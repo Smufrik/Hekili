@@ -721,7 +721,7 @@ local HekiliSpecMixin = {
             end
         end
 
-        if ( a.velocity or a.flightTime ) and a.impact then
+        if ( a.velocity or a.flightTime ) and a.impact and a.isProjectile == nil then
             a.isProjectile = true
         end
 
@@ -1668,7 +1668,7 @@ all:RegisterAuras( {
     -- Mastery increased by $w1% and auto attacks have a $h% chance to instantly strike again.
     skyfury = {
         id = 462854,
-        duration = 3600.0,
+        duration = 3600,
         max_stack = 1,
         shared = "player",
         dot = "buff"

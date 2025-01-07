@@ -915,7 +915,6 @@ spec:RegisterHook( "reset_precast", function ()
         active_dot.frost_nova > 0 and debuff.frost_nova.down then
         active_dot.frozen = active_dot.frozen + 1
     end
-
 end )
 
 spec:RegisterHook( "runHandler", function( action )
@@ -990,8 +989,14 @@ spec:RegisterAbilities( {
         talent = "comet_storm",
         startsCombat = false,
 
+        flightTime = 2.6,
+
         handler = function ()
             applyBuff( "active_comet_storm" )
+        end,
+
+        impact = function ()
+            -- noop.
         end,
     },
 

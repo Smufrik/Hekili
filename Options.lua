@@ -739,6 +739,7 @@ do
                 },
 
                 filterCasts = true,
+                castRemainingThreshold = 0.25,
                 castFilters = {
                     [40167] = {
                     desc = "Grim Batol - Twilight Beguiler",
@@ -8702,6 +8703,30 @@ do
                             width = 2,
                             order = 4
                         },
+                        lb3 = {
+                            type = "description",
+                            name = "",
+                            width = "full",
+                            order = 4.1
+                        },
+
+                        indent3 = {
+                            type = "description",
+                            name = "",
+                            width = 1,
+                            order = 4.2,
+                        },
+                        castRemainingThreshold = {
+                            type = "range",
+                            name = "Interrupt Timing",
+                            desc = "By default, interrupts are recommended when an enemy's cast has 0.25 seconds (or less) remaining.\n\n"
+                                    .. "If set to 2, an interrupt could be recommended when the cast has less than 2 seconds remaining.",
+                            min = 0.25,
+                            max = 3,
+                            step = 0.25,
+                            width = 2,
+                            order = 4.3
+                        },
 
                         defensives = {
                             type = "group",
@@ -11533,6 +11558,7 @@ do
         { "rtb_buffs%.will_lose%.([%w_]+)"                  , "rtb_buffs_will_lose_buff.%1"             },
         { "rtb_buffs%.will_lose"                            , "rtb_buffs_will_lose"                     },
         { "rtb_buffs%.total"                                , "rtb_buffs"                               },
+        { "buff.supercharge_(%d).up"                        , "supercharge_%1"                          },
         { "hyperthread_wristwraps%.([%w_]+)%.first_remains" , "hyperthread_wristwraps.first_remains.%1" },
         { "hyperthread_wristwraps%.([%w_]+)%.count"         , "hyperthread_wristwraps.%1"               },
         { "cooldown"                                        , "action_cooldown"                         },
