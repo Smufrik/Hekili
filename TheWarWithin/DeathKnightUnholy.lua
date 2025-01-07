@@ -17,18 +17,15 @@ local spec = Hekili:NewSpecialization( 252 )
 spec:RegisterResource( Enum.PowerType.Runes, {
     rune_regen = {
         last = function () return state.query_time end,
+        stop = function( x ) return x == 6 end,
 
         interval = function( time, val )
-            local r = state.runes
-            val = math.floor( val )
-
+            val = floor( val )
             if val == 6 then return -1 end
-            return r.expiry[ val + 1 ] - time
+            return state.runes.expiry[ val + 1 ] - time
         end,
-
-        stop = function( x ) return x == 6 end,
         value = 1,
-    },
+    }
 }, setmetatable( {
     expiry = { 0, 0, 0, 0, 0, 0 },
     cooldown = 10,
@@ -42,26 +39,20 @@ spec:RegisterResource( Enum.PowerType.Runes, {
 
     reset = function()
         local t = state.runes
-
         for i = 1, 6 do
             local start, duration, ready = GetRuneCooldown( i )
-            start = start or 0
-            duration = duration or ( 10 * state.haste )
-            start = roundUp( start, 3 )
-
-            t.expiry[ i ] = ready and 0 or start + duration
+            t.expiry[ i ] = ready and 0 or ( start + duration )
             t.cooldown = duration
         end
-
         table.sort( t.expiry )
         t.actual = nil -- Reset actual to force recalculation
     end,
 
     gain = function( amount )
         local t = state.runes
-
         for i = 1, amount do
-            t.expiry[ 7 - i ] = 0
+            table.insert( t.expiry, 0 )
+            t.expiry[ 7 ] = nil
         end
         table.sort( t.expiry )
         t.actual = nil -- Reset actual to force recalculation
@@ -69,25 +60,19 @@ spec:RegisterResource( Enum.PowerType.Runes, {
 
     spend = function( amount )
         local t = state.runes
-
         for i = 1, amount do
-            if t.expiry[ 4 ] > state.query_time then
-                t.expiry[ 1 ] = t.expiry[ 4 ] + t.cooldown
-            else
-                t.expiry[ 1 ] = state.query_time + t.cooldown
-            end
-            table.sort( t.expiry )
+            local nextReady = ( t.expiry[ 4 ] > 0 and t.expiry[ 4 ] or state.query_time ) + t.cooldown
+            table.remove( t.expiry, 1 )
+            table.insert( t.expiry, nextReady )
         end
 
-        if amount > 0 then
-            -- Handle Runic Power gain
-            state.gain( amount * 10, "runic_power" )
+        -- Handle Runic Power gain
+        state.gain( amount * 10, "runic_power" )            
 
-            -- Handle Tier 20 4-piece set bonus
-            if state.set_bonus.tier20_4pc == 1 then
-                state.cooldown.army_of_the_dead.expires = max( 0, state.cooldown.army_of_the_dead.expires - 1 )
-            end
-        end
+        -- Handle Tier 20 4-piece set bonus
+        if state.set_bonus.tier20_4pc == 1 then
+            state.cooldown.army_of_the_dead.expires = max( 0, state.cooldown.army_of_the_dead.expires - 1 )
+        end      
 
         t.actual = nil -- Reset actual to force recalculation
     end,
@@ -146,7 +131,7 @@ spec:RegisterResource( Enum.PowerType.Runes, {
         else
             local amount = k:match( "time_to_(%d+)" )
             amount = amount and tonumber( amount )
-            if amount then return state:TimeToResource( t, amount ) end
+            if amount then return t.timeTo( amount ) end
         end
     end
 }))
