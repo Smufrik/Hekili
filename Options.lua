@@ -519,15 +519,19 @@ do
 
                     mode = {
                         key = "ALT-SHIFT-N",
+                        value = "automatic",
                         -- type = "AutoSingle",
                         automatic = true,
                         single = true,
-                        value = "automatic",
+                        reactive = "false",
+                        dual = "false",
+                        aoe = "false",
                     },
 
                     cooldowns = {
                         key = "ALT-SHIFT-R",
                         value = true,
+                        infusion = false,
                         override = false,
                         separate = false,
                     },
@@ -541,12 +545,14 @@ do
                     potions = {
                         key = "",
                         value = false,
+                        override = false,
                     },
 
                     interrupts = {
                         key = "ALT-SHIFT-I",
                         value = true,
                         separate = false,
+                        filterCasts = false,
                     },
 
                     essences = {
@@ -10791,533 +10797,620 @@ do
     local info = {}
     local priorities = {}
 
-    local function countPriorities()
-        wipe( priorities )
+end
 
-        local spec = state.spec.id
+function Hekili:countPriorities()
+    local priorities = {}
+    local spec = state.spec.id
 
-        for priority, data in pairs( Hekili.DB.profile.packs ) do
-            if data.spec == spec then
-                insert( priorities, priority )
-            end
+    for priority, data in pairs( Hekili.DB.profile.packs ) do
+        if data.spec == spec then
+            table.insert( priorities, priority )
         end
-
-        sort( priorities )
-
-        return #priorities
     end
 
-    function Hekili:CmdLine( input )
-        if not input or input:trim() == "" or input:trim() == "skeleton" then
-            if input:trim() == 'skeleton' then
-                self:StartListeningForSkeleton()
-                self:Print( "Addon will now gather specialization information.  Select all talents and use all abilities for best results." )
-                self:Print( "See the Skeleton tab for more information. ")
-                Hekili.Skeleton = ""
-            end
-
-            ns.StartConfiguration()
-            return
-
-        elseif input:trim() == "recover" then
-            local defaults = self:GetDefaults()
-
-            for k, v in pairs( self.DB.profile.displays ) do
-                local default = defaults.profile.displays[ k ]
-                if defaults.profile.displays[ k ] then
-                    for key, value in pairs( default ) do
-                        if type( value ) == "table" then v[ key ] = tableCopy( value )
-                        else v[ key ] = value end
-
-                        if type( value ) == "table" then
-                            for innerKey, innerValue in pairs( value ) do
-                                if v[ key ][ innerKey ] == nil then
-                                    if type( innerValue ) == "table" then v[ key ][ innerKey ] = tableCopy( innerValue )
-                                    else v[ key ][ innerKey ] = innerValue end
-                                end
-                            end
-                        end
-                    end
-
-                    for key, value in pairs( self.DB.profile.displays["**"] ) do
-                        if type( value ) == "table" then v[ key ] = tableCopy( value )
-                        else v[ key ] = value end
-
-                        if type( value ) == "table" then
-                            for innerKey, innerValue in pairs( value ) do
-                                if v[ key ][ innerKey ] == nil then
-                                    if type( innerValue ) == "table" then v[ key ][ innerKey ] = tableCopy( innerValue )
-                                    else v[ key ][ innerKey ] = innerValue end
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-            self:RestoreDefaults()
-            self:RefreshOptions()
-            self:BuildUI()
-            self:Print( "Default displays and action lists restored." )
-            return
-
-        end
-
-        if input then
-            input = input:trim()
-            local args = {}
-
-            for arg in string.gmatch( input, "%S+" ) do
-                insert( args, lower( arg ) )
-            end
-
-            if ( "set" ):match( "^" .. args[1] ) then
-                local profile = Hekili.DB.profile
-                local spec = profile.specs[ state.spec.id ]
-                local prefs = spec.settings
-                local settings = class.specs[ state.spec.id ].settings
-
-                local index
-
-                if args[2] then
-                    if ( "target_swap" ):match( "^" .. args[2] ) or ( "swap" ):match( "^" .. args[2] ) or ( "cycle" ):match( "^" .. args[2] ) then
-                        index = -1
-                    elseif ( "mode" ):match( "^" .. args[2] ) then
-                        index = -2
-                    else
-                        for i, setting in ipairs( settings ) do
-                            if setting.name:match( "^" .. args[2] ) then
-                                index = i
-                                break
-                            end
-                        end
-
-                        if not index then
-                            -- Check toggles instead.
-                            for toggle, num in pairs( toggleToIndex ) do
-                                if toggle:match( "^" .. args[2] ) then
-                                    index = num
-                                    break
-                                end
-                            end
-                        end
-                    end
-                end
-
-                if #args == 1 or not index then
-                    -- No arguments, list options.
-                    local output = "Use |cFFFFD100/hekili set|r to adjust your specialization options via chat or macros.\n\nOptions for " .. state.spec.name .. " are:"
-
-                    local hasToggle, hasNumber = false, false
-                    local exToggle, exNumber
-
-                    for i, setting in ipairs( settings ) do
-                        if not setting.info.arg or setting.info.arg() then
-                            if setting.info.type == "toggle" then
-                                output = format( "%s\n - |cFFFFD100%s|r = %s|r (%s)", output, setting.name, prefs[ setting.name ] and "|cFF00FF00ON" or "|cFFFF0000OFF", type( setting.info.name ) == "function" and setting.info.name() or setting.info.name )
-                                hasToggle = true
-                                exToggle = setting.name
-                            elseif setting.info.type == "range" then
-                                output = format( "%s\n - |cFFFFD100%s|r = |cFF00FF00%.2f|r, min: %.2f, max: %.2f", output, setting.name, prefs[ setting.name ], ( setting.info.min and format( "%.2f", setting.info.min ) or "N/A" ), ( setting.info.max and format( "%.2f", setting.info.max ) or "N/A" ), settingName )
-                                hasNumber = true
-                                exNumber = setting.name
-                            end
-                        end
-                    end
-
-                    output = format( "%s\n - |cFFFFD100cycle|r, |cFFFFD100swap|r, or |cFFFFD100target_swap|r = %s|r (%s)", output, spec.cycle and "|cFF00FF00ON" or "|cFFFF0000OFF", "Recommend Target Swaps" )
-
-                    output = format( "%s\n\nTo control your toggles (|cFFFFD100cooldowns|r, |cFFFFD100covenants|r, |cFFFFD100defensives|r, |cFFFFD100interrupts|r, |cFFFFD100potions|r, |cFFFFD100custom1|r, and |cFFFFD100custom2|r):\n" ..
-                        " - Enable Cooldowns:  |cFFFFD100/hek set cooldowns on|r\n" ..
-                        " - Disable Interrupts:  |cFFFFD100/hek set interupts off|r\n" ..
-                        " - Toggle Defensives:  |cFFFFD100/hek set defensives|r", output )
-
-                    output = format( "%s\n\nTo control your display mode (currently |cFFFFD100%s|r):\n - Toggle Mode:  |cFFFFD100/hek set mode|r\n - Set Mode:  |cFFFFD100/hek set mode aoe|r (or |cFFFFD100automatic|r, |cFFFFD100single|r, |cFFFFD100dual|r, |cFFFFD100reactive|r)", output, self.DB.profile.toggles.mode.value or "unknown" )
-
-                    if hasToggle then
-                        output = format( "%s\n\nTo set a |cFFFFD100specialization toggle|r, use the following commands:\n" ..
-                            " - Toggle On/Off:  |cFFFFD100/hek set %s|r\n" ..
-                            " - Enable:  |cFFFFD100/hek set %s on|r\n" ..
-                            " - Disable:  |cFFFFD100/hek set %s off|r\n" ..
-                            " - Reset to Default:  |cFFFFD100/hek set %s default|r", output, exToggle, exToggle, exToggle, exToggle )
-                    end
-
-                    if hasNumber then
-                        output = format( "%s\n\nTo set a |cFFFFD100number|r value, use the following commands:\n" ..
-                            " - Set to #:  |cFFFFD100/hek set %s #|r\n" ..
-                            " - Reset to Default:  |cFFFFD100/hek set %s default|r", output, exNumber, exNumber )
-                    end
-
-                    output = format( "%s\n\nTo select another priority, see |cFFFFD100/hekili priority|r.", output )
-
-                    Hekili:Print( output )
-                    return
-                end
-
-                local toggle = indexToToggle[ index ]
-
-                if toggle then
-                    local tab, text, to = toggle[ 1 ], toggle[ 2 ]
-
-                    if args[3] then
-                        if args[3] == "on" then to = true
-                        elseif args[3] == "off" then to = false
-                        elseif args[3] == "default" then to = false
-                        else
-                            Hekili:Print( format( "'%s' is not a valid option for |cFFFFD100%s|r.", args[3], text ) )
-                            return
-                        end
-                    else
-                        to = not profile.toggles[ tab ].value
-                    end
-
-                    Hekili:Print( format( "|cFFFFD100%s|r toggle set to %s.", text, ( to and "|cFF00FF00ON|r" or "|cFFFF0000OFF|r" ) ) )
-
-                    profile.toggles[ tab ].value = to
-
-                    if WeakAuras and WeakAuras.ScanEvents then WeakAuras.ScanEvents( "HEKILI_TOGGLE", tab, to ) end
-                    if ns.UI.Minimap then ns.UI.Minimap:RefreshDataText() end
-                    return
-                end
-
-                -- Two or more arguments, we're setting (or querying).
-                if index == -1 then
-                    local to
-
-                    if args[3] then
-                        if args[3] == "on" then to = true
-                        elseif args[3] == "off" then to = false
-                        elseif args[3] == "default" then to = false
-                        else
-                            Hekili:Print( format( "'%s' is not a valid option for |cFFFFD100%s|r.", args[3] ) )
-                            return
-                        end
-                    else
-                        to = not spec.cycle
-                    end
-
-                    Hekili:Print( format( "Recommend Target Swaps set to %s.", ( to and "|cFF00FF00ON|r" or "|cFFFF0000OFF|r" ) ) )
-
-                    spec.cycle = to
-
-                    Hekili:ForceUpdate( "CLI_TOGGLE" )
-                    return
-                elseif index == -2 then
-                    if args[3] then
-                        Hekili:SetMode( args[3] )
-                        if WeakAuras and WeakAuras.ScanEvents then WeakAuras.ScanEvents( "HEKILI_TOGGLE", "mode", args[3] ) end
-                        if ns.UI.Minimap then ns.UI.Minimap:RefreshDataText() end
-                    else
-                        Hekili:FireToggle( "mode" )
-                    end
-                    return
-                end
-
-                local setting = settings[ index ]
-                if not setting then
-                    Hekili:Print( "Not a valid option." )
-                    return
-                end
-
-                local settingName = type( setting.info.name ) == "function" and setting.info.name() or setting.info.name
-
-                if setting.info.type == "toggle" then
-                    local to
-
-                    if args[3] then
-                        if args[3] == "on" then to = true
-                        elseif args[3] == "off" then to = false
-                        elseif args[3] == "default" then to = setting.default
-                        else
-                            Hekili:Print( format( "'%s' is not a valid option for |cFFFFD100%s|r.", args[3] ) )
-                            return
-                        end
-                    else
-                        to = not setting.info.get( info )
-                    end
-
-                    Hekili:Print( format( "%s set to %s.", settingName, ( to and "|cFF00FF00ON|r" or "|cFFFF0000OFF|r" ) ) )
-
-                    info[ 1 ] = setting.name
-                    setting.info.set( info, to )
-
-                    Hekili:ForceUpdate( "CLI_TOGGLE" )
-                    if WeakAuras and WeakAuras.ScanEvents then
-                        WeakAuras.ScanEvents( "HEKILI_SPEC_OPTION_CHANGED", args[2], to )
-                    end
-                    return
-
-                elseif setting.info.type == "range" then
-                    local to
-
-                    if args[3] == "default" then
-                        to = setting.default
-                    else
-                        to = tonumber( args[3] )
-                    end
-
-                    if to and ( ( setting.info.min and to < setting.info.min ) or ( setting.info.max and to > setting.info.max ) ) then
-                        Hekili:Print( format( "The value for %s must be between %s and %s.", args[2], ( setting.info.min and format( "%.2f", setting.info.min ) or "N/A" ), ( setting.info.max and format( "%.2f", setting.info.max ) or "N/A" ) ) )
-                        return
-                    end
-
-                    if not to then
-                        Hekili:Print( format( "You must provide a number value for %s (or default).", args[2] ) )
-                        return
-                    end
-
-                    Hekili:Print( format( "%s set to |cFF00B4FF%.2f|r.", settingName, to ) )
-                    prefs[ setting.name ] = to
-                    Hekili:ForceUpdate( "CLI_NUMBER" )
-                    if WeakAuras and WeakAuras.ScanEvents then
-                        WeakAuras.ScanEvents( "HEKILI_SPEC_OPTION_CHANGED", args[2], to )
-                    end
-                    return
-
-                end
-
-
-            elseif ( "profile" ):match( "^" .. args[1] ) then
-                if not args[2] then
-                    local output = "Use |cFFFFD100/hekili profile name|r to swap profiles via command-line or macro.\nValid profile |cFFFFD100name|rs are:"
-
-                    for name, prof in ns.orderedPairs( Hekili.DB.profiles ) do
-                        output = format( "%s\n - |cFFFFD100%s|r %s", output, name, Hekili.DB.profile == prof and "|cFF00FF00(current)|r" or "" )
-                    end
-
-                    output = format( "%s\nTo create a new profile, see |cFFFFD100/hekili|r > |cFFFFD100Profiles|r.", output )
-
-                    Hekili:Print( output )
-                    return
-                end
-
-                local profileName = input:match( "%s+(.+)$" )
-
-                if not rawget( Hekili.DB.profiles, profileName ) then
-                    local output = format( "'%s' is not a valid profile name.\nValid profile |cFFFFD100name|rs are:", profileName )
-
-                    local count = 0
-
-                    for name, prof in ns.orderedPairs( Hekili.DB.profiles ) do
-                        count = count + 1
-                        output = format( "%s\n - |cFFFFD100%s|r %s", output, name, Hekili.DB.profile == prof and "|cFF00FF00(current)|r" or "" )
-                    end
-
-                    output = format( "%s\n\nTo create a new profile, see |cFFFFD100/hekili|r > |cFFFFD100Profiles|r.", output )
-
-                    Hekili:Notify( output )
-                    return
-                end
-
-                Hekili:Print( format( "Set profile to |cFF00FF00%s|r.", profileName ) )
-                self.DB:SetProfile( profileName )
-                return
-
-            elseif ( "priority" ):match( "^" .. args[1] ) then
-                local n = countPriorities()
-
-                if not args[2] then
-                    local output = "Use |cFFFFD100/hekili priority name|r to change your current specialization's priority via command-line or macro."
-
-                    if n < 2 then
-                        output = output .. "\n\n|cFFFF0000You must have multiple priorities for your specialization to use this feature.|r"
-                    else
-                        output = output .. "\nValid priority |cFFFFD100name|rs are:"
-                        for i, priority in ipairs( priorities ) do
-                            output = format( "%s\n - %s%s|r %s", output, Hekili.DB.profile.packs[ priority ].builtIn and BlizzBlue or "|cFFFFD100", priority, Hekili.DB.profile.specs[ state.spec.id ].package == priority and "|cFF00FF00(current)|r" or "" )
-                        end
-                    end
-
-                    output = format( "%s\n\nTo create a new priority, see |cFFFFD100/hekili|r > |cFFFFD100Priorities|r.", output )
-
-                    if Hekili.DB.profile.notifications.enabled then Hekili:Notify( output ) end
-                    Hekili:Print( output )
-                    return
-                end
-
-                -- Setting priority via commandline.
-                -- Requires multiple priorities loaded for one's specialization.
-                -- This also prepares the priorities table with relevant priority names.
-
-                if n < 2 then
-                    Hekili:Print( "You must have multiple priorities for your specialization to use this feature." )
-                    return
-                end
-
-                if not args[2] then
-                    local output = "You must provide the priority name (case sensitive).\nValid options are"
-                    for i, priority in ipairs( priorities ) do
-                        output = output .. format( " %s%s|r%s", Hekili.DB.profile.packs[ priority ].builtIn and BlizzBlue or "|cFFFFD100", priority, i == #priorities and "." or "," )
-                    end
-                    Hekili:Print( output )
-                    return
-                end
-
-                local raw = input:match( "^%S+%s+(.+)$" )
-                local name = raw:gsub( "%%", "%%%%" ):gsub( "^%^", "%%^" ):gsub( "%$$", "%%$" ):gsub( "%(", "%%(" ):gsub( "%)", "%%)" ):gsub( "%.", "%%." ):gsub( "%[", "%%[" ):gsub( "%]", "%%]" ):gsub( "%*", "%%*" ):gsub( "%+", "%%+" ):gsub( "%-", "%%-" ):gsub( "%?", "%%?" )
-
-                for i, priority in ipairs( priorities ) do
-                    if priority:match( "^" .. name ) then
-                        Hekili.DB.profile.specs[ state.spec.id ].package = priority
-                        local output = format( "Priority set to %s%s|r.", Hekili.DB.profile.packs[ priority ].builtIn and BlizzBlue or "|cFFFFD100", priority )
-                        if Hekili.DB.profile.notifications.enabled then Hekili:Notify( output ) end
-                        Hekili:Print( output )
-                        Hekili:ForceUpdate( "CLI_TOGGLE" )
-                        return
-                    end
-                end
-
-                local output = format( "No match found for priority '%s'.\nValid options are", raw )
-
-                for i, priority in ipairs( priorities ) do
-                    output = output .. format( " %s%s|r%s", Hekili.DB.profile.packs[ priority ].builtIn and BlizzBlue or "|cFFFFD100", priority, i == #priorities and "." or "," )
-                end
-
-                if Hekili.DB.profile.notifications.enabled then Hekili:Notify( output ) end
-                Hekili:Print( output )
-                return
-
-            elseif ( "enable" ):match( "^" .. args[1] ) or ( "disable" ):match( "^" .. args[1] ) then
-                local enable = ( "enable" ):match( "^" .. args[1] ) or false
-
-                for i, buttons in ipairs( ns.UI.Buttons ) do
-                    for j, _ in ipairs( buttons ) do
-                        if not enable then
-                            buttons[j]:Hide()
-                        else
-                            buttons[j]:Show()
-                        end
-                    end
-                end
-
-                self.DB.profile.enabled = enable
-
-                if enable then
-                    Hekili:Print( "Addon |cFFFFD100ENABLED|r." )
-                    self:Enable()
-                else
-                    Hekili:Print( "Addon |cFFFFD100DISABLED|r." )
-                    self:Disable()
-                end
-
-            elseif ( "move" ):match( "^" .. args[1] ) or ( "unlock" ):match( "^" .. args[1] ) then
-                if InCombatLockdown() then
-                    Hekili:Print( "Movers cannot be activated while in combat." )
-                    return
-                end
-
-                if not Hekili.Config then
-                    ns.StartConfiguration( true )
-                elseif ( "move" ):match( "^" .. args[1] ) and Hekili.Config then
-                    ns.StopConfiguration()
-                end
-
-            elseif ("stress" ):match( "^" .. args[1] ) then
-                if InCombatLockdown() then
-                    Hekili:Print( "Unable to stress test abilities and auras while in combat." )
-                    return
-                end
-
-                local precount = 0
-                for k, v in pairs( self.ErrorDB ) do
-                    precount = precount + v.n
-                end
-
-                local results, count, specs = "", 0, {}
-                for i in ipairs( class.specs ) do
-                    if i ~= 0 then insert( specs, i ) end
-                end
-                sort( specs )
-
-                for i, specID in ipairs( specs ) do
-                    local spec = class.specs[ specID ]
-                    results = format( "%sSpecialization: %s\n", results, spec.name )
-
-                    for key, aura in ipairs( spec.auras ) do
-                        local keyNamed = false
-                        -- Avoid duplicates.
-                        if aura.key == key then
-                            for k, v in pairs( aura ) do
-                                if type( v ) == "function" then
-                                    local ok, val = pcall( v )
-                                    if not ok then
-                                        if not keyNamed then results = format( "%s - Aura: %s\n", results, k )
-keyNamed = true end
-                                        results = format( "%s    - %s = %s\n", results, tostring( val ) )
-                                        count = count + 1
-                                    end
-                                end
-                            end
-                            for k, v in pairs( aura.funcs ) do
-                                if type( v ) == "function" then
-                                    local ok, val = pcall( v )
-                                    if not ok then
-                                        if not keyNamed then results = format( "%s - Aura: %s\n", results, k )
-keyNamed = true end
-                                        results = format( "%s    - %s = %s\n", results, tostring( val ) )
-                                        count = count + 1
-                                    end
-                                end
-                            end
-                        end
-                    end
-
-                    for key, ability in ipairs( spec.abilities ) do
-                        local keyNamed = false
-                        -- Avoid duplicates.
-                        if ability.key == key then
-                            for k, v in pairs( ability ) do
-                                if type( v ) == "function" then
-                                    local ok, val = pcall( v )
-                                    if not ok then
-                                        if not keyNamed then results = format( "%s - Ability: %s\n", results, k )
-keyNamed = true end
-                                        results = format( "%s    - %s = %s\n", results, tostring( val ) )
-                                        count = count + 1
-                                    end
-                                end
-                            end
-                            for k, v in pairs( ability.funcs ) do
-                                if type( v ) == "function" then
-                                    local ok, val = pcall( v )
-                                    if not ok then
-                                        if not keyNamed then results = format( "%s - Ability: %s\n", results, k )
-keyNamed = true end
-                                        results = format( "%s    - %s = %s\n", results, tostring( val ) )
-                                        count = count + 1
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
-
-                local postcount = 0
-                for k, v in pairs( self.ErrorDB ) do
-                    postcount = postcount + v.n
-                end
-
-                if count > 0 then
-                    Hekili:Print( results )
-                    Hekili:Error( results )
-                end
-
-                if postcount > precount then Hekili:Print( "New warnings were loaded in /hekili > Warnings." ) end
-                if count == 0 and postcount == precount then Hekili:Print( "Stress test completed; no issues found." ) end
-
-            elseif ( "lock" ):match( "^" .. args[1] ) then
-                if Hekili.Config then
-                    ns.StopConfiguration()
-                else
-                    Hekili:Print( "Displays are not unlocked.  Use |cFFFFD100/hek move|r or |cFFFFD100/hek unlock|r to allow click-and-drag." )
-                end
-            elseif ( "dotinfo" ):match( "^" .. args[1] ) then
-                local aura = args[2] and args[2]:trim()
-                Hekili:DumpDotInfo( aura )
-            end
+    table.sort( priorities )
+    return priorities
+end
+
+function Hekili:CmdLine( input )
+    -- Trim the input once and handle empty or 'skeleton' input
+    input = input and input:trim() or ""
+
+    if input == "" or input == "skeleton" then
+        self:HandleSkeletonCommand( input )
+        return true  -- Ensure return true to close chat box
+    end
+
+    -- Parse arguments into a table
+    local args = {}
+    for arg in string.gmatch( input, "%S+" ) do
+        table.insert( args, arg:lower() )
+    end
+
+    -- Alias maps for argument substitutions
+    local arg1Aliases = { prio = "priority" }
+    local arg2Aliases = {
+        cd          = "cooldowns",
+        cds         = "cooldowns",
+        pot         = "potions",
+        display     = "mode",
+        target_swap = "cycle",
+        swap        = "cycle",
+    }
+    local arg3Aliases = {
+        auto = "automatic",
+        pi   = "infusion",
+    }
+
+    -- Apply aliases to arguments
+    if args[1] and arg1Aliases[ args[1] ] then args[1] = arg1Aliases[ args[1] ] end
+    if args[2] and arg2Aliases[ args[2] ] then args[2] = arg2Aliases[ args[2] ] end
+    if args[3] and arg3Aliases[ args[3] ] then args[3] = arg3Aliases[ args[3] ] end
+
+    local command = args[1]
+
+    -- Command handlers mapping
+    local commandHandlers = {
+        set      = function () self:HandleSetCommand( args ) end,
+        profile  = function () self:HandleProfileCommand( args ) end,
+        priority = function () self:HandlePriorityCommand( args ) end,
+        enable   = function () self:HandleEnableDisableCommand( args ) end,
+        disable  = function () self:HandleEnableDisableCommand( args ) end,
+        move     = function () self:HandleMoveCommand( args ) end,
+        unlock   = function () self:HandleMoveCommand( args ) end,
+        lock     = function () self:HandleMoveCommand( args ) end,
+        stress   = function () self:RunStressTest() end,
+        dotinfo  = function () self:DumpDotInfo( args[2] ) end,
+        recover  = function () self:HandleRecoverCommand() end,
+    }
+
+    -- Execute the corresponding command handler or show error message
+    if commandHandlers[ command ] then
+        commandHandlers[ command ]()
+        return true
+    elseif command == "help" then
+        self:DisplayChatCommandList( "all" )
+    else
+        self:Print( "Invalid command. Type '/hekili help' to see the available commands." )
+        return true
+    end
+end
+
+function Hekili:HandleSetCommand( args )
+    local profile = self.DB.profile
+    local mainToggle = args[2] and args[2]:lower()  -- Convert to lowercase
+    local subToggleOrState = args[3] and args[3]:lower()
+    local explicitState = args[4]
+
+    -- No Main Toggle Provided
+    if not mainToggle then
+        self:DisplayChatCommandList( "all" )
+        return true
+    end
+
+    -- Special Case for cycle
+    if mainToggle == "cycle" then
+        -- Check for whole number minimum time to die (from 0 to 20 seconds)
+        local cycleValue = tonumber( subToggleOrState )
+        if cycleValue and cycleValue >= 0 and cycleValue <= 20 and floor( cycleValue ) == cycleValue then
+            profile.specs[ state.spec.id ].cycle_min = cycleValue
+            self:Print( format( "Target Swap minimum time to die set to %d seconds.", cycleValue ) )
+        elseif subToggleOrState == nil then
+            -- Toggle cycle if no state is provided
+            profile.specs[ state.spec.id ].cycle = not profile.specs[ state.spec.id ].cycle
+            local toggleStateText = profile.specs[ state.spec.id ].cycle and "|cFF00FF00ON|r" or "|cFFFF0000OFF|r"
+            self:Print( format( "Target Swap toggle set to %s.", toggleStateText ) )
+        elseif subToggleOrState == "on" or subToggleOrState == "off" then
+            -- Explicitly set cycle to on or off
+            local toggleState = ( subToggleOrState == "on" )
+            profile.specs[ state.spec.id ].cycle = toggleState
+            local toggleStateText = toggleState and "|cFF00FF00ON|r" or "|cFFFF0000OFF|r"
+            self:Print( format( "Target Swap toggle set to %s.", toggleStateText ) )
         else
-            LibStub( "AceConfigCmd-3.0" ):HandleCommand( "hekili", "Hekili", input )
+            -- Invalid parameter handling
+            self:Print( "Invalid input for 'cycle'. Use 'on', 'off', leave blank to toggle, or provide a whole number from 0 to 20 to set the minimum time to die." )
+        end
+        self:ForceUpdate( "CLI_TOGGLE" )
+        return true
+    end
+
+    -- Handle display mode setting
+    if mainToggle == "mode" then
+        if subToggleOrState then
+            self:SetMode( subToggleOrState )
+            if WeakAuras and WeakAuras.ScanEvents then WeakAuras.ScanEvents( "HEKILI_TOGGLE", "mode", args[3] ) end
+            if ns.UI.Minimap then ns.UI.Minimap:RefreshDataText() end
+        return true
+        else
+            Hekili:FireToggle( "mode" )
+        end
+        return true
+    end
+
+    -- Handle specialization settings
+    if mainToggle == "spec" then
+        if self:HandleSpecSetting( subToggleOrState, explicitState) then
+            return true
+        else
+            self:Print( "Invalid spec setting specified." )
+            return true
         end
     end
+
+    -- Main Toggle and Sub-Toggle Handling
+    -- Explicit State Check for Main Toggle
+    local toggleCategory = profile.toggles[ mainToggle ]
+    if toggleCategory then
+        if subToggleOrState == "on" or subToggleOrState == "off" then
+            toggleCategory.value = ( subToggleOrState == "on" )
+            local stateText = toggleCategory.value and "|cFF00FF00ON|r" or "|cFFFF0000OFF|r"
+            self:Print( format( "|cFFFFD100%s|r is now %s.", mainToggle, stateText ) )
+            self:ForceUpdate( "CLI_TOGGLE" )
+            return true
+        end
+
+        -- Sub-Toggle Handling with Validation
+        if subToggleOrState then
+            -- Convert keys of toggleCategory to lowercase to handle case-insensitivity
+            local lowerToggleCategory = {}
+            for k, v in pairs( toggleCategory) do
+                lowerToggleCategory[ k:lower() ] = v
+            end
+
+            -- Check if sub-toggle exists in main toggle
+            if lowerToggleCategory[ subToggleOrState ] ~= nil then
+                if explicitState == "on" or explicitState == "off" then
+                    lowerToggleCategory[ subToggleOrState ] = ( explicitState == "on" )
+                elseif explicitState == nil then
+                    lowerToggleCategory[ subToggleOrState ] = not lowerToggleCategory[ subToggleOrState ]
+                else
+                    self:Print( "Invalid explicit state. Use 'on' or 'off'." )
+                    return true
+                end
+
+                toggleCategory[ subToggleOrState ] = lowerToggleCategory[ subToggleOrState ]  -- Update the original case-sensitive table
+                local stateText = lowerToggleCategory[ subToggleOrState ] and "|cFF00FF00ON|r" or "|cFFFF0000OFF|r"
+                self:Print( format( "|cFFFFD100%s_%s|r is now %s.", mainToggle, subToggleOrState, stateText ) )
+                self:ForceUpdate("CLI_TOGGLE" )
+                return true
+            else
+                self:Print("Invalid sub-toggle specified." )
+                return true
+            end
+        end
+
+        -- Default Toggle Behavior for Main Toggle (Toggle)
+        self:FireToggle( mainToggle, explicitState )
+        local mainToggleState = profile.toggles[ mainToggle ].value and "|cFF00FF00ON|r" or "|cFFFF0000OFF|r"
+        self:Print( format( "|cFFFFD100%s|r is now %s.", mainToggle, mainToggleState ) )
+        self:ForceUpdate( "CLI_TOGGLE" )
+        return true
+    end
+    -- Invalid Toggle or Setting
+    self:Print( "Invalid toggle or setting specified." )
+    return true
+end
+
+function Hekili:HandleSpecSetting( specSetting, specValue )
+    local profile = self.DB.profile
+    local settings = class.specs[ state.spec.id ].settings
+
+    -- Search for the spec setting within the settings table
+    for i, setting in ipairs( settings ) do
+        if setting.name:match( "^" .. specSetting ) then
+            if setting.info.type == "toggle" then
+                -- If specValue is nil, treat it as a toggle command
+                if specValue == nil or specValue == "toggle" then
+                    local newValue = not profile.specs[ state.spec.id ].settings[ setting.name ]
+                    profile.specs[ state.spec.id ].settings[ setting.name ] = newValue
+                    local stateText = newValue and "|cFF00FF00ON|r" or "|cFFFF0000OFF|r"
+                    self:Print( format( "%s set to %s.", setting.name, stateText ) )
+                elseif specValue == "on" then
+                    profile.specs[state.spec.id].settings[setting.name] = true
+                    self:Print( format( "%s set to |cFF00FF00ON|r.", setting.name ) )
+                elseif specValue == "off" then
+                    profile.specs[state.spec.id].settings[setting.name] = false
+                    self:Print( format( "%s set to |cFFFF0000OFF|r.", setting.name ) )
+                else
+                    self:Print( "Invalid input. Use 'on', 'off', or leave blank to toggle for toggle settings." )
+                end
+                return true
+
+            elseif setting.info.type == "range" then
+                -- Ensure specValue is a number within the allowed range
+                local newValue = tonumber( specValue )
+                if newValue and newValue >= ( setting.info.min or -math.huge ) and newValue <= ( setting.info.max or math.huge ) then
+                    profile.specs[ state.spec.id ].settings[ setting.name ] = newValue
+                    self:Print( format( "%s set to |cFF00B4FF%.2f|r.", setting.name, newValue ) )
+                else
+                    self:Print( format( "Invalid value for %s. Must be between %.2f and %.2f.", setting.name, setting.info.min or 0, setting.info.max or 100 ) )
+                end
+                return true
+            end
+        end
+    end
+
+    self:Print( "Invalid spec setting specified." )
+    return false
+end
+
+function Hekili:DisplayChatCommandList( list )
+    local profile = self.DB.profile
+
+    -- Generate and print the "all" overview message.
+    if list == "all" then
+        self:Print( "Use |cFFFFD100/hekili set|r to adjust toggles, display modes, and specialization settings via chat commands or macros.\n\n" ) 
+    end
+
+    -- Toggle Options Section
+    local function getTogglesChunk()
+        return "Toggle Options:\n" ..
+            " - |cFFFFD100cooldowns|r, |cFFFFD100potions|r, |cFFFFD100interrupts|r, etc.\n" ..
+            " - Example commands:\n" ..
+            "   - Enable Cooldowns: |cFFFFD100/hek set cooldowns on|r\n" ..
+            "   - Disable Interrupts: |cFFFFD100/hek set interrupts off|r\n" ..
+            "   - Toggle Defensives: |cFFFFD100/hek set defensives|r\n\n"
+    end
+
+    -- Display Mode Control Section
+    local function getModesChunk()
+        return format( "Display Mode Control (currently |cFFFFD100%s|r):\n", profile.toggles.mode.value or "unknown" ) ..
+            " - Toggle Mode: |cFFFFD100/hek set mode|r\n" ..
+            " - Set specific mode:\n" ..
+            "   - |cFFFFD100/hek set mode automatic|r\n" ..
+            "   - |cFFFFD100/hek set mode single|r\n" ..
+            "   - |cFFFFD100/hek set mode aoe|r\n" ..
+            "   - |cFFFFD100/hek set mode dual|r\n" ..
+            "   - |cFFFFD100/hek set mode reactive|r\n\n"
+    end
+
+    -- Target Swap (Cycle) Setting Section
+    local function getCycleChunk()
+        return "Target Swap Setting:\n" ..
+            " - Toggle Target Swap: |cFFFFD100/hek set cycle|r\n" ..
+            " - Set minimum time to die for target swaps: |cFFFFD100/hek set cycle #|r (0-20)\n" ..
+            " - Enable: |cFFFFD100/hek set cycle on|r\n" ..
+            " - Disable: |cFFFFD100/hek set cycle off|r\n\n"
+    end
+
+    -- Specialization Settings Section
+    local function getSpecializationChunk()
+        local output = "Specialization Settings for " .. ( state.spec.name or "your specialization" ) .. ":\n"
+        local hasToggle, hasNumber = false, false
+        local exToggle, exNumber, exMin, exMax, exStep
+
+        -- Loop through specialization settings if they exist
+        local settings = class.specs[ state.spec.id ] and class.specs[ state.spec.id ].settings or {}
+        for i, setting in ipairs( settings ) do
+            if not setting.info.arg or setting.info.arg() then
+                if setting.info.type == "toggle" then
+                    output = output .. format(
+                        " - |cFFFFD100%s|r = %s|r (%s)\n",
+                        setting.name,
+                        profile.specs[ state.spec.id ].settings[ setting.name ] and "|cFF00FF00ON" or "|cFFFF0000OFF",
+                        type( setting.info.name ) == "function" and setting.info.name() or setting.info.name
+                    )
+                    hasToggle = true
+                    exToggle = setting.name
+                elseif setting.info.type == "range" then
+                    output = output .. format(
+                        " - |cFFFFD100%s|r = |cFF00FF00%.2f|r, min: %.2f, max: %.2f\n",
+                        setting.name,
+                        profile.specs[ state.spec.id ].settings[ setting.name ],
+                        setting.info.min and format( "%.2f", setting.info.min ) or "N/A",
+                        setting.info.max and format( "%.2f", setting.info.max ) or "N/A"
+                    )
+                    hasNumber = true
+                    exNumber = setting.name
+                    exMin = setting.info.min
+                    exMax = setting.info.max
+                    exStep = setting.info.step
+                end
+            end
+        end
+
+        -- Example Commands for Specialization Settings
+        if hasToggle then
+            output = output .. format(
+                "\nExample commands for toggling specialization settings:\n" ..
+                " - Toggle On/Off: |cFFFFD100/hek set spec %s|r\n" ..
+                " - Enable: |cFFFFD100/hek set spec %s on|r\n" ..
+                " - Disable: |cFFFFD100/hek set spec %s off|r\n",
+                exToggle, exToggle, exToggle
+            )
+        end
+
+        if hasNumber then
+            -- Adjust range display based on step size
+            local rangeFormat = exStep and exStep >= 1 and "%d-%d" or "%.1f-%.1f"
+            output = output .. format(
+                "\nExample command for setting numeric values:\n" ..
+                " - Set to a value within range: |cFFFFD100/hek set spec %s #|r ( " .. rangeFormat .. ")\n",
+                exNumber, exMin or 0, exMax or 100
+            )
+        end
+
+        return output .. "\n"
+    end
+
+    -- Other Commands Section (only included with "all")
+    local function getOtherCommandsChunk()
+        return "Other available commands:\n" ..
+            " - |cFFFFD100/hekili priority|r - View or change priority settings\n" ..
+            " - |cFFFFD100/hekili profile|r - View or change profiles\n" ..
+            " - |cFFFFD100/hekili move|r - Unlock or lock the UI for positioning\n" ..
+            " - |cFFFFD100/hekili enable|r or |cFFFFD100/hekili disable|r - Enable or disable the addon\n"
+    end
+
+    -- Determine which sections to print based on the input
+    if list == "all" then
+        self:Print( getTogglesChunk() )
+        self:Print( getModesChunk() )
+        self:Print( getCycleChunk() )
+        self:Print( getSpecializationChunk() )
+        self:Print( getOtherCommandsChunk() )
+    elseif list == "toggles" then
+        self:Print( getTogglesChunk() )
+    elseif list == "modes" then
+        self:Print( getModesChunk() )
+    elseif list == "cycle" then
+        self:Print( getCycleChunk() )
+    elseif list == "specialization" then
+        self:Print( getSpecializationChunk() )
+    end
+end
+
+function Hekili:HandleSkeletonCommand( input )
+    if input == "skeleton" then
+        self:StartListeningForSkeleton()
+        self:Print( "Addon will now gather specialization information. Select all talents and use all abilities for best results." )
+        self:Print( "See the Skeleton tab for more information." )
+        Hekili.Skeleton = ""
+    end
+    ns.StartConfiguration()
+    return
+end
+
+function Hekili:RunStressTest()
+    if InCombatLockdown() then
+        self:Print( "Cannot run stress test while in combat." )
+        return true
+    end
+
+    local preErrorCount = 0
+    for _, v in pairs( self.ErrorDB ) do
+        preErrorCount = preErrorCount + v.n
+    end
+
+    local results, count, specs = "", 0, {}
+    for i in ipairs( class.specs ) do
+        if i ~= 0 then insert( specs, i ) end
+    end
+    sort( specs )
+
+    for i, specID in ipairs( specs ) do
+        local spec = class.specs[ specID ]
+        results = format( "%sSpecialization: %s\n", results, spec.name )
+
+        for key, aura in ipairs( spec.auras ) do
+            local keyNamed = false
+            -- Avoid duplicates.
+            if aura.key == key then
+                for k, v in pairs( aura ) do
+                    if type( v ) == "function" then
+                        local ok, val = pcall( v )
+                        if not ok then
+                            if not keyNamed then results = format( "%s - Aura: %s\n", results, k )
+keyNamed = true end
+                            results = format( "%s    - %s = %s\n", results, tostring( val ) )
+                            count = count + 1
+                        end
+                    end
+                end
+                for k, v in pairs( aura.funcs ) do
+                    if type( v ) == "function" then
+                        local ok, val = pcall( v )
+                        if not ok then
+                            if not keyNamed then results = format( "%s - Aura: %s\n", results, k )
+keyNamed = true end
+                            results = format( "%s    - %s = %s\n", results, tostring( val ) )
+                            count = count + 1
+                        end
+                    end
+                end
+            end
+        end
+
+        for key, ability in ipairs( spec.abilities ) do
+            local keyNamed = false
+            -- Avoid duplicates.
+            if ability.key == key then
+                for k, v in pairs( ability ) do
+                    if type( v ) == "function" then
+                        local ok, val = pcall( v )
+                        if not ok then
+                            if not keyNamed then results = format( "%s - Ability: %s\n", results, k )
+keyNamed = true end
+                            results = format( "%s    - %s = %s\n", results, tostring( val ) )
+                            count = count + 1
+                        end
+                    end
+                end
+                for k, v in pairs( ability.funcs ) do
+                    if type( v ) == "function" then
+                        local ok, val = pcall( v )
+                        if not ok then
+                            if not keyNamed then results = format( "%s - Ability: %s\n", results, k )
+keyNamed = true end
+                            results = format( "%s    - %s = %s\n", results, tostring( val ) )
+                            count = count + 1
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    local postErrorCount = 0
+    for _, v in pairs( self.ErrorDB ) do
+        postErrorCount = postErrorCount + v.n
+    end
+
+    if count > 0 then
+        Hekili:Print( results )
+        Hekili:Error( results )
+    end
+
+    if postErrorCount > preErrorCount then Hekili:Print( "New warnings were loaded in /hekili > Warnings." ) end
+    if count == 0 and postErrorCount == preErrorCount then Hekili:Print( "Stress test completed; no issues found." ) end
+
+    return true
+end
+
+function Hekili:HandleProfileCommand( args )
+    if not args[2] then
+        local output = "Use |cFFFFD100/hekili profile name|r to swap profiles. Valid profile names are:"
+        for name, prof in ns.orderedPairs( Hekili.DB.profiles ) do
+            output = output .. format( "\n - |cFFFFD100%s|r %s", name, Hekili.DB.profile == prof and "|cFF00FF00(current)|r" or "" )
+        end
+        self:Print( output )
+        return
+    end
+
+    local profileName = args[2]
+    if not rawget( Hekili.DB.profiles, profileName ) then
+        self:Print( "Invalid profile name. Please choose a valid profile." )
+        return
+    end
+
+    self:Print( format( "Set profile to |cFF00FF00%s|r.", profileName ) )
+    self.DB:SetProfile( profileName )
+    return
+end
+
+function Hekili:HandleEnableDisableCommand( args )
+    local enable = args[1] == "enable"
+    self.DB.profile.enabled = enable
+
+    for _, buttons in ipairs( ns.UI.Buttons ) do
+        for _, button in ipairs( buttons ) do
+            if enable then button:Show() else button:Hide() end
+        end
+    end
+
+    if enable then
+        self:Print( "Addon enabled." )
+        self:Enable()
+    else
+        self:Print( "Addon disabled." )
+        self:Disable()
+    end
+    return
+end
+
+function Hekili:HandleMoveCommand( args )
+    if InCombatLockdown() then
+        self:Print( "Cannot unlock UI elements in combat." )
+        return
+    end
+
+    if args[1] == "lock" then
+        ns.StopConfiguration()
+        self:Print( "UI locked." )
+    else
+        ns.StartConfiguration()
+        self:Print( "UI unlocked for movement." )
+    end
+    return
+end
+
+function Hekili:HandleRecoverCommand()
+    local defaults = self:GetDefaults()
+    for k, v in pairs( self.DB.profile.displays ) do
+        local default = defaults.profile.displays[k]
+        if default then
+            for key, value in pairs( default ) do
+                v[ key ] = ( type( value) == "table" ) and tableCopy( value ) or value
+            end
+        end
+    end
+    self:RestoreDefaults()
+    self:RefreshOptions()
+    self:BuildUI()
+    self:Print( "Default displays and action lists restored." )
+    return
+end
+
+function Hekili:HandlePriorityCommand( args )
+    local priorities = self:countPriorities()
+    local spec = state.spec.id
+
+    -- Check for "default" keyword as the second argument
+    if args[2] == "default" then
+        local defaultPriority = nil
+
+        -- Search for the built-in default priority in the current spec
+        for _, priority in ipairs( priorities ) do
+            if Hekili.DB.profile.packs[ priority ].builtIn then
+                defaultPriority = priority
+                break
+            end
+        end
+
+        -- Set the default priority if found
+        if defaultPriority then
+            Hekili.DB.profile.specs[ spec ].package = defaultPriority
+            local output = format("Switched to the built-in default priority for your specialization: %s%s|r.", Hekili.DB.profile.packs[ defaultPriority ].builtIn and BlizzBlue or "|cFFFFD100", defaultPriority )
+            self:Print( output )
+            self:ForceUpdate( "CLI_TOGGLE" )
+        else
+            -- If no built-in default is found, display an error message
+            self:Print( "No built-in default priority available for this specialization." )
+        end
+        return true
+    end
+
+    -- No additional argument provided, show available priorities
+    if not args[2] then
+        local output = "Use |cFFFFD100/hekili priority name|r to change your current specialization's priority via command-line or macro."
+
+        if #priorities < 2 then
+            output = output .. "\n\n|cFFFF0000You must have multiple priorities for your specialization to use this feature.|r"
+        else
+            output = output .. "\nValid priority |cFFFFD100name|rs are:"
+            for _, priority in ipairs( priorities ) do
+                local isCurrent = Hekili.DB.profile.specs[ spec ].package == priority
+                output = format( "%s\n - %s%s|r %s", output, Hekili.DB.profile.packs[ priority ].builtIn and BlizzBlue or "|cFFFFD100", priority, isCurrent and "|cFF00FF00(current)|r" or "" )
+            end
+        end
+
+        output = format( "%s\n\nTo create a new priority, see |cFFFFD100/hekili|r > |cFFFFD100Priorities|r.", output )
+        self:Print( output )
+        return true
+    end
+
+    -- Combine args into full priority name (case-insensitive) if provided
+    local rawName = table.concat( args, " ", 2 ):lower()
+    local pattern = "^" .. rawName:gsub( "%%", "%%%%" ):gsub( "%^", "%%^" ):gsub( "%$", "%%$" ):gsub( "%(", "%%(" ):gsub( "%)", "%%)" ):gsub( "%.", "%%." ):gsub( "%[", "%%[" ):gsub( "%]", "%%]" ):gsub( "%*", "%%*" ):gsub( "%+", "%%+" ):gsub( "%-", "%%-" ):gsub( "%?", "%%?" )
+
+    for _, priority in ipairs( priorities ) do
+        if priority:lower():match( pattern ) then
+            Hekili.DB.profile.specs[ spec ].package = priority
+            local output = format( "Priority set to %s%s|r.", Hekili.DB.profile.packs[ priority ].builtIn and BlizzBlue or "|cFFFFD100", priority )
+            self:Print( output )
+            self:ForceUpdate( "CLI_TOGGLE" )
+            return true
+        end
+    end
+
+    -- If no matching priority found, display valid options
+    local output = format( "No match found for priority '%s'.\nValid options are:", rawName )
+    for i, priority in ipairs( priorities ) do
+        output = output .. format( " %s%s|r%s", Hekili.DB.profile.packs[ priority ].builtIn and BlizzBlue or "|cFFFFD100", priority, i == #priorities and "." or "," )
+    end
+    self:Print( output )
+    return true
 end
 
 
@@ -12091,61 +12184,73 @@ do
     end
 
 
-    function Hekili:FireToggle( name )
+    function Hekili:FireToggle( name, explicitState )
         local toggle = name and self.DB.profile.toggles[ name ]
-
         if not toggle then return end
-
+    
+        -- Handle mode toggle with explicitState if provided
         if name == 'mode' then
-            local current = toggle.value
-            local c_index = modeIndex[ current ][ 1 ]
-
-            local i = c_index + 1
-
-            while true do
-                if i > #modes then i = i % #modes end
-                if i == c_index then break end
-
-                local newMode = modes[ i ]
-
-                if toggle[ newMode ] then
-                    toggle.value = newMode
-                    break
-                end
-
-                i = i + 1
-            end
-
-            if self.DB.profile.notifications.enabled then
-                self:Notify( "Mode: " .. modeIndex[ toggle.value ][2] )
+            if explicitState then
+                self:SetMode( explicitState )
             else
-                self:Print( modeIndex[ toggle.value ][2] .. " mode activated." )
+                -- If no explicit state, cycle through available modes
+                local current = toggle.value
+                local c_index = modeIndex[ current ][1]
+                local i = c_index + 1
+    
+                while true do
+                    if i > #modes then i = i % #modes end
+                    if i == c_index then break end
+    
+                    local newMode = modes[i]
+                    if toggle [ newMode ] then
+                        toggle.value = newMode
+                        break
+                    end
+                    i = i + 1
+                end
+                if self.DB.profile.notifications.enabled then
+                    self:Notify( "Mode: " .. modeIndex[ toggle.value ][2] )
+                else
+                    self:Print( modeIndex[ toggle.value ][2] .. " mode activated." )
+                end
             end
-
+    
         elseif name == 'pause' then
             self:TogglePause()
             return
-
+    
         elseif name == 'snapshot' then
             self:MakeSnapshot()
             return
-
+    
         else
-            toggle.value = not toggle.value
-
+            -- Handle other toggles with explicit state if provided
+            if explicitState == "on" then
+                toggle.value = true
+            elseif explicitState == "off" then
+                toggle.value = false
+            elseif explicitState == nil then
+                -- Toggle the value if no explicit state is provided
+                toggle.value = not toggle.value
+            else
+                -- If an invalid explicitState is provided, print an error
+                self:Print( "Invalid state specified. Use 'on' or 'off'." )
+                return
+            end
+    
             if toggle.name then toggles[ name ] = toggle.name end
-
+    
             if self.DB.profile.notifications.enabled then
                 self:Notify( toggles[ name ] .. ": " .. ( toggle.value and "ON" or "OFF" ) )
             else
-                self:Print( toggles[ name ].. ( toggle.value and " |cFF00FF00ENABLED|r." or " |cFFFF0000DISABLED|r." ) )
+                self:Print( toggles[ name ] .. ( toggle.value and " |cFF00FF00ENABLED|r." or " |cFFFF0000DISABLED|r." ) )
             end
         end
-
+    
         if WeakAuras and WeakAuras.ScanEvents then WeakAuras.ScanEvents( "HEKILI_TOGGLE", name, toggle.value ) end
         if ns.UI.Minimap then ns.UI.Minimap:RefreshDataText() end
         self:UpdateDisplayVisibility()
-
         self:ForceUpdate( "HEKILI_TOGGLE", true )
     end
 
