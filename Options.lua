@@ -9196,8 +9196,9 @@ do
         -- Remove "X seconds remaining" or "X second remaining"
         tooltip = tooltip:gsub( "%d+ second[s]? remaining", "" )
 
-        -- Remove SpellID IconID pattern from the end of the string
-         tooltip = tooltip:gsub( " SpellID IconID$", "" )
+        -- Remove "SpellID IconID" wherever it appears in the string
+        tooltip = tooltip:gsub( "%s*SpellID%s*", "" ) -- Matches "SpellID" with optional surrounding whitespace
+        tooltip = tooltip:gsub( "%s*IconID%s*", "" )  -- Matches "IconID" with optional surrounding whitespace
     
         -- Trim extra whitespace
         tooltip = tooltip:gsub( "%s+", " " ):trim()
@@ -9528,7 +9529,7 @@ do
             
                     a.id = spellID
                     a.duration = duration
-                    a.max_stack = max( a.max_stack or 1, count )
+                    a.max_stack = math.max( a.max_stack or 1, count )
                     a.tooltip = tooltip
             
                     auras[ token ] = a
@@ -9548,7 +9549,7 @@ do
                     a.id = spellID
                     a.duration = duration
                     a.type = debuffType or "None"
-                    a.max_stack = max( a.max_stack or 1, count )
+                    a.max_stack = math.max( a.max_stack or 1, count )
             
                     auras[ token ] = a
                 end
@@ -9748,7 +9749,7 @@ do
                             decreaseIndent()
                             append( "} )\n\n" )
 
-                            
+
                             append( "-- Auras" )
                             append( "spec:RegisterAuras( {" )
                             increaseIndent()
