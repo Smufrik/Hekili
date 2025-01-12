@@ -9190,6 +9190,48 @@ do
         end
     end
 
+    local function CleanTooltip( tooltip )
+        if not tooltip then return nil end
+    
+        -- Remove "X seconds remaining" or "X second remaining"
+        tooltip = tooltip:gsub( "%d+ second[s]? remaining", "" )
+
+        -- Remove SpellID IconID pattern from the end of the string
+         tooltip = tooltip:gsub( " SpellID IconID$", "" )
+    
+        -- Trim extra whitespace
+        tooltip = tooltip:gsub( "%s+", " " ):trim()
+    
+        return tooltip
+    end
+    
+    
+
+    local function GetBuffTooltip( unit, index, filter )
+        -- Create a tooltip for inspection if it doesn’t exist
+        local tooltip = HekiliTooltip or CreateFrame( "GameTooltip", "HekiliTooltip", UIParent, "GameTooltipTemplate" )
+        tooltip:SetOwner( UIParent, "ANCHOR_NONE" )
+        
+        -- Set the tooltip to the buff or debuff
+        if filter == "HELPFUL" then
+            tooltip:SetUnitBuff( unit, index )
+        else
+            tooltip:SetUnitDebuff( unit, index )
+        end
+    
+        -- Collect tooltip lines
+        local tooltipText = {}
+        for i = 1, tooltip:NumLines() do
+            local line = _G[ "HekiliTooltipTextLeft" .. i ]
+            if line then
+                table.insert( tooltipText, line:GetText() or "" )
+            end
+        end
+    
+        return tooltipText
+    end
+    
+
     local spec = ""
     local specID = 0
 
@@ -9472,44 +9514,46 @@ do
             end
         elseif event == "UNIT_AURA" then
             if UnitIsUnit( unit, "player" ) or UnitCanAttack( "player", unit ) then
+                -- Process Buffs
                 for i = 1, 40 do
-                    local name, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, _, spellID, canApplyAura, _, castByPlayer = UnitBuff( unit, i, "PLAYER" )
-
+                    local name, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, _, spellID = UnitBuff( unit, i, "PLAYER" )
                     if not name then break end
-
+            
+                    local tooltipData = GetBuffTooltip( "player", i, "HELPFUL" )
+                    local tooltip = table.concat( tooltipData, " " )
+                    tooltip = CleanTooltip( tooltip )  -- Clean the tooltip text
+            
                     local token = key( name )
-
                     local a = auras[ token ] or {}
-
-                    if duration == 0 then duration = 3600 end
-
+            
                     a.id = spellID
                     a.duration = duration
-                    a.type = debuffType
                     a.max_stack = max( a.max_stack or 1, count )
-
+                    a.tooltip = tooltip
+            
                     auras[ token ] = a
                 end
-
+            
+                -- Process Debuffs
                 for i = 1, 40 do
                     local name, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, _, spellID, canApplyAura, _, castByPlayer = UnitDebuff( unit, i, "PLAYER" )
-
                     if not name then break end
-
+            
                     local token = key( name )
-
                     local a = auras[ token ] or {}
-
+            
+                    -- Set default duration for indefinite auras
                     if duration == 0 then duration = 3600 end
-
+            
                     a.id = spellID
                     a.duration = duration
-                    a.type = debuffType
+                    a.type = debuffType or "None"
                     a.max_stack = max( a.max_stack or 1, count )
-
+            
                     auras[ token ] = a
                 end
             end
+            
 
         elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
             if UnitIsUnit( "player", unit ) then
@@ -9551,7 +9595,7 @@ do
     end
 
     function Hekili:StartListeningForSkeleton()
-        -- listener:SetScript( "OnEvent", skeletonHandler )
+        listener:SetScript( "OnEvent", skeletonHandler )
         skeletonHandler( listener, "ACTIVE_PLAYER_SPECIALIZATION_CHANGED" )
         skeletonHandler( listener, "SPELLS_CHANGED" )
     end
@@ -9700,36 +9744,46 @@ do
                             for i, tal in ipairs( pvptalents ) do
                                 append( format( formatPvp, tal.name, tal.talent, tal.spell, GetSpellDescription( tal.spell ):gsub( "\n", " " ):gsub( "\r", " " ):gsub( "%s%s+", " " ) ) )
                             end
+
                             decreaseIndent()
                             append( "} )\n\n" )
 
+                            
                             append( "-- Auras" )
                             append( "spec:RegisterAuras( {" )
                             increaseIndent()
-
+                            
                             for k, aura in orderedPairs( auras ) do
-                                if aura.desc then append( "-- " .. aura.desc ) end
+                                -- Generate Wowhead link
+                                local wowheadLink = string.format( "-- https://www.wowhead.com/spell=%d", aura.id )
+                                append( wowheadLink )
+                            
+                                -- Add cleaned tooltip description
+                                if aura.tooltip then
+                                    local cleanedTooltip = CleanTooltip( aura.tooltip )
+                                    if cleanedTooltip and cleanedTooltip ~= "" then
+                                        append( "-- " .. cleanedTooltip )
+                                    end
+                                end
+                            
+                                -- Define the aura
                                 append( k .. " = {" )
                                 increaseIndent()
                                 append( "id = " .. aura.id .. "," )
-
-                                for key, value in pairs( aura ) do
-                                    if key ~= "id" then
-                                        if type(value) == 'string' then
-                                            append( key .. ' = "' .. value .. '",' )
-                                        else
-                                            append( key .. " = " .. value .. "," )
-                                        end
-                                    end
+                                append( "duration = " .. (aura.duration or 0) .. "," )
+                                if aura.type and aura.type ~= "None" then -- Only include type if it's not "None"
+                                    append( "type = \"" .. aura.type .. "\"," )
                                 end
-
+                                if aura.max_stack then
+                                    append( "max_stack = " .. aura.max_stack .. "," )
+                                end
                                 decreaseIndent()
                                 append( "}," )
                             end
-
+                            
                             decreaseIndent()
-                            append( "} )\n\n" )
-
+                            append( "} )" )
+                            
 
                             append( "-- Abilities" )
                             append( "spec:RegisterAbilities( {" )
@@ -9806,15 +9860,15 @@ do
                             end
 
                             for k,v in pairs( talents ) do
-                                if not aggregate[v.name] then aggregate[v.name] = {} end
-                                aggregate[v.name].id = v.spell
-                                aggregate[v.name].talent = true
+                                if not aggregate[ v.name ] then aggregate[ v.name ] = {} end
+                                aggregate[ v.name ].id = v.spell
+                                aggregate[ v.name ].talent = true
                             end
 
                             for k,v in pairs( pvptalents ) do
-                                if not aggregate[v.name] then aggregate[v.name] = {} end
-                                aggregate[v.name].id = v.spell
-                                aggregate[v.name].pvptalent = true
+                                if not aggregate[ v.name] then aggregate[ v.name ] = {} end
+                                aggregate[ v.name ].id = v.spell
+                                aggregate[ v.name ].pvptalent = true
                             end
 
                             -- append( select( 2, GetSpecializationInfo(GetSpecialization())) .. "\nKey\tID\tIs Aura\tIs Ability\tIs Talent\tIs PvP" )
