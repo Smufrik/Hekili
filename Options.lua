@@ -9395,117 +9395,154 @@ do
 
     local function skeletonHandler( self, event, ... )
         local unit = select( 1, ... )
-
+    
         if ( event == "ACTIVE_PLAYER_SPECIALIZATION_CHANGED" ) or event == "PLAYER_ENTERING_WORLD" then
+            -- Reset data structures
+            wipe( resources )
+            wipe( auras )
+            wipe( abilities )
+            wipe( talents )
+            wipe( pvptalents )
+    
+            -- Fetch player specialization
             local sID, s = GetSpecializationInfo( GetSpecialization() )
-            if specID ~= sID then
-                wipe( resources )
-                wipe( auras )
-                wipe( abilities )
-            end
             specID = sID
             spec = s
-
-            mastery_spell = GetSpecializationMasterySpells( GetSpecialization() )
-
-            for k, i in pairs( Enum.PowerType ) do
-                if k ~= "NumPowerTypes" and i >= 0 then
-                    if UnitPowerMax( "player", i ) > 0 then resources[ k ] = i end
-                end
-            end
-
-
-            -- TODO: Rewrite to be a little clearer.
-            -- Modified by Wyste in July 2024 to try and fix skeleton building the talents better. 
-            -- It could probably be written better
-            wipe( talents )
+    
+            -- Fetch active configuration
             local configID = C_ClassTalents.GetActiveConfigID() or -1
             local configInfo = C_Traits.GetConfigInfo( configID )
-            local specializationName = configInfo.name
-            local classCurID = nil
-            local specCurID = nil
-            local subTrees = C_ClassTalents.GetHeroTalentSpecsForClassSpec ( configID )
+    
+            -- Fetch active hero tree ID
+            local activeHeroTreeID = C_ClassTalents.GetActiveHeroTalentSpec()
+    
+            -- Fetch valid hero trees for this specialization
+            local validHeroTrees = {}
+            local heroTreeIDs = C_ClassTalents.GetHeroTalentSpecsForClassSpec( configID, specID )
+            if heroTreeIDs then
+                for _, treeID in ipairs( heroTreeIDs ) do
+                    validHeroTrees[ treeID ] = true
+                end
+            end
+    
+            -- Process all talent trees
             for _, treeID in ipairs( configInfo.treeIDs ) do
                 local treeCurrencyInfo = C_Traits.GetTreeCurrencyInfo( configID, treeID, false )
-                -- 1st key is class points, 2nd key is spec points
-                -- per ref: https://wowpedia.fandom.com/wiki/API_C_Traits.GetTreeCurrencyInfo
-                classCurID = treeCurrencyInfo[1].traitCurrencyID
-                specCurID = treeCurrencyInfo[2].traitCurrencyID
+                local classCurrencyID = treeCurrencyInfo[1].traitCurrencyID
+                local specCurrencyID = treeCurrencyInfo[2].traitCurrencyID
+    
+                -- Process all nodes in the tree
                 local nodes = C_Traits.GetTreeNodes( treeID )
                 for _, nodeID in ipairs( nodes ) do
                     local node = C_Traits.GetNodeInfo( configID, nodeID )
-
-                    local isHeroSpec = false
-                    local isSpecSpec = false
-
-                    if type(C_Traits.GetNodeCost(configID, nodeID)) == "table" then
-                        for i, traitCurrencyCost in ipairs (C_Traits.GetNodeCost(configID, nodeID)) do
-                            if traitCurrencyCost.ID == specCurID then isSpecSpec = true end
-                            if traitCurrencyCost.ID == classCurID then isSpecSpec = false end
-                        end
-                    end
-
-                    if (node.subTreeID ~= nil ) then
-                        specializationName = C_Traits.GetSubTreeInfo( configID, node.subTreeID ).name
-                        isHeroSpec = true
-                        isSpecSpec = false
-                    end
-
-                    if node.maxRanks > 0 then
-                        for _, entryID in ipairs( node.entryIDs ) do
-                            local entryInfo = C_Traits.GetEntryInfo( configID, entryID )
-                            if entryInfo.definitionID then -- Not a subTree (hero talent hidden node)
-                                local definitionInfo = C_Traits.GetDefinitionInfo( entryInfo.definitionID )
-                                local spellID = definitionInfo and definitionInfo.spellID
-
-                                if spellID then
-                                    local name = definitionInfo.overrideName or GetSpellInfo( spellID )
-                                    local subtext = spellID and C_Spell.GetSpellSubtext( spellID ) or ""
-
-                                    if subtext then
-                                        local rank = subtext:match( "^Rank (%d+)$" )
-                                        if rank then name = name .. "_" .. rank end
-                                    end
-
-                                    local token = key( name )
-                                    insert( talents, { name = token, talent = nodeID, isSpec = isSpecSpec, isHero = isHeroSpec, specName = specializationName, definition = entryInfo.definitionID, spell = spellID, ranks = node.maxRanks } )
-                                    if not IsPassiveSpell( spellID ) then EmbedSpellData( spellID, token, true ) end
+                    if node and node.maxRanks > 0 then
+                        -- Determine talent type
+                        local isClassTalent = false
+                        local isSpecTalent = false
+                        local isHeroTalent = false
+                        local treeName = "Unknown"
+    
+                        -- Check subtree for classification
+                        if node.subTreeID then
+                            local subTreeInfo = C_Traits.GetSubTreeInfo( configID, node.subTreeID )
+                            if subTreeInfo then
+                                if subTreeInfo.traitCurrencyID == classCurrencyID then
+                                    isClassTalent = true
+                                    treeName = "Class"
+                                elseif subTreeInfo.traitCurrencyID == specCurrencyID then
+                                    isSpecTalent = true
+                                    treeName = spec
+                                elseif validHeroTrees[ node.subTreeID ] then
+                                    isHeroTalent = true
+                                    treeName = subTreeInfo.name
                                 end
                             end
                         end
+    
+                        -- If subtree classification is not definitive, use node costs to classify
+                        if not isClassTalent and not isSpecTalent and not isHeroTalent then
+                            for _, cost in ipairs( C_Traits.GetNodeCost( configID, nodeID ) or {} ) do
+                                if cost.ID == classCurrencyID then
+                                    isClassTalent = true
+                                    treeName = "Class"
+                                elseif cost.ID == specCurrencyID then
+                                    isSpecTalent = true
+                                    treeName = spec
+                                end
+                            end
+                        end
+    
+                        -- Default to class talent if no specific type identified
+                        if not isClassTalent and not isSpecTalent and not isHeroTalent then
+                            isClassTalent = true
+                            treeName = "Class"
+                        end
+    
+                        -- Ignore nodes from unavailable hero trees
+                        if isHeroTalent and not validHeroTrees[ node.subTreeID ] then
+                            isHeroTalent = false
+                        end
+    
+                        -- Add talents to appropriate groups
+                        for _, entryID in ipairs( node.entryIDs ) do
+                            local entryInfo = C_Traits.GetEntryInfo( configID, entryID )
+                            if entryInfo and entryInfo.definitionID then
+                                local definitionInfo = C_Traits.GetDefinitionInfo( entryInfo.definitionID )
+                                local spellID = definitionInfo and definitionInfo.spellID
+                        
+                                if spellID then
+                                    local name = definitionInfo.overrideName or GetSpellInfo( spellID )
+                                    local token = key( name )
+                        
+                                    -- Attempt to fetch the tooltip description
+                                    local tooltipDescription = GetSpellDescription( spellID )
+                                    if not tooltipDescription or tooltipDescription == "" then
+                                        tooltipDescription = "No tooltip available for this spell."
+                                    end
+                        
+                                    -- Add talent data
+                                    insert( talents, {
+                                        name = token,
+                                        talent = nodeID,
+                                        spell = spellID,
+                                        ranks = node.maxRanks,
+                                        tooltip = tooltipDescription,
+                                        isSpec = isSpecTalent,
+                                        isHero = isHeroTalent,
+                                        specName = treeName
+                                    } )
+                        
+                                    -- Embed spell data if not passive
+                                    if not IsPassiveSpell( spellID ) then
+                                        EmbedSpellData( spellID, token, true )
+                                    end
+                                end
+                            end
+                        end
+                        
                     end
                 end
             end
-
-            wipe( pvptalents )
-            local row = C_SpecializationInfo.GetPvpTalentSlotInfo( 1 )
-
-            for i, tID in ipairs( row.availableTalentIDs ) do
-                local _, name, _, _, _, sID = GetPvpTalentInfoByID( tID )
-                name = key( name )
-                insert( pvptalents, { name = name, talent = tID, spell = sID } )
-
-                if not IsPassiveSpell( sID ) then
-                    EmbedSpellData( sID, name, nil, true )
-                end
-            end
-
-            sort( pvptalents, function( a, b ) return a.name < b.name end )
-
-            for i = 1, GetNumSpellTabs() do
-                local tab, _, offset, n = GetSpellTabInfo( i )
-
-                if i == 2 or tab == spec then
-                    for j = offset + 1, offset + n do
-                        local name, _, texture, castTime, minRange, maxRange, spellID = GetSpellInfo( j, "spell" )
-                        if name then EmbedSpellData( spellID, key( name ) ) end
+    
+            -- Fetch and process PvP talents
+            local pvpTalentRow = C_SpecializationInfo.GetPvpTalentSlotInfo( 1 )
+            if pvpTalentRow then
+                for _, tID in ipairs( pvpTalentRow.availableTalentIDs ) do
+                    local _, name, _, _, _, sID = GetPvpTalentInfoByID( tID )
+                    name = key( name )
+                    insert( pvptalents, { name = name, talent = tID, spell = sID } )
+    
+                    if not IsPassiveSpell( sID ) then
+                        EmbedSpellData( sID, name, nil, true )
                     end
                 end
+    
+                sort( pvptalents, function( a, b ) return a.name < b.name end )
             end
         elseif event == "SPELLS_CHANGED" then
             for i = 1, GetNumSpellTabs() do
                 local tab, _, offset, n = GetSpellTabInfo( i )
-
+    
                 if i == 2 or tab == spec then
                     for j = offset + 1, offset + n do
                         local name, _, texture, castTime, minRange, maxRange, spellID = GetSpellInfo( j, "spell" )
@@ -9519,61 +9556,59 @@ do
                 for i = 1, 40 do
                     local name, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, _, spellID = UnitBuff( unit, i, "PLAYER" )
                     if not name then break end
-            
+    
                     local tooltipData = GetBuffTooltip( "player", i, "HELPFUL" )
                     local tooltip = table.concat( tooltipData, " " )
-                    tooltip = CleanTooltip( tooltip )  -- Clean the tooltip text
-            
+                    tooltip = CleanTooltip( tooltip ) -- Clean the tooltip text
+    
                     local token = key( name )
                     local a = auras[ token ] or {}
-            
+    
                     a.id = spellID
                     a.duration = duration
-                    a.max_stack = math.max( a.max_stack or 1, count )
+                    a.max_stack = max( a.max_stack or 1, count )
                     a.tooltip = tooltip
-            
+    
                     auras[ token ] = a
                 end
-            
+    
                 -- Process Debuffs
                 for i = 1, 40 do
                     local name, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, _, spellID, canApplyAura, _, castByPlayer = UnitDebuff( unit, i, "PLAYER" )
                     if not name then break end
-            
+    
                     local token = key( name )
                     local a = auras[ token ] or {}
-            
+    
                     -- Set default duration for indefinite auras
                     if duration == 0 then duration = 3600 end
-            
+    
                     a.id = spellID
                     a.duration = duration
                     a.type = debuffType or "None"
-                    a.max_stack = math.max( a.max_stack or 1, count )
-            
+                    a.max_stack = max( a.max_stack or 1, count )
+    
                     auras[ token ] = a
                 end
             end
-            
-
         elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
             if UnitIsUnit( "player", unit ) then
                 local spellID = select( 3, ... )
                 local token = spellID and class.abilities[ spellID ] and class.abilities[ spellID ].key
-
+    
                 local now = GetTime()
-
+    
                 if not token then return end
-
+    
                 lastAbility = token
                 lastTime = now
-
+    
                 local a = abilities[ token ]
-
+    
                 if not a then
                     return
                 end
-
+    
                 for k, v in pairs( applications ) do
                     if now - v.t < 0.5 then
                         a.applies = a.applies or {}
@@ -9581,11 +9616,11 @@ do
                     end
                     applications[ k ] = nil
                 end
-
+    
                 for k, v in pairs( removals ) do
                     if now - v.t < 0.5 then
                         a.removes = a.removes or {}
-                        a.removes[ v.s ] = v.i
+                        a.removes[v.s] = v.i
                     end
                     removals[ k ] = nil
                 end
@@ -9594,13 +9629,12 @@ do
             CLEU( event, CombatLogGetCurrentEventInfo() )
         end
     end
-
+    
     function Hekili:StartListeningForSkeleton()
         listener:SetScript( "OnEvent", skeletonHandler )
         skeletonHandler( listener, "ACTIVE_PLAYER_SPECIALIZATION_CHANGED" )
         skeletonHandler( listener, "SPELLS_CHANGED" )
     end
-
 
     function Hekili:EmbedSkeletonOptions( db )
         db = db or self.Options
@@ -9677,7 +9711,7 @@ do
                                     if ( specName == nil ) then specName = tal.specName end
                                     insert( specTalents, tal )
                                 end
-                                if (tal.isSpec == false and tal.isHero == true ) then
+                                if ( tal.isSpec == false and tal.isHero == true ) then
                                     if ( firstHeroSpec == nil ) then 
                                         firstHeroSpec = tal.specName 
                                     end
