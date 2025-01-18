@@ -1871,14 +1871,14 @@ spec:RegisterAbilities( {
 
         texture = 132369,
 
-        usable = function ()
+        readyTime = function ()
             if settings.check_ww_range and target.distance > 8 then return false, "target is outside of whirlwind range" end
             if active_enemies == 1 and buff.meat_cleaver.up then return false, "meat cleaver already active" end
             return true
         end,
 
         handler = function ()
-            if talent.improved_whirlwind.enabled then
+            if talent.improved_whirlwind.enabled or talent.meat_cleaver.enabled then
                 applyBuff( "meat_cleaver", nil, talent.meat_cleaver.enabled and 4 or 2 )
             end
         end,
