@@ -2120,7 +2120,7 @@ spec:RegisterAbilities( {
     spectral_sight = {
         id = 188501,
         cast = 0,
-        cooldown = function() return 30 - ( 5 * talent.lost_in_darkness.rank ) end,
+        cooldown = 30,
         gcd = "spell",
         school = "physical",
 
