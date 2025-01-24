@@ -54,7 +54,8 @@ actions+=/immolate,if=(((dot.immolate.remains-5*(action.chaos_bolt.in_flight&tal
 actions+=/summon_infernal
 actions+=/incinerate,if=talent.diabolic_ritual&(diabolic_ritual&(buff.diabolic_ritual_mother_of_chaos.remains+buff.diabolic_ritual_overlord.remains+buff.diabolic_ritual_pit_lord.remains-2-!variable.disable_cb_2t*action.chaos_bolt.cast_time-variable.disable_cb_2t*gcd.max)<=0)
 actions+=/chaos_bolt,if=variable.pooling_condition_cb&(cooldown.summon_infernal.remains>=gcd.max*3|soul_shard>4|!talent.rain_of_chaos)
-actions+=/channel_demonfire
+# [Hekili] Don't use without Immolate/Wither active.
+actions+=/channel_demonfire,if=dot.immolate.remains+dot.wither.remains>cast_time
 actions+=/dimensional_rift
 actions+=/infernal_bolt
 actions+=/conflagrate,if=time_to_max_charges<2*gcd.max|boss&fight_remains<gcd.max*charges
@@ -120,7 +121,7 @@ actions.cleave+=/rain_of_fire,if=variable.allow_rof_2t_spender>=1&!talent.wither
 actions.cleave+=/rain_of_fire,if=variable.do_rof_2t&variable.pooling_condition&(cooldown.summon_infernal.remains>=gcd.max*3|!talent.rain_of_chaos)
 actions.cleave+=/soul_fire,if=soul_shard<=4&talent.mayhem
 actions.cleave+=/chaos_bolt,if=!variable.disable_cb_2t&variable.pooling_condition_cb&(cooldown.summon_infernal.remains>=gcd.max*3|soul_shard>4|!talent.rain_of_chaos)
-actions.cleave+=/channel_demonfire
+actions.cleave+=/channel_demonfire,if=dot.immolate.remains+dot.wither.remains>cast_time
 actions.cleave+=/dimensional_rift
 actions.cleave+=/infernal_bolt
 actions.cleave+=/conflagrate,if=time_to_max_charges<2*gcd.max|boss&fight_remains<gcd.max*charges
@@ -135,7 +136,7 @@ actions.havoc+=/shadowburn,if=(cooldown.shadowburn.full_recharge_time<=gcd.max*3
 actions.havoc+=/shadowburn,if=havoc_remains<=gcd.max*3
 actions.havoc+=/chaos_bolt,if=cast_time<havoc_remains&((!talent.improved_chaos_bolt&active_enemies<=2)|(talent.improved_chaos_bolt&((talent.wither&talent.inferno&active_enemies<=2)|(((talent.wither&talent.cataclysm)|(!talent.wither&talent.inferno))&active_enemies<=3)|(!talent.wither&talent.cataclysm&active_enemies<=4))))
 actions.havoc+=/rain_of_fire,if=active_enemies>=3
-actions.havoc+=/channel_demonfire,if=soul_shard<4.5
+actions.havoc+=/channel_demonfire,if=dot.immolate.remains+dot.wither.remains>cast_time&soul_shard<4.5
 actions.havoc+=/conflagrate,if=!talent.backdraft
 actions.havoc+=/dimensional_rift,if=soul_shard<4.7&(charges>2|boss&fight_remains<cooldown.dimensional_rift.duration)
 actions.havoc+=/incinerate,if=cast_time<havoc_remains
