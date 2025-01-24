@@ -553,6 +553,7 @@ do
                         value = true,
                         separate = false,
                         filterCasts = false,
+                        castRemainingThreshold = 0.25,
                     },
 
                     essences = {
