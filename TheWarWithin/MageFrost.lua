@@ -664,6 +664,12 @@ spec:RegisterStateFunction( "fingers_of_frost", function( active )
     fingers_of_frost_active = active
 end )
 
+local wc_spenders = {
+    frostbolt = true,
+    glacial_spike = true,
+    ice_lance = true,
+}
+
 spec:RegisterStateExpr( "remaining_winters_chill", function ()
     local wc = debuff.winters_chill.stack
 
@@ -671,9 +677,9 @@ spec:RegisterStateExpr( "remaining_winters_chill", function ()
 
     local projectiles = 0
 
-    if prev_gcd[1].ice_lance and state:IsInFlight( "ice_lance" ) then projectiles = projectiles + 1 end
-    if prev_gcd[1].frostbolt and state:IsInFlight( "frostbolt" ) then projectiles = projectiles + 1 end
-    if prev_gcd[1].glacial_spike and state:IsInFlight( "glacial_spike" ) then projectiles = projectiles + 1 end
+    for spender in pairs( wc_spenders ) do
+        if action[ spender ].in_flight and action[ spender ].in_flight_remains < wc then projectiles = projectiles + 1 end
+    end
 
     return max( 0, wc - projectiles )
 end )
@@ -1433,8 +1439,6 @@ spec:RegisterAbilities( {
                 if set_bonus.tier29_4pc > 0 then applyBuff( "touch_of_ice" ) end
             end
         end,
-
-
 
         impact = function ()
             if ( buff.fingers_of_frost.up or debuff.frozen.up ) and talent.hailstones.enabled then
