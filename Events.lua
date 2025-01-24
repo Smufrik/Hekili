@@ -1641,6 +1641,7 @@ local death_events = {
 local dmg_filtered = {
     [280705] = true, -- Laser Matrix.
     [450412] = true, -- Sentinel.
+    [462952] = true, -- Squall Sailor's Citrine
 }
 
 
