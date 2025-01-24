@@ -2490,7 +2490,9 @@ do
 
                             class.auras[ spell ] = all.auras[ potion.name ]
                         else
-                            insert( all.auras[ potion.name ].copy, spell )
+                            local existing = all.auras[ potion.name ]
+                            if not existing.copy then existing.copy = {} end
+                            insert( existing.copy, spell )
                             all.auras[ spell ] = all.auras[ potion.name ]
                             class.auras[ spell ] = all.auras[ potion.name ]
                         end
