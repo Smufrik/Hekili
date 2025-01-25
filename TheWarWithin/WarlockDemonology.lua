@@ -131,7 +131,7 @@ spec:RegisterTalents( {
     infernal_bulwark               = {  94852, 429130, 1 }, -- Unending Resolve grants Soul Leech equal to 10% of your maximum health and increases the maximum amount Soul Leech can absorb by 10% for 8 sec.
     infernal_machine               = {  94848, 429917, 1 }, -- Spending Soul Shards on damaging spells while your Demonic Tyrant is active decreases the duration of Diabolic Ritual by 1 additional sec.
     infernal_vitality              = {  94852, 429115, 1 }, -- Unending Resolve heals you for 30% of your maximum health over 10 sec.
-    ruination                      = {  94830, 428522, 1 }, -- Summoning a Pit Lord causes your next Hand of Gul'dan to become Ruination.  Ruination Call down a demon-infested meteor from the depths of the Twisting Nether, dealing 191,536 Chaos damage on impact to all enemies within 8 yds of the target and summoning 3 Wild Imps. Damage is reduced beyond 8 targets.
+    ruination                      = {  94830, 428522, 1 }, -- Summoning a Pit Lord causes your next Hand of Gul'dan to become Ruination.  Ruination Call down a demon-infested meteor from the depths of the Twisting Nether, dealing 191,536 Chaos damage on impact to all enemies within 8 yds of the target and summoning 3 Wild Imps. Damage is reduced beyond 8 targets. Consuming a Demonic Core reduces the duration of Doom by 2 sec.
     secrets_of_the_coven           = {  94826, 428518, 1 }, -- Mother of Chaos empowers your next Shadow Bolt to become Infernal Bolt.  Infernal Bolt Hurl a bolt enveloped in the infernal flames of the abyss, dealing 167,303 Fire damage to your enemy target and generating 3 Soul Shards.
     souletched_circles             = {  94836, 428911, 1 }, -- You always gain the benefit of Soulburn when casting Demonic Circle: Teleport, increasing your movement speed by 50% and making you immune to snares and roots for 6 sec.
     touch_of_rancora               = {  94856, 429893, 1 }, -- Demonic Art increases the damage of your next Hand of Gul'dan by 100% and reduces its cast time by 50%.
@@ -1588,6 +1588,13 @@ spec:RegisterAuras( {
             end,
         }
     },
+
+    doom = {
+        id = 460551,
+        duration = 20,
+        max_stack = 1,
+        copy = "impending_doom"
+    },
 } )
 
 
@@ -2268,7 +2275,25 @@ spec:RegisterAbilities( {
         handler = function()
             gain( 1, "soul_shards" )
         end
-    }
+    },
+
+    felstorm = {
+        id = 89751,
+        cast = 0,
+        cooldown = function() return 30 * ( talent.reign_of_tyranny.enabled and 0.9 or 1 ) end,
+        gcd = "off", -- Pet ability, no GCD
+
+        startsCombat = true,
+        texture = 236298,
+
+        readyTime = function() return buff.fiendish_wrath.remains end,
+
+        usable = function() return pet.alive and pet.real_pet == "felguard", "requires a living felguard" end,
+        handler = function()
+            applyBuff( "felstorm" )
+            if cooldown.guillotine.remains < 5 then setCooldown( "guillotine", 8 ) end
+        end,
+    },
 } )
 
 
