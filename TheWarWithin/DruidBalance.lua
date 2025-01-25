@@ -1829,7 +1829,8 @@ spec:RegisterAuras( {
     dreamstate = {
         id = 424248,
         duration = 3600,
-        max_stack = 2
+        max_stack = 2,
+        copy = 450346
     },
     balance_t31_4pc_buff_lunar = {
         duration = 3600,
