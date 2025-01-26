@@ -3981,6 +3981,9 @@ do
                 if t.remains == 0 then return 0 end
                 return ( 100 * t.stack / t.max_stack )
 
+            elseif k == "at_max_stacks" then
+                return t.stack_pct >= 100
+
             elseif k == "ticks" then
                 if t.remains == 0 then return 0 end
                 -- if t.applied <= state.query_time and state.query_time < t.expires then return t.duration / t.tick_time - t.ticks_remain end
