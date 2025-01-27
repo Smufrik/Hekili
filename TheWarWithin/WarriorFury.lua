@@ -54,7 +54,7 @@ spec:RegisterResource( Enum.PowerType.Rage, {
 
         stop = function () return state.time == 0 or state.swings.offhand == 0 end,
         value = function ()
-            return ( ( state.talent.war_machine.enabled and 1.1 or 1 ) * base_rage_gen * fury_rage_mult * state.swings.offhand_speed * offhand_mod )
+            return ( ( state.talent.war_machine.enabled and 1.2 or 1 ) * base_rage_gen * fury_rage_mult * state.swings.offhand_speed * offhand_mod )
         end,
     },
 
@@ -744,6 +744,12 @@ spec:RegisterHook( "reset_precast", function ()
     rage_spent = nil
     glory_rage = nil
 
+    if buff.recklessness.up then
+        -- Casts are handled in prespend hook, this is to double the rage gen for weapon swings in the rage resource model
+        fury_rage_mult = 2
+    else fury_rage_mult = 1
+    end
+
     if legendary.will_of_the_berserker.enabled and buff.recklessness.up then
         state:QueueAuraExpiration( "recklessness", WillOfTheBerserker, buff.recklessness.expires )
     end
@@ -1065,35 +1071,31 @@ spec:RegisterAbilities( {
             if buff.enrage.up and talent.deft_experience.enabled then
                 buff.enrage.remains = buff.enrage.remains + ( 0.5 * talent.deft_experience.rank )
             end
-        
+
             if talent.cold_steel_hot_blood.enabled and action.bloodthirst.crit_pct_current >= 100 then
                 applyDebuff( "target", "gushing_wound" )
-                gain( 4, "rage" )
             end
-        
-            if set_bonus.tier31_4pc > 0 and action.bloodthirst.crit_pct_current >= 100 then
-                reduceCooldown( "odyns_fury", 2.5 )
-            end
-        
-            removeBuff( "merciless_assault" )
-            if talent.bloodcraze.enabled then
-                if action.bloodthirst.crit_pct_current >= 100 then removeBuff( "bloodcraze" )
-                else addStack( "bloodcraze" ) end
-            end
-        
+
+            if talent.bloodcraze.enabled and action.bloodthirst.crit_pct_current >= 100 then removeBuff( "bloodcraze" ) end
+
             gain( health.max * ( buff.enraged_regeneration.up and 0.23 or 0.03 ) , "health" )
-        
+
             if talent.fresh_meat.enabled and debuff.hit_by_fresh_meat.down then
                 applyBuff( "enrage" )
                 applyDebuff( "target", "hit_by_fresh_meat" )
             end
 
+            if buff.reckless_abandon_bloodbath.up then removeBuff( "reckless_abandon_bloodbath" ) end
+
+            -- Legacy
+            if set_bonus.tier30_4pc > 0 then removeBuff( "merciless_assault" ) end
+            if set_bonus.tier31_4pc > 0 and action.bloodthirst.crit_pct_current >= 100 then
+                reduceCooldown( "odyns_fury", 2.5 )
+            end
             if legendary.cadence_of_fujieda.enabled then
                 if buff.cadence_of_fujieda.stack < 5 then stat.haste = stat.haste + 0.01 end
                 addStack( "cadence_of_fujieda" )
             end
-        
-            if buff.reckless_abandon_bloodbath.up then removeBuff( "reckless_abandon_bloodbath" ) end
         end,
 
         auras = {
@@ -1448,10 +1450,12 @@ spec:RegisterAbilities( {
         startsCombat = false,
         texture = 1278409,
 
+        spend = 15,
+        spendType = "rage",
+
         handler = function ()
             applyDebuff( "target", "odyns_fury" )
             active_dot.odyns_fury = max( active_dot.odyns_fury, active_enemies )
-            if pvptalent.slaughterhouse.enabled then applyDebuff( "target", "slaughterhouse", nil, debuff.slaughterhouse.stack + 1 ) end
             if talent.dancing_blades.enabled then applyBuff( "dancing_blades" ) end
             if talent.titanic_rage.enabled then
                 applyBuff( "enrage" )
@@ -1462,6 +1466,9 @@ spec:RegisterAbilities( {
             if state.spec.fury and set_bonus.tier31_2pc > 0 then
                 applyBuff( "furious_bloodthirst", nil, 3 )
             end
+
+            -- PvP
+            if pvptalent.slaughterhouse.enabled then applyDebuff( "target", "slaughterhouse", nil, debuff.slaughterhouse.stack + 1 ) end
         end,
     },
 
@@ -1534,13 +1541,10 @@ spec:RegisterAbilities( {
     raging_blow = {
         id = 85288,
         cast = 0,
-        charges = function () return
-            ( talent.raging_blow.enabled and 1 or 0 )
-          + ( talent.improved_raging_blow.enabled and 1 or 0 )
-          + ( talent.raging_armaments.enabled and 1 or 0 )
-        end,
-        cooldown = function() return 8 * state.haste end,
-        recharge = function() return 8 * state.haste end,
+        charges = function () if talent.improved_raging_blow.enabled then return 2 end end,
+        cooldown = 8,
+        hasteCD = true,
+        recharge = function () if talent.improved_raging_blow.enabled then return 8 * state.haste end end,
         gcd = "spell",
 
         spend = function () return -12 - talent.swift_strikes.rank end,
@@ -1557,7 +1561,8 @@ spec:RegisterAbilities( {
             spendCharges( "crushing_blow", 1 )
             removeBuff( "opportunist" )
             if buff.will_of_the_berserker.up then buff.will_of_the_berserker.expires = query_time + 12 end
-            if talent.slaughtering_strikes.enabled then addStack( "slaughtering_strikes_raging_blow" ) end
+            if talent.slaughtering_strikes.enabled then addStack( "slaughtering_strikes" ) end
+            if talent.bloodcraze.enabled then addStack ( "bloodcraze" ) end
         end,
     },
 
@@ -1599,14 +1604,20 @@ spec:RegisterAbilities( {
         handler = function ()
             applyBuff( "enrage" )
             removeStack( "whirlwind" )
-            if pvptalent.slaughterhouse.enabled then applyDebuff( "target", "slaughterhouse", nil, debuff.slaughterhouse.stack + 1 ) end
-            if talent.frenzy.enabled then addStack( "frenzy" ) end
-            if talent.reckless_abandon.enabled then 
+            removeBuff( "slaughtering_strikes" )
+            if talent.frenzy.enabled then addStack( "frenzy" ) end -- TODO: resets on target swap
+            if talent.reckless_abandon.enabled then
                 applyBuff( "reckless_abandon_bloodbath" )
                 applyBuff( "reckless_abandon_crushing_blow" )
             end
-            if set_bonus.tier30_4pc > 0 then addStack( "merciless_assault" ) end
+
             removeBuff( "brutal_finish" )
+
+            -- PvP
+            if pvptalent.slaughterhouse.enabled then applyDebuff( "target", "slaughterhouse", nil, debuff.slaughterhouse.stack + 1 ) end
+
+            -- Legacy
+            if set_bonus.tier30_4pc > 0 then addStack( "merciless_assault" ) end
         end,
     },
 
@@ -1766,7 +1777,7 @@ spec:RegisterAbilities( {
         gcd = "spell",
         hasteCD = true,
 
-        spend = 15,
+        spend = 10,
         spendType = "rage",
 
         talent = "thunder_blast",
@@ -1795,7 +1806,7 @@ spec:RegisterAbilities( {
         gcd = "spell",
         hasteCD = true,
 
-        spend = 20,
+        spend = 8,
         spendType = "rage",
 
         talent = "thunder_clap",
@@ -1804,11 +1815,10 @@ spec:RegisterAbilities( {
         texture = 136105,
 
         handler = function ()
-            if ( talent.crashing_thunder.enabled ) then
-                if ( talent.improved_whirlwind.enabled ) then
-                    applyBuff ( "whirlwind", nil, talent.meat_cleaver.enabled and 4 or 2 )
-                end
+            if talent.crashing_thunder.enabled and talent.improved_whirlwind.enabled then
+                applyBuff ( "whirlwind", nil, talent.meat_cleaver.enabled and 4 or 2 )
             end
+
             applyDebuff( "target", "thunder_clap" )
             active_dot.thunder_clap = max( active_dot.thunder_clap, active_enemies )
         end,
