@@ -2487,6 +2487,7 @@ spec:RegisterAbilities( {
 
         startsCombat = false,
         nobuff = "skyfury",
+        essential = true,
 
         handler = function()
             applyBuff( "skyfury" )
