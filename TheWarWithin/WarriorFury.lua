@@ -707,6 +707,11 @@ spec:RegisterStateExpr( "glory_rage", function ()
     return gloryRage
 end )
 
+spec:RegisterHook( "prespend", function( amt, resource, overcap, clean )
+    if buff.recklessness.up and resource == "rage" then
+        return amt * 2, resource, overcap, true
+    end
+end )
 
 spec:RegisterHook( "spend", function( amt, resource )
     if resource == "rage" then
