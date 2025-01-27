@@ -1121,18 +1121,18 @@ spec:RegisterHook( "spend", function( amt, resource )
             if legendary.wilfreds_sigil_of_superior_summoning.enabled then reduceCooldown( "summon_infernal", amt * 1.5 ) end
 
             if buff.art_overlord.up then
-                summon_demon( "overlord" )
+                summon_demon( "overlord", 2 )
                 removeBuff( "art_overlord" )
             end
 
             if buff.art_mother.up then
-                summon_demon( "mother_of_chaos" )
+                summon_demon( "mother_of_chaos", 6 )
                 removeBuff( "art_mother" )
                 if talent.secrets_of_the_coven.enabled then applyBuff( "infernal_bolt" ) end
             end
 
             if buff.art_pit_lord.up then
-                summon_demon( "pit_lord" )
+                summon_demon( "pit_lord", 5 )
                 removeBuff( "art_pit_lord" )
                 if talent.ruination.enabled then applyBuff( "ruination" ) end
             end
@@ -1165,7 +1165,7 @@ end )
 
 spec:RegisterHook( "advance_end", function( time )
     if buff.art_mother.expires > query_time - time and buff.art_mother.down then
-        summon_demon( "mother_of_chaos" )
+        summon_demon( "mother_of_chaos", 6 )
         removeBuff( "art_mother" )
         if talent.secrets_of_the_coven.enabled then applyBuff( "infernal_bolt" ) end
     end
@@ -1803,6 +1803,8 @@ spec:RegisterAbilities( {
 
         talent = "rain_of_fire",
         startsCombat = true,
+
+        usable = function() return raid_event.adds.remains > 4 end,
 
         handler = function ()
             removeStack( "crashing_chaos" )
