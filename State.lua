@@ -7499,6 +7499,7 @@ function state:TimeToReady( action, pool )
     local wait = self.cooldown[ action ].remains
     local ability = class.abilities[ action ]
 
+    -- Early exit for timeToReadyOverride. This is to fix the fact that some spells show as unavailable in game even though
     -- the addon knows that it will become available on the next GCD due to a guaranteed buff/proc
     if ability.timeToReadyOverride then
         local override = ability.timeToReadyOverride

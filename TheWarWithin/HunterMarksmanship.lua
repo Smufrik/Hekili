@@ -677,7 +677,9 @@ spec:RegisterAuras( {
         id = 342076,
         duration = 15,
         max_stack = 1,
+        -- Focus cost
         streamlineCostMultiplier = function() return 1 - ( buff.streamline.stack * 0.2 * ( talent.tensile_bowstring.enabled and buff.trueshot.up and 1.5 or 1 ) ) end,
+        -- Cast speed reduction
         streamlineCastMultiplier = function() return 1 - ( buff.streamline.stack * ( 0.2 + 0.1 * talent.improved_streamline.rank ) * ( talent.tensile_bowstring.enabled and buff.trueshot.up and 1.5 or 1 ) ) end
     },
     survival_of_the_fittest = {
