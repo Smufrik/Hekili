@@ -1,6 +1,6 @@
 
 -- HunterSurvival.lua
--- October 2024
+-- January 2025
 
 if UnitClassBase( "player" ) ~= "HUNTER" then return end
 
@@ -50,10 +50,10 @@ spec:RegisterResource( Enum.PowerType.Focus, {
 spec:RegisterTalents( {
     -- Hunter
     binding_shackles           = { 102388, 321468, 1 }, -- Targets stunned by Binding Shot, knocked back by High Explosive Trap, knocked up by Implosive Trap, incapacitated by Scatter Shot, or stunned by Intimidation deal 10% less damage to you for 8 sec after the effect ends.
-    binding_shot               = { 102386, 109248, 1 }, -- Fires a magical projectile, tethering the enemy and any other enemies within 5 yds for 10 sec, stunning them for 3 sec if they move more than 5 yds from the arrow. Targets stunned by Binding Shot deal 10% less damage to you for 8 sec after the effect ends.
+    binding_shot               = { 102386, 109248, 1 }, -- Fires a magical projectile, tethering the enemy and any other enemies within 5 yds for 10 sec, stunning them for 4 sec if they move more than 5 yds from the arrow.
     blackrock_munitions        = { 102392, 462036, 1 }, -- The damage of Explosive Shot is increased by 8%.
     born_to_be_wild            = { 102416, 266921, 1 }, -- Reduces the cooldowns of Aspect of the Eagle, Aspect of the Cheetah, and Aspect of the Turtle by 30 sec.
-    bursting_shot              = { 102421, 186387, 1 }, -- Fires an explosion of bolts at all enemies in front of you, knocking them back, snaring them by 50% for 6 sec, and dealing 606 Physical damage.
+    bursting_shot              = { 102421, 186387, 1 }, -- Fires an explosion of bolts at all enemies in front of you, knocking them back, snaring them by 50% for 6 sec, and dealing 4,977 Physical damage.
     camouflage                 = { 102414, 199483, 1 }, -- You and your pet blend into the surroundings and gain stealth for 1 min. While camouflaged, you will heal for 2% of maximum health every 1 sec.
     concussive_shot            = { 102407,   5116, 1 }, -- Dazes the target, slowing movement speed by 50% for 6 sec. Steady Shot will increase the duration of Concussive Shot on the target by 3.0 sec.
     deathblow                  = { 102410, 343248, 1 }, -- Kill Command has a 15% chance to grant Deathblow.  Deathblow The cooldown of Kill Shot is reset. Your next Kill Shot can be used on any target, regardless of their current health.
@@ -61,23 +61,23 @@ spec:RegisterTalents( {
     disruptive_rounds          = { 102395, 343244, 1 }, -- When Tranquilizing Shot successfully dispels an effect or Muzzle interrupts a cast, gain 10 Focus.
     emergency_salve            = { 102389, 459517, 1 }, -- Feign Death and Aspect of the Turtle removes poison and disease effects from you.
     entrapment                 = { 102403, 393344, 1 }, -- When Tar Trap is activated, all enemies in its area are rooted for 4 sec. Damage taken may break this root.
-    explosive_shot             = { 102420, 212431, 1 }, -- Fires an explosive shot at your target. After 3 sec, the shot will explode, dealing 37,961 Fire damage to all enemies within 8 yds. Deals reduced damage beyond 5 targets.
+    explosive_shot             = { 102420, 212431, 1 }, -- Fires an explosive shot at your target. After 3 sec, the shot will explode, dealing 385,013 Fire damage to all enemies within 8 yds. Deals reduced damage beyond 5 targets.
     ghillie_suit               = { 102385, 459466, 1 }, -- You take 20% reduced damage while Camouflage is active. This effect persists for 3 sec after you leave Camouflage.
-    high_explosive_trap        = { 102739, 236776, 1 }, -- Hurls a fire trap to the target location that explodes when an enemy approaches, causing 4,845 Fire damage and knocking all enemies away. Limit 1. Trap will exist for 1 min. Targets knocked back by High Explosive Trap deal 10% less damage to you for 8 sec after being knocked back.
+    high_explosive_trap        = { 102739, 236776, 1 }, -- Hurls a fire trap to the target location that explodes when an enemy approaches, causing 44,960 Fire damage and knocking all enemies away. Limit 1. Trap will exist for 1 min.
     hunters_avoidance          = { 102423, 384799, 1 }, -- Damage taken from area of effect attacks reduced by 5%.
-    implosive_trap             = { 102739, 462031, 1 }, -- Hurls a fire trap to the target location that explodes when an enemy approaches, causing 4,845 Fire damage and knocking all enemies up. Limit 1. Trap will exist for 1 min. Targets knocked up by Implosive Trap deal 10% less damage to you for 8 sec after being knocked up.
+    implosive_trap             = { 102739, 462031, 1 }, -- Hurls a fire trap to the target location that explodes when an enemy approaches, causing 44,960 Fire damage and knocking all enemies up. Limit 1. Trap will exist for 1 min.
     improved_traps             = { 102418, 343247, 1 }, -- The cooldown of Tar Trap, High Explosive Trap, Implosive Trap, and Freezing Trap is reduced by 5.0 sec.
-    intimidation               = { 102397,  19577, 1 }, -- Commands your pet to intimidate the target, stunning it for 5 sec. Targets stunned by Intimidation deal 10% less damage to you for 8 sec after the effect ends.
+    intimidation               = { 103989,  19577, 1 }, -- Commands your pet to intimidate the target, stunning it for 5 sec.
     keen_eyesight              = { 102409, 378004, 2 }, -- Critical strike chance increased by 2%.
-    kill_shot                  = { 102379, 320976, 1 }, -- You attempt to finish off a wounded target, dealing 46,014 Physical damage. Only usable on enemies with less than 20% health.
-    kindling_flare             = { 102425, 459506, 1 }, -- Stealthed enemies revealed by Flare remain revealed for 3 sec after exiting the flare.
+    kill_shot                  = { 102379, 320976, 1 }, -- You attempt to finish off a wounded target, dealing 453,099 Physical damage. Only usable on enemies with less than 20% health.
+    kindling_flare             = { 102425, 459506, 1 }, -- Flare's radius is increased by 50%.
     kodo_tranquilizer          = { 102415, 459983, 1 }, -- Tranquilizing Shot removes up to 1 additional Magic effect from up to 2 nearby targets.
     lone_survivor              = { 102391, 388039, 1 }, -- Reduce the cooldown of Survival of the Fittest by 30 sec, and increase its duration by 2.0 sec. Reduce the cooldown of Counter Shot and Muzzle by 2 sec.
     misdirection               = { 102419,  34477, 1 }, -- Misdirects all threat you cause to the targeted party or raid member, beginning with your next attack within 30 sec and lasting for 8 sec.
     moment_of_opportunity      = { 102426, 459488, 1 }, -- When a trap triggers, you gain 30% movement speed for 3 sec. Can only occur every 1 min.
     muzzle                     = {  79837, 187707, 1 }, -- Interrupts spellcasting, preventing any spell in that school from being cast for 3 sec.
     natural_mending            = { 102401, 270581, 1 }, -- Every 10 Focus you spend reduces the remaining cooldown on Exhilaration by 1.0 sec.
-    no_hard_feelings           = { 102412, 459546, 1 }, -- When Misdirection targets your pet, it reduces the damage they take by 50% for 5 sec.
+    no_hard_feelings           = { 102412, 459546, 1 }, -- When Misdirection targets your pet, it reduces the damage they take by 50% for 5 sec. The cooldown of Misdirection is reduced by 5 sec.
     padded_armor               = { 102406, 459450, 1 }, -- Survival of the Fittest gains an additional charge.
     pathfinding                = { 102404, 378002, 1 }, -- Movement speed increased by 4%.
     posthaste                  = { 102411, 109215, 1 }, -- Disengage also frees you from all movement impairing effects and increases your movement speed by 50% for 4 sec.
@@ -85,77 +85,77 @@ spec:RegisterTalents( {
     rejuvenating_wind          = { 102381, 385539, 1 }, -- Maximum health increased by 8%, and Exhilaration now also heals you for an additional 12.0% of your maximum health over 8 sec.
     roar_of_sacrifice          = { 102405,  53480, 1 }, -- Instructs your pet to protect a friendly target from critical strikes, making attacks against that target unable to be critical strikes, but 10% of all damage taken by that target is also taken by the pet. Lasts 12 sec.
     scare_beast                = { 102382,   1513, 1 }, -- Scares a beast, causing it to run in fear for up to 20 sec. Damage caused may interrupt the effect. Only one beast can be feared at a time.
-    scatter_shot               = { 102421, 213691, 1 }, -- A short-range shot that deals 377 damage, removes all harmful damage over time effects, and incapacitates the target for 4 sec. Any damage caused will remove the effect. Turns off your attack when used. Targets incapacitated by Scatter Shot deal 10% less damage to you for 8 sec after the effect ends.
+    scatter_shot               = { 102421, 213691, 1 }, -- A short-range shot that deals 3,499 damage, removes all harmful damage over time effects, and incapacitates the target for 4 sec. Any damage caused will remove the effect. Turns off your attack when used.
     scouts_instincts           = { 102424, 459455, 1 }, -- You cannot be slowed below 80% of your normal movement speed while Aspect of the Cheetah is active.
     scrappy                    = { 102408, 459533, 1 }, -- Casting Wildfire Bomb reduces the cooldown of Intimidation and Binding Shot by 0.5 sec.
     serrated_tips              = { 102384, 459502, 1 }, -- You gain 5% more critical strike from critical strike sources.
-    specialized_arsenal        = { 102390, 459542, 1 }, -- Wildfire Bomb deals 10% increased damage.
+    specialized_arsenal        = { 102390, 459542, 1 }, -- Wildfire Bomb deals 10% increased damage. 
     survival_of_the_fittest    = { 102422, 264735, 1 }, -- Reduces all damage you and your pet take by 30% for 8 sec.
     tar_trap                   = { 102393, 187698, 1 }, -- Hurls a tar trap to the target location that creates a 8 yd radius pool of tar around itself for 30 sec when the first enemy approaches. All enemies have 50% reduced movement speed while in the area of effect. Limit 1. Trap will exist for 1 min.
     tarcoated_bindings         = { 102417, 459460, 1 }, -- Binding Shot's stun duration is increased by 1 sec.
-    territorial_instincts      = { 102394, 459507, 1 }, -- Casting Intimidation without a pet now summons one from your stables to intimidate the target. Additionally, the cooldown of Intimidation is reduced by 5 sec.
+    territorial_instincts      = { 102394, 459507, 1 }, -- The cooldown of Intimidation is reduced by 10 sec.
     trailblazer                = { 102400, 199921, 1 }, -- Your movement speed is increased by 30% anytime you have not attacked for 3 sec.
     tranquilizing_shot         = { 102380,  19801, 1 }, -- Removes 1 Enrage and 1 Magic effect from an enemy target. Successfully dispelling an effect generates 10 Focus.
     trigger_finger             = { 102396, 459534, 2 }, -- You and your pet have 5.0% increased attack speed. This effect is increased by 100% if you do not have an active pet.
     unnatural_causes           = { 102387, 459527, 1 }, -- Your damage over time effects deal 10% increased damage. This effect is increased by 50% on targets below 20% health.
-    wilderness_medicine        = { 102383, 343242, 1 }, -- Mend Pet heals for an additional 25% of your pet's health over its duration, and has a 25% chance to dispel a magic effect each time it heals your pet.
+    wilderness_medicine        = { 102383, 343242, 1 }, -- Natural Mending now reduces the cooldown of Exhilaration by an additional 0.5 sec Mend Pet heals for an additional 25% of your pet's health over its duration, and has a 25% chance to dispel a magic effect each time it heals your pet.
 
     -- Survival
     alpha_predator             = { 102259, 269737, 1 }, -- Kill Command now has 2 charges, and deals 15% increased damage.
-    bloodseeker                = { 102270, 260248, 1 }, -- Kill Command causes the target to bleed for 4,024 damage over 8 sec. You and your pet gain 10% attack speed for every bleeding enemy within 12 yds.
+    bloodseeker                = { 102270, 260248, 1 }, -- Kill Command causes the target to bleed for 35,969 damage over 8 sec. You and your pet gain 10% attack speed for every bleeding enemy within 12 yds.
     bloody_claws               = { 102268, 385737, 1 }, -- Each stack of Mongoose Fury increases the chance for Kill Command to reset by 2%. Kill Command extends the duration of Mongoose Fury by 1.5 sec.
-    bombardier                 = { 102273, 389880, 1 }, -- When you cast Coordinated Assault, you gain 2 charges of Wildfire Bomb. When Coordinated Assault ends, Explosive Shot's cooldown is reset and your next Explosive Shot fires at 2 additional targets at 100% effectiveness.
-    butchery                   = { 102290, 212436, 1 }, -- Attack all nearby enemies in a flurry of strikes, inflicting 34,924 Physical damage to nearby enemies and 72,308 damage over 8 sec. Deals reduced damage beyond 5 targets. Reduces the remaining cooldown on Wildfire Bomb by 3 sec for each target hit, up to 15.0 sec.
-    contagious_reagents        = { 102276, 459741, 1 }, -- Reapplying Serpent Sting to a target also spreads it to up to 2 nearby enemies.
-    coordinated_assault        = { 102252, 360952, 1 }, -- You and your pet charge your enemy, striking them for a combined 36,811 Physical damage. You and your pet's bond is then strengthened for 20 sec, causing you and your pet to deal 20% increased damage. While Coordinated Assault is active, Kill Command's chance to reset its cooldown is increased by 15%.
-    deadly_duo                 = { 102284, 378962, 1 }, -- The cooldown of Spearhead is reduced by 30 sec and Spearhead's bleed now increases your critical strike damage against the target by 30%.
-    explosives_expert          = { 102281, 378937, 2 }, -- Wildfire Bomb cooldown reduced by 2.0 sec.
-    exposed_flank              = { 102271, 459861, 1 }, -- Your Flanking Strike now strikes 2 additional nearby targets at 100% effectiveness. Flanking Strike causes your next Kill Command to deal 50% increased damage, to hit 2 additional nearby enemies, and generate a Tip of the Spear stack for each additional hit.
+    bombardier                 = { 102273, 389880, 1 }, -- When you cast Coordinated Assault, you gain 1 charge of Wildfire Bomb. When Coordinated Assault ends, Explosive Shot's cooldown is reset and your next Explosive Shot fires at 2 additional targets at 100% effectiveness.
+    born_to_kill               = { 102271, 1217434, 1 }, -- Your chance to gain Deathblow is increased by 5% and the duration of Cull the Herd is increased by 2.0 sec. Cull the Herd now additionally increases the damage taken from your Kill Shot by 25%.
+    butchery                   = { 102290, 212436, 1 }, -- Attack all nearby enemies in a flurry of strikes, inflicting 300,914 Physical damage to nearby enemies and 289,435 damage over 8 sec. Deals reduced damage beyond 5 targets. Reduces the remaining cooldown on Wildfire Bomb by 3 sec for each target hit, up to 15.0 sec.
+    contagious_reagents        = { 102276, 459741, 1 }, -- Reapplying Serpent Sting to a target also spreads it to up to 4 enemies within 8 yds.
+    coordinated_assault        = { 102252, 360952, 1 }, -- You and your pet charge your enemy, striking them for a combined 302,065 Physical damage. You and your pet's bond is then strengthened for 20 sec, causing you and your pet to deal 20% increased damage. While Coordinated Assault is active, Kill Command's chance to reset its cooldown is increased by 15%.
+    cull_the_herd              = { 102278, 1217429, 1 }, -- Kill Shot increases the damage enemies receive from you and your pet's Bleed effects by 25% for 8 sec.
+    deadly_duo                 = { 102284, 378962, 1 }, -- The cooldown of Spearhead is reduced by 30 sec and Spearhead's bleed now increases you and your pet's critical strike damage against the target by 30%.
+    explosives_expert          = { 102281, 378937, 2 }, -- Wildfire Bomb and Explosive Shot damage increased by 2.5%.
     flankers_advantage         = { 102283, 459964, 1 }, -- Kill Command has an additional 10% chance to immediately reset its cooldown. Tip of the Spear's damage bonus is increased up to 30%, based on your critical strike chance.
-    flanking_strike            = { 102278, 269751, 1 }, -- You and your pet leap to the target and strike it as one, dealing a total of 52,500 Physical damage. Tip of the Spear grants an additional 15% damage bonus to Flanking Strike and Flanking Strike generates 2 stacks of Tip of the Spear.
-    frenzy_strikes             = { 102286, 294029, 1 }, -- Butchery reduces the remaining cooldown on Wildfire Bomb by 3.0 sec for each target hit, up to 5 targets.
-    fury_of_the_eagle          = { 102275, 203415, 1 }, -- Furiously strikes all enemies in front of you, dealing 163,580 Physical damage over 2.5 sec. Critical strike chance increased by 50% against any target below 20% health. Deals reduced damage beyond 5 targets.
+    flanking_strike            = { 102290, 269751, 1 }, -- You and your pet leap to the target and strike it as one, dealing a total of 532,541 Physical damage. Tip of the Spear grants an additional 15% damage bonus to Flanking Strike and Flanking Strike generates 2 stacks of Tip of the Spear.
+    frenzy_strikes             = { 102286, 294029, 1 }, -- Flanking Strike damage increased by 40% and Flanking Strike now increases your attack speed by 25% for 12 sec. Butchery reduces the remaining cooldown on Wildfire Bomb by 3.0 sec for each target hit, up to 5 targets.
+    fury_of_the_eagle          = { 102275, 203415, 1 }, -- Furiously strikes all enemies in front of you, dealing 1.3 million Physical damage over 2.6 sec. Critical strike chance increased by 50% against any target below 20% health. Deals reduced damage beyond 5 targets.
     grenade_juggler            = { 102287, 459843, 1 }, -- Wildfire Bomb deals 5% increased damage and has a 25% chance to reset the cooldown of Explosive Shot. Explosive Shot reduces the cooldown of Wildfire Bomb by 2 sec.
     guerrilla_tactics          = { 102285, 264332, 1 }, -- Wildfire Bomb now has 2 charges, and the initial explosion deals 50% increased damage.
-    improved_wildfire_bomb     = { 102274, 321290, 1 }, -- Wildfire Bomb deals 8% additional damage.
-    kill_command               = { 102255, 259489, 1 }, -- Give the command to kill, causing your pet to savagely deal 13,390 Physical damage to the enemy. Kill Command has a 20% chance to immediately reset its cooldown. Generates 15 Focus.
+    kill_command               = { 102255, 259489, 1 }, -- Give the command to kill, causing your pet to savagely deal 111,829 Physical damage to the enemy. Kill Command has a 20% chance to immediately reset its cooldown. Generates 15 Focus.
     killer_companion           = { 102282, 378955, 2 }, -- Kill Command damage increased by 20%.
     lunge                      = { 102272, 378934, 1 }, -- Auto-attacks with a two-handed weapon reduce the cooldown of Wildfire Bombs by 1.0 sec.
-    merciless_blow             = { 102267, 459868, 1 }, -- Casting Butchery causes affected targets to bleed for 72,308 damage over 8 sec.
-    mongoose_bite              = { 102257, 259387, 1 }, -- A brutal attack that deals 26,838 Physical damage and grants you Mongoose Fury. Mongoose Fury Increases the damage of Mongoose Bite by 15% for 14 sec, stacking up to 5 times.
+    merciless_blow             = { 102267, 459868, 1 }, -- Enemies damaged by Flanking Strike bleed for an additional 578,871 damage over 8 sec. Up to 5 enemies damaged by Butchery bleed for an additional 289,435 damage over 8 sec.
+    mongoose_bite              = { 102257, 259387, 1 }, -- A brutal attack that deals 278,596 Physical damage and grants you Mongoose Fury. Mongoose Fury Increases the damage of Mongoose Bite by 15% for 16 sec, stacking up to 5 times.
     outland_venom              = { 102269, 459939, 1 }, -- Each damage over time effect on a target increases the critical strike damage they receive from you by 2%.
     quick_shot                 = { 102279, 378940, 1 }, -- When you cast Kill Command, you have a 30% chance to fire an Arcane Shot at your target at 100% of normal value.
     ranger                     = { 102256, 385695, 1 }, -- Kill Shot, Serpent Sting, Arcane Shot, Steady Shot, and Explosive Shot deal 20% increased damage.
-    raptor_strike              = { 102262, 186270, 1 }, -- A vicious slash dealing 32,900 Physical damage.
-    relentless_primal_ferocity = { 102258, 459922, 1 }, -- Coordinated Assault sends you and your pet into a state of primal power. For the duration of Coordinated Assault, Kill Command generates 2 additional stack of Tip of the Spear, you gain 10% Haste, and Tip of the Spear's damage bonus is increased by 50%.
+    raptor_strike              = { 102262, 186270, 1 }, -- A vicious slash dealing 341,513 Physical damage.
+    relentless_primal_ferocity = { 102258, 459922, 1 }, -- Coordinated Assault sends you and your pet into a state of primal power. For the duration of Coordinated Assault, Kill Command generates 2 additional stack of Tip of the Spear, you gain 10% Haste, and Tip of the Spear's damage bonus is increased by 50%. 
     ruthless_marauder          = { 102261, 470068, 1 }, -- Fury of the Eagle's damage is increased by 10% and has a 20% chance to generate a stack of Tip of the Spear. When Fury of the Eagle ends, your Haste is increased by 8%.
-    sic_em                     = { 102280, 459920, 1 }, -- Kill Command's chance to grant Deathblow is increased to 15% and Deathblow now makes Kill Shot strike up to 2 additional targets. Your chance to gain Deathblow is doubled during Coordinated Assault.  Deathblow The cooldown of Kill Shot is reset. Your next Kill Shot can be used on any target, regardless of their current health.
-    spearhead                  = { 102291, 360966, 1 }, -- You give the signal, and your pet charges your target, bleeding them for 45,192 damage over 10 sec and increasing your chance to critically strike your target by 30% for 10 sec.
+    sic_em                     = { 102280, 459920, 1 }, -- Kill Command's chance to grant Deathblow is increased by 5% and Deathblow now makes Kill Shot strike up to 2 additional targets. Your chance to gain Deathblow is doubled during Coordinated Assault.  Deathblow The cooldown of Kill Shot is reset. Your next Kill Shot can be used on any target, regardless of their current health.
+    spearhead                  = { 102291, 360966, 1 }, -- You give the signal, and your pet charges your target, bleeding them for 361,794 damage over 10 sec and increasing you and your pet's chance to critically strike your target by 30% for 10 sec.
     sulfurlined_pockets        = { 102266, 459828, 1 }, -- Every 3 Quick Shots is replaced with an Explosive Shot at 100% effectiveness.
     sweeping_spear             = { 102289, 378950, 2 }, -- Raptor Strike, Mongoose Bite, and Butchery damage increased by 10%.
     symbiotic_adrenaline       = { 102258, 459875, 1 }, -- The cooldown of Coordinated Assault is reduced by 60 sec and Coordinated Assault now grants 3 stacks of Tip of the Spear.
-    tactical_advantage         = { 102277, 378951, 1 }, -- Damage of Flanking Strike increased by 5% and all damage dealt by Wildfire Bomb increased by 5%.
-    terms_of_engagement        = { 102288, 265895, 1 }, -- Harpoon has a 10 sec reduced cooldown, and deals 5,751 Physical damage and generates 20 Focus over 10 sec. Killing an enemy resets the cooldown of Harpoon.
+    tactical_advantage         = { 102277, 378951, 1 }, -- Damage of Flanking Strike and Butchery increased by 5% and all damage dealt by Wildfire Bomb increased by 5%.
+    terms_of_engagement        = { 102288, 265895, 1 }, -- Harpoon has a 10 sec reduced cooldown, and deals 47,197 Physical damage and generates 20 Focus over 10 sec. Killing an enemy resets the cooldown of Harpoon.
     tip_of_the_spear           = { 102263, 260285, 1 }, -- Kill Command increases the direct damage of your other spells by 15%, stacking up to 3 times.
-    vipers_venom               = { 102260, 268501, 1 }, -- Raptor Strike and Mongoose Bite apply Serpent Sting to your target. Serpent Sting Fire a poison-tipped arrow at an enemy, dealing 3,391 Nature damage instantly and an additional 23,383 damage over 12 sec.
-    wildfire_bomb              = { 102264, 259495, 1 }, -- Hurl a bomb at the target, exploding for 15,936 Fire damage in a cone and coating enemies in wildfire, scorching them for 16,272 Fire damage over 6 sec. Deals reduced damage beyond 8 targets. Deals 80% increased damage to your primary target.
+    vipers_venom               = { 102260, 268501, 1 }, -- Raptor Strike and Mongoose Bite damage increased by 15%. Raptor Strike and Mongoose Bite apply Serpent Sting to your target. Serpent Sting Fire a poison-tipped arrow at an enemy, dealing 33,393 Nature damage instantly and an additional 224,641 damage over 12 sec.
+    wildfire_arsenal           = { 102274, 321290, 1 }, -- Quick Shot and and auto-attacks with a two-handed weapon increase the direct damage of your next Wildfire Bomb by 4%, stacking up to 3 times. Casting Coordinated Assault grants 3 stacks of Wildfire Arsenal.
+    wildfire_bomb              = { 102264, 259495, 1 }, -- Hurl a bomb at the target, exploding for 164,758 Fire damage in a cone and coating enemies in wildfire, scorching them for 148,484 Fire damage over 6 sec. Deals reduced damage beyond 8 targets. Deals 80% increased damage to your primary target.
     wildfire_infusion          = { 102265, 460198, 1 }, -- Mongoose Bite and Raptor Strike have a 10% chance to reset Kill Command's cooldown. Kill Command reduces the cooldown of Wildfire Bomb by 0.5 sec.
 
     -- Pack Leader
-    beast_of_opportunity       = {  94979, 445700, 1 }, -- Coordinated Assault calls on the pack, summoning a pet from your stable for 6 sec.
-    cornered_prey              = {  94984, 445702, 1 }, -- Disengage increases the range of all your attacks by 5 yds for 5 sec.
-    covering_fire              = {  94969, 445715, 1 }, -- Wildfire Bomb reduces the cooldown of Butchery by 2 sec.
-    cull_the_herd              = {  94967, 445717, 1 }, -- Kill Shot deals an additional 60% damage over 6 sec and increases the bleed damage you and your pet deal to the target by 25%.
-    den_recovery               = {  94972, 445710, 1 }, -- Aspect of the Turtle, Survival of the Fittest, and Mend Pet heal the target for 20% of maximum health over 4 sec. Duration increased by 1 sec when healing a target under 50% maximum health.
-    frenzied_tear              = {  94988, 445696, 1 }, -- Your pet's Basic Attack has a 20% chance to reset the cooldown and cause Kill Command to strike a second time for 30% of normal damage.
-    furious_assault            = {  94979, 445699, 1 }, -- Consuming Frenzied Tear has a 50% chance to reduce the cost of your next Mongoose Bite by 100% and deal 60% more damage.
-    howl_of_the_pack           = {  94992, 445707, 1 }, -- Your pet's Basic Attack critical strikes increase your critical strike damage by 11% for 8 sec stacking up to 3 times. Wildfire Bomb damage is increased by 20%.
-    pack_assault               = {  94966, 445721, 1 }, -- Vicious Hunt and Pack Coordination now stack and apply twice, and are always active during Coordinated Assault.
-    pack_coordination          = {  94985, 445505, 1 }, -- Attacking with Vicious Hunt instructs your pet to strike with their Basic Attack along side your next Mongoose Bite.
-    scattered_prey             = {  94969, 445768, 1 }, -- Butchery increases the damage of your next Butchery by 40%.
-    tireless_hunt              = {  94984, 445701, 1 }, -- Aspect of the Cheetah now increases movement speed by 15% for another 8 sec.
-    vicious_hunt               = {  94991, 445404, 1 }, -- Kill Command prepares you to viciously attack in coordination with your pet, dealing an additional 32,209 Physical damage with your next Kill Command.
-    wild_attacks               = {  94962, 445708, 1 }, -- Every third pet Basic Attack is a guaranteed critical strike, with damage further increased by critical strike chance. Mongoose Bite's damage is increased by 20%.
+    better_together            = {  94962, 472357, 1 }, -- Howl of the Pack Leader's cooldown is reduced to 25 sec. Your pets gain an extra 5% of your attack power.
+    dire_summons               = {  94992, 472352, 1 }, -- Kill Command reduces the cooldown of Howl of the Pack Leader by 1.0 sec. Mongoose Bite reduces the cooldown of Howl of the Pack Leader by 1.0 sec.
+    envenomed_fangs            = {  94972, 472524, 1 }, -- Initial damage from your Bear will consume Serpent Sting from up to 8 nearby targets, dealing 100% of its remaining damage instantly.
+    fury_of_the_wyvern         = {  94984, 472550, 1 }, -- Your pet's attacks increase your Wyvern's damage bonus by 1%, up to 10%. Casting Wildfire Bomb extends the duration of your Wyvern by 2.0 sec, up to 10 additional sec.
+    hogstrider                 = {  94988, 472639, 1 }, -- Summoning your Boar refreshes the duration of Mongoose Fury. Each time your Boar deals damage, you have a 25% chance to gain a stack of Mongoose Fury and Mongoose Bite strikes 1 additional target. Stacks up to 4 times. Mongoose Fury Increases the damage of Mongoose Bite or Raptor Strike by 15% for 16 sec, stacking up to 5 times.
+    horsehair_tether           = {  94979, 472729, 1 }, -- When an enemy is stunned by Binding Shot, it is dragged to Binding Shot's center.
+    howl_of_the_pack_leader    = {  94991, 471876, 1, "pack_leader" }, -- Every 25 sec, your next Kill Command summons the aid of a Beast.  Bear A Bear leaps into the fray, rending the flesh of your enemies, dealing 508,191 damage over 10 sec to up to 8 nearby enemies.  Wyvern A Wyvern descends from the skies, letting out a battle cry that increases the damage of you and your pets by 10% for 15 sec.  Boar A Boar charges through your target 3 times, dealing 493,017 physical damage to the primary target and 197,207 damage to up to 8 nearby enemies.
+    lead_from_the_front        = {  94966, 472741, 1 }, -- Casting Coordinated Assault grants Howl of the Pack Leader and increases the damage dealt by your Beasts by 25% and your pet by 0% for 12 sec.
+    no_mercy                   = {  94969, 472660, 1 }, -- Damage from your Kill Shot sends your pets into a rage, causing all active pets within 20 yds and your Bear to pounce to the target and Smack, Claw, or Bite it. Your pets will not leap if their target is already in melee range.
+    pack_mentality             = {  94985, 472358, 1 }, -- Howl of the Pack Leader causes your Kill Command to generate an additional stack of Tip of the Spear. Summoning a Beast reduces the cooldown of Wildfire Bomb by 10.0 sec.
+    shell_cover                = {  94967, 472707, 1 }, -- When dropping below 60% health, summon the aid of a Turtle, reducing the damage you take by 10% for 6 sec. This effect can only occur once every 1.5 min.
+    slicked_shoes              = {  94979, 472719, 1 }, -- When Disengage removes a movement impairing effect, its cooldown is reduced by 4 sec.
+    ursine_fury                = {  94972, 472476, 1 }, -- Your Bear's periodic damage has a 10% chance to reduce the cooldown of Butchery or Flanking Strike by 2.0 sec.
 
     -- Sentinel
     catch_out                  = {  94990, 451516, 1 }, -- When a target affected by Sentinel deals damage to you, they are rooted for 3 sec. May only occur every 1 min per target.
@@ -163,31 +163,30 @@ spec:RegisterTalents( {
     dont_look_back             = {  94989, 450373, 1 }, -- Each time Sentinel deals damage to an enemy you gain an absorb shield equal to 1.0% of your maximum health, up to 10%.
     extrapolated_shots         = {  94973, 450374, 1 }, -- When you apply Sentinel to a target not affected by Sentinel, you apply 1 additional stack.
     eyes_closed                = {  94970, 450381, 1 }, -- For 8 sec after activating Coordinated Assault, all abilities are guaranteed to apply Sentinel.
-    invigorating_pulse         = {  94971, 450379, 1 }, -- Each time Sentinel deals damage to an enemy it has an up to 15% chance to generate 5 focus. Chances decrease with each additional Sentinel currently imploding applied to enemies.
-    lunar_storm                = {  94978, 450385, 1 }, -- Every 15 sec your next Wildfire Bomb summons a celestial owl that conjures a 10 yd radius Lunar Storm at the target's location for 8 sec. A random enemy affected by Sentinel within your Lunar Storm gets struck for 8,627 Arcane damage every 0.4 sec. Any target struck by this effect takes 10% increased damage from you and your pet for 8 sec.
+    invigorating_pulse         = {  94971, 450379, 1 }, -- Each time Sentinel deals damage to an enemy it has an up to 15% chance to generate 5 Focus. Chances decrease with each additional Sentinel currently imploding applied to enemies.
+    lunar_storm                = {  94978, 450385, 1 }, -- Every 30 sec your next Wildfire Bomb launches a celestial arrow that conjures a 12 yd radius Lunar Storm at the target's location dealing 94,395 Arcane damage. For the next 12 sec, a random enemy affected by Sentinel within your Lunar Storm gets struck for 88,495 Arcane damage every 0.4 sec. Any target struck by this effect takes 10% increased damage from you and your pet for 8 sec. 
     overwatch                  = {  94980, 450384, 1 }, -- All Sentinel debuffs implode when a target affected by more than 3 stacks of your Sentinel falls below 20% health. This effect can only occur once every 15 sec per target.
     release_and_reload         = {  94958, 450376, 1 }, -- When you apply Sentinel on a target, you have a 15% chance to apply a second stack.
-    sentinel                   = {  94976, 450369, 1, "sentinel" }, -- Your attacks have a chance to apply Sentinel on the target, stacking up to 10 times. While Sentinel stacks are higher than 3, applying Sentinel has a chance to trigger an implosion, causing a stack to be consumed on the target every sec to deal 9,007 Arcane damage.
-    sentinel_precision         = {  94981, 450375, 1 }, -- Raptor Strike, Mongoose Bite and Wildfire Bomb deal 10% increased damage.
+    sentinel                   = {  94976, 450369, 1, "sentinel" }, -- Your attacks have a chance to apply Sentinel on the target, stacking up to 10 times. While Sentinel stacks are higher than 3, applying Sentinel has a chance to trigger an implosion, causing a stack to be consumed on the target every sec to deal 84,588 Arcane damage. 
+    sentinel_precision         = {  94981, 450375, 1 }, -- Raptor Strike, Mongoose Bite and Wildfire Bomb deal 10% increased damage. 
     sentinel_watch             = {  94970, 451546, 1 }, -- Whenever a Sentinel deals damage, the cooldown of Coordinated Assault is reduced by 1 sec, up to 15 sec.
     sideline                   = {  94990, 450378, 1 }, -- When Sentinel starts dealing damage, the target is snared by 40% for 3 sec.
-    symphonic_arsenal          = {  94965, 450383, 1 }, -- Multi-Shot and Butchery discharge arcane energy from all targets affected by your Sentinel, dealing 10,353 Arcane damage to up to 5 targets within 8 yds of your Sentinel targets.
+    symphonic_arsenal          = {  94965, 450383, 1 }, -- Multi-Shot and Butchery discharge arcane energy from all targets affected by your Sentinel, dealing 84,956 Arcane damage to up to 5 targets within 8 yds of your Sentinel targets.
 } )
 
-
 -- PvP Talents
-spec:RegisterPvpTalents( {
-    chimaeral_sting  = 3609, -- (356719) Stings the target, dealing 12,678 Nature damage and initiating a series of venoms. Each lasts 3 sec and applies the next effect after the previous one ends.  Scorpid Venom: 90% reduced movement speed.  Spider Venom: Silenced.  Viper Venom: 20% reduced damage and healing.
-    diamond_ice      =  686, -- (203340) Victims of Freezing Trap can no longer be damaged or healed. Freezing Trap is now undispellable, but has a 5 sec duration.
+spec:RegisterPvpTalents( { 
+    chimaeral_sting  = 3609, -- (356719) Stings the target, dealing 117,636 Nature damage and initiating a series of venoms. Each lasts 3 sec and applies the next effect after the previous one ends.  Scorpid Venom: 90% reduced movement speed.  Spider Venom: Silenced.  Viper Venom: 20% reduced damage and healing.
+    diamond_ice      =  686, -- (203340) Victims of Freezing Trap can no longer be damaged or healed. Freezing Trap is now undispellable, but has a 4 sec duration.
+    explosive_powder = 5690, -- (1218150) Bursting Shot now also knocks you back and snares enemies by an additional 20%.
     hunting_pack     =  661, -- (203235) Aspect of the Cheetah has 50% reduced cooldown and grants its effects to allies within 15 yds.
-    interlope        = 5532, -- (248518) Misdirection now causes the next 3 hostile spells cast on your target within 10 sec to be redirected to your pet, but its cooldown is increased by 15 sec. Your pet must be within 20 yards of the target for spells to be redirected.
+    interlope        = 5532, -- (248518) Misdirection now causes the next 3 hostile spells cast on your target within 10 sec to be redirected to your pet, but its cooldown is increased by 15 sec. Your pet must be within 20 yards of the target for spells to be redirected. 
     mending_bandage  =  662, -- (212640) Instantly clears all bleeds, poisons, and diseases from the target, and heals for 18% damage over 6 sec. Being attacked will stop you from using Mending Bandage.
     sticky_tar_bomb  =  664, -- (407028) Throw a Sticky Tar Bomb that coats your target's weapons with tar, disarming them for 4 sec. After 4 sec, Sticky Tar Bomb explodes onto nearby enemies. Other enemies that are hit by the explosion are affected by Sticky Tar Bomb but this effect cannot spread further.
     survival_tactics = 3607, -- (202746) Feign Death reduces damage taken by 90% for 2 sec.
     trackers_net     =  665, -- (212638) Hurl a net at your enemy, rooting them for 6 sec. While within the net, the target's chance to hit is reduced by 80%. Any damage will break the net.
     wild_kingdom     = 5443, -- (356707) Call in help from one of your dismissed Cunning pets for 10 sec. Your current pet is dismissed to rest and heal 30% of maximum health.
 } )
-
 
 -- Auras
 spec:RegisterAuras( {
@@ -291,8 +290,8 @@ spec:RegisterAuras( {
     },
     -- Bleeding for $w1 damage every $t1 sec.
     cull_the_herd = {
-        id = 449233,
-        duration = 6.0,
+        id = 1217430,
+        duration = function() return 6 + ( 2 * talent.born_to_kill.rank ) end,
         tick_time = 2.0,
         max_stack = 1,
     },
@@ -341,11 +340,11 @@ spec:RegisterAuras( {
         -- spearhead[378957] #2: { 'type': APPLY_AURA, 'subtype': MOD_CRITICAL_DAMAGE_TAKEN_FROM_CASTER, 'target': TARGET_UNIT_TARGET_ENEMY, }
     },
     -- Your Kill Command hits $s1 targets.
-    exposed_flank = {
+    --[[exposed_flank = {
         id = 459864,
         duration = 10.0,
         max_stack = 1,
-    },
+    },--]]
     -- All abilities are guaranteed to apply Sentinel.
     eyes_closed = {
         id = 451180,
@@ -367,10 +366,12 @@ spec:RegisterAuras( {
         duration = 360,
         max_stack = 1
     },
-    furious_assault = {
-        id = 448814,
+    -- https://www.wowhead.com/spell=1217377
+    -- Frenzy Strikes Attack speed increased by 25%.  
+    frenzy_strikes = {
+        id = 1217377,
         duration = 12,
-        max_stack = 1
+        max_stack = 1,
     },
     -- Talent: Rooted.
     -- https://wowhead.com/beta/spell=190925
@@ -381,11 +382,26 @@ spec:RegisterAuras( {
         max_stack = 1,
         copy = 190927
     },
-    -- Critical damage dealt increased by $s1%.
-    howl_of_the_pack = {
-        id = 462515,
-        duration = 8.0,
-        max_stack = 3,
+    -- Keep an eye out for what SIMC labels all these auras, be ready to change the names
+    howl_of_the_pack_leader_cooldown = {
+        id = 471877,
+        duration = function() return 30 - ( 5 * talent.better_together.rank ) end,
+        max_stack = 1,
+    },
+    howl_of_the_pack_leader_bear = {
+        id = 472325,
+        duration = function() return 30 - ( 5 * talent.better_together.rank ) end,
+        max_stack = 1,
+    },
+    howl_of_the_pack_leader_pig = {
+        id = 472324,
+        duration = function() return 30 - ( 5 * talent.better_together.rank ) end,
+        max_stack = 1,
+    },
+    howl_of_the_pack_leader_wyvern = {
+        id = 471878,
+        duration = function() return 30 - ( 5 * talent.better_together.rank ) end,
+        max_stack = 1,
     },
     -- The next hostile spell cast on the target will cause hostile spells for the next 3 sec. to be redirected to your pet. Your pet must be within 10 yards of the target for spells to be redirected.
     interlope = {
@@ -424,6 +440,17 @@ spec:RegisterAuras( {
         max_stack = 10,
         copy = 273286
     },
+    -- Damage taken from $@auracaster and their pets increased by $w1%.
+    lunar_storm = {
+        id = 450884,
+        duration = 8.0,
+        max_stack = 1,
+    },
+    lunar_storm_cooldown = {
+        id = 451803,
+        duration = 30,
+        max_stack = 1,
+    },
     masters_call = {
         id = 54216,
         duration = 4,
@@ -436,9 +463,18 @@ spec:RegisterAuras( {
         duration = 3600,
         max_stack = 1,
     },
-    -- Your next Raptor Strike or Mongoose Bite hits $s1 targets.
+    -- Butchery Version
     merciless_blows = {
         id = 459870,
+        duration = 8,
+        tick_time = 1,
+        mechanic = "bleed",
+        type = "melee",
+        max_stack = 1,
+    },
+    -- Flanking Strike Version
+    merciless_blow = {
+        id = 1217375,
         duration = 8,
         tick_time = 1,
         mechanic = "bleed",
@@ -477,12 +513,6 @@ spec:RegisterAuras( {
         duration = 3600,
         tick_time = 1.0,
         max_stack = 1,
-    },
-
-    pack_coordination = {
-        id = 445695,
-        duration = 20,
-        max_stack = 2,
     },
 
     pathfinding = {
@@ -597,14 +627,14 @@ spec:RegisterAuras( {
         duration = 3600,
         max_stack = 1,
     },
-    vicious_hunt = {
-        id = 431917,
-        duration = 20,
-        max_stack = function() return talent.pack_assault.enabled and 2 or 1 end,
-    },
     -- Call in help from one of your dismissed Cunning pets for 10 sec. Your current pet is dismissed to rest and heal 30% of maximum health.
     wild_kingdom = {
         id = 356707,
+    },
+    wildfire_arsenal = {
+        id = 1223701,
+        duration = 12,
+        max_stack = 3
     },
     -- Talent: Suffering $w1 Fire damage every $t1 sec.
     -- https://wowhead.com/beta/spell=269747
@@ -668,6 +698,80 @@ spec:RegisterAuras( {
     }
 } )
 
+-- Pets
+spec:RegisterPets({
+    -- Howl of the Pack Leader
+    wyvern = {
+        id = 234170,
+        spell = "kill_command",
+        duration = 15,
+    },
+    --[[ Not yet detectable in combatlogs?
+    boar = {
+
+    },
+    bear = {
+
+    }--]]
+} )
+
+local pack_leader__buff_cycle = {
+    "howl_of_the_pack_leader_wyvern",
+    "howl_of_the_pack_leader_pig",
+    "howl_of_the_pack_leader_bear",
+}
+
+local pack_leader_buff_current = 1
+
+local HowlOfThePackLeaderHandler = setfenv( function( isCoordinatedAssault )
+    -- Track the number of summons triggered.
+    local summonCount = 0
+
+    if isCoordinatedAssault then
+        -- Scenario 1: Coordinated Assault grants the next buff without triggering summons.
+        applyBuff( pack_leader__buff_cycle[ pack_leader_buff_current ] )
+        pack_leader_buff_current = ( pack_leader_buff_current % #pack_leader__buff_cycle ) + 1 -- Advance to the next buff.
+        -- No cooldown reduction happens here.
+        applyBuff( "lead_from_the_front" )
+    else
+        -- Scenario 2: Triggered by Kill Command (summoning is possible).
+        if buff.howl_of_the_pack_leader_cooldown.up then
+            -- Scenario 2A: Cooldown buff is active.
+            -- Consume all active buffs (summoning them) and reduce the cooldown buff.
+            for _, buffName in ipairs( pack_leader__buff_cycle ) do
+                if buff[ buffName ].up then
+                    removeBuff( buffName )
+                    summonCount = summonCount + 1
+                    -- Refresh Mongoose Fury if summoning the pig.
+                    if buffName == "howl_of_the_pack_leader_pig" and talent.hogstrider.enabled then
+                        applyBuff( "mongoose_fury", spec.auras.mongoose_fury.duration, buff.mongoose_fury.stack )
+                    end
+                end
+            end
+            if talent.dire_summons.enabled then 
+                reduceCooldown( "howl_of_the_pack_leader", 1 )
+            end
+        else
+            -- Scenario 2B: Cooldown buff is not active.
+            -- Consume all active buffs (summoning them) and apply a new cooldown buff.
+            for _, buffName in ipairs( pack_leader__buff_cycle ) do
+                if buff[ buffName ].up then
+                    removeBuff( buffName )
+                    summonCount = summonCount + 1
+                    -- Refresh Mongoose Fury if summoning the pig.
+                    if buffName == "howl_of_the_pack_leader_pig" and talent.hogstrider.enabled then
+                        applyBuff( "mongoose_fury", spec.auras.mongoose_fury.duration, buff.mongoose_fury.stack )
+                    end
+                end
+            end
+            applyBuff( "howl_of_the_pack_leader_cooldown" )
+        end
+        -- Apply the Wildfire Bomb cooldown reduction based on the number of summons.
+        if talent.pack_mentality.enabled then reduceCooldown( "wildfire_bomb", 10 * summonCount ) end
+        if summonCount > 0 then addStack( "tip_of_the_spear" ) end
+    end
+end, state )
+
 
 spec:RegisterHook( "runHandler", function( action, pool )
     if buff.camouflage.up and action ~= "camouflage" then removeBuff( "camouflage" ) end
@@ -702,25 +806,45 @@ end, state )
 
 
 local TriggerBombardier = setfenv( function()
-    setCooldown( "explosive_shot", 0 )
+    setCooldown( "explosive_shot", 1 ) -- There is a slight delay before you actually get it
     applyBuff( "bombardier", nil, 2 )
 end, state )
 
+-- The War Within
+spec:RegisterGear( "tww2", 229271, 229272, 229274, 229270, 229273 )
+spec:RegisterAuras( {
+    -- 2-set
+    -- https://www.wowhead.com/spell=1216874
+    -- Winning Streak! Wildfire Bomb damage increased by 6%.  
+    winning_streak = {
+        id = 1216874,
+        duration = 30,
+        max_stack = 6,
+    },
+    -- 4-set
+    -- https://www.wowhead.com/spell=1216879
+    -- Generous Tip Kill Command damage increased by 200% and Kill Command grants 3 stacks of Tip of the Spear.  
+    strike_it_rich = {
+        id = 1216879,
+        duration = 12,
+        max_stack = 1,
+    },
 
+} )
+
+-- Dragonflight
 spec:RegisterGear( "tier29", 200390, 200392, 200387, 200389, 200391, 217183, 217185, 217181, 217182, 217184 )
 spec:RegisterAura( "bestial_barrage", {
     id = 394388,
     duration = 15,
     max_stack = 1
 } )
-
 spec:RegisterGear( "tier30", 202482, 202480, 202479, 202478, 202477 )
 spec:RegisterAura( "shredded_armor", {
     id = 410167,
     duration = 8,
     max_stack = 1
 } )
-
 spec:RegisterGear( "tier31", 207216, 207217, 207218, 207219, 207221 )
 spec:RegisterAuras( {
     fury_strikes = {
@@ -737,14 +861,17 @@ spec:RegisterAuras( {
 
 
 
-local lunar_storm_expires = 0
-
 spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _, _, destGUID, destName, destFlags, _, spellID, spellName )
-
-    if sourceGUID == state.GUID then
-        if ( subtype == "SPELL_AURA_APPLIED" or subtype == "SPELL_AURA_REFRESH" or subtype == "SPELL_AURA_APPLIED_DOSE" ) then
-            if spellID == 450978 then
-                lunar_storm_expires = GetTime() + 13.7
+    if sourceGUID == GUID then
+        -- Keep the cycle synced to real game data if we lose it somehow
+        if subtype == "SPELL_AURA_APPLIED" or subtype == "SPELL_AURA_REFRESH" then
+            -- Check if one of the summon buffs is applied and sync the index.
+            for index, buffName in ipairs( pack_leader__buff_cycle ) do
+                if spellID == spec.auras[ buffName ].id then
+                    -- Align the cycle to the buff AFTER the currently applied one.
+                    pack_leader_buff_current = ( index % #pack_leader__buff_cycle ) + 1
+                    break
+                end
             end
         end
     end
@@ -769,8 +896,6 @@ spec:RegisterHook( "reset_precast", function()
     end
 
     if now - action.resonating_arrow.lastCast < 6 then applyBuff( "resonating_arrow", 10 - ( now - action.resonating_arrow.lastCast ) ) end
-
-    if lunar_storm_expires > query_time then setCooldown( "lunar_storm", lunar_storm_expires - query_time ) end
 
     if buff.coordinated_assault.up and talent.relentless_primal_ferocity.enabled then
         applyBuff( "relentless_primal_ferocity", buff.coordinated_assault.remains )
@@ -919,11 +1044,11 @@ spec:RegisterAbilities( {
             if talent.scattered_prey.enabled then applyBuff( "scattered_prey" ) end
             removeStack( "tip_of_the_spear" )
 
-            if talent.frenzy_strikes.enabled then
+            --[[if talent.frenzy_strikes.enabled then
                 gainChargeTime( "wildfire_bomb", min( 5, true_active_enemies ) * 3 )
-            end
+            end--]]
 
-            if talent.merciless_blows.enabled then applyDebuff( "target", "merciless_blows" ) end
+            if talent.merciless_blow.enabled then applyDebuff( "target", "merciless_blows" ) end
 
             -- Legacy / PvP Stuff
             if set_bonus.tier31_2pc > 0 then removeBuff( "bestial_barrage" ) end
@@ -963,13 +1088,18 @@ spec:RegisterAbilities( {
         toggle = "cooldowns",
 
         handler = function ()
+            -- Standard effects / talents
             applyBuff( "coordinated_assault" )
             if talent.bombardier.enabled then
-                setCooldown( "wildfire_bomb", 0 )
+                gainCharges( "wildfire_bomb", 1 )
             end
             if talent.relentless_primal_ferocity.enabled then
                 applyBuff( "relentless_primal_ferocity", buff.coordinated_assault.remains )
             end
+            if talent.wildfire_arsenal.enabled then addStack( "wildfire_arsenal", nil, 3 ) end
+
+            -- Hero Talents
+            if talent.lead_from_the_front.enabled then HowlOfThePackLeaderHandler( true ) end
         end,
     },
 
@@ -1015,6 +1145,7 @@ spec:RegisterAbilities( {
 
         handler = function()
             addStack( "tip_of_the_spear" )
+            if talent.merciless_blow.enabled then applyDebuff( "target", "merciless_blow" ) end
         end,
     },
 
@@ -1097,14 +1228,7 @@ spec:RegisterAbilities( {
         handler = function ()
             removeBuff( "deadly_duo" )
 
-            if talent.vicious_hunt.enabled then
-                if buff.vicious_hunt.down then
-                    addStack( "vicious_hunt", 20, talent.pack_assault.enabled and 2 or 1 )
-                else
-                    removeStack( "vicious_hunt" )
-                    if talent.pack_coordination.enabled then addStack( "pack_coordination", 20, talent.pack_assault.enabled and 2 or 1) end
-                end
-            end
+            if talent.howl_of_the_pack_leader.enabled then HowlOfThePackLeaderHandler( false ) end
             
             if buff.sulfurlined_pockets_ready.up then
                 buff.sulfurlined_pockets_ready.v1 = 259489
@@ -1119,7 +1243,7 @@ spec:RegisterAbilities( {
             end
 
             if talent.tip_of_the_spear.enabled then
-                addStack( "tip_of_the_spear", nil, talent.relentless_primal_ferocity.enabled and buff.coordinated_assault.up and 3 or buff.exposed_flank.up and max( 3, true_active_enemies ) or 1 )
+                addStack( "tip_of_the_spear", nil, talent.relentless_primal_ferocity.enabled and buff.coordinated_assault.up and 3 or 1 )
             end
 
             if talent.wildfire_infusion.enabled then
@@ -1156,9 +1280,25 @@ spec:RegisterAbilities( {
         handler = function ()
             removeStack ( "tip_of_the_spear" )
             removeBuff( "deathblow" )
+            if talent.cull_the_herd.enabled then applyDebuff( "target", "cull_the_herd" ) end
         end,
     },
+    howl_of_the_pack_leader = {
+        cast = 0,
+        cooldown = function() return 30 - ( 5 * talent.better_together.rank ) end,
+        gcd = "off",
+        hidden = true,
+        handler = function ()
 
+        end,
+    },
+    lunar_storm = {
+        cast = 0,
+        cooldown = 30,
+        gcd = "off",
+        hidden = true,
+        readyTime = function() return buff.lunar_storm_cooldown.remains end,
+    },
     masters_call = {
         id = 272682,
         cast = 0,
@@ -1178,7 +1318,7 @@ spec:RegisterAbilities( {
     misdirection = {
         id = 34477,
         cast = 0,
-        cooldown = 30,
+        cooldown = function() return 30 - ( 5 * talent.no_hard_feelings.rank ) end,
         gcd = "off",
         school = "physical",
 
@@ -1200,7 +1340,6 @@ spec:RegisterAbilities( {
         school = "physical",
 
         spend = function()
-            if buff.furious_assault.up then return 0 end
             return 30 - ( buff.bestial_barrage.up and 10 or 0 )
         end,
         spendType = "focus",
@@ -1230,7 +1369,6 @@ spec:RegisterAbilities( {
         school = "physical",
 
         spend = function()
-            if buff.furious_assault.up then return 0 end
             return 30 - ( buff.bestial_barrage.up and 10 or 0 )
         end,
         spendType = "focus",
@@ -1244,15 +1382,18 @@ spec:RegisterAbilities( {
         notalent = "mongoose_bite",
 
         handler = function ()
+            if buff.strike_it_rich.up then
+                removeBuff( "generous_tip" )
+                reduceCooldown( "wildfire_bomb", 10 )
+            end
 
-            if buff.furious_assault.up then removeBuff( "furious_assault" ) end
+            if talent.dire_summons.enabled then reduceCooldown( "howl_of_the_pack_leader", 1 ) end
+
             removeStack( "tip_of_the_spear" )
-
-            if talent.pack_coordination.enabled then removeStack( "pack_coordination" ) end
 
             if talent.vipers_venom.enabled then
                 if talent.contagious_reagents.enabled and debuff.serpent_sting.up then
-                    active_dot.serpent_sting = min( true_active_enemies, active_dot.serpent_sting + 2 )
+                    active_dot.serpent_sting = min( true_active_enemies, active_dot.serpent_sting + 4 )
                 end
                 applyDebuff( "target", "serpent_sting" )
             end
@@ -1322,14 +1463,15 @@ spec:RegisterAbilities( {
                 gainCharges( 1, "wildfire_bomb" )
             end
             if talent.lunar_storm.enabled and cooldown.lunar_storm.ready then
-                setCooldown( "lunar_storm", 13.7 )
                 applyDebuff( "target", "lunar_storm" )
+                applyBuff( "lunar_storm_cooldown" )
             end
         end,
 
         impact = function ()
             applyDebuff( "target", "wildfire_bomb_dot" )
             removeStack ( "tip_of_the_spear" )
+            removeBuff( "wildfire_arsenal" )
         end,
 
         impactSpell = "wildfire_bomb",
