@@ -1,5 +1,5 @@
 -- State.lua
--- July 2024
+-- January 2025
 
 local addon, ns = ...
 local Hekili = _G[ addon ]
@@ -7498,6 +7498,18 @@ function state:TimeToReady( action, pool )
     -- Need to ignore the wait for this part.
     local wait = self.cooldown[ action ].remains
     local ability = class.abilities[ action ]
+
+    -- the addon knows that it will become available on the next GCD due to a guaranteed buff/proc
+    if ability.timeToReadyOverride then
+        local override = ability.timeToReadyOverride
+        if override ~= nil then
+            override = max( override, self.cooldown.global_cooldown.remains )
+            if Hekili.ActiveDebug then
+                Hekili:Debug( "%s has a timeToReadyOverride. Returning %.2f.", action, override )
+            end
+            return max( override, self.delayMin )
+        end
+    end
 
     -- Working variable.
     local z = ability.id
