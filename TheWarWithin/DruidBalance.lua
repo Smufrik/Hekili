@@ -395,21 +395,15 @@ spec:RegisterAuras( {
     -- https://wowhead.com/beta/spell=48518
     eclipse_lunar = {
         id = 48518,
-        duration = 15,
+        duration = 16,
         max_stack = 1,
-        meta = {
-            empowered = function( t ) return t.up and t.empowerTime >= t.applied end,
-        }
     },
     -- Nature spells deal $w1% additional damage$?<$w5>0>[, Astral Power generation increased $w5%,][] and Wrath's damage is increased by $w2%.
     -- https://wowhead.com/beta/spell=48517
     eclipse_solar = {
         id = 48517,
-        duration = 15,
+        duration = 16,
         max_stack = 1,
-        meta = {
-            empowered = function( t ) return t.up and t.empowerTime >= t.applied end,
-        }
     },
     -- Rooted.$?<$w2>0>[ Suffering $w2 Nature damage every $t2 sec.][]
     -- https://wowhead.com/beta/spell=339
@@ -1011,7 +1005,6 @@ spec:RegisterAuras( {
     },
 } )
 
-
 -- Adaptive Swarm Stuff
 do
     local applications = {
@@ -1336,7 +1329,6 @@ spec:RegisterStateFunction( "break_stealth", function ()
     end
 end )
 
-
 -- Function to remove any form currently active.
 spec:RegisterStateFunction( "unshift", function()
     if conduit.tireless_pursuit.enabled and ( buff.cat_form.up or buff.travel_form.up ) then applyBuff( "tireless_pursuit" ) end
@@ -1355,7 +1347,6 @@ spec:RegisterStateFunction( "unshift", function()
         applyDebuff( "player", "oath_of_the_elder_druid_icd" )
     end
 end )
-
 
 local affinities = {
     bear_form = "guardian_affinity",
@@ -1386,15 +1377,6 @@ spec:RegisterStateFunction( "shift", function( form )
     end
 end )
 
-
-spec:RegisterStateExpr( "lunar_eclipse", function ()
-    return 0
-end )
-
-spec:RegisterStateExpr( "solar_eclipse", function ()
-    return 0
-end )
-
 spec:RegisterStateExpr( "energize_amount", function ()
     local ability = class.abilities[ this_action ]
     local amount = ability and ability.energize_amount
@@ -1402,7 +1384,6 @@ spec:RegisterStateExpr( "energize_amount", function ()
     if not amount then return 0 end
     return -amount
 end )
-
 
 spec:RegisterHook( "runHandler", function( ability )
     local a = class.abilities[ ability ]
@@ -1435,7 +1416,6 @@ spec:RegisterHook( "prespend", function( amt, resource, overcap, clean )
     end
 end )
 
-
 local check_for_ap_overcap = setfenv( function( ability )
     local a = ability or this_action
     if not a then return true end
@@ -1462,7 +1442,6 @@ for i, lookup in ipairs( ap_checks ) do
     end )
 end
 
-
 spec:RegisterStateExpr( "active_moon", function ()
     return "new_moon"
 end )
@@ -1477,178 +1456,111 @@ end
 
 state.IsActiveSpell = IsActiveSpell
 
-local ExpireCelestialAlignment = setfenv( function()
-    eclipse.state = "ANY_NEXT"
+local ExitEclipse = setfenv( function()
+    eclipse.state = "IN_NONE"
     eclipse.reset_stacks()
-    if buff.eclipse_lunar.down then removeBuff( "starsurge_empowerment_lunar" ) end
-    if buff.eclipse_solar.down then removeBuff( "starsurge_empowerment_solar" ) end
-    if set_bonus.tier31_2pc > 0 then applyBuff( "dreamstate", nil, 2 ) end
-    if set_bonus.tier31_4pc > 0 then
-        removeBuff( "balance_t31_4pc_buff_lunar" )
-        removeBuff( "balance_t31_4pc_buff_solar" )
-    end
-    if Hekili.ActiveDebug then Hekili:Debug( "Expire CA_Inc: %s - Starfire(%d), Wrath(%d), Solar(%.2f), Lunar(%.2f)", eclipse.state, eclipse.starfire_counter, eclipse.wrath_counter, buff.eclipse_solar.remains, buff.eclipse_lunar.remains ) end
-end, state )
-
-local ExpireEclipseLunar = setfenv( function()
-    eclipse.state = "ANY_NEXT"
-    eclipse.reset_stacks()
-    removeBuff( "starsurge_empowerment_lunar" )
-    if set_bonus.tier31_2pc > 0 then applyBuff( "dreamstate", nil, 2 ) end
-    if set_bonus.tier31_4pc > 0 then
-        removeBuff( "balance_t31_4pc_buff_lunar" )
-    end
-    if Hekili.ActiveDebug then Hekili:Debug( "Expire Lunar: %s - Starfire(%d), Wrath(%d), Solar(%.2f), Lunar(%.2f)", eclipse.state, eclipse.starfire_counter, eclipse.wrath_counter, buff.eclipse_solar.remains, buff.eclipse_lunar.remains ) end
-end, state )
-
-local ExpireEclipseSolar = setfenv( function()
-    eclipse.state = "ANY_NEXT"
-    eclipse.reset_stacks()
-    removeBuff( "starsurge_empowerment_solar" )
-    if set_bonus.tier31_2pc > 0 then applyBuff( "dreamstate", nil, 2 ) end
-    if set_bonus.tier31_4pc > 0 then
-        removeBuff( "balance_t31_4pc_buff_solar" )
-    end
-    if Hekili.ActiveDebug then Hekili:Debug( "Expire Solar: %s - Starfire(%d), Wrath(%d), Solar(%.2f), Lunar(%.2f)", eclipse.state, eclipse.starfire_counter, eclipse.wrath_counter, buff.eclipse_solar.remains, buff.eclipse_lunar.remains ) end
+    if talent.dreamstate.enabled then applyBuff( "dreamstate", nil, 2 ) end
+    if Hekili.ActiveDebug then Hekili:Debug( "Expire Eclipse: %s - Starfire(%d), Wrath(%d), Solar(%.2f), Lunar(%.2f)", eclipse.state, eclipse.starfire_counter, eclipse.wrath_counter, buff.eclipse_solar.remains, buff.eclipse_lunar.remains ) end
 end, state )
 
 spec:RegisterStateTable( "eclipse", setmetatable( {
-    -- ANY_NEXT, IN_SOLAR, IN_LUNAR, IN_BOTH, SOLAR_NEXT, LUNAR_NEXT
-    state = "ANY_NEXT",
+    -- IN_SOLAR, IN_LUNAR, IN_BOTH, IN_NONE
+    state = "IN_NONE",
     wrath_counter = 2,
-    starfire_counter = 2,
+    starfire_counter = talent.lunar_calling.enabled and 0 or 2, -- With the talent, the starfire counter API call is hard-set to return 0 and cannot be changed
 
     reset = setfenv( function()
+        -- Refresh/sync current gamestate during reset_precast
         eclipse.starfire_counter = GetSpellCount( 197628 ) or 0
         eclipse.wrath_counter    = GetSpellCount(   5176 ) or 0
 
         if buff.eclipse_solar.up and buff.eclipse_lunar.up then
             eclipse.state = "IN_BOTH"
-            state:QueueAuraExpiration( "ca_inc", ExpireCelestialAlignment, buff.ca_inc.expires )
+            state:QueueAuraExpiration( "ca_inc", ExitEclipse, buff.ca_inc.expires )
         elseif buff.eclipse_solar.up then
             eclipse.state = "IN_SOLAR"
-            state:QueueAuraExpiration( "eclipse_solar", ExpireEclipseSolar, buff.eclipse_solar.expires )
+            state:QueueAuraExpiration( "eclipse_solar", ExitEclipse, buff.eclipse_solar.expires )
         elseif buff.eclipse_lunar.up then
             eclipse.state = "IN_LUNAR"
-            state:QueueAuraExpiration( "eclipse_lunar", ExpireEclipseLunar, buff.eclipse_lunar.expires )
+            state:QueueAuraExpiration( "eclipse_lunar", ExitEclipse, buff.eclipse_lunar.expires )
         else
-            eclipse.state = "ANY_NEXT"
-            if eclipse.starfire_counter == 0 and eclipse.wrath_counter == 0 then
-                if Hekili.ActiveDebug then Hekili:Debug( "Resetting from %d / %d to ANY_NEXT.", eclipse.starfire_counter, eclipse.wrath_counter ) end
-                eclipse.reset_stacks()
-            end
+            eclipse.state = "IN_NONE"
         end
-
-        buff.eclipse_solar.empowerTime = 0
-        buff.eclipse_lunar.empowerTime = 0
-
-        if buff.eclipse_solar.up and action.starsurge.lastCast > buff.eclipse_solar.applied then buff.eclipse_solar.empowerTime = action.starsurge.lastCast end
-        if buff.eclipse_lunar.up and action.starsurge.lastCast > buff.eclipse_lunar.applied then buff.eclipse_lunar.empowerTime = action.starsurge.lastCast end
     end, state ),
 
     reset_stacks = setfenv( function()
+        -- Fresh out of any eclipse
         eclipse.wrath_counter = 2
-        eclipse.starfire_counter = 2
+        eclipse.starfire_counter = talent.lunar_calling.enabled and 0 or 2
     end, state ),
 
-    trigger_both = setfenv( function( duration )
-        eclipse.state = "IN_BOTH"
-        eclipse.reset_stacks()
+    trigger_eclipse = setfenv( function( eclipseType, duration )
+        -- Both are forcibly set to 0 in-game when you enter any eclipse (or both)
+        eclipse.wrath_counter = 0
+        eclipse.starfire_counter = 0
+        -- Clear out any old aura queues and overwrite them down below. This might matter as eclipses do not currently extend, they overwrite with a fresh copy
+        state:RemoveAuraExpiration( "eclipse_lunar" )
+        state:RemoveAuraExpiration( "eclipse_solar" )
+        state:RemoveAuraExpiration( "ca_inc" )
+        local partingSkies = 1
+        -- These interactions, it matters which type of eclipse
+        if eclipseType == "both" then
+            eclipse.state = "IN_BOTH"
+            applyBuff( "eclipse_solar", duration )
+            applyBuff( "eclipse_lunar", duration )
+            state:QueueAuraExpiration( "ca_inc", ExitEclipse, buff.ca_inc.expires )
+            if talent.balance_of_all_things.enabled then
+                applyBuff( "balance_of_all_things_nature" )
+                applyBuff( "balance_of_all_things_arcane" )
+            end
+            partingSkies = 2 -- overwrite to 2 if its a double eclipse
+        elseif eclipseType == "lunar" then
+            eclipse.state = "IN_LUNAR"
+            applyBuff( "eclipse_lunar", duration )
+            state:QueueAuraExpiration( "eclipse_lunar", ExitEclipse, buff.eclipse_solar.expires )
+            if talent.balance_of_all_things.enabled then applyBuff( "balance_of_all_things_arcane" ) end
+        else
+            eclipse.state = "IN_SOLAR"
+            applyBuff( "eclipse_solar", duration )
+            state:QueueAuraExpiration( "eclipse_solar", ExitEclipse, buff.eclipse_solar.expires )
+            if talent.balance_of_all_things.enabled then applyBuff( "balance_of_all_things_nature" ) end
+        end
 
+        -- There interactions happen regardless of eclipse type
+        if talent.astral_communion.enabled then applyBuff( "astral_communion" ) end
+        if talent.solstice.enabled then applyBuff( "solstice" ) end
+        if talent.cenarius_might.enabled then applyBuff( "cenarius_might" ) end
+        if talent.parting_skies.enabled then
+            if partingSkies == 2 then -- Trigger spell. If buff is up, refresh it
+                applyDebuff( "target", "fury_of_elune", 8 )
+                applyBuff( "fury_of_elune_ap", 8 )
+                if buff.parting_skies.up then
+                    buff.parting_skies.remains = spec.auras.parting_skies.duration
+                end
+            else
+                if buff.parting_skies.up then
+                    removeBuff( "parting_skies" )
+                    applyDebuff( "target", "fury_of_elune", 8 )
+                    applyBuff( "fury_of_elune_ap", 8 )
+                else applyBuff( "parting_skies" )
+                end
+            end
+        end
+        -- Legacy
         if set_bonus.tier29_4pc > 0 then applyBuff( "touch_the_cosmos" ) end
 
-        if legendary.balance_of_all_things.enabled then
-            applyBuff( "balance_of_all_things_arcane", nil, 8, 8 )
-            applyBuff( "balance_of_all_things_nature", nil, 8, 8 )
-        end
-
-        if talent.solstice.enabled then applyBuff( "solstice" ) end
-
-        removeBuff( "starsurge_empowerment_lunar" )
-        removeBuff( "starsurge_empowerment_solar" )
-
-        applyBuff( "eclipse_lunar", ( duration or class.auras.eclipse_lunar.duration ) + buff.eclipse_lunar.remains )
-        if set_bonus.tier29_2pc > 0 then applyBuff( "celestial_infusion" ) end
-        applyBuff( "eclipse_solar", ( duration or class.auras.eclipse_solar.duration ) + buff.eclipse_solar.remains )
-
-        if talent.astral_communion.enabled then applyBuff( "astral_communion" ) end
-
-        if buff.parting_skies.up then
-            removeBuff( "parting_skies" )
-            applyDebuff( "target", "fury_of_elune", 8 )
-            applyBuff( "fury_of_elune_ap", 8 )
-        elseif talent.parting_skies.enabled then
-            applyBuff( "parting_skies" )
-        end
-
-        state:QueueAuraExpiration( "ca_inc", ExpireCelestialAlignment, buff.ca_inc.expires )
-        state:RemoveAuraExpiration( "eclipse_solar" )
-        state:QueueAuraExpiration( "eclipse_solar", ExpireEclipseSolar, buff.eclipse_solar.expires )
-        state:RemoveAuraExpiration( "eclipse_lunar" )
-        state:QueueAuraExpiration( "eclipse_lunar", ExpireEclipseLunar, buff.eclipse_lunar.expires )
     end, state ),
 
-    advance = setfenv( function()
-        if Hekili.ActiveDebug then Hekili:Debug( "Eclipse Advance (Pre): %s - Starfire(%d), Wrath(%d), Solar(%.2f), Lunar(%.2f)", eclipse.state, eclipse.starfire_counter, eclipse.wrath_counter, buff.eclipse_solar.remains, buff.eclipse_lunar.remains ) end
-
-        if not ( eclipse.state == "IN_SOLAR" or eclipse.state == "IN_LUNAR" or eclipse.state == "IN_BOTH" ) then
-            local initial = eclipse.state
-
-            if eclipse.starfire_counter == 0 and ( initial == "SOLAR_NEXT" or initial == "ANY_NEXT" ) then
-                applyBuff( "eclipse_solar", class.auras.eclipse_solar.duration + buff.eclipse_solar.remains )
-                if set_bonus.tier29_4pc > 0 then applyBuff( "touch_the_cosmos" ) end
-                state:RemoveAuraExpiration( "eclipse_solar" )
-                state:QueueAuraExpiration( "eclipse_solar", ExpireEclipseSolar, buff.eclipse_solar.expires )
-                if talent.astral_communion.enabled then applyBuff( "astral_communion" ) end
-                if talent.solstice.enabled then applyBuff( "solstice" ) end
-                if legendary.balance_of_all_things.enabled then applyBuff( "balance_of_all_things_nature", nil, 5, 8 ) end
-                eclipse.state = "IN_SOLAR"
-                if buff.parting_skies.up then
-                    removeBuff( "parting_skies" )
-                    applyDebuff( "target", "fury_of_elune", 8 )
-                    applyBuff( "fury_of_elune_ap", 8 )
-                elseif talent.parting_skies.enabled then
-                    applyBuff( "parting_skies" )
-                end
-            end
-
-            if eclipse.wrath_counter == 0 and ( initial == "LUNAR_NEXT" or initial == "ANY_NEXT" ) then
-                applyBuff( "eclipse_lunar", class.auras.eclipse_lunar.duration + buff.eclipse_lunar.remains )
-                if set_bonus.tier29_4pc > 0 then applyBuff( "touch_the_cosmos" ) end
-                state:RemoveAuraExpiration( "eclipse_lunar" )
-                state:QueueAuraExpiration( "eclipse_lunar", ExpireEclipseLunar, buff.eclipse_lunar.expires )
-                if talent.astral_communion.enabled then applyBuff( "astral_communion" ) end
-                if talent.solstice.enabled then applyBuff( "solstice" ) end
-                if legendary.balance_of_all_things.enabled then applyBuff( "balance_of_all_things_nature", nil, 5, 8 ) end
-                eclipse.state = eclipse.state == "IN_SOLAR" and "IN_BOTH" or "IN_LUNAR"
-                if buff.parting_skies.up then
-                    removeBuff( "parting_skies" )
-                    applyDebuff( "target", "fury_of_elune", 8 )
-                    applyBuff( "fury_of_elune_ap", 8 )
-                elseif talent.parting_skies.enabled then
-                    applyBuff( "parting_skies" )
-                end
-            end
-
-            if eclipse.state ~= initial then
-                eclipse.starfire_counter = 0
-                eclipse.wrath_counter = 0
-            end
-        end
-
-        if Hekili.ActiveDebug then Hekili:Debug( "Eclipse Advance (Post): %s - Starfire(%d), Wrath(%d), Solar(%.2f), Lunar(%.2f)", eclipse.state, eclipse.starfire_counter, eclipse.wrath_counter, buff.eclipse_solar.remains, buff.eclipse_lunar.remains ) end
-
-    end, state )
 }, {
     __index = function( t, k )
         -- any_next
         if k == "any_next" then
-            return eclipse.state == "ANY_NEXT"
+            return eclipse.state == "IN_NONE"
         -- in_any
         elseif k == "in_any" then
-            return eclipse.state == "IN_SOLAR" or eclipse.state == "IN_LUNAR" or eclipse.state == "IN_BOTH"
+            return eclipse.state ~= "IN_NONE"
         elseif k == "in_none" then
-            return eclipse.state ~= "IN_SOLAR" and eclipse.state ~= "IN_LUNAR" and eclipse.state ~= "IN_BOTH"
+            return eclipse.state == "IN_NONE"
         -- in_solar
         elseif k == "in_solar" then
             return eclipse.state == "IN_SOLAR"
@@ -1658,9 +1570,6 @@ spec:RegisterStateTable( "eclipse", setmetatable( {
         -- in_both
         elseif k == "in_both" then
             return eclipse.state == "IN_BOTH"
-        -- solar_next
-        elseif k == "solar_next" then
-            return eclipse.state == "SOLAR_NEXT"
         -- solar_in
         elseif k == "solar_in" then
             return eclipse.starfire_counter
@@ -1670,9 +1579,6 @@ spec:RegisterStateTable( "eclipse", setmetatable( {
         -- solar_in_1
         elseif k == "solar_in_1" then
             return eclipse.starfire_counter == 1
-        -- lunar_next
-        elseif k == "lunar_next" then
-            return eclipse.state == "LUNAR_NEXT"
         -- lunar_in
         elseif k == "lunar_in" then
             return eclipse.wrath_counter
@@ -1742,7 +1648,6 @@ spec:RegisterHook( "reset_precast", function ()
         rawset( buff, "ca_inc", buff.celestial_alignment )
     end
 
-
     --[[ Needs more work
     if pet.treants.up then
         local tick, expires = action.force_of_nature.lastCast, pet.treants.expires
@@ -1764,7 +1669,7 @@ spec:RegisterHook( "reset_precast", function ()
         setCooldown( "warrior_of_elune", 3600 )
     end
 
-    eclipse.reset()
+    eclipse.reset() -- sync all eclipse components with gamestate
 
     --[[ if buff.lycaras_fleeting_glimpse.up then
         state:QueueAuraExpiration( "lycaras_fleeting_glimpse", LycarasHandler, buff.lycaras_fleeting_glimpse.expires )
@@ -1775,11 +1680,9 @@ spec:RegisterHook( "reset_precast", function ()
     end
 end )
 
-
 spec:RegisterHook( "step", function()
     if Hekili.ActiveDebug then Hekili:Debug( "Eclipse State: %s, Wrath: %d, Starfire: %d; Lunar: %.2f, Solar: %.2f\n", eclipse.state or "NOT SET", eclipse.wrath_counter, eclipse.starfire_counter, buff.eclipse_lunar.remains, buff.eclipse_solar.remains ) end
 end )
-
 
 spec:RegisterHook( "spend", function( amt, resource )
     if legendary.primordial_arcanic_pulsar.enabled and resource == "astral_power" and amt > 0 then
@@ -1798,7 +1701,6 @@ spec:RegisterHook( "spend", function( amt, resource )
         end
     end
 end )
-
 
 --Tww set
 spec:RegisterGear( "tww1", 212059, 212057, 212056, 212055, 212054 )
@@ -1832,14 +1734,7 @@ spec:RegisterAuras( {
         max_stack = 2,
         copy = 450346
     },
-    balance_t31_4pc_buff_lunar = {
-        duration = 3600,
-        max_stack = 5
-    },
-    balance_t31_4pc_buff_solar = {
-        duration = 3600,
-        max_stack = 5
-    }
+
 } )
 spec:RegisterHook( "runHandler_startCombat", function()
     if set_bonus.tier31_2pc > 0 then applyBuff( "dreamstate", nil, 2 ) end
@@ -1991,7 +1886,7 @@ spec:RegisterAbilities( {
             applyBuff( "celestial_alignment" )
             stat.haste = stat.haste + 0.1
 
-            eclipse.trigger_both( 20 )
+            eclipse.trigger_eclipse( "both", spec.auras.celestial_alignment.duration )
 
             if pvptalent.moon_and_stars.enabled then applyBuff( "moon_and_stars" ) end
         end,
@@ -2313,7 +2208,7 @@ spec:RegisterAbilities( {
             stat.crit = stat.crit + 0.10
             stat.haste = stat.haste + 0.10
 
-            eclipse.trigger_both( 20 )
+            eclipse.trigger_eclipse( "both", spec.auras.incarnation.duration )
 
             if pvptalent.moon_and_stars.enabled then applyBuff( "moon_and_stars" ) end
         end,
@@ -2865,10 +2760,12 @@ spec:RegisterAbilities( {
             if talent.natures_grace.enabled and buff.dreamstate.up then removeStack( "dreamstate" ) end
             if talent.dream_surge.enabled and buff.dream_burst.up then removeStack( "dream_burst" ) end
 
-            if not talent.lunar_calling.enabled and ( eclipse.state == "ANY_NEXT" or eclipse.state == "SOLAR_NEXT" ) then
-                eclipse.starfire_counter = eclipse.starfire_counter - 1
-                eclipse.advance()
-            end          
+
+            if eclipse.starfire_counter == 1 then
+                eclipse.trigger_eclipse( "solar", 15 )
+            elseif eclipse.starfire_counter == 2 then
+                eclipse.starfire_counter = 1
+            end
 
             if buff.blooming_infusion.up then
                 removeBuff( "blooming_infusion" )
@@ -2936,11 +2833,6 @@ spec:RegisterAbilities( {
                 end
             end
 
-            if set_bonus.tier31_4pc > 0 then
-                if buff.eclipse_lunar.up then addStack( "balance_t31_4pc_buff_lunar" ) end
-                if buff.eclipse_solar.up then addStack( "balance_t31_4pc_buff_solar" ) end
-            end
-
             if set_bonus.tier29_2pc > 0 then
                 addStack( "gathering_starstuff" )
             end
@@ -2968,59 +2860,6 @@ spec:RegisterAbilities( {
 
         copy = { 78674, 197626 },
 
-        auras = {
-            starsurge_empowerment_lunar = {
-                duration = 3600,
-                max_stack = 30,
-                generate = function( t )
-                    local last = action.starsurge.lastCast
-
-                    t.name = "Starsurge Empowerment (Lunar)"
-
-                    if eclipse.in_any then
-                        t.applied = last
-                        t.duration = buff.eclipse_lunar.expires - last
-                        t.expires = t.applied + t.duration
-                        t.count = 1
-                        t.caster = "player"
-                        return
-                    end
-
-                    t.applied = 0
-                    t.duration = 0
-                    t.expires = 0
-                    t.count = 0
-                    t.caster = "nobody"
-                end,
-                copy = "starsurge_lunar"
-            },
-
-            starsurge_empowerment_solar = {
-                duration = 3600,
-                max_stack = 30,
-                generate = function( t )
-                    local last = action.starsurge.lastCast
-
-                    t.name = "Starsurge Empowerment (Solar)"
-
-                    if eclipse.in_any then
-                        t.applied = last
-                        t.duration = buff.eclipse_solar.expires - last
-                        t.expires = t.applied + t.duration
-                        t.count = 1
-                        t.caster = "player"
-                        return
-                    end
-
-                    t.applied = 0
-                    t.duration = 0
-                    t.expires = 0
-                    t.count = 0
-                    t.caster = "nobody"
-                end,
-                copy = "starsurge_solar"
-            }
-        }
     },
 
     -- Talent: Burns the target for $s1 Astral damage, and then an additional $o2 damage over $d.    |cFFFFFFFFGenerates ${$m3/10} Astral Power.|r
@@ -3315,10 +3154,6 @@ spec:RegisterAbilities( {
         velocity = 20,
 
         impact = function ()
-            if state.spec.balance and ( eclipse.state == "ANY_NEXT" or eclipse.state == "LUNAR_NEXT" ) then
-                eclipse.wrath_counter = eclipse.wrath_counter - 1
-                eclipse.advance()
-            end
             if talent.dream_surge.enabled and buff.dream_burst.up then removeStack( "dream_burst" ) end
         end,
 
@@ -3333,9 +3168,10 @@ spec:RegisterAbilities( {
             removeBuff( "gathering_starstuff" )
             if talent.natures_grace.enabled and buff.dreamstate.up then removeStack( "dreamstate" ) end
 
-            if state.spec.balance and ( eclipse.state == "ANY_NEXT" or eclipse.state == "LUNAR_NEXT" ) then
-                eclipse.wrath_counter = eclipse.wrath_counter - 1
-                eclipse.advance()
+            if eclipse.wrath_counter == 1 then
+                eclipse.trigger_eclipse( "lunar", 15 )
+            elseif eclipse.wrath_counter == 2 then
+                eclipse.wrath_counter = 1
             end
 
             removeBuff( "dawning_sun" )
