@@ -454,6 +454,7 @@ spec:RegisterAuras( {
         max_stack = 3
     }
 } )
+spec:RegisterGear( "tww2", 229334, 229332, 229337, 229335, 229333 )
 
 -- Dragonflight
 spec:RegisterGear( "tier29", 200327, 200329, 200324, 200326, 200328 )
