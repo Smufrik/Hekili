@@ -1467,7 +1467,7 @@ spec:RegisterStateTable( "eclipse", setmetatable( {
     -- IN_SOLAR, IN_LUNAR, IN_BOTH, IN_NONE
     state = "IN_NONE",
     wrath_counter = 2,
-    starfire_counter = talent.lunar_calling.enabled and 0 or 2, -- With the talent, the starfire counter API call is hard-set to return 0 and cannot be changed
+    starfire_counter = state.talent.lunar_calling.enabled and 0 or 2, -- With the talent, the starfire counter API call is hard-set to return 0 and cannot be changed
 
     reset = setfenv( function()
         -- Refresh/sync current gamestate during reset_precast
