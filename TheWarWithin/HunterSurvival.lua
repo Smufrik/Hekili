@@ -726,10 +726,9 @@ spec:RegisterAuras( {
     },
     -- 4-set
     -- https://www.wowhead.com/spell=1216879
-    -- Generous Tip Kill Command damage increased by 200% and Kill Command grants 3 stacks of Tip of the Spear.  
     strike_it_rich = {
         id = 1216879,
-        duration = 12,
+        duration = 10,
         max_stack = 1,
     },
 
@@ -1380,7 +1379,7 @@ spec:RegisterAbilities( {
 
         handler = function ()
             if buff.strike_it_rich.up then
-                removeBuff( "generous_tip" )
+                removeBuff( "strike_it_rich" )
                 reduceCooldown( "wildfire_bomb", 10 )
             end
 
