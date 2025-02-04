@@ -1277,8 +1277,6 @@ spec:RegisterAura( "lethal_command", {
     max_stack = 1
 } )
 
-
-
 spec:RegisterStateExpr( "barbed_shot_grace_period", function ()
     return ( settings.barbed_shot_grace_period or 0 ) * gcd.max
 end )
@@ -1297,55 +1295,27 @@ local CallOfTheWildCDR = setfenv( function()
     if talent.withering_fire.enabled then applyBuff( "deathblow" ) end
 end, state )
 
-local pack_leader__buff_cycle = {
-    "howl_of_the_pack_leader_wyvern",
-    "howl_of_the_pack_leader_pig",
-    "howl_of_the_pack_leader_bear",
+local pack_leader_buff_cycle = {
+    "howl_of_the_pack_leader_wyvern_ready",
+    "howl_of_the_pack_leader_boar_ready",
+    "howl_of_the_pack_leader_bear_ready",
 }
 
-local pack_leader_buff_current = 1
+-- This variable represents the true index in the above table of the next buff that will be applied to you, whether by the natural cycle or by bestial wrath
+-- We don't need to virtually manage the current buff, as it is visible on the character. 
+-- But the next buff is technically "invisible", so this will allow us to have access to things such as a "time_to_next_boar", "next_summon", etc via expressions, if necessary depending on APLs
+-- The index should always initially start at "1" (Wyvern), and is also reset to 1 upon:
+  -- Aura Interrupt: Leave World (19), Enter World (22), Change Specialization (38), Raid Encounter Start or M+ Start (40), Raid Encounter End or M+ Start (41), Disconnect (42), Enter Instance (43), Leave Arena or Battleground (45), Change Talent (46), Encounter End (56)
+local PackLeaderBuffNextIndex = 1
 
-local HowlOfThePackLeaderHandler = setfenv( function( isBestialWrath )
-    -- Track the number of summons triggered.
-    local summonCount = 0
-
-    if isBestialWrath then
-        -- Scenario 1: Bestial Wrath grants the next buff without triggering summons.
-        applyBuff( pack_leader__buff_cycle[ pack_leader_buff_current ] )
-        pack_leader_buff_current = ( pack_leader_buff_current % #pack_leader__buff_cycle ) + 1 -- Advance to the next buff.
-        applyBuff( "lead_from_the_front" )
-    else
-        -- Scenario 2: Triggered by Kill Command (summoning is possible).
-        if buff.howl_of_the_pack_leader_cooldown.up then
-            -- Scenario 2A: Cooldown buff is active.
-            -- Consume all active buffs (summoning them) and reduce the cooldown buff.
-            for _, buffName in ipairs( pack_leader__buff_cycle ) do
-                if buff[ buffName ].up then
-                    removeBuff( buffName )
-                    summonCount = summonCount + 1
-                end
-            end
-            if talent.dire_summons.enabled then 
-                reduceCooldown( "howl_of_the_pack_leader", 1 )
-            end
-        else
-            -- Scenario 2B: Cooldown buff is not active.
-            -- Consume all active buffs (summoning them) and apply a new cooldown buff.
-            for _, buffName in ipairs( pack_leader__buff_cycle ) do
-                if buff[ buffName ].up then
-                    removeBuff( buffName )
-                    summonCount = summonCount + 1
-                end
-            end
-            applyBuff( "howl_of_the_pack_leader_cooldown" )
-        end
-
-        -- Apply the Barbed Shot cooldown reduction based on the number of summons.
-        if talent.pack_mentality.enabled then reduceCooldown( "barbed_shot", 10 * summonCount ) end
-    end
-end, state )
+spec:RegisterStateExpr( "pack_leader_buff_next_index", function()
+    return PackLeaderBuffNextIndex
+end )
 
 spec:RegisterHook( "reset_precast", function()
+
+    pack_leader_buff_next_index = nil
+
     if debuff.tar_trap.up then
         debuff.tar_trap.expires = debuff.tar_trap.applied + 30
     end
@@ -1358,7 +1328,6 @@ spec:RegisterHook( "reset_precast", function()
 
     if buff.call_of_the_wild.up then
         local tick, expires = buff.call_of_the_wild.applied, buff.call_of_the_wild.expires
-
         for i = 1, 5 do
             tick = tick + 4
             if tick > query_time and tick < expires then
@@ -1366,10 +1335,9 @@ spec:RegisterHook( "reset_precast", function()
             end
         end
     end
-
     if covenant.kyrian and now - action.resonating_arrow.lastCast < 6 then applyBuff( "resonating_arrow", 10 - ( now - action.resonating_arrow.lastCast ) ) end
-
     if barbed_shot_grace_period > 0 and cooldown.barbed_shot.remains > 0 then reduceCooldown( "barbed_shot", barbed_shot_grace_period ) end
+
 end )
 
 local trapUnits = { "target", "focus" }
@@ -1391,13 +1359,12 @@ end
 
 spec:RegisterHook( "COMBAT_LOG_EVENT_UNFILTERED", function( _, subtype, _, sourceGUID, sourceName, _, _, destGUID, destName, destFlags, _, spellID, spellName )
     if sourceGUID == GUID then
-        -- Keep the cycle synced to real game data if we lose it somehow
         if subtype == "SPELL_AURA_APPLIED" or subtype == "SPELL_AURA_REFRESH" then
-            -- Check if one of the summon buffs is applied and sync the index.
-            for index, buffName in ipairs( pack_leader__buff_cycle ) do
-                if spellID == spec.auras[ buffName ].id then
-                    -- Align the cycle to the buff AFTER the currently applied one.
-                    pack_leader_buff_current = ( index % #pack_leader__buff_cycle ) + 1
+            -- Detect REAL cycle events and update the index accordingly
+            for index, buffName in ipairs( pack_leader_buff_cycle ) do
+                local aura = spec.auras[ buffName ]  -- Safely store the aura reference
+                if aura and spellID == aura.id then  -- Ensure it's a valid aura before using it
+                    PackLeaderBuffNextIndex = ( index % #pack_leader_buff_cycle) + 1
                     break
                 end
             end
@@ -1422,6 +1389,46 @@ spec:RegisterStateTable( "tar_trap", setmetatable( {}, {
         return state.debuff.tar_trap[ k ]
     end
 } ) )
+
+local HowlOfThePackLeaderHandler = setfenv( function( isBestialWrath )
+    -- Track the number of summons triggered for CDR purposes
+    local summonCount = 0
+
+    if isBestialWrath then
+        -- Scenario 1: Bestial Wrath grants the next buff without triggering summons.
+        applyBuff( pack_leader_buff_cycle[ pack_leader_buff_next_index ] )
+        pack_leader_buff_next_index = ( pack_leader_buff_next_index % #pack_leader_buff_cycle) + 1  -- Advance to the next buff index virtually, will be reset / synced in reset_precast
+        applyBuff( "lead_from_the_front" )
+    else
+        -- Scenario 2: Triggered by Kill Command (summoning is possible).
+        if buff.howl_of_the_pack_leader_cooldown.up then
+            -- Scenario 2A: Cooldown buff is active.
+            -- Consume all active buffs (summoning them) and reduce the cooldown buff.
+            for _, buffName in ipairs( pack_leader_buff_cycle ) do
+                if buff[ buffName ].up then
+                    removeBuff( buffName )
+                    summonCount = summonCount + 1
+                end
+            end
+            if talent.dire_summons.enabled then 
+                reduceCooldown( "howl_of_the_pack_leader", 1 )
+            end
+        else
+            -- Scenario 2B: Cooldown buff is not active.
+            -- Consume all active buffs (summoning them) and apply a new cooldown buff.
+            for _, buffName in ipairs( pack_leader_buff_cycle ) do
+                if buff[ buffName ].up then
+                    removeBuff( buffName )
+                    summonCount = summonCount + 1
+                end
+            end
+            applyBuff( "howl_of_the_pack_leader_cooldown" )
+        end
+
+        -- Apply the Barbed Shot cooldown reduction based on the number of summons.
+        if talent.pack_mentality.enabled then reduceCooldown( "barbed_shot", 10 * summonCount ) end
+    end
+end, state )
 
 -- Abilities
 spec:RegisterAbilities( {
@@ -2498,7 +2505,6 @@ spec:RegisterAbilities( {
     },
 } )
 
-
 spec:RegisterRanges( "arcane_shot", "kill_command", "wing_clip" )
 
 spec:RegisterOptions( {
@@ -2517,7 +2523,6 @@ spec:RegisterOptions( {
     potion = "tempered_potion",
     package = "Beast Mastery",
 } )
-
 
 spec:RegisterSetting( "barbed_shot_grace_period", 1, {
     name = strformat( "%s Grace Period", Hekili:GetSpellLinkWithTexture( spec.abilities.barbed_shot.id ) ),  -- Barbed Shot

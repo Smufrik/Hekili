@@ -189,6 +189,19 @@ spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _
             elseif spellID == spec.abilities.emerald_blossom.id then
                 eb_col_casts = ( eb_col_casts + 1 ) % 3
                 return
+            elseif spellID == 375087 then  -- Dragonrage
+                animosityExtension = 0
+                return
+            end
+
+            if talent.animosity.enabled and animosityExtension < 4 then
+                -- Empowered spell casts increment this extension tracker by 1
+                for _, ability in pairs( class.abilities ) do
+                    if ability.empowered and spellID == ability.id then
+                        animosityExtension = animosityExtension + 1
+                        break
+                    end
+                end
             end
         end
 
@@ -720,7 +733,9 @@ spec:RegisterStateExpr( "maximum", function()
     return max_empower
 end )
 
-local animosityExtension = 0
+local animosityExtension = 0 -- Maintained by CLEU
+
+spec:RegisterStateExpr( "animosity_extension", function() return animosityExtension end )
 
 spec:RegisterHook( "runHandler", function( action )
     local ability = class.abilities[ action ]
@@ -743,8 +758,8 @@ spec:RegisterHook( "runHandler", function( action )
 
     if ability.empowered then
         if talent.power_swell.enabled then applyBuff( "power_swell" ) end -- TODO: Modify Essence regen rate.
-        if talent.animosity.enabled and animosityExtension < 4 then
-            animosityExtension = animosityExtension + 1
+        if talent.animosity.enabled and animosity_extension < 4 then
+            animosity_extension = animosity_extension + 1
             buff.dragonrage.expires = buff.dragonrage.expires + 5
         end
         if talent.iridescence.enabled and color then
@@ -835,6 +850,7 @@ end, state )
 
 
 spec:RegisterHook( "reset_precast", function()
+    animosity_extension = nil
     cycle_of_life_count = nil
 
     max_empower = talent.font_of_magic.enabled and 4 or 3
@@ -1077,7 +1093,6 @@ spec:RegisterAbilities( {
         damage = function () return action.living_pyre.damage * action.dragonrage.spell_targets end,
 
         handler = function ()
-            animosityExtension = 0
 
             for i = 1, ( max( 3, active_enemies ) ) do
                 spec.abilities.pyre.handler()

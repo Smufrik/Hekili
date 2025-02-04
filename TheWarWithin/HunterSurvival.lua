@@ -653,7 +653,6 @@ spec:RegisterAuras( {
         max_stack = 1
     },
 
-
     -- AZERITE POWERS
     blur_of_talons = {
         id = 277969,
@@ -714,101 +713,6 @@ spec:RegisterPets({
     }--]]
 } )
 
-local pack_leader__buff_cycle = {
-    "howl_of_the_pack_leader_wyvern",
-    "howl_of_the_pack_leader_pig",
-    "howl_of_the_pack_leader_bear",
-}
-
-local pack_leader_buff_current = 1
-
-local HowlOfThePackLeaderHandler = setfenv( function( isCoordinatedAssault )
-    -- Track the number of summons triggered.
-    local summonCount = 0
-
-    if isCoordinatedAssault then
-        -- Scenario 1: Coordinated Assault grants the next buff without triggering summons.
-        applyBuff( pack_leader__buff_cycle[ pack_leader_buff_current ] )
-        pack_leader_buff_current = ( pack_leader_buff_current % #pack_leader__buff_cycle ) + 1 -- Advance to the next buff.
-        -- No cooldown reduction happens here.
-        applyBuff( "lead_from_the_front" )
-    else
-        -- Scenario 2: Triggered by Kill Command (summoning is possible).
-        if buff.howl_of_the_pack_leader_cooldown.up then
-            -- Scenario 2A: Cooldown buff is active.
-            -- Consume all active buffs (summoning them) and reduce the cooldown buff.
-            for _, buffName in ipairs( pack_leader__buff_cycle ) do
-                if buff[ buffName ].up then
-                    removeBuff( buffName )
-                    summonCount = summonCount + 1
-                    -- Refresh Mongoose Fury if summoning the pig.
-                    if buffName == "howl_of_the_pack_leader_pig" and talent.hogstrider.enabled then
-                        applyBuff( "mongoose_fury", spec.auras.mongoose_fury.duration, buff.mongoose_fury.stack )
-                    end
-                end
-            end
-            if talent.dire_summons.enabled then 
-                reduceCooldown( "howl_of_the_pack_leader", 1 )
-            end
-        else
-            -- Scenario 2B: Cooldown buff is not active.
-            -- Consume all active buffs (summoning them) and apply a new cooldown buff.
-            for _, buffName in ipairs( pack_leader__buff_cycle ) do
-                if buff[ buffName ].up then
-                    removeBuff( buffName )
-                    summonCount = summonCount + 1
-                    -- Refresh Mongoose Fury if summoning the pig.
-                    if buffName == "howl_of_the_pack_leader_pig" and talent.hogstrider.enabled then
-                        applyBuff( "mongoose_fury", spec.auras.mongoose_fury.duration, buff.mongoose_fury.stack )
-                    end
-                end
-            end
-            applyBuff( "howl_of_the_pack_leader_cooldown" )
-        end
-        -- Apply the Wildfire Bomb cooldown reduction based on the number of summons.
-        if talent.pack_mentality.enabled then reduceCooldown( "wildfire_bomb", 10 * summonCount ) end
-        if summonCount > 0 then addStack( "tip_of_the_spear" ) end
-    end
-end, state )
-
-
-spec:RegisterHook( "runHandler", function( action, pool )
-    if buff.camouflage.up and action ~= "camouflage" then removeBuff( "camouflage" ) end
-    if buff.feign_death.up and action ~= "feign_death" then removeBuff( "feign_death" ) end
-end )
-
-
-spec:RegisterStateExpr( "current_wildfire_bomb", function () return "wildfire_bomb" end )
-
-spec:RegisterStateExpr( "check_focus_overcap", function ()
-    if settings.allow_focus_overcap then return true end
-    if not this_action then return focus.current + focus.regen * gcd.max <= focus.max end
-    return focus.current + cast_regen <= focus.max
-end )
-
-
-local function IsActiveSpell( id )
-    local slot = FindSpellBookSlotBySpellID( id )
-    if not slot then return false end
-
-    local _, _, spellID = GetSpellBookItemName( slot, "spell" )
-    return id == spellID
-end
-
-state.IsActiveSpell = IsActiveSpell
-
-
-local ExpireNesingwarysTrappingApparatus = setfenv( function()
-    focus.regen = focus.regen * 0.5
-    forecastResources( "focus" )
-end, state )
-
-
-local TriggerBombardier = setfenv( function()
-    setCooldown( "explosive_shot", 1 ) -- There is a slight delay before you actually get it
-    applyBuff( "bombardier", nil, 2 )
-end, state )
-
 -- The War Within
 spec:RegisterGear( "tww2", 229271, 229272, 229274, 229270, 229273 )
 spec:RegisterAuras( {
@@ -858,26 +762,60 @@ spec:RegisterAuras( {
     }
 } )
 
+local pack_leader_buff_cycle = {
+    "howl_of_the_pack_leader_wyvern_ready",
+    "howl_of_the_pack_leader_boar_ready",
+    "howl_of_the_pack_leader_bear_ready",
+}
 
+-- This variable represents the true index in the above table of the next buff that will be applied to you, whether by the natural cycle or by bestial wrath
+-- We don't need to virtually manage the current buff, as it is visible on the character. 
+-- But the next buff is technically "invisible", so this will allow us to have access to things such as a "time_to_next_boar", "next_summon", etc via expressions, if necessary depending on APLs
+-- The index should always initially start at "1" (Wyvern), and is also reset to 1 upon:
+  -- Aura Interrupt: Leave World (19), Enter World (22), Change Specialization (38), Raid Encounter Start or M+ Start (40), Raid Encounter End or M+ Start (41), Disconnect (42), Enter Instance (43), Leave Arena or Battleground (45), Change Talent (46), Encounter End (56)
+local PackLeaderBuffNextIndex = 1
 
-spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _, _, destGUID, destName, destFlags, _, spellID, spellName )
-    if sourceGUID == GUID then
-        -- Keep the cycle synced to real game data if we lose it somehow
-        if subtype == "SPELL_AURA_APPLIED" or subtype == "SPELL_AURA_REFRESH" then
-            -- Check if one of the summon buffs is applied and sync the index.
-            for index, buffName in ipairs( pack_leader__buff_cycle ) do
-                if spellID == spec.auras[ buffName ].id then
-                    -- Align the cycle to the buff AFTER the currently applied one.
-                    pack_leader_buff_current = ( index % #pack_leader__buff_cycle ) + 1
-                    break
-                end
-            end
-        end
-    end
+spec:RegisterStateExpr( "pack_leader_buff_next_index", function()
+    return PackLeaderBuffNextIndex
 end )
 
+spec:RegisterHook( "runHandler", function( action, pool )
+    if buff.camouflage.up and action ~= "camouflage" then removeBuff( "camouflage" ) end
+    if buff.feign_death.up and action ~= "feign_death" then removeBuff( "feign_death" ) end
+end )
+
+spec:RegisterStateExpr( "current_wildfire_bomb", function () return "wildfire_bomb" end )
+
+spec:RegisterStateExpr( "check_focus_overcap", function ()
+    if settings.allow_focus_overcap then return true end
+    if not this_action then return focus.current + focus.regen * gcd.max <= focus.max end
+    return focus.current + cast_regen <= focus.max
+end )
+
+local function IsActiveSpell( id )
+    local slot = FindSpellBookSlotBySpellID( id )
+    if not slot then return false end
+
+    local _, _, spellID = GetSpellBookItemName( slot, "spell" )
+    return id == spellID
+end
+
+state.IsActiveSpell = IsActiveSpell
+
+local ExpireNesingwarysTrappingApparatus = setfenv( function()
+    focus.regen = focus.regen * 0.5
+    forecastResources( "focus" )
+end, state )
+
+local TriggerBombardier = setfenv( function()
+    setCooldown( "explosive_shot", 1 ) -- There is a slight delay before you actually get it
+    applyBuff( "bombardier", nil, 2 )
+end, state )
 
 spec:RegisterHook( "reset_precast", function()
+    
+    pack_leader_buff_next_index = nil
+
     if buff.coordinated_assault.up and talent.bombardier.enabled then
         state:QueueAuraEvent( "coordinated_assault", TriggerBombardier, buff.coordinated_assault.expires, "AURA_EXPIRATION" )
     end
@@ -908,6 +846,69 @@ spec:RegisterHook( "reset_precast", function()
         class.abilities.mongoose_strike = class.abilities.raptor_strike
     end
 end )
+
+spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _, _, destGUID, destName, destFlags, _, spellID, spellName )
+    if sourceGUID == GUID then
+        if subtype == "SPELL_AURA_APPLIED" or subtype == "SPELL_AURA_REFRESH" then
+            -- Detect REAL cycle events and update the index accordingly
+            for index, buffName in ipairs( pack_leader_buff_cycle ) do
+                local aura = spec.auras[ buffName ]  -- Safely store the aura reference
+                if aura and spellID == aura.id then  -- Ensure it's a valid aura before using it
+                    PackLeaderBuffNextIndex = ( index % #pack_leader_buff_cycle) + 1
+                    break
+                end
+            end
+        end
+    end
+end )
+
+local HowlOfThePackLeaderHandler = setfenv( function( isCoordinatedAssault )
+    -- Track the number of summons triggered.
+    local summonCount = 0
+
+    if isCoordinatedAssault then
+        -- Scenario 1: Coordinated Assault grants the next buff without triggering summons.
+        applyBuff( pack_leader_buff_cycle[ pack_leader_buff_next_index ] )
+        pack_leader_buff_next_index = ( pack_leader_buff_next_index % #pack_leader_buff_cycle) + 1  -- Advance to the next buff index virtually, will be reset / synced in reset_precast
+        applyBuff( "lead_from_the_front" )
+    else
+        -- Scenario 2: Triggered by Kill Command (summoning is possible).
+        if buff.howl_of_the_pack_leader_cooldown.up then
+            -- Scenario 2A: Cooldown buff is active.
+            -- Consume all active buffs (summoning them) and reduce the cooldown buff.
+            for _, buffName in ipairs( pack_leader__buff_cycle ) do
+                if buff[ buffName ].up then
+                    removeBuff( buffName )
+                    summonCount = summonCount + 1
+                    -- Refresh Mongoose Fury if summoning the pig.
+                    if buffName == "howl_of_the_pack_leader_pig" and talent.hogstrider.enabled then
+                        applyBuff( "mongoose_fury", spec.auras.mongoose_fury.duration, buff.mongoose_fury.stack )
+                    end
+                end
+            end
+            if talent.dire_summons.enabled then 
+                reduceCooldown( "howl_of_the_pack_leader", 1 )
+            end
+        else
+            -- Scenario 2B: Cooldown buff is not active.
+            -- Consume all active buffs (summoning them) and apply a new cooldown buff.
+            for _, buffName in ipairs( pack_leader__buff_cycle ) do
+                if buff[ buffName ].up then
+                    removeBuff( buffName )
+                    summonCount = summonCount + 1
+                    -- Refresh Mongoose Fury if summoning the pig.
+                    if buffName == "howl_of_the_pack_leader_pig" and talent.hogstrider.enabled then
+                        applyBuff( "mongoose_fury", spec.auras.mongoose_fury.duration, buff.mongoose_fury.stack )
+                    end
+                end
+            end
+            applyBuff( "howl_of_the_pack_leader_cooldown" )
+        end
+        -- Apply the Wildfire Bomb cooldown reduction based on the number of summons.
+        if talent.pack_mentality.enabled then reduceCooldown( "wildfire_bomb", 10 * summonCount ) end
+        if summonCount > 0 then addStack( "tip_of_the_spear" ) end
+    end
+end, state )
 
 spec:RegisterHook( "spend", function( amt, resource )
     if set_bonus.tier30_4pc > 0 and amt >= 30 and resource == "focus" then

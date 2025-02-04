@@ -988,12 +988,6 @@ spec:RegisterHook( "reset_precast", function ()
 
     chiSpent = 0
 
-    if talent.ordered_elements.enabled then
-        if buff.storm_earth_and_fire.up then orderedElementsMod = 1
-        else orderedElementsMod = 0
-        end
-    end
-
     if actual_combo == "tiger_palm" and chi.current < 2 and now - action.tiger_palm.lastCast > 0.2 then
         actual_combo = "none"
     end
@@ -1113,6 +1107,11 @@ do
         return stages[ power_level ] * haste
     end, state )
 end
+
+spec:RegisterStateExpr( "orderedElementsMod", function()
+    if not talented.ordered_elements.enabled or buff.storm_earth_and_fire.down then return 0 end
+    return 1
+end )
 
 -- Abilities
 spec:RegisterAbilities( {
