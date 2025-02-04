@@ -2352,7 +2352,8 @@ spec:RegisterAbilities( {
         end,
 
         bind = "lightning_bolt",
-        copy = { 454009, 454015 }
+        copy = { 454009, 454015 },
+        flash = 188196
     },
 
     -- Talent: Grips the target in lightning, stunning and dealing $305485o1 Nature damage over $305485d while the target is lassoed. Can move while channeling.
