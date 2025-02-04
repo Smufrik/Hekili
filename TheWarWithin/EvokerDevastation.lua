@@ -743,11 +743,9 @@ spec:RegisterHook( "runHandler", function( action )
 
     if ability.empowered then
         if talent.power_swell.enabled then applyBuff( "power_swell" ) end -- TODO: Modify Essence regen rate.
-        if talent.animosity.enabled then
+        if talent.animosity.enabled and animosityExtension < 4 then
             animosityExtension = animosityExtension + 1
-            if animosityExtension < 5 then
-                buff.dragonrage.expires = buff.dragonrage.expires + 5
-            end
+            buff.dragonrage.expires = buff.dragonrage.expires + 5
         end
         if talent.iridescence.enabled and color then
                 local iridescenceBuffType = "iridescence_" .. color -- Constructs "iridescence_red", "iridescence_blue", etc.

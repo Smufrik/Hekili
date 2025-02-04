@@ -116,6 +116,7 @@ spec:RegisterTalents( {
     improved_ironbark           = {  82081, 382552, 1 }, -- Ironbark's cooldown is reduced by 20 sec.
     improved_regrowth           = {  82055, 231032, 1 }, -- Regrowth's initial heal has a 40% increased chance for a critical effect if the target is already affected by Regrowth.
     improved_wild_growth        = {  82045, 328025, 1 }, -- Wild Growth heals 1 additional target.
+    incarnation                 = {  82064,  33891, 1 }, -- Shapeshift into the Tree of Life, increasing healing done by 10%, increasing armor by 120%, and granting protection from Polymorph effects. Functionality of Rejuvenation, Wild Growth, Regrowth, Entangling Roots, and Wrath is enhanced. Lasts 30 sec. You may shapeshift in and out of this form for its duration.
     incarnation_tree_of_life    = {  82064,  33891, 1 }, -- Shapeshift into the Tree of Life, increasing healing done by 10%, increasing armor by 120%, and granting protection from Polymorph effects. Functionality of Rejuvenation, Wild Growth, Regrowth, Entangling Roots, and Wrath is enhanced. Lasts 30 sec. You may shapeshift in and out of this form for its duration.
     inner_peace                 = {  82053, 197073, 1 }, -- Reduces the cooldown of Tranquility by 30 sec. While channeling Tranquility, you take 20% reduced damage and are immune to knockbacks.
     invigorate                  = {  82070, 392160, 1 }, -- Refreshes the duration of your active Lifebloom and Rejuvenation effects on the target and causes them to complete 200% faster.
@@ -432,7 +433,7 @@ spec:RegisterAuras( {
             t.stack    = 0
             t.caster   = "nobody"
         end,
-        tick_time = function() return ( 5 * haste ) / 5 end,  -- Interval between each tick based on haste
+        tick_time = function() return haste end,  -- Interval between each tick based on haste
         max_stack = 1
     },
     tranquility_hot = {
@@ -525,17 +526,6 @@ end )
 
 -- The War Within
 spec:RegisterGear( "tww2", 229310, 229308, 229306, 229307, 229305  )
-spec:RegisterAuras( {
-    -- 2-set
-    -- https://www.wowhead.com/spell=1218033
-    -- Jackpot! Auto shot damage increased by 200% and the time between auto shots is reduced by 0.5 sec.  
-    --[[jackpot = {
-        id = 1218033,
-        duration = 10,
-        max_stack = 1,
-    },--]]
-
-} )
 
 -- Tier 30
 spec:RegisterGear( "tier30", 202518, 202516, 202515, 202514, 202513 )
@@ -977,9 +967,8 @@ spec:RegisterAbilities( {
 
         talent = "skull_bash",
         startsCombat = true,
-        form = function () if talent.fluid_form.enabled then
-            return
-            end
+        form = function () 
+            if talent.fluid_form.enabled then return end
             return buff.bear_form.up and "bear_form" or "cat_form" end,
         toggle = "interrupts",
 

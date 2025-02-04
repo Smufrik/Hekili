@@ -226,8 +226,8 @@ spec:RegisterAuras( {
     },
     divine_hymn = {
         id = 64843,
-        function() return 5 * haste end,
-        tick_time = function() return ( 5 * haste ) / 5 end,
+        duration = function() return 5 * haste end,
+        tick_time = function() return haste end,
         max_stack = 1
     },
     divine_hymn_buff = {
@@ -438,7 +438,7 @@ spec:RegisterAuras( {
     },
 } )
 
-local naaruMulti = 1 + ( 0.1 * state.talent.light_of_the_naaru.rank )
+
 
 -- The War Within
 spec:RegisterGear( "tww2", 229334, 229332, 229337, 229335, 229333 )
@@ -458,6 +458,12 @@ spec:RegisterAura( "sacred_reverence", {
     duration = 3600,
     max_stack = 2
 } )
+
+local naaruMulti = 1 + ( 0.1 * state.talent.light_of_the_naaru.rank )
+
+spec:RegisterHook( "reset_precast", function ()
+    naaruMulti = 1 + ( 0.1 * talent.light_of_the_naaru.rank ) -- manual syncing in case of talent change for completeness
+end )
 
 
 -- Abilities

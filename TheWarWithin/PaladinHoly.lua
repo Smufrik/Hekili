@@ -590,22 +590,6 @@ spec:RegisterAuras( {
 
 -- Current Expansion
 spec:RegisterGear( "tww2", 229244, 229242, 229243, 229245, 229247 )
-spec:RegisterAuras( {
-   -- 2-set
-    set_placeholder_2 = {
-        id = 1216828,
-        duration = 30,
-        max_stack = 10
-    },
-    set_placeholder_4 = {
-        id = 1216837,
-        duration = 4,
-        max_stack = 1
-    },
-
-
-
-} )
 
 -- Legacy
 

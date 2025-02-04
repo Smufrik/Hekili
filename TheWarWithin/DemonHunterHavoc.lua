@@ -580,14 +580,16 @@ spec:RegisterAuras( {
     inertia_damage_buff = { -- find out what simc is gonna use
         id = 427641,
         duration = 5,
-        max_stack = 1
+        max_stack = 1,
+        copy = "inertia"
     },
     -- https://www.wowhead.com/spell=1215159
     -- Inertia Your next Fel Rush or Felblade increases your damage by 18% for 5 sec.
     inertia_prep_buff = { -- find out what simc is gonna use
         id = 1215159,
         duration = 12,
-        max_stack = 1
+        max_stack = 1,
+        copy = "inertia_trigger"
     },
     initiative = {
         id = 391215,
@@ -627,7 +629,8 @@ spec:RegisterAuras( {
     exergy = {
         id = 208628,
         duration = 30, -- extends up to 30
-        max_stack = 1
+        max_stack = 1,
+        copy = "momentum"
     },
     -- Agility increased by $w1%.
     monster_rising = {
@@ -695,6 +698,9 @@ spec:RegisterAuras( {
         max_stack = 1
     },
     reavers_glaive = {
+        -- no id, fake buff
+        duration = 3600,
+        max_Stack = 1
     },
     restless_hunter = {
         id = 390212,
@@ -1854,12 +1860,10 @@ spec:RegisterAbilities( {
         texture = function() return talent.demonic_intensity.enabled and buff.metamorphosis.up and 135794 or 1344649 end,
 
         handler = function ()
-            if IsSpellKnownOrOverridesKnown(452487) then
-                -- Consuming Fire, needed because they aren't split into 2 separate ability registrations
-                if talent.demonic_intensity.enabled and buff.demonsurge_consuming_fire.up then
-                    removeBuff( "demonsurge_consuming_fire" )
-                    addStack( "demonsurge" )
-                end
+
+            if talent.demonic_intensity.enabled and buff.demonsurge_consuming_fire.up then
+                removeBuff( "demonsurge_consuming_fire" )
+                addStack( "demonsurge" )
             end
             applyBuff( "immolation_aura" )
 
@@ -1927,7 +1931,7 @@ spec:RegisterAbilities( {
 
             stat.haste = stat.haste + 10
             -- Legacy
-            if IsSpellKnownOrOverridesKnown( 317009 ) then
+            if covenant.venthyr then
                 applyDebuff( "target", "sinful_brand" )
                 active_dot.sinful_brand = active_enemies
             end

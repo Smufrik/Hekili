@@ -382,23 +382,22 @@ spec:RegisterAuras( {
         max_stack = 1,
         copy = 190927
     },
-    -- Keep an eye out for what SIMC labels all these auras, be ready to change the names
     howl_of_the_pack_leader_cooldown = {
         id = 471877,
         duration = function() return 30 - ( 5 * talent.better_together.rank ) end,
         max_stack = 1,
     },
-    howl_of_the_pack_leader_bear = {
+    howl_of_the_pack_leader_bear_ready = {
         id = 472325,
         duration = function() return 30 - ( 5 * talent.better_together.rank ) end,
         max_stack = 1,
     },
-    howl_of_the_pack_leader_pig = {
+    howl_of_the_pack_leader_boar_ready = {
         id = 472324,
         duration = function() return 30 - ( 5 * talent.better_together.rank ) end,
         max_stack = 1,
     },
-    howl_of_the_pack_leader_wyvern = {
+    howl_of_the_pack_leader_wyvern_ready = {
         id = 471878,
         duration = function() return 30 - ( 5 * talent.better_together.rank ) end,
         max_stack = 1,
@@ -1288,9 +1287,6 @@ spec:RegisterAbilities( {
         cooldown = function() return 30 - ( 5 * talent.better_together.rank ) end,
         gcd = "off",
         hidden = true,
-        handler = function ()
-
-        end,
     },
     lunar_storm = {
         cast = 0,

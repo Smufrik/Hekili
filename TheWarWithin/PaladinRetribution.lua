@@ -1593,13 +1593,7 @@ spec:RegisterAbilities( {
             end
 
             -- Hero Talents
-            if talent.lights_deliverance.enabled and talent.hammerfall.enabled then
-                if buff.shake_the_heavens.up then
-                    addStack( "lights_deliverance", nil, 2 )
-                else
-                    addStack( "lights_deliverance", nil, 1 )
-                end
-            end
+            if talent.lights_deliverance.enabled and talent.hammerfall.enabled then addStack( "lights_deliverance", nil, 1 + ( buff.shake_the_heavens.up and 1 or 0 ) ) end
             -- Legacy
             removeBuff( "echoes_of_wrath" )
         end,
@@ -2248,13 +2242,7 @@ spec:RegisterAbilities( {
             removeBuff( "divine_purpose" )
 
             -- Hero Talents
-            if talent.lights_deliverance.enabled and talent.hammerfall.enabled then
-                if buff.shake_the_heavens.up then
-                    addStack( "lights_deliverance", nil, 2 )
-                else
-                    addStack( "lights_deliverance", nil, 1 )
-                end
-            end
+            if talent.lights_deliverance.enabled and talent.hammerfall.enabled then addStack( "lights_deliverance", nil, 1 + ( buff.shake_the_heavens.up and 1 or 0 ) ) end
 
             -- Legacy
             removeBuff( "echoes_of_wrath" )

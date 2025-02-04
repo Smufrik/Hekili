@@ -891,12 +891,12 @@ spec:RegisterAuras( {
         duration = 12,
         max_stack = 1
     },
--- https://www.wowhead.com/ptr-2/spell=1219036/warlock-affliction-11-1-class-set-4pc
+--[[ https://www.wowhead.com/ptr-2/spell=1219036/warlock-affliction-11-1-class-set-4pc
     tww2_set_haste_buff = {
         id = 1219034,
         duration = 12,
         max_stack = 1
-    },
+    },--]]
 
 } )
 

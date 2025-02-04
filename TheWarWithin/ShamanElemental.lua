@@ -1450,11 +1450,7 @@ spec:RegisterAbilities( {
 
     -- Transform into a Flame Ascendant for $d, instantly casting a Flame Shock and a $s10% effectiveness Lava Burst at up to $s7 nearby enemies.; While ascended, Elemental Overload damage is increased by $s8% and spells affected by your Mastery: Elemental Overload cause $s9 additional Elemental $LOverload:Overloads;.
     ascendance = {
-        id = function()
-            if state.spec.elemental then return 114050 end
-            if state.spec.enhancement then return 114051 end
-            return 114052
-        end,
+        id = 114050,
         cast = 0,
         cooldown = function () return 180 - 60 * talent.first_ascendant.rank end,
         gcd = "spell",
@@ -1479,7 +1475,6 @@ spec:RegisterAbilities( {
             if set_bonus.tww2 >= 2 then summonPet( talent.primal_elementalist.enabled and "primal_storm_elemental" or "greater_storm_elemental", 8 ) end
         end,
 
-        copy = { 114050, 114051, 114052 }
     },
 
 
@@ -2778,7 +2773,7 @@ spec:RegisterAbilities( {
         end,
         startsCombat = true,
 
-        velocity = 30,
+        -- velocity = 30,
 
         usable = function()
             if active_dot.flame_shock < 1 then return false, "requires active flame_shock" end
@@ -2801,7 +2796,6 @@ spec:RegisterAbilities( {
                 applyBuff( "elemental_blast_mastery", 10 )
             end
         end,
-
 
         copy = { 326059, 375982 }
     },

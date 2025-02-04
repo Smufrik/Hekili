@@ -30,7 +30,7 @@ spec:RegisterResource( Enum.PowerType.Fury, {
         value = 2
     },
     -- 5 fury every 2 seconds for 8 seconds
-    student_of_suffering= {
+    student_of_suffering = {
         aura    = "student_of_suffering",
 
         last = function ()
@@ -1208,7 +1208,7 @@ spec:RegisterAbilities( {
         start = function ()
             applyBuff( "fel_devastation" )
 
-            if talent.demonic_intensity.enabled and buff.demonsurge_fel_Desolation.up then
+            if talent.demonic_intensity.enabled and buff.demonsurge_fel_desolation.up then
                 addStack( "demonsurge" )
                 removeBuff( "demonsurge_fel_desolation" )
             end
@@ -1348,8 +1348,10 @@ spec:RegisterAbilities( {
         end,
 
         tick = function ()
-            if talent.charred_flesh.enabled and debuff.fiery_brand.up then applyDebuff( "target", debuff.fiery_brand.remains + 0.25 * talent.charred_flesh.rank ) end
-            if talent.charred_flesh.enabled and debuff.sigil_of_flame.up then applyDebuff( "target", debuff.sigil_of_flame.remains + 0.25 * talent.charred_flesh.rank ) end
+            if talent.charred_flesh.enabled then
+                if debuff.fiery_brand.up then applyDebuff( "target", debuff.fiery_brand.remains + 0.25 * talent.charred_flesh.rank ) end
+                if debuff.sigil_of_flame.up then applyDebuff( "target", debuff.sigil_of_flame.remains + 0.25 * talent.charred_flesh.rank ) end
+            end
         end,
 
         bind = "consuming_fire"

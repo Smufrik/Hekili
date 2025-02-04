@@ -172,6 +172,7 @@ spec:RegisterTalents( {
     gory_fur                      = {  82132, 200854, 1 }, -- Mangle has a 15% chance to reduce the Rage cost of your next Ironfur by 25%.
     guardian_of_elune             = {  82140, 155578, 1 }, -- Mangle increases the duration of your next Ironfur by 3 sec, or the healing of your next Frenzied Regeneration by 20%.
     improved_survival_instincts   = {  82128, 328767, 1 }, -- Survival Instincts now has 2 charges. 
+    incarnation                   = {  82136, 102558, 1 }, -- An improved Bear Form that grants the benefits of Berserk, causes Mangle to hit up to 3 targets, and increases maximum health by 30%. Lasts 30 sec. You may freely shapeshift in and out of this improved Bear Form for its duration.
     incarnation_guardian_of_ursoc = {  82136, 102558, 1 }, -- An improved Bear Form that grants the benefits of Berserk, causes Mangle to hit up to 3 targets, and increases maximum health by 30%. Lasts 30 sec. You may freely shapeshift in and out of this improved Bear Form for its duration.
     infected_wounds               = {  82162, 345208, 1 }, -- Mangle and Maul cause an Infected Wound in the target, reducing their movement speed by 50% for 12 sec.
     innate_resolve                = {  82160, 377811, 1 }, -- Frenzied Regeneration's healing is increased by up to 120% based on your missing health. Frenzied Regeneration has 1 additional charge.
@@ -2006,9 +2007,8 @@ spec:RegisterAbilities( {
 
         talent = "skull_bash",
         startsCombat = true,
-        form = function () if talent.fluid_form.enabled then
-            return
-            end
+        form = function ()
+            if talent.fluid_form.enabled then return end
             return buff.bear_form.up and "bear_form" or "cat_form" end,
         toggle = "interrupts",
 

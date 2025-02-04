@@ -1956,7 +1956,7 @@ spec:RegisterAbilities( {
             if buff.voltaic_blaze.up then removeBuff( "voltaic_blaze" ) end
             if buff.whirling_earth.up then
                 removeBuff( "whirling_earth" )
-                active_dot.flame_shock = min( active_enemies, active_dot.flame_shock + 5 )
+                active_dot.flame_shock = min( true_active_enemies, active_dot.flame_shock + 5 )
             end
 
             if talent.focused_insight.enabled then applyBuff( "focused_insight" ) end
@@ -2462,6 +2462,7 @@ spec:RegisterAbilities( {
         cooldown = 30,
         gcd = "spell",
         school = "flamestrike",
+        flash = 375982,
 
         spend = 0.08,
         spendType = "mana",
@@ -2477,6 +2478,7 @@ spec:RegisterAbilities( {
             consume_maelstrom()
         end,
 
+        bind = "primordial_wave"
     },
     -- Talent / Covenant (Necrolord): Blast your target with a Primordial Wave, dealing $375984s1 Shadow damage and apply Flame Shock to them.; Your next $?a137040[Lava Burst]?a137041[Lightning Bolt][Healing Wave] will also hit all targets affected by your $?a137040|a137041[Flame Shock][Riptide] for $?a137039[$s2%]?a137040[$s3%][$s4%] of normal $?a137039[healing][damage].$?s384405[; Primordial Wave generates $s5 stacks of Maelstrom Weapon.][]
     primordial_wave = {
@@ -2490,7 +2492,7 @@ spec:RegisterAbilities( {
         spendType = "mana",
 
         startsCombat = true,
-        velocity = 25,
+        -- velocity = 25,
 
         toggle = "essences",
 
@@ -2503,10 +2505,7 @@ spec:RegisterAbilities( {
         cycle = "flame_shock",
 
         handler = function ()
-            if talent.primal_maelstrom.enabled then
-                if state.spec.elemental then gain_maelstrom( 5 * talent.primal_maelstrom.rank )
-                elseif state.spec.enhancement then gain_maelstrom( 5 ) end
-            end
+            if talent.primal_maelstrom.enabled then gain_maelstrom( 5 ) end
             applyBuff( "primordial_wave" )
             if talent.conductive_energy.enabled then active_dot.lightning_rod = min( active_enemies, max( active_dot.lightning_rod, active_dot.flame_shock ) ) end
             if set_bonus.tier31_2pc > 0 then
@@ -2518,10 +2517,6 @@ spec:RegisterAbilities( {
                     insert( virtual_earthen_weapons, query_time + 15 )
                 end
             end
-        end,
-
-        impact = function ()
-            
         end,
 
         copy = { 326059, 375982 }

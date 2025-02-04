@@ -782,23 +782,22 @@ spec:RegisterAuras( {
         duration = 20,
         max_stack = 4,
     },
-    -- Keep an eye out for what SIMC labels all these auras, be ready to change the names
     howl_of_the_pack_leader_cooldown = {
         id = 471877,
         duration = function() return 30 - ( 5 * talent.better_together.rank ) end,
         max_stack = 1,
     },
-    howl_of_the_pack_leader_bear = {
+    howl_of_the_pack_leader_bear_ready = {
         id = 472325,
         duration = function() return 30 - ( 5 * talent.better_together.rank ) end,
         max_stack = 1,
     },
-    howl_of_the_pack_leader_pig = {
+    howl_of_the_pack_leader_boar_ready = {
         id = 472324,
         duration = function() return 30 - ( 5 * talent.better_together.rank ) end,
         max_stack = 1,
     },
-    howl_of_the_pack_leader_wyvern = {
+    howl_of_the_pack_leader_wyvern_ready = {
         id = 471878,
         duration = function() return 30 - ( 5 * talent.better_together.rank ) end,
         max_stack = 1,
@@ -2001,10 +2000,6 @@ spec:RegisterAbilities( {
         cooldown = function() return 30 - ( 5 * talent.better_together.rank ) end,
         gcd = "off",
         hidden = true,
-        handler = function ()
-
-        end,
-
     },
 
     -- Apply Hunter's Mark to the target, causing the target to always be seen and tracked by the Hunter.; Hunter's Mark increases all damage dealt to targets above $s3% health by $428402s1%. Only one Hunter's Mark damage increase can be applied to a target at a time.; Hunter's Mark can only be applied to one target at a time. When applying Hunter's Mark in combat, the ability goes on cooldown for ${$s5/1000} sec.

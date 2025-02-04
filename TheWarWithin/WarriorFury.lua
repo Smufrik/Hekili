@@ -561,11 +561,11 @@ spec:RegisterAuras( {
     --https://www.wowhead.com/ptr-2/spell=1216569/double-down
     --Raging Blow damage increased by 15% and Rage generated increased by (w2 / 10).
     double_down_rb = {
-    id = 1216569,
-    duration = 12,
-    max_stack = 1
+        id = 1216569,
+        duration = 12,
+        max_stack = 1
     },
-    } )
+} )
 
 -- Dragonflight
 spec:RegisterGear( "tier29", 200426, 200428, 200423, 200425, 200427 )
@@ -725,7 +725,7 @@ spec:RegisterStateExpr( "glory_rage", function ()
 end )
 
 spec:RegisterHook( "prespend", function( amt, resource, overcap, clean )
-    if buff.recklessness.up and resource == "rage" then
+    if buff.recklessness.up and resource == "rage" and amt < 0 then
         return amt * 2, resource, overcap, true
     end
 end )

@@ -797,21 +797,19 @@ spec:RegisterAuras( {
     },
 } )
 
-
 -- The War Within
 spec:RegisterGear( "tww2", 229244, 229242, 229243, 229245, 229247 )
-spec:RegisterAuras( {
+spec:RegisterAura( {
     -- https://www.wowhead.com/ptr-2/spell=1218114/luck-of-the-draw
     -- Each time you take damage you have a chance to activate Luck of the Draw! causing you to cast Guardian of Ancient Kings for 4.0 sec. Your damage done is increased by 15% for 10 sec after Luck of the Draw! activates.
     luck_of_the_draw = {
-    id = 1218114,
-    duration = 10,
-    max_stack = 1
+        id = 1218114,
+        duration = 10,
+        max_stack = 1
     },
 } )
 
 -- Legacy
-
 spec:RegisterGear( "tier31", 207189, 207190, 207191, 207192, 207194 )
 spec:RegisterAuras( {
     sanctification = { -- TODO: Explore reset of stacks when empowered Consecration expires.

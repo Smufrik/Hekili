@@ -7501,6 +7501,7 @@ function state:TimeToReady( action, pool )
 
     -- Early exit for timeToReadyOverride. This is to fix the fact that some spells show as unavailable in game even though
     -- the addon knows that it will become available on the next GCD due to a guaranteed buff/proc
+    --[[ Commenting out for now. After 11.1 review is finished we can revisit
     if ability.timeToReadyOverride then
         local override = ability.timeToReadyOverride
         if override ~= nil then
@@ -7511,6 +7512,7 @@ function state:TimeToReady( action, pool )
             return max( override, self.delayMin )
         end
     end
+    --]]
 
     -- Working variable.
     local z = ability.id
