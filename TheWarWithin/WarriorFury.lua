@@ -34,8 +34,8 @@ spec:RegisterResource( Enum.PowerType.Rage, {
 
         stop = function () return state.time == 0 or state.swings.mainhand == 0 end,
         value = function ()
-            return ( ( ( state.talent.war_machine.enabled and 1.2 or 1 ) * base_rage_gen * fury_rage_mult * state.swings.mainhand_speed )
-            )
+            local baseAmt = base_rage_gen * fury_rage_mult * state.talent.war_machine.enabled and 1.2 or 1 -- "static" amount
+            return ( baseAmt * ( state.buff.recklessness.up and 2 or 1 ) * state.swings.mainhand_speed ) -- Dynamic factors
         end
     },
 
@@ -707,7 +707,7 @@ spec:RegisterStateExpr( "glory_rage", function ()
 end )
 
 spec:RegisterHook( "prespend", function( amt, resource, overcap, clean )
-    if buff.recklessness.up and resource == "rage" then
+    if buff.recklessness.up and resource == "rage" and amt < 0 then
         return amt * 2, resource, overcap, true
     end
 end )
@@ -742,12 +742,6 @@ end, state )
 spec:RegisterHook( "reset_precast", function ()
     rage_spent = nil
     glory_rage = nil
-
-    if buff.recklessness.up then
-        -- Casts are handled in prespend hook, this is to double the rage gen for weapon swings in the rage resource model
-        fury_rage_mult = 2
-    else fury_rage_mult = 1
-    end
 
     if legendary.will_of_the_berserker.enabled and buff.recklessness.up then
         state:QueueAuraExpiration( "recklessness", WillOfTheBerserker, buff.recklessness.expires )
@@ -1543,7 +1537,7 @@ spec:RegisterAbilities( {
         charges = function () if talent.improved_raging_blow.enabled then return 2 end end,
         cooldown = 8,
         hasteCD = true,
-        recharge = function () if talent.improved_raging_blow.enabled then return 8 * state.haste end end,
+        recharge = function () if talent.improved_raging_blow.enabled then return 8 * haste end end,
         gcd = "spell",
 
         spend = function () return -12 - talent.swift_strikes.rank end,
