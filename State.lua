@@ -2942,6 +2942,8 @@ do
             elseif k == "moving" then t[k] = GetUnitSpeed( "target" ) > 0
             elseif k == "real_ttd" then t[k] = Hekili:GetTTD( "target" )
             elseif k == "time_to_die" then
+                if state.IsCycling() then return state.raid_event.adds.remains end
+
                 local ttd = t.real_ttd
                 if ttd == 3600 then t[k] = ttd
                 else return max( 1, t.real_ttd - ( state.offset + state.delay ) ) end
