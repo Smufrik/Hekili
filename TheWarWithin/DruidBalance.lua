@@ -2760,12 +2760,12 @@ spec:RegisterAbilities( {
             if talent.natures_grace.enabled and buff.dreamstate.up then removeStack( "dreamstate" ) end
             if talent.dream_surge.enabled and buff.dream_burst.up then removeStack( "dream_burst" ) end
 
-
+            -- No lunar_calling talent check needed, the API call handles this already as the return is hard set to 0 with the talent enabled
             if eclipse.starfire_counter == 1 then
                 eclipse.trigger_eclipse( "solar", 15 )
             elseif eclipse.starfire_counter == 2 then
                 eclipse.starfire_counter = 1
-            end
+            end -- if the counter isn't 1 or 2, we don't care because it cannot affect eclipse in any way
 
             if buff.blooming_infusion.up then
                 removeBuff( "blooming_infusion" )
@@ -3172,7 +3172,7 @@ spec:RegisterAbilities( {
                 eclipse.trigger_eclipse( "lunar", 15 )
             elseif eclipse.wrath_counter == 2 then
                 eclipse.wrath_counter = 1
-            end
+            end -- if the counter isn't 1 or 2, we don't care because it cannot affect eclipse in any way
 
             removeBuff( "dawning_sun" )
             if azerite.sunblaze.enabled then applyBuff( "sunblaze" ) end
