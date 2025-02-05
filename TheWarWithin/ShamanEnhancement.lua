@@ -892,6 +892,8 @@ local molten_weapons = {}
 local icy_edges = {}
 local crackling_surges = {}
 local earthen_weapons = {}
+local recent_spell_hits = {}
+local tiSpell = "lightning_bolt"
 
 spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _, _, destGUID, destName, destFlags, _, spellID, spellName )
     -- Deaths/despawns.
@@ -965,6 +967,41 @@ spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _
 
         end
 
+        if subtype == "SPELL_DAMAGE" then
+            local now = GetTime()
+
+            -- Check for Lightning Bolt (188196) and Tempest (452201)
+            if spellID == 188196 or spellID == 452201 then
+                -- Initialize tracking for the spell if needed
+                if not recent_spell_hits[ spellID ] then
+                    recent_spell_hits[ spellID ] = {}
+                end
+
+                -- Remove expired entries (older than 0.2 seconds)
+                for targetGUID, timestamp in pairs( recent_spell_hits[ spellID ]) do
+                    if now - timestamp > 0.2 then
+                        recent_spell_hits[ spellID ][ targetGUID ] = nil
+                    end
+                end
+
+                -- Record the current hit
+                recent_spell_hits[ spellID ][ destGUID ] = now
+
+                -- Count unique targets hit
+                local target_count = 0
+                for _ in pairs( recent_spell_hits[ spellID ] ) do
+                    target_count = target_count + 1
+                end
+
+                -- Set tiSpell based on target count
+                if target_count > 1 then
+                    tiSpell = "chain_lightning"  -- Multiple targets → CL
+                else
+                    tiSpell = "lightning_bolt"   -- Single target → LB
+                end
+            end
+        end
+
         if subtype == "SPELL_CAST_SUCCESS" then
             -- Reset in case we need to deal with an instant after a hardcast.
             vesper_last_proc = 0
@@ -976,6 +1013,12 @@ spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _
                 recallTotem2 = recallTotem1
                 recallTotem1 = key
             end
+
+            -- Chain Lightning ALWAYS sets tiSpell to "chain_lightning"
+            if spellID == 188443 then
+                tiSpell = "chain_lightning"
+            end
+
         end
     end
 
@@ -1002,6 +1045,7 @@ spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _
 
         end
     end
+
 end )
 
 spec:RegisterStateExpr( "vesper_totem_heal_charges", function()
@@ -1117,16 +1161,20 @@ local TriggerStaticAccumulation = setfenv( function()
     gain_maelstrom( 1 )
 end, state )
 
-
-local tiSpell = "lightning_bolt"
+spec:RegisterStateExpr( "thorims_current_mode", function ()
+    return tiSpell
+end)
 
 spec:RegisterStateExpr( "ti_lightning_bolt", function ()
-    return tiSpell == "lightning_bolt"
+    return thorims_current_mode == "lightning_bolt"
 end)
 
 spec:RegisterStateExpr( "ti_chain_lightning", function ()
-    return tiSpell == "chain_lightning"
+    return thorims_current_mode == "chain_lightning"
 end)
+
+
+
 
 spec:RegisterStateExpr( "tempest_mael_count", function ()
     return GetSpellCastCount( class.abilities.tempest.id )
@@ -1261,8 +1309,7 @@ spec:RegisterHook( "reset_precast", function ()
         end
     end ]]
 
-    tiSpell = action.lightning_bolt.lastCast >= action.chain_lightning.lastCast and "lightning_bolt" or "chain_lightning"
-    if action.tempest.lastCast > action[ tiSpell ].lastCast then tiSpell = true_active_enemies > 1 and "chain_lightning" or "lightning_bolt" end
+    thorims_current_mode = tiSpell -- Sync with CLEU every recommendation set
 
     rawset( buff, "doom_winds_debuff", debuff.doom_winds_debuff )
     rawset( buff, "doom_winds_cd", debuff.doom_winds_debuff )
@@ -1553,7 +1600,7 @@ spec:RegisterAbilities( {
 
             if buff.vesper_totem.up and vesper_totem_dmg_charges > 0 then trigger_vesper_damage() end
 
-            tiSpell = "chain_lightning"
+            thorims_current_mode = "chain_lightning"
         end,
     },
 
@@ -2253,7 +2300,12 @@ spec:RegisterAbilities( {
             if azerite.natural_harmony.enabled then applyBuff( "natural_harmony_nature" ) end
             if buff.vesper_totem.up and vesper_totem_dmg_charges > 0 then trigger_vesper_damage() end
 
-            tiSpell = "lightning_bolt"
+            if buff.primordial_wave.up and active_dot.flame_shock > 1 then
+                thorims_current_mode = "chain_lightning"
+            else
+                thorims_current_mode = "lightning_bolt"
+            end
+
         end,
 
         bind = "tempest"
@@ -2297,7 +2349,7 @@ spec:RegisterAbilities( {
             if azerite.natural_harmony.enabled then applyBuff( "natural_harmony_nature" ) end
             if buff.vesper_totem.up and vesper_totem_dmg_charges > 0 then trigger_vesper_damage() end
 
-            tiSpell = true_active_enemies > 1 and "chain_lightning" or "lightning_bolt"
+            thorims_current_mode = true_active_enemies > 1 and "chain_lightning" or "lightning_bolt"
         end,
 
         bind = "lightning_bolt",
