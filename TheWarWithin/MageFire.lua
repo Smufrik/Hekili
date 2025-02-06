@@ -937,7 +937,7 @@ spec:RegisterHook( "advance", function ( time )
 end )
 
 
-local ConsumeHotStreak = setfenv( function( pyro )
+local ConsumeHotStreak = setfenv( function()
 
     removeBuff( "hot_streak" )
     -- Sunfury
