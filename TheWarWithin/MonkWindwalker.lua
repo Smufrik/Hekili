@@ -631,9 +631,6 @@ spec:RegisterAuras( {
         duration = 6,
         max_stack = 1
     },
-    tea_of_plenty_rsk = {
-        -- Stub until MW is loaded.
-    },
     teachings_of_the_monastery = {
         id = 202090,
         duration = 20,
@@ -857,6 +854,7 @@ spec:RegisterGear( "the_wind_blows", 151811 )
 
 spec:RegisterStateTable( "combos", {
     blackout_kick = true,
+    celestial_conduit,
     chi_burst = true,
     chi_wave = true,
     crackling_jade_lightning = true,
@@ -867,6 +865,7 @@ spec:RegisterStateTable( "combos", {
     flying_serpent_kick = true,
     rising_sun_kick = true,
     rushing_jade_wind = true,
+    slicing_wind = true,
     spinning_crane_kick = true,
     strike_of_the_windlord = true,
     tiger_palm = true,
@@ -946,6 +945,11 @@ spec:RegisterHook( "spend", function( amt, resource )
         if talent.last_emperors_capacitor.enabled or legendary.last_emperors_capacitor.enabled then
             addStack( "the_emperors_capacitor" )
         end
+    elseif resource == "energy" then
+        if amt > 50 and talent.efficient_training.enabled then
+            reduceCooldown( "storm_earth_and_fire", 1 )
+        end
+
     end
 end )
 
@@ -1142,6 +1146,36 @@ spec:RegisterAbilities( {
         end,--]]
 
         handler = function ()
+            local kicks = buff.teachings_of_the_monastery.up and buff.teachings_of_the_monastery.stack or 1
+            local hits = min( talent.shadowboxing_treads.enabled and 3 or 1, true_active_enemies ) * kicks
+
+            if buff.bok_proc.up then
+                removeStack( "bok_proc" )
+                if talent.energy_burst.enabled then gain( 1, "chi" ) end
+                if set_bonus.tier21_4pc > 0 then gain( 1, "chi" ) end
+            end
+
+            if talent.martial_mixture.up then
+                addStack( "martial_mixture", nil, hits )
+            end
+
+            reduceCooldown( "rising_sun_kick", ( buff.ordered_elements.up and 2 or 1 ) )
+            reduceCooldown( "fists_of_fury", ( buff.ordered_elements.up and 2 or 1 ) )
+
+            if buff.teachings_of_the_monastery.up then
+                if talent.memory_of_the_monastery.enabled then
+                    addStack( "memory_of_the_monastery", nil, buff.teachings_of_the_monastery.stack )
+                end
+                removeBuff( "teachings_of_the_monastery" )
+                if buff.strength_of_the_black_ox.up then
+                    removeBuff( "strength_of_the_black_ox" )
+                    addStack( "teachings_of_the_monastery", nil, 2 )
+                end
+            end
+            if talent.eye_of_the_tiger.enabled then applyDebuff( "target", "eye_of_the_tiger" ) end
+            if talent.transfer_the_power.enabled then addStack( "transfer_the_power", nil, kicks ) end
+
+            -- Legacy
             if buff.blackout_reinforcement.up then
                 removeBuff( "blackout_reinforcement" )
                 if set_bonus.tier31_4pc > 0 then
@@ -1151,30 +1185,7 @@ spec:RegisterAbilities( {
                     reduceCooldown( "whirling_dragon_punch", 3 )
                 end
             end
-            if buff.bok_proc.up then
-                removeStack( "bok_proc" )
-                if talent.energy_burst.enabled then gain( 1, "chi" ) end
-                if set_bonus.tier21_4pc > 0 then gain( 1, "chi" ) end
-            end
 
-            if level > 22 then
-                reduceCooldown( "rising_sun_kick", ( buff.weapons_of_order.up and 2 or 1 ) )
-                reduceCooldown( "fists_of_fury", ( buff.weapons_of_order.up and 2 or 1 ) )
-            end
-
-            if buff.teachings_of_the_monastery.up then
-                if talent.memory_of_the_monastery.enabled then
-                    addStack( "memory_of_the_monastery", nil, buff.teachings_of_the_monastery.stack )
-                end
-                removeBuff( "teachings_of_the_monastery" )
-            end
-
-            if talent.eye_of_the_tiger.enabled then applyDebuff( "target", "eye_of_the_tiger" ) end
-            --[[if level > 32 then
-                applyDebuff( "target", "mark_of_the_crane" )
-                if talent.shadowboxing_treads.enabled then active_dot.mark_of_the_crane = min( active_dot.mark_of_the_crane + 2, active_enemies ) end
-            end--]]
-            if talent.transfer_the_power.enabled then addStack( "transfer_the_power" ) end
         end,
     },
 
@@ -1413,7 +1424,7 @@ spec:RegisterAbilities( {
 
         start = function ()
             -- Standard effects / talents
-            removeBuff( "fists_of_flowing_momentum" )
+
             removeBuff( "transfer_the_power" )
 
             if buff.fury_of_xuen.stack >= 50 then
@@ -1442,7 +1453,7 @@ spec:RegisterAbilities( {
                 applyDebuff( "target", "shadowflame_vulnerability" )
                 active_dot.shadowflame_vulnerability = active_enemies
             end
-
+            removeBuff( "fists_of_flowing_momentum" )
         end,
 
 
@@ -1633,7 +1644,7 @@ spec:RegisterAbilities( {
         id = 107428,
         cast = 0,
         cooldown = function ()
-            return ( ( buff.tea_of_plenty_rsk.up and 1 or 10 ) - ( talent.brawlers_intensity.enabled and 1 or 0 ) ) * haste
+            return ( 10 - talent.brawlers_intensity.rank ) * haste
         end,
         gcd = "spell",
         school = "physical",
@@ -1644,40 +1655,27 @@ spec:RegisterAbilities( {
         talent = "rising_sun_kick",
         startsCombat = true,
 
-        --[[cycle = function()
-            if cycle_enemies == 1 then return end
-
-            if level > 32 and cycle_enemies > active_dot.mark_of_the_crane and active_dot.mark_of_the_crane < 5 and debuff.mark_of_the_crane.up then
-                if Hekili.ActiveDebug then Hekili:Debug( "Recommending swap to target missing Mark of the Crane debuff." ) end
-                return "mark_of_the_crane"
-            end
-        end,--]]
-
         handler = function ()
-            applyDebuff( "target", "rising_sun_kick" )
-            removeStack( "tea_of_plenty_rsk" )
+
             removeBuff( "chi_wave" )
 
-            if buff.kicks_of_flowing_momentum.up then
-                removeStack( "kicks_of_flowing_momentum" )
-                if set_bonus.tier29_4pc > 0 then addStack( "fists_of_flowing_momentum" ) end
-            end
-
             if talent.acclamation.enabled then applyDebuff( "target", "acclamation", nil, debuff.acclamation.stack + 1 ) end
-
-           -- if level > 32 then applyDebuff( "target", "mark_of_the_crane" ) end
-
             if talent.transfer_the_power.enabled then addStack( "transfer_the_power" ) end
 
             if talent.whirling_dragon_punch.enabled and cooldown.fists_of_fury.remains > 0 then
                 applyBuff( "whirling_dragon_punch", min( cooldown.fists_of_fury.remains, cooldown.rising_sun_kick.remains ) )
             end
 
-            if azerite.sunrise_technique.enabled then applyDebuff( "target", "sunrise_technique" ) end
 
+            -- Legacy
+            if azerite.sunrise_technique.enabled then applyDebuff( "target", "sunrise_technique" ) end
             if buff.weapons_of_order.up then
                 applyBuff( "weapons_of_order_ww" )
                 state:QueueAuraExpiration( "weapons_of_order_ww", noop, buff.weapons_of_order_ww.expires )
+            end
+            if buff.kicks_of_flowing_momentum.up then
+                removeStack( "kicks_of_flowing_momentum" )
+                if set_bonus.tier29_4pc > 0 then addStack( "fists_of_flowing_momentum" ) end
             end
         end,
     },
@@ -1945,19 +1943,14 @@ spec:RegisterAbilities( {
 
         startsCombat = true,
 
-        -- cycle = "mark_of_the_crane",
-
         handler = function ()
             gain( 2, "chi" )
             removeBuff( "martial_mixture" )
-            -- removeStack( "darting_hurricane" )
 
             if buff.combat_wisdom.up then
                 class.abilities.expel_harm.handler()
                 removeBuff( "combat_wisdom" )
             end
-
-            -- if level > 32 then applyDebuff( "target", "mark_of_the_crane" ) end
 
             if talent.eye_of_the_tiger.enabled then
                 applyDebuff( "target", "eye_of_the_tiger" )
