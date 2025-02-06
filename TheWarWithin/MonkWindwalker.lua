@@ -848,6 +848,7 @@ spec:RegisterGear( "the_wind_blows", 151811 )
 
 spec:RegisterStateTable( "combos", {
     blackout_kick = true,
+    celestial_conduit = true,
     chi_burst = true,
     chi_wave = true,
     crackling_jade_lightning = true,
