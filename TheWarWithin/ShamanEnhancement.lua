@@ -886,7 +886,7 @@ local recall_totems = {
 
 local recallTotem1
 local recallTotem2
-local tiSpell = "lightning_bolt"
+local tiWindow, tiSpell, tiTarget = 0, "lightning_bolt"
 local recent_spell_hits = {}
 local actual_spirits, virtual_spirits = {}, {}
 local molten_weapons, virtual_molten_weapons = {}, {}
@@ -966,39 +966,33 @@ spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _
 
         end
 
-        if subtype == "SPELL_DAMAGE" then
+        if state.talent.thorims_invocation.enabled and subtype == "SPELL_DAMAGE" and ( spellID == 188196 or spellID == 452201 or spellID == 188443 ) then
+
+            -- Chain Lightning ALWAYS sets tiSpell to "chain_lightning"
+            if spellID == 188443 then
+                tiSpell = "chain_lightning"
+                return
+            end
+
+            -- timestamp not needed if it's a chain lightning, declare after
             local now = GetTime()
 
-            -- Check for Lightning Bolt (188196) and Tempest (452201)
-            if spellID == 188196 or spellID == 452201 then
-                -- Initialize tracking for the spell if needed
-                if not recent_spell_hits[ spellID ] then
-                    recent_spell_hits[ spellID ] = {}
-                end
-
-                -- Remove expired entries (older than 0.2 seconds)
-                for targetGUID, timestamp in pairs( recent_spell_hits[ spellID ]) do
-                    if now - timestamp > 0.2 then
-                        recent_spell_hits[ spellID ][ targetGUID ] = nil
-                    end
-                end
-
-                -- Record the current hit
-                recent_spell_hits[ spellID ][ destGUID ] = now
-
-                -- Count unique targets hit
-                local target_count = 0
-                for _ in pairs( recent_spell_hits[ spellID ] ) do
-                    target_count = target_count + 1
-                end
-
-                -- Set tiSpell based on target count
-                if target_count > 1 then
-                    tiSpell = "chain_lightning"  -- Multiple targets → CL
-                else
-                    tiSpell = "lightning_bolt"   -- Single target → LB
-                end
+            if now > tiWindow then -- "if this is a new window"
+                tiWindow = GetTime() + 0.5 -- Window closure time
+                tiSpell = "lightning_bolt" -- We can set to Lightning Bolt since we're at target count = 1 for now.  
+                tiTarget = destGUID -- To count the next target, we just need to know it wasn't this guy.  
+                return
             end
+
+            -- If we're here, we're inside an active Thorim's log collection window of 0.5s.  
+            -- If this is hit # 3 - 99999 of the same window it doesn't matter
+            if tiSpell == "chain_lightning" then return end
+
+            -- Otherwise, check if this is a new enemy
+            if destGUID ~= tiTarget then
+                tiSpell = "chain_lightning" -- If so, it must be an aoe CL or tempset, and so thorims is primed to CL
+                return
+             end
         end
 
         if subtype == "SPELL_CAST_SUCCESS" then
@@ -1012,12 +1006,6 @@ spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _
                 recallTotem2 = recallTotem1
                 recallTotem1 = key
             end
-
-            -- Chain Lightning ALWAYS sets tiSpell to "chain_lightning"
-            if spellID == 188443 then
-                tiSpell = "chain_lightning"
-            end
-
         end
     end
 
@@ -1148,16 +1136,16 @@ local TriggerStaticAccumulation = setfenv( function()
     gain_maelstrom( 1 )
 end, state )
 
-spec:RegisterStateExpr( "thorims_current_mode", function ()
+spec:RegisterStateExpr( "ti_mode", function ()
     return tiSpell
 end)
 
 spec:RegisterStateExpr( "ti_lightning_bolt", function ()
-    return thorims_current_mode == "lightning_bolt"
+    return ti_mode == "lightning_bolt"
 end)
 
 spec:RegisterStateExpr( "ti_chain_lightning", function ()
-    return thorims_current_mode == "chain_lightning"
+    return ti_mode == "chain_lightning"
 end)
 
 spec:RegisterStateExpr( "tempest_mael_count", function ()
@@ -1293,7 +1281,7 @@ spec:RegisterHook( "reset_precast", function ()
         end
     end ]]
 
-    thorims_current_mode = tiSpell -- Sync with CLEU every recommendation set
+    ti_mode = tiSpell -- Sync with CLEU every recommendation set
 
     rawset( buff, "doom_winds_debuff", debuff.doom_winds_debuff )
     rawset( buff, "doom_winds_cd", debuff.doom_winds_debuff )
@@ -1593,7 +1581,7 @@ spec:RegisterAbilities( {
 
             if buff.vesper_totem.up and vesper_totem_dmg_charges > 0 then trigger_vesper_damage() end
 
-            thorims_current_mode = "chain_lightning"
+            ti_mode = "chain_lightning"
         end,
     },
 
@@ -2293,11 +2281,7 @@ spec:RegisterAbilities( {
             if azerite.natural_harmony.enabled then applyBuff( "natural_harmony_nature" ) end
             if buff.vesper_totem.up and vesper_totem_dmg_charges > 0 then trigger_vesper_damage() end
 
-            if buff.primordial_wave.up and active_dot.flame_shock > 1 then
-                thorims_current_mode = "chain_lightning"
-            else
-                thorims_current_mode = "lightning_bolt"
-            end
+            ti_mode = buff.primordial_wave.up and active_dot.flame_shock > 1 and "chain_lightning" or "lightning_bolt"
 
         end,
 
@@ -2342,7 +2326,7 @@ spec:RegisterAbilities( {
             if azerite.natural_harmony.enabled then applyBuff( "natural_harmony_nature" ) end
             if buff.vesper_totem.up and vesper_totem_dmg_charges > 0 then trigger_vesper_damage() end
 
-            thorims_current_mode = true_active_enemies > 1 and "chain_lightning" or "lightning_bolt"
+            ti_mode = true_active_enemies > 1 and "chain_lightning" or "lightning_bolt"
         end,
 
         bind = "lightning_bolt",
