@@ -321,7 +321,7 @@ spec:RegisterAuras( {
     excess_fire = {
         id = 438624,
         duration = 30,
-        max_stack = 1
+        max_stack = 2
     },
     excess_frost = {
         id = 438611,
@@ -965,16 +965,13 @@ spec:RegisterHook( "runHandler", function( action )
 
     if talent.frostfire_mastery.enabled and ability then
         if ability.school == "fire" or ability.school == "frostfire" then
-            if buff.fire_mastery.up then buff.fire_mastery.stack = buff.fire_mastery.stack + 1
-            else applyBuff( "fire_mastery" ) end
-            if talent.excess_fire.enabled and buff.fire_mastery.stack_pct == 100 then applyBuff( "excess_fire" ) end
+            if buff.fire_mastery.up then applyBuff( "fire_mastery", buff.fire_mastery.remains, min( spec.auras.fire_mastery.max_stack, buff.fire_mastery.stack + 1 ) )
+            else addStack( "fire_mastery" ) end
         end
         if ability.school == "frost" or ability.school == "frostfire" then
-            if buff.frost_mastery.up then buff.frost_mastery.stack = buff.frost_mastery.stack + 1
+            if buff.frost_mastery.up then applyBuff( "frost_mastery", buff.frost_mastery.remains, min( spec.auras.frost_mastery.max_stack, buff.frost_mastery.stack + 1 ) )
             else applyBuff( "frost_mastery" ) end
-            if talent.excess_frost.enabled and buff.frost_mastery.stack_pct == 100 then applyBuff( "excess_frost" ) end
         end
-
     end
 end )
 
@@ -1390,8 +1387,8 @@ spec:RegisterAbilities( {
             applyDebuff( "target", "ignite" )
 
             if buff.excess_fire.up then
-                applyDebuff( "target", "living_bomb" )
-                removeBuff( "excess_fire" )
+                reduceCooldown( "phoenix_flames", 5 )
+                removeStack( "excess_fire" )
             end
 
             if buff.lit_fuse.up then
@@ -1456,7 +1453,7 @@ spec:RegisterAbilities( {
                 applyBuff( "frost_mastery", nil, 6 )
                 if talent.excess_frost.enabled then applyBuff( "excess_frost" ) end
                 applyBuff( "fire_mastery", nil, 6 )
-                if talent.excess_fire.enabled then applyBuff( "excess_fire" ) end
+                if talent.excess_fire.enabled then addStack( "excess_fire" ) end
                 removeBuff( "frostfire_empowerment" )
             end
 
@@ -1747,6 +1744,7 @@ spec:RegisterAbilities( {
             if buff.excess_frost.up then
                 removeBuff( "excess_frost" )
                 class.abilities.ice_nova.handler()
+                reduceCooldown( "meteor", 3 )
             end
         end,
 

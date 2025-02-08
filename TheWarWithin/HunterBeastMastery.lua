@@ -1253,9 +1253,10 @@ spec:RegisterAuras( {
     jackpot = {
 
     },
+    -- Possible TODO: pet attacks reduce bestial wrath cd?
     potent_mutagen = {
         id = 1218003,
-        duration = 10,
+        duration = 8,
         max_stack = 1
     },
 

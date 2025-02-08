@@ -818,7 +818,12 @@ spec:RegisterAbilities( {
                     spec.abilities.eruption.handler()
                 end
             end
-            if set_bonus.tww2 >= 2 then spec.abilities.upheaval.handler() end
+            if set_bonus.tww2 >= 2 then
+                local ebon = buff.ebon_might.remains
+                spec.abilities.upheaval.handler()
+                -- Except ebon might extensions. Why blizz.
+                buff.ebon_might.remains = ebon
+            end
         end,
 
         finish = function()
@@ -1162,7 +1167,7 @@ spec:RegisterAbilities( {
         handler = function()
             if buff.ebon_might.up then buff.ebon_might.expires = buff.ebon_might.expires + 2 end
             if talent.mass_disintegrate.enabled then addStack( "mass_disintegrate_stacks" ) end
-            if talent.mass_eruption.enabled then applyBuff( "mass_eruption_stacks" ) end -- ???
+            if talent.mass_eruption.enabled then applyBuff( "mass_eruption_stacks" ) end
             if set_bonus.tww2 >= 4 then addStack( "essence_burst" ) end
         end,
 

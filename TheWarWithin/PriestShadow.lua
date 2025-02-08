@@ -1151,6 +1151,7 @@ spec:RegisterAbilities( {
             if set_bonus.tww2 >= 2 then
                 spec.abilities.void_bolt.handler()
                 spend( spec.abilities.void_bolt.spend, spec.abilities.void_bolt.spendType )
+                applyBuff( "power_infusion", buff.power_infusion.remains + 5 )
             end
         end,
     },
@@ -1816,7 +1817,7 @@ spec:RegisterAbilities( {
         indicator = function () return group and ( talent.twins_of_the_sun_priestess.enabled or legendary.twins_of_the_sun_priestess.enabled ) and "cycle" or nil end,
 
         handler = function ()
-            applyBuff( "power_infusion" )
+            applyBuff( "power_infusion", max( 30,  buff.power_infusion.remains + 15 ) )
             stat.haste = stat.haste + 0.25
         end,
     },
@@ -2321,6 +2322,7 @@ spec:RegisterAbilities( {
             if set_bonus.tww2 >= 2 then
                 spec.abilities.void_bolt.handler()
                 spend( spec.abilities.void_bolt.spend, spec.abilities.void_bolt.spendType )
+                applyBuff( "power_infusion", buff.power_infusion.remains + 5 )
             end
             applyBuff( "voidform" )
             if talent.ancient_madness.enabled then applyBuff( "ancient_madness", nil, 20 ) end

@@ -248,7 +248,7 @@ spec:RegisterAuras( {
     awakening_storms = {
         id = 462131,
         duration = 3600,
-        max_stack = 3
+        max_stack = 4
     },
     -- Haste increased by $w1%.
     -- https://wowhead.com/ptr-2/spell=2825

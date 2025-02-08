@@ -927,6 +927,18 @@ spec:RegisterHook( "runHandler", function( action )
         local ability = class.abilities[ action ]
         if ability and ability.cast > 0 and ability.cast < 10 then removeStack( "ice_floes" ) end
     end
+
+    if talent.frostfire_mastery.enabled and ability then
+        if ability.school == "fire" or ability.school == "frostfire" then
+            if buff.fire_mastery.up then applyBuff( "fire_mastery", buff.fire_mastery.remains, min( spec.auras.fire_mastery.max_stack, buff.fire_mastery.stack + 1 ) )
+            else addStack( "fire_mastery" ) end
+        end
+        if ability.school == "frost" or ability.school == "frostfire" then
+            if buff.frost_mastery.up then applyBuff( "frost_mastery", buff.frost_mastery.remains, min( spec.auras.frost_mastery.max_stack, buff.frost_mastery.stack + 1 ) )
+            else applyBuff( "frost_mastery" ) end
+        end
+    end
+
 end )
 
 
@@ -1082,7 +1094,7 @@ spec:RegisterAbilities( {
                 if buff.excess_frost.up then
                     removeBuff( "excess_frost" )
                     spec.abilities.ice_nova.handler()
-                    reduceCooldown( "comet_storm", 5 )
+                    reduceCooldown( "comet_storm", 3 )
                 end
             end
 
@@ -1160,10 +1172,10 @@ spec:RegisterAbilities( {
 
             if buff.frostfire_empowerment.up then
                 if talent.flash_freezeburn.enabled then
-                    applyBuff( "frost_mastery", 14, 6 )
+                    applyBuff( "frost_mastery", nil, 6 )
                     applyBuff( "excess_frost" )
-                    applyBuff( "fire_mastery", 14, 6 )
-                    applyBuff( "excess_fire" )
+                    applyBuff( "fire_mastery", nil, 6 )
+                    addStack( "excess_fire" )
                 end
                 removeBuff( "frostfire_empowerment" )
             end
@@ -1243,10 +1255,10 @@ spec:RegisterAbilities( {
 
             if buff.frostfire_empowerment.up then
                 if talent.flash_freezeburn.enabled then
-                    applyBuff( "frost_mastery", 14, 6 )
+                    applyBuff( "frost_mastery", nil, 6 )
                     applyBuff( "excess_frost" )
-                    applyBuff( "fire_mastery", 14, 6 )
-                    applyBuff( "excess_fire" )
+                    applyBuff( "fire_mastery", nil, 6 )
+                    addStack( "excess_fire" )
                 end
                 removeBuff( "frostfire_empowerment" )
             end
@@ -1450,7 +1462,7 @@ spec:RegisterAbilities( {
             removeDebuff( "target", "frozen" )
             if talent.frostfire_mastery.enabled then
                 if buff.excess_fire.up then
-                    removeBuff( "excess_fire" )
+                    removeStack( "excess_fire" )
                     applyBuff( "excess_frost" )
                     BrainFreeze()
                 end

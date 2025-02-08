@@ -1763,6 +1763,7 @@ spec:RegisterAbilities( {
             if buff.sudden_doom.up then
                 PopWounds( 1 + ( 1 * pvptalent.doomburst.rank ) )
                 removeStack( "sudden_doom" )
+                if talent.doomed_bidding.enabled then summonPet( "magus_of_the_dead", 6 ) end
                 if talent.rotten_touch.enabled then applyDebuff( "target", "rotten_touch" ) end
                 if talent.death_rot.enabled then applyDebuff( "target", "death_rot", nil, 2 ) end
             elseif talent.death_rot.enabled then applyDebuff( "target", "death_rot", nil, 1 ) end

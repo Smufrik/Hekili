@@ -494,7 +494,7 @@ spec:RegisterAuras( {
     },
     intuition = {
         id = 455681,
-        duration = 6,
+        duration = 3,
         max_stack = 1
     },
     leydrinker = {
