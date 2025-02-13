@@ -1810,7 +1810,7 @@ spec:RegisterAbilities( {
         gcd = "spell",
         hasteCD = true,
 
-        spend = function () return -15
+        spend = function () return ( ( talent.thorims_might.enabled and talent.flashing_skies.enabled ) and -11 or -8 )
             * ( buff.violent_outburst.up and 2 or 1 )
             * ( buff.unnerving_focus.up and 1.5 or 1 ) end,
         spendType = "rage",
