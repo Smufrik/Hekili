@@ -769,9 +769,6 @@ spec:RegisterAbilities( {
             if talent.immovable_object.enabled then
                 applyBuff( "shield_wall", 4 )
             end
-            if talent.violent_outburst.enabled then
-                applyBuff( "violent_outburst" )
-            end
             if talent.avatar_of_the_storm.enabled then
                 applyBuff( "thunder_blast", 15, 2 )
             end
