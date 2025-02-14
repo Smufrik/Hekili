@@ -770,6 +770,8 @@ spec:RegisterAbilities( {
                 applyBuff( "shield_wall", 4 )
             end
             if talent.avatar_of_the_storm.enabled then
+                setCooldown( "thunder_clap", 0 )
+                setCooldown( "thunder_blast", 0 )
                 applyBuff( "thunder_blast", 15, 2 )
             end
         end,
