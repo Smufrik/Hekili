@@ -9,7 +9,7 @@ local class, state = Hekili.Class, Hekili.State
 
 local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
 
-local GetItemCooldown = GetItemCooldown
+local GetItemCooldown = C_Item.GetItemCooldown
 local strformat = string.format
 
 local spec = Hekili:NewSpecialization( 62 )
