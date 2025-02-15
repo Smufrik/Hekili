@@ -1291,8 +1291,8 @@ spec:RegisterHook( "spend", function( amt, resource )
 end )
 
 local CallOfTheWildCDR = setfenv( function()
-    gainChargeTime( "kill_command", spec.abilities.kill_command.recharge/2)
-    gainChargeTime( "barbed_shot", spec.abilities.barbed_shot.recharge/2)
+    gainChargeTime( "kill_command", spec.abilities.kill_command.recharge/4)
+    gainChargeTime( "barbed_shot", spec.abilities.barbed_shot.recharge/4)
     if talent.withering_fire.enabled then applyBuff( "deathblow" ) end
 end, state )
 

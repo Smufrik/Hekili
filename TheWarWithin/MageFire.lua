@@ -1744,7 +1744,7 @@ spec:RegisterAbilities( {
             if buff.excess_frost.up then
                 removeBuff( "excess_frost" )
                 class.abilities.ice_nova.handler()
-                reduceCooldown( "meteor", 3 )
+                reduceCooldown( "meteor", 5 )
             end
         end,
 

@@ -961,7 +961,7 @@ spec:RegisterAbilities( {
             -- Simple buffs
             removeDebuff( "target", "spotters_mark" )
             removeBuff ( "moving_target" )
-            if talent.precise_shots.enabled then addStack( "precise_shots" ) end
+            if talent.precise_shots.enabled then addStack( "precise_shots", nil, 1 + talent.windrunner_quiver.rank ) end
             if debuff.explosive_shot.up and talent.precision_detonation.enabled then removeDebuff( "target", "explosive_shot" ) end
             if debuff.spotters_mark.up then SpottersMarkConsumer( action.aimed_shot.max_targets ) end
             
@@ -976,7 +976,7 @@ spec:RegisterAbilities( {
                 spec.abilities.aimed_shot.runHandler()
             end
 
-            if talent.bullet_hell.enabled then reduceCooldown( "volley", 0.25 * action.aimed_shot.max_targets ) end
+            if talent.bullet_hell.enabled then reduceCooldown( "volley", 0.5 * action.aimed_shot.max_targets ) end
 
             -- Trick Shots
             if buff.trick_shots.up then
@@ -1386,7 +1386,7 @@ spec:RegisterAbilities( {
 
             if buff.precise_shots.up then PreciseShotsConsumer() end
             if talent.trick_shots.enabled and active_enemies > 2 then applyBuff( "trick_shots" ) end
-            if talent.bullet_hell.enabled then reduceCooldown( "rapid_fire", 0.25 * active_enemies ) end
+            if talent.bullet_hell.enabled then reduceCooldown( "rapid_fire", 0.3 * active_enemies ) end
 
             -- Legacy / PvP stuff
             if set_bonus.tier29_4pc > 0 then
@@ -1543,7 +1543,7 @@ spec:RegisterAbilities( {
         end,
 
         tick = function()
-            if talent.bullet_hell.enabled then reduceCooldown( "rapid_fire", 0.25 * active_enemies ) end
+            if talent.bullet_hell.enabled then reduceCooldown( "rapid_fire", 0.3 * active_enemies ) end
         end,
     },
 

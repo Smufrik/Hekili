@@ -816,7 +816,7 @@ spec:RegisterAbilities( {
         cooldown = 15,
         gcd = "spell",
 
-        spend = 0.04,
+        spend = 0.045,
         spendType = "mana",
 
         startsCombat = false,

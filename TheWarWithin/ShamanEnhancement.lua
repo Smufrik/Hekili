@@ -501,7 +501,7 @@ spec:RegisterAuras( {
     -- https://wowhead.com/ptr-2/spell=215785
     hot_hand = {
         id = 215785,
-        duration = 8,
+        duration = 6,
         max_stack = 1
     },
     -- Talent: Movement speed reduced by $s2%.

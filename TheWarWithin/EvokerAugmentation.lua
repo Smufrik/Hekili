@@ -1168,7 +1168,8 @@ spec:RegisterAbilities( {
             if buff.ebon_might.up then buff.ebon_might.expires = buff.ebon_might.expires + 2 end
             if talent.mass_disintegrate.enabled then addStack( "mass_disintegrate_stacks" ) end
             if talent.mass_eruption.enabled then applyBuff( "mass_eruption_stacks" ) end
-            if set_bonus.tww2 >= 4 then addStack( "essence_burst" ) end
+            -- This was reduced to 50% chance, can't gaurantee it atm
+            -- if set_bonus.tww2 >= 4 then addStack( "essence_burst" ) end
         end,
 
         copy = { 396286, 408092 }
