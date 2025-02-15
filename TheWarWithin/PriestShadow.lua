@@ -1,5 +1,5 @@
 -- PriestShadow.lua
--- July 2024
+-- January 2025
 
 if UnitClassBase( "player" ) ~= "PRIEST" then return end
 
@@ -333,6 +333,11 @@ local PowerSurge = setfenv( function()
 end, state )
 
 
+
+-- The War Within
+spec:RegisterGear( "tww2", 229334, 229332, 229337, 229335, 229333 )
+
+-- Dragonflight
 spec:RegisterGear( "tier29", 200327, 200329, 200324, 200326, 200328 )
 spec:RegisterAuras( {
     dark_reveries = {
@@ -1079,6 +1084,12 @@ spec:RegisterAuras( {
     },
 } )
 
+local InescapableTorment = setfenv( function ()
+    if buff.mindbender.up then buff.mindbender.expires = buff.mindbender.expires + 0.7
+    elseif buff.shadowfiend.up then buff.shadowfiend.expires = buff.shadowfiend.expires + 0.7
+    elseif buff.voidwraith.up then buff.voidwraith.expires = buff.voidwraith.expires + 0.7 
+    end
+end, state )
 
 -- Abilities
 spec:RegisterAbilities( {
@@ -1137,6 +1148,11 @@ spec:RegisterAbilities( {
         handler = function ()
             applyBuff( "dark_ascension" )
             if talent.ancient_madness.enabled then applyBuff( "ancient_madness", nil, 20 ) end
+            if set_bonus.tww2 >= 2 then
+                spec.abilities.void_bolt.handler()
+                spend( spec.abilities.void_bolt.spend, spec.abilities.void_bolt.spendType )
+                applyBuff( "power_infusion", buff.power_infusion.remains + 5 )
+            end
         end,
     },
 
@@ -1486,11 +1502,7 @@ spec:RegisterAbilities( {
             removeBuff( "mind_melt" )
             removeBuff( "shadowy_insight" )
 
-            if talent.inescapable_torment.enabled then
-                if buff.mindbender.up then buff.mindbender.expires = buff.mindbender.expires + 0.7
-                elseif buff.shadowfiend.up then buff.shadowfiend.expires = buff.shadowfiend.expires + 0.7
-                elseif buff.voidwraith.up then buff.voidwraith.expires = buff.voidwraith.expires + 0.7 end
-            end
+            if talent.inescapable_torment.enabled then InescapableTorment() end
 
             if talent.schism.enabled then applyDebuff( "target", "schism" ) end
 
@@ -1544,10 +1556,7 @@ spec:RegisterAbilities( {
                 rift_extensions = rift_extensions + 1
             end
 
-            if talent.inescapable_torment.enabled then
-                if buff.mindbender.up then buff.mindbender.expires = buff.mindbender.expires + 0.7
-                elseif buff.shadowfiend.up then buff.shadowfiend.expires = buff.shadowfiend.expires + 0.7 end
-            end
+            if talent.inescapable_torment.enabled then InescapableTorment() end
 
             if talent.schism.enabled then applyDebuff( "target", "schism" ) end
 
@@ -1808,7 +1817,7 @@ spec:RegisterAbilities( {
         indicator = function () return group and ( talent.twins_of_the_sun_priestess.enabled or legendary.twins_of_the_sun_priestess.enabled ) and "cycle" or nil end,
 
         handler = function ()
-            applyBuff( "power_infusion" )
+            applyBuff( "power_infusion", max( 30,  buff.power_infusion.remains + 15 ) )
             stat.haste = stat.haste + 0.25
         end,
     },
@@ -2109,11 +2118,7 @@ spec:RegisterAbilities( {
                 applyDebuff( "target", "death_and_madness_debuff" )
             end
 
-            if talent.inescapable_torment.enabled then
-                local fiend = talent.voidwraith.enabled and "voidwraith" or talent.mindbender.enabled and "mindbender" or "shadowfiend"
-                if buff[ fiend ].up then buff[ fiend ].expires = buff[ fiend ].expires + ( talent.inescapable_torment.rank * 0.5 ) end
-                if pet[ fiend ].up then pet[ fiend ].expires = pet[ fiend ].expires + ( talent.inescapable_torment.rank * 0.5 ) end
-            end
+            if talent.inescapable_torment.enabled then InescapableTorment() end
 
             if talent.expiation.enabled then
                 local swp = talent.purge_the_wicked.enabled and "purge_the_wicked" or "shadow_word_pain"
@@ -2314,6 +2319,11 @@ spec:RegisterAbilities( {
         end,
 
         handler = function ()
+            if set_bonus.tww2 >= 2 then
+                spec.abilities.void_bolt.handler()
+                spend( spec.abilities.void_bolt.spend, spec.abilities.void_bolt.spendType )
+                applyBuff( "power_infusion", buff.power_infusion.remains + 5 )
+            end
             applyBuff( "voidform" )
             if talent.ancient_madness.enabled then applyBuff( "ancient_madness", nil, 20 ) end
         end,

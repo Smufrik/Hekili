@@ -10927,6 +10927,7 @@ function Hekili:CmdLine( input )
         display     = "mode",
         target_swap = "cycle",
         swap        = "cycle",
+        covenants   = "essences"
     }
     local arg3Aliases = {
         auto = "automatic",

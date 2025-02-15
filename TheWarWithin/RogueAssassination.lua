@@ -1,5 +1,5 @@
 -- RogueAssassination.lua
--- October 2024
+-- January 2025
 
 if UnitClassBase( "player" ) ~= "ROGUE" then return end
 
@@ -696,6 +696,25 @@ local ExpireSepsis = setfenv( function ()
         applyBuff( "shadow_blades", 10 )
     end
 end, state )
+
+-- The War Within
+spec:RegisterGear( "tww2", 229290, 229288, 229289, 229287, 229292 )
+spec:RegisterAuras( {
+    -- 2-set
+    -- https://www.wowhead.com/spell=1218439
+    -- Winning Streak!  
+    winning_streak = {
+        id = 1218439,
+        duration = 3600,
+        max_stack = 10,
+    },
+    -- 4-set
+    cashout = {
+        id = 1219264,
+        duration = 4,
+        max_stack = 1,
+    },
+} )
 
 
 -- Tier 31
