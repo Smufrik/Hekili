@@ -2162,7 +2162,7 @@ spec:RegisterAbilities( {
         velocity = 30,
 
         indicator = function()
-            return active_enemies > 1 and settings.cycle and debuff.flame_shock.down and active_dot.flame_shock > 0 and "cycle" or nil
+            return active_enemies > 1 and settings.cycle and dot.flame_shock.down and active_dot.flame_shock > 0 and "cycle" or nil
         end,
 
         handler = function ()
