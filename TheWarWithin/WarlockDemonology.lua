@@ -2284,7 +2284,7 @@ spec:RegisterAbilities( {
         gcd = "off", -- Pet ability, no GCD
 
         startsCombat = true,
-        texture = 236298,
+        texture = 236303,
 
         readyTime = function() return buff.fiendish_wrath.remains end,
 
