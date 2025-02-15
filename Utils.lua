@@ -40,6 +40,8 @@ ns.UnitBuffByID = function( unitToken, spellID, filter )
     end, unitToken, filter )
 end
 
+ns.FindUnitBuffByID = ns.UnitBuffByID
+
 ns.UnitDebuffByID = function( unitToken, spellID, filter )
     local playerOrPet = UnitIsUnit( "player", unitToken ) or UnitIsUnit( "pet", unitToken )
     filter = filter or "HARMFUL"
@@ -49,6 +51,8 @@ ns.UnitDebuffByID = function( unitToken, spellID, filter )
         return id == spellID and ( not playerOrPet or isFromPlayerOrPet )
     end, unitToken, filter )
 end
+
+ns.FindUnitDebuffByID = ns.UnitDebuffByID
 
 local UnitBuff, UnitDebuff = ns.UnitBuff, ns.UnitDebuff
 local UnitBuffByID, UnitDebuffByID = ns.UnitBuffByID, ns.UnitDebuffByID
@@ -575,27 +579,9 @@ end
 
 function ns.FindUnitDebuffByID( unit, id, filter )
     if unit == "player" then return FindPlayerAuraByID( id ) end
-
-    local playerOrPet = false
-
-    if filter == "PLAYER|PET" then
-        playerOrPet = true
-        filter = nil
-    end
-
-    local i = 1
-    local name, icon, count, debuffType, duration, expirationTime, caster, stealable, nameplateShowPersonal, spellID, canApplyAura, isBossDebuff, nameplateShowAll, timeMod, value1, value2, value3 = UnitDebuff( unit, i, filter )
-
-    while( name ) do
-        if spellID == id and ( not playerOrPet or UnitIsUnit( caster, "player" ) or UnitIsUnit( caster, "pet" ) ) then break end
-        i = i + 1
-        name, icon, count, debuffType, duration, expirationTime, caster, stealable, nameplateShowPersonal, spellID, canApplyAura, isBossDebuff, nameplateShowAll, timeMod, value1, value2, value3 = UnitDebuff( unit, i, filter )
-    end
-
-    if name and name ~= nil then
-        return name, icon, count, debuffType, duration, expirationTime, caster, stealable, nameplateShowPersonal, spellID, canApplyAura, isBossDebuff, nameplateShowAll, timeMod, value1, value2, value3
-    end
+    return UnitDebuffByID( unit, id, filter )
 end
+
 
 function ns.IsActiveSpell( id )
     local slot = FindSpellBookSlotBySpellID( id )
