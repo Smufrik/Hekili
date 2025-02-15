@@ -854,7 +854,7 @@ spec:RegisterGear( "the_wind_blows", 151811 )
 
 spec:RegisterStateTable( "combos", {
     blackout_kick = true,
-    celestial_conduit,
+    celestial_conduit = true,
     chi_burst = true,
     chi_wave = true,
     crackling_jade_lightning = true,
@@ -992,7 +992,8 @@ spec:RegisterHook( "reset_precast", function ()
 
     chiSpent = 0
 
-    if actual_combo == "tiger_palm" and chi.current < 2 and now - action.tiger_palm.lastCast > 0.2 then
+    -- If your chi decays out of combat below the amount to cast something, let the user start combat with tiger palm
+    if not InCombatLockdown() and actual_combo == "tiger_palm" and chi.current < 2 then
         actual_combo = "none"
     end
 
@@ -1005,7 +1006,7 @@ spec:RegisterHook( "reset_precast", function ()
 
     spinning_crane_kick.count = nil
 
-    virtual_combo = actual_combo or "no_action"
+    virtual_combo = actual_combo or "none"
     -- reverse_harm_target = nil
 
     if buff.weapons_of_order_ww.up then
