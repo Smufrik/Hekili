@@ -16,6 +16,7 @@ actions+=/kick
 # Combined Energy Regen needed to saturate
 actions+=/variable,name=regen_saturated,value=energy.regen_combined>30
 # Pooling Setup, check for cooldowns
+actions+=/variable,name=single_target,value=active_enemies=1
 actions+=/variable,name=in_cooldowns,value=dot.deathmark.ticking|dot.kingsbane.ticking|debuff.shiv.up
 actions+=/variable,name=clip_envenom,value=buff.envenom.up&buff.envenom.max_stack_remains<=1
 actions+=/variable,name=upper_limit_energy,value=70-30*talent.sanguine_blades-10*talent.vicious_venoms.rank
