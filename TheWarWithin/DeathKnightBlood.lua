@@ -47,51 +47,45 @@ spec:RegisterResource( Enum.PowerType.Runes, {
 
     reset = function()
         local t = state.runes
-
         for i = 1, 6 do
             local start, duration, ready = GetRuneCooldown( i )
-
             start = start or 0
             duration = duration or ( 10 * state.haste )
-
-            t.expiry[ i ] = ready and 0 or start + duration
+            t.expiry[ i ] = ready and 0 or ( start + duration )
             t.cooldown = duration
         end
-
         table.sort( t.expiry )
-
         t.actual = nil
     end,
 
     gain = function( amount )
         local t = state.runes
-
         for i = 1, amount do
-            t.expiry[ 7 - i ] = 0
+            table.insert( t.expiry, 0 )
+            t.expiry[ 7 ] = nil
         end
         table.sort( t.expiry )
-
-        t.actual = nil
+        t.actual = nil -- Reset actual to force recalculation
     end,
 
     spend = function( amount )
         local t = state.runes
-    
+
         -- Consume the specified number of runes.
         for i = 1, amount do
             t.expiry[ 1 ] = ( t.expiry[ 4 ] > 0 and t.expiry[ 4 ] or state.query_time ) + t.cooldown
             table.sort( t.expiry )
         end
-    
-        -- Handle Runic Power gain, considering Rampant Transference or Rune of Hysteria.
+
+        -- Handle Runic Power gain
         local rpGainMultiplier = state.buff.rune_of_hysteria.up and 1.2 or 1
         state.gain( amount * 10 * rpGainMultiplier, "runic_power" )
-    
-        -- Handle Rune Strike cooldown reduction if applicable.
+
+        -- Handle Rune Strike cooldown reduction
         if state.talent.rune_strike.enabled then
             state.gainChargeTime( "rune_strike", amount )
         end
-    
+
         -- Handle Eternal Rune Weapon interactions (Dancing Rune Weapon synergy).
         if state.buff.dancing_rune_weapon.up and state.azerite.eternal_rune_weapon.enabled then
             local maxExtension = state.buff.dancing_rune_weapon.duration + 5
@@ -102,7 +96,7 @@ spec:RegisterResource( Enum.PowerType.Runes, {
                 )
             end
         end
-    
+
         -- Invalidate the actual rune count to force recalculation.
         t.actual = nil
     end,

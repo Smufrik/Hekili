@@ -46,15 +46,18 @@ spec:RegisterResource( Enum.PowerType.Runes, {
     cooldown = 10,
     regen = 0,
     max = 6,
-    resource = "runes",
+    forecast = {},
+    fcount = 0,
     times = {},
     values = {},
-    forecast = {},
+    resource = "runes",
 
     reset = function()
         local t = state.runes
         for i = 1, 6 do
             local start, duration, ready = GetRuneCooldown( i )
+            start = start or 0
+            duration = duration or ( 10 * state.haste )
             t.expiry[ i ] = ready and 0 or ( start + duration )
             t.cooldown = duration
         end
