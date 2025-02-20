@@ -2753,6 +2753,7 @@ spec:RegisterAbilities( {
         cast = 0.0,
         cooldown = function() return 30.0 - 6 * talent.totemic_surge.rank end,
         gcd = "spell",
+        texture = 5927655,
 
         spend = 0.086,
         spendType = 'mana',
@@ -2769,6 +2770,27 @@ spec:RegisterAbilities( {
                 applyBuff( "whirling_fire" )
             end
         end,
+    },
+
+    -- Summons your Surging Totem nearby
+    surging_totem_projection = {
+        id = 1221348,
+        cast = 0,
+        cooldown = 6,
+        gcd = "off",
+        school = "nature",
+        texture = 310733,
+
+        usable = function() return totem.surging_totem.up end,
+
+        talent = "surging_totem",
+        startsCombat = false,
+        essential = false,
+
+        handler = function ()
+        end,
+
+        bind = "surging_totem"
     },
 
     -- Talent: Calls down a bolt of lightning, dealing $s1 Nature damage to all enemies within $A1 yards, reducing their movement speed by $s3% for $d, and knocking them $?s378779[upward][away from the Shaman]. Usable while stunned.
