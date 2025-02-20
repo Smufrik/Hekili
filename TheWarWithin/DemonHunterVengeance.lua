@@ -265,16 +265,13 @@ spec:RegisterAuras( {
         duration = 12,
         max_stack = 6,
     },
-    demonsurge_hardcast = {
-        id = 452489,
-    },
-    -- Fake Buffs
-    demonsurge_spirit_burst = {},
-    demonsurge_soul_sunder = {},
-    demonsurge_fel_desolation = {},
+    -- Fake buffs for demonsurge damage procs
     demonsurge_consuming_fire = {},
+    demonsurge_fel_desolation = {},
+    demonsurge_hardcast = {},
     demonsurge_sigil_of_doom = {},
-
+    demonsurge_soul_sunder = {},
+    demonsurge_spirit_burst = {},
     -- Vengeful Retreat may be cast again.
     evasive_action = {
         id = 444929,

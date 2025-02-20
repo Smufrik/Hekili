@@ -371,41 +371,15 @@ spec:RegisterAuras( {
         duration = 12,
         max_stack = 10
     },
-    demonsurge_demonic = {
-        id = 452435,
-        duration = 12,
-        max_stack = 1
-    },
-    demonsurge_hardcast = {
-        id = 452489,
-        duration = 12,
-        max_stack = 1
-    },
-    demonsurge_soul_sunder = {
-        duration = 12,
-        max_stack = 1
-    },
-    demonsurge_spirit_burst = {
-        duration = 12,
-        max_stack = 1
-    },
-    demonsurge_abyssal_gaze = {
-        duration = 12,
-        max_stack = 1
-    },
-    demonsurge_annihilation = {
-        duration = 12,
-        max_stack = 1
-    },
-    demonsurge_consuming_fire = {
-        duration = 12,
-        max_stack = 1
-    },
-    demonsurge_death_sweep = {
-        duration = 12,
-        max_stack = 1
-    },
-    elysian_decree = { -- TODO: This aura determines sigil pop time.
+    -- Fake buffs for demonsurge damage procs
+    demonsurge_abyssal_gaze = {},
+    demonsurge_annihilation = {},
+    demonsurge_consuming_fire = {},
+    demonsurge_death_sweep = {},
+    demonsurge_hardcast = {},
+    demonsurge_sigil_of_doom = {},
+    -- TODO: This aura determines sigil pop time.
+    elysian_decree = {
         id = 390163,
         duration = function () return talent.quickened_sigils.enabled and 1 or 2 end,
         max_stack = 1,
@@ -1913,20 +1887,21 @@ spec:RegisterAbilities( {
                 setCooldown( "death_sweep", 0 )
             end
 
-            if talent.demonic_intensity.enabled then
-                applyBuff( "demonsurge_abyssal_gaze", buff.metamorphosis.remains )
-                setCooldown( "eye_beam", max( cooldown.eye_beam.remains, cooldown.abyssal_gaze.remains, buff.metamorphosis.remains ) )
+            if talent.demonsurge.enabled then
+                removeBuff( "demonsurge" )
                 applyBuff( "demonsurge_annihilation", buff.metamorphosis.remains )
-                applyBuff( "demonsurge_consuming_fire", buff.metamorphosis.remains )
                 applyBuff( "demonsurge_death_sweep", buff.metamorphosis.remains )
-                applyBuff( "demonsurge_sigil_of_doom", buff.metamorphosis.remains )
-            end
-
-            if talent.violent_transformation.enabled then
-                setCooldown( "sigil_of_flame", 0 )
-                setCooldown( "sigil_of_doom", 0 )
-                gainCharges( "immolation_aura", 1 )
-                gainCharges( "consuming_fire", 1 )
+                if talent.violent_transformation.enabled then
+                    setCooldown( "sigil_of_flame", 0 )
+                    setCooldown( "sigil_of_doom", 0 )
+                    gainCharges( "immolation_aura", 1 )
+                    gainCharges( "consuming_fire", 1 )
+                end
+                if talent.demonic_intensity.enabled then
+                    applyBuff( "demonsurge_abyssal_gaze", buff.metamorphosis.remains )
+                    applyBuff( "demonsurge_consuming_fire", buff.metamorphosis.remains )
+                    applyBuff( "demonsurge_sigil_of_doom", buff.metamorphosis.remains )
+                end
             end
 
             stat.haste = stat.haste + 10
