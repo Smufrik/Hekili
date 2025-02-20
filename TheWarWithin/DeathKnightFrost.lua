@@ -72,7 +72,7 @@ spec:RegisterResource( Enum.PowerType.Runes, {
             t.expiry[ 7 ] = nil
         end
         table.sort( t.expiry )
-        t.actual = nil -- Reset actual to force recalculation
+        t.actual = nil
     end,
 
     spend = function( amount )
@@ -93,7 +93,7 @@ spec:RegisterResource( Enum.PowerType.Runes, {
             state.buff.remorseless_winter.expires = state.buff.remorseless_winter.expires + ( 0.5 * amount )
         end
 
-        t.actual = nil -- Reset actual to force recalculation
+        t.actual = nil
     end,
 
     timeTo = function( x )

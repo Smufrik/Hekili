@@ -55,7 +55,7 @@ spec:RegisterResource( Enum.PowerType.Runes, {
             t.cooldown = duration
         end
         table.sort( t.expiry )
-        t.actual = nil
+        t.actual = nil -- Reset actual to force recalculation
     end,
 
     gain = function( amount )
@@ -65,23 +65,20 @@ spec:RegisterResource( Enum.PowerType.Runes, {
             t.expiry[ 7 ] = nil
         end
         table.sort( t.expiry )
-        t.actual = nil -- Reset actual to force recalculation
+        t.actual = nil
     end,
 
     spend = function( amount )
         local t = state.runes
 
-        -- Consume the specified number of runes.
         for i = 1, amount do
             t.expiry[ 1 ] = ( t.expiry[ 4 ] > 0 and t.expiry[ 4 ] or state.query_time ) + t.cooldown
             table.sort( t.expiry )
         end
 
-        -- Handle Runic Power gain
         local rpGainMultiplier = state.buff.rune_of_hysteria.up and 1.2 or 1
         state.gain( amount * 10 * rpGainMultiplier, "runic_power" )
 
-        -- Handle Rune Strike cooldown reduction
         if state.talent.rune_strike.enabled then
             state.gainChargeTime( "rune_strike", amount )
         end
@@ -97,7 +94,6 @@ spec:RegisterResource( Enum.PowerType.Runes, {
             end
         end
 
-        -- Invalidate the actual rune count to force recalculation.
         t.actual = nil
     end,
 

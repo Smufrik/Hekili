@@ -47,7 +47,7 @@ spec:RegisterResource( Enum.PowerType.Runes, {
             t.cooldown = duration
         end
         table.sort( t.expiry )
-        t.actual = nil
+        t.actual = nil -- Reset actual to force recalculation
     end,
 
     gain = function( amount )
@@ -68,15 +68,12 @@ spec:RegisterResource( Enum.PowerType.Runes, {
             table.insert( t.expiry, nextReady )
         end
 
-        -- Handle Runic Power gain
         state.gain( amount * 10, "runic_power" )
-
-        -- Handle Tier 20 4-piece set bonus
         if state.set_bonus.tier20_4pc == 1 then
             state.cooldown.army_of_the_dead.expires = max( 0, state.cooldown.army_of_the_dead.expires - 1 )
-        end      
+        end
 
-        t.actual = nil -- Reset actual to force recalculation
+        t.actual = nil
     end,
 
     timeTo = function( x )
