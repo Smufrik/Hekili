@@ -1454,20 +1454,20 @@ spec:RegisterAbilities( {
             if talent.demonsurge.enabled then
                 applyBuff( "demonsurge_soul_cleave", buff.metamorphosis.remains )
                 applyBuff( "demonsurge_spirit_bomb", buff.metamorphosis.remains )
+                if talent.violent_transformation.enabled then
+                    setCooldown( "sigil_of_flame", 0 )
+                    setCooldown( "fel_devastation", 0 )
+                    setCooldown( "sigil_of_doom", 0 )
+                    setCooldown( "fel_desolation", 0 )
+                end
+                if talent.demonic_intensity.enabled then
+                    applyBuff( "demonsurge_consuming_fire", buff.metamorphosis.remains )
+                    applyBuff( "demonsurge_fel_desolation", buff.metamorphosis.remains )
+                    applyBuff( "demonsurge_sigil_of_doom", buff.metamorphosis.remains )
+                end
             end
 
-            if talent.demonic_intensity.enabled then
-                applyBuff( "demonsurge_consuming_fire", buff.metamorphosis.remains )
-                applyBuff( "demonsurge_fel_desolation", buff.metamorphosis.remains )
-                applyBuff( "demonsurge_sigil_of_doom", buff.metamorphosis.remains )
-            end
 
-            if talent.violent_transformation.enabled then
-                setCooldown( "sigil_of_flame", 0 )
-                setCooldown( "fel_devastation", 0 )
-                setCooldown( "sigil_of_doom", 0 )
-                setCooldown( "fel_desolation", 0 )
-            end
 
             -- last_metamorphosis = query_time
         end,
