@@ -801,7 +801,9 @@ spec:RegisterHook( "reset_precast", function ()
         if CanTriggerDemonsurge( 452436 ) then applyBuff( "demonsurge_soul_sunder", buff.metamorphosis.remains ) end
         if CanTriggerDemonsurge( 452437 ) then applyBuff( "demonsurge_spirit_burst", buff.metamorphosis.remains ) end
         if talent.demonic_intensity.enabled then
-            if action.metamorphosis.lastCast >= buff.metamorphosis.applied then applyBuff( "demonsurge_hardcast", buff.metamorphosis.remains ) end
+            if ( action.metamorphosis.lastCast >= buff.metamorphosis.applied ) or ( buff.metamorphosis.expires > ( action.metamorphosis.lastCast + 15 ) ) then
+                applyBuff( "demonsurge_hardcast", buff.metamorphosis.remains )
+            end
             if CanTriggerDemonsurge( 452486 ) then applyBuff( "demonsurge_fel_desolation", buff.metamorphosis.remains ) end
             if CanTriggerDemonsurge( 452487 ) then applyBuff( "demonsurge_consuming_fire", buff.metamorphosis.remains ) end
             if CanTriggerDemonsurge( 452490 ) then applyBuff( "demonsurge_sigil_of_doom", buff.metamorphosis.remains ) end
