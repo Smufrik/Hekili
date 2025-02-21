@@ -909,6 +909,11 @@ local HowlOfThePackLeaderHandler = setfenv( function( isCoordinatedAssault )
     end
 end, state )
 
+-- SIMC expression
+spec:RegisterStateExpr( "howl_summon_ready", function ()
+    return buff.howl_of_the_pack_leader_bear_ready.up or buff.howl_of_the_pack_leader_boar_ready.up or buff.howl_of_the_pack_leader_wyvern_ready.up or false
+end )
+
 spec:RegisterHook( "spend", function( amt, resource )
     if set_bonus.tier30_4pc > 0 and amt >= 30 and resource == "focus" then
         local sec = floor( amt / 30 )

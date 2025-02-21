@@ -1431,6 +1431,11 @@ local HowlOfThePackLeaderHandler = setfenv( function( isBestialWrath )
     end
 end, state )
 
+-- SIMC expression
+spec:RegisterStateExpr( "howl_summon_ready", function ()
+    return buff.howl_of_the_pack_leader_bear_ready.up or buff.howl_of_the_pack_leader_boar_ready.up or buff.howl_of_the_pack_leader_wyvern_ready.up or false
+end )
+
 -- Abilities
 spec:RegisterAbilities( {
     -- Increases your movement speed by $s1% for $d, and then by $186258s1% for another $186258d$?a445701[, and then by $445701s1% for another $445701s2 sec][].$?a459455[; You cannot be slowed below $s2% of your normal movement speed.][]
