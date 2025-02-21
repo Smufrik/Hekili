@@ -1333,15 +1333,15 @@ spec:RegisterAbilities( {
 
     -- Engulf yourself in flames, $?a320364 [instantly causing $258921s1 $@spelldesc395020 damage to enemies within $258921A1 yards and ][]radiating ${$258922s1*$d} $@spelldesc395020 damage over $d.$?s320374[    |cFFFFFFFFGenerates $<havocTalentFury> Fury over $d.|r][]$?(s212612 & !s320374)[    |cFFFFFFFFGenerates $<havocFury> Fury.|r][]$?s212613[    |cFFFFFFFFGenerates $<vengeFury> Fury over $d.|r][]
     immolation_aura = {
-        id = 258920,
+        id = function() return buff.demonsurge_hardcast.up and 452487 or 258920 end,
         cast = 0,
         cooldown = 15,
         hasteCD = true,
 
         gcd = "spell",
         school = "fire",
-        texture = 1344649,
-        nobuff = "demonsurge_hardcast",
+        texture = function() return buff.demonsurge_hardcast.up and 135794 or 1344649 end,
+        -- nobuff = "demonsurge_hardcast",
 
         spend = -8,
         spendType = "fury",
@@ -1358,6 +1358,12 @@ spec:RegisterAbilities( {
                 addStack( "soul_fragments", nil, active_enemies < 3 and 1 or 2 )
             end
 
+            -- Fel-Scarred
+            if buff.demonsurge_consuming_fire.up then
+                removeBuff( "demonsurge_consuming_fire" )
+                if talent.demonic_intensity.enabled then addStack( "demonsurge" ) end
+            end
+
         end,
 
         tick = function ()
@@ -1368,10 +1374,9 @@ spec:RegisterAbilities( {
         end,
 
         bind = "consuming_fire",
-        copy = { 452487, "consuming_fire" }
     },
 
-    consuming_fire = {
+    --[[consuming_fire = {
         id = 452487,
         known = 258920,
         cast = 0,
@@ -1404,7 +1409,7 @@ spec:RegisterAbilities( {
         end,
 
         bind = "immolation_aura",
-    },
+    },--]]
 
     -- Talent: Imprisons a demon, beast, or humanoid, incapacitating them for $d. Damage will cancel the effect. Limit 1.
     imprison = {
