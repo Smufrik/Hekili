@@ -1099,7 +1099,13 @@ spec:RegisterAbilities( {
             end
             applyBuff( "dragonrage" )
 
-            if set_bonus.tww2 >= 2 then spec.abilities.shattering_star.handler() end
+
+            if set_bonus.tww2 >= 2 then
+            -- spec.abilities.shattering_star.handler()
+            -- Except essence burst, so we can't use the handler.
+                applyDebuff( "target", "shattering_star" )
+                if talent.charged_blast.enabled then addStack( "charged_blast", nil, min( action.shattering_star.spell_targets, active_enemies ) ) end
+            end
 
 
             -- Legacy
