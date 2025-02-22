@@ -11,7 +11,7 @@ local class, state = Hekili.Class, Hekili.State
 
 local floor = math.floor
 local strformat = string.format
-
+local CanTriggerDemonsurge = IsSpellOverlayed
 
 local spec = Hekili:NewSpecialization( 581 )
 
@@ -267,9 +267,11 @@ spec:RegisterAuras( {
         max_stack = 6,
     },
     -- Fake buffs for demonsurge damage procs
+    demonsurge_hardcast = {
+        id = 452489
+    },
     demonsurge_consuming_fire = {},
     demonsurge_fel_desolation = {},
-    demonsurge_hardcast = {},
     demonsurge_sigil_of_doom = {},
     demonsurge_soul_sunder = {},
     demonsurge_spirit_burst = {},
@@ -374,7 +376,7 @@ spec:RegisterAuras( {
         duration = 15,
         max_stack = 1,
         -- This copy is for SIMC compatability while avoiding managing a virtual buff
-        copy = function() if state.talent.demonsurge.enabled then return "demonsurge_demonic" end end,
+        copy = "demonsurge_demonic"
     },
     -- Stunned.
     -- https://wowhead.com/beta/spell=200166
@@ -798,7 +800,6 @@ spec:RegisterHook( "reset_precast", function ()
     -- demonsurge_hardcast differentiates whether only the basic 2 abilities are transformed, or all 5
     if talent.demonsurge.enabled and buff.metamorphosis.up then
 
-        local CanTriggerDemonsurge = IsSpellOverlayed
         local metaRemains = buff.metamorphosis.remains
 
         if CanTriggerDemonsurge( 452436 ) then applyBuff( "demonsurge_soul_sunder", metaRemains ) end
@@ -806,15 +807,16 @@ spec:RegisterHook( "reset_precast", function ()
 
         if talent.demonic_intensity.enabled then
 
-            if ( action.metamorphosis.lastCast >= buff.metamorphosis.applied ) or ( buff.metamorphosis.expires > ( action.metamorphosis.lastCast + 15 ) ) then
-                applyBuff( "demonsurge_hardcast", metaRemains )
+            if ( action.metamorphosis.lastCast > 0 and ( action.metamorphosis.lastCast >= buff.metamorphosis.applied or buff.metamorphosis.expires > ( action.metamorphosis.lastCast + 15 ) ) ) then
+                applyBuff( "demonsurge_hardcast", buff.metamorphosis.remains )
             end
+
 
             if CanTriggerDemonsurge( 452486 ) then applyBuff( "demonsurge_fel_desolation", metaRemains ) end
             if CanTriggerDemonsurge( 452487 ) then applyBuff( "demonsurge_consuming_fire", metaRemains ) end
             if CanTriggerDemonsurge( 452490 ) then applyBuff( "demonsurge_sigil_of_doom", metaRemains ) end
             -- setCooldown( "fel_devastation", max( cooldown.fel_devastation.remains, cooldown.fel_desolation.remains, buff.metamorphosis.remains ) ) -- To support cooldown.eye_beam.up checks in SimC priority.
-        
+
         end
         if Hekili.ActiveDebug then
             Hekili:Debug( "Demon Surge status:\n" ..
@@ -1008,7 +1010,7 @@ local TriggerDemonic = setfenv( function()
         if talent.demonic_intensity.enabled and buff.demonsurge_hardcast.up then
             -- Extend the appropriate buffs
             local hardcastMetaExpires = buff.metamorphosis.expires
-            buff.demonsurge_hardcast.expires = hardcastMetaExpires
+            applyBuff( "demonsurge_hardcast", buff.metamorphosis.remains )
             if buff.demonsurge_fel_desolation.up then buff.demonsurge_fel_desolation.expires = hardcastMetaExpires end
             if buff.demonsurge_consuming_fire.up then buff.demonsurge_consuming_fire.expires = hardcastMetaExpires end
             if buff.demonsurge_sigil_of_doom.up then buff.demonsurge_sigil_of_doom.expires = hardcastMetaExpires end
@@ -1603,7 +1605,7 @@ spec:RegisterAbilities( {
 
         startsCombat = false,
         texture = 1344652,
-        nobuff = "demonsurge_demonic",
+        nobuff = function() if talent.demonsurge.enabled then return "demonsurge_demonic" end end,
 
         readyTime = function ()
             return sigils.flame - query_time
@@ -1786,7 +1788,7 @@ spec:RegisterAbilities( {
 
         startsCombat = true,
         texture = 1344653,
-        nobuff = "demonsurge_demonic",
+        nobuff = function() if talent.demonsurge.enabled then return "demonsurge_demonic" end end,
 
         handler = function ()
             removeBuff( "soul_furnace" )
@@ -1867,7 +1869,7 @@ spec:RegisterAbilities( {
         talent = "spirit_bomb",
         startsCombat = false,
         buff = "soul_fragments",
-        nobuff = "demonsurge_demonic",
+        nobuff = function() if talent.demonsurge.enabled then return "demonsurge_demonic" end end,
 
         handler = function ()
 
@@ -1883,7 +1885,7 @@ spec:RegisterAbilities( {
     },
 
     spirit_burst = {
-		id = 452437,
+        id = 452437,
         known = 247454,
         cast = 0,
         cooldown = 0,
