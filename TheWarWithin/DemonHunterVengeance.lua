@@ -1393,6 +1393,7 @@ spec:RegisterAbilities( {
         end,
 
         bind = "consuming_fire",
+        copy = "consuming_fire"
     },
 
     --[[consuming_fire = {
