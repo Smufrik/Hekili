@@ -7150,6 +7150,8 @@ function state:IsKnown( sID )
 
     if IsAbilityDisabled( ability ) then return false, "not usable here" end
 
+    local z -- scratch variable
+
     if sID < 0 then
         if ability.known ~= nil then
             if type( ability.known ) == "number" then
@@ -7175,20 +7177,48 @@ function state:IsKnown( sID )
         return false, "spec [ " .. ability.nospec .. " ] disallowed"
     end
 
-    if ability.talent and not state.talent[ ability.talent ].enabled then
-        return false, "talent [ " .. ability.talent .. " ] missing"
+    z = ability.talent
+    if type( z ) == "table" then
+        for _, v in ipairs( z ) do
+            if not state.talent[ v ].enabled then
+                return false, "talent [ " .. v .. " ] missing"
+            end
+        end
+    elseif z and not state.talent[ z ].enabled then
+        return false, "talent [ " .. z .. " ] missing"
     end
 
-    if ability.notalent and state.talent[ ability.notalent ].enabled then
-        return false, "talent [ " .. ability.notalent .. " ] disallowed"
+    z = ability.notalent
+    if type( z ) == "table" then
+        for _, v in ipairs( z ) do
+            if state.talent[ v ].enabled then
+                return false, "talent [ " .. v .. " ] disallowed"
+            end
+        end
+    elseif z and state.talent[ z ].enabled then
+        return false, "talent [ " .. z .. " ] disallowed"
     end
 
-    if ability.pvptalent and not state.pvptalent[ ability.pvptalent ].enabled then
-        return false, "PvP talent [ " .. ability.pvptalent .. " ] missing"
+    z = ability.pvptalent
+    if type( z ) == "table" then
+        for _, v in ipairs( z ) do
+            if not state.pvptalent[ v ].enabled then
+                return false, "PvP talent [ " .. v .. " ] missing"
+            end
+        end
+    elseif z and not state.pvptalent[ z ].enabled then
+        return false, "PvP talent [ " .. z .. " ] missing"
     end
 
-    if ability.nopvptalent and state.pvptalent[ ability.nopvptalent ].enabled then
-        return false, "PvP talent [ " ..ability.nopvptalent .. " ] disallowed"
+    z = ability.nopvptalent
+    if type( z ) == "table" then
+        for _, v in ipairs( z ) do
+            if state.pvptalent[ v ].enabled then
+                return false, "PvP talent [ " .. v .. " ] disallowed"
+            end
+        end
+    elseif z and state.pvptalent[ z ].enabled then
+        return false, "PvP talent [ " .. z .. " ] disallowed"
     end
 
     if ability.trait and not state.artifact[ ability.trait ].enabled then
