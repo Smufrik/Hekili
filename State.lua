@@ -7335,6 +7335,7 @@ do
         end
 
         local profile = Hekili.DB.profile
+        local z -- scratch variable
 
         if self.rangefilter and UnitExists( "target" ) then
             if LSR.IsSpellInRange( ability.rangeSpell or ability.id, "target" ) == 0 then
@@ -7384,12 +7385,26 @@ do
             return false, "not usable in current form (" .. ability.noform .. ")"
         end
 
-        if ability.buff and not state.buff[ ability.buff ].up then
-            return false, "required buff (" .. ability.buff .. ") not active"
+        z = ability.buff
+        if type( z ) == "table" then
+            for _, v in ipairs( z ) do
+                if not state.buff[ v ].up then
+                    return false, "required buff (" .. v .. ") not active"
+                end
+            end
+        elseif z and not state.buff[ z ].up then
+            return false, "required buff (" .. z .. ") not active"
         end
 
-        if ability.debuff and not state.debuff[ ability.debuff ].up then
-            return false, "required debuff (" ..ability.debuff .. ") not active"
+        z = ability.debuff
+        if type( z ) == "table" then
+            for _, v in ipairs( z ) do
+                if not state.debuff[ v ].up then
+                    return false, "required debuff (" .. v .. ") not active"
+                end
+            end
+        elseif z and not state.debuff[ z ].up then
+            return false, "required debuff (" .. z .. ") not active"
         end
 
         if ability.channeling then
@@ -7555,15 +7570,33 @@ function state:TimeToReady( action, pool )
     end
 
     z = ability.nobuff
-    z = z and self.buff[ z ].remains
-    if z and z > wait then
-        wait = z
+    if type( z ) == "table" then
+        for _, v in ipairs( z ) do
+            z = self.buff[ v ].remains
+            if z and z > wait then
+                wait = z
+            end
+        end
+    else
+        z = z and self.buff[ z ].remains
+        if z and z > wait then
+            wait = z
+        end
     end
 
     z = ability.nodebuff
-    z = z and self.debuff[ z ].remains
-    if z and z > wait then
-        wait = z
+    if type( z ) == "table" then
+        for _, v in ipairs( z ) do
+            z = self.debuff[ v ].remains
+            if z and z > wait then
+                wait = z
+            end
+        end
+    else
+        z = z and self.debuff[ z ].remains
+        if z and z > wait then
+            wait = z
+        end
     end
 
     --[[ Need to house this in an encounter module, really.
