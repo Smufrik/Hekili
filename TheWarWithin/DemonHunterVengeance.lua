@@ -12,7 +12,6 @@ local class, state = Hekili.Class, Hekili.State
 local floor = math.floor
 local strformat = string.format
 
-local CanTriggerDemonsurge = IsSpellOverlayed
 
 local spec = Hekili:NewSpecialization( 581 )
 
@@ -798,16 +797,24 @@ spec:RegisterHook( "reset_precast", function ()
     -- SpellOverlay API call is 1:1 with "can trigger a demonsurge damage proc", this grounds these fake buffs in the gamestate
     -- demonsurge_hardcast differentiates whether only the basic 2 abilities are transformed, or all 5
     if talent.demonsurge.enabled and buff.metamorphosis.up then
-        if CanTriggerDemonsurge( 452436 ) then applyBuff( "demonsurge_soul_sunder", buff.metamorphosis.remains ) end
-        if CanTriggerDemonsurge( 452437 ) then applyBuff( "demonsurge_spirit_burst", buff.metamorphosis.remains ) end
+
+        local CanTriggerDemonsurge = IsSpellOverlayed
+        local metaRemains = buff.metamorphosis.remains
+
+        if CanTriggerDemonsurge( 452436 ) then applyBuff( "demonsurge_soul_sunder", metaRemains ) end
+        if CanTriggerDemonsurge( 452437 ) then applyBuff( "demonsurge_spirit_burst", metaRemains ) end
+
         if talent.demonic_intensity.enabled then
+
             if ( action.metamorphosis.lastCast >= buff.metamorphosis.applied ) or ( buff.metamorphosis.expires > ( action.metamorphosis.lastCast + 15 ) ) then
-                applyBuff( "demonsurge_hardcast", buff.metamorphosis.remains )
+                applyBuff( "demonsurge_hardcast", metaRemains )
             end
-            if CanTriggerDemonsurge( 452486 ) then applyBuff( "demonsurge_fel_desolation", buff.metamorphosis.remains ) end
-            if CanTriggerDemonsurge( 452487 ) then applyBuff( "demonsurge_consuming_fire", buff.metamorphosis.remains ) end
-            if CanTriggerDemonsurge( 452490 ) then applyBuff( "demonsurge_sigil_of_doom", buff.metamorphosis.remains ) end
+
+            if CanTriggerDemonsurge( 452486 ) then applyBuff( "demonsurge_fel_desolation", metaRemains ) end
+            if CanTriggerDemonsurge( 452487 ) then applyBuff( "demonsurge_consuming_fire", metaRemains ) end
+            if CanTriggerDemonsurge( 452490 ) then applyBuff( "demonsurge_sigil_of_doom", metaRemains ) end
             -- setCooldown( "fel_devastation", max( cooldown.fel_devastation.remains, cooldown.fel_desolation.remains, buff.metamorphosis.remains ) ) -- To support cooldown.eye_beam.up checks in SimC priority.
+        
         end
         if Hekili.ActiveDebug then
             Hekili:Debug( "Demon Surge status:\n" ..
@@ -993,21 +1000,31 @@ end, state )
 local sigilList = { "sigil_of_Flame", "sigil_of_misery", "sigil_of_spite", "sigil_of_silence", "sigil_of_chains", "sigil_of_doom" }
 
 local TriggerDemonic = setfenv( function()
+
+    local demonicExtension = 7
+
     if buff.metamorphosis.up then
-        buff.metamorphosis.expires = buff.metamorphosis.expires + 7
-        if talent.demonic_intensity.enabled and buff.demonsurge_hardcast.up then buff.demonsurge_hardcast.expires = buff.metamorphosis.expires end
-    else
-        applyBuff( "metamorphosis", 7 )
-        if talent.inner_demon.enabled then
-            applyBuff( "inner_demon" )
+        buff.metamorphosis.expires = buff.metamorphosis.expires + demonicExtension
+        if talent.demonic_intensity.enabled and buff.demonsurge_hardcast.up then
+            -- Extend the appropriate buffs
+            local hardcastMetaExpires = buff.metamorphosis.expires
+            buff.demonsurge_hardcast.expires = hardcastMetaExpires
+            if buff.demonsurge_fel_desolation.up then buff.demonsurge_fel_desolation.expires = hardcastMetaExpires end
+            if buff.demonsurge_consuming_fire.up then buff.demonsurge_consuming_fire.expires = hardcastMetaExpires end
+            if buff.demonsurge_sigil_of_doom.up then buff.demonsurge_sigil_of_doom.expires = hardcastMetaExpires end
         end
+    else
+        applyBuff( "metamorphosis", demonicExtension )
+        if talent.inner_demon.enabled then applyBuff( "inner_demon" ) end
         stat.haste = stat.haste + 10
         -- Fel-Scarred
         if talent.demonsurge.enabled then
-            applyBuff( "demonsurge_spirit_burst", buff.metamorphosis.remains )
-            applyBuff( "demonsurge_soul_sunder", buff.metamorphosis.remains )
+            local metaRemains = buff.metamorphosis.remains
+            applyBuff( "demonsurge_spirit_burst", metaRemains )
+            applyBuff( "demonsurge_soul_sunder", metaRemains )
         end
     end
+
 end, state )
 
 -- Abilities
@@ -1475,25 +1492,28 @@ spec:RegisterAbilities( {
             gain( health.max * 0.4, "health" )
 
             if talent.demonsurge.enabled then
-                applyBuff( "demonsurge_soul_cleave", buff.metamorphosis.remains )
-                applyBuff( "demonsurge_spirit_bomb", buff.metamorphosis.remains )
+                local metaRemains = buff.metamorphosis.remains
+
+                applyBuff( "demonsurge_soul_cleave", metaRemains )
+                applyBuff( "demonsurge_spirit_bomb", metaRemains )
+
                 if talent.violent_transformation.enabled then
                     setCooldown( "sigil_of_flame", 0 )
                     setCooldown( "fel_devastation", 0 )
-                    setCooldown( "sigil_of_doom", 0 )
-                    setCooldown( "fel_desolation", 0 )
+                    if talent.demonic_intensity.enabled then
+                        setCooldown( "sigil_of_doom", 0 )
+                        setCooldown( "fel_desolation", 0 )
+                    end
                 end
+
                 if talent.demonic_intensity.enabled then
-                    applyBuff( "demonsurge_hardcast", buff.metamorphosis.remains )
-                    applyBuff( "demonsurge_consuming_fire", buff.metamorphosis.remains )
-                    applyBuff( "demonsurge_fel_desolation", buff.metamorphosis.remains )
-                    applyBuff( "demonsurge_sigil_of_doom", buff.metamorphosis.remains )
+                    applyBuff( "demonsurge_hardcast", metaRemains )
+                    applyBuff( "demonsurge_consuming_fire", metaRemains )
+                    applyBuff( "demonsurge_fel_desolation", metaRemains )
+                    applyBuff( "demonsurge_sigil_of_doom", metaRemains )
                 end
             end
 
-
-
-            -- last_metamorphosis = query_time
         end,
     },
 
@@ -1534,7 +1554,7 @@ spec:RegisterAbilities( {
             if buff.rending_strike.up then -- Reaver stuff
                 applyDebuff( "target", "reavers_mark" )
                 removeBuff( "rending_strike" )
-                if buff.glaive_flurry.down then applyBuff( "thrill_of_the_fight" ) end
+                if talent.thrill_of_the_fight.enabled and buff.glaive_flurry.down then applyBuff( "thrill_of_the_fight" ) end
             end
 
             -- Legacy
@@ -1583,7 +1603,7 @@ spec:RegisterAbilities( {
 
         startsCombat = false,
         texture = 1344652,
-        nobuff = function () return talent.demonic_intensity.enabled and "metamorphosis" or nil end,
+        nobuff = "demonsurge_demonic",
 
         readyTime = function ()
             return sigils.flame - query_time
@@ -1766,7 +1786,7 @@ spec:RegisterAbilities( {
 
         startsCombat = true,
         texture = 1344653,
-        nobuff = function () return talent.demonsurge.enabled and "metamorphosis" or nil end,
+        nobuff = "demonsurge_demonic",
 
         handler = function ()
             removeBuff( "soul_furnace" )
@@ -1774,7 +1794,7 @@ spec:RegisterAbilities( {
             -- 
             if buff.glaive_flurry.up then -- Reaver stuff
                 removeBuff( "glaive_flurry" )
-                if buff.rending_strike.down then applyBuff( "thrill_of_the_fight" ) end
+                if talent.thrill_of_the_fight.enabled and buff.rending_strike.down then applyBuff( "thrill_of_the_fight" ) end
             end
 
             if talent.feast_of_souls.enabled then applyBuff( "feast_of_souls" ) end
@@ -1804,7 +1824,7 @@ spec:RegisterAbilities( {
         startsCombat = true,
         texture = 1355117,
         talent = "demonsurge",
-        buff = "metamorphosis",
+        buff = "demonsurge_demonic",
 
         handler = function ()
 
@@ -1847,7 +1867,7 @@ spec:RegisterAbilities( {
         talent = "spirit_bomb",
         startsCombat = false,
         buff = "soul_fragments",
-        nobuff = function () return talent.demonsurge.enabled and "metamorphosis" or nil end,
+        nobuff = "demonsurge_demonic",
 
         handler = function ()
 
@@ -1873,7 +1893,7 @@ spec:RegisterAbilities( {
         spend = 40,
         spendType = "fury",
 
-        talent = function() return talent.spirit_bomb.enabled and "demonsurge" or "spirit_bomb" end,
+        talent = "demonsurge",
         startsCombat = false,
         buff = function () return buff.metamorphosis.down and "metamorphosis" or "soul_fragments" end,
 
