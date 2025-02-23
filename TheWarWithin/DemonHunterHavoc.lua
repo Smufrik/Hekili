@@ -1187,15 +1187,16 @@ spec:RegisterHook( "reset_precast", function ()
     end
 
     if talent.demonsurge.enabled and buff.metamorphosis.up then
+        local metaRemains = buff.metamorphosis.remains
 
-        if IsSpellOverlayed( 201427 ) then applyBuff( "demonsurge_annihilation", buff.metamorphosis.remains ) end
-        if IsSpellOverlayed( 210152 ) then applyBuff( "demonsurge_death_sweep", buff.metamorphosis.remains ) end
+        if IsSpellOverlayed( 201427 ) then applyBuff( "demonsurge_annihilation", metaRemains ) end
+        if IsSpellOverlayed( 210152 ) then applyBuff( "demonsurge_death_sweep", metaRemains ) end
 
         if talent.demonic_intensity.enabled then
 
-            if IsSpellOverlayed( 452497 ) then applyBuff( "demonsurge_abyssal_gaze", buff.metamorphosis.remains ) end
-            if IsSpellOverlayed( 452487 ) then applyBuff( "demonsurge_consuming_fire", buff.metamorphosis.remains ) end
-            if IsSpellOverlayed( 469991 ) then applyBuff( "demonsurge_sigil_of_doom", buff.metamorphosis.remains ) end
+            if IsSpellOverlayed( 452497 ) then applyBuff( "demonsurge_abyssal_gaze", metaRemains ) end
+            if IsSpellOverlayed( 452487 ) then applyBuff( "demonsurge_consuming_fire", metaRemains ) end
+            if IsSpellOverlayed( 469991 ) then applyBuff( "demonsurge_sigil_of_doom", metaRemains ) end
 
             -- setCooldown( "eye_beam", max( cooldown.abyssal_gaze.remains, cooldown.eye_beam.remains, buff.metamorphosis.remains ) ) -- To support cooldown.eye_beam.up checks in SimC priority.
         end
@@ -1296,19 +1297,21 @@ end
 
 local TriggerDemonic = setfenv( function( )
 
+    local demonicExtension = 7
+
     if buff.metamorphosis.up then
-        buff.metamorphosis.duration = buff.metamorphosis.duration + 7
-        buff.metamorphosis.expires = buff.metamorphosis.expires + 7
+        buff.metamorphosis.expires = buff.metamorphosis.expires + demonicExtension
     else
-        applyBuff( "metamorphosis", 7 )
+        applyBuff( "metamorphosis", demonicExtension )
         if talent.inner_demon.enabled then
             applyBuff( "inner_demon" )
         end
         stat.haste = stat.haste + 10
         -- Fel-Scarred
         if talent.demonsurge.enabled then
-            applyBuff( "demonsurge_annihilation", buff.metamorphosis.remains )
-            applyBuff( "demonsurge_death_sweep", buff.metamorphosis.remains )
+            local metaRemains = buff.metamorphosis.remains
+            applyBuff( "demonsurge_annihilation", metaRemains )
+            applyBuff( "demonsurge_death_sweep", metaRemains)
         end
     end
 
@@ -1893,9 +1896,11 @@ spec:RegisterAbilities( {
                 applyBuff( "demonsurge_death_sweep", buff.metamorphosis.remains )
                 if talent.violent_transformation.enabled then
                     setCooldown( "sigil_of_flame", 0 )
-                    setCooldown( "sigil_of_doom", 0 )
                     gainCharges( "immolation_aura", 1 )
-                    gainCharges( "consuming_fire", 1 )
+                    if talent.demonic_intensity.enabled then
+                        gainCharges( "consuming_fire", 1 )
+                        setCooldown( "sigil_of_doom", 0 )
+                    end
                 end
                 if talent.demonic_intensity.enabled then
                     applyBuff( "demonsurge_abyssal_gaze", buff.metamorphosis.remains )
