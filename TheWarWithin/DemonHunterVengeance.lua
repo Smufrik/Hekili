@@ -807,7 +807,7 @@ spec:RegisterHook( "reset_precast", function ()
 
         if talent.demonic_intensity.enabled then
 
-            if ( action.metamorphosis.lastCast > 0 and ( action.metamorphosis.lastCast >= buff.metamorphosis.applied or buff.metamorphosis.expires > ( action.metamorphosis.lastCast + 15 ) ) ) then
+            if ( action.metamorphosis.lastCast > 0 and ( buff.metamorphosis.expires >= ( action.metamorphosis.lastCast + spec.auras.metamorphosis.duration ) ) ) then
                 applyBuff( "demonsurge_hardcast", buff.metamorphosis.remains )
             end
 
@@ -1020,11 +1020,12 @@ local TriggerDemonic = setfenv( function()
         if talent.inner_demon.enabled then applyBuff( "inner_demon" ) end
         stat.haste = stat.haste + 10
         -- Fel-Scarred
-        if talent.demonsurge.enabled then
-            local metaRemains = buff.metamorphosis.remains
-            applyBuff( "demonsurge_spirit_burst", metaRemains )
-            applyBuff( "demonsurge_soul_sunder", metaRemains )
-        end
+    end
+
+    if talent.demonsurge.enabled then
+        local metaRemains = buff.metamorphosis.remains
+        applyBuff( "demonsurge_spirit_burst", metaRemains )
+        applyBuff( "demonsurge_soul_sunder", metaRemains )
     end
 
 end, state )
@@ -1231,23 +1232,15 @@ spec:RegisterAbilities( {
         buff = "demonsurge_hardcast",
 
         start = function ()
-            applyBuff( "fel_devastation" )
-
             if buff.demonsurge_fel_desolation.up then
                 removeBuff( "demonsurge_fel_desolation" )
                 if talent.demonic_intensity.enabled then addStack( "demonsurge" ) end
             end
-
-            if talent.demonic.enabled then TriggerDemonic() end
+            spec.abilities.fel_devastation.start()
         end,
 
         finish = function ()
-
-            if talent.darkglare_boon.enabled then
-                gain( 15, "fury" )
-                reduceCooldown( "fel_devastation", 6 )
-            end
-            if talent.ruinous_bulwark.enabled then applyBuff( "ruinous_bulwark" ) end
+            spec.abilities.fel_devastation.finish()
         end,
 
         bind = "fel_devastation"
@@ -1497,8 +1490,8 @@ spec:RegisterAbilities( {
             if talent.demonsurge.enabled then
                 local metaRemains = buff.metamorphosis.remains
 
-                applyBuff( "demonsurge_soul_cleave", metaRemains )
-                applyBuff( "demonsurge_spirit_bomb", metaRemains )
+                applyBuff( "demonsurge_soul_sunder", metaRemains )
+                applyBuff( "demonsurge_spirit_burst", metaRemains )
 
                 if talent.violent_transformation.enabled then
                     setCooldown( "sigil_of_flame", 0 )
@@ -1606,7 +1599,7 @@ spec:RegisterAbilities( {
 
         startsCombat = false,
         texture = 1344652,
-        nobuff = function() if talent.demonsurge.enabled then return "demonsurge_demonic" end end,
+        nobuff = "demonsurge_hardcast",
 
         readyTime = function ()
             return sigils.flame - query_time
