@@ -178,6 +178,7 @@ local firestorm_cast = 368847
 local firestorm_tick = 369374
 
 local eb_col_casts = 0
+local animosityExtension = 0 -- Maintained by CLEU
 
 spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _, _, destGUID, destName, destFlags, _, spellID, spellName )
     if sourceGUID == state.GUID then
@@ -194,7 +195,7 @@ spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _
                 return
             end
 
-            if talent.animosity.enabled and animosityExtension < 4 then
+            if state.talent.animosity.enabled and animosityExtension < 4 then
                 -- Empowered spell casts increment this extension tracker by 1
                 for _, ability in pairs( class.abilities ) do
                     if ability.empowered and spellID == ability.id then
@@ -732,8 +733,6 @@ end )
 spec:RegisterStateExpr( "maximum", function()
     return max_empower
 end )
-
-local animosityExtension = 0 -- Maintained by CLEU
 
 spec:RegisterStateExpr( "animosity_extension", function() return animosityExtension end )
 

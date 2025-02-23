@@ -447,18 +447,6 @@ spec:RegisterAuras( {
         tick_time = 2,
         max_stack = 1
     },
-    --[[reckless_abandon_bloodbath = {
-        id = 461288,
-        duration = 12,
-        max_stack = 1,
-        copy = "bloodbath"
-    },
-    reckless_abandon_crushing_blow = {
-        id = 396752,
-        duration = 12,
-        max_stack = 1,
-        copy = "crushing_blow"
-    },--]]
     recklessness = {
         id = 1719,
         duration = function() return state.talent.depths_of_insanity.enabled and 16 or 12 end,
@@ -981,7 +969,8 @@ spec:RegisterAbilities( {
 
         startsCombat = true,
         texture = 236304,
-        buff = "reckless_abandon",
+        talent = "reckless_abandon",
+        buff = "recklessness",
         bind = "bloodthirst",
 
         critical = function()
@@ -1068,7 +1057,7 @@ spec:RegisterAbilities( {
 
         talent = "bloodthirst",
         texture = 136012,
-        nobuff = "reckless_abandon_bloodbath",
+        nobuff = function() if talent.reckless_abandon.enabled then return "recklessness" end end,
         startsCombat = true,
         bind = "bloodbath",
 
@@ -1107,7 +1096,6 @@ spec:RegisterAbilities( {
                 if buff.cadence_of_fujieda.stack < 5 then stat.haste = stat.haste + 0.01 end
                 addStack( "cadence_of_fujieda" )
             end
-            if buff.reckless_abandon_bloodbath.up then removeBuff( "reckless_abandon_bloodbath" ) end
             removeBuff( "double_down_bt" )
         end,
 
@@ -1189,13 +1177,12 @@ spec:RegisterAbilities( {
         texture = 132215,
 
         talent = "reckless_abandon",
-        buff = "reckless_abandon",
+        buff = "recklessness",
         bind = "raging_blow",
 
         handler = function ()
             removeStack( "whirlwind" )
             removeBuff( "opportunist" )
-            removeBuff( "reckless_abandon" )
             spendCharges( "raging_blow", 1 )
             if buff.will_of_the_berserker.up then buff.will_of_the_berserker.expires = query_time + 12 end
 
@@ -1566,7 +1553,7 @@ spec:RegisterAbilities( {
         talent = "raging_blow",
         texture = 589119,
         startsCombat = true,
-        nobuff = "reckless_abandon_crushing_blow",
+        nobuff = function() if talent.reckless_abandon.enabled then return "recklessness" end end,
         bind = "crushing_blow",
 
         handler = function ()
@@ -1619,11 +1606,6 @@ spec:RegisterAbilities( {
             removeStack( "whirlwind" )
             removeBuff( "slaughtering_strikes" )
             if talent.frenzy.enabled then addStack( "frenzy" ) end -- TODO: resets on target swap
-            if talent.reckless_abandon.enabled then
-                applyBuff( "reckless_abandon_bloodbath" )
-                applyBuff( "reckless_abandon_crushing_blow" )
-            end
-
             removeBuff( "brutal_finish" )
 
             -- PvP
@@ -1662,6 +1644,8 @@ spec:RegisterAbilities( {
         gcd = "off",
 
         toggle = "cooldowns",
+        spend = function() return talent.reckless_abandon.enabled and -50 or 0 end,
+        spendType = "rage",
 
         talent = "recklessness",
         startsCombat = false,
@@ -1669,9 +1653,6 @@ spec:RegisterAbilities( {
 
         handler = function ()
             applyBuff( "recklessness" )
-            if talent.reckless_abandon.enabled then
-                gain( 50, "rage" )
-            end
             if talent.berserkers_torment.enabled then applyBuff( "avatar", 8 ) end
 
             if talent.snap_induction.enabled then addStack( "thunder_blast " ) end

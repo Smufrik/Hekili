@@ -280,7 +280,7 @@ spec:RegisterAuras( {
         max_stack = 1,
 
         generate = function( ah )
-            ah.duration = talent.mayhem.enabled and class.auras.mayhem.duration or class.auras.havoc.duration
+            ah.duration = class.auras.havoc.duration
 
             if talent.mayhem.enabled and active_dot.mayhem > 0 then
                 ah.count = 1
