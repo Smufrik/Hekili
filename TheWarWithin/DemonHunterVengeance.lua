@@ -1031,8 +1031,6 @@ local TriggerDemonic = setfenv( function()
         end
     end
 
-
-
 end, state )
 
 -- Abilities
