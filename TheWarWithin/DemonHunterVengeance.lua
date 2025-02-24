@@ -1007,26 +1007,31 @@ local TriggerDemonic = setfenv( function()
 
     if buff.metamorphosis.up then
         buff.metamorphosis.expires = buff.metamorphosis.expires + demonicExtension
-        if talent.demonic_intensity.enabled and buff.demonsurge_hardcast.up then
-            -- Extend the appropriate buffs
-            local hardcastMetaExpires = buff.metamorphosis.expires
-            applyBuff( "demonsurge_hardcast", buff.metamorphosis.remains )
-            if buff.demonsurge_fel_desolation.up then buff.demonsurge_fel_desolation.expires = hardcastMetaExpires end
-            if buff.demonsurge_consuming_fire.up then buff.demonsurge_consuming_fire.expires = hardcastMetaExpires end
-            if buff.demonsurge_sigil_of_doom.up then buff.demonsurge_sigil_of_doom.expires = hardcastMetaExpires end
+        -- Fel-Scarred Demonsurge stuff
+        if talent.demonsurge.enabled then
+            local metaExpires = buff.metamorphosis.expires
+            if buff.demonsurge_spirit_burst.up then buff.demonsurge_spirit_burst.expires = metaExpires end
+            if buff.demonsurge_soul_sunder.up then buff.demonsurge_soul_sunder.expires = metaExpires end
+            if talent.demonic_intensity.enabled and buff.demonsurge_hardcast.up then
+                buff.demonsurge_hardcast.expires = metaExpires
+                if buff.demonsurge_fel_desolation.up then buff.demonsurge_fel_desolation.expires = metaExpires end
+                if buff.demonsurge_consuming_fire.up then buff.demonsurge_consuming_fire.expires = metaExpires end
+                if buff.demonsurge_sigil_of_doom.up then buff.demonsurge_sigil_of_doom.expires = metaExpires end
+            end
         end
     else
         applyBuff( "metamorphosis", demonicExtension )
         if talent.inner_demon.enabled then applyBuff( "inner_demon" ) end
         stat.haste = stat.haste + 10
         -- Fel-Scarred
+        if talent.demonsurge.enabled then
+            local metaRemains = buff.metamorphosis.remains
+            applyBuff( "demonsurge_spirit_burst", metaRemains )
+            applyBuff( "demonsurge_soul_sunder", metaRemains )
+        end
     end
 
-    if talent.demonsurge.enabled then
-        local metaRemains = buff.metamorphosis.remains
-        applyBuff( "demonsurge_spirit_burst", metaRemains )
-        applyBuff( "demonsurge_soul_sunder", metaRemains )
-    end
+
 
 end, state )
 
