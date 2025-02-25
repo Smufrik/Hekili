@@ -41,6 +41,8 @@ spec:RegisterResource( Enum.PowerType.Runes, {
         local t = state.runes
         for i = 1, 6 do
             local start, duration, ready = GetRuneCooldown( i )
+            start = start or 0
+            duration = duration or ( 10 * state.haste )
             t.expiry[ i ] = ready and 0 or ( start + duration )
             t.cooldown = duration
         end
@@ -55,7 +57,7 @@ spec:RegisterResource( Enum.PowerType.Runes, {
             t.expiry[ 7 ] = nil
         end
         table.sort( t.expiry )
-        t.actual = nil -- Reset actual to force recalculation
+        t.actual = nil
     end,
 
     spend = function( amount )
@@ -66,15 +68,12 @@ spec:RegisterResource( Enum.PowerType.Runes, {
             table.insert( t.expiry, nextReady )
         end
 
-        -- Handle Runic Power gain
-        state.gain( amount * 10, "runic_power" )            
-
-        -- Handle Tier 20 4-piece set bonus
+        state.gain( amount * 10, "runic_power" )
         if state.set_bonus.tier20_4pc == 1 then
             state.cooldown.army_of_the_dead.expires = max( 0, state.cooldown.army_of_the_dead.expires - 1 )
-        end      
+        end
 
-        t.actual = nil -- Reset actual to force recalculation
+        t.actual = nil
     end,
 
     timeTo = function( x )
