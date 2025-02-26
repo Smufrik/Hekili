@@ -1074,7 +1074,7 @@ end )
 
 
 local dynamic_keys = setmetatable( {}, {
-    __index = function( t, k, v )
+    __index = function( t, k )
         local name = GetSpellInfo( k )
         local key = name and formatKey( name ) or k
         t[k] = key
