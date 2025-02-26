@@ -104,25 +104,25 @@ actions.single_totemic+=/fire_nova,if=active_dot.flame_shock
 actions.single_totemic+=/earth_elemental
 actions.single_totemic+=/flame_shock,if=!talent.voltaic_blaze.enabled
 
-actions.aoe+=/run_action_list,name=aoe_open,if=time<15
+actions.aoe+=/call_action_list,name=aoe_open,strict=1,if=time<15
 actions.aoe+=/feral_spirit
 actions.aoe+=/flame_shock,if=talent.molten_assault.enabled&!ticking
 actions.aoe+=/ascendance,if=(dot.flame_shock.ticking|!talent.molten_assault.enabled)&ti_chain_lightning
 actions.aoe+=/tempest,cycle_targets=1,if=!buff.arc_discharge.stack>=1&((buff.maelstrom_weapon.stack=buff.maelstrom_weapon.max_stack&!talent.raging_maelstrom.enabled)|(buff.maelstrom_weapon.stack>=9))|(buff.maelstrom_weapon.stack>=5&(tempest_mael_count>30))
 actions.aoe+=/doom_winds
-actions.aoe+=/primordial_wave,if=(active_dot.flame_shock=6|(active_dot.flame_shock>=4&active_dot.flame_shock=active_enemies))
+actions.aoe+=/primordial_wave,if=(active_dot.flame_shock=6|(active_dot.flame_shock>=4&active_dot.flame_shock>=active_enemies))
 actions.aoe+=/primordial_storm,if=(buff.maelstrom_weapon.stack>=10)&(buff.doom_winds.up|cooldown.doom_winds.remains>15|buff.primordial_storm.remains<3)
-actions.aoe+=/voltaic_blaze,if=active_dot.flame_shock<5
+actions.aoe+=/voltaic_blaze,if=buff.voltaic_blaze.up&active_enemies>active_dot.flame_shock&active_dot.flame_shock<5
 actions.aoe+=/crash_lightning,if=talent.converging_storms.enabled&buff.electrostatic_wager.stack>3
 actions.aoe+=/windstrike,cycle_targets=1,if=talent.thorims_invocation.enabled&buff.maelstrom_weapon.stack>0&ti_chain_lightning
 actions.aoe+=/crash_lightning,if=talent.converging_storms.enabled&talent.alpha_wolf.enabled
 actions.aoe+=/stormstrike,if=buff.converging_storms.stack=6&buff.stormblast.stack>0&buff.legacy_of_the_frost_witch.up&buff.maelstrom_weapon.stack<=8
 actions.aoe+=/crash_lightning,if=buff.maelstrom_weapon.stack<=8
-actions.aoe+=/voltaic_blaze,if=buff.maelstrom_weapon.stack<=8
+actions.aoe+=/voltaic_blaze,if=buff.voltaic_blaze.up&buff.maelstrom_weapon.stack<=8
 actions.aoe+=/chain_lightning,cycle_targets=1,if=buff.maelstrom_weapon.stack>=5&!buff.primordial_storm.up&(cooldown.crash_lightning.remains>=1|!talent.alpha_wolf.enabled)
 actions.aoe+=/fire_nova,if=active_dot.flame_shock=6|(active_dot.flame_shock>=4&active_dot.flame_shock=active_enemies)
 actions.aoe+=/stormstrike,if=talent.stormblast.enabled&talent.stormflurry.enabled
-actions.aoe+=/voltaic_blaze
+actions.aoe+=/voltaic_blaze,if=buff.voltaic_blaze.up
 actions.aoe+=/lava_lash,cycle_targets=1,if=talent.lashing_flames.enabled|talent.molten_assault.enabled&dot.flame_shock.ticking
 actions.aoe+=/ice_strike,if=talent.hailstorm.enabled&!buff.ice_strike.up
 actions.aoe+=/frost_shock,if=talent.hailstorm.enabled&buff.hailstorm.up
@@ -144,7 +144,7 @@ actions.aoe+=/frost_shock,if=!talent.hailstorm.enabled
 
 actions.aoe_open+=/flame_shock,if=!ticking
 actions.aoe_open+=/crash_lightning,if=(buff.electrostatic_wager.stack>9&buff.doom_winds.up)|!buff.crash_lightning.up
-actions.aoe_open+=/voltaic_blaze,if=active_dot.flame_shock<3
+actions.aoe_open+=/voltaic_blaze,if=buff.voltaic_blaze.up&active_dot.flame_shock<active_enemies&active_dot.flame_shock<3
 actions.aoe_open+=/lava_lash,if=talent.molten_assault.enabled&(talent.primordial_wave.enabled|talent.fire_nova.enabled)&dot.flame_shock.ticking&(active_dot.flame_shock<active_enemies)&active_dot.flame_shock<3
 actions.aoe_open+=/primordial_wave,if=buff.maelstrom_weapon.stack>=4&(active_dot.flame_shock=6|(active_dot.flame_shock>=4&active_dot.flame_shock=active_enemies))
 actions.aoe_open+=/doom_winds,if=buff.maelstrom_weapon.stack>=9
@@ -161,7 +161,7 @@ actions.aoe_open+=/voltaic_blaze
 actions.aoe_open+=/stormstrike
 
 actions.aoe_totemic+=/surging_totem
-actions.aoe_totemic+=/run_action_list,name=aoe_totemic_open,if=(cooldown.doom_winds.remains=0|cooldown.sundering.remains=0|!buff.hot_hand.up)&time<15
+actions.aoe_totemic+=/call_action_list,name=aoe_totemic_open,strict=1,if=(cooldown.doom_winds.remains=0|cooldown.sundering.remains=0|!buff.hot_hand.up)&time<15
 actions.aoe_totemic+=/ascendance,if=ti_chain_lightning
 actions.aoe_totemic+=/flame_shock,if=!ticking&(talent.ashen_catalyst.enabled|talent.primordial_wave.enabled)
 actions.aoe_totemic+=/crash_lightning,if=talent.crashing_storms.enabled&(active_enemies>=15-5*talent.unruly_winds.enabled)
