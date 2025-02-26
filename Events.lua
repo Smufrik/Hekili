@@ -934,7 +934,7 @@ do
         -- Improve Pocket-Sized Computronic Device.
         if state.equipped.pocketsized_computation_device then
             local tName = CGetItemInfo( 167555 )
-            local redName, redLink = GetItemGem( tName, 1 )
+            local redName, redLink = C_Item.GetItemGem( tName, 1 )
 
             if redName and redLink then
                 local redID = tonumber( redLink:match("item:(%d+)") )
