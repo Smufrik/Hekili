@@ -78,19 +78,19 @@ spec:RegisterTalents( {
     bounding_stride                 = {  90355, 202163, 1 }, -- Reduces the cooldown of Heroic Leap by 15 sec, and Heroic Leap now also increases your movement speed by 70% for 3 sec.
     cacophonous_roar                = {  90383, 382954, 1 }, -- Intimidating Shout can withstand 200% more damage before breaking.
     champions_might                 = {  90323, 386284, 1 }, -- The duration of Champion's Spear is increased by 2 sec. You deal 25% increased critical strike damage to targets chained to your Spear.
-    champions_spear                 = {  90380, 376079, 1 }, -- Throw a spear at the target location, dealing 35,491 Physical damage instantly and an additional 44,999 damage over 4 sec. Deals reduced damage beyond 5 targets. Enemies hit are chained to the spear's location for the duration. Generates 10 Rage.
+    champions_spear                 = {  90380, 376079, 1 }, -- Throw a spear at the target location, dealing 20,869 Physical damage instantly and an additional 22,111 damage over 4 sec. Deals reduced damage beyond 5 targets. Enemies hit are chained to the spear's location for the duration. Generates 10 Rage.
     concussive_blows                = {  90354, 383115, 1 }, -- Cooldown of Pummel reduced by 1.0 sec. Successfully interrupting an enemy increases the damage you deal to them by 5% for 10 sec.
     crackling_thunder               = {  95959, 203201, 1 }, -- Thunder Clap's radius is increased by 50%, and it reduces movement speed by an additional 20%.
     cruel_strikes                   = {  90381, 392777, 2 }, -- Critical strike chance increased by 1% and critical strike damage of Execute increased by 5%. 
     crushing_force                  = {  90347, 382764, 2 }, -- Shield Slam deals an additional 5% damage and deals 5% increased critical strike damage.
-    defensive_stance                = {  90330, 386208, 1 }, -- A defensive combat state that reduces all damage you take by 16%. Lasts until canceled.
+    defensive_stance                = {  90330, 386208, 1 }, -- A defensive combat state that reduces all damage you take by 16% and all magic damage you take by an additional 6%. Lasts until canceled.
     double_time                     = {  90382, 103827, 1 }, -- Increases the maximum number of charges on Charge by 1, and reduces its cooldown by 3 sec.
     fast_footwork                   = {  90344, 382260, 1 }, -- Movement speed increased by 5%.
-    frothing_berserker              = {  90352, 392792, 1 }, -- Revenge has a 20% chance to immediately refund 25% of the Rage spent.
-    heroic_leap                     = {  90346,   6544, 1 }, -- Leap through the air toward a target location, slamming down with destructive force to deal 4,980 Physical damage to all enemies within 8 yards, and resetting the remaining cooldown on Taunt.
+    frothing_berserker              = {  90352, 392792, 1 }, -- Revenge has a 20% chance to immediately refund 50% of the Rage spent.
+    heroic_leap                     = {  90346,   6544, 1 }, -- Leap through the air toward a target location, slamming down with destructive force to deal 2,928 Physical damage to all enemies within 8 yards, and resetting the remaining cooldown on Taunt.
     honed_reflexes                  = {  95956, 391271, 1 }, -- Cooldown of Shield Wall, Pummel, Intervene, Spell Reflection, and Storm Bolt reduced by 5%.
     immovable_object                = {  90364, 394307, 1 }, -- Activating Avatar or Shield Wall grants 4 sec of the other.
-    impending_victory               = {  90326, 202168, 1 }, -- Instantly attack the target, causing 12,503 damage and healing you for 20% of your maximum health. Killing an enemy that yields experience or honor resets the cooldown of Impending Victory and makes it cost no Rage.
+    impending_victory               = {  90326, 202168, 1 }, -- Instantly attack the target, causing 7,352 damage and healing you for 20% of your maximum health. Killing an enemy that yields experience or honor resets the cooldown of Impending Victory and makes it cost no Rage.
     intervene                       = {  90329,   3411, 1 }, -- Run at high speed toward an ally, intercepting all melee and ranged attacks against them for 6 sec while they remain within 10 yds.
     intimidating_shout              = {  90384,   5246, 1 }, -- Causes the targeted enemy to cower in fear, and up to 5 additional enemies within 8 yards to flee. Targets are disoriented for 8 sec.
     leeching_strikes                = {  90371, 382258, 1 }, -- Leech increased by 3%.
@@ -105,19 +105,19 @@ spec:RegisterTalents( {
     rumbling_earth                  = {  90374, 275339, 1 }, -- Shockwave's range increased by 6 yards and when Shockwave strikes at least 3 targets, its cooldown is reduced by 15 sec.
     second_wind                     = {  90332,  29838, 1 }, -- Restores 6% health every 1 sec when you have not taken damage for 5 sec. While you are below 35% health, restores 1.0% health every 1 sec. The amount restored increases the closer you are to death.
     seismic_reverberation           = {  90354, 382956, 1 }, -- If Whirlwind or Revenge hits 3 or more enemies, it hits them 1 additional time for 30% damage.
-    shattering_throw                = {  90351,  64382, 1 }, -- Hurl your weapon at the enemy, causing 14,819 Physical damage, ignoring armor, and removing any magical immunities. Deals up to 500% increased damage to absorb shields.
-    shockwave                       = {  90375,  46968, 1 }, -- Sends a wave of force in a frontal cone, causing 6,357 damage and stunning all enemies within 10 yards for 2 sec.
-    sidearm                         = {  90340, 384404, 1 }, -- Your auto-attacks have a 20% chance to hurl weapons at your target and 3 other enemies in front of you, dealing an additional 5,298 Physical damage.
+    shattering_throw                = {  90351,  64382, 1 }, -- Hurl your weapon at the enemy, causing 7,244 Physical damage, ignoring armor, and removing any magical immunities. Deals up to 500% increased damage to absorb shields.
+    shockwave                       = {  90375,  46968, 1 }, -- Sends a wave of force in a frontal cone, causing 3,738 damage and stunning all enemies within 16 yards for 2 sec.
+    sidearm                         = {  90340, 384404, 1 }, -- Your auto-attacks have a 20% chance to hurl weapons at your target and 3 other enemies in front of you, dealing an additional 3,115 Physical damage.
     spell_reflection                = {  90385,  23920, 1 }, -- Raise your shield, reflecting the first spell cast on you, and reduce magic damage you take by 25% for 5 sec.
-    storm_bolt                      = {  90337, 107570, 1 }, -- Hurls your weapon at an enemy, causing 6,039 Physical damage and stunning for 4 sec.
-    thunder_clap                    = {  90343,   6343, 1 }, -- Blasts all enemies within 8 yards for 10,405 Physical damage and reduces their movement speed by 20% for 10 sec. Deals reduced damage beyond 5 targets. Generates 5 Rage. If you have Rend, Thunder Clap affects 5 nearby targets with Rend. 
-    thunderous_roar                 = {  90359, 384318, 1 }, -- Roar explosively, dealing 37,169 Physical damage to enemies within 12 yds and cause them to bleed for 51,803 physical damage over 8 sec. Deals reduced damage beyond 5 targets.
+    storm_bolt                      = {  90337, 107570, 1 }, -- Hurls your weapon at an enemy, causing 3,551 Physical damage and stunning for 4 sec.
+    thunder_clap                    = {  90343,   6343, 1 }, -- Blasts all enemies within 12 yards for 6,118 Physical damage and reduces their movement speed by 40% for 10 sec. Deals reduced damage beyond 5 targets. Generates 5 Rage. If you have Rend, Thunder Clap affects 5 nearby targets with Rend.
+    thunderous_roar                 = {  90359, 384318, 1 }, -- Roar explosively, dealing 21,856 Physical damage to enemies within 12 yds and cause them to bleed for 25,472 physical damage over 8 sec. Deals reduced damage beyond 5 targets.
     thunderous_words                = {  90358, 384969, 1 }, -- Increases the duration of Thunderous Roar's Bleed effect by 2.0 sec and Thunderous Roar's Bleed effect causes enemies to take 20% increased damage from all your bleeds.
     unstoppable_force               = {  90364, 275336, 1 }, -- Avatar increases the damage of Thunder Clap and Shockwave by 50% and reduces the cooldown of Thunder Clap by 50%.
     uproar                          = {  90357, 391572, 1 }, -- Thunderous Roar's cooldown reduced by 45 sec.
     war_machine                     = {  90328, 262231, 1 }, -- Your auto attacks generate 50% more Rage. Killing an enemy instantly generates 5 Rage, and increases your movement speed by 30% for 8 sec.
     wild_strikes                    = {  90360, 382946, 2 }, -- Haste increased by 1% and your auto-attack critical strikes increase your auto-attack speed by 10% for 10 sec.
-    wrecking_throw                  = {  90351, 384110, 1 }, -- Hurl your weapon at the enemy, causing 14,819 Physical damage, ignoring armor. Deals up to 500% increased damage to absorb shields.
+    wrecking_throw                  = {  90351, 384110, 1 }, -- Hurl your weapon at the enemy, causing 7,244 Physical damage, ignoring armor. Deals up to 500% increased damage to absorb shields.
 
     -- Protection
     anger_management                = {  90311, 152278, 1 }, -- Every 10 Rage you spend reduces the remaining cooldown on Avatar and Shield Wall by 1 sec.
@@ -134,8 +134,8 @@ spec:RegisterTalents( {
     champions_bulwark               = {  90316, 386328, 1 }, -- Shield Charge deals 20% increased damage, grants you Shield Block, and makes your next Revenge cost no Rage.
     dance_of_death                  = {  90260, 390713, 1 }, -- When an enemy dies while affected by your Ravager, its duration is extended by 2 sec. This effect can trigger a maximum of 3 times per use of Ravager.
     defenders_aegis                 = {  90310, 397103, 1 }, -- Shield Wall gains 1 additional charge, and its cooldown is reduced by 60 sec.
-    demoralizing_shout              = {  90305,   1160, 1 }, -- Demoralizes all enemies within 10 yards, reducing the damage they deal to you by 20% for 8 sec. Generates 20 Rage.
-    devastator                      = {  90299, 236279, 1 }, -- Your auto attacks deal an additional 9,282 Physical damage and have a 20% chance to reset the remaining cooldown on Shield Slam.
+    demoralizing_shout              = {  90305,   1160, 1 }, -- Demoralizes all enemies within 15 yards, reducing the damage they deal to you by 20% for 8 sec.
+    devastator                      = {  90299, 236279, 1 }, -- Your auto attacks deal an additional 5,458 Physical damage and have a 25% chance to reset the remaining cooldown on Shield Slam.
     disrupting_shout                = {  90307, 386071, 1 }, -- Taunts all enemies within 14 yds to attack you for 6 sec, interrupts all spellcasting within 14 yds and prevents any spell in that school from being cast for 6 sec. 
     enduring_alacrity               = {  90433, 384063, 1 }, -- Increases Stamina and Armor by 8% and your Haste by 2%.
     enduring_defenses               = {  90313, 386027, 1 }, -- Shield Block lasts 2 sec longer.
@@ -143,7 +143,7 @@ spec:RegisterTalents( {
     focused_vigor                   = {  90318, 384067, 1 }, -- Increases Strength and Armor by 5% and your critical strike chance by 1%. 
     fueled_by_violence              = {  90451, 383103, 1 }, -- You are healed for 110% of the damage dealt by Deep Wounds.
     heavy_repercussions             = {  90319, 203177, 1 }, -- Shield Slam generates 2 more Rage and extends the duration of Shield Block by 1.0 sec.
-    ignore_pain                     = {  90295, 190456, 1 }, -- Fight through the pain, ignoring 50% of damage taken until 168,572 damage has been prevented. Repeated uses of Ignore Pain accumulate, up to 315,354 total damage prevented.
+    ignore_pain                     = {  90295, 190456, 1 }, -- Fight through the pain, ignoring 50% of damage taken until 82,409 damage has been prevented. Repeated uses of Ignore Pain accumulate, up to 245,731 total damage prevented.
     impenetrable_wall               = {  90310, 384072, 1 }, -- Shield Slam reduces the remaining cooldown of Shield Wall by 6 sec.
     indomitable                     = {  90434, 202095, 1 }, -- Your maximum health is increased by 6%, and every 20 Rage you spend heals you for 1% of your maximum health.
     instigate                       = {  90301, 394311, 1 }, -- Devastate deals 20% increased damage and generates 2 Rage. Devastator deals 10% increased damage and generates 2 Rage.
@@ -151,20 +151,20 @@ spec:RegisterTalents( {
     juggernaut                      = {  90449, 393967, 1 }, -- Execute increases Execute's damage dealt by 3% for 20 sec, stacking up to 15 times.
     last_stand                      = {  90297,  12975, 1 }, -- Increases maximum health by 30% for 15 sec, and instantly heals you for that amount.
     massacre                        = {  90313, 281001, 1 }, -- Execute is now usable on targets below 35% health. 
-    punish                          = {  90449, 275334, 1 }, -- Shield Slam deals 10% increased damage, and reduces enemies' damage against you by 4% for 9 sec. Multiple punishments may overlap.
-    ravager                         = {  90432, 228920, 1 }, -- Throws a whirling weapon at the target location that chases nearby enemies, inflicting 132,971 Physical damage to all enemies over 8.6 sec. Deals reduced damage beyond 8 targets. Generates 10 Rage each time it deals damage.
-    rend                            = {  90302, 394062, 1 }, -- Wounds the target, causing 8,299 Physical damage instantly and an additional 21,760 Bleed damage over 15 sec. Thunder Clap affects 5 nearby targets with Rend. 
-    revenge                         = {  90298,   6572, 1 }, -- Swing in a wide arc, dealing 16,718 Physical damage to all enemies in front of you. Deals reduced damage beyond 5 targets. Your successful dodges and parries have a chance to make your next Revenge cost no Rage.
-    shield_charge                   = {  90317, 385952, 1 }, -- Charge to an enemy with your shield, dealing 106,807 Physical damage to it and 34,127 Physical damage to all enemies within 10 yards. Also stuns the primary target for 4 sec. Generates 20 Rage.
+    punish                          = {  90449, 275334, 1 }, -- Shield Slam deals 10% increased damage, and reduces enemies' damage against you by 3% for 9 sec. Multiple punishments may overlap.
+    ravager                         = {  90432, 228920, 1 }, -- Throws a whirling weapon at the target location that chases nearby enemies, inflicting 54,731 Physical damage to all enemies over 10.3 sec. Deals reduced damage beyond 8 targets. Generates 20 Rage each time it deals damage.
+    rend                            = {  90302, 394062, 1 }, -- Wounds the target, causing 4,879 Physical damage instantly and an additional 10,697 Bleed damage over 15 sec. Thunder Clap affects 5 nearby targets with Rend.
+    revenge                         = {  90298,   6572, 1 }, -- Swing in a wide arc, dealing 8,124 Physical damage to all enemies in front of you. Deals reduced damage beyond 5 targets. Your successful dodges and parries have a chance to make your next Revenge cost no Rage.
+    shield_charge                   = {  90317, 385952, 1 }, -- Charge to an enemy with your shield, dealing 62,803 Physical damage to it and 20,067 Physical damage to all enemies within 10 yards. Also stuns the primary target for 4 sec. Generates 20 Rage.
     shield_specialization           = {  90315, 386011, 2 }, -- Increases Block chance by 6% and your Block value by 12%.
     shield_wall                     = {  90312,    871, 1 }, -- Reduces all damage you take by 40% for 8 sec.
     show_of_force                   = {  90320, 385843, 1 }, -- Revenge damage increased by 10% and Revenge increases the damage of your next Thunder Clap by 20%.
     spell_block                     = {  90450, 392966, 1 }, -- You are able to block spells for 30 sec.
     storm_of_steel                  = {  90260, 382953, 1 }, -- Ravager's damage is reduced by 30% but it now has 2 charges and generates 10 additional Rage each time it deals damage.
-    strategist                      = {  90303, 384041, 1 }, -- Devastate, Thunder Clap, Revenge, and Execute have a 20% chance to reset the remaining cooldown on Shield Slam.
+    strategist                      = {  90303, 384041, 1 }, -- Devastate, Thunder Clap, Revenge, and Execute have a 25% chance to reset the remaining cooldown on Shield Slam.
     sudden_death                    = {  90320,  29725, 1 }, -- Your attacks have a chance to make your next Execute cost no Rage, be usable on any target regardless of their health, and deal damage as if you spent 40 Rage.
     thunderlord                     = {  90308, 385840, 1 }, -- Increases the radius of Demoralizing Shout by 5 yards. Each enemy hit by Thunder Clap reduces the remaining cooldown on Demoralizing Shout by 1.5 sec, up to 4.5 sec.
-    tough_as_nails                  = {  90450, 385888, 1 }, -- Blocking an attack deals 4,445 Physical damage to the attacker, ignoring armor. Generates high threat.
+    tough_as_nails                  = {  90450, 385888, 1 }, -- Blocking an attack deals 2,173 Physical damage to the attacker, ignoring armor. Generates high threat.
     unnerving_focus                 = {  90452, 384042, 1 }, -- Last Stand increases your Rage generation by 50%.
     violent_outburst                = {  90265, 386477, 1 }, -- Every 250 rage you spend triggers a Violent Outburst, causing your next Shield Slam or Thunder Clap to deal 200% increased damage, generate 50% more Rage and grant Ignore Pain.
 
@@ -190,7 +190,7 @@ spec:RegisterTalents( {
     crashing_thunder                = {  94816, 436707, 1 }, -- Stormstrike or Nature damage your abilities deal is increased by 5%. Stormstrike damage ignores Armor. Thunder Clap damage increased by 40%. Seismic Reverberations now affects Thunder Clap in addition to Whirlwind.
     flashing_skies                  = {  94797, 437079, 1 }, -- Thunder Blast calls down a Lightning Strike on an enemy it hits.
     gathering_clouds                = {  94792, 436201, 1 }, -- Your attacks trigger Lightning Strikes 30% more often.
-    ground_current                  = {  94800, 436148, 1 }, -- Lightning Strikes also deal 6,317 to enemies near their target. Damage reduced beyond 5 targets.
+    ground_current                  = {  94800, 436148, 1 }, -- Lightning Strikes also deal 3,714 to enemies near their target. Damage reduced beyond 5 targets.
     keep_your_feet_on_the_ground    = {  94798, 438590, 1 }, -- Physical damage taken reduced by 2%. Thunder Blast reduces damage you take by 8% for 5 sec.
     lightning_strikes               = {  94803, 434969, 1, "mountain_thane" }, -- Damaging enemies with Thunder Clap, Revenge, or Execute has a 25% chance to also strike one with a lightning bolt, dealing 19,168 Nature damage. Lightning Strikes occur 30% more often during Avatar.
     snap_induction                  = {  94797, 456270, 1 }, -- Activating Demoralizing Shout grants a charge of Thunder Blast.
@@ -202,27 +202,29 @@ spec:RegisterTalents( {
     thunder_blast                   = {  94785, 435607, 1 }, -- Shield Slam and Bloodthirst have a 35% chance to grant you Thunder Blast, stacking up to 2 charges. Thunder Blast Your next Thunder Clap becomes a Thunder Blast that deals 40% increased damage as Stormstrike and generates 7 Rage.
 } )
 
+
 -- PvP Talents
 spec:RegisterPvpTalents( { 
-    battlefield_commander = 5629, -- (424742) 
+    battlefield_commander = 5629, -- (424742) Your Shout abilities have additional effects.  Battle Shout: Increases Stamina by 3%.  Piercing Howl: Radius increased by 50%  Berserker Shout: Range increased by 8 yds.  Intimidating Shout: Cooldown reduced by 15 sec.  Rallying Cry: Removes movement impairing effects and grants 30% movement speed to allies.  Thunderous Roar: Targets receive 5% more damage from all sources while bleeding.
     berserker_roar        = 5703, -- (1219201) Go berserk, removing and granting immunity to Fear, Sap, and Incapacitate effects for 6 sec. Also reduces the duration of the next crowd control effect within 10 sec by 50% on group members within 40 yds.
     bodyguard             =  168, -- (213871) Protect an ally, causing 40% of all Physical damage they take to be transfered to you. When the target takes Physical damage, your Shield Slam cooldown has a 30% chance to be reset. Bodyguard is cancelled if the target is further than 20 yards from you. Lasts 1 min. Only one target can be Bodyguarded at a time.
-    demolition            = 5374, -- (329033) 
+    demolition            = 5374, -- (329033) Reduces the cooldown of your Shattering Throw or Wrecking Throw by 50% and increases its damage to absorb shields by an additional 250%.
     disarm                =   24, -- (236077) Disarm the enemy's weapons and shield for 5 sec. Disarmed creatures deal significantly reduced damage.
-    dragon_charge         =  831, -- (206572) Run at high speed at a distance in front of you. All enemies in your path will take 14,834 Physical damage and be knocked back.
-    morale_killer         =  171, -- (199023) 
+    dragon_charge         =  831, -- (206572) Run at high speed at a distance in front of you. All enemies in your path will take 8,722 Physical damage and be knocked back.
+    morale_killer         =  171, -- (199023) Reduces the cooldown of Demoralizing Shout by 15 sec, and Demoralizing Shout now reduces the damage enemies deal to all targets, not just you.
     oppressor             =  845, -- (205800) You focus the assault on this target, increasing their damage taken by 3% for 6 sec. Each unique player that attacks the target increases the damage taken by an additional 3%, stacking up to 5 times. Your melee attacks refresh the duration of Focused Assault.
-    rebound               =  833, -- (213915) 
-    safeguard             = 5626, -- (424654) 
+    rebound               =  833, -- (213915) Spell Reflection reflects the next 2 incoming spells cast on you and reflected spells deal 100% extra damage to the attacker. Spell Reflection's cooldown is increased by 10 sec.
+    safeguard             = 5626, -- (424654) Intervene now has 2 charges and reduces the ally's damage taken by 20% for 5 sec. Intervene's cooldown is increased by 10 sec.
     shield_bash           =  173, -- (198912) When Shield Slam is used on targets that are casting, it reduces their damage done by 15% for 8 sec and the cooldown is instantly reset.
-    storm_of_destruction  = 5627, -- (236308) 
-    thunderstruck         =  175, -- (199045) 
+    storm_of_destruction  = 5627, -- (236308) Bladestorm, Ravager, and Demolish now snare all targets you hit by 60% for 6 sec and decrease their healing taken by 50% for 10 sec.
+    thunderstruck         =  175, -- (199045) Thunder Clap roots all targets it damages for 4 sec.
 } )
+
 
 -- Auras
 spec:RegisterAuras( {
     avatar = {
-        id = 401150,
+        id = 107574,
         duration = 20,
         max_stack = 1,
         copy = 107574
@@ -745,7 +747,7 @@ end )
 -- Abilities
 spec:RegisterAbilities( {
     avatar = {
-        id = 401150,
+        id = 107574,
         cast = 0,
         cooldown = 90,
         gcd = "off",
