@@ -940,7 +940,7 @@ do
                 local redID = tonumber( redLink:match("item:(%d+)") )
                 local action = class.itemMap[ redID ]
 
-                if action then
+                if action and class.abilities[ action ] and redID then
                     state.set_bonus[ action ] = 1
                     state.set_bonus[ redID ] = 1
                     class.abilities.pocketsized_computation_device = class.abilities[ action ]
@@ -948,8 +948,10 @@ do
                     insert( state.items, action )
                 end
             else
-                class.abilities.pocketsized_computation_device = class.abilities.inactive_red_punchcard
-                class.abilities[ tName ] = class.abilities.inactive_red_punchcard
+                if class.abilities.inactive_red_punchcard then
+                    class.abilities.pocketsized_computation_device = class.abilities.inactive_red_punchcard
+                    class.abilities[ tName ] = class.abilities.inactive_red_punchcard
+                end
             end
         end
 
