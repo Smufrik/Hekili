@@ -60,7 +60,7 @@ actions.single+=/stormstrike,if=buff.doom_winds.up|buff.stormblast.stack>0
 actions.single+=/crash_lightning,if=talent.unrelenting_storms.enabled&talent.alpha_wolf.enabled&alpha_wolf_min_remains=0
 actions.single+=/lava_lash,if=buff.hot_hand.up
 actions.single+=/crash_lightning,if=set_bonus.tww2_4pc
-actions.single+=/voltaic_blaze,if=talent.voltaic_blaze.enabled
+actions.single+=/voltaic_blaze
 actions.single+=/stormstrike
 actions.single+=/ice_strike
 actions.single+=/lava_lash,if=talent.elemental_assault.enabled&talent.molten_assault.enabled&dot.flame_shock.ticking
@@ -95,7 +95,7 @@ actions.single_totemic+=/lava_lash
 actions.single_totemic+=/windstrike
 actions.single_totemic+=/stormstrike
 actions.single_totemic+=/crash_lightning,if=set_bonus.tww2_4pc
-actions.single_totemic+=/voltaic_blaze,if=talent.voltaic_blaze.enabled
+actions.single_totemic+=/voltaic_blaze
 actions.single_totemic+=/crash_lightning,if=talent.unrelenting_storms.enabled
 actions.single_totemic+=/ice_strike,if=!buff.ice_strike.up
 actions.single_totemic+=/crash_lightning
@@ -157,7 +157,7 @@ actions.aoe_open+=/chain_lightning,cycle_targets=1,if=buff.maelstrom_weapon.stac
 actions.aoe_open+=/chain_lightning,cycle_targets=1,if=buff.maelstrom_weapon.stack>=9&(!buff.primordial_storm.up|!buff.legacy_of_the_frost_witch.up)
 actions.aoe_open+=/stormstrike,if=buff.converging_storms.stack=6&buff.stormblast.stack>1
 actions.aoe_open+=/crash_lightning
-actions.aoe_open+=/voltaic_blaze,if=talent.voltaic_blaze.enabled
+actions.aoe_open+=/voltaic_blaze
 actions.aoe_open+=/stormstrike
 
 actions.aoe_totemic+=/surging_totem
@@ -178,7 +178,7 @@ actions.aoe_totemic+=/elemental_blast,if=(buff.maelstrom_weapon.stack>=10)
 actions.aoe_totemic+=/chain_lightning,if=buff.maelstrom_weapon.stack>=10&!buff.primordial_storm.up
 actions.aoe_totemic+=/feral_spirit
 actions.aoe_totemic+=/crash_lightning,if=buff.doom_winds.up|!buff.crash_lightning.up|(talent.alpha_wolf.enabled&feral_spirit.active&alpha_wolf_min_remains=0)
-actions.aoe_totemic+=/voltaic_blaze,if=talent.voltaic_blaze.enabled
+actions.aoe_totemic+=/voltaic_blaze
 actions.aoe_totemic+=/lava_lash,if=talent.molten_assault.enabled&dot.flame_shock.ticking
 actions.aoe_totemic+=/crash_lightning,if=talent.crashing_storms.enabled
 actions.aoe_totemic+=/elemental_blast,if=buff.maelstrom_weapon.stack>=5&!buff.primordial_storm.up
@@ -186,7 +186,7 @@ actions.aoe_totemic+=/chain_lightning,if=buff.maelstrom_weapon.stack>=5&!buff.pr
 actions.aoe_totemic+=/stormstrike
 actions.aoe_totemic+=/sundering,if=buff.doom_winds.up|talent.earthsurge.enabled&(buff.legacy_of_the_frost_witch.up|!talent.legacy_of_the_frost_witch.enabled)&pet.surging_totem.active
 actions.aoe_totemic+=/fire_nova,if=active_dot.flame_shock=6|(active_dot.flame_shock>=4&active_dot.flame_shock=active_enemies)
-actions.aoe_totemic+=/voltaic_blaze,if=talent.voltaic_blaze.enabled
+actions.aoe_totemic+=/voltaic_blaze
 actions.aoe_totemic+=/ice_strike,if=talent.hailstorm.enabled&!buff.ice_strike.up
 actions.aoe_totemic+=/frost_shock,if=talent.hailstorm.enabled&buff.hailstorm.up
 actions.aoe_totemic+=/sundering,if=(buff.legacy_of_the_frost_witch.up|!talent.legacy_of_the_frost_witch.enabled)&pet.surging_totem.active
