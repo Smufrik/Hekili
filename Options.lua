@@ -10959,6 +10959,7 @@ function Hekili:CmdLine( input )
     -- Execute the corresponding command handler or show error message
     if commandHandlers[ command ] then
         commandHandlers[ command ]()
+        self:UpdateDisplayVisibility()
         return true
     elseif command == "help" then
         self:DisplayChatCommandList( "all" )
@@ -11037,7 +11038,6 @@ function Hekili:HandleSetCommand( args )
             toggleCategory.value = ( subToggleOrState == "on" )
             local stateText = toggleCategory.value and "|cFF00FF00ON|r" or "|cFFFF0000OFF|r"
             self:Print( format( "|cFFFFD100%s|r is now %s.", mainToggle, stateText ) )
-            self:UpdateDisplayVisibility()
             self:ForceUpdate( "CLI_TOGGLE" )
             return true
         end
@@ -11064,7 +11064,6 @@ function Hekili:HandleSetCommand( args )
                 toggleCategory[ subToggleOrState ] = lowerToggleCategory[ subToggleOrState ]  -- Update the original case-sensitive table
                 local stateText = lowerToggleCategory[ subToggleOrState ] and "|cFF00FF00ON|r" or "|cFFFF0000OFF|r"
                 self:Print( format( "|cFFFFD100%s_%s|r is now %s.", mainToggle, subToggleOrState, stateText ) )
-                self:UpdateDisplayVisibility()
                 self:ForceUpdate("CLI_TOGGLE" )
                 return true
             else
