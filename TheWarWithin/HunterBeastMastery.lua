@@ -787,17 +787,17 @@ spec:RegisterAuras( {
         duration = function() return 30 - ( 5 * talent.better_together.rank ) end,
         max_stack = 1,
     },
-    howl_of_the_pack_leader_bear_ready = {
+    howl_of_the_pack_leader_bear = {
         id = 472325,
         duration = function() return 30 - ( 5 * talent.better_together.rank ) end,
         max_stack = 1,
     },
-    howl_of_the_pack_leader_boar_ready = {
+    howl_of_the_pack_leader_boar = {
         id = 472324,
         duration = function() return 30 - ( 5 * talent.better_together.rank ) end,
         max_stack = 1,
     },
-    howl_of_the_pack_leader_wyvern_ready = {
+    howl_of_the_pack_leader_wyvern = {
         id = 471878,
         duration = function() return 30 - ( 5 * talent.better_together.rank ) end,
         max_stack = 1,
@@ -1297,9 +1297,9 @@ local CallOfTheWildCDR = setfenv( function()
 end, state )
 
 local pack_leader_buff_cycle = {
-    "howl_of_the_pack_leader_wyvern_ready",
-    "howl_of_the_pack_leader_boar_ready",
-    "howl_of_the_pack_leader_bear_ready",
+    "howl_of_the_pack_leader_wyvern",
+    "howl_of_the_pack_leader_boar",
+    "howl_of_the_pack_leader_bear",
 }
 
 -- This variable represents the true index in the above table of the next buff that will be applied to you, whether by the natural cycle or by bestial wrath
@@ -1433,7 +1433,7 @@ end, state )
 
 -- SIMC expression
 spec:RegisterStateExpr( "howl_summon_ready", function ()
-    return buff.howl_of_the_pack_leader_bear_ready.up or buff.howl_of_the_pack_leader_boar_ready.up or buff.howl_of_the_pack_leader_wyvern_ready.up or false
+    return buff.howl_of_the_pack_leader_bear.up or buff.howl_of_the_pack_leader_boar.up or buff.howl_of_the_pack_leader_wyvern.up or false
 end )
 
 -- Abilities
