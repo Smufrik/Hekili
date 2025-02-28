@@ -272,6 +272,9 @@ spec:RegisterPvpTalents( {
     soul_rip         = 5607, -- (410598) Fracture the soul of up to 3 target players within 20 yds into the shadows, reducing their damage done by 25% and healing received by 25% for 8 sec. Souls are fractured up to 20 yds from the player's location. Players can retrieve their souls to remove this effect.
 } )
 
+spec:RegisterHook( "TALENTS_UPDATED", function()
+    talent.rain_of_fire = talent.rain_of_fire_targeted.enabled and talent.rain_of_fire_targeted or talent.rain_of_fire_ground
+end )
 
 -- Auras
 spec:RegisterAuras( {
@@ -1821,9 +1824,7 @@ spec:RegisterAbilities( {
 
 
         usable = function() return raid_event.adds.remains > 4 end,
-        talent = function()
-            return talent.rain_of_fire_targeted.enabled and "rain_of_fire_targeted" or "rain_of_fire_ground"
-        end,
+        talent = "rain_of_fire",
         startsCombat = true,
 
         handler = function ()
