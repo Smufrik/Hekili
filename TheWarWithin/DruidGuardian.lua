@@ -945,7 +945,7 @@ spec:RegisterStateFunction( "shift", function( form )
 end )
 
 spec:RegisterStateExpr( "ironfur_damage_threshold", function ()
-    return ( settings.ironfur_damage_threshold or 0 ) / 100 * ( health.max )
+    return ( settings.ironfur_damage_threshold or 0 ) / 100 * health.max * ( solo and 0.5 or 1 )
 end )
 
 -- The War Within
@@ -1552,13 +1552,6 @@ spec:RegisterAbilities( {
         form = "bear_form",
         cycle = function()
             if talent.tooth_and_claw.enabled then return "tooth_and_claw" end
-        end,
-
-        usable = function ()
-            -- allow offensive ironfur with specific talents
-            if talent.thorns_of_iron.enabled and talent.reinforced_fur.enabled then return true end
-            if settings.ironfur_damage_threshold > 0 and incoming_damage_5s < health.max * settings.ironfur_damage_threshold * 0.01 * ( solo and 0.5 or 1 ) then return false, "player has not taken preferred damage in 5s" end
-            return true
         end,
 
         handler = function ()
