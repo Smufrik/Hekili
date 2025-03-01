@@ -1456,10 +1456,6 @@ spec:RegisterAbilities( {
 
         startsCombat = true,
 
-        usable = function ()
-            if ( settings.eh_percent > 0 and health.pct > settings.eh_percent ) then return false, "health is above " .. settings.eh_percent .. "%" end
-            return true
-        end,
         handler = function ()
             gain( ( healing_sphere.count * stat.attack_power ) + stat.spell_power * ( 1 + stat.versatility_atk_mod ), "health" )
             if pvptalent.reverse_harm.enabled then gain( 1, "chi" ) end
