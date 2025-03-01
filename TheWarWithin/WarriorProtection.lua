@@ -1105,8 +1105,7 @@ spec:RegisterAbilities( {
         timeToReady = function()
             if buff.sudden_death.up then return 0 end
             local threshold = settings.reserve_rage + 40
-            if rage.current >= threshold or ( buff.shield_block.remains > 3 and buff.ignore_pain.remains > 3 ) or not tanking then return 0 end
-            return rage[ "time_to_" .. ( settings.reserve_rage + 40 ) ]
+            return ( tanking and rage.current < threshold ) and rage[ "time_to_" .. threshold ] or 0
         end,
 
         handler = function()
@@ -1439,9 +1438,8 @@ spec:RegisterAbilities( {
 
         readyTime = function()
             if buff.revenge.up then return 0 end
-            local threshold = action.revenge.cost + ( settings.reserve_rage or 40 )
-            if rage.current >= threshold or ( buff.shield_block.remains > 3 and buff.ignore_pain.remains > 3 ) or not tanking then return 0 end
-            return rage[ "time_to_" .. threshold ]
+            local threshold = settings.reserve_rage + 40
+            return ( tanking and rage.current < threshold ) and rage[ "time_to_" .. threshold ] or 0
         end,
 
         handler = function ()
