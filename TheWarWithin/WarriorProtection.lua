@@ -1189,13 +1189,6 @@ spec:RegisterAbilities( {
 
         toggle = "defensives",
 
-        readyTime = function ()
-            if settings.overlap_ignore_pain then return end
-            if buff.ignore_pain.up and buff.ignore_pain.v1 >= 0.3 * health.max then
-                return buff.ignore_pain.remains - gcd.max
-            end
-        end,
-
         handler = function ()
             if buff.ignore_pain.up then
                 buff.ignore_pain.expires = query_time + class.auras.ignore_pain.duration
