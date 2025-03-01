@@ -1143,7 +1143,7 @@ spec:RegisterAbilities( {
 
         talent = "dark_ascension",
         startsCombat = false,
-        toggle = "cooldowns",
+        toggle = "essences",
 
         handler = function ()
             applyBuff( "dark_ascension" )
