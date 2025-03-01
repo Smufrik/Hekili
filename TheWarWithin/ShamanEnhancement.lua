@@ -1303,6 +1303,10 @@ spec:RegisterHook( "reset_precast", function ()
 
     rawset( buff, "doom_winds_debuff", debuff.doom_winds_debuff )
     rawset( buff, "doom_winds_cd", debuff.doom_winds_debuff )
+
+    if totem.surging_totem.up then
+        setCooldown( "surging_totem", totem.surging_totem.remains + 0.1 )
+    end
 end )
 
 
@@ -2789,13 +2793,15 @@ spec:RegisterAbilities( {
         cast = 0.0,
         cooldown = function() return 30.0 - 6 * talent.totemic_surge.rank end,
         gcd = "spell",
-        texture = 5927655,
 
         spend = 0.086,
         spendType = 'mana',
 
         talent = "surging_totem",
         startsCombat = false,
+        readyTime = function() return totem.surging_totem.remains + 0.1 end,
+
+        texture = 5927655,
 
         handler = function()
             summonTotem( "surging_totem" )
@@ -2806,6 +2812,8 @@ spec:RegisterAbilities( {
                 applyBuff( "whirling_fire" )
             end
         end,
+
+        bind = "surging_totem_projection"
     },
 
     -- Summons your Surging Totem nearby
@@ -2815,12 +2823,12 @@ spec:RegisterAbilities( {
         cooldown = 6,
         gcd = "off",
         school = "nature",
-        texture = 310733,
-
-        usable = function() return totem.surging_totem.up end,
 
         talent = "surging_totem",
         startsCombat = false,
+        usable = function() return totem.surging_totem.up end,
+
+        texture = 310733,
         essential = false,
 
         handler = function ()
