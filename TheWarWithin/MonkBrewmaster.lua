@@ -10,6 +10,8 @@ local class, state = Hekili.Class, Hekili.State
 local strformat = string.format
 
 local spec = Hekili:NewSpecialization( 268 )
+
+local FindUnitBuffByID = ns.FindUnitBuffByID
 local GetSpellCount = C_Spell.GetSpellCastCount
 local GetUnitBuffByAuraInstanceID = C_TooltipInfo.GetUnitBuffByAuraInstanceID
 
@@ -1042,6 +1044,59 @@ spec:RegisterStateExpr( "boc_count", function()
     return blackoutComboCount
 end )
 
+-- Snapshotting
+
+local bocConsumptionTime = 0 -- time at which Blackout Combo was most recently consumed
+
+local function calculate_pmultiplier( spellID )
+    local a = class.auras
+
+    if spellID == a.breath_of_fire_dot.id then
+        -- Provide a short window of 0.2s after Blackout Combo is consumed to grant its effects.
+        local blackout_combo = FindUnitBuffByID( "player", a.blackout_combo.id, "PLAYER" ) or ( GetTime() - bocConsumptionTime < 0.2 )
+
+        -- The Breath of Fire DoT normally reduces damage by 5% but increases to 10%
+        -- with Blackout Combo.
+        return 1.05 + ( blackout_combo and 0.05 or 0 )
+    end
+
+    return 1
+end
+
+spec:RegisterStateExpr( "persistent_multiplier", function( act )
+    local mult = 1
+
+    act = act or this_action
+
+    if not act then return mult end
+
+    -- Snapshot damage reduction from Breath of Fire DoT with Blackout Combo.
+    if act == "breath_of_fire" then
+        mult = mult * ( 1.05 + ( buff.blackout_combo.up and 0.05 or 0 ) )
+    end
+
+    return mult
+end )
+
+spec:RegisterCombatLogEvent( function( ... )
+    local _, subtype, _, sourceGUID, _, _, _, destGUID, _, _, _, spellID = ...
+
+    -- Must be a player event.
+    if sourceGUID ~= state.GUID then return end
+
+    if subtype == "SPELL_AURA_REMOVED" then
+        -- Save when Blackout Combo is consumed to give a short window for snapshotting.
+        if spellID == class.auras.blackout_combo.id then
+            bocConsumptionTime = GetTime()
+        end
+    elseif subtype == "SPELL_AURA_APPLIED" then
+        if spellID == class.auras.breath_of_fire_dot.id then
+            local mult = calculate_pmultiplier( spellID )
+            ns.saveDebuffModifier( spellID, mult )
+            ns.trackDebuff( spellID, destGUID, GetTime(), true )
+        end
+    end
+end )
 
 spec:RegisterHook( "reset_precast", function ()
     rawset( healing_sphere, "count", nil )
@@ -1057,6 +1112,9 @@ spec:RegisterHook( "reset_precast", function ()
 
     stagger.amount = nil
     stagger.amount_remains = nil
+
+    -- Reset snapshots.
+    debuff.breath_of_fire_dot.pmultiplier = nil
 end )
 
 
@@ -1172,7 +1230,10 @@ spec:RegisterAbilities( {
         handler = function ()
             removeBuff( "blackout_combo" )
             addStack( "elusive_brawler", nil, active_enemies * ( 1 + set_bonus.tier21_2pc ) )
-            if debuff.keg_smash.up then applyDebuff( "target", "breath_of_fire_dot" ) end
+            if debuff.keg_smash.up then
+                applyDebuff( "target", "breath_of_fire_dot" )
+                debuff.breath_of_fire_dot.pmultiplier = persistent_multiplier
+            end
             if talent.charred_passions.enabled or legendary.charred_passions.enabled then applyBuff( "charred_passions" ) end
         end,
     },
