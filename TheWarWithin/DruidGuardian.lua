@@ -1672,8 +1672,7 @@ spec:RegisterAbilities( {
 
     -- Talent: Maul the target for $s2 Physical damage.
     maul = {
-        id = function() return buff.ravage.up and 441605 or 6807 end,
-        known = 6807,
+        id = 6807,
         cast = 0,
         cooldown = 0,
         gcd = "spell",
@@ -1688,7 +1687,7 @@ spec:RegisterAbilities( {
         talent = "maul",
         notalent = "raze",
         startsCombat = true,
-        texture = function() return buff.ravage.up and 5927623 or 132136 end,
+        texture = function() return buff.ravage.up and spec.abilities.ravage_maul.texture or 132136 end,
         form = "bear_form",
 
         usable = function ()
@@ -1698,7 +1697,7 @@ spec:RegisterAbilities( {
 
         handler = function ()
 
-            -- Interactions for both Maul and Ravage
+            -- Interactions for Maul, Raze, and Ravage; the latter two replace Maul.
             if talent.vicious_cycle.enabled then
                 removeBuff( "vicious_cycle_maul" )
                 addStack( "vicious_cycle_mangle" )
@@ -1711,13 +1710,7 @@ spec:RegisterAbilities( {
             end
 
             -- Ravage specific interactions
-            if talent.ravage.enabled and buff.ravage.up then
-                removeBuff( "ravage" )
-                if talent.dreadful_wound.enabled then applyDebuff( "target", "dreadful_wound" ) end
-                if talent.ruthless_aggression.enabled then applyBuff( "ruthless_aggression" ) end
-                if talent.killing_strikes.enabled then applyBuff( "killing_strikes" ) end
-
-            end
+            if talent.ravage.enabled then spec.abilities.ravage_maul.handler() end
 
             -- Legacy / PvP         
             if conduit.savage_combatant.enabled then removeBuff( "savage_combatant" ) end
@@ -1726,7 +1719,7 @@ spec:RegisterAbilities( {
 
         end,
 
-        copy = { 6807, "ravage", 441605}
+        bind = { "raze" },
     },
 
     -- Talent: Invokes the spirit of Ursoc to stun the target for $d. Usable in all shapeshift forms.
@@ -1861,6 +1854,38 @@ spec:RegisterAbilities( {
         end,
     },
 
+    ravage_maul = {
+        id = 441605,
+        known = false, -- "ravage_maul" is not actually a usable action
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        school = "physical",
+
+        spend = function() return spec.abilities.maul.spend end,
+        spendType = "rage",
+
+        talent = "ravage",
+        form = "bear_form",
+        startsCombat = true,
+        buff = "ravage",
+        texture = 5927623,
+
+        usable = function() return spec.abilities.maul.usable end,
+
+        handler = function()
+            if buff.ravage.up then
+                removeBuff( "ravage" )
+                if talent.dreadful_wound.enabled then applyDebuff( "target", "dreadful_wound" ) end
+                if talent.ruthless_aggression.enabled then applyBuff( "ruthless_aggression" ) end
+                if talent.killing_strikes.enabled then applyBuff( "killing_strikes" ) end
+            elseif talent.aggravate_wounds.enabled and debuff.dreadful_wound.up then
+                -- XXX Dreadful Wounds can only be extended for a maximum of 8 seconds total.
+                debuff.dreadful_wound.expires = debuff.dreadful_wound.expires + 0.6
+            end
+        end,
+    },
+
     -- Talent: Maul the target for $s2 Physical damage.
     raze = {
         id = 400254,
@@ -1869,43 +1894,19 @@ spec:RegisterAbilities( {
         gcd = "spell",
         school = "physical",
 
-        spend = function()
-            if buff.tooth_and_claw.up then return 0 end
-            return buff.berserk_bear.up and talent.berserk_unchecked_aggression.enabled and 20 or 40
-        end,
+        spend = function() return spec.abilities.maul.spend end,
         spendType = "rage",
 
         talent = "raze",
         form = "bear_form",
         startsCombat = true,
+        texture = function() return buff.ravage.up and spec.abilities.ravage_maul.texture or 132131 end,
 
-        usable = function ()
-            if action.raze.spend > 0 and ( settings.maul_rage or 0 ) > 0 and rage.current - action.raze.spend < ( settings.maul_rage or 0 ) then return false, "not enough additional rage" end
-            return true
-        end,
+        usable = function() return spec.abilities.maul.usable end,
 
-        handler = function ()
+        handler = function() return spec.abilities.maul.handler() end,
 
-            if talent.vicious_cycle.enabled then
-                addStack( "vicious_cycle_mangle" )
-                removeBuff( "vicious_cycle_maul" )
-            end
-            if buff.tooth_and_claw.up then
-                removeStack( "tooth_and_claw" )
-                applyDebuff( "target", "tooth_and_claw_debuff" )
-            end
-
-            if talent.aggravate_wounds.enabled and debuff.dreadful_wound.up then
-                debuff.dreadful_wound.expires = debuff.dreadful_wound.expires + 0.6
-            end
-            if talent.infected_wounds.enabled then applyDebuff( "target", "infected_wounds" ) end
-            if talent.ursocs_fury.enabled then applyBuff( "ursocs_fury" ) end
-
-            -- Legacy / PvP
-            if pvptalent.sharpened_claws.enabled or essence.conflict_and_strife.major then applyBuff( "sharpened_claws" ) end
-            if set_bonus.tier30_4pc > 0 then addStack( "indomitable_guardian" ) end
-            if conduit.savage_combatant.enabled then removeBuff( "savage_combatant" ) end
-        end,
+        bind = { "maul" },
     },
 
     -- Heals a friendly target for $s1 and another ${$o2*$<mult>} over $d.$?s231032[ Initial heal has a $231032s1% increased chance for a critical effect if the target is already affected by Regrowth.][]$?s24858|s197625[ Usable while in Moonkin Form.][]$?s33891[    |C0033AA11Tree of Life: Instant cast.|R][]
