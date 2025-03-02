@@ -1456,10 +1456,6 @@ spec:RegisterAbilities( {
 
         startsCombat = true,
 
-        usable = function ()
-            if ( settings.eh_percent > 0 and health.pct > settings.eh_percent ) then return false, "health is above " .. settings.eh_percent .. "%" end
-            return true
-        end,
         handler = function ()
             gain( ( healing_sphere.count * stat.attack_power ) + stat.spell_power * ( 1 + stat.versatility_atk_mod ), "health" )
             if pvptalent.reverse_harm.enabled then gain( 1, "chi" ) end
@@ -2088,15 +2084,6 @@ spec:RegisterOptions( {
 
     package = "Brewmaster"
 } )
-
-
---[[ spec:RegisterSetting( "ox_walker", true, {
-    name = "Use |T606543:0|t Spinning Crane Kick in Single-Target with Walk with the Ox",
-    desc = "If checked, the default priority will recommend |T606543:0|t Spinning Crane Kick when Walk with the Ox is active.  This tends to " ..
-        "reduce mitigation slightly but increase damage based on using Invoke Niuzao more frequently.",
-    type = "toggle",
-    width = "full",
-} ) ]]
 
 
 spec:RegisterSetting( "purify_for_celestial", true, {
