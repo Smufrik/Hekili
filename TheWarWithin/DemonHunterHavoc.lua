@@ -1799,7 +1799,6 @@ spec:RegisterAbilities( {
             if talent.demonsurge.enabled then
                 local metaRemains = buff.metamorphosis.remains
 
-                removeBuff( "demonsurge" )
                 applyBuff( "demonsurge_annihilation", metaRemains )
                 applyBuff( "demonsurge_death_sweep", metaRemains )
 
@@ -1813,6 +1812,7 @@ spec:RegisterAbilities( {
                 end
 
                 if talent.demonic_intensity.enabled then
+                    removeBuff( "demonsurge" )
                     applyBuff( "demonsurge_hardcast", metaRemains )
                     applyBuff( "demonsurge_abyssal_gaze", metaRemains )
                     applyBuff( "demonsurge_consuming_fire", metaRemains )

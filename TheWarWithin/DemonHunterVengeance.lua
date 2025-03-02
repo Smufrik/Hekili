@@ -1431,6 +1431,7 @@ spec:RegisterAbilities( {
                 end
 
                 if talent.demonic_intensity.enabled then
+                    removeBuff( "demonsurge" )
                     applyBuff( "demonsurge_hardcast", metaRemains )
                     applyBuff( "demonsurge_consuming_fire", metaRemains )
                     applyBuff( "demonsurge_fel_desolation", metaRemains )
