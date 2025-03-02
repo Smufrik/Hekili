@@ -8,10 +8,10 @@ actions+=/tranquilizing_shot
 actions+=/hunters_mark,if=(settings.mark_any|target.is_boss)&active_dot.hunters_mark=0&target.time_to_pct_80>20
 actions+=/mend_pet,if=pet.health_pct<pet_healing
 actions+=/call_action_list,name=cds
-actions+=/call_action_list,name=plst,if=active_enemies<3&talent.howl_of_the_pack_leader
-actions+=/call_action_list,name=plcleave,if=active_enemies>2&talent.howl_of_the_pack_leader
-actions+=/call_action_list,name=sentst,if=active_enemies<3&!talent.howl_of_the_pack_leader
-actions+=/call_action_list,name=sentcleave,if=active_enemies>2&!talent.howl_of_the_pack_leader
+actions+=/call_action_list,name=plst,strict=1,if=active_enemies<3&talent.howl_of_the_pack_leader
+actions+=/call_action_list,name=plcleave,strict=1,if=active_enemies>2&talent.howl_of_the_pack_leader
+actions+=/call_action_list,name=sentst,strict=1,if=active_enemies<3&!talent.howl_of_the_pack_leader
+actions+=/call_action_list,name=sentcleave,strict=1,if=active_enemies>2&!talent.howl_of_the_pack_leader
 # Use Kill Command if there's nothing else to press
 actions+=/kill_command,cycle_targets=1
 actions+=/arcane_torrent
