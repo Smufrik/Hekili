@@ -703,7 +703,7 @@ spec:RegisterAuras( {
     },
     -- Talent: Suffering $w2 $@spelldesc395020 damage every $t2 sec.
     -- https://wowhead.com/beta/spell=204598
-    sigil_of_flame_dot = {
+    sigil_of_flame = {
         id = 204598,
         duration = function() return ( talent.felfire_heart.enabled and 8 or 6 ) + talent.extended_sigils.rank + ( talent.precise_sigils.enabled and 2 or 0 ) end,
         type = "Magic",
@@ -711,7 +711,7 @@ spec:RegisterAuras( {
     },
     -- Talent: Sigil of Flame is active.
     -- https://wowhead.com/beta/spell=389810
-    sigil_of_flame = {
+    sigil_of_flame_active = {
         id = 389810,
         duration = function () return talent.quickened_sigils.enabled and 1 or 2 end,
         max_stack = 1,
@@ -912,24 +912,6 @@ spec:RegisterAuras( {
     },
 } )
 
-
-local sigils = setmetatable( {}, {
-    __index = function( t, k )
-        t[ k ] = 0
-        return t[ k ]
-    end
-} )
-
-spec:RegisterStateFunction( "create_sigil", function( sigil )
-    sigils[ sigil ] = query_time + activation_time
-    if sigil == "sigil_of_spite" or "elysian_decree" then return end
-
-    local effect = ( "sigil_of_" .. sigil )
-    applyDebuff( "target", effect )
-    debuff[ effect ].applied = debuff[ effect ].applied + 1
-    debuff[ effect ].expires = debuff[ effect ].expires + 1
-end )
-
 spec:RegisterStateExpr( "soul_fragments", function ()
     return GetSpellCastCount(232893) -- only works with Reaver hero tree
 end )
@@ -969,17 +951,9 @@ spec:RegisterStateExpr( "extended_by_demonic", function ()
     return buff.metamorphosis.up and buff.metamorphosis.extended_by_demonic
 end )
 
-local activation_time = function ()
+spec:RegisterStateExpr( "activation_time", function()
     return talent.quickened_sigils.enabled and 1 or 2
-end
-
-spec:RegisterStateExpr( "activation_time", activation_time )
-
-local sigil_placed = function ()
-    return sigils.flame > query_time
-end
-
-spec:RegisterStateExpr( "sigil_placed", sigil_placed )
+end )
 
 spec:RegisterStateExpr( "meta_cd_multiplier", function ()
     return 1
@@ -1022,16 +996,6 @@ local death_events = {
 spec:RegisterHook( "COMBAT_LOG_EVENT_UNFILTERED", function( _, subtype, _, sourceGUID, sourceName, _, _, destGUID, destName, destFlags, _, spellID, spellName )
     if sourceGUID == GUID then
         if subtype == "SPELL_CAST_SUCCESS" then
-            -- Fracture:  Generate 2 frags.
-            if spellID == 263642 then
-                queue_fragments( 2 )
-            end
-
-            -- Shear:  Generate 1 frag.
-            if spellID == 203782 then
-                queue_fragments( 1 )
-            end
-
             if spellID == 198793 and talent.initiative.enabled then
                 wipe( initiative_actual )
             end
@@ -1123,16 +1087,6 @@ spec:RegisterAura( "blade_rhapsody", {
 } )
 
 
-
-local sigil_types = {
-    chains         = "sigil_of_chains" ,
-    flame          = "sigil_of_flame"  ,
-    misery         = "sigil_of_misery" ,
-    silence        = "sigil_of_silence",
-    spite          = "sigil_of_spite",
-    elysian_decree = "elysian_decree"
-}
-
 spec:RegisterHook( "reset_precast", function ()
     -- last_metamorphosis = nil
     last_infernal_strike = nil
@@ -1148,12 +1102,6 @@ spec:RegisterHook( "reset_precast", function ()
         else
             active_dot.initiative_tracker = active_dot.initiative_tracker + 1
         end
-    end
-
-    for s, a in ipairs( sigil_types ) do
-        local activation = ( action[ a ].lastCast or 0 ) + ( talent.quickened_sigils.enabled and 2 or 1 )
-        if activation > now then sigils[ s ] = activation
-        else sigils[ s ] = 0 end
     end
 
     last_darkness = 0
@@ -1223,16 +1171,6 @@ spec:RegisterHook( "runHandler", function( action )
     if ability.startsCombat and not debuff.initiative_tracker.up then
         applyBuff( "initiative" )
         applyDebuff( "target", "initiative_tracker" )
-    end
-end )
-
-
-spec:RegisterHook( "advance_end", function( time )
-    if query_time - time < sigils.flame and query_time >= sigils.flame then
-        -- SoF should've applied.
-        applyDebuff( "target", "sigil_of_flame", debuff.sigil_of_flame.duration - ( query_time - sigils.flame ) )
-        active_dot.sigil_of_flame = active_enemies
-        sigils.flame = 0
     end
 end )
 
@@ -1988,13 +1926,10 @@ spec:RegisterAbilities( {
 
     -- Talent: Place a Sigil of Flame at your location that activates after $d.    Deals $204598s1 Fire damage, and an additional $204598o3 Fire damage over $204598d, to all enemies affected by the sigil.    |CFFffffffGenerates $389787s1 Fury.|R
     sigil_of_flame = {
-        id = function ()
-            if talent.precise_sigils.enabled then return 389810 end
-            return 204596
-        end,
+        id = function() return talent.precise_sigils.enabled and 389810 or 204596 end,
         known = 204596,
         cast = 0,
-        cooldown = 30,
+        cooldown = function() return ( pvptalent.sigil_of_mastery.enabled and 0.75 or 1 ) * 30 end,
         gcd = "spell",
         school = "fire",
 
@@ -2005,24 +1940,27 @@ spec:RegisterAbilities( {
         texture = 1344652,
         nobuff = function () return talent.demonic_intensity.enabled and "metamorphosis" or nil end,
 
-        sigil_placed = function() return sigil_placed end,
+        flightTime = function() return activation_time end,
+        delay = function() return activation_time end,
+        placed = function() return query_time < action.sigil_of_flame.lastCast + activation_time end,
 
-        handler = function ()
-            create_sigil( "flame" )
+        impact = function()
+            applyDebuff( "target", "sigil_of_flame" )
+            active_dot.sigil_of_flame = active_enemies
+            if talent.soul_sigils.enabled then addStack( "soul_fragments", nil, 1 ) end
             if talent.student_of_suffering.enabled then applyBuff( "student_of_suffering" ) end
-            setCooldown( "sigil_of_doom", action.sigil_of_doom.cooldown )
             if talent.flames_of_fury.enabled then gain( talent.flames_of_fury.rank * active_enemies, "fury" ) end
         end,
 
-        copy = { 204596, 204513, 389810 },
+        copy = { 204596, 389810 },
         bind = "sigil_of_doom"
     },
 
     sigil_of_doom = {
-        id = 452490,
+        id = function () return talent.precise_sigils.enabled and 469991 or 452490 end,
         known = 204596,
         cast = 0,
-        cooldown = 30,
+        cooldown = function() return ( pvptalent.sigil_of_mastery.enabled and 0.75 or 1 ) * 30 end,
         gcd = "spell",
         school = "chaos",
 
@@ -2035,30 +1973,34 @@ spec:RegisterAbilities( {
         startsCombat = false,
         texture = 1121022,
 
-        sigil_placed = function() return sigil_placed end,
+        flightTime = function() return activation_time end,
+        delay = function() return activation_time end,
+        placed = function() return query_time < action.sigil_of_doom.lastCast + activation_time end,
 
         handler = function ()
-            create_sigil( "flame" )
-            setCooldown( "sigil_of_flame", action.sigil_of_doom.cooldown )
-            if talent.demonic_intensity.enabled and buff.demonsurge_sigil_of_doom.up then
+            if buff.demonsurge_sigil_of_doom.up then
                 removeBuff( "demonsurge_sigil_of_doom" )
-                addStack( "demonsurge" )
+                if talent.demonic_intensity.enabled then addStack( "demonsurge" ) end
             end
-            if talent.flames_of_fury.enabled then gain( talent.flames_of_fury.rank * active_enemies, "fury" ) end
-            if talent.student_of_suffering.enabled then applyBuff( "student_of_suffering" ) end
-
+            -- Sigil of Doom and Sigil of Flame share a cooldown.
+            setCooldown( "sigil_of_flame", action.sigil_of_doom.cooldown )
         end,
 
+        impact = function()
+            applyDebuff( "target", "sigil_of_doom" )
+            active_dot.sigil_of_doom = active_enemies
+            if talent.soul_sigils.enabled then addStack( "soul_fragments", nil, 1 ) end
+            if talent.student_of_suffering.enabled then applyBuff( "student_of_suffering" ) end
+            if talent.flames_of_fury.enabled then gain( talent.flames_of_fury.rank * active_enemies, "fury" ) end
+        end,
+
+        copy = { 452490, 469991 },
         bind = "sigil_of_flame"
     },
 
     -- Talent: Place a Sigil of Misery at your location that activates after $d.    Causes all enemies affected by the sigil to cower in fear. Targets are disoriented for $207685d.
     sigil_of_misery = {
-        id = function ()
-            if talent.precise_sigils.enabled then return 389813 end
-            if talent.concentrated_sigils.enabled then return 202140 end
-            return 207684
-        end,
+        id = function () return talent.precise_sigils.enabled and 389813 or 207684 end,
         known = 207684,
         cast = 0,
         cooldown = function () return 120 * ( pvptalent.sigil_mastery.enabled and 0.75 or 1 ) end,
@@ -2068,24 +2010,22 @@ spec:RegisterAbilities( {
         talent = "sigil_of_misery",
         startsCombat = false,
 
-        toggle = function()
-            if talent.misery_in_defeat.enabled then return "cooldowns" end
-            return "interrupts"
+        toggle = "interrupts",
+
+        flightTime = function() return activation_time end,
+        delay = function() return activation_time end,
+        placed = function() return query_time < action.sigil_of_misery.lastCast + activation_time end,
+
+        impact = function()
+            applyDebuff( "target", "sigil_of_misery_debuff" )
         end,
 
-        handler = function ()
-            create_sigil( "misery" )
-        end,
-
-        copy = { 389813, 207684, 202140 }
+        copy = { 207684, 389813 }
     },
 
     -- Place a demonic sigil at the target location that activates after $d.; Detonates to deal $389860s1 Chaos damage and shatter up to $s3 Lesser Soul Fragments from
     sigil_of_spite = {
-        id = function()
-            if talent.precise_sigils.enabled then return 389815 end
-            return 390163
-        end,
+        id = function () return talent.precise_sigils.enabled and 389815 or 390163 end,
         known = 390163,
         cast = 0.0,
         cooldown = function() return 60 * ( pvptalent.sigil_mastery.enabled and 0.75 or 1 ) end,
@@ -2094,13 +2034,15 @@ spec:RegisterAbilities( {
         talent = "sigil_of_spite",
         startsCombat = false,
 
-        sigil_placed = function() return sigil_placed end,
+        flightTime = function() return activation_time end,
+        delay = function() return activation_time end,
+        placed = function() return query_time < action.sigil_of_spite.lastCast + activation_time end,
 
-        handler = function ()
-            create_sigil( "spite" )
+        impact = function ()
+            addStack( "soul_fragments", nil, talent.soul_sigils.enabled and 4 or 3 )
         end,
 
-        copy = { 390163, 389815 }
+        copy = { 389815, 390163 }
     },
 
     -- Allows you to see enemies and treasures through physical barriers, as well as enemies that are stealthed and invisible. Lasts $d.    Attacking or taking damage disrupts the sight.
