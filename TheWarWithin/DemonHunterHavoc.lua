@@ -9,7 +9,7 @@ local class, state = Hekili.Class, Hekili.State
 
 local strformat, wipe = string.format, table.wipe
 local GetSpellInfo = ns.GetUnpackedSpellInfo
-local IsSpellOverlayed = IsSpellOverlayed
+local CanTriggerDemonsurge = IsSpellOverlayed
 local GetSpellCastCount = C_Spell.GetSpellCastCount
 local spec = Hekili:NewSpecialization( 577 )
 
@@ -594,6 +594,8 @@ spec:RegisterAuras( {
         id = 162264,
         duration = 20,
         max_stack = 1,
+        -- This copy is for SIMC compatibility while avoiding managing a virtual buff.
+        copy = "demonsurge_demonic"
     },
     exergy = {
         id = 208628,
@@ -1101,22 +1103,25 @@ spec:RegisterHook( "reset_precast", function ()
     if talent.demonsurge.enabled and buff.metamorphosis.up then
         local metaRemains = buff.metamorphosis.remains
 
-        if IsSpellOverlayed( 201427 ) then applyBuff( "demonsurge_annihilation", metaRemains ) end
-        if IsSpellOverlayed( 210152 ) then applyBuff( "demonsurge_death_sweep", metaRemains ) end
+        if CanTriggerDemonsurge( 201427 ) then applyBuff( "demonsurge_annihilation", metaRemains ) end
+        if CanTriggerDemonsurge( 210152 ) then applyBuff( "demonsurge_death_sweep", metaRemains ) end
 
         if talent.demonic_intensity.enabled then
+            local metaApplied = ( buff.metamorphosis.applied - 0.005 ) -- fudge-factor because GetTime has ms precision
+            if action.metamorphosis.lastCast >= metaApplied or action.abyssal_gaze.lastCast >= metaApplied then
+                applyBuff( "demonsurge_hardcast", metaRemains )
+            end
 
-            if IsSpellOverlayed( 452497 ) then applyBuff( "demonsurge_abyssal_gaze", metaRemains ) end
-            if IsSpellOverlayed( 452487 ) then applyBuff( "demonsurge_consuming_fire", metaRemains ) end
-            if IsSpellOverlayed( 469991 ) then applyBuff( "demonsurge_sigil_of_doom", metaRemains ) end
-
+            if CanTriggerDemonsurge( 452497 ) then applyBuff( "demonsurge_abyssal_gaze", metaRemains ) end
+            if CanTriggerDemonsurge( 452487 ) then applyBuff( "demonsurge_consuming_fire", metaRemains ) end
+            if CanTriggerDemonsurge( 469991 ) then applyBuff( "demonsurge_sigil_of_doom", metaRemains ) end
             -- setCooldown( "eye_beam", max( cooldown.abyssal_gaze.remains, cooldown.eye_beam.remains, buff.metamorphosis.remains ) ) -- To support cooldown.eye_beam.up checks in SimC priority.
         end
 
         if Hekili.ActiveDebug then
-            Hekili:Debug( "Demon Surge status:\n" ..
-                -- " - Hardcast " .. ( buff.demonsurge_hardcast.up and "ACTIVE" or "INACTIVE" ) .. "\n" ..
-                -- " - Demonic " .. ( buff.demonsurge_demonic.up and "ACTIVE" or "INACTIVE" ) .. "\n" ..
+            Hekili:Debug( "Demonsurge status:\n" ..
+                " - Hardcast " .. ( buff.demonsurge_hardcast.up and "ACTIVE" or "INACTIVE" ) .. "\n" ..
+                " - Demonic " .. ( buff.demonsurge_demonic.up and "ACTIVE" or "INACTIVE" ) .. "\n" ..
                 " - Abyssal Gaze " .. ( buff.demonsurge_abyssal_gaze.up and "ACTIVE" or "INACTIVE" ) .. "\n" ..
                 " - Annihilation " .. ( buff.demonsurge_annihilation.up and "ACTIVE" or "INACTIVE" ) .. "\n" ..
                 " - Consuming Fire " .. ( buff.demonsurge_consuming_fire.up and "ACTIVE" or "INACTIVE" ) .. "\n" ..
@@ -1203,12 +1208,22 @@ local TriggerDemonic = setfenv( function( )
 
     if buff.metamorphosis.up then
         buff.metamorphosis.expires = buff.metamorphosis.expires + demonicExtension
+        -- Fel-Scarred
+        if talent.demonsurge.enabled then
+            local metaExpires = buff.metamorphosis.expires
+            if buff.demonsurge_annihilation.up then buff.demonsurge_annihilation.expires = metaExpires end
+            if buff.demonsurge_death_sweep.up then buff.demonsurge_death_sweep.expires = metaExpires end
+            if talent.demonic_intensity.enabled and buff.demonsurge_hardcast.up then
+                buff.demonsurge_hardcast.expires = metaExpires
+                if buff.demonsurge_abyssal_gaze.up then buff.demonsurge_abyssal_gaze.expires = metaExpires end
+                if buff.demonsurge_consuming_fire.up then buff.demonsurge_consuming_fire.expires = metaExpires end
+                if buff.demonsurge_sigil_of_doom.up then buff.demonsurge_sigil_of_doom.expires = metaExpires end
+            end
+        end
     else
         applyBuff( "metamorphosis", demonicExtension )
-        if talent.inner_demon.enabled then
-            applyBuff( "inner_demon" )
-        end
-        stat.haste = stat.haste + 10
+        if talent.inner_demon.enabled then applyBuff( "inner_demon" ) end
+        stat.haste = stat.haste + 20
         -- Fel-Scarred
         if talent.demonsurge.enabled then
             local metaRemains = buff.metamorphosis.remains
@@ -1240,10 +1255,10 @@ spec:RegisterAbilities( {
 
         handler = function ()
             spec.abilities.chaos_strike.handler()
-            -- Felscarred
-            if talent.demonic_intensity.enabled and buff.demonsurge_annihilation.up then
-                addStack( "demonsurge" )
+            -- Fel-Scarred
+            if buff.demonsurge_annihilation.up then
                 removeBuff( "demonsurge_annihilation" )
+                if talent.demonic_intensity.enabled then addStack( "demonsurge" ) end
             end
         end,
     },
@@ -1431,10 +1446,10 @@ spec:RegisterAbilities( {
             applyBuff( "death_sweep" )
             setCooldown( "blade_dance", action.death_sweep.cooldown )
 
-            -- Hero Talents
-            if talent.demonic_intensity.enabled and buff.demonsurge_death_sweep.up then
-                addStack( "demonsurge" )
+            -- Fel-Scarred
+            if buff.demonsurge_death_sweep.up then
                 removeBuff( "demonsurge_death_sweep" )
+                if talent.demonic_intensity.enabled then addStack( "demonsurge" ) end
             end
         end,
     },
@@ -1516,19 +1531,18 @@ spec:RegisterAbilities( {
         startsCombat = true,
         nobuff = function () return talent.demonic_intensity.enabled and "metamorphosis" or nil end,
 
-        start = function ()
+        start = function()
             applyBuff( "eye_beam" )
+            if talent.demonic.enabled then TriggerDemonic() end
             if talent.cycle_of_hatred.enabled then
                 reduceCooldown( "eye_beam", 5 * talent.cycle_of_hatred.rank * buff.cycle_of_hatred.stack )
                 addStack( "cycle_of_hatred" )
-                setCooldown( "abyssal_gaze", action.eye_beam.cooldown )
             end
-
-            if talent.demonic.enabled then TriggerDemonic() end
-
+            removeBuff( "seething_potential" )
+            setCooldown( "abyssal_gaze", action.eye_beam.cooldown )
         end,
 
-        finish = function ()
+        finish = function()
             if talent.furious_gaze.enabled then applyBuff( "furious_gaze" ) end
         end,
 
@@ -1548,30 +1562,25 @@ spec:RegisterAbilities( {
         spendType = "fury",
 
         talent = "demonic_intensity",
-        buff = "metamorphosis",
+        buff = "demonsurge_hardcast",
         startsCombat = true,
 
-        start = function ()
+        start = function()
             applyBuff( "eye_beam" )
+            if talent.demonic.enabled then TriggerDemonic() end
             if talent.cycle_of_hatred.enabled then
                 reduceCooldown( "abyssal_gaze", 5 * talent.cycle_of_hatred.rank * buff.cycle_of_hatred.stack )
                 addStack( "cycle_of_hatred" )
-                setCooldown( "eye_beam", action.abyssal_gaze.cooldown )
             end
-
-            if talent.demonic_intensity.enabled and buff.demonsurge_abyssal_gaze.up then
-                addStack( "demonsurge" )
+            if buff.demonsurge_abyssal_gaze.up then
                 removeBuff( "demonsurge_abyssal_gaze" )
+                if talent.demonic_intensity.enabled then addStack( "demonsurge" ) end
             end
-
-            if talent.demonic.enabled then TriggerDemonic() end
-
             removeBuff( "seething_potential" )
+            setCooldown( "eye_beam", action.abyssal_gaze.cooldown )
         end,
 
-        finish = function ()
-            if talent.furious_gaze.enabled then applyBuff( "furious_gaze" ) end
-        end,
+        finish = function() spec.abilities.eye_beam.finish() end,
 
         bind = "eye_beam"
     },
@@ -1716,10 +1725,11 @@ spec:RegisterAbilities( {
 
     -- Engulf yourself in flames, $?a320364 [instantly causing $258921s1 $@spelldesc395020 damage to enemies within $258921A1 yards and ][]radiating ${$258922s1*$d} $@spelldesc395020 damage over $d.$?s320374[    |cFFFFFFFFGenerates $<havocTalentFury> Fury over $d.|r][]$?(s212612 & !s320374)[    |cFFFFFFFFGenerates $<havocFury> Fury.|r][]$?s212613[    |cFFFFFFFFGenerates $<vengeFury> Fury over $d.|r][]
     immolation_aura = {
-        id = function() return talent.demonic_intensity.enabled and buff.metamorphosis.up and 452487 or 258920 end,
+        id = function() return buff.demonsurge_hardcast.up and 452487 or 258920 end,
         known = 258920,
         cast = 0,
-        cooldown = function() return 30 * haste end,
+        cooldown = 30,
+        hasteCD = true,
         charges = function()
             if talent.a_fire_inside.enabled then return 2 end
         end,
@@ -1728,22 +1738,20 @@ spec:RegisterAbilities( {
         end,
         gcd = "spell",
         school = function() return talent.a_fire_inside.enabled and "chaos" or "fire" end,
+        texture = function() return buff.demonsurge_hardcast.up and 135794 or 1344649 end,
 
         spend = -20,
         spendType = "fury",
-
         startsCombat = false,
-        texture = function() return talent.demonic_intensity.enabled and buff.metamorphosis.up and 135794 or 1344649 end,
 
         handler = function ()
-
-            if talent.demonic_intensity.enabled and buff.demonsurge_consuming_fire.up then
-                removeBuff( "demonsurge_consuming_fire" )
-                addStack( "demonsurge" )
-            end
             applyBuff( "immolation_aura" )
-
             if talent.ragefire.enabled then applyBuff( "ragefire" ) end
+
+            if buff.demonsurge_consuming_fire.up then
+                removeBuff( "demonsurge_consuming_fire" )
+                if talent.demonic_intensity.enabled then addStack( "demonsurge" ) end
+            end
         end,
 
         copy = { 258920, 427917, "consuming_fire", 452487 }
@@ -1777,9 +1785,9 @@ spec:RegisterAbilities( {
         toggle = "cooldowns",
 
         handler = function ()
-            applyBuff( "metamorphosis", buff.metamorphosis.remains + 20 ) -- it extends demonic now
-
+            applyBuff( "metamorphosis", buff.metamorphosis.remains + 20 )
             setDistance( 5 )
+            stat.haste = stat.haste + 20
 
             if talent.chaotic_transformation.enabled then
                 setCooldown( "eye_beam", 0 )
@@ -1789,9 +1797,12 @@ spec:RegisterAbilities( {
             end
 
             if talent.demonsurge.enabled then
+                local metaRemains = buff.metamorphosis.remains
+
                 removeBuff( "demonsurge" )
-                applyBuff( "demonsurge_annihilation", buff.metamorphosis.remains )
-                applyBuff( "demonsurge_death_sweep", buff.metamorphosis.remains )
+                applyBuff( "demonsurge_annihilation", metaRemains )
+                applyBuff( "demonsurge_death_sweep", metaRemains )
+
                 if talent.violent_transformation.enabled then
                     setCooldown( "sigil_of_flame", 0 )
                     gainCharges( "immolation_aura", 1 )
@@ -1800,21 +1811,24 @@ spec:RegisterAbilities( {
                         setCooldown( "sigil_of_doom", 0 )
                     end
                 end
+
                 if talent.demonic_intensity.enabled then
-                    applyBuff( "demonsurge_abyssal_gaze", buff.metamorphosis.remains )
-                    applyBuff( "demonsurge_consuming_fire", buff.metamorphosis.remains )
-                    applyBuff( "demonsurge_sigil_of_doom", buff.metamorphosis.remains )
+                    applyBuff( "demonsurge_hardcast", metaRemains )
+                    applyBuff( "demonsurge_abyssal_gaze", metaRemains )
+                    applyBuff( "demonsurge_consuming_fire", metaRemains )
+                    applyBuff( "demonsurge_sigil_of_doom", metaRemains )
                 end
             end
 
-            stat.haste = stat.haste + 10
             -- Legacy
             if covenant.venthyr then
                 applyDebuff( "target", "sinful_brand" )
                 active_dot.sinful_brand = active_enemies
             end
-
         end,
+
+        -- We need to alias to spell ID 200166 to catch SPELL_CAST_SUCCESS for Metamorphosis.
+        copy = 200166
     },
 
     -- Talent: Slip into the nether, increasing movement speed by $s3% and becoming immune to damage, but unable to attack. Lasts $d.
@@ -1888,7 +1902,7 @@ spec:RegisterAbilities( {
 
         startsCombat = false,
         texture = 1344652,
-        nobuff = function () return talent.demonic_intensity.enabled and "metamorphosis" or nil end,
+        nobuff = "demonsurge_hardcast",
 
         flightTime = function() return activation_time end,
         delay = function() return activation_time end,
@@ -1918,7 +1932,7 @@ spec:RegisterAbilities( {
         spendType = "fury",
 
         talent = "demonic_intensity",
-        buff = "metamorphosis",
+        buff = "demonsurge_hardcast",
 
         startsCombat = false,
         texture = 1121022,
