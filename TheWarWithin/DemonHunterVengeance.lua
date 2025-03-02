@@ -11,7 +11,7 @@ local class, state = Hekili.Class, Hekili.State
 
 local floor = math.floor
 local strformat = string.format
-local CanTriggerDemonsurge = IsSpellOverlayed
+local IsSpellOverlayed = IsSpellOverlayed
 
 local spec = Hekili:NewSpecialization( 581 )
 
@@ -713,6 +713,12 @@ end, false )
 
 local sigil_types = { "chains", "flame", "misery", "silence" }
 
+-- Abilities that may trigger Demonsurge.
+local demonsurge = {
+    demonic = { "soul_sunder", "spirit_burst" },
+    hardcast = { "consuming_fire", "fel_desolation", "sigil_of_doom" },
+}
+
 spec:RegisterHook( "reset_precast", function ()
     if fragments.realTime > 0 and fragments.realTime < now then
         fragments.real = 0
@@ -734,41 +740,40 @@ spec:RegisterHook( "reset_precast", function ()
         addStack( "soul_fragments", nil, fragments.real )
     end
 
-    if IsSpellKnownOrOverridesKnown( 442294 ) then applyBuff( "reavers_glaive" ) end
+    if IsSpellKnownOrOverridesKnown( 442294 ) then
+        applyBuff( "reavers_glaive" )
+        if Hekili.ActiveDebug then Hekili:Debug( "Applied Reaver's Glaive." ) end
+    end
 
-    -- SpellOverlay API call is 1:1 with "can trigger a demonsurge damage proc", this grounds these fake buffs in the gamestate
-    -- demonsurge_hardcast differentiates whether only the basic 2 abilities are transformed, or all 5
     if talent.demonsurge.enabled and buff.metamorphosis.up then
-
         local metaRemains = buff.metamorphosis.remains
 
-        if CanTriggerDemonsurge( 452436 ) then applyBuff( "demonsurge_soul_sunder", metaRemains ) end
-        if CanTriggerDemonsurge( 452437 ) then applyBuff( "demonsurge_spirit_burst", metaRemains ) end
-
+        for _, name in ipairs( demonsurge.demonic ) do
+            if IsSpellOverlayed( class.abilities[ name ].id ) then
+                applyBuff( "demonsurge_" .. name, metaRemains )
+            end
+        end
         if talent.demonic_intensity.enabled then
-
             local metaApplied = ( buff.metamorphosis.applied - 0.005 ) -- fudge-factor because GetTime has ms precision
             if action.metamorphosis.lastCast >= metaApplied or action.fel_desolation.lastCast >= metaApplied then
                 applyBuff( "demonsurge_hardcast", metaRemains )
             end
-
-
-            if CanTriggerDemonsurge( 452486 ) then applyBuff( "demonsurge_fel_desolation", metaRemains ) end
-            if CanTriggerDemonsurge( 452487 ) then applyBuff( "demonsurge_consuming_fire", metaRemains ) end
-            if CanTriggerDemonsurge( 452490 ) then applyBuff( "demonsurge_sigil_of_doom", metaRemains ) end
-            -- setCooldown( "fel_devastation", max( cooldown.fel_devastation.remains, cooldown.fel_desolation.remains, buff.metamorphosis.remains ) ) -- To support cooldown.eye_beam.up checks in SimC priority.
-
+            for _, name in ipairs( demonsurge.hardcast ) do
+                if IsSpellOverlayed( class.abilities[ name ].id ) then
+                    applyBuff( "demonsurge_" .. name, metaRemains )
+                end
+            end
         end
+
         if Hekili.ActiveDebug then
-            Hekili:Debug( "Demon Surge status:\n" ..
+            Hekili:Debug( "Demonsurge status:\n" ..
                 " - Hardcast " .. ( buff.demonsurge_hardcast.up and "ACTIVE" or "INACTIVE" ) .. "\n" ..
                 " - Demonic " .. ( buff.demonsurge_demonic.up and "ACTIVE" or "INACTIVE" ) .. "\n" ..
                 " - Consuming Fire " .. ( buff.demonsurge_consuming_fire.up and "ACTIVE" or "INACTIVE" ) .. "\n" ..
                 " - Fel Desolation " .. ( buff.demonsurge_fel_desolation.up and "ACTIVE" or "INACTIVE" ) .. "\n" ..
                 " - Sigil of Doom " .. ( buff.demonsurge_sigil_of_doom.up and "ACTIVE" or "INACTIVE" ) .. "\n" ..
                 " - Soul Sunder " .. ( buff.demonsurge_soul_sunder.up and "ACTIVE" or "INACTIVE" ) .. "\n" ..
-                " - Spirit Burst " .. ( buff.demonsurge_spirit_burst.up and "ACTIVE" or "INACTIVE" )
-            )
+                " - Spirit Burst " .. ( buff.demonsurge_spirit_burst.up and "ACTIVE" or "INACTIVE" ) )
         end
     end
 
@@ -930,21 +935,26 @@ end, state )
 local sigilList = { "sigil_of_flame", "sigil_of_misery", "sigil_of_spite", "sigil_of_silence", "sigil_of_chains", "sigil_of_doom" }
 
 local TriggerDemonic = setfenv( function()
-
     local demonicExtension = 7
 
     if buff.metamorphosis.up then
         buff.metamorphosis.expires = buff.metamorphosis.expires + demonicExtension
-        -- Fel-Scarred Demonsurge stuff
+        -- Fel-Scarred
         if talent.demonsurge.enabled then
             local metaExpires = buff.metamorphosis.expires
-            if buff.demonsurge_spirit_burst.up then buff.demonsurge_spirit_burst.expires = metaExpires end
-            if buff.demonsurge_soul_sunder.up then buff.demonsurge_soul_sunder.expires = metaExpires end
+
+            for _, name in ipairs( demonsurge.demonic ) do
+                local aura = buff[ "demonsurge_" .. name ]
+                if aura.up then aura.expires = metaExpires end
+            end
+
             if talent.demonic_intensity.enabled and buff.demonsurge_hardcast.up then
                 buff.demonsurge_hardcast.expires = metaExpires
-                if buff.demonsurge_fel_desolation.up then buff.demonsurge_fel_desolation.expires = metaExpires end
-                if buff.demonsurge_consuming_fire.up then buff.demonsurge_consuming_fire.expires = metaExpires end
-                if buff.demonsurge_sigil_of_doom.up then buff.demonsurge_sigil_of_doom.expires = metaExpires end
+
+                for _, name in ipairs( demonsurge.hardcast ) do
+                    local aura = buff[ "demonsurge_" .. name ]
+                    if aura.up then aura.expires = metaExpires end
+                end
             end
         end
     else
@@ -953,11 +963,12 @@ local TriggerDemonic = setfenv( function()
         -- Fel-Scarred
         if talent.demonsurge.enabled then
             local metaRemains = buff.metamorphosis.remains
-            applyBuff( "demonsurge_spirit_burst", metaRemains )
-            applyBuff( "demonsurge_soul_sunder", metaRemains )
+
+            for _, name in ipairs( demonsurge.demonic ) do
+                applyBuff( "demonsurge_" .. name, metaRemains )
+            end
         end
     end
-
 end, state )
 
 -- Abilities
@@ -1411,15 +1422,15 @@ spec:RegisterAbilities( {
         toggle = "cooldowns",
 
         handler = function ()
-
             applyBuff( "metamorphosis", buff.metamorphosis.remains + 15 )
             gain( health.max * 0.4, "health" )
 
             if talent.demonsurge.enabled then
                 local metaRemains = buff.metamorphosis.remains
 
-                applyBuff( "demonsurge_soul_sunder", metaRemains )
-                applyBuff( "demonsurge_spirit_burst", metaRemains )
+                for _, name in ipairs( demonsurge.demonic ) do
+                    applyBuff( "demonsurge_ " .. name, metaRemains )
+                end
 
                 if talent.violent_transformation.enabled then
                     setCooldown( "sigil_of_flame", 0 )
@@ -1433,12 +1444,12 @@ spec:RegisterAbilities( {
                 if talent.demonic_intensity.enabled then
                     removeBuff( "demonsurge" )
                     applyBuff( "demonsurge_hardcast", metaRemains )
-                    applyBuff( "demonsurge_consuming_fire", metaRemains )
-                    applyBuff( "demonsurge_fel_desolation", metaRemains )
-                    applyBuff( "demonsurge_sigil_of_doom", metaRemains )
+
+                    for _, name in ipairs( demonsurge.hardcast ) do
+                        applyBuff( "demonsurge_ " .. name, metaRemains )
+                    end
                 end
             end
-
         end,
     },
 
