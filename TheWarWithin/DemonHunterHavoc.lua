@@ -1443,9 +1443,9 @@ spec:RegisterAbilities( {
         buff = "metamorphosis",
 
         handler = function ()
+            setCooldown( "blade_dance", action.death_sweep.cooldown )
             spec.abilities.blade_dance.handler()
             applyBuff( "death_sweep" )
-            setCooldown( "blade_dance", action.death_sweep.cooldown )
 
             -- Fel-Scarred
             if buff.demonsurge_death_sweep.up then
