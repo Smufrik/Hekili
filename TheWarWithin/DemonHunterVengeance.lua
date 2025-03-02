@@ -950,7 +950,6 @@ local TriggerDemonic = setfenv( function()
     else
         applyBuff( "metamorphosis", demonicExtension )
         if talent.inner_demon.enabled then applyBuff( "inner_demon" ) end
-        stat.haste = stat.haste + 10
         -- Fel-Scarred
         if talent.demonsurge.enabled then
             local metaRemains = buff.metamorphosis.remains
