@@ -1287,6 +1287,7 @@ spec:RegisterAbilities( {
             removeBuff( "restless_hunter" )
             setCooldown( "death_sweep", action.blade_dance.cooldown )
             if talent.chaos_theory.enabled then applyBuff( "chaos_theory" ) end
+            if talent.deflecting_dance.enabled then applyBuff( "deflecting_dance" ) end
             if talent.screaming_brutality.enabled then spec.abilities.throw_glaive.handler() end
             if talent.mortal_dance.enabled then applyDebuff( "target", "mortal_dance" ) end
 
