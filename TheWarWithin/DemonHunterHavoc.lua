@@ -805,6 +805,12 @@ spec:RegisterAuras( {
         id = 442695,
         duration = 20.0,
         max_stack = 1,
+        copy = "thrill_of_the_fight_attack_speed",
+    },
+    thrill_of_the_fight_damage = {
+        id = 442688,
+        duration = 10,
+        max_stack = 1,
     },
     -- Taunted.
     -- https://wowhead.com/beta/spell=185245
@@ -1346,6 +1352,7 @@ spec:RegisterAbilities( {
                 removeBuff( "glaive_flurry" )
                 if talent.thrill_of_the_fight.enabled and buff.rending_strike.down then
                     applyBuff( "thrill_of_the_fight" )
+                    applyBuff( "thrill_of_the_fight_damage" )
                 end
             end
         end,
@@ -1423,6 +1430,7 @@ spec:RegisterAbilities( {
                 removeBuff( "rending_strike" )
                 if talent.thrill_of_the_fight.enabled and buff.glaive_flurry.down then
                     applyBuff( "thrill_of_the_fight" )
+                    applyBuff( "thrill_of_the_fight_damage" )
                 end
             end
             removeBuff( "warblades_hunger" )
