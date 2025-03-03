@@ -3397,7 +3397,9 @@ do
         { "verdant_aspirants_badge_of_ferocity", 209763 },
         { "verdant_gladiators_badge_of_ferocity", 209343 },
         { "forged_aspirants_badge_of_ferocity", 218421 },
-        { "forged_gladiators_badge_of_ferocity", 218713 }
+        { "forged_gladiators_badge_of_ferocity", 218713 },
+        { "prized_aspirants_badge_of_ferocity", 229491 },
+        { "prized_gladiators_badge_of_ferocity", 229780 }
     }
 
     local pvp_badges_copy = {}
@@ -3422,7 +3424,7 @@ do
         cooldown = 120,
         gcd = "off",
 
-        items = { 162966, 161902, 165223, 165058, 167528, 167380, 172849, 172669, 175884, 175921, 185161, 185197, 186906, 186866, 192352, 192295, 201449, 201807, 205778, 205708, 209763, 209343, 218421, 218713 },
+        items = { 162966, 161902, 165223, 165058, 167528, 167380, 172849, 172669, 175884, 175921, 185161, 185197, 186906, 186866, 192352, 192295, 201449, 201807, 205778, 205708, 209763, 209343, 218421, 218713, 229491, 229780 },
         texture = 135884,
 
         toggle = "cooldowns",
@@ -3500,7 +3502,9 @@ do
         verdant_combatants_emblem = 208309,
         verdant_gladiators_emblem = 209345,
         algari_competitors_emblem = 219933,
-        forged_gladiators_emblem = 218715
+        forged_gladiators_emblem = 218715,
+        prized_aspirants_emblem = 229494,
+        prized_gladiators_emblem = 229782
     }
 
     local pvp_emblems_copy = {}
@@ -3534,7 +3538,7 @@ do
             end
             return e
         end,
-        items = { 162898, 161675, 165221, 165056, 167378, 167526, 172667, 172847, 178334, 178447, 185242, 185282, 186946, 186868, 192392, 192297, 201452, 201809, 204166, 205781, 205710, 209766, 208309, 209345, 219933, 218715 },
+        items = { 162898, 161675, 165221, 165056, 167378, 167526, 172667, 172847, 178334, 178447, 185242, 185282, 186946, 186868, 192392, 192297, 201452, 201809, 204166, 205781, 205710, 209766, 208309, 209345, 219933, 218715, 229494, 229782 },
         toggle = "cooldowns",
 
         handler = function ()

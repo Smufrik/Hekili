@@ -269,7 +269,7 @@ all:RegisterAbilities( {
         cooldown = 60,
         gcd = "off",
 
-        item = 435475,
+        item = 235984,
         toggle = "essences",
 
         proc = "damage",
@@ -940,7 +940,456 @@ all:RegisterAbilities( {
                 max_stack = 1
             }
         }
-    }
+    },
+} )
+
+all:RegisterGear( "bestinslots_melee", 232526 )
+all:RegisterGear( "bestinslots_caster", 232805 )
+all:RegisterGear( "bestinslots", 232526, 232805 )
+
+all:RegisterAbilities( {
+    -- 11.1
+    ringing_ritual_mud = {
+        cast = 0,
+        cooldown = 120,
+        gcd = "off",
+
+        item = 232543,
+        toggle = "defensives",
+
+        proc = "defensive",
+        self_buff = "mudborne",
+
+        handler = function ()
+            applyBuff( "mudborne" )
+        end,
+
+        auras = {
+            mudborne = {
+                id = 1219102,
+                duration = 10,
+                max_stack = 1
+            }
+        }
+    },
+
+    darkfuse_medichopper = {
+        cast = 0,
+        cooldown = 120,
+        gcd = "off",
+
+        item = 232542,
+        toggle = "defensives",
+
+        proc = "defensive",
+
+        handler = function ()
+        end,
+    },
+
+    kuj0s_flame_vents = {
+        cast = 2,
+        channeled = true,
+        cooldown = 120,
+        gcd = "off",
+
+        item = 232546,
+        toggle = "cooldowns",
+
+        proc = "damage",
+        self_buff = "kuj0s_flame_vents",
+
+        handler = function ()
+            applyBuff( "kuj0s_flame_vents" )
+        end,
+
+        auras = {
+            kuj0s_flame_vents = {
+                id = 1218716,
+                duration = 2,
+                max_stack = 1,
+                copy = "kujos_flame_vents"
+            },
+        },
+
+        copy = "kujos_flame_vents"
+    },
+
+    house_of_cards = {
+        cast = 0,
+        cooldown = 90,
+        gcd = "off",
+
+        item = 232543,
+        toggle = "cooldowns",
+
+        proc = "mastery",
+        self_buff = "house_of_cards",
+
+        handler = function ()
+            removeBuff( "stacked_deck" )
+            applyBuff( "house_of_cards" )
+        end,
+
+        auras = {
+            house_of_cards = {
+                id = 466681,
+                duration = 15,
+                max_stack = 1
+            },
+            stacked_deck = {
+                id = 1219158,
+                duration = 3600,
+                max_stack = 3
+            }
+        }
+    },
+
+    bestinslots = {
+        cast = 5,
+        cooldown = 120,
+        gcd = "spell",
+
+        item = function() return equipped.bestinslots_caster and 232805 or 232526 end,
+        toggle = "cooldowns",
+
+        proc = "secondary",
+        self_buff = "cheating",
+
+        handler = function ()
+            if time > 0 then applyBuff( "cheating" ) end
+        end,
+
+        auras = {
+            cheating = {
+                id = 473402,
+                duration = 15,
+                max_stack = 1
+            }
+        }
+    },
+
+    test_pilots_gopack = {
+        cast = 0,
+        cooldown = 120,
+        gcd = "off",
+
+        item = 232543,
+        toggle = "interrupts",
+
+        proc = "speed",
+        self_buff = "test_pilots_gopack",
+
+        handler = function ()
+            applyBuff( "test_pilots_gopack" )
+        end,
+
+        auras = {
+            test_pilots_gopack = {
+                id = 471383,
+                duration = 1,
+                max_stack = 1
+            }
+        }
+    },
+
+    -- skip mister_locknstalk ?
+
+    geargrinders_spare_keys = {
+        cast = 0,
+        cooldown = 120,
+        gcd = "off",
+
+        item = 230197,
+        toggle = "cooldowns",
+
+        proc = "damage",
+
+        handler = function ()
+        end,
+    },
+
+    chromebustible_bomb_suit = {
+        cast = 0,
+        cooldown = 90,
+        gcd = "off",
+
+        item = 230029,
+        toggle = "defensives",
+
+        proc = "defensive",
+        self_buff = "chromebustible_bomb_suit",
+
+        handler = function ()
+            applyBuff( "chromebustible_bomb_suit" )
+        end,
+
+        auras = {
+            chromebustible_bomb_suit = {
+                id = 466810,
+                duration = 20,
+                max_stack = 1
+            }
+        }
+    },
+
+    junkmaestros_mega_magnet = {
+        cast = 0,
+        cooldown = 20,
+        gcd = "off",
+
+        item = 230189,
+
+        proc = "damage",
+        usable = function() return buff.junkmaestros_mega_magnet.stack > 28 end,
+
+        handler = function ()
+            removeBuff( "junkmaestros_mega_magnet" )
+        end,
+
+        auras = {
+            junkmaestros_mega_magnet = {
+                id = 1219661,
+                duration = 3600,
+                max_stack = 30
+            }
+        }
+    },
+
+    gallagio_bottle_service = {
+        cast = 4,
+        channeled = true,
+        cooldown = 90,
+        gcd = "spell",
+
+        item = 230188,
+        toggle = "cooldowns",
+
+        proc = "healing",
+    },
+
+    flarendos_pilot_light = {
+        cast = 0,
+        cooldown = 120,
+        gcd = "off",
+
+        item = 230191,
+        toggle = "cooldowns",
+
+        proc = "intellect",
+        self_buff = "flarendos_pilot_light",
+
+        handler = function ()
+            applyBuff( "flarendos_pilot_light" )
+        end,
+
+        auras = {
+            flarendos_pilot_light = {
+                id = 471142,
+                duration = 15,
+                max_stack = 1
+            }
+        }
+    },
+
+    vexies_pit_whistle = {
+        cast = 0,
+        cooldown = 90,
+        gcd = "off",
+
+        item = 230019,
+        toggle = "cooldowns",
+
+        proc = "damage",
+
+        -- idk
+    },
+
+    torqs_big_red_button = {
+        cast = 0,
+        cooldown = 120,
+        gcd = "off",
+
+        item = 230190,
+        toggle = "cooldowns",
+
+        proc = "strength",
+        self_buff = "torqs_big_red_button",
+
+        handler = function ()
+            applyBuff( "torqs_big_red_button" )
+        end,
+
+        auras = {
+            torqs_big_red_button = {
+                id = 470286,
+                duration = 15,
+                max_stack = 1
+            }
+        }
+    },
+
+    funhouse_lens = {
+        cast = 0,
+        cooldown = 90,
+        gcd = "off",
+
+        item = 234217,
+        toggle = "cooldowns",
+
+        proc = "secondary",
+        self_buff = "funhouse_lens",
+
+        handler = function ()
+            applyBuff( "funhouse_lens" )
+        end,
+
+        auras = {
+            funhouse_lens_crit = {
+                id = 1213433,
+                duration = 15,
+                max_stack = 1
+            },
+
+            funhouse_lens_haste = {
+                id = 1213434,
+                duration = 15,
+                max_stack = 1,
+            },
+
+            funhouse_lens = {
+                aliasType = "buff",
+                alias = { "funhouse_lens_crit", "funhouse_lens_haste" },
+                aliasMode = "first",
+                duration = 15
+            }
+        }
+    },
+
+    noggenfogger_ultimate_deluxe = {
+        cast = 0,
+        cooldown = 120,
+        gcd = "off",
+
+        item = 232486,
+        toggle = "cooldowns",
+
+        proc = "damage",
+    },
+
+    ratfang_toxin = {
+        cast = 0,
+        cooldown = 90,
+        gcd = "off",
+
+        item = 235359,
+        proc = "damage",
+
+        handler = function ()
+            removeDebuff( "target", "ratfang_toxin" )
+        end,
+
+        auras = {
+            ratfang_toxin = {
+                id = 1213433,
+                duration = 20,
+                max_stack = 5
+            }
+        }
+    },
+
+    blastmaster3000 = {
+        cast = 0,
+        cooldown = 60,
+        gcd = "off",
+
+        item = 234717,
+        proc = "damage",
+    },
+
+    gooblin_grenade = {
+        cast = 0,
+        cooldown = 90,
+        gcd = "off",
+
+        item = 234218,
+        toggle = "cooldowns",
+
+        proc = "damage",
+
+        handler = function()
+            applyDebuff( "target", "gooblin_grenade" )
+        end,
+
+        auras = {
+            gooblin_grenade = {
+                id = 1213436,
+                duration = 10,
+                max_stack = 1
+            }
+        }
+    },
+
+    abyssal_volt = {
+        cast = 0,
+        cooldown = 90,
+        gcd = "off",
+
+        item = 235373,
+        toggle = "cooldowns",
+
+        proc = "haste",
+        self_buff = "abyssal_volt",
+
+        handler = function ()
+            applyBuff( "abyssal_volt" )
+        end,
+
+        auras = {
+            abyssal_volt = {
+                id = 1216770,
+                duration = 15,
+                max_stack = 1
+            }
+        }
+    },
+
+    core_recycling_unit = {
+        cast = 0,
+        cooldown = 90,
+        gcd = "off",
+
+        item = 234326,
+        toggle = "defensives",
+
+        usable = function() return buff.core_recycling_unit.stack > 10 and health.pct < 60 end,
+
+        proc = "heal",
+        self_buff = "core_recycling_unit",
+
+        handler = function ()
+            removeBuff( "core_recycling_unit" )
+        end,
+
+        auras = {
+            core_recycling_unit = {
+                id = 1213758,
+                duration = 3600,
+                max_stack = 20
+            }
+        }
+    },
+
+    garbagemancers_last_resort = {
+        cast = 0,
+        cooldown = 120,
+        gcd = "off",
+
+        item = 235984,
+        toggle = "cooldowns",
+
+        proc = "damage",
+    },
 } )
 
 all:RegisterGear( "scroll_of_momentum", 226539 )
