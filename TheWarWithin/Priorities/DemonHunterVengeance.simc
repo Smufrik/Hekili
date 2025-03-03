@@ -222,6 +222,10 @@ actions.rg_sequence+=/call_action_list,name=rg_sequence_filler,if=(fury<30&((!va
 actions.rg_sequence+=/fracture,if=((variable.rg_enhance_cleave&buff.rending_strike.up&buff.glaive_flurry.up)|(!variable.rg_enhance_cleave&!buff.glaive_flurry.up))
 actions.rg_sequence+=/shear,if=((variable.rg_enhance_cleave&buff.rending_strike.up&buff.glaive_flurry.up)|(!variable.rg_enhance_cleave&!buff.glaive_flurry.up))
 actions.rg_sequence+=/soul_cleave,if=((!variable.rg_enhance_cleave&buff.glaive_flurry.up&buff.rending_strike.up)|(variable.rg_enhance_cleave&!buff.rending_strike.up))
+## [Hekili] Fall-through actions in case the "wrong" sequence of empowered spells was cast.
+actions.rg_sequence+=/fracture,if=buff.rending_strike.up&!buff.glaive_flurry.up
+actions.rg_sequence+=/shear,if=buff.rending_strike.up&!buff.glaive_flurry.up
+actions.rg_sequence+=/soul_cleave,if=!buff.rending_strike.up&buff.glaive_flurry.up
 
 actions.rg_sequence_filler+=/felblade
 actions.rg_sequence_filler+=/fracture,if=!buff.rending_strike.up
