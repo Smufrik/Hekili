@@ -873,7 +873,7 @@ spec:RegisterAuras( {
     winning_streak = {
         id = 121843,
         duration = 3600,
-        max_stack = 10,
+        max_stack = 8,
     },
 } )
 

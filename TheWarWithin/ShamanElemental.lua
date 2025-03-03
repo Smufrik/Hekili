@@ -1472,7 +1472,7 @@ spec:RegisterAbilities( {
             spec.abilities.lava_burst.handler()
             active_dot.flame_shock = min( true_active_enemies, active_dot.flame_shock + 6 )
 
-            if set_bonus.tww2 >= 2 then summonPet( talent.primal_elementalist.enabled and "primal_storm_elemental" or "greater_storm_elemental", 8 ) end
+            if set_bonus.tww2 >= 2 then summonPet( talent.primal_elementalist.enabled and "primal_storm_elemental" or "greater_storm_elemental", 6 ) end
         end,
 
     },

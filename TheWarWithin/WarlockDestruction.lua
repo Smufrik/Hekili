@@ -1092,7 +1092,7 @@ spec:RegisterAuras( {
     wither = {
         id = 445474,
         duration = function() return ( 18.0 + 3 * talent.scalding_flames.rank ) * ( 1 - 0.15 * talent.hatefury_rituals.rank ) end,
-        tick_time = 2.0,
+        tick_time = 3.0,
         pandemic = true,
         max_stack = 8,
     },
