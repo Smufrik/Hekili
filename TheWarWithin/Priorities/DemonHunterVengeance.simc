@@ -22,6 +22,8 @@ actions.ar+=/variable,name=spb_threshold,op=setif,condition=talent.fiery_demise&
 actions.ar+=/variable,name=can_spb,op=setif,condition=talent.spirit_bomb,value=soul_fragments>=variable.spb_threshold,value_else=0
 actions.ar+=/variable,name=can_spb_soon,op=setif,condition=talent.spirit_bomb,value=soul_fragments>=variable.spb_threshold,value_else=0
 actions.ar+=/variable,name=can_spb_one_gcd,op=setif,condition=talent.spirit_bomb,value=(soul_fragments+variable.num_spawnable_souls)>=variable.spb_threshold,value_else=0
+## [Hekili] Move `double_rm_expires` variable from `rg_sequence` to here to prevent an unused variable warning.
+actions.ar+=/variable,name=double_rm_expires,value=time+action.fracture.execute_time+20,if=!buff.glaive_flurry.up&buff.rending_strike.up
 actions.ar+=/variable,name=double_rm_remains,op=setif,condition=(variable.double_rm_expires-time)>0,value=variable.double_rm_expires-time,value_else=0
 actions.ar+=/variable,name=trigger_overflow,op=set,value=0,if=!buff.glaive_flurry.up&!buff.rending_strike.up&!prev_gcd.1.reavers_glaive
 actions.ar+=/variable,name=rg_enhance_cleave,op=setif,condition=variable.trigger_overflow|(spell_targets.spirit_bomb>=4)|(fight_remains<10|target.time_to_die<10),value=1,value_else=0
@@ -217,7 +219,6 @@ actions.rg_prep+=/sigil_of_flame
 actions.rg_prep+=/immolation_aura
 actions.rg_prep+=/fracture
 
-actions.rg_sequence+=/variable,name=double_rm_expires,value=time+action.fracture.execute_time+20,if=!buff.glaive_flurry.up&buff.rending_strike.up
 actions.rg_sequence+=/call_action_list,name=rg_sequence_filler,if=(fury<30&((!variable.rg_enhance_cleave&buff.glaive_flurry.up&buff.rending_strike.up)|(variable.rg_enhance_cleave&!buff.rending_strike.up)))|(action.fracture.charges_fractional<1&((variable.rg_enhance_cleave&buff.rending_strike.up&buff.glaive_flurry.up)|(!variable.rg_enhance_cleave&!buff.glaive_flurry.up)))
 actions.rg_sequence+=/fracture,if=((variable.rg_enhance_cleave&buff.rending_strike.up&buff.glaive_flurry.up)|(!variable.rg_enhance_cleave&!buff.glaive_flurry.up))
 actions.rg_sequence+=/shear,if=((variable.rg_enhance_cleave&buff.rending_strike.up&buff.glaive_flurry.up)|(!variable.rg_enhance_cleave&!buff.glaive_flurry.up))
