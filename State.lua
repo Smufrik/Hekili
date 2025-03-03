@@ -5267,6 +5267,9 @@ local mt_default_action = {
         elseif k == "ready" then
             return state:IsUsable( t.action ) and state:IsReady( t.action )
 
+        elseif k == "usable_in" then
+            return state.cooldown[ t.action ].remains
+
         elseif k == "cast_time" then
             return ability.cast
 
