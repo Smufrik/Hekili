@@ -702,7 +702,7 @@ do
                 local count = 0
                 local counted = 0
                 for i = 1, 10 do
-                    if not hyperthread_blocks[ state.sprev[ i ].spell ] then
+                    if not hyperthread_blocks[ state.prev[ i ].spell ] then
                         counted = counted + 1
                     end
 
