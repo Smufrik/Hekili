@@ -325,9 +325,13 @@ spec:RegisterStateExpr( "rift_extensions", function()
     return er_extensions
 end )
 
-spec:RegisterStateExpr( "force_devour_matter", function()
-    return debuff.all_absorbs.up
-end )
+spec:RegisterStateTable( "priest", setmetatable( {},{
+    __index = function( t, k )
+        if k == "self_power_infusion" then return true
+    elseif k == "force_devour_matter" then return debuff.all_absorbs.up end
+        return false
+    end
+} ) )
 
 local ExpireVoidform = setfenv( function()
     applyBuff( "shadowform" )
@@ -478,12 +482,6 @@ spec:RegisterHook( "pregain", function( amount, resource, overcap )
 
     return amount, resource, overcap
 end )
-
-
-spec:RegisterStateTable( "priest", {
-    self_power_infusion = true
-} )
-
 
 -- Auras
 spec:RegisterAuras( {
