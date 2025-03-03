@@ -1065,6 +1065,10 @@ local demonsurge = {
     hardcast = { "abyssal_gaze", "consuming_fire", "sigil_of_doom" },
 }
 
+local demonsurgeLastSeen = setmetatable( {}, {
+    __index = function( t, k ) return rawget( t, k ) or 0 end,
+})
+
 spec:RegisterHook( "reset_precast", function ()
     wipe( initiative_virtual )
     active_dot.initiative_tracker = 0
@@ -1111,17 +1115,46 @@ spec:RegisterHook( "reset_precast", function ()
         for _, name in ipairs( demonsurge.demonic ) do
             if IsSpellOverlayed( class.abilities[ name ].id ) then
                 applyBuff( "demonsurge_" .. name, metaRemains )
+                demonsurgeLastSeen[ name ] = query_time
             end
         end
         if talent.demonic_intensity.enabled then
-            local metaApplied = ( buff.metamorphosis.applied - 0.005 ) -- fudge-factor because GetTime has ms precision
+            local metaApplied = buff.metamorphosis.applied - 0.2
             if action.metamorphosis.lastCast >= metaApplied or action.abyssal_gaze.lastCast >= metaApplied then
                 applyBuff( "demonsurge_hardcast", metaRemains )
             end
             for _, name in ipairs( demonsurge.hardcast ) do
                 if IsSpellOverlayed( class.abilities[ name ].id ) then
                     applyBuff( "demonsurge_" .. name, metaRemains )
+                    demonsurgeLastSeen[ name ] = query_time
                 end
+            end
+
+            -- The Demonsurge buff does not actually get applied in-game until ~500ms after
+            -- the empowered ability is cast. Pretend that it's applied instantly for any
+            -- APL conditions that check `buff.demonsurge.stack`.
+
+            local pending = 0
+
+            for _, list in pairs( demonsurge ) do
+                for _, name in ipairs( list ) do
+                    local hasPending = buff[ "demonsurge_" .. name ].down and abs( action[ name ].lastCast - demonsurgeLastSeen[ name ] ) < 0.7 and action[ name ].lastCast > buff.demonsurge.applied
+                    if hasPending then pending = pending + 1 end
+                    --[[
+                    if Hekili.ActiveDebug then
+                        Hekili:Debug( " - " .. ( hasPending and "PASS: " or "FAIL: " ) ..
+                            "buff.demonsurge_" .. name .. ".down[" .. ( buff[ "demonsurge_" .. name ].down and "true" or "false" ) .. "] & " ..
+                            "@( action." .. name .. ".lastCast[" .. action[ name ].lastCast .. "] - lastSeen." .. name .. "[" .. demonsurgeLastSeen[ name ] .. "] ) < 0.7 & " ..
+                            "action." .. name .. ".lastCast[" .. action[ name ].lastCast .. "] > buff.demonsurge.applied[" .. buff.demonsurge.applied .. "]" )
+                    end
+                    --]]
+                end
+            end
+            if pending > 0 then
+                addStack( "demonsurge", nil, pending )
+            end
+            if Hekili.ActiveDebug then
+                Hekili:Debug( " - buff.demonsurge.stack[" .. buff.demonsurge.stack - pending .. " + " .. pending .. "]" )
             end
         end
 
