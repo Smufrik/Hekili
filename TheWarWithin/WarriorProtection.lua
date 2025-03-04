@@ -1701,12 +1701,21 @@ spec:RegisterAbilities( {
         usable = function()
             if not settings.spell_reflection_filter then return true end
 
-            local filters = class.reflectableFilters
-            local npcid = target.npcid
+            local zone = state.instance_id
+            local npcid = target.npcid or -1
             local t = debuff.casting
 
             -- Only use on a reflectable spell targeted at the player.
-            return not not ( t.up and npcid and filters and filters[ npcid ] and filters[ npcid ][ t.v1 ] and UnitIsUnit( "player", t.caster .. "target" ) )
+            if not t.up then
+                return false, "Target is not casting"
+            end
+            if not class.reflectableFilters[ zone ][ npcid ][ t.v1 ] then
+                return false, "spell[" .. t.v1 .. "] in zone[" .. zone .. "] by npc[" .. npcid .. "] is not reflectable"
+            end
+            if not UnitIsUnit( "player", t.caster .. "target" ) then
+                return false, "Player is not target of cast"
+            end
+            return true
         end,
 
         handler = function()
