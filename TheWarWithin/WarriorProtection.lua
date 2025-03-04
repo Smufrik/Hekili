@@ -1082,7 +1082,7 @@ spec:RegisterAbilities( {
         copy = { 163201, 281000 },
         noOverride = 317485, -- Condemn
         cast = 0,
-        cooldown = 6,
+        cooldown = 0,
         gcd = "spell",
         hasteCD = true,
 
