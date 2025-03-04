@@ -1304,8 +1304,8 @@ spec:RegisterHook( "reset_precast", function ()
     rawset( buff, "doom_winds_debuff", debuff.doom_winds_debuff )
     rawset( buff, "doom_winds_cd", debuff.doom_winds_debuff )
 
-    if totem.surging_totem.up then
-        setCooldown( "surging_totem", totem.surging_totem.remains + 0.1 )
+    if buff.voidbinding.up and totem.surging_totem.up then
+        setCooldown( "surging_totem", totem.surging_totem.remains )
     end
 end )
 

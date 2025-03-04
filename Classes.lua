@@ -1401,6 +1401,38 @@ all:RegisterAuras( {
         duration = 3600,
     },
 
+    -- The War Within M+ Affix auras
+    -- Haste
+    cosmic_ascension = {
+        id = 461910,
+        duration = 30,
+        max_stack = 1
+    },
+    -- Crit
+    rift_essence = {
+        id = 465136,
+        duration = 30,
+        max_stack = 1
+    },
+    -- Mastery
+    void_essence = {
+        id = 463767,
+        duration = 30,
+        max_stack = 1
+    },
+    -- CDR & Vers
+    voidbinding = {
+        id = 462661,
+        duration = 30,
+        max_stack = 1
+    },
+    -- Priory of the Sacred Flame
+    blessing_of_the_sacred_flame = {
+        id = 435088,
+        duration = 1800,
+        max_stack = 1
+    },
+
     -- Can be used in GCD calculation.
     shadowform = {
         id = 232698,
