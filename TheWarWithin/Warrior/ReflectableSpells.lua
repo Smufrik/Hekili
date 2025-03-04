@@ -40,6 +40,27 @@ local reflectableFilters = {
         },
     },
 
+    -- The MOTHERLODE!!
+    [ 1594 ] = {
+        [ 130661 ] = {
+            desc = "The MOTHERLODE!! - Venture Co. Earthshaper",
+            [ 263202 ] = "Rock Lance",
+            [ 271579 ] = "Rock Lance",
+        },
+        [ 136139 ] = {
+            desc = "The MOTHERLODE!! - Mechanized Peacekeeper",
+            [ 263628 ] = "Charged Shield",
+        },
+        [ 136934 ] = {
+            desc = "The MOTHERLODE!! - Weapons Tester",
+            [ 268846 ] = "Echo Blade",
+        },
+        [ 136470 ] = {
+            desc = "The MOTHERLODE!! - Refreshment Vendor",
+            [ 280604 ] = "Iced Spritzer",
+        },
+    },
+
     -- Siege of Boralus
     [ 1822 ] = {
         [ 129367 ] = {
@@ -61,6 +82,30 @@ local reflectableFilters = {
         [ 144071 ] = {
             desc = "Siege of Boralus - Irontide Waveshaper",
             [ 257063 ] = "Brackish Bolt",
+        },
+    },
+
+    -- Operation: Mechagon
+    [ 2097 ] = {
+        [ 144294 ] = {
+            desc = "Operation: Mechagon - Mechagon Tinkerer",
+            [ 293827 ] = "Giga-Wallop",
+        },
+        [ 144298 ] = {
+            desc = "Operation: Mechagon - Defense Bot Mk III",
+            [ 294195 ] = "Arcing Zap",
+        },
+        [ 150396 ] = {
+            desc = "Operation: Mechagon - Aerial Unit R-21/X",
+            [ 291878 ] = "Pulse Blast",
+        },
+        [ 151649 ] = {
+            desc = "Operation: Mechagon - Defense Bot Mk I",
+            [ 294195 ] = "Arcing Zap",
+        },
+        [ 152033 ] = {
+            desc = "Operation: Mechagon - Inconspicuous Plant",
+            [ 294855 ] = "Blossom Blast",
         },
     },
 
@@ -139,6 +184,125 @@ local reflectableFilters = {
         [ 172991 ] = {
             desc = "Mists of Tirna Scithe - Drust Soulcleaver",
             [ 322557 ] = "Soul Split",
+        },
+    },
+
+    -- Theater of Pain
+    [ 2293 ] = {
+        [ 160495] = {
+            desc = "Theater of Pain - Maniacal Soulbinder",
+            [ 330784 ] = "Necrotic Bolt",
+        },
+        [ 162309 ] = {
+            desc = "Theater of Pain - Kul'tharok",
+            [  319669 ] = "Spectral Reach",
+            [ 1216475 ] = "Necrotic Bolt",
+        },
+        [ 164461 ] = {
+            desc = "Theater of Pain - Sathel the Accursed",
+            [ 1217138 ] = "Necrotic Bolt",
+        },
+        [ 165946 ] = {
+            desc = "Theater of Pain - Mordretha, the Endless Empress",
+            [ 323608 ] = "Dark Devastation",
+        },
+        [ 166524 ] = {
+            desc = "Theater of Pain - Deathwalker",
+            [ 324589 ] = "Death Bolt",
+        },
+        [ 169875 ] = {
+            desc = "Theater of Pain - Shackled Soul",
+            [ 330810 ] = "Bind Soul",
+        },
+        [ 169893 ] = {
+            desc = "Theater of Pain - Nefarious Darkspeaker",
+            [ 330875 ] = "Spirit Frost",
+        },
+        [ 170690 ] = {
+            desc = "Theater of Pain - Diseased Horror",
+            [ 330697 ] = "Decaying Strike",
+        },
+        [ 174197 ] = {
+            desc = "Theater of Pain - Battlefield Ritualist",
+            [ 330784 ] = "Necrotic Bolt",
+        },
+        [ 174210 ] = {
+            desc = "Theater of Pain - Blighted Sludge-Spewer",
+            [ 341969 ] = "Withering Discharge",
+        },
+    },
+
+    -- The Rookery
+    [ 2648 ] = {
+        [ 207202 ] = {
+            desc = "The Rookery - Void Fragment",
+            [ 430238 ] = "Void Bolt",
+        },
+        [ 207198 ] = {
+            desc = "The Rookery - Cursed Thunderer",
+            [ 430109 ] = "Lightning Bolt",
+        },
+        [ 214421 ] = {
+            desc = "The Rookery - Coalescing Void Diffuser",
+            [ 430805 ] = "Arcing Void",
+        },
+        [ 214439 ] = {
+            desc = "The Rookery - Corrupted Oracle",
+            [ 430179 ] = "Seeping Corruption",
+        },
+    },
+
+    -- Priory of the Sacred Flame
+    [ 2649 ] = {
+        [ 206697 ] = {
+            desc = "Priory of the Sacred Flame - Devout Priest",
+            [ 427357 ] = "Holy Smite",
+        },
+        [ 206698 ] = {
+            desc = "Priory of the Sacred Flame - Fanatical Conjuror",
+            [ 427469 ] = "Fireball",
+        },
+        [ 207939 ] = {
+            desc = "Priory of the Sacred Flame - Baron Braunpyke",
+            [ 423015 ] = "Castigator's Shield",
+        },
+        [ 207940 ] = {
+            desc = "Priory of the Sacred Flame - Prioress Murrpray",
+            [ 423536 ] = "Holy Smite",
+        },
+        [ 211289 ] = {
+            desc = "Priory of the Sacred Flame - Taener Duelmal",
+            [ 424420 ] = "Cinderblast",
+            [ 424421 ] = "Fireball",
+        },
+        [ 221760 ] = {
+            desc = "Priory of the Sacred Flame - Risen Mage",
+            [ 427469 ] = "Fireball",
+        },
+        [ 212827 ] = {
+            desc = "Priory of the Sacred Flame - High Priest Aemya",
+            [ 427357 ] = "Holy Smite",
+        },
+    },
+
+    -- Darkflame Cleft
+    [ 2651 ] = {
+        [ 208743 ] = {
+            desc = "Darkflame Cleft - Blazikon",
+            [ 421638 ] = "Wicklighter Barrage",
+            [ 421817 ] = "Wicklighter Barrage",
+        },
+        [ 210812 ] = {
+            desc = "Darkflame Cleft - Royal Wicklighter",
+            [ 423479 ] = "Wicklighter Bolt",
+        },
+        [ 212412 ] = {
+            desc = "Darkflame Cleft - Sootsnout",
+            [ 426677 ] = "Candleflame Bolt",
+        },
+        [ 213913 ] = {
+            desc = "Darkflame Cleft - Kobold Flametender",
+            [ 428563 ] = "Flame Bolt",
         },
     },
 
@@ -250,6 +414,18 @@ local reflectableFilters = {
         },
     },
 
+    -- Cinderbrew Meadery
+    [ 2661 ] = {
+        [ 214661 ] = {
+            desc = "Cinderbrew Meadery - Goldie Baronbottom",
+            [ 436640 ] = "Burning Ricochet",
+        },
+        [ 218671 ] = {
+            desc = "Cinderbrew Meadery - Venture Co. Pyromaniac",
+            [ 437733 ] = "Boiling Flames",
+        },
+    },
+
     -- The Dawnbreaker
     [ 2662 ] = {
         [ 210966 ] = {
@@ -313,6 +489,50 @@ local reflectableFilters = {
         [ 224732 ] = {
             desc = "City of Threads - Covert Webmancer",
             [ 442536 ] = "Grimweave Blast",
+        },
+    },
+
+    -- Liberation of Undermine
+    [ 2769 ] = {
+        [ 231839 ] = {
+            desc = "Liberation of Undermine - Scrapmaster",
+            [ 1219384 ] = "Scrap Rockets",
+        },
+        [ 234211 ] = {
+            desc = "Liberation of Undermine - Reel Assistant",
+            [ 460847 ] = "Electric Blast",
+        },
+    },
+
+    -- Operation: Floodgate
+    [ 2773 ] = {
+        [ 226396 ] = {
+            desc = "Operation: Floodgate - Swampface",
+            [ 473114 ] = "Mudslide",
+        },
+        [ 229069 ] = {
+            desc = "Operation: Floodgate - Mechadrone Sniper",
+            [ 1214468 ] = "Trickshot",
+        },
+        [ 229686 ] = {
+            desc = "Operation: Floodgate - Venture Co. Surveyor",
+            [ 462771 ] = "Surveying Beam",
+        },
+        [ 230740 ] = {
+            desc = "Operation: Floodgate - Shreddinator 3000",
+            [ 465754 ] = "Flamethrower",
+        },
+        [ 230748 ] = {
+            desc = "Operation: Floodgate - Darkfuse Bloodwarper",
+            [ 465871 ] = "Blood Bolt",
+        },
+        [ 231197 ] = {
+            desc = "Operation: Floodgate - Bubbles",
+            [ 469721 ] = "Backwash",
+        },
+        [ 231312 ] = {
+            desc = "Operation: Floodgate - Venture Co. Electrician",
+            [ 465595 ] = "Lightning Bolt",
         },
     },
 }
