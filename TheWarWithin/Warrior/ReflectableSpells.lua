@@ -317,4 +317,20 @@ local reflectableFilters = {
     },
 }
 
+do
+    -- Make reflectableFilters[ instanceID ][ npcID ][ spellID ] always be valid.
+
+    local emptyNPC = {}
+    local mt_instance = { __index = function( t, k ) return emptyNPC end }
+
+    local emptyInstance = setmetatable( {}, mt_instance )
+    local mt_filter = { __index = function( t, k ) return emptyInstance end }
+
+    for instanceID, instanceData in pairs( reflectableFilters ) do
+        setmetatable( instanceData, mt_instance )
+    end
+
+    setmetatable( reflectableFilters, mt_filter )
+end
+
 class.reflectableFilters = reflectableFilters
