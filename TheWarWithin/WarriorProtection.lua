@@ -457,7 +457,7 @@ spec:RegisterAuras( {
     },
     shield_block = {
         id = 132404,
-        duration = function () return ( talent.enduring_defenses.enabled and 8 or 6 ) + ( talent.heavy_repercussions.enabled and 1 or 0 )  end,
+        duration = function () return ( talent.enduring_defenses.enabled and 8 or 6 ) end,
         max_stack = 1
     },
     shield_charge = {
@@ -1116,8 +1116,6 @@ spec:RegisterAbilities( {
                 removeBuff( "sudden_death" )
             end
             if talent.juggernaut.enabled then addStack( "juggernaut" ) end
-
-            if talent.dominance_of_the_colossus.enabled and buff.colossal_might.stack == 10 then reduceCooldown( "demolish", 2 ) end
         end,
     },
 
@@ -1771,7 +1769,7 @@ spec:RegisterAbilities( {
             removeBuff( "show_of_force" )
 
             if ( talent.thunderlord.enabled or legendary.thunderlord.enabled ) and cooldown.demoralizing_shout.remains > 0 then
-                reduceCooldown( "demoralizing_shout", min( 3, active_enemies ) )
+                reduceCooldown( "demoralizing_shout", 1.5 * min( 3, active_enemies ) )
             end
 
             if talent.rend.enabled then
@@ -1795,8 +1793,7 @@ spec:RegisterAbilities( {
         hasteCD = true,
 
         spend = function () return ( ( talent.thorims_might.enabled and talent.flashing_skies.enabled ) and -11 or -8 )
-            * ( buff.violent_outburst.up and 2 or 1 )
-
+            * ( buff.violent_outburst.up and 1.5 or 1 )
             * ( buff.unnerving_focus.up and 1.5 or 1 ) end,
         spendType = "rage",
 
@@ -1813,7 +1810,7 @@ spec:RegisterAbilities( {
             removeBuff( "show_of_force" )
 
             if ( talent.thunderlord.enabled or legendary.thunderlord.enabled ) and cooldown.demoralizing_shout.remains > 0 then
-                reduceCooldown( "demoralizing_shout", min( 3, active_enemies ) )
+                reduceCooldown( "demoralizing_shout", 1.5 * min( 3, active_enemies ) )
             end
 
             if talent.rend.enabled then
@@ -1836,7 +1833,7 @@ spec:RegisterAbilities( {
         cooldown = function() return talent.uproar.enabled and 90 or 45 end,
         gcd = "spell",
 
-        spend = -10,
+        spend = 0,
         spendType = "rage",
 
         talent = "thunderous_roar",
