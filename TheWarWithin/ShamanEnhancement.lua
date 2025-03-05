@@ -2799,7 +2799,7 @@ spec:RegisterAbilities( {
 
         talent = "surging_totem",
         startsCombat = false,
-        readyTime = function() return totem.surging_totem.remains + 0.1 end,
+        -- readyTime = function() return totem.surging_totem.remains + 0.1 end,
 
         texture = 5927655,
 
