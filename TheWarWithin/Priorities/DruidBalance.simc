@@ -1,5 +1,5 @@
 actions.precombat+=/mark_of_the_wild
-actions.precombat+=/bear_form,if=talent.lycaras_meditation&talent.fluid_form
+## actions.precombat+=/bear_form,if=talent.lycaras_meditation&talent.fluid_form
 actions.precombat+=/moonkin_form,if=!talent.lycaras_meditation|!talent.fluid_form
 actions.precombat+=/variable,name=no_cd_talent,value=!talent.celestial_alignment&!talent.incarnation_chosen_of_elune|druid.no_cds
 actions.precombat+=/variable,name=on_use_trinket,value=0
