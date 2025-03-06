@@ -1847,12 +1847,19 @@ all:RegisterAuras( {
                     t.caster = unit
 
                     if unit == "target" and Hekili.DB.profile.toggles.interrupts.filterCasts then
-                        local filters = Hekili.DB.profile.castFilters
-                        local npcid = state.target.npcid
+                        local filters = class.interruptibleFilters
+                        local zone = state.instance_id
+                        local npcid = state.target.npcid or -1
 
-                        if npcid and filters[ npcid ] and not filters[ npcid ][ spellID ] then
-                            if Hekili.ActiveDebug then Hekili:Debug( "Cast '%s' not interruptible per user preference.", spell ) end
-                            t.v2 = 1
+                        if filters then
+                            local interruptible = filters[ zone ][ npcid ][ spellID ]
+
+                            if not interruptible then
+                                if Hekili.ActiveDebug then Hekili:Debug( "Cast '%s' not interruptible per user preference.", spell ) end
+                                t.v2 = 1
+                            elseif interruptible == "testing" then
+                                t.v2 = 0
+                            end
                         end
                     end
 
@@ -1879,11 +1886,18 @@ all:RegisterAuras( {
                         removeBuff( "casting" )
                     elseif unit == "target" and Hekili.DB.profile.filterCasts then
                         local filters = Hekili.DB.profile.castFilters
-                        local npcid = state.target.npcid
+                        local zone = state.instance_id
+                        local npcid = state.target.npcid or -1
 
-                        if npcid and filters[ npcid ] and not filters[ npcid ][ spellID ] then
-                            if Hekili.ActiveDebug then Hekili:Debug( "Cast '%s' not interruptible per user preference.", spell ) end
-                            t.v2 = 1
+                        if filters then
+                            local interruptible = filters[ zone ][ npcid ][ spellID ]
+
+                            if not interruptible then
+                                if Hekili.ActiveDebug then Hekili:Debug( "Cast '%s' not interruptible per user preference.", spell ) end
+                                t.v2 = 1
+                            elseif interruptible == "testing" then
+                                t.v2 = 0
+                            end
                         end
                     end
 
