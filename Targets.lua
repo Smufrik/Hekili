@@ -1303,7 +1303,8 @@ do
 
         for k, v in pairs(db) do
             if not CheckEnemyExclusion( k ) and v.lastHealth > percent then
-                time = max( time, max( 0, v.deathTime ) )
+                local scale = ( percent - v.deathPercent ) / ( v.lastHealth - v.deathPercent )
+                time = max( time, max( 0, v.deathTime * scale ) )
                 validUnit = true
             end
         end
