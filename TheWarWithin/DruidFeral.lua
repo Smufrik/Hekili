@@ -2492,7 +2492,7 @@ spec:RegisterAbilities( {
         talent = "renewal",
         startsCombat = false,
 
-        toggle = "cooldowns",
+        toggle = "defensives",
 
         handler = function ()
             health.actual = min( health.max, health.actual + ( 0.2 * health.max ) )
