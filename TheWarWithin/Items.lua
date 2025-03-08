@@ -1020,7 +1020,7 @@ all:RegisterAbilities( {
         cooldown = 90,
         gcd = "off",
 
-        item = 232543,
+        item = 230027,
         toggle = "cooldowns",
 
         proc = "mastery",
@@ -1074,7 +1074,7 @@ all:RegisterAbilities( {
         cooldown = 120,
         gcd = "off",
 
-        item = 232543,
+        item = 228844,
         toggle = "interrupts",
 
         proc = "speed",
