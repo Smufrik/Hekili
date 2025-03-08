@@ -64,11 +64,14 @@ actions.fill+=/arcane_pulse
 actions.fill+=/lights_judgment
 actions.fill+=/bag_of_tricks
 
+# [Syrif] - This variable prevents rupture spam when CDs are toggled off, or otherwise desynced due to dungeon gameplay environment 
+actions.finish+=/variable,name=cooldowns_soon,op=setif,condition=!toggle.cooldowns,value=false,value_else=cooldown.shadow_blades.remains<=13&cooldown.flagellation.remains<10&(dot.rupture.remains<(cooldown.shadow_blades.remains+buff.shadow_blades.duration))
 actions.finish+=/secret_technique,if=variable.secret
 # Maintenance Finisher
 actions.finish+=/rupture,if=!variable.skip_rupture&(!dot.rupture.ticking|refreshable)&target.time_to_die-remains>6
 actions.finish+=/rupture,cycle_targets=1,if=!variable.skip_rupture&!variable.priority_rotation&target.time_to_die>=(2*combo_points)&refreshable&active_enemies>=2
-actions.finish+=/rupture,if=talent.unseen_blade&cooldown.flagellation.remains<10
+# [Syrif] Uses Hekili-specific variable as a workaround
+actions.finish+=/rupture,if=talent.unseen_blade&variable.cooldowns_soon
 # Direct Damage Finisher
 actions.finish+=/coup_de_grace,if=debuff.fazed.up
 actions.finish+=/black_powder,if=!variable.priority_rotation&variable.maintenance&((active_enemies>=2&talent.deathstalkers_mark&(!buff.darkest_night.up|buff.shadow_dance.up&active_enemies>=5))|talent.unseen_blade&active_enemies>=7)

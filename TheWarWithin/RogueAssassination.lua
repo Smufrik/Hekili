@@ -1358,13 +1358,6 @@ spec:RegisterAuras( {
         duration = 4,
         max_stack = 1
     },
-    --[[ Talent: Marked for death, taking extra damage from @auracaster's finishing moves. Cooldown resets upon death.
-    -- https://wowhead.com/beta/spell=137619
-    marked_for_death = {
-        id = 137619,
-        duration = 15,
-        max_stack = 1
-    }, ]]
     -- Talent: Critical strike chance increased by $w1%.
     -- https://wowhead.com/beta/spell=256735
     master_assassin = {
@@ -1966,6 +1959,8 @@ spec:RegisterAbilities( {
         gcd = "off",
         school = "physical",
 
+        toggle = "essences",
+
         talent = "cold_blood",
         startsCombat = false,
         nobuff = "cold_blood",
@@ -2424,6 +2419,8 @@ spec:RegisterAbilities( {
         spend = 35,
         spendType = "energy",
 
+        toggle = "essences",
+
         talent = "kingsbane",
         startsCombat = false,
 
@@ -2438,32 +2435,6 @@ spec:RegisterAbilities( {
             gain( action.kingsbane.cp_gain, "combo_points" )
         end,
     },
-
-    --[[ Talent: Marks the target, instantly generating 5 combo points. Cooldown reset if the target dies within 1 min.
-    -- TODO:  MfD cooldown for Subtlety is different?
-    marked_for_death = {
-        id = 137619,
-        cast = 0,
-        cooldown = 40,
-        gcd = "off",
-        school = "physical",
-
-        talent = "marked_for_death",
-        startsCombat = false,
-        texture = 236364,
-
-        toggle = "cooldowns",
-
-        usable = function ()
-            return combo_points.current <= settings.mfd_points, "combo_point (" .. combo_points.current .. ") > user preference (" .. settings.mfd_points .. ")"
-        end,
-
-        cp_gain = function () return 7 end,
-
-        handler = function ()
-            gain( action.marked_for_death.cp_gain, "combo_points" )
-        end,
-    }, ]]
 
     -- Attack with both weapons, dealing a total of 649 Physical damage. Awards 2 combo points.
     mutilate = {
