@@ -2317,7 +2317,7 @@ do
             elseif k == "executing" then return t:IsCasting( action ) or ( t.prev[ 1 ][ action ] and t.gcd.remains > 0 )
             elseif k == "full_recharge_time" or k == "time_to_max_charges" then return cooldown.full_recharge_time
             elseif k == "hardcast" then return false -- will set to true if/when a spell is hardcast.
-            elseif k == "in_flight" then return model and model.in_flight or false
+            elseif k == "in_flight" or k == "in_flight_to_target" then return model and model.in_flight or false
             elseif k == "in_flight_remains" then return model and model.in_flight_remains or 0
             elseif k == "in_range" then return model.in_range
             elseif k == "recharge" then return cooldown.recharge
@@ -5345,7 +5345,7 @@ local mt_default_action = {
             if type( a ) == "string" then return a end
             return class.primaryResource
 
-        elseif k == "in_flight" then
+        elseif k == "in_flight" or k == "in_flight_to_target" then
             if ability.flightTime then
                 return ability.lastCast + max( ability.flightTime, 0.25 ) > state.query_time
             end
