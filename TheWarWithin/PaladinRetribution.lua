@@ -943,7 +943,7 @@ spec:RegisterHook( "spend", function( amt, resource )
             reduceCooldown( "blessing_of_sacrifice", 1 )
             reduceCooldown( "blessing_of_spellwarding", 1 )
         end
-        if buff.divine_hammer.up then buff.divine_hammer.up.expires =  buff.divine_hammer.up.expires + ( amt * 0.5 ) end
+        if buff.divine_hammer.up then buff.divine_hammer.expires = buff.divine_hammer.expires + ( amt * 0.5 ) end
     end
 end )
 
