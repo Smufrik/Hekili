@@ -1940,11 +1940,17 @@ spec:RegisterAbilities( {
         talent = "scorch",
         startsCombat = true,
 
+        velocity = 70,
+
         handler = function ()
-            hot_streak( buff.heat_shimmer.up or target.health_pct < ( talent.sunfury_execution.enabled and 35 or 30 ) )
-            applyDebuff( "target", "ignite" )
             if talent.from_the_ashes.enabled then reduceCooldown( "phoenix_flames", 1 ) end
             if talent.unleashed_inferno.enabled and buff.combustion.up then reduceCooldown( "combustion", 1.25 ) end
+
+        end,
+
+        impact = function()
+            hot_streak( buff.heat_shimmer.up or target.health_pct < ( talent.sunfury_execution.enabled and 35 or 30 ) )
+            applyDebuff( "target", "ignite" )
             if target.health.pct < 30 or buff.heat_shimmer.up then
                 if talent.frenetic_speed.enabled then applyBuff( "frenetic_speed" ) end
                 if talent.improved_scorch.enabled then applyDebuff( "target", "improved_scorch", nil, debuff.improved_scorch.stack + 1 ) end
