@@ -269,7 +269,7 @@ all:RegisterAbilities( {
         cooldown = 60,
         gcd = "off",
 
-        item = 235984,
+        item = 215170,
         toggle = "essences",
 
         proc = "damage",
