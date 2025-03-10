@@ -33,7 +33,7 @@ actions.cleave+=/explosive_shot,if=talent.thundering_hooves
 actions.cleave+=/barbed_shot,cycle_targets=1,if=buff.call_of_the_wild.up|talent.black_arrow&(talent.barbed_scales|talent.savagery)|set_bonus.tww2>=2|boss&fight_remains<9
 actions.cleave+=/explosive_shot,if=talent.thundering_hooves
 actions.cleave+=/lights_judgment,if=buff.bestial_wrath.down|target.time_to_die<5
-actions.cleave+=/cobra_shot,if=buff.hogstrider.stack>3
+actions.cleave+=/cobra_shot,if=focus.time_to_max<gcd*2|buff.hogstrider.stack>3
 actions.cleave+=/dire_beast
 actions.cleave+=/explosive_shot
 actions.cleave+=/bag_of_tricks,if=buff.bestial_wrath.down|target.time_to_die<5
