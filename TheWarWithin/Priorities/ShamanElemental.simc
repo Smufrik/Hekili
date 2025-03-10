@@ -5,7 +5,7 @@ actions.precombat+=/lightning_shield
 actions.precombat+=/thunderstrike_ward
 actions.precombat+=/earth_shield,if=!buff.earth_shield.up&talent.elemental_orbit
 actions.precombat+=/stormkeeper
-actions.precombat+=/variable,name=mael_cap,value=100+50*talent.swelling_maelstrom.enabled+25*talent.primordial_capacity.enabled
+actions.precombat+=/variable,name=mael_cap,value=100+50*talent.swelling_maelstrom.rank+25*talent.primordial_capacity.rank
 actions.precombat+=/variable,name=special_items,value=trinket.1.is.spymasters_web|trinket.2.is.spymasters_web|(trinket.1.is.house_of_cards&!trinket.2.has_use_buff|trinket.2.is.house_of_cards&!trinket.1.has_use_buff)&talent.first_ascendant
 
 # Interrupt of casts.
