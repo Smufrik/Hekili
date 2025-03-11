@@ -923,10 +923,10 @@ spec:RegisterHook( "reset_precast", function ()
 end )
 
 spec:RegisterHook( "runHandler", function( action )
-    if buff.ice_floes.up then
-        local ability = class.abilities[ action ]
-        if ability and ability.cast > 0 and ability.cast < 10 then removeStack( "ice_floes" ) end
-    end
+
+    local ability = class.abilities[ action ]
+
+    if buff.ice_floes.up and ability and ability.cast > 0 and ability.cast < 10 then removeStack( "ice_floes" ) end
 
     if talent.frostfire_mastery.enabled and ability then
         if ability.school == "fire" or ability.school == "frostfire" then
@@ -1113,7 +1113,7 @@ spec:RegisterAbilities( {
             applyDebuff( "target", "winters_chill", nil, 2 )
             applyDebuff( "target", "flurry" )
             applyBuff( "bone_chilling", nil, 3 )
-            if talent.frostfire_mastery.enabled then 
+            if talent.frostfire_mastery.enabled then
                 if buff.frost_mastery.up then applyBuff( "frost_mastery", buff.frost_mastery.expires, min( buff.frost_mastery.stacks + 3, 6) )
                 else applyBuff( "frost_mastery", nil, 3 ) end
             end
@@ -1167,8 +1167,6 @@ spec:RegisterAbilities( {
 
         handler = function ()
             addStack( "icicles" )
-
-            if action.frostbolt.cast_time > 0 then removeStack( "ice_floes" ) end
 
             if buff.frostfire_empowerment.up then
                 if talent.flash_freezeburn.enabled then
@@ -1250,8 +1248,6 @@ spec:RegisterAbilities( {
 
         handler = function ()
             addStack( "icicles" )
-
-            if action.frostfire_bolt.cast_time > 0 then removeStack( "ice_floes" ) end
 
             if buff.frostfire_empowerment.up then
                 if talent.flash_freezeburn.enabled then
