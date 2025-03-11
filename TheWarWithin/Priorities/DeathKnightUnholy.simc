@@ -118,8 +118,9 @@ actions.cds_san+=/abomination_limb,if=active_enemies>=1&active_enemies=1&!buff.g
 # Cleave
 actions.cleave+=/any_dnd,if=!death_and_decay.ticking
 actions.cleave+=/death_coil,if=!variable.pooling_runic_power
-actions.cleave+=/festering_strike,cycle_targets=1,if=!variable.pop_wounds&debuff.festering_wound.stack<4|buff.festering_scythe.up
-actions.cleave+=/festering_strike,cycle_targets=1,if=cooldown.apocalypse.remains<variable.apoc_timing&debuff.festering_wound.stack<4
+actions.cleave+=/wound_spender,if=buff.vampiric_strike.up
+actions.cleave+=/festering_strike,cycle_targets=1,if=!buff.vampiric_strike.react&!variable.pop_wounds&debuff.festering_wound.stack<2|buff.festering_scythe.react
+actions.cleave+=/festering_strike,cycle_targets=1,if=cooldown.apocalypse.remains<variable.apoc_timing&debuff.festering_wound.stack<1
 actions.cleave+=/wound_spender,if=variable.pop_wounds
 
 # San'layn Fishing
