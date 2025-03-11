@@ -1092,7 +1092,7 @@ spec:RegisterAbilities( {
 
             if talent.frostfire_mastery.enabled then
                 if buff.excess_frost.up then
-                    removeBuff( "excess_frost" )
+                    removeStack( "excess_frost" )
                     spec.abilities.ice_nova.handler()
                     reduceCooldown( "comet_storm", 3 )
                 end
@@ -1171,7 +1171,7 @@ spec:RegisterAbilities( {
             if buff.frostfire_empowerment.up then
                 if talent.flash_freezeburn.enabled then
                     applyBuff( "frost_mastery", nil, 6 )
-                    applyBuff( "excess_frost" )
+                    addStack( "excess_frost" )
                     applyBuff( "fire_mastery", nil, 6 )
                     addStack( "excess_fire" )
                 end
@@ -1252,7 +1252,7 @@ spec:RegisterAbilities( {
             if buff.frostfire_empowerment.up then
                 if talent.flash_freezeburn.enabled then
                     applyBuff( "frost_mastery", nil, 6 )
-                    applyBuff( "excess_frost" )
+                    addStack( "excess_frost" )
                     applyBuff( "fire_mastery", nil, 6 )
                     addStack( "excess_fire" )
                 end
@@ -1459,7 +1459,7 @@ spec:RegisterAbilities( {
             if talent.frostfire_mastery.enabled then
                 if buff.excess_fire.up then
                     removeStack( "excess_fire" )
-                    applyBuff( "excess_frost" )
+                    addStack( "excess_frost" )
                     BrainFreeze()
                 end
             end
