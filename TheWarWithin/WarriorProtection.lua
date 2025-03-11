@@ -639,7 +639,7 @@ end )
 
 -- model rage expenditure and special effects
 spec:RegisterHook( "spend", function( amt, resource )
-    if resource == "rage" and amt < 0 then
+    if resource == "rage" and amt > 0 then
         if talent.anger_management.enabled or ( legendary.glory.enabled and buff.conquerors_banner.up ) then
             rageSpent_10 = rageSpent_10 + amt
             local rage10activations = floor( rageSpent_10 / 10 )
@@ -672,7 +672,7 @@ spec:RegisterHook( "spend", function( amt, resource )
                 applyBuff( "violent_outburst" )
             end
             buff.seeing_red.v1 = buff.seeing_red.v1 % 250
-	        if buff.seeing_red.v1 == 0 then
+            if buff.seeing_red.v1 == 0 then
                 removeBuff( "seeing_red" )
             else
                 applyBuff( "seeing_red", nil, floor( buff.seeing_red.v1 / 250 * 100 ), buff.seeing_red.v1)
