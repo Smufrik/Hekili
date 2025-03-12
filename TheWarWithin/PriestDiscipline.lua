@@ -1083,6 +1083,37 @@ spec:RegisterAbilities( {
         end,
     },
 
+    premonition_of_insight = {
+        id = 428933,
+        case = 0,
+        cooldown = 60,
+        gcd = "off",
+        talent = "premonition",
+    },
+
+    premonition_of_clairvoyance = {
+        id = 440725,
+        case = 0,
+        cooldown = 60,
+        gcd = "off",
+        talent = "premonition",
+    },
+
+    premonition_of_piety = {
+        id = 428930,
+        case = 0,
+        cooldown = 60,
+        gcd = "off",
+        talent = "premonition",
+    },
+
+    premonition_of_solace = {
+        id = 428934,
+        case = 0,
+        cooldown = 60,
+        gcd = "off",
+        talent = "premonition",
+    },
 
     shadow_word_pain = {
         id = 589,
