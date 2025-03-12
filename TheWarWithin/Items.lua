@@ -1047,11 +1047,11 @@ all:RegisterAbilities( {
 
     bestinslots = {
         cast = function() return time > 0 and 0 or 5 end,
-        cooldown = 120,
+        cooldown = function() return time > 0 and 120 or 30 end,
         gcd = function() return time > 0 and "off" or "spell" end,
 
         item = function() return equipped.bestinslots_caster and 232805 or 232526 end,
-        toggle = "cooldowns",
+        toggle = function() return time > 0 and "cooldowns" or "default" end,
 
         -- During combat, usable. Outside of combat, only usable if your weapon type doesn't match your mainstat
         usable = function()
