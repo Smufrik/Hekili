@@ -1046,12 +1046,18 @@ all:RegisterAbilities( {
     },
 
     bestinslots = {
-        cast = 5,
+        cast = function() return time > 0 and 0 or 5 end,
         cooldown = 120,
-        gcd = "spell",
+        gcd = function() return time > 0 and "off" or "spell" end,
 
         item = function() return equipped.bestinslots_caster and 232805 or 232526 end,
         toggle = "cooldowns",
+
+        -- During combat, usable. Outside of combat, only usable if your weapon type doesn't match your mainstat
+        usable = function()
+            if time > 0 then return true end
+            return equipped.bestinslots_caster and spec.primaryStat ~= "intellect" or equipped.bestinslots_melee and spec.primaryStat == "intellect" or false
+        end,
 
         proc = "secondary",
         self_buff = "cheating",
