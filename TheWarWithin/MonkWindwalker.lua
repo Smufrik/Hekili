@@ -1250,6 +1250,8 @@ spec:RegisterAbilities( {
         spend = function () return 20 * ( 1 - ( buff.the_emperors_capacitor.stack * 0.05 ) ) end,
         spendPerSec = function () return 20 * ( 1 - ( buff.the_emperors_capacitor.stack * 0.05 ) ) end,
 
+        toggle = function() if raid and talent.power_of_the_thunder_king.enabled then return "cooldowns" end end,
+
         startsCombat = false,
 
         handler = function ()
@@ -1895,6 +1897,8 @@ spec:RegisterAbilities( {
 
         talent = "strike_of_the_windlord",
         startsCombat = true,
+
+        toggle = function() if raid then return "cooldowns" end end,
 
         handler = function ()
             applyDebuff( "target", "strike_of_the_windlord" )
