@@ -1250,6 +1250,8 @@ spec:RegisterAbilities( {
         spend = function () return 20 * ( 1 - ( buff.the_emperors_capacitor.stack * 0.05 ) ) end,
         spendPerSec = function () return 20 * ( 1 - ( buff.the_emperors_capacitor.stack * 0.05 ) ) end,
 
+        toggle = function() if talent.last_emperors_capacitor.enabled then return "cooldowns" end end,
+
         startsCombat = false,
 
         handler = function ()
