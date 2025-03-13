@@ -1551,7 +1551,7 @@ spec:RegisterStateTable( "eclipse", setmetatable( {
         elseif eclipseType == "lunar" then
             eclipse.state = "IN_LUNAR"
             applyBuff( "eclipse_lunar", duration )
-            state:QueueAuraExpiration( "eclipse_lunar", ExitEclipse, buff.eclipse_solar.expires )
+            state:QueueAuraExpiration( "eclipse_lunar", ExitEclipse, buff.eclipse_lunar.expires )
             if talent.balance_of_all_things.enabled then applyBuff( "balance_of_all_things_arcane" ) end
         else
             eclipse.state = "IN_SOLAR"
@@ -1582,6 +1582,18 @@ spec:RegisterStateTable( "eclipse", setmetatable( {
         end
         -- Legacy
         if set_bonus.tier29_4pc > 0 then applyBuff( "touch_the_cosmos" ) end
+
+    end, state ),
+
+    advance = setfenv( function( spell )
+
+        if spell == "wrath" then
+            eclipse.wrath_counter = eclipse.wrath_counter - 1
+            if eclipse.wrath_counter == 0 then eclipse.trigger_eclipse( "lunar", 15 ) end
+        elseif spell == "starfire" then
+            eclipse.starfire_counter = eclipse.starfire_counter - 1
+            if starfire == 0 then eclipse.trigger_eclipse( "solar", 15 ) end
+        end
 
     end, state ),
 
@@ -2807,13 +2819,7 @@ spec:RegisterAbilities( {
             removeBuff( "gathering_starstuff" )
             if talent.natures_grace.enabled and buff.dreamstate.up then removeStack( "dreamstate" ) end
             if talent.dream_surge.enabled and buff.dream_burst.up then removeStack( "dream_burst" ) end
-
-            -- No lunar_calling talent check needed, the API call handles this already as the return is hard set to 0 with the talent enabled
-            if eclipse.starfire_counter == 1 then
-                eclipse.trigger_eclipse( "solar", 15 )
-            elseif eclipse.starfire_counter == 2 then
-                eclipse.starfire_counter = 1
-            end -- if the counter isn't 1 or 2, we don't care because it cannot affect eclipse in any way
+            if talent.lunar_calling.disabled then eclipse.advance( "starfire" ) end
 
             if buff.blooming_infusion.up then
                 removeBuff( "blooming_infusion" )
@@ -3218,11 +3224,7 @@ spec:RegisterAbilities( {
             removeBuff( "gathering_starstuff" )
             if talent.natures_grace.enabled and buff.dreamstate.up then removeStack( "dreamstate" ) end
 
-            if eclipse.wrath_counter == 1 then
-                eclipse.trigger_eclipse( "lunar", 15 )
-            elseif eclipse.wrath_counter == 2 then
-                eclipse.wrath_counter = 1
-            end -- if the counter isn't 1 or 2, we don't care because it cannot affect eclipse in any way
+            eclipse.advance( "wrath" )
 
             removeBuff( "dawning_sun" )
             if azerite.sunblaze.enabled then applyBuff( "sunblaze" ) end
