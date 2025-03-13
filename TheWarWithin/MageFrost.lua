@@ -1173,6 +1173,8 @@ spec:RegisterAbilities( {
         startsCombat = true,
         velocity = 35,
 
+        max_targets = function() return talent.fractured_frost.enabled and buff.icy_veins.up and min( 3, active_enemies ) or 1 end,
+
         usable = function ()
             if moving and settings.prevent_hardcasts and action.frostbolt.cast_time > buff.ice_floes.remains then return false, "prevent_hardcasts during movement and ice_floes is down" end
             return true
@@ -1196,7 +1198,7 @@ spec:RegisterAbilities( {
             end
 
             if talent.deaths_chill.enabled and buff.icy_veins.up then
-                addStack( "deaths_chill", buff.icy_veins.remains, 1 )
+                addStack( "deaths_chill", buff.icy_veins.remains, action.frostbolt.max_targets )
             end
 
 
@@ -1254,6 +1256,8 @@ spec:RegisterAbilities( {
         startsCombat = true,
         velocity = 35,
 
+        max_targets = function() return talent.fractured_frost.enabled and buff.icy_veins.up and min( 3, active_enemies ) or 1 end,
+
         usable = function ()
             if moving and settings.prevent_hardcasts and action.frostfire_bolt.cast_time > buff.ice_floes.remains then return false, "prevent_hardcasts during movement and ice_floes is down" end
             return true
@@ -1277,7 +1281,7 @@ spec:RegisterAbilities( {
             end
 
             if talent.deaths_chill.enabled and buff.icy_veins.up then
-                addStack( "deaths_chill", buff.icy_veins.remains, 1 )
+                addStack( "deaths_chill", buff.icy_veins.remains, action.frostfire_bolt.max_targets )
             end
 
 
