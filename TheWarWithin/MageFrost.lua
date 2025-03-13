@@ -1281,7 +1281,7 @@ spec:RegisterAbilities( {
             end
 
             if talent.deaths_chill.enabled and buff.icy_veins.up then
-                addStack( "deaths_chill", buff.icy_veins.remains, action.frostfire.max_targets )
+                addStack( "deaths_chill", buff.icy_veins.remains, action.frostfire_bolt.max_targets )
             end
 
 
