@@ -34,7 +34,8 @@ actions+=/rip,if=talent.veinripper&spell_targets=1&hero_tree.wildstalker&!(talen
 # fix to work with veinripper idk
 actions+=/rip,if=!talent.veinripper&spell_targets=1&hero_tree.wildstalker&buff.tigers_fury.up&(buff.bloodtalons.up|!talent.bloodtalons)&(combo_points>=3&refreshable&cooldown.tigers_fury.remains>25|buff.tigers_fury.remains<5&variable.rip_duration>cooldown.tigers_fury.remains&cooldown.tigers_fury.remains>=dot.rip.remains)
 actions+=/call_action_list,name=finisher,if=combo_points=5
-actions+=/call_action_list,name=builder,if=spell_targets.swipe_cat=1&(variable.time_to_pool<=0|!variable.need_bt|variable.proccing_bt)
+## [Syrif] - combo_points<5 is a workaround until the pool_resource entry can be investigated as its not being respected
+actions+=/call_action_list,name=builder,if=spell_targets.swipe_cat=1&(variable.time_to_pool<=0|!variable.need_bt|variable.proccing_bt)&combo_points<5
 actions+=/call_action_list,name=aoe_builder,if=spell_targets.swipe_cat>=2&combo_points<5&(variable.time_to_pool<=0|!variable.need_bt|variable.proccing_bt)
 actions+=/regrowth,if=buff.predatory_swiftness.up&variable.regrowth&selection_time>gcd.max
 
