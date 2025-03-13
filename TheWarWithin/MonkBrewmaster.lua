@@ -1201,7 +1201,7 @@ spec:RegisterAbilities( {
             if conduit.walk_with_the_ox.enabled and cooldown.invoke_niuzao.remains > 0 then reduceCooldown( "invoke_niuzao", 0.5 ) end
 
             if set_bonus.tww2 >= 4 and buff.opportunistic_strike.up then
-                reduceCooldown( "blackout_kick" )
+                reduceCooldown( "blackout_kick", 2 )
                 removeStack( "opportunistic_strike" )
             end
 
