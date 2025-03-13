@@ -940,7 +940,7 @@ spec:RegisterAbilities( {
             setDistance( 5 )
             applyDebuff( "target", "charge" )
             if legendary.reprisal.enabled then
-                applyBuff( "shield_block", 4 )
+                applyBuff( "shield_block", min( buff.shield_block.remains + 4, 3 * buff.shield_block.duration ) )
                 applyBuff( "revenge" )
                 gain( 20, "rage" )
             end
@@ -1228,7 +1228,7 @@ spec:RegisterAbilities( {
 
         handler = function ()
             if legendary.reprisal.enabled then
-                applyBuff( "shield_block", 4 )
+                applyBuff( "shield_block", min( buff.shield_block.remains + 4, 3 * buff.shield_block.duration ) )
                 applyBuff( "revenge" )
                 gain( 20, "rage" )
             end
@@ -1282,7 +1282,7 @@ spec:RegisterAbilities( {
             applyBuff( "last_stand" )
 
             if talent.bolster.enabled then
-                applyBuff( "shield_block", buff.last_stand.duration )
+                applyBuff( "shield_block", min( buff.shield_block.remains + buff.last_stand.duration, 3 * buff.shield_block.duration ) )
             end
 
             if talent.unnerving_focus.enabled then
@@ -1501,7 +1501,7 @@ spec:RegisterAbilities( {
         end,
 
         handler = function ()
-            applyBuff( "shield_block" )
+            applyBuff( "shield_block", min( buff.shield_block.remains + buff.shield_block.duration, 3 * buff.shield_block.duration ) )
         end,
     },
 
@@ -1524,7 +1524,7 @@ spec:RegisterAbilities( {
                 applyBuff( "battering_ram" )
             end
             if talent.champions_bulwark.enabled then
-                applyBuff( "shield_block" )
+                applyBuff( "shield_block", min( buff.shield_block.remains + buff.shield_block.duration, 3 * buff.shield_block.duration ) )
                 applyBuff( "revenge" )
             end
         end,
