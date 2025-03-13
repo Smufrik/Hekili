@@ -1898,6 +1898,8 @@ spec:RegisterAbilities( {
         talent = "strike_of_the_windlord",
         startsCombat = true,
 
+        toggle = function() if raid then return "cooldowns" end end,
+
         handler = function ()
             applyDebuff( "target", "strike_of_the_windlord" )
             -- if talent.darting_hurricane.enabled then addStack( "darting_hurricane", nil, 2 ) end
