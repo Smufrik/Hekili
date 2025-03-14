@@ -33,7 +33,7 @@ actions.aoe+=/variable,name=holding_crash,op=set,value=(variable.max_vts-active_
 actions.aoe+=/variable,name=manual_vts_applied,op=set,value=(active_dot.vampiric_touch+8*!variable.holding_crash)>=variable.max_vts|!variable.is_vt_possible
 
 # TODO: Add holding condition for weird fight times to potion with execute
-actions.cds+=/potion,if=(buff.voidform.up&buff.power_infusion.up|buff.dark_ascension.up)&(fight_remains>=320|time_to_bloodlust>=320|buff.bloodlust.react)|boss&fight_remains<=30
+actions.cds+=/potion,if=(buff.voidform.up&buff.power_infusion.up|buff.dark_ascension.up)&(fight_remains>=320|buff.bloodlust.up)|boss&fight_remains<=30
 actions.cds+=/fireblood,if=buff.power_infusion.up&(buff.voidform.up|buff.dark_ascension.up)|boss&fight_remains<=8
 actions.cds+=/berserking,if=buff.power_infusion.up&(buff.voidform.up|buff.dark_ascension.up)|boss&fight_remains<=12
 actions.cds+=/blood_fury,if=buff.power_infusion.up&(buff.voidform.up|buff.dark_ascension.up)|boss&fight_remains<=15
