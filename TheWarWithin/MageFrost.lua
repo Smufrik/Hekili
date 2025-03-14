@@ -1500,7 +1500,6 @@ spec:RegisterAbilities( {
 
         handler = function ()
             applyDebuff( "target", "ice_nova" )
-            removeDebuffStack( "target", "winters_chill" )
         end,
     },
 
