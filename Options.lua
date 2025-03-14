@@ -10653,7 +10653,10 @@ function Hekili:CmdLine( input )
         display     = "mode",
         target_swap = "cycle",
         swap        = "cycle",
-        covenants   = "essences"
+        covenants   = "essences",
+        apl         = "pack",
+        rotation    = "pack",
+        lost        = "lostmyui"
     }
     local arg3Aliases = {
         auto = "automatic",
@@ -10680,6 +10683,7 @@ function Hekili:CmdLine( input )
         stress   = function () self:RunStressTest() end,
         dotinfo  = function () self:DumpDotInfo( args[2] ) end,
         recover  = function () self:HandleRecoverCommand() end,
+        fix      = function () self:HandleFixCommand( args ) end,
     }
 
     -- Execute the corresponding command handler or show error message
@@ -10808,6 +10812,46 @@ function Hekili:HandleSetCommand( args )
     -- Invalid Toggle or Setting
     self:Print( "Invalid toggle or setting specified." )
     return true
+end
+
+function Hekili:HandleFixCommand( args )
+
+    local fixType = args[2] and args[2]:lower()  -- Convert to lowercase
+
+    if fixType == "pack" then
+        local pack = self.DB.profile.packs[ state.system.packName ]
+        Hekili.DB.profile.packs[ pack ] = nil
+        Hekili:RestoreDefault( pack )
+        Hekili:EmbedPackOptions()
+        Hekili:LoadScripts()
+        ACD:SelectGroup( "Hekili", "packs", pack )
+        if Hekili.DB.profile.notifications.enabled then Hekili:Notify( "Your pack has been reset to default" ) end
+        return true
+    end
+
+
+
+    func = function ()
+        Hekili.DB.profile.packs[ pack ] = nil
+        Hekili:RestoreDefault( pack )
+        Hekili:EmbedPackOptions()
+        Hekili:LoadScripts()
+        ACD:SelectGroup( "Hekili", "packs", pack )
+    end
+
+    if fixType == "lostmyui" then
+        -- Enable all displays
+        -- Set displays to center-top of screen
+        -- Set frame strata to something reasonable
+        -- Set alpha to 100%
+    end
+
+    if fixType == "toggles" then
+        -- Turn all toggles on
+        -- Set abilities back to their default toggles
+        -- Enable any manually disabled abilities
+    end
+
 end
 
 function Hekili:HandleSpecSetting( specSetting, specValue )
