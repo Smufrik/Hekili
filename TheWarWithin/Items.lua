@@ -1078,7 +1078,9 @@ all:RegisterAbilities( {
         gcd = "off",
         texture = 6218212,
 
-        known = function() return equipped.bestinslots and time > 0 end,
+        known = function() return equipped.bestinslots end,
+
+        usable = function() return time > 0, "Not usable out of combat" end,
 
         item = function() return equipped.bestinslots_caster and 232805 or 232526 end,
         toggle ="cooldowns",
