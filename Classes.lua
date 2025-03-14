@@ -2574,7 +2574,7 @@ all:RegisterAuras( {
             local amount = UnitGetTotalAbsorbs( unit )
 
             if amount > 0 then
-                t.name = ABSORB
+                -- t.name = ABSORB
                 t.count = 1
                 t.expires = now + 10
                 t.applied = now - 5
