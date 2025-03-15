@@ -45,7 +45,7 @@ actions.aoe+=/flame_shock,cycle_targets=1,if=cooldown.primordial_wave.remains<gc
 actions.aoe+=/primordial_wave,if=active_dot.flame_shock=active_enemies>?6|cooldown.liquid_magma_totem.remains>15|!talent.liquid_magma_totem
 actions.aoe+=/ancestral_swiftness
 # JUST DO IT! https://i.kym-cdn.com/entries/icons/mobile/000/018/147/Shia_LaBeouf__Just_Do_It__Motivational_Speech_(Original_Video_by_LaBeouf__R%C3%B6nkk%C3%B6___Turner)_0-4_screenshot.jpg
-actions.aoe+=/ascendance,if=(talent.first_ascendant|fight_remains>200|boss&fight_remains<90&buff.stormkeeper.stack>=2|buff.spymasters_web.up|!(trinket.1.is.spymasters_web|trinket.2.is.spymasters_web))&(buff.fury_of_storms.up|!talent.fury_of_the_storms)
+actions.aoe+=/ascendance,if=(buff.stormkeeper.stack>=2|buff.spymasters_web.up|!(trinket.1.is.spymasters_web|trinket.2.is.spymasters_web))&(buff.fury_of_storms.up|!talent.fury_of_the_storms)|boss&fight_remains<20
 # Surge of Power is strong and should be used. ??
 actions.aoe+=/tempest,cycle_targets=1,if=buff.arc_discharge.stack<2&(buff.surge_of_power.up|!talent.surge_of_power)
 actions.aoe+=/lightning_bolt,if=buff.stormkeeper.up&buff.surge_of_power.up&spell_targets.chain_lightning=2
@@ -89,7 +89,7 @@ actions.single_target+=/flame_shock,if=!dot.flame_shock.ticking&!buff.surge_of_p
 # Use Primordial Wave as much as possible.
 actions.single_target+=/primordial_wave
 actions.single_target+=/ancestral_swiftness
-actions.single_target+=/ascendance,if=(talent.first_ascendant|fight_remains>200|boss&fight_remains<80|buff.spymasters_web.up|(trinket.1.has_use_buff&trinket.1.ready_cooldown|trinket.2.has_use_buff&trinket.2.ready_cooldown)&!variable.special_items)&(buff.fury_of_storms.up|!talent.fury_of_the_storms)&(cooldown.primordial_wave.remains>25|!talent.primordial_wave)
+actions.single_target+=/ascendance,if=(buff.spymasters_web.up|(trinket.1.has_use_buff&trinket.1.ready_cooldown|trinket.2.has_use_buff&trinket.2.ready_cooldown)&!variable.special_items)&(buff.fury_of_storms.up|!talent.fury_of_the_storms)&(cooldown.primordial_wave.remains>25|!talent.primordial_wave)|boss&fight_remains<20
 # Surge of Power is strong and should be used.??
 actions.single_target+=/tempest,if=buff.surge_of_power.up
 actions.single_target+=/lightning_bolt,if=buff.surge_of_power.up
