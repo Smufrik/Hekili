@@ -690,6 +690,7 @@ local wc_spenders = {
     frostbolt = true,
     glacial_spike = true,
     ice_lance = true,
+    frostfire_bolt = true,
 }
 
 spec:RegisterStateExpr( "remaining_winters_chill", function ()
@@ -1499,7 +1500,6 @@ spec:RegisterAbilities( {
 
         handler = function ()
             applyDebuff( "target", "ice_nova" )
-            removeDebuffStack( "target", "winters_chill" )
         end,
     },
 
