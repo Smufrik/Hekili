@@ -1898,7 +1898,7 @@ spec:RegisterAbilities( {
 
     -- Talent: Causes the earth within $a1 yards of the target location to tremble and break, dealing $<damage> Physical damage over $d and has a $?s381743[${$77478s2+$381743S1)}.1][$77478s2]% chance to knock the enemy down.
     earthquake = {
-        id = function() return talent.earthquake_ground.enabled and 462620 or 61882 end,
+        id = function() return talent.earthquake_targeted.enabled and 462620 or 61882 end,
         cast = 0,
         cooldown = 0,
         gcd = "spell",
