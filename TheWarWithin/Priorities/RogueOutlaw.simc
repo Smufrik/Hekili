@@ -1,3 +1,6 @@
+## https://github.com/simulationcraft/simc/blob/thewarwithin/ActionPriorityLists/rogue_outlaw.simc
+## Up to date with SimC: December 23 2024 - 3ed492f
+
 actions.precombat+=/apply_poison
 actions.precombat+=/use_item,name=imperfect_ascendancy_serum
 actions.precombat+=/stealth,precombat_seconds=2
