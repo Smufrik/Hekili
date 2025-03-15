@@ -1570,7 +1570,7 @@ spec:RegisterAbilities( {
         talent = "chain_lightning",
         startsCombat = true,
 
-        cycle = "lightning_rod",
+        cycle = function() if talent.conductive_energy.enabled then return "lightning_rod" end end,
 
         handler = function ()
             local refund = ceil( buff.maelstrom_weapon.stack * 0.5 )
@@ -1825,7 +1825,7 @@ spec:RegisterAbilities( {
         talent = "elemental_blast",
         startsCombat = false,
 
-        cycle = "lightning_rod",
+        cycle = function() if talent.conductive_energy.enabled then return "lightning_rod" end end,
 
         handler = function ()
             consume_maelstrom()
@@ -2346,7 +2346,7 @@ spec:RegisterAbilities( {
         startsCombat = true,
         nobuff = "tempest",
 
-        cycle = "lightning_rod",
+        cycle = function() if talent.conductive_energy.enabled then return "lightning_rod" end end,
 
         handler = function ()
             consume_maelstrom()
@@ -2394,7 +2394,7 @@ spec:RegisterAbilities( {
         startsCombat = true,
         buff = "tempest",
 
-        cycle = "lightning_rod",
+        cycle = function() if talent.conductive_energy.enabled then return "lightning_rod" end end,
 
         handler = function ()
             consume_maelstrom()
@@ -3019,7 +3019,7 @@ spec:RegisterAbilities( {
         known = 17364,
 
         buff = "ascendance",
-        cycle = "lightning_rod",
+        cycle = function() if talent.conductive_energy.enabled then return "lightning_rod" end end,
 
         bind = "stormstrike",
 
