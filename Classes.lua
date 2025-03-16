@@ -364,7 +364,6 @@ local HekiliSpecMixin = {
         end
     end,
 
-
     RegisterPower = function( self, power, id, aura )
         self.powers[ power ] = id
         CommitKey( power )
@@ -567,6 +566,33 @@ local HekiliSpecMixin = {
         self.gear[ key ] = gear
         CommitKey( key )
     end,
+
+    RegisterGears = function( self, gears )
+        for key, data in pairs( gears ) do
+            local gear = self.gear[ key ] or {}
+
+            -- Register gear
+            if type( data.items ) == "table" then
+                for _, item in ipairs( data.items ) do
+                    table.insert( gear, item )
+                    gear[ item ] = true
+                end
+            else
+                table.insert( gear, data.items )
+                gear[ data.items ] = true
+            end
+
+            self.gear[ key ] = gear
+
+            -- Register auras provided by the gear
+            if data.auras then
+                self:RegisterAuras( data.auras )
+            end
+
+            CommitKey( key )
+        end
+    end,
+
 
     -- Check for the set bonus based on hidden aura instead of counting the number of equipped items.
     -- This may be useful for tier set items that are crafted so their item ID doesn't match.
@@ -1033,7 +1059,6 @@ local HekiliSpecMixin = {
             end
         end
     end,
-    
 
     RegisterPets = function( self, pets )
         for token, data in pairs( pets ) do
@@ -1051,7 +1076,6 @@ local HekiliSpecMixin = {
             end
         end
     end,
-
 
     RegisterTotem = function( self, token, id, ... )
         -- Register the primary totem.
