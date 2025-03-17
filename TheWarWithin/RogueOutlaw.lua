@@ -14,6 +14,8 @@ local PTR = ns.PTR
 local FindPlayerAuraByID = ns.FindPlayerAuraByID
 local strformat = string.format
 
+local CoupDeGrace = IsSpellOverlayed
+
 local spec = Hekili:NewSpecialization( 260 )
 
 spec:RegisterResource( Enum.PowerType.ComboPoints )
@@ -520,6 +522,8 @@ spec:RegisterAuras( {
 
 local lastShot = 0
 local numShots = 0
+local lastUnseenBlade = 0
+local disorientStacks = 0
 
 local rtbApplicators = {
     roll_the_bones = true,
@@ -551,6 +555,25 @@ spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _
         end
     end
 
+    -- Killing Spree grants 2 stacks of Disorienting Strikes.
+    if state.talent.disorienting_strikes.enabled and subtype == "SPELL_CAST_SUCCESS" and spellID == 51690 then
+        disorientStacks = 2
+    end
+
+     -- Sinister Strike (193315) or Ambush (8676) consumes 1 Disorienting Strike stack.
+     if (spellID == 193315 or spellID == 8676) and subtype == "SPELL_CAST_SUCCESS" then
+        disorientStacks = disorientStacks - 1
+
+    end
+
+    -- Unseen Blade damage event.
+    if subtype == "SPELL_DAMAGE" and spellID == 441144 then
+        if disorientStacks < 0 then -- If not bypassing the ICD
+            local now = GetTime()
+            lastUnseenBlade = now
+        end
+    end
+
     if spellID == 315508 then
         local now = GetTime()
 
@@ -573,6 +596,27 @@ end )
 
 spec:RegisterStateExpr( "rtb_buffs", function ()
     return buff.roll_the_bones.count
+end )
+
+spec:RegisterStateExpr( "last_unseen_blade", function ()
+    return lastUnseenBlade
+end )
+
+spec:RegisterStateExpr( "disorient_stacks", function ()
+    return disorientStacks
+end )
+
+spec:RegisterStateExpr( "unseen_blades_available", function ()
+    local count = 0
+
+    -- add 1 if the ICD is cooled down
+    if state.query_time - lastUnseenBlade >= 20 then count = count + 1 end
+
+    -- add the # of bypasses that are available
+    if disorientStacks > 0 then count = count + disorientStacks end
+
+    return count
+
 end )
 
 spec:RegisterStateExpr( "rtb_primary_remains", function ()
@@ -770,10 +814,19 @@ spec:RegisterStateExpr( "effective_combo_points", function ()
     return c
 end )
 
+-- Coup De Grace double cast bug, currently a 5% dps gain according to sims
+spec:RegisterStateExpr( "coup_de_bug", function ()
+
+    return talent.coup_de_grace.enabled and CoupDeGrace(2098) and prev_gcd[1].coup_de_grace and buff.adrenaline_rush.up
+
+end )
+
 
 -- We need to break stealth when we start combat from an ability.
 spec:RegisterHook( "runHandler", function( ability )
     local a = class.abilities[ ability ]
+
+    if ability ~= "coup_de_grace" then coup_de_bug = false end
 
     if stealthed.all and ( not a or a.startsCombat ) then
         if buff.stealth.up then
@@ -870,10 +923,9 @@ spec:RegisterHook( "reset_precast", function()
 
     class.abilities.apply_poison = class.abilities[ action.apply_poison_actual.next_poison ]
 
-    if talent.coup_de_grace.enabled and IsSpellOverlayed( 2098 ) then
+    if talent.coup_de_grace.enabled and CoupDeGrace( 2098 ) then
         applyBuff( "coup_de_grace" )
     end
-
 
     -- Debugging for Roll the Bones
     if Hekili.ActiveDebug and buff.roll_the_bones.up then
@@ -928,6 +980,8 @@ spec:RegisterHook( "reset_precast", function()
    --     end
    -- end
 end )
+
+
 
 
 -- Abilities
@@ -1106,9 +1160,9 @@ spec:RegisterAbilities( {
         end,
     },
 
-    -- Finishing move that dispatches the enemy, dealing damage per combo point:     1 point  : ${$m1*1} damage     2 points: ${$m1*2} damage     3 points: ${$m1*3} damage     4 points: ${$m1*4} damage     5 points: ${$m1*5} damage$?s193531|((s394320|s394321)&!s193531)[     6 points: ${$m1*6} damage][]$?s193531&(s394320|s394321)[     7 points: ${$m1*7} damage][]
+
     dispatch = {
-        id = function() return buff.coup_de_grace.up and 441776 or 2098 end,
+        id = 2098,
         cast = 0,
         cooldown = 0,
         gcd = "totem",
@@ -1120,6 +1174,8 @@ spec:RegisterAbilities( {
         startsCombat = true,
 
         usable = function() return combo_points.current > 0, "requires combo points" end,
+        nobuff = "coup_de_grace",
+
         handler = function ()
             removeBuff( "brutal_opportunist" )
 
@@ -1129,10 +1185,6 @@ spec:RegisterAbilities( {
                 addStack( "summarily_dispatched", ( buff.summarily_dispatched.up and buff.summarily_dispatched.remains or nil ), 1 )
             end
 
-            if buff.coup_de_grace.up then
-                if debuff.fazed.up then addStack( "flawless_form", nil, 5 ) end
-                removeBuff( "coup_de_grace" )
-            end
 
             if buff.slice_and_dice.up then
                 buff.slice_and_dice.expires = buff.slice_and_dice.expires + combo_points.current * 3
@@ -1144,7 +1196,39 @@ spec:RegisterAbilities( {
             removeStack( "supercharged_combo_points" )
         end,
 
-        copy = { 2098, "coup_de_grace", 441776 }
+        bind = "coup_de_grace"
+    },
+
+
+    -- Finishing move that dispatches the enemy, dealing damage per combo point:     1 point  : ${$m1*1} damage     2 points: ${$m1*2} damage     3 points: ${$m1*3} damage     4 points: ${$m1*4} damage     5 points: ${$m1*5} damage$?s193531|((s394320|s394321)&!s193531)[     6 points: ${$m1*6} damage][]$?s193531&(s394320|s394321)[     7 points: ${$m1*7} damage][]
+    coup_de_grace = {
+        id = 441776,
+        cast = 0,
+        cooldown = 0,
+        gcd = "totem",
+        school = "physical",
+
+        spend = function() return 35 * ( talent.tight_spender.enabled and 0.94 or 1 ) - ( 5 * buff.summarily_dispatched.stack ) end,
+        spendType = "energy",
+
+        startsCombat = true,
+
+        usable = function() return combo_points.current > 0, "requires combo points" end,
+        buff = "coup_de_grace",
+        talent = "coup_de_grace",
+
+        handler = function ()
+
+            spec.abilities.dispatch.handler()
+
+            if buff.coup_de_grace.up then
+                if debuff.fazed.up then addStack( "flawless_form", nil, 5 ) end
+                removeBuff( "coup_de_grace" )
+            end
+
+        end,
+
+        bind = "dispatch"
     },
 
     -- Talent: Strikes an enemy, dealing $s1 Physical damage and causing the target to take $s3% increased damage from your abilities for $d.    |cFFFFFFFFAwards $s2 combo $lpoint:points;.|r
@@ -1218,7 +1302,7 @@ spec:RegisterAbilities( {
     killing_spree = {
         id = 51690,
         cast = 0,
-        cooldown = 90,
+        cooldown = function() return 90 * ( talent.disorienting_strikes and 0.9 or 1 ) end,
         gcd = "totem",
         school = "physical",
 
@@ -1236,6 +1320,10 @@ spec:RegisterAbilities( {
             applyBuff( "killing_spree" )
             spend( combo_points.current, "combo_points" )
             removeStack( "supercharged_combo_points" )
+
+            if talent.disorienting_strikes.enabled then
+                unseen_blades_available = unseen_blades_available + 2
+            end
 
             if talent.flawless_form.enabled then addStack( "flawless_form" ) end
         end,
@@ -1367,6 +1455,39 @@ spec:RegisterAbilities( {
         end,
     },
 
+    ambush = {
+        id = 8676,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+
+        spend = 50,
+        spendType = "energy",
+
+        startsCombat = true,
+        usable = function () return stealthed.ambush or buff.audacity.up, "requires stealth or audacity/blindside/sepsis_buff" end,
+
+        cp_gain = function ()
+            return 2 + ( buff.broadside.up and 1 or 0 ) + talent.improved_ambush.rank + ( buff.cold_blood.up and not talent.inevitable_end.enabled and 1 or 0 )
+        end,
+
+        handler = function ()
+            gain( action.ambush.cp_gain, "combo_points" )
+
+            if buff.audacity.up then removeBuff( "audacity" ) end
+
+
+            if talent.unseen_blade.enabled and unseen_blades_available > 0 then
+                applyDebuff( "target", "fazed" )
+                addStack( "escalating_blade" )
+                if buff.escalating_blade.stack == 4 then applyBuff( "coup_de_grace" ) end
+            end
+
+        end,
+
+        copy = 430023,
+        bind = "sinister_strike"
+    },
 
     sinister_strike = {
         id = 193315,
@@ -1380,6 +1501,7 @@ spec:RegisterAbilities( {
 
         startsCombat = true,
         texture = 136189,
+        
 
         cp_gain = function () return 1 + ( buff.broadside.up and 1 or 0 ) end,
 
@@ -1387,15 +1509,10 @@ spec:RegisterAbilities( {
             gain( action.sinister_strike.cp_gain, "combo_points" )
             removeStack( "snake_eyes" )
 
-            if talent.unseen_blade.enabled and debuff.unseen_blade.down then
+            if talent.unseen_blade.enabled and unseen_blades_available > 0 then
                 applyDebuff( "target", "fazed" )
-                applyDebuff( "player", "unseen_blade" )
-                if buff.escalating_blade.stack == 3 then
-                    removeBuff( "escalating_blade" )
-                    applyBuff( "coup_de_grace" )
-                else
-                    addStack( "escalating_blade" )
-                end
+                addStack( "escalating_blade" )
+                if buff.escalating_blade.stack == 4 then applyBuff( "coup_de_grace" ) end
             end
 
             if talent.echoing_reprimand.enabled then removeBuff( "echoing_reprimand" ) end
@@ -1404,7 +1521,7 @@ spec:RegisterAbilities( {
 
         copy = 1752,
 
-        bind = function() return buff.audacity.down and "ambush" or nil end,
+        bind = "ambush",
     },
 
     smoke_bomb = {

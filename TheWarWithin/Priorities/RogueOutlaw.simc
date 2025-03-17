@@ -1,5 +1,5 @@
 ## https://github.com/simulationcraft/simc/blob/thewarwithin/ActionPriorityLists/rogue_outlaw.simc
-## Up to date with SimC: March 15 2025 - b539d20
+## Up to date with SimC: December 23 2024 - 3ed492f
 
 actions.precombat+=/apply_poison
 actions.precombat+=/use_item,name=imperfect_ascendancy_serum
@@ -19,7 +19,7 @@ actions+=/variable,name=finish_condition,value=combo_points>=cp_max_spend-1-(ste
 actions+=/call_action_list,name=cds
 # High priority stealth list, will fall through if no conditions are met.
 actions+=/call_action_list,name=stealth,strict=1,if=stealthed.all
-actions+=/call_action_list,name=finish,strict=1,if=variable.finish_condition
+actions+=/call_action_list,name=finish,strict=1,if=variable.finish_condition|coup_de_bug
 actions+=/call_action_list,name=build
 actions+=/arcane_torrent,if=energy.base_deficit>=15+energy.regen
 actions+=/arcane_pulse
@@ -87,9 +87,12 @@ actions.cds+=/ancestral_call
 actions.cds+=/use_items,slots=trinket1,if=buff.between_the_eyes.up|trinket.1.has_stat.any_dps|boss&fight_remains<=20
 actions.cds+=/use_items,slots=trinket2,if=buff.between_the_eyes.up|trinket.2.has_stat.any_dps|boss&fight_remains<=20
 
-# Finishers Use Between the Eyes outside of Stealth to maintain the buff, or with Ruthless Precision active, or to proc Greenskins Wickers if not active. Trickster builds can also send BtE on cooldown.
-actions.finish=between_the_eyes,if=(buff.ruthless_precision.up|buff.between_the_eyes.remains<4|!talent.mean_streak)&(!buff.greenskins_wickers.up|!talent.greenskins_wickers)
+# Finishers Use Between the Eyes to keep the crit buff up, but on cooldown if Improved/Greenskins, and avoid overriding Greenskins
+actions.finish+=/between_the_eyes,if=!talent.crackshot&(buff.between_the_eyes.remains<4|talent.improved_between_the_eyes|talent.greenskins_wickers)&!buff.greenskins_wickers.up
+# Crackshot builds use Between the Eyes outside of Stealth to refresh the Between the Eyes crit buff or on cd with the Ruthless Precision buff
+actions.finish+=/between_the_eyes,if=talent.crackshot&(buff.ruthless_precision.up|buff.between_the_eyes.remains<4|!talent.keep_it_rolling|!talent.mean_streak)
 actions.finish+=/cold_blood
+## actions.finish+=/coup_de_grace,if=!debuff.fazed.up
 actions.finish+=/coup_de_grace
 actions.finish+=/dispatch
 
