@@ -558,7 +558,7 @@ spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _
     end
 
      -- Sinister Strike (193315) or Ambush (8676) consumes 1 Disorienting Strike stack.
-     if (spellID == 193315 or spellID == 8676) and subtype == "SPELL_CAST_SUCCESS" then
+     if ( spellID == 193315 or spellID == 8676 ) and subtype == "SPELL_CAST_SUCCESS" then
         disorientStacks = disorientStacks - 1
     end
 
@@ -830,7 +830,7 @@ end )
 
 -- Coup De Grace double cast bug, currently a 5% dps gain according to sims
 spec:RegisterStateExpr( "coup_de_bug", function ()
-    return talent.coup_de_grace.enabled and IsSpellOverlayed(2098) and prev_gcd[1].coup_de_grace and buff.adrenaline_rush.up
+    return talent.coup_de_grace.enabled and IsSpellOverlayed( 2098 ) and prev_gcd[ 1 ].coup_de_grace and buff.adrenaline_rush.up
 end )
 
 -- We need to break stealth when we start combat from an ability.
