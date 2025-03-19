@@ -1080,7 +1080,7 @@ spec:RegisterAbilities( {
             if talent.wildfire_arsenal.enabled then addStack( "wildfire_arsenal", nil, 3 ) end
 
             -- Hero Talents
-            if talent.howl_of_the_pack_leader.enabled then howl_summon.trigger_summon( true ) end
+            if talent.lead_from_the_front.enabled then howl_summon.trigger_summon( true ) end
         end,
     },
 
