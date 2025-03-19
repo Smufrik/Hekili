@@ -11517,6 +11517,7 @@ do
         { "target"                                          , "target.unit"                             },
         { "player"                                          , "player.unit"                             },
         { "gcd"                                             , "gcd.max"                                 },
+        { "howl_summon%.([%w_]+)%.([%w_]+)"                 , "howl_summon.%1_%2"                       },
 
         { "equipped%.(%d+)", nil, function( item )
             item = tonumber( item )
