@@ -552,45 +552,70 @@ local HekiliSpecMixin = {
         end )
     end,
 
-    RegisterGear = function( self, key, ... )
-        local n = select( "#", ... )
+    RegisterGear = function( self, ... )
+        local arg1 = select( 1, ... )
+        if not arg1 then return end
 
-        local gear = self.gear[ key ] or {}
-
-        for i = 1, n do
-            local item = select( i, ... )
-            table.insert( gear, item )
-            gear[ item ] = true
+        -- If the first arg is a table, it's registering multiple items/sets
+        if type( arg1 ) == "table" then
+            for set, data in pairs( arg1 ) do
+                self:RegisterGear( set, data )
+            end
+            return
         end
 
-        self.gear[ key ] = gear
-        CommitKey( key )
-    end,
+        local arg2 = select( 2, ... )
+        if not arg2 then return end
 
-    RegisterGears = function( self, gears )
-        for key, data in pairs( gears ) do
-            local gear = self.gear[ key ] or {}
+        -- If the first arg is a string, register it
+        if type( arg1 ) == "string" then
+            local gear = self.gear[ arg1 ] or {}
+            local found = false
 
-            -- Register gear
-            if type( data.items ) == "table" then
-                for _, item in ipairs( data.items ) do
+            -- If the second arg is a table, it's a tier set with auras
+            if type( arg2 ) == "table" then
+                if arg2.items then
+                    for _, item in ipairs( arg2.items ) do
+                        table.insert( gear, item )
+                        gear[ item ] = true
+                        found = true
+                    end
+                end
+
+                if arg2.auras then
+                    -- Register auras (even if no items are found, can be useful for early patch testing).
+                    self:RegisterAuras( arg2.auras )
+                end
+            end
+
+            -- If the second arg is a number, this is a legacy registration with a single set/item
+            if type( arg2 ) == "number" then
+                local n = select( "#", ... )
+                local item, i = arg2, 3
+
+                while item do
                     table.insert( gear, item )
                     gear[ item ] = true
+                    found = true
+
+                    i = i + 1
+                    item = select( i, ... )
                 end
+            end
+
+            if found then
+                self.gear[ arg1 ] = gear
+                CommitKey( arg1 )
             else
-                table.insert( gear, data.items )
-                gear[ data.items ] = true
+                -- No valid items found, remove the set.
+                self.gear[ arg1 ] = nil
             end
 
-            self.gear[ key ] = gear
-
-            -- Register auras provided by the gear
-            if data.auras then
-                self:RegisterAuras( data.auras )
-            end
-
-            CommitKey( key )
+            return
         end
+
+        -- Debug print if needed
+        -- Hekili:Print( "|cFFFF0000[Hekili]|r Invalid input passed to RegisterGear." )
     end,
 
 

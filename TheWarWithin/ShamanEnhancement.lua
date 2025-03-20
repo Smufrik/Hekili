@@ -1338,7 +1338,7 @@ spec:RegisterHook( "runHandler", function( action )
 end )
 
 
-spec:RegisterGears({
+spec:RegisterGear({
     tww2 = {
         items = { 229260, 229261, 229262, 229263, 229265 },
         auras = {
