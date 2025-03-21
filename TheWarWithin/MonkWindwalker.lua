@@ -1076,13 +1076,11 @@ do
         1.4 * 0.25,
         1.4 * 0.5,
         1.4 * 0.75,
-        1.4,
+        1.4
     }
 
     empowered_cast_time = setfenv( function()
-        local power_level = args.empower_to or max_empower
-
-        return stages[ power_level ] * haste
+        return stages[ args.empower_to or ( args.max_empower == 1 and max_empower ) or 1 ] * haste
     end, state )
 end
 
