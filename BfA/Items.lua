@@ -636,6 +636,7 @@ do
         cast = 0,
         cooldown = 120,
         gcd = "off",
+        known = function () return equipped.hyperthread_wristwraps end,
 
         item = 168989,
         toggle = "cooldowns",

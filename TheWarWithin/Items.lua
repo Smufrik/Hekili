@@ -1045,19 +1045,45 @@ all:RegisterAbilities( {
         }
     },
 
+
+   --[[ reconfiguring_for_melee_combat = {
+        id = 473401,
+        item = 232805,
+        cast = 5,
+        cooldown = 30,
+        gcd = "spell",
+
+        texture = 6218212,
+
+        known = function() return equipped.bestinslots_caster and not ( InCombatLockdown() or time > 0 ) and spec.primaryStat ~= "intellect" end,
+    },
+
+    reconfiguring_for_spell_Casting = {
+        id = 473400,
+        item = 232526,
+        cast = 5,
+        cooldown = 30,
+        gcd = "spell",
+
+        texture = 6218212,
+
+        known = function() return equipped.bestinslots_melee and not ( InCombatLockdown() or time > 0 ) and spec.primaryStat == "intellect" end,
+
+    },--]]
+
     bestinslots = {
-        cast = function() return time > 0 and 0 or 5 end,
-        cooldown = function() return time > 0 and 120 or 30 end,
-        gcd = function() return time > 0 and "off" or "spell" end,
+        id = 473402,
+        cast = 0,
+        cooldown = 120,
+        gcd = "off",
+        texture = 6218212,
+
+        known = function() return equipped.bestinslots end,
+
+        usable = function() return time > 0, "Not usable out of combat" end,
 
         item = function() return equipped.bestinslots_caster and 232805 or 232526 end,
-        toggle = function() return time > 0 and "cooldowns" or "default" end,
-
-        -- During combat, usable. Outside of combat, only usable if your weapon type doesn't match your mainstat
-        usable = function()
-            if time > 0 then return true end
-            return equipped.bestinslots_caster and spec.primaryStat ~= "intellect" or equipped.bestinslots_melee and spec.primaryStat == "intellect" or false
-        end,
+        toggle ="cooldowns",
 
         proc = "secondary",
         self_buff = "cheating",

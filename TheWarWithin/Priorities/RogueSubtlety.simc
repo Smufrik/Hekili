@@ -1,3 +1,6 @@
+## https://github.com/simulationcraft/simc/commits/thewarwithin/ActionPriorityLists/rogue_subtlety.simc
+## Up to date with SimC: February 25 2025 - 5d5dfd2
+
 actions.precombat+=/apply_poison
 # Swap to priority rotation if the variable is enabled
 actions.precombat+=/variable,name=priority_rotation,value=toggle.funnel
