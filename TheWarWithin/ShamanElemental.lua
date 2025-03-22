@@ -2792,7 +2792,7 @@ spec:RegisterAbilities( {
             if talent.call_of_the_ancestors.enabled then
                 applyBuff( "call_of_the_ancestors" )
             end
-            gain_maelstrom( 3 )
+            gain_maelstrom( 12 )
             if talent.conductive_energy.enabled then active_dot.lightning_rod = min( active_enemies, max( active_dot.lightning_rod, active_dot.flame_shock ) ) end
 
             removeBuff( "echoing_shock" )

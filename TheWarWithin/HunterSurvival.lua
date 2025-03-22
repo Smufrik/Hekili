@@ -365,7 +365,7 @@ spec:RegisterAuras( {
     },
     howl_of_the_pack_leader_cooldown = {
         id = 471877,
-        duration = function() return 30 - ( 5 * talent.better_together.rank ) end,
+        duration = function() return 25 - ( 5 * talent.better_together.rank ) end,
         max_stack = 1
     },
     howl_of_the_pack_leader_bear = {
@@ -822,7 +822,7 @@ spec:RegisterStateTable( "howl_summon", setmetatable( {
             end
 
             if buff.howl_of_the_pack_leader_cooldown.down then applyBuff( "howl_of_the_pack_leader_cooldown" )
-            elseif talent.dire_summons.enabled then buff.howl_of_the_pack_leader_cooldown.expires = buff.howl_of_the_pack_leader_cooldown.expires - 1
+            elseif talent.dire_summons.enabled then buff.howl_of_the_pack_leader_cooldown.expires = buff.howl_of_the_pack_leader_cooldown.expires - 2
             end
         end
     end, state ),
@@ -1267,7 +1267,7 @@ spec:RegisterAbilities( {
     },
     howl_of_the_pack_leader = {
         cast = 0,
-        cooldown = function() return 30 - ( 5 * talent.better_together.rank ) end,
+        cooldown = function() return 25 - ( 5 * talent.better_together.rank ) end,
         gcd = "off",
         hidden = true,
     },

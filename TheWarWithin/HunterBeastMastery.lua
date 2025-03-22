@@ -495,7 +495,7 @@ spec:RegisterAuras( {
     },
     black_arrow = {
         id = 468572,
-        duration = 10,
+        duration = 14,
         tick_time = 2,
         max_stack = 1
     },
