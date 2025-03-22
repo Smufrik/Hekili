@@ -10660,7 +10660,10 @@ function Hekili:CmdLine( input )
     end
 
     -- Alias maps for argument substitutions
-    local arg1Aliases = { prio = "priority" }
+    local arg1Aliases = { 
+        prio        = "priority",
+        snap        = "snapshot"
+    }
     local arg2Aliases = {
         cd          = "cooldowns",
         cds         = "cooldowns",
@@ -10671,11 +10674,12 @@ function Hekili:CmdLine( input )
         covenants   = "essences",
         apl         = "pack",
         rotation    = "pack",
-        lost        = "lostmyui"
+        lost        = "lostmyui",
+
     }
     local arg3Aliases = {
-        auto = "automatic",
-        pi   = "infusion",
+        auto        = "automatic",
+        pi          = "infusion",
     }
 
     -- Apply aliases to arguments
@@ -10699,6 +10703,7 @@ function Hekili:CmdLine( input )
         dotinfo  = function () self:DumpDotInfo( args[2] ) end,
         recover  = function () self:HandleRecoverCommand() end,
         fix      = function () self:HandleFixCommand( args ) end,
+        snapshot = function () self:MakeSnapshot() end
     }
 
     -- Execute the corresponding command handler or show error message
@@ -10840,18 +10845,8 @@ function Hekili:HandleFixCommand( args )
         Hekili:EmbedPackOptions()
         Hekili:LoadScripts()
         ACD:SelectGroup( "Hekili", "packs", pack )
-        if Hekili.DB.profile.notifications.enabled then Hekili:Notify( "Your pack has been reset to default" ) end
+        if Hekili.DB.profile.notifications.enabled then Hekili:Notify( "Your pack has been reset to default", 6 ) end
         return true
-    end
-
-
-
-    func = function ()
-        Hekili.DB.profile.packs[ pack ] = nil
-        Hekili:RestoreDefault( pack )
-        Hekili:EmbedPackOptions()
-        Hekili:LoadScripts()
-        ACD:SelectGroup( "Hekili", "packs", pack )
     end
 
     if fixType == "lostmyui" then
@@ -10862,11 +10857,16 @@ function Hekili:HandleFixCommand( args )
     end
 
     if fixType == "toggles" then
-        -- Turn all toggles on
-        -- Set abilities back to their default toggles
-        -- Enable any manually disabled abilities
+        local profile = Hekili.DB.profile.toggles
+        for i, toggle in ipairs( profile ) do
+            local toggleState = profile[ toggle ].value
+            if toggleState ~= nil then
+                toggleState = true
+                self:ForceUpdate( "CLI_TOGGLE" )
+            end
+        Hekili:Print( "Your toggles have been enabled" )
+        end
     end
-
 end
 
 function Hekili:HandleSpecSetting( specSetting, specValue )
