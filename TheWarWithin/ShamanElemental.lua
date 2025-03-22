@@ -1004,14 +1004,22 @@ spec:RegisterHook( "runHandler", function( action )
 
     if talent.elemental_equilibrium.enabled and elemental_equilibrium.ready then
         local ability = class.abilities[ action ]
-        if ability and ability.startsCombat and ability.school then
-            elemental_equilibrium.register_damage( ability.school, query_time )
+        if ability and ability.startsCombat and eeSchools[ ability.school ] then
+            elemental_equilibrium.register_damage( ability.school )
         end
     end
 end )
 
 local fireDamage, frostDamage, natureDamage, lastEEApplied = 0, 0, 0, 0
 local stormkeeperCastStart, stormkeeperLastProc = 0, 0
+
+local eeSchools = {
+    "fire",
+    "frost",
+    "nature",
+    "volcanic",
+    "elemental"
+}
 
 local further_beyond_duration_remains, fbSpells = 0, {
     earth_shock = 1,
@@ -1090,23 +1098,10 @@ spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _
 
         if state.talent.elemental_equilibrium.enabled then
             if ( subtype == "SPELL_DAMAGE" or subtype == "SPELL_PERIODIC_DAMAGE" ) then
-
-                if school == 4 then -- fire
-                    fireDamage = GetTime()
-                elseif school == 16 then -- frost
-                    frostDamage = GetTime()
-                elseif school == 8 then -- nature
-                    natureDamage = GetTime()
-                elseif school == 12 then -- volcanic
-                    fireDamage = GetTime()
-                    natureDamage = GetTime()
-                elseif school == 28 then -- elemental
-                    fireDamage = GetTime()
-                    frostDamage = GetTime()
-                    natureDamage = GetTime()
-                end
-            end
-            if subtype == "SPELL_AURA_APPLIED" and ( spellID == 378275 or spellID == 347348 ) then
+                if bit.band( school, 4  ) > 0 then fireDamage   = GetTime() end
+                if bit.band( school, 16 ) > 0 then frostDamage  = GetTime() end
+                if bit.band( school, 8  ) > 0 then natureDamage = GetTime() end
+            elseif subtype == "SPELL_AURA_APPLIED" and ( spellID == 378275 or spellID == 347348 ) then
                 lastEEApplied = GetTime()
             end
         end
@@ -1232,8 +1227,10 @@ spec:RegisterStateTable( "earth_elemental", setmetatable( { onReset = function( 
 } ) )
 
 spec:RegisterStateTable( "elemental_equilibrium", setmetatable( {
-
-    state = "READY", -- READY, ACTIVE, COOLDOWN
+    -- READY, ACTIVE, COOLDOWN
+    state = function()
+        return buff.elemental_equilibrium.remains and "ACTIVE" or ( elemental_equilibrium.last_application + 30 - state.query_time ) > 0 and "COOLDOWN" or "READY"
+    end,
     last_application = 0,
     last_fire = 0,
     last_frost = 0,
@@ -1259,24 +1256,11 @@ spec:RegisterStateTable( "elemental_equilibrium", setmetatable( {
 
     end, state ),
 
-    register_damage = setfenv( function( school, now )
+    register_damage = setfenv( function( school )
 
-        if school == "fire" then
-            elemental_equilibrium.last_fire = now
-        elseif school == "frost" then
-            elemental_equilibrium.last_frost = now
-        elseif school == "nature" then
-            elemental_equilibrium.last_nature = now
-        elseif school == "volcanic" then
-            elemental_equilibrium.last_fire = now
-            elemental_equilibrium.last_nature = now
-        elseif school == "elemental" then
-            elemental_equilibrium.last_fire = now
-            elemental_equilibrium.last_frost = now
-            elemental_equilibrium.last_nature = now
-        else
-            return
-        end
+        elemental_equilibrium.last_fire = ( school == "fire" or school == "volcanic" or school == "elemental" ) and query_time or elemental_equilibrium.last_fire
+        elemental_equilibrium.last_frost = ( school == "frost" or school == "elemental" ) and query_time or elemental_equilibrium.last_frost
+        elemental_equilibrium.last_nature = ( school == "nature" or school == "volcanic" or school == "elemental" ) and query_time or elemental_equilibrium.last_nature
 
         if max( elemental_equilibrium.last_fire, elemental_equilibrium.last_frost, elemental_equilibrium.last_nature ) - min( elemental_equilibrium.last_fire, elemental_equilibrium.last_frost, elemental_equilibrium.last_nature ) < 10 then
             applyBuff( "elemental_equilibrium" )
@@ -1288,7 +1272,6 @@ spec:RegisterStateTable( "elemental_equilibrium", setmetatable( {
 
 }, {
     __index = function( t, k )
-        local now = state.query_time
         if k == "ready" then
             return elemental_equilibrium.state == "READY"
         elseif k == "active" then
@@ -1296,15 +1279,15 @@ spec:RegisterStateTable( "elemental_equilibrium", setmetatable( {
         elseif k == "cooldown" then
             return elemental_equilibrium.state == "COOLDOWN"
         elseif k == "needs_frost" then
-            return elemental_equilibrium.state == "READY" and ( now - elemental_equilibrium.last_frost > 10 )
+            return elemental_equilibrium.state == "READY" and ( query_time - elemental_equilibrium.last_frost > 10 )
         elseif k == "needs_fire" then
-            return elemental_equilibrium.state == "READY" and ( now - elemental_equilibrium.last_fire > 10 )
+            return elemental_equilibrium.state == "READY" and ( query_time - elemental_equilibrium.last_fire > 10 )
         elseif k == "needs_nature" then
-            return elemental_equilibrium.state == "READY" and ( now - elemental_equilibrium.last_nature > 10 )
+            return elemental_equilibrium.state == "READY" and ( query_time - elemental_equilibrium.last_nature > 10 )
         elseif k == "cycle_started" then
-            return elemental_equilibrium.state == "READY" and min( now - elemental_equilibrium.last_nature, now - elemental_equilibrium.last_fire, now - elemental_equilibrium.last_frost ) < 10
+            return elemental_equilibrium.state == "READY" and min( query_time - elemental_equilibrium.last_nature, query_time - elemental_equilibrium.last_fire, query_time - elemental_equilibrium.last_frost ) < 10
         elseif k == "time_to_ready" then
-            return max( 0, elemental_equilibrium.last_application + 30 - now )
+            return max( 0, elemental_equilibrium.last_application + 30 - query_time )
         end
     end
 } ) )
