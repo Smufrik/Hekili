@@ -1894,20 +1894,21 @@ all:RegisterAuras( {
                     t.v3 = 0
                     t.caster = unit
 
-                    if unit == "target" and Hekili.DB.profile.toggles.interrupts.filterCasts then
+                    if unit ~= "target" then return end
+
+                    if state.target.is_dummy then
+                        -- Pretend that all casts by target dummies are interruptible.
+                        if Hekili.ActiveDebug then Hekili:Debug( "Cast '%s' is fake-interruptible", spell ) end
+                        t.v2 = 0
+
+                    elseif Hekili.DB.profile.toggles.interrupts.filterCasts then
                         local filters = class.interruptibleFilters
                         local zone = state.instance_id
                         local npcid = state.target.npcid or -1
 
-                        if filters then
-                            local interruptible = filters[ zone ][ npcid ][ spellID ]
-
-                            if not interruptible then
-                                if Hekili.ActiveDebug then Hekili:Debug( "Cast '%s' not interruptible per user preference.", spell ) end
-                                t.v2 = 1
-                            elseif interruptible == "testing" then
-                                t.v2 = 0
-                            end
+                        if filters and not filters[ zone ][ npcid ][ spellID ] then
+                            if Hekili.ActiveDebug then Hekili:Debug( "Cast '%s' not interruptible per user preference.", spell ) end
+                            t.v2 = 1
                         end
                     end
 
@@ -1932,20 +1933,24 @@ all:RegisterAuras( {
 
                     if class.abilities[ spellID ] and class.abilities[ spellID ].dontChannel then
                         removeBuff( "casting" )
-                    elseif unit == "target" and Hekili.DB.profile.filterCasts then
-                        local filters = Hekili.DB.profile.castFilters
+                        return
+                    end
+
+                    if unit ~= "target" then return end
+
+                    if state.target.is_dummy then
+                        -- Pretend that all casts by target dummies are interruptible.
+                        if Hekili.ActiveDebug then Hekili:Debug( "Channel '%s' is fake-interruptible", spell ) end
+                        t.v2 = 0
+
+                    elseif Hekili.DB.profile.toggles.interrupts.filterCasts then
+                        local filters = class.interruptibleFilters
                         local zone = state.instance_id
                         local npcid = state.target.npcid or -1
 
-                        if filters then
-                            local interruptible = filters[ zone ][ npcid ][ spellID ]
-
-                            if not interruptible then
-                                if Hekili.ActiveDebug then Hekili:Debug( "Cast '%s' not interruptible per user preference.", spell ) end
-                                t.v2 = 1
-                            elseif interruptible == "testing" then
-                                t.v2 = 0
-                            end
+                        if filters and not filters[ zone ][ npcid ][ spellID ] then
+                            if Hekili.ActiveDebug then Hekili:Debug( "Channel '%s' not interruptible per user preference.", spell ) end
+                            t.v2 = 1
                         end
                     end
 
