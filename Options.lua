@@ -10836,16 +10836,29 @@ end
 
 function Hekili:HandleFixCommand( args )
 
+    local profile = Hekili.DB.profile
+    -- On any fix command, ensure the addon is enabled
+    profile.enabled = true
+
     local fixType = args[2] and args[2]:lower()  -- Convert to lowercase
 
     if fixType == "pack" then
-        local pack = self.DB.profile.packs[ state.system.packName ]
-        Hekili.DB.profile.packs[ pack ] = nil
-        Hekili:RestoreDefault( pack )
+        local packName = state.system.packName
+        local pack = profile.packs[ packName ]
+
+        if not pack or not pack.builtIn then
+            return false
+        end
+
+        profile.packs[ packName ] = nil
+        Hekili:RestoreDefault( packName )
         Hekili:EmbedPackOptions()
         Hekili:LoadScripts()
-        ACD:SelectGroup( "Hekili", "packs", pack )
-        if Hekili.DB.profile.notifications.enabled then Hekili:Notify( "Your pack has been reset to default", 6 ) end
+        ACD:SelectGroup( "Hekili", "packs", packName )
+        if profile.notifications.enabled then
+            Hekili:Notify( "Your pack has been reset to default", 6 )
+        end
+
         return true
     end
 
@@ -10857,7 +10870,6 @@ function Hekili:HandleFixCommand( args )
     end
 
     if fixType == "toggles" then
-        local profile = Hekili.DB.profile.toggles
         for i, toggle in ipairs( profile ) do
             local toggleState = profile[ toggle ].value
             if toggleState ~= nil then
@@ -10866,6 +10878,10 @@ function Hekili:HandleFixCommand( args )
             end
         Hekili:Print( "Your toggles have been enabled" )
         end
+    end
+
+    if fixtype == "interrupts" then
+        
     end
 end
 
