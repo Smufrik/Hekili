@@ -10656,11 +10656,11 @@ function Hekili:CmdLine( input )
     -- Parse arguments into a table
     local args = {}
     for arg in string.gmatch( input, "%S+" ) do
-        table.insert( args, arg:lower() )
+        table.insert( args, arg )
     end
 
     -- Alias maps for argument substitutions
-    local arg1Aliases = { 
+    local arg1Aliases = {
         prio        = "priority",
         snap        = "snapshot"
     }
@@ -10683,9 +10683,9 @@ function Hekili:CmdLine( input )
     }
 
     -- Apply aliases to arguments
-    if args[1] and arg1Aliases[ args[1] ] then args[1] = arg1Aliases[ args[1] ] end
-    if args[2] and arg2Aliases[ args[2] ] then args[2] = arg2Aliases[ args[2] ] end
-    if args[3] and arg3Aliases[ args[3] ] then args[3] = arg3Aliases[ args[3] ] end
+    if args[1] and arg1Aliases[ args[1]:lower() ] then args[1] = arg1Aliases[ args[1]:lower() ] end
+    if args[2] and arg2Aliases[ args[2]:lower() ] then args[2] = arg2Aliases[ args[2]:lower() ] end
+    if args[3] and arg3Aliases[ args[3]:lower() ] then args[3] = arg3Aliases[ args[3]:lower() ] end
 
     local command = args[1]
 
@@ -10836,8 +10836,9 @@ end
 
 function Hekili:HandleFixCommand( args )
 
-    local profile = Hekili.DB.profile
-    -- On any fix command, ensure the addon is enabled
+    local DB = Hekili.DB
+    local profile = DB.profile
+    local defaults = DB.defaults
     profile.enabled = true
 
     local fixType = args[2] and args[2]:lower()  -- Convert to lowercase
@@ -10863,26 +10864,84 @@ function Hekili:HandleFixCommand( args )
     end
 
     if fixType == "lostmyui" then
-        -- Enable all displays
-        -- Set displays to center-top of screen
-        -- Set frame strata to something reasonable
-        -- Set alpha to 100%
+        local displays = profile.displays
+        local displayDefaults = defaults.profile.displays
+
+        for name, display in pairs( displays ) do
+            if type( display ) == "table" then
+                -- Pull defaults if they exist
+                local def = displayDefaults[ name ]
+
+                display.enabled = true
+                display.frameStrata = "DIALOG"
+
+                -- Reset anchor and position (use defaults if available)
+                display.relativeTo = def and def.relativeTo or "SCREEN"
+                display.anchorPoint = def and def.anchorPoint or "BOTTOM"
+                display.displayPoint = def and def.displayPoint or "TOP"
+                display.x = def and def.x or 0
+                display.y = def and def.y or -200
+
+                -- Ensure visibility is sane
+                display.visibility = display.visibility or {}
+                display.visibility.pve = display.visibility.pve or {}
+                display.visibility.pvp = display.visibility.pvp or {}
+                display.visibility.pve.alpha = 1
+                display.visibility.pvp.alpha = 1
+            end
+        end
+
+        -- Reset display mode to automatic.
+        self:SetMode( "automatic" )
+
+        self:Print( "Your UI displays have been restored to default positions and visibility." )
+        self:BuildUI()
+        self:UpdateDisplayVisibility()
+        self:ForceUpdate( "CLI_TOGGLE" )
+        return true
     end
 
     if fixType == "toggles" then
-        for i, toggle in ipairs( profile ) do
-            local toggleState = profile[ toggle ].value
-            if toggleState ~= nil then
-                toggleState = true
-                self:ForceUpdate( "CLI_TOGGLE" )
+        for name, toggle in pairs( profile.toggles ) do
+            if type( toggle ) == "table" and toggle.value ~= nil then
+                if name == "mode" then
+                    -- Skip mode toggle.
+                elseif name == "funnel" then
+                    self:FireToggle( name, "off" )
+                else
+                    self:FireToggle( name, "on" )
+                end
             end
-        Hekili:Print( "Your toggles have been enabled" )
         end
+
+        self:Print( "All standard toggles have been fixed (enabled), except 'funnel' (disabled) and 'mode' (unchanged)." )
+        return true
     end
 
-    if fixtype == "interrupts" then
-        
+    if fixType == "interrupts" then
+        local interrupts = profile.toggles.interrupts
+        self:FireToggle( "interrupts", "on" )
+
+        if type( interrupts ) == "table" then
+            interrupts.separate = true
+        end
+
+        interrupts.castRemainingThreshold = defaults.profile.castRemainingThreshold
+        interrupts.filterCasts = defaults.profile.filterCasts
+
+        self:Print( "Interrupt display has been restored, set to separate mode, and interrupt tuning values reset." )
+        self:BuildUI()
+        self:UpdateDisplayVisibility()
+        self:ForceUpdate( "CLI_TOGGLE" )
+        return true
     end
+
+    --[[if fixtype == "lowdps" then
+        if profile.notifications.enabled then
+            Hekili:Notify( "skill issue", 6 )
+        end
+    end--]]
+
 end
 
 function Hekili:HandleSpecSetting( specSetting, specValue )
