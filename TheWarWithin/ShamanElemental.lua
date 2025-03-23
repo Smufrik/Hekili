@@ -1229,7 +1229,7 @@ spec:RegisterStateTable( "earth_elemental", setmetatable( { onReset = function( 
 spec:RegisterStateTable( "elemental_equilibrium", setmetatable( {
     -- READY, ACTIVE, COOLDOWN
     state = function()
-        return buff.elemental_equilibrium.remains and "ACTIVE" or ( elemental_equilibrium.last_application + 30 - state.query_time ) > 0 and "COOLDOWN" or "READY"
+        return buff.elemental_equilibrium.up and "ACTIVE" or ( elemental_equilibrium.last_application + 30 - state.query_time ) > 0 and "COOLDOWN" or "READY"
     end,
     last_application = 0,
     last_fire = 0,
