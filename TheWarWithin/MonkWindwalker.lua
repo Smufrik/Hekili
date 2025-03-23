@@ -1248,7 +1248,7 @@ spec:RegisterAbilities( {
         spend = function () return 20 * ( 1 - ( buff.the_emperors_capacitor.stack * 0.05 ) ) end,
         spendPerSec = function () return 20 * ( 1 - ( buff.the_emperors_capacitor.stack * 0.05 ) ) end,
 
-        toggle = function() if setting.dynamic_crackling_jade_lightning and raid and talent.power_of_the_thunder_king.enabled then return "cooldowns" end end,
+        toggle = function() if settings.dynamic_crackling_jade_lightning and raid and talent.power_of_the_thunder_king.enabled then return "cooldowns" end end,
 
         startsCombat = false,
 
@@ -1896,7 +1896,7 @@ spec:RegisterAbilities( {
         talent = "strike_of_the_windlord",
         startsCombat = true,
 
-        toggle = function() if setting.dynamic_strike_of_the_windlord and raid then return "cooldowns" end end,
+        toggle = function() if settings.dynamic_strike_of_the_windlord and raid then return "cooldowns" end end,
 
         handler = function ()
             applyDebuff( "target", "strike_of_the_windlord" )
