@@ -1031,8 +1031,6 @@ spec:RegisterGear( "tier31", 207261, 207262, 207263, 207264, 207266, 217228, 217
 -- (4) Throw Glaive reduces the remaining cooldown of The Hunt by ${$s1/1000}.1 sec, and The Hunt's damage over time effect lasts ${$s2/1000} sec longer.
 
 spec:RegisterGear( "tww2", 229316, 229314, 229319, 229317, 229315 )
--- APL uses this syntax because ...
-spec:RegisterGear( "thewarwithin_season_2", 229316, 229314, 229319, 229317, 229315 )
 
 spec:RegisterAuras( {
     -- 2-set
