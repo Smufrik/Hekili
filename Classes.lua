@@ -604,7 +604,6 @@ local HekiliSpecMixin = {
                 end
             end
 
-
             if found then
                 self.gear[ arg1 ] = gear
                 CommitKey( arg1 )
