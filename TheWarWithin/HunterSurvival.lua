@@ -1030,9 +1030,9 @@ spec:RegisterAbilities( {
             if talent.scattered_prey.enabled then applyBuff( "scattered_prey" ) end
             removeStack( "tip_of_the_spear" )
 
-            --[[if talent.frenzy_strikes.enabled then
+            if talent.frenzy_strikes.enabled then
                 gainChargeTime( "wildfire_bomb", min( 5, true_active_enemies ) * 3 )
-            end--]]
+            end
 
             if talent.merciless_blow.enabled then applyDebuff( "target", "merciless_blows" ) end
 
@@ -1154,7 +1154,11 @@ spec:RegisterAbilities( {
         end,
 
         finish = function ()
-            if talent.ruthless_marauder.enabled then applyBuff( "ruthless_marauder" ) end
+            if talent.ruthless_marauder.enabled then
+                applyBuff( "ruthless_marauder" )
+                -- Can generate up to 3, but since its RNG we need to lowball it
+                addStack( "tip_of_the_spear" )
+            end
         end,
     },
 
