@@ -1248,7 +1248,7 @@ spec:RegisterAbilities( {
         spend = function () return 20 * ( 1 - ( buff.the_emperors_capacitor.stack * 0.05 ) ) end,
         spendPerSec = function () return 20 * ( 1 - ( buff.the_emperors_capacitor.stack * 0.05 ) ) end,
 
-        toggle = function() if settings.dynamic_crackling_jade_lightning and raid and talent.power_of_the_thunder_king.enabled then return "cooldowns" end end,
+        toggle = function() if settings.dynamic_crackling_jade_lightning and raid and talent.power_of_the_thunder_king.enabled then return "essence" end end,
 
         startsCombat = false,
 
@@ -1896,7 +1896,7 @@ spec:RegisterAbilities( {
         talent = "strike_of_the_windlord",
         startsCombat = true,
 
-        toggle = function() if settings.dynamic_strike_of_the_windlord and raid then return "cooldowns" end end,
+        toggle = function() if settings.dynamic_strike_of_the_windlord and raid then return "essences" end end,
 
         handler = function ()
             applyDebuff( "target", "strike_of_the_windlord" )
@@ -2180,15 +2180,23 @@ spec:RegisterSetting( "sef_one_charge", false, {
 } )
 
 spec:RegisterSetting( "dynamic_strike_of_the_windlord", false, {
-    name = strformat( "%s: Dynamic Toggle", Hekili:GetSpellLinkWithTexture( spec.abilities.strike_of_the_windlord.id ) ),
-    desc = strformat( "If checked, %s will be automatically assigned to the cooldowns toggle when in a raid. This allows you to choose to hold it with cooldowns for add waves or burst windows in raid, without interfering during mythic+.", Hekili:GetSpellLinkWithTexture( spec.abilities.strike_of_the_windlord.id ) ),
+    name = strformat( "%s: Raid Cooldown", Hekili:GetSpellLinkWithTexture( spec.abilities.strike_of_the_windlord.id ) ),
+    desc = strformat(
+        "If checked, %s will require an active Minor Cooldowns toggle to be recommended in raid.\n\nThis feature ensures %s is only recommended when you are actively using cooldown abilities (e.g., add waves, burst windows).",
+        Hekili:GetSpellLinkWithTexture( spec.abilities.strike_of_the_windlord.id ),
+        Hekili:GetSpellLinkWithTexture( spec.abilities.strike_of_the_windlord.id )
+    ),
     type = "toggle",
     width = "full"
 } )
 
 spec:RegisterSetting( "dynamic_crackling_jade_lightning", false, {
-    name = strformat( "%s: Dynamic Toggle", Hekili:GetSpellLinkWithTexture( spec.abilities.crackling_jade_lightning.id ) ),
-    desc = strformat( "If checked, %s will be automatically assigned to the cooldowns toggle when in a raid. This allows you to choose to hold it with cooldowns for add waves or burst windows in raid, without interfering during mythic+.", Hekili:GetSpellLinkWithTexture( spec.abilities.crackling_jade_lightning.id ) ),
+    name = strformat( "%s: Raid Cooldown", Hekili:GetSpellLinkWithTexture( spec.abilities.crackling_jade_lightning.id ) ),
+    desc = strformat(
+        "If checked, %s will require an active Minor Cooldowns toggle to be recommended in raid.\n\nThis feature ensures %s is only recommended when you are actively using cooldown abilities (e.g., add waves, burst windows).",
+        Hekili:GetSpellLinkWithTexture( spec.abilities.crackling_jade_lightning.id ),
+        Hekili:GetSpellLinkWithTexture( spec.abilities.crackling_jade_lightning.id )
+    ),
     type = "toggle",
     width = "full"
 } )
