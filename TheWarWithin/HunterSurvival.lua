@@ -581,7 +581,10 @@ spec:RegisterAuras( {
     tip_of_the_spear = {
         id = 260286,
         duration = 10,
-        max_stack = 3
+        max_stack = 3,
+        meta = {
+            stack = function() return max( 0, ( state.buff.tip_of_the_spear.stack - ( action.wildfire_bomb.in_flight and 1 or 0 ) ) ) end,
+        }
     },
     trailblazer = {
         id = 231390,
@@ -1457,6 +1460,8 @@ spec:RegisterAbilities( {
         impactSpells = {
             wildfire_bomb = true,
         },
+
+        copy = 265157
     },
 
     raptor_bite = {
