@@ -11642,7 +11642,6 @@ do
         { "set_bonus%.thewarwithin_season_2_4pc"            , "set_bonus.tww2 >= 4"                     },
         { "set_bonus%.tww2_2pc"                             , "set_bonus.tww2 >= 2"                     },
         { "set_bonus%.tww2_4pc"                             , "set_bonus.tww2 >= 4"                     },
-        { "set_bonus%.([%w_]+)_([24])pc"                    , "set_bonus.%1 >= %2"                      },
 
 
         { "equipped%.(%d+)", nil, function( item )
