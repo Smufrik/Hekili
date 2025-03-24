@@ -11637,6 +11637,13 @@ do
         { "player"                                          , "player.unit"                             },
         { "gcd"                                             , "gcd.max"                                 },
         { "howl_summon%.([%w_]+)%.([%w_]+)"                 , "howl_summon.%1_%2"                       },
+        -- Standardize 2pc/4pc set bonus APL expressions
+        { "set_bonus%.thewarwithin_season_2_2pc"            , "set_bonus.tww2 >= 2"                     },
+        { "set_bonus%.thewarwithin_season_2_4pc"            , "set_bonus.tww2 >= 4"                     },
+        { "set_bonus%.tww2_2pc"                             , "set_bonus.tww2 >= 2"                     },
+        { "set_bonus%.tww2_4pc"                             , "set_bonus.tww2 >= 4"                     },
+        { "set_bonus%.([%w_]+)_([24])pc"                    , "set_bonus.%1 >= %2"                      },
+
 
         { "equipped%.(%d+)", nil, function( item )
             item = tonumber( item )
