@@ -1230,7 +1230,7 @@ spec:RegisterPets({
 
 --- The War Within
 spec:RegisterGear( "tww1", 212018, 212019, 212020, 212021, 212023 )
-spec:RegisterGear( "tww2", 229271, 229272, 229274, 229270, 229273 )
+spec:RegisterGear( "tww2", 229271, 229269, 229274, 229272, 229270 )
 spec:RegisterAuras( {
    -- 2-set
     jackpot = {
