@@ -4752,39 +4752,34 @@ do
     } )
 end
 
-
-
 -- Table of set bonuses. Some string manipulation to honor the SimC syntax.
 -- Currently returns 1 for true, 0 for false to be consistent with SimC conditionals.
 -- Won't catch fake set names. Should revise.
 local mt_set_bonuses = {
-    __index = function(t, k)
-        if type(k) == "number" then return 0 end
+    __index = function( t, k )
+        if type( k ) == "number" then return 0 end
 
-        -- if ( not class.artifacts[ k ] ) and ( state.bg or state.arena ) then return 0 end
+        -- Aliases to account for syntax differences across specs in SimC
+        local aliasMap = {
+            thewarwithin_season_2 = "tww2",
+            -- room for more in future tiers
+        }
 
-        local set, pieces, class = k:match("^(.-)_"), tonumber( k:match("_(%d+)pc") ), k:match("pc(.-)$")
+        -- Match suffix pattern like tww2_2pc, tww2_4pc, thewarwithin_season_2_2pc, etc.
+        local rawSet, pieces = k:match( "^([%w_]+)_([24])pc$" )
+        if rawSet and pieces then
+            local set = aliasMap[ rawSet ] or rawSet
+            pieces = tonumber( pieces )
 
-        if not pieces or not set then
-            -- This wasn't a tier set bonus.
-            return 0
-
-        else
-            if class then set = set .. class end
-
-            if not t[set] then
-                return 0
-            end
-
-            return t[set] >= pieces and 1 or 0
+            if not t[ set ] then return 0 end
+            return t[ set ] >= pieces and 1 or 0
         end
 
+        -- Non-matching or malformed key
         return 0
-
     end
 }
 ns.metatables.mt_set_bonuses = mt_set_bonuses
-
 
 local mt_equipped = {
     __index = function(t, k)
