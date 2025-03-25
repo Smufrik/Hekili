@@ -1,5 +1,6 @@
 ## https://github.com/simulationcraft/simc/blob/thewarwithin/ActionPriorityLists/rogue_assassination.simc
-## Up to date with SimC: March 10 2025 - fca975f
+## Up to date with SimC: March 25 2025 - ???
+## pulled ahead of time from: https://github.com/simulationcraft/simc/pull/10113/files
 
 actions.precombat+=/apply_poison
 # Check which trinket slots have Stat Values
