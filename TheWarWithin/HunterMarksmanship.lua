@@ -266,7 +266,7 @@ spec:RegisterAuras( {
     -- Taking $w1 Shadow damage every $t1 seconds.
     black_arrow = {
         id = 468572,
-        duration = 10,
+        duration = 14,
         tick_time = 1,
         max_stack = 1,
     },
