@@ -1056,10 +1056,18 @@ end )
 
 spec:RegisterPet( "xuen_the_white_tiger", 63508, "invoke_xuen", 24, "xuen" )
 
-spec:RegisterTotem( "jade_serpent_statue", 620831 )
-spec:RegisterTotem( "white_tiger_statue", 125826 )
-spec:RegisterTotem( "black_ox_statue", 627607 )
-
+-- Totems (which are sometimes pets)
+spec:RegisterTotems( {
+    jade_serpent_statue = {
+        id = 620831
+    },
+    white_tiger_statue = {
+        id = 125826
+    },
+    black_ox_statue = {
+        id = 627607
+    }
+} )
 
 spec:RegisterUnitEvent( "UNIT_POWER_UPDATE", "player", nil, function( event, unit, resource )
     if resource == "CHI" then
