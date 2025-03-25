@@ -15,7 +15,7 @@ actions.precombat+=/arcane_torrent
 ## actions.precombat+=/use_item,name=aberrant_spellforge
 actions.precombat+=/halo,if=boss&active_enemies<=4&(fight_remains>=120|active_enemies<=2)
 actions.precombat+=/shadow_crash,if=spell_targets.shadow_crash<=8
-actions.precombat+=/vampiric_touch,if=(!talent.whispering_shadows|!action.shadow_crash.in_flight)&(!talent.shadow_crash.enabled|spell_targets.shadow_crash>8|!boss
+actions.precombat+=/vampiric_touch,if=(!talent.whispering_shadows|!action.shadow_crash.in_flight)&(!talent.shadow_crash.enabled|spell_targets.shadow_crash>8|!boss)
 
 actions+=/silence
 actions+=/variable,name=holding_crash,op=set,value=false
