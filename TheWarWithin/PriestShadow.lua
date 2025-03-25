@@ -897,7 +897,7 @@ spec:RegisterAuras( {
 } )
 
 
-spec:RegisterTotems({
+spec:RegisterTotems( {
     mindbender = {
         id = 136214
     },
@@ -907,7 +907,7 @@ spec:RegisterTotems({
     voidwraith = {
         id = 615099
     },
-})
+} )
 
 local entropic_rift_expires = 0
 local er_extensions = 0
