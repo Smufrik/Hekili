@@ -670,14 +670,14 @@ spec:RegisterAuras( {
 } )
 
 -- Totems (which are sometimes pets)
-spec:RegisterTotems({
+spec:RegisterTotems( {
     chiji = {
         id = 877514
     },
     yulon = {
         id = 574571
     },
-})
+} )
 
 spec:RegisterStateTable( "gust_of_mist", setmetatable( {}, {
     __index = function( t,  k)

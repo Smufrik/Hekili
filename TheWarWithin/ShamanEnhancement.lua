@@ -1439,7 +1439,7 @@ spec:RegisterStateFunction( "maelstrom_mod", function( amount )
     return mod * amount
 end )
 
-spec:RegisterTotems({
+spec:RegisterTotems( {
     skyfury_totem = {
         id = 135829
     },
@@ -1452,7 +1452,7 @@ spec:RegisterTotems({
     stoneskin_totem = {
         id = 4667425
     },
-})
+} )
 
 -- Abilities
 spec:RegisterAbilities( {

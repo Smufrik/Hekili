@@ -1028,7 +1028,7 @@ spec:RegisterPets({
 })
 
 -- Totems (which are sometimes pets)
-spec:RegisterTotems({
+spec:RegisterTotems( {
     gargoyle = {
         id = 458967,
         copy = "dark_arbiter",
@@ -1040,7 +1040,7 @@ spec:RegisterTotems({
     abomination = {
         id = 298667,
     },
-})
+} )
 
 spec:RegisterStateTable( "death_and_decay",
 setmetatable( { onReset = function( self ) end },
