@@ -384,7 +384,7 @@ spec:RegisterAuras( {
         -- TODO: damage = function () return 0.322 * stat.spell_power * action.fire_breath.spell_targets * ( talent.heat_wave.enabled and 1.2 or 1 ) * ( debuff.shattering_star.up and 1.2 or 1 ) end,
         type = "Magic",
         max_stack = 1,
-        copy = { "fire_breath_damage", "fire_damage_dot" }
+        copy = { "fire_breath_damage", "fire_breath_dot" }
     },
     firestorm = { -- TODO: Check for totem?
         id = 369372,
