@@ -208,6 +208,8 @@ local enemyExclusions = {
     [229296] = true,      -- Orb of Ascendance (TWW S1 Affix)
     [218884] = true,      -- Silken Court: Scattershell Scarab
     [235187] = true,      -- Cauldron: Voltaic Image
+    [231788] = true,      -- Mug'Zee: Unstable Crawler Mine
+    [233474] = true,      -- Mug'Zee: Gallagio Goon (they are within a cage with LoS restrictions)
 }
 
 local requiredForInclusion = {
