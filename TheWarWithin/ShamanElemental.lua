@@ -974,6 +974,17 @@ local ancestral_wolf_affinity_spells = {
 local recallTotem1
 local recallTotem2
 
+local fireDamage, frostDamage, natureDamage, lastEEApplied = 0, 0, 0, 0
+local stormkeeperCastStart, stormkeeperLastProc = 0, 0
+
+local eeSchools = {
+    "fire",
+    "frost",
+    "nature",
+    "volcanic",
+    "elemental"
+}
+
 spec:RegisterStateExpr( "recall_totem_1", function()
     return recallTotem1
 end )
@@ -1009,17 +1020,6 @@ spec:RegisterHook( "runHandler", function( action )
         end
     end
 end )
-
-local fireDamage, frostDamage, natureDamage, lastEEApplied = 0, 0, 0, 0
-local stormkeeperCastStart, stormkeeperLastProc = 0, 0
-
-local eeSchools = {
-    "fire",
-    "frost",
-    "nature",
-    "volcanic",
-    "elemental"
-}
 
 local further_beyond_duration_remains, fbSpells = 0, {
     earth_shock = 1,
@@ -1277,13 +1277,13 @@ spec:RegisterStateTable( "elemental_equilibrium", setmetatable( {
         elseif k == "cooldown_remains" then
             return cd_remains
         elseif k == "needs_frost" then
-            return elemental_equilibrium.ready and ( query_time - elemental_equilibrium.last_frost > 10 )
+            return cd_remains == 0 and ( query_time - elemental_equilibrium.last_frost > 10 )
         elseif k == "needs_fire" then
-            return elemental_equilibrium.ready and ( query_time - elemental_equilibrium.last_fire > 10 )
+            return cd_remains == 0 and ( query_time - elemental_equilibrium.last_fire > 10 )
         elseif k == "needs_nature" then
-            return elemental_equilibrium.ready and ( query_time - elemental_equilibrium.last_nature > 10 )
+            return cd_remains == 0 and ( query_time - elemental_equilibrium.last_nature > 10 )
         elseif k == "cycle_started" then
-            return elemental_equilibrium.ready and min( query_time - elemental_equilibrium.last_nature, query_time - elemental_equilibrium.last_fire, query_time - elemental_equilibrium.last_frost ) < 10
+            return cd_remains == 0 and min( query_time - elemental_equilibrium.last_nature, query_time - elemental_equilibrium.last_fire, query_time - elemental_equilibrium.last_frost ) < 10
         end
     end
 } ) )
@@ -1354,9 +1354,6 @@ spec:RegisterGear({
         }
     },
 })
-
--- Set bonuses are still separate
-spec:RegisterSetBonuses( "tier29_2pc", 393688, "tier29_4pc", 393690 )
 
 local TriggerHeatWave = setfenv( function()
     applyBuff( "lava_surge" )
