@@ -868,7 +868,7 @@ spec:RegisterAuras( {
     },
 } )
 
-spec:RegisterTotems({
+spec:RegisterTotems( {
     greater_storm_elemental = {
         id = 1020304
     },
@@ -890,7 +890,7 @@ spec:RegisterTotems({
     vesper_totem = {
         id = 3565451
     },
-})
+} )
 
 -- Pets
 spec:RegisterPets({
