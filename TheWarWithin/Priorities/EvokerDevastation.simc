@@ -56,7 +56,7 @@ actions+=/run_action_list,name=aoe,strict=1,if=active_enemies>=3
 actions+=/run_action_list,name=st
 
 # AOE action list; Open with star before DR to save a global and start with a free EB  BaumChange 2: Don't do as FS - Neutral
-actions.aoe=shattering_star,cycle_targets=1,if=(cooldown.dragonrage.up&talent.arcane_vigor|talent.eternitys_span&active_enemies<=3)&!talent.engulf
+actions.aoe+=/shattering_star,cycle_targets=1,if=(cooldown.dragonrage.up&talent.arcane_vigor|talent.eternitys_span&active_enemies<=3)&!talent.engulf
 actions.aoe+=/hover,use_off_gcd=1,if=raid_event.movement.in<6&!buff.hover.up&gcd.remains>=0.5&(buff.mass_disintegrate_stacks.up&talent.mass_disintegrate|active_enemies<=4)
 # Spend firestorm procs ASAP
 actions.aoe+=/firestorm,if=buff.snapfire.up&!talent.feed_the_flames
