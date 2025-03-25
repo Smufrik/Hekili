@@ -591,7 +591,8 @@ local HekiliSpecMixin = {
             -- If the second arg is a number, this is a legacy registration with a single set/item
             if type( arg2 ) == "number" then
                 local n = select( "#", ... )
-                local item, i = arg2, 3
+                local i = 2
+                local item = select( i, ... )
 
                 while item do
                     table.insert( gear, item )
