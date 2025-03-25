@@ -70,7 +70,7 @@ actions.aoe+=/dragonrage
 # Tip ES at appropiate target count or when playing Flameshaper otherwise Tip FB
 actions.aoe+=/tip_the_scales,if=(!talent.dragonrage|buff.dragonrage.up)&(cooldown.fire_breath.remains<=cooldown.eternity_surge.remains|(cooldown.eternity_surge.remains<=cooldown.fire_breath.remains&talent.font_of_magic)&!talent.engulf)
 # BaumChange 2: Do as FS - Neutral
-actions.aoe+=/shattering_star,target_if=max:target.health.pct,if=(cooldown.dragonrage.up&talent.arcane_vigor|talent.eternitys_span&active_enemies<=3)&talent.engulf
+actions.aoe+=/shattering_star,if=(cooldown.dragonrage.up&talent.arcane_vigor|talent.eternitys_span&active_enemies<=3)&talent.engulf
 actions.aoe+=/dragonrage,if=target.time_to_die>=32|active_enemies>=3&target.time_to_die>=15|boss&fight_remains<30
 # Cast Fire Breath DS optimization: Only cast if current fight will last 8s+ or encounter ends in less than 30s
 actions.aoe+=/call_action_list,name=fb,if=(!talent.dragonrage|buff.dragonrage.up|cooldown.dragonrage.remains>variable.dr_prep_time_aoe|!talent.animosity|talent.flame_siphon)&(target.time_to_die>=8|talent.mass_disintegrate)|empowering.fire_breath
@@ -153,7 +153,7 @@ actions.st+=/living_flame,if=talent.ruby_embers&talent.engulf&(buff.burnout.up&d
 actions.st+=/pyre,if=debuff.in_firestorm.up&talent.feed_the_flames&buff.charged_blast.stack=20&active_enemies>=2
 actions.st+=/call_action_list,name=es,if=(!talent.dragonrage|variable.next_dragonrage>variable.dr_prep_time_st|!talent.animosity|talent.mass_disintegrate)&(!set_bonus.tww2_4pc|!buff.jackpot.up|talent.mass_disintegrate)|empowering.eternity_surge
 # Mass Disintegrates
-actions.st+=/disintegrate,target_if=min:debuff.bombardments.remains,early_chain_if=ticks_remain<=1&buff.mass_disintegrate_stacks.up,if=(raid_event.movement.in>2|buff.hover.up)&buff.mass_disintegrate_stacks.up&talent.mass_disintegrate&!variable.pool_for_id
+actions.st+=/disintegrate,cycle_targets=1,early_chain_if=ticks_remain<=1&buff.mass_disintegrate_stacks.up,if=(raid_event.movement.in>2|buff.hover.up)&buff.mass_disintegrate_stacks.up&talent.mass_disintegrate&!variable.pool_for_id
 # Use Deep Breath on 2T, unless adds will come before it'll be ready again or if talented ID.
 actions.st+=/deep_breath,if=!buff.dragonrage.up&active_enemies>=2&((raid_event.adds.in>=120&!talent.onyx_legacy)|(raid_event.adds.in>=60&talent.onyx_legacy))
 actions.st+=/deep_breath,if=!buff.dragonrage.up&(talent.imminent_destruction&!debuff.shattering_star_debuff.up|talent.melt_armor|talent.maneuverability)
