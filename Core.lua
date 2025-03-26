@@ -1966,7 +1966,7 @@ function Hekili.Update()
                     if debug then
                         -- scripts:ImplantDebugData( slot )
                         Hekili:Debug( "Fallthrough Empowerment:  %s at %.2f!", action, state.delay )
-                        Hekili:Debug( "Texture shown:  %s", slot.texture )
+                        Hekili:Debug( "Texture shown:  %s", slot.texture or "NOT SET" )
                     end
                 end
 
