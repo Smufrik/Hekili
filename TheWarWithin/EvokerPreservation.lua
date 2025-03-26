@@ -502,7 +502,7 @@ do
 
     empowered_cast_time = setfenv( function()
         if buff.tip_the_scales.up then return 0 end
-        local power_level = args.empower_to or max_empower
+        local power_level = args.empower_to or class.abilities[ this_action ].empowerment_default or max_empower
 
         if settings.fire_breath_fixed > 0 then
             power_level = min( settings.fire_breath_fixed, max_empower )
