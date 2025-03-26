@@ -373,7 +373,7 @@ spec:RegisterAuras( {
     ignore_pain = {
         id = 190456,
         duration = 12,
-        max_stack = 1
+        max_stack = 100
     },
     indelible_victory = {
         id = 336642,
@@ -448,7 +448,7 @@ spec:RegisterAuras( {
     seeing_red = {
         id = 386486,
         duration = 30,
-        max_stack = 8
+        max_stack = 100
     },
     shield_bash = {
         id = 198912,
@@ -615,11 +615,9 @@ spec:RegisterAuras( {
 
 local rageSpent_10 = 0
 local rageSpent_20 = 0
-local rageSpent_30 = 0
 
 spec:RegisterStateExpr( "rageSpent_10", function () return rageSpent_10 end ) -- Glory (Shadowlands) and Anger Management talent
 spec:RegisterStateExpr( "rageSpent_20", function () return rageSpent_20 end ) -- Indomitable talent
-spec:RegisterStateExpr( "rageSpent_30", function () return rageSpent_30 end ) -- Outburst talent
 
 local RAGE = Enum.PowerType.Rage
 local lastRage = -1
@@ -634,9 +632,6 @@ spec:RegisterUnitEvent( "UNIT_POWER_FREQUENT", "player", nil, function( event, u
             if state.talent.indomitable.enabled then -- Indomitable
                 rageSpent_20 = ( rageSpent_20 + lastRage - current ) % 20
             end
-            if state.talent.violent_outburst.enabled then -- Outburst T28 or Violent Outburst
-                rageSpent_30 = ( rageSpent_30 + lastRage - current ) % 30
-            end
         end
         lastRage = current
     end
@@ -644,7 +639,7 @@ end )
 
 -- model rage expenditure and special effects
 spec:RegisterHook( "spend", function( amt, resource )
-    if resource == "rage" and amt < 0 then
+    if resource == "rage" and amt > 0 then
         if talent.anger_management.enabled or ( legendary.glory.enabled and buff.conquerors_banner.up ) then
             rageSpent_10 = rageSpent_10 + amt
             local rage10activations = floor( rageSpent_10 / 10 )
@@ -672,16 +667,15 @@ spec:RegisterHook( "spend", function( amt, resource )
         end
 
         if talent.violent_outburst.enabled then
-            rageSpent_30 = rageSpent_30 + amt
-            local rage30activations = floor( rageSpent_30 / 30 )
-            rageSpent_30 = rageSpent_30 % 30
-
-            if rage30activations > 0 then
-                addStack( "seeing_red", nil, rage30activations )
-                if buff.seeing_red.stack > 7 then
-                    applyBuff( "violent_outburst" )
-                    removeBuff( "seeing_red" )
-                end
+            buff.seeing_red.v1 = buff.seeing_red.v1 + amt
+            if buff.seeing_red.v1 >= 250 then
+                applyBuff( "violent_outburst" )
+            end
+            buff.seeing_red.v1 = buff.seeing_red.v1 % 250
+            if buff.seeing_red.v1 == 0 then
+                removeBuff( "seeing_red" )
+            else
+                applyBuff( "seeing_red", nil, floor( buff.seeing_red.v1 / 250 * 100 ), buff.seeing_red.v1)
             end
         end
     end
@@ -946,7 +940,7 @@ spec:RegisterAbilities( {
             setDistance( 5 )
             applyDebuff( "target", "charge" )
             if legendary.reprisal.enabled then
-                applyBuff( "shield_block", 4 )
+                applyBuff( "shield_block", buff.shield_block.remains + 4 )
                 applyBuff( "revenge" )
                 gain( 20, "rage" )
             end
@@ -1187,13 +1181,8 @@ spec:RegisterAbilities( {
         toggle = "defensives",
 
         handler = function ()
-            if buff.ignore_pain.up then
-                buff.ignore_pain.expires = query_time + class.auras.ignore_pain.duration
-                buff.ignore_pain.v1 = min( 0.3 * health.max, buff.ignore_pain.v1 + stat.attack_power * 4.375 * ( 1 + stat.versatility_atk_mod / 100 ) )
-            else
-                applyBuff( "ignore_pain" )
-                buff.ignore_pain.v1 = min( 0.3 * health.max, stat.attack_power * 4.375 * ( 1 + stat.versatility_atk_mod / 100 ) )
-            end
+            buff.ignore_pain.v1 = min( 0.3 * health.max, buff.ignore_pain.v1 + stat.attack_power * 4.375 * ( 1 + stat.versatility_atk_mod / 100 ) )
+            applyBuff( "ignore_pain", nil, floor( buff.ignore_pain.v1 / ( 0.3 * health.max ) * 100 ), buff.ignore_pain.v1 )
         end,
     },
 
@@ -1239,7 +1228,7 @@ spec:RegisterAbilities( {
 
         handler = function ()
             if legendary.reprisal.enabled then
-                applyBuff( "shield_block", 4 )
+                applyBuff( "shield_block", buff.shield_block.remains + 4 )
                 applyBuff( "revenge" )
                 gain( 20, "rage" )
             end
@@ -1293,7 +1282,7 @@ spec:RegisterAbilities( {
             applyBuff( "last_stand" )
 
             if talent.bolster.enabled then
-                applyBuff( "shield_block", buff.last_stand.duration )
+                applyBuff( "shield_block", buff.shield_block.remains + buff.last_stand.duration )
             end
 
             if talent.unnerving_focus.enabled then
@@ -1512,7 +1501,7 @@ spec:RegisterAbilities( {
         end,
 
         handler = function ()
-            applyBuff( "shield_block" )
+            applyBuff( "shield_block", buff.shield_block.remains + buff.shield_block.duration )
         end,
     },
 
@@ -1535,7 +1524,7 @@ spec:RegisterAbilities( {
                 applyBuff( "battering_ram" )
             end
             if talent.champions_bulwark.enabled then
-                applyBuff( "shield_block" )
+                applyBuff( "shield_block", buff.shield_block.remains + buff.shield_block.duration )
                 applyBuff( "revenge" )
             end
         end,
@@ -1572,7 +1561,7 @@ spec:RegisterAbilities( {
 
         handler = function ()
             if buff.violent_outburst.up then
-                applyBuff( "ignore_pain" )
+                class.abilities.ignore_pain.handler()
                 removeBuff( "violent_outburst" )
             end
 
@@ -1709,7 +1698,7 @@ spec:RegisterAbilities( {
             if not t.up then
                 return false, "Target is not casting"
             end
-            if not class.reflectableFilters[ zone ][ npcid ][ t.v1 ] then
+            if not state.target.is_dummy and not class.reflectableFilters[ zone ][ npcid ][ t.v1 ] then
                 return false, "spell[" .. t.v1 .. "] in zone[" .. zone .. "] by npc[" .. npcid .. "] is not reflectable"
             end
             if not UnitIsUnit( "player", t.caster .. "target" ) then
@@ -1787,7 +1776,7 @@ spec:RegisterAbilities( {
             end
 
             if buff.violent_outburst.up then
-                applyBuff( "ignore_pain" )
+                class.abilities.ignore_pain.handler()
                 removeBuff( "violent_outburst" )
             end
         end,
@@ -1828,7 +1817,7 @@ spec:RegisterAbilities( {
             end
 
             if buff.violent_outburst.up then
-                applyBuff( "ignore_pain" )
+                class.abilities.ignore_pain.handler()
                 removeBuff( "violent_outburst" )
             end
         end,

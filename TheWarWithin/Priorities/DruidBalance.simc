@@ -1,10 +1,14 @@
+## https://github.com/simulationcraft/simc/blob/thewarwithin/ActionPriorityLists/druid_balance.simc
+## Up to date with SimC: March 12 2025 - ecf3680
+
 actions.precombat+=/mark_of_the_wild
 ## actions.precombat+=/bear_form,if=talent.lycaras_meditation&talent.fluid_form
 actions.precombat+=/moonkin_form,if=!talent.lycaras_meditation|!talent.fluid_form
 actions.precombat+=/variable,name=no_cd_talent,value=!talent.celestial_alignment&!talent.incarnation_chosen_of_elune|druid.no_cds
 actions.precombat+=/variable,name=on_use_trinket,value=0
-actions.precombat+=/variable,name=on_use_trinket,op=add,value=(trinket.1.has_proc&trinket.1.cooldown.duration|trinket.1.is.spymasters_web|trinket.1.is.signet_of_the_priory)&!trinket.1.is.arakara_sacbrood
-actions.precombat+=/variable,name=on_use_trinket,op=add,value=((trinket.2.has_proc&trinket.2.cooldown.duration|trinket.2.is.spymasters_web|trinket.2.is.signet_of_the_priory)*2&!trinket.2.is.arakara_sacbrood)
+## [Syrif] - Edited the below 2 variables to better match SimC's intention
+actions.precombat+=/variable,name=on_use_trinket,op=add,if=trinket.1.has_use_buff&!trinket.1.is.ovinaxs_mercurial_egg&!trinket.1.is.spymasters_web,value=1,value_else=0
+actions.precombat+=/variable,name=on_use_trinket,op=add,if=trinket.2.has_use_buff&!trinket.2.is.ovinaxs_mercurial_egg&!trinket.2.is.spymasters_web,value=2,value_else=0
 ## Regrowth to stack for Keeper of the Grove...
 actions.precombat+=/regrowth,if=hero_tree.keeper_of_the_grove&!talent.stellar_flare&action.regrowth.time_since<10&active_dot.regrowth=0
 # [edited] This handles the wrath opener based on the state of eclipse
@@ -29,8 +33,9 @@ actions+=/variable,name=boat_stacks,value=buff.balance_of_all_things_arcane.stac
 actions+=/use_item,name=spymasters_web,if=variable.cd_condition&(buff.spymasters_report.stack>29|boss&fight_remains<cooldown.ca_inc.duration)|boss&fight_remains<20
 actions+=/use_item,name=imperfect_ascendancy_serum,if=dot.sunfire.remains>4&(dot.moonfire.remains>4|talent.treants_of_the_moon&(cooldown.force_of_nature.remains<3|buff.harmony_of_the_grove.up)&variable.ca_effective_cd<1|boss&fight_remains<20|fight_remains<variable.ca_effective_cd&(buff.harmony_of_the_grove.up|cooldown.convoke_the_spirits.ready))&buff.spymasters_report.stack<=29
 actions+=/use_item,name=treacherous_transmitter,if=((cooldown.force_of_nature.remains<3&(trinket.1.is.spymasters_web|trinket.2.is.spymasters_web)&buff.spymasters_report.stack>=29)|(cooldown.convoke_the_spirits.remains<2&cooldown.ca_inc.ready&cooldown.force_of_nature.remains<3&buff.spymasters_report.stack<=29|fight_remains<20|fight_remains<variable.ca_effective_cd&(buff.harmony_of_the_grove.up|cooldown.convoke_the_spirits.ready)))
-actions+=/use_item,slot=trinket1,if=!trinket.1.is.spymasters_web&!trinket.1.is.imperfect_ascendancy_serum&!trinket.1.is.treacherous_transmitter&variable.on_use_trinket=1&variable.cd_condition
-actions+=/use_item,slot=trinket2,if=!trinket.2.is.spymasters_web&!trinket.2.is.imperfect_ascendancy_serum&!trinket.2.is.treacherous_transmitter&variable.on_use_trinket=2&variable.cd_condition
+actions+=/variable,name=generic_trinket_condition,value=variable.no_cd_talent|boss&fight_remains<variable.ca_effective_cd&(buff.harmony_of_the_grove.up|cooldown.convoke_the_spirits.ready)|(buff.spymasters_report.stack+variable.ca_effective_cd%6)>29&variable.ca_effective_cd>20|variable.on_use_trinket=0
+actions+=/use_item,slot=trinket1,if=!trinket.1.is.spymasters_web&!trinket.1.is.imperfect_ascendancy_serum&!trinket.1.is.treacherous_transmitter&!trinket.1.is.soulletting_ruby&(variable.on_use_trinket!=1&variable.on_use_trinket!=3&trinket.2.cooldown.remains>20|boss&fight_remains<(20+20*(trinket.2.has_use&trinket.2.cooldown.remains<25))|variable.generic_trinket_condition)
+actions+=/use_item,slot=trinket2,if=!trinket.2.is.spymasters_web&!trinket.2.is.imperfect_ascendancy_serum&!trinket.2.is.treacherous_transmitter&!trinket.2.is.soulletting_ruby&(variable.on_use_trinket<2&trinket.1.cooldown.remains>20|variable.on_use_trinket=3&trinket.1.cooldown.remains>20&(!hero_tree.keeper_of_the_grove|buff.harmony_of_the_grove.up|ceil((fight_remains-15)%trinket.2.cooldown.duration)>ceil((fight_remains-cooldown.force_of_nature.remains-15)%trinket.2.cooldown.duration))|boss&fight_remains<(20+20*(trinket.1.has_use&trinket.1.cooldown.remains<25))|variable.generic_trinket_condition)
 actions+=/use_item,name=bestinslots,if=hero_tree.keeper_of_the_grove&buff.harmony_of_the_grove.up|hero_tree.elunes_chosen&(cooldown.ca_inc.full_recharge_time>20|buff.ca_inc.up)
 actions+=/use_item,name=neural_synapse_enhancer,if=variable.on_use_trinket=1&!trinket.1.cooldown.ready&(buff.harmony_of_the_grove.up|hero_tree.elunes_chosen)|!trinket.1.has_use_buff&(buff.harmony_of_the_grove.up|hero_tree.elunes_chosen)
 actions+=/use_item,name=neural_synapse_enhancer,if=variable.on_use_trinket=2&!trinket.2.cooldown.ready&(buff.harmony_of_the_grove.up|hero_tree.elunes_chosen)|!trinket.2.has_use_buff&(buff.harmony_of_the_grove.up|hero_tree.elunes_chosen)

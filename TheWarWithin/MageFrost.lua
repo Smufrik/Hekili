@@ -178,10 +178,10 @@ spec:RegisterAuras( {
         duration = function () return 12 * haste end,
         max_stack = 1,
         generate = function( t )
-            if query_time - action.blizzard.lastCast < 8 * haste then
+            if query_time - action.blizzard.lastCast < 12 * haste then
                 t.count = 1
                 t.applied = action.blizzard.lastCast
-                t.expires = t.applied + ( 8 * haste )
+                t.expires = t.applied + ( 12 * haste )
                 t.caster = "player"
                 return
             end
@@ -191,7 +191,9 @@ spec:RegisterAuras( {
             t.expires = 0
             t.caster = "nobody"
         end,
+
     },
+
     active_comet_storm = {
         duration = 2.6,
         max_stack = 1,
@@ -310,6 +312,17 @@ spec:RegisterAuras( {
         duration = 15,
         max_stack = 2,
     },
+    fof_consumed = {
+        -- Virtual buff to track if FoF is consumed (by Ice Lance) so we know whether to (virtually) consume Winter's Chill stacks.
+        -- Appears to only happen during the addon's forecasting, need to determine if we need to also apply this buff in reset_precast to avoid recommendation flicker between IL cast and impact.
+        duration = function() return gcd.max * 1.5 end,
+        max_stack = 1
+    },
+    fire_mastery = {
+        id = 431040,
+        duration = 14,
+        max_stack = 6
+    },
     -- Talent: Movement slowed by $w1%.
     -- https://wowhead.com/beta/spell=228354
     flurry = {
@@ -355,6 +368,11 @@ spec:RegisterAuras( {
         type = "Magic",
         max_stack = 1,
         copy = 235235
+    },
+    frost_mastery = {
+        id = 431039,
+        duration = 14,
+        max_stack = 6
     },
     -- Talent: Frozen.
     -- https://wowhead.com/beta/spell=378760
@@ -678,6 +696,7 @@ local wc_spenders = {
     frostbolt = true,
     glacial_spike = true,
     ice_lance = true,
+    frostfire_bolt = true,
 }
 
 spec:RegisterStateExpr( "remaining_winters_chill", function ()
@@ -893,7 +912,6 @@ local BrainFreeze = setfenv( function()
     applyBuff( "brain_freeze" )
 end, state )
 
-
 spec:RegisterHook( "reset_precast", function ()
     frost_info.last_target_virtual = frost_info.last_target_actual
 
@@ -920,13 +938,14 @@ spec:RegisterHook( "reset_precast", function ()
         active_dot.frost_nova > 0 and debuff.frost_nova.down then
         active_dot.frozen = active_dot.frozen + 1
     end
+
 end )
 
 spec:RegisterHook( "runHandler", function( action )
-    if buff.ice_floes.up then
-        local ability = class.abilities[ action ]
-        if ability and ability.cast > 0 and ability.cast < 10 then removeStack( "ice_floes" ) end
-    end
+
+    local ability = class.abilities[ action ]
+
+    if buff.ice_floes.up and ability and ability.cast > 0 and ability.cast < 10 then removeStack( "ice_floes" ) end
 
     if talent.frostfire_mastery.enabled and ability then
         if ability.school == "fire" or ability.school == "frostfire" then
@@ -970,6 +989,7 @@ spec:RegisterAbilities( {
         handler = function ()
             applyDebuff( "target", "blizzard" )
             applyBuff( "active_blizzard" )
+
         end,
     },
 
@@ -1092,7 +1112,7 @@ spec:RegisterAbilities( {
 
             if talent.frostfire_mastery.enabled then
                 if buff.excess_frost.up then
-                    removeBuff( "excess_frost" )
+                    removeStack( "excess_frost" )
                     spec.abilities.ice_nova.handler()
                     reduceCooldown( "comet_storm", 3 )
                 end
@@ -1113,7 +1133,7 @@ spec:RegisterAbilities( {
             applyDebuff( "target", "winters_chill", nil, 2 )
             applyDebuff( "target", "flurry" )
             applyBuff( "bone_chilling", nil, 3 )
-            if talent.frostfire_mastery.enabled then 
+            if talent.frostfire_mastery.enabled then
                 if buff.frost_mastery.up then applyBuff( "frost_mastery", buff.frost_mastery.expires, min( buff.frost_mastery.stacks + 3, 6) )
                 else applyBuff( "frost_mastery", nil, 3 ) end
             end
@@ -1160,6 +1180,8 @@ spec:RegisterAbilities( {
         startsCombat = true,
         velocity = 35,
 
+        max_targets = function() return talent.fractured_frost.enabled and buff.icy_veins.up and min( 3, active_enemies ) or 1 end,
+
         usable = function ()
             if moving and settings.prevent_hardcasts and action.frostbolt.cast_time > buff.ice_floes.remains then return false, "prevent_hardcasts during movement and ice_floes is down" end
             return true
@@ -1168,12 +1190,10 @@ spec:RegisterAbilities( {
         handler = function ()
             addStack( "icicles" )
 
-            if action.frostbolt.cast_time > 0 then removeStack( "ice_floes" ) end
-
             if buff.frostfire_empowerment.up then
                 if talent.flash_freezeburn.enabled then
                     applyBuff( "frost_mastery", nil, 6 )
-                    applyBuff( "excess_frost" )
+                    addStack( "excess_frost" )
                     applyBuff( "fire_mastery", nil, 6 )
                     addStack( "excess_fire" )
                 end
@@ -1185,7 +1205,7 @@ spec:RegisterAbilities( {
             end
 
             if talent.deaths_chill.enabled and buff.icy_veins.up then
-                addStack( "deaths_chill", buff.icy_veins.remains, 1 )
+                addStack( "deaths_chill", buff.icy_veins.remains, action.frostbolt.max_targets )
             end
 
 
@@ -1243,6 +1263,8 @@ spec:RegisterAbilities( {
         startsCombat = true,
         velocity = 35,
 
+        max_targets = function() return talent.fractured_frost.enabled and buff.icy_veins.up and min( 3, active_enemies ) or 1 end,
+
         usable = function ()
             if moving and settings.prevent_hardcasts and action.frostfire_bolt.cast_time > buff.ice_floes.remains then return false, "prevent_hardcasts during movement and ice_floes is down" end
             return true
@@ -1251,12 +1273,10 @@ spec:RegisterAbilities( {
         handler = function ()
             addStack( "icicles" )
 
-            if action.frostfire_bolt.cast_time > 0 then removeStack( "ice_floes" ) end
-
             if buff.frostfire_empowerment.up then
                 if talent.flash_freezeburn.enabled then
                     applyBuff( "frost_mastery", nil, 6 )
-                    applyBuff( "excess_frost" )
+                    addStack( "excess_frost" )
                     applyBuff( "fire_mastery", nil, 6 )
                     addStack( "excess_fire" )
                 end
@@ -1268,7 +1288,7 @@ spec:RegisterAbilities( {
             end
 
             if talent.deaths_chill.enabled and buff.icy_veins.up then
-                addStack( "deaths_chill", buff.icy_veins.remains, 1 )
+                addStack( "deaths_chill", buff.icy_veins.remains, action.frostfire_bolt.max_targets )
             end
 
 
@@ -1445,7 +1465,11 @@ spec:RegisterAbilities( {
             end
 
             if buff.fingers_of_frost.up or debuff.frozen.up then
-                removeStack( "fingers_of_frost" )
+                if buff.fingers_of_frost.up then
+                    removeStack( "fingers_of_frost" )
+                    applyBuff( "fof_consumed", gcd.max * 1.5 )
+                end
+
                 if talent.hailstones.enabled then
                     addStack( "icicles" )
                     if talent.glacial_spike.enabled and buff.icicles.stack_pct == 100 then
@@ -1463,11 +1487,13 @@ spec:RegisterAbilities( {
             if talent.frostfire_mastery.enabled then
                 if buff.excess_fire.up then
                     removeStack( "excess_fire" )
-                    applyBuff( "excess_frost" )
+                    addStack( "excess_frost" )
                     BrainFreeze()
                 end
             end
-            removeDebuffStack( "target", "winters_chill" )
+            if not buff.fof_consumed.up then
+                removeDebuffStack( "target", "winters_chill" )
+            end
         end,
 
         copy = 228598
@@ -1486,7 +1512,6 @@ spec:RegisterAbilities( {
 
         handler = function ()
             applyDebuff( "target", "ice_nova" )
-            removeDebuffStack( "target", "winters_chill" )
         end,
     },
 
@@ -1623,7 +1648,7 @@ spec:RegisterAbilities( {
             applyBuff( "shifting_power" )
         end,
 
-        tick  = function ()
+        tick = function ()
             local seen = {}
             for _, a in pairs( spec.abilities ) do
                 if not seen[ a.key ] and ( not talent.coldest_snap.enabled or a.key ~= "cone_of_cold" ) then

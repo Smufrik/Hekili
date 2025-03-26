@@ -764,7 +764,7 @@ spec:RegisterHook( "reset_postcast", function( x )
 end )
 
 -- The War Within
-spec:RegisterGear( "tww2", 229298, 212045, 229301, 229299, 229297 )
+spec:RegisterGear( "tww2", 229301, 229299, 229298, 229297, 229296 )
 spec:RegisterAuras( {
     -- 2-set
     -- https://www.wowhead.com/ptr-2/spell=1217990/luck-of-the-draw
@@ -1201,7 +1201,7 @@ spec:RegisterAbilities( {
             if conduit.walk_with_the_ox.enabled and cooldown.invoke_niuzao.remains > 0 then reduceCooldown( "invoke_niuzao", 0.5 ) end
 
             if set_bonus.tww2 >= 4 and buff.opportunistic_strike.up then
-                reduceCooldown( "blackout_kick" )
+                reduceCooldown( "blackout_kick", 2 )
                 removeStack( "opportunistic_strike" )
             end
 

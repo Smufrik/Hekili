@@ -269,7 +269,7 @@ all:RegisterAbilities( {
         cooldown = 60,
         gcd = "off",
 
-        item = 235984,
+        item = 215170,
         toggle = "essences",
 
         proc = "damage",
@@ -1045,13 +1045,45 @@ all:RegisterAbilities( {
         }
     },
 
-    bestinslots = {
+
+   --[[ reconfiguring_for_melee_combat = {
+        id = 473401,
+        item = 232805,
         cast = 5,
-        cooldown = 120,
+        cooldown = 30,
         gcd = "spell",
 
+        texture = 6218212,
+
+        known = function() return equipped.bestinslots_caster and not ( InCombatLockdown() or time > 0 ) and spec.primaryStat ~= "intellect" end,
+    },
+
+    reconfiguring_for_spell_Casting = {
+        id = 473400,
+        item = 232526,
+        cast = 5,
+        cooldown = 30,
+        gcd = "spell",
+
+        texture = 6218212,
+
+        known = function() return equipped.bestinslots_melee and not ( InCombatLockdown() or time > 0 ) and spec.primaryStat == "intellect" end,
+
+    },--]]
+
+    bestinslots = {
+        id = 473402,
+        cast = 0,
+        cooldown = 120,
+        gcd = "off",
+        texture = 6218212,
+
+        known = function() return equipped.bestinslots end,
+
+        usable = function() return time > 0, "Not usable out of combat" end,
+
         item = function() return equipped.bestinslots_caster and 232805 or 232526 end,
-        toggle = "cooldowns",
+        toggle ="cooldowns",
 
         proc = "secondary",
         self_buff = "cheating",

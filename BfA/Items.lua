@@ -542,6 +542,7 @@ do
     all:RegisterGear( "pocketsized_computation_device", 167555 )
     all:RegisterGear( "cyclotronic_blast", 167672 )
     all:RegisterGear( "harmonic_dematerializer", 167677 )
+    all:RegisterGear( "hyperthread_wristwraps", 168989 )
 
     all:RegisterAura( "cyclotronic_blast", {
         id = 293491,
@@ -635,6 +636,10 @@ do
         cast = 0,
         cooldown = 120,
         gcd = "off",
+        known = function () return equipped.hyperthread_wristwraps end,
+
+        item = 168989,
+        toggle = "cooldowns",
 
         handler = function ()
             -- Gain 5 seconds of CD for the last 3 spells.
