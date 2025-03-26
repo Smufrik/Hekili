@@ -505,7 +505,7 @@ do
         local power_level = args.empower_to or class.abilities[ this_action ].empowerment_default or max_empower
 
         if settings.fire_breath_fixed > 0 then
-            power_level = min( settings.fire_breath_fixed, max_empower )
+            power_level = min( settings.fire_breath_fixed, power_level )
         end
 
         return stages[ power_level ] * ( talent.font_of_magic.enabled and 0.8 or 1 ) * ( 1 - 0.1 * buff.temporal_compression.stack ) * haste
