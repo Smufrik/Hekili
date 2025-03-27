@@ -1227,7 +1227,7 @@ local function summonPet( name, duration, spec )
     local model = class.pets[ name ]
 
     if model then
-        state.pet[ name ].id = type( model.id ) == "function" and model.id() or id
+        state.pet[ name ].model = model  -- access id dynamically via metatable
         if ( type( model.duration ) == "function" and model.duration() or model.duration ) == 3600 then
             state.pet.alive = true
         end
@@ -1235,11 +1235,6 @@ local function summonPet( name, duration, spec )
 
     if spec then
         state.pet[ name ].spec = spec
-
-        for k, v in pairs( state.pet ) do
-            if type(v) == "boolean" then state.pet[k] = false end
-        end
-
         state.pet[ spec ] = state.pet[ name ]
     end
 end
@@ -2608,13 +2603,16 @@ do
                 end
 
                 local petGUID = UnitGUID( "pet" )
-                if petGUID and t.id == tonumber( petGUID:match( "%-(%d+)%-[0-9A-F]+$" ) ) then
+                petGUID = petGUID and tonumber( petGUID:match( "%-(%d+)%-[0-9A-F]+$" ) )
+                
+                local id = t.id
+                if petGUID and id == petGUID and UnitHealth( "pet" ) > 0 then
                     t.expires = state.query_time + 3600
-                    return t.expires
+                else
+                    t.expires = 0
                 end
-
-                t.expires = 0
-                return 0
+                return t.expires
+                
 
             elseif k == "remains" then
                 return max( 0, t.expires - ( state.query_time ) )
