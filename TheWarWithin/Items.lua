@@ -1422,6 +1422,30 @@ all:RegisterAbilities( {
 
         proc = "damage",
     },
+
+    anodized_deflectors = {
+        cast = 0,
+        cooldown = 30,
+        gcd = "off",
+
+        item = 168978,
+        toggle = "defensives",
+
+        proc = "avoidance",
+        self_buff = "anodized_deflectors",
+
+        handler = function ()
+            applyBuff( "anodized_deflectors" )
+        end,
+
+        auras = {
+            anodized_deflectors = {
+                id = 300140,
+                duration = 6,
+                max_stack = 1,
+            }
+        }
+    },
 } )
 
 all:RegisterGear( "scroll_of_momentum", 226539 )
