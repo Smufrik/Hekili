@@ -1429,10 +1429,9 @@ spec:RegisterStateTable( "boar_charge", setmetatable( {
 }, {
     __index = function( t, k )
         local elapsed = query_time - last_boar_summoned
-        local remains = boar_charge.boar_duration - elapsed
 
         if k == "remains" then
-            return max( 0, remains )
+            return max( 0, boar_charge.boar_duration - elapsed )
         elseif k == "next_charge"  then
             if elapsed < 0 or elapsed > boar_charge.boar_duration then
                 return 3600
