@@ -1748,6 +1748,8 @@ spec:RegisterAbilities( {
         startsCombat = false,
         texture = 1029596,
 
+        empowerment_default = 1,
+        
         handler = function ()
         end,
     },
