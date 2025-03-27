@@ -7976,38 +7976,38 @@ n = tonumber( n ) + 1
                                     type = "input",
                                     name = "Priority Export String",
                                     desc = "Press CTRL+A to select, then CTRL+C to copy.",
-                                        get = function( info )
-                                            Hekili.PackExports = Hekili.PackExports or {}
+                                    get = function( info )
+                                        Hekili.PackExports = Hekili.PackExports or {}
 
-                                            -- Wipe old export for this pack
-                                            Hekili.PackExports[ pack ] = {
-                                                export = "",
-                                                stress = ""
-                                            }
+                                        -- Wipe old export for this pack
+                                        Hekili.PackExports[ pack ] = {
+                                            export = "",
+                                            stress = ""
+                                        }
 
-                                            local export = SerializeActionPack( pack )
-                                            Hekili.PackExports[ pack ].export = export
+                                        local export = SerializeActionPack( pack )
+                                        Hekili.PackExports[ pack ].export = export
 
-                                            -- Run the stress test
-                                            Hekili:RunStressTest()
+                                        -- Run the stress test
+                                        Hekili:RunStressTest()
 
-                                            -- Collect current warnings
-                                            local output = {}
-                                            for _, key in ipairs( Hekili.ErrorKeys ) do
-                                                local entry = Hekili.ErrorDB[ key ]
-                                                if entry then
-                                                    table.insert( output, string.format( "[%s (%dx)] %s\n%s", entry.last or "??", entry.n or 1, key, entry.text or "?" ) )
-                                                end
+                                        -- Collect current warnings
+                                        local output = {}
+                                        for _, key in ipairs( Hekili.ErrorKeys ) do
+                                            local entry = Hekili.ErrorDB[ key ]
+                                            if entry then
+                                                table.insert( output, string.format( "[%s (%dx)] %s\n%s", entry.last or "??", entry.n or 1, key, entry.text or "?" ) )
                                             end
+                                        end
 
-                                            if #output == 0 then
-                                                table.insert( output, "No warnings or errors detected." )
-                                            end
+                                        if #output == 0 then
+                                            table.insert( output, "No warnings or errors detected." )
+                                        end
 
-                                            Hekili.PackExports[ pack ].stress = table.concat( output, "\n\n" )
+                                        Hekili.PackExports[ pack ].stress = table.concat( output, "\n\n" )
 
-                                            return export
-                                        end,
+                                        return export
+                                    end,
 
                                     set = function() end,
                                     order = 1,
