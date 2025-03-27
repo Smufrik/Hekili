@@ -666,7 +666,7 @@ local ExpireDeathmarkT30 = setfenv( function ()
     applyBuff( "poisoned_edges" )
 end, state )
 
-spec:RegisterGear({
+spec:RegisterGear( {
     -- The War Within
     tww2 = {
         items = { 229290, 229288, 229289, 229287, 229292 },
@@ -716,7 +716,7 @@ spec:RegisterGear({
             }
         }
     }
-})
+} )
 
 spec:RegisterHook( "reset_precast", function ()
     -- Supercharged Combo Point handling
