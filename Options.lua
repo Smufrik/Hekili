@@ -7976,14 +7976,63 @@ n = tonumber( n ) + 1
                                     type = "input",
                                     name = "Priority Export String",
                                     desc = "Press CTRL+A to select, then CTRL+C to copy.",
-                                    get = function( info )
-                                        return SerializeActionPack( pack )
-                                    end,
-                                    set = function () end,
+                                        get = function( info )
+                                            Hekili.PackExports = Hekili.PackExports or {}
+
+                                            -- Wipe old export for this pack
+                                            Hekili.PackExports[ pack ] = {
+                                                export = "",
+                                                stress = ""
+                                            }
+
+                                            local export = SerializeActionPack( pack )
+                                            Hekili.PackExports[ pack ].export = export
+
+                                            -- Run the stress test
+                                            Hekili:RunStressTest()
+
+                                            -- Collect current warnings
+                                            local output = {}
+                                            for _, key in ipairs( Hekili.ErrorKeys ) do
+                                                local entry = Hekili.ErrorDB[ key ]
+                                                if entry then
+                                                    table.insert( output, string.format( "[%s (%dx)] %s\n%s", entry.last or "??", entry.n or 1, key, entry.text or "?" ) )
+                                                end
+                                            end
+
+                                            if #output == 0 then
+                                                table.insert( output, "No warnings or errors detected." )
+                                            end
+
+                                            Hekili.PackExports[ pack ].stress = table.concat( output, "\n\n" )
+
+                                            return export
+                                        end,
+
+                                    set = function() end,
                                     order = 1,
-                                    width = "full"
+                                    width = "full",
+                                },
+                                stressResults = {
+                                    type = "description",
+                                    name = function()
+                                        Hekili.PackExports = Hekili.PackExports or {}
+                                        return Hekili.PackExports[ pack ] and ( "Warnings and Errors:\n\n" .. Hekili.PackExports[ pack ].stress ) or ""
+                                    end,
+                                    fontSize = "medium",
+                                    order = 2,
+                                    width = "full",
+                                    hidden = function()
+                                        return not ( Hekili.PackExports and Hekili.PackExports[ pack ] and Hekili.PackExports[ pack ].stress and Hekili.PackExports[ pack ].stress ~= "" )
+                                    end
                                 }
-                            }
+                            },
+                            hidden = function()
+                                if Hekili.PackExports then
+                                    Hekili.PackExports[ pack ] = nil
+                                end
+                                return false
+                            end
                         }
                     },
                 }
@@ -11212,10 +11261,15 @@ keyNamed = true end
     if count > 0 then
         Hekili:Print( results )
         Hekili:Error( results )
+        return results
     end
 
+
     if postErrorCount > preErrorCount then Hekili:Print( "New warnings were loaded in /hekili > Warnings." ) end
-    if count == 0 and postErrorCount == preErrorCount then Hekili:Print( "Stress test completed; no issues found." ) end
+    if count == 0 and postErrorCount == preErrorCount then 
+        Hekili:Print( "Stress test completed; no issues found." ) 
+        return "Stress test completed; no issues found."
+    end
 
     return true
 end
