@@ -1396,7 +1396,7 @@ all:RegisterAbilities( {
 
         usable = function() return buff.core_recycling_unit.stack > 10 and health.pct < 60 end,
 
-        proc = "heal",
+        proc = "healing",
         self_buff = "core_recycling_unit",
 
         handler = function ()
