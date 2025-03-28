@@ -7334,7 +7334,10 @@ do
         end
         -- New: DoT Cap
         if option.dotCap and option.dotCap > 0 and state.active_dot[ spell ] and state.active_dot[ spell ] >= option.dotCap then
-            return true, "DoT cap reached (" .. state.active_dot[ spell ] .. "/" .. option.dotCap .. ")"
+            if state.dot[ spell ] and state.dot[ spell ].refreshable then
+                return false, "DoT cap reached, but target is refreshable"
+            end
+            return true, "DoT cap reached (" .. state.active_dot[ spell ] .. "/" .. option.dotCap .. ") and target is not refreshable"
         end
 
         return false
