@@ -7979,36 +7979,80 @@ n = tonumber( n ) + 1
                                     get = function( info )
                                         Hekili.PackExports = Hekili.PackExports or {}
 
-                                        -- Wipe old export for this pack
-                                        Hekili.PackExports[ pack ] = {
+                                        -- Wipe previous output for this pack.
+                                        local exportData = {
                                             export = "",
-                                            stress = ""
+                                            stress = "",
+                                            linked = false,
+                                            unrelated = false
                                         }
+                                        Hekili.PackExports[ pack ] = exportData
 
                                         local export = SerializeActionPack( pack )
-                                        Hekili.PackExports[ pack ].export = export
+                                        exportData.export = export
 
-                                        -- Run the stress test
-                                        Hekili:RunStressTest()
+                                        wipe( Hekili.ErrorDB )
+                                        wipe( Hekili.ErrorKeys )
 
-                                        -- Collect current warnings
-                                        local output = {}
+                                        Hekili.Scripts:LoadScripts()
+                                        local stressTestResults = Hekili:RunStressTest()
+
+                                        local function ColorizeAPLIdentifier( key )
+                                            local spec, list, entry, context = key:match( "^([^:]+):([^:]+):(%d+)%s+(%a+):" )
+                                            if not spec then return key end
+
+                                            return string.format(
+                                                "|cff00ccff%s|r:|cffffd100%s|r:%s |cff888888%s|r:",
+                                                spec, list, entry, context
+                                            )
+                                        end
+
+                                        local output, finalOutput = {}, {}
+                                        local lowerPack = pack:lower()
+                                        local shadowKey   = "error in " .. lowerPack .. ":"
+                                        local shadowLabel = "priority '" .. lowerPack .. "'"
+
                                         for _, key in ipairs( Hekili.ErrorKeys ) do
                                             local entry = Hekili.ErrorDB[ key ]
                                             if entry then
-                                                table.insert( output, string.format( "[%s (%dx)] %s\n%s", entry.last or "??", entry.n or 1, key, entry.text or "?" ) )
+                                                local body = entry.text or "|cff777777<No message provided>|r"
+                                                local coloredKey = ColorizeAPLIdentifier( key )
+
+                                                table.insert( output, format(
+                                                    "|cff888888[%s (%dx)]|r %s\n%s",
+                                                    entry.last or "??", entry.n or 1, coloredKey, body
+                                                ))
+
+                                                local k = key:lower()
+                                                if k:find( shadowKey, 1, true ) or k:find( shadowLabel, 1, true ) then
+                                                    exportData.linked = true
+                                                else
+                                                    exportData.unrelated = true
+                                                end
                                             end
                                         end
 
-                                        if #output == 0 then
-                                            table.insert( output, "No warnings or errors detected." )
+                                        -- 1. Internal Check
+                                        if type( stressTestResults ) == "string" and stressTestResults ~= "" then
+                                            table.insert( finalOutput, "|cffa0a0ffInternal Check:|r\n" .. stressTestResults )
+                                        end
+                                        -- 2. Header
+                                        if exportData.linked then
+                                            table.insert( finalOutput, "|cffff0000WARNING:|r There are unresolved Warnings related to this priority. Please review before exporting." )
+                                        elseif exportData.unrelated then
+                                            table.insert( finalOutput, "|cffffff00NOTICE:|r There are unresolved Warnings since reloading the UI. These may not be related to this priority." )
+                                        end
+                                        -- 3. Error entries
+                                        for _, line in ipairs( output ) do
+                                            table.insert( finalOutput, line )
+                                        end
+                                        if not exportData.linked and not exportData.unrelated and #output == 0 then
+                                            table.insert( finalOutput, "|cff00ff00Bleep bloop, you are a good egg.|r\nNo warnings or errors were detected during export." )
                                         end
 
-                                        Hekili.PackExports[ pack ].stress = table.concat( output, "\n\n" )
-
+                                        exportData.stress = table.concat( finalOutput, "\n\n" )
                                         return export
                                     end,
-
                                     set = function() end,
                                     order = 1,
                                     width = "full",
@@ -8016,14 +8060,15 @@ n = tonumber( n ) + 1
                                 stressResults = {
                                     type = "description",
                                     name = function()
-                                        Hekili.PackExports = Hekili.PackExports or {}
-                                        return Hekili.PackExports[ pack ] and ( "Warnings and Errors:\n\n" .. Hekili.PackExports[ pack ].stress ) or ""
+                                        local info = Hekili.PackExports and Hekili.PackExports[ pack ]
+                                        return info and info.stress or ""
                                     end,
                                     fontSize = "medium",
                                     order = 2,
                                     width = "full",
                                     hidden = function()
-                                        return not ( Hekili.PackExports and Hekili.PackExports[ pack ] and Hekili.PackExports[ pack ].stress and Hekili.PackExports[ pack ].stress ~= "" )
+                                        local info = Hekili.PackExports and Hekili.PackExports[ pack ]
+                                        return not ( info and info.stress and info.stress ~= "" )
                                     end
                                 }
                             },
