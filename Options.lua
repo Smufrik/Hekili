@@ -4179,7 +4179,7 @@ self:ForceUpdate( "SPEC_PACKAGE_CHANGED" )
             dotCap = {
                 type = "range",
                 name = "DoT Cap",
-                desc = "If set above zero, this ability will not be recommended if there are this many or more active DoTs from this ability.\n" ..
+                desc = "If set above zero, this ability will not be recommended if there are this many or more active DoTs from this ability.\n\n" ..
                        "Set to zero to ignore this limit.",
                 width = 1.5,
                 min = 0,
@@ -4354,7 +4354,7 @@ self:ForceUpdate( "SPEC_PACKAGE_CHANGED" )
                     dotCap = {
                         type = "range",
                         name = "DoT Cap",
-                        desc = "If set above zero, this ability will not be recommended if there are this many or more active DoTs from this ability.\n" ..
+                        desc = "If set above zero, this ability will not be recommended if there are this many or more active DoTs from this ability.\n\n" ..
                                "Set to zero to ignore this limit.",
                         width = 1.5,
                         min = 0,
