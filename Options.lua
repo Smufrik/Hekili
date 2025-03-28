@@ -8032,9 +8032,9 @@ n = tonumber( n ) + 1
                                             end
                                         end
 
-                                        -- 1. Internal Check
+                                        -- 1. Stress Test
                                         if type( stressTestResults ) == "string" and stressTestResults ~= "" then
-                                            table.insert( finalOutput, "|cffa0a0ffInternal Check:|r\n" .. stressTestResults )
+                                            table.insert( finalOutput, "|cffa0a0ffAutomatic Stress Test:|r " .. stressTestResults )
                                         end
                                         -- 2. Header
                                         if exportData.linked then
@@ -8047,7 +8047,7 @@ n = tonumber( n ) + 1
                                             table.insert( finalOutput, line )
                                         end
                                         if not exportData.linked and not exportData.unrelated and #output == 0 then
-                                            table.insert( finalOutput, "|cff00ff00Bleep bloop, you are a good egg.|r\nNo warnings or errors were detected during export." )
+                                            table.insert( finalOutput, "|cff00ff00No warnings or errors detected!|r\n" )
                                         end
 
                                         exportData.stress = table.concat( finalOutput, "\n\n" )
