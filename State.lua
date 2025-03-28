@@ -7332,6 +7332,10 @@ do
         elseif option.targetMax > 0 and self.active_enemies > option.targetMax then
             return true, "active_enemies[" .. self.active_enemies .. "] is more than ability's maximum targets [" .. option.targetMax .. "]"
         end
+        -- New: DoT Cap
+        if option.dotCap and option.dotCap > 0 and state.active_dot[ spell ] and state.active_dot[ spell ] >= option.dotCap then
+            return true, "DoT cap reached (" .. state.active_dot[ spell ] .. "/" .. option.dotCap .. ")"
+        end
 
         return false
     end

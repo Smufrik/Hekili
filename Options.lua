@@ -4176,6 +4176,18 @@ self:ForceUpdate( "SPEC_PACKAGE_CHANGED" )
                 order = 3.2,
             },
 
+            dotCap = {
+                type = "range",
+                name = "DoT Cap",
+                desc = "If set above zero, this ability will not be recommended if there are this many or more active DoTs from this ability.\n" ..
+                       "Set to zero to ignore this limit.",
+                width = 1.5,
+                min = 0,
+                max = 100,
+                step = 1,
+                order = 3.25,
+            },
+
             clash = {
                 type = "range",
                 name = "Clash",
@@ -4339,18 +4351,29 @@ self:ForceUpdate( "SPEC_PACKAGE_CHANGED" )
                         order = 2.11,
                     },
 
+                    dotCap = {
+                        type = "range",
+                        name = "DoT Cap",
+                        desc = "If set above zero, this ability will not be recommended if there are this many or more active DoTs from this ability.\n" ..
+                               "Set to zero to ignore this limit.",
+                        width = 1.5,
+                        min = 0,
+                        max = 100,
+                        step = 1,
+                        order = 2.19,
+                    },
+
                     clash = {
                         type = "range",
                         name = "Clash",
                         desc = "If set above zero, the addon will pretend " .. k .. " has come off cooldown this much sooner than it actually has.  " ..
                             "This can be helpful when an ability is very high priority and you want the addon to prefer it over abilities that are available sooner.",
-                        width = 3,
+                        width = 1.5,
                         min = -1.5,
                         max = 1.5,
                         step = 0.05,
                         order = 2.2,
                     },
-
 
                     lineBreak3 = {
                         type = "description",
