@@ -361,6 +361,11 @@ spec:RegisterAuras( {
         duration = 15,
         max_stack = 1
     },
+    jade_empowerment = {
+        id = 467317,
+        duration = 3600,
+        max_stack = 2
+    },
     leg_sweep = {
         id = 119381,
         duration = 3,
@@ -592,9 +597,6 @@ spec:RegisterAuras( {
         id = 116680,
         duration = 30,
         max_stack = function() return talent.focused_thunder.enabled and 2 or 1 end,
-        onRemove = function()
-            setCooldown( "thunder_focus_tea", 30 )
-        end,
     },
     tigers_lust = {
         id = 116841,
@@ -706,12 +708,72 @@ local sm_spells = {
     vivify = 1
 }
 
+local teaBuffs = {
+    expel_harm      = "tea_of_plenty_eh",
+    enveloping_mist = { "tea_of_plenty_em", "tea_of_serenity_em" },
+    rising_sun_kick = "tea_of_plenty_rsk",
+    renewing_mist   = "tea_of_serenity_rm",
+    vivify          = "tea_of_serenity_v"
+}
+
+local infusions = {
+    expel_harm      = "secret_infusion_versatility",
+    enveloping_mist = "secret_infusion_critical_strike",
+    rising_sun_kick = "secret_infusion_versatility",
+    renewing_mist   = "secret_infusion_haste",
+    vivify          = "secret_infusion_mastery"
+}
+
+local ThunderFocusTea = setfenv( function ()
+
+    local spell = this_action
+    local trueTeaConsumed = 0
+    local tea = teaBuffs[ spell ]
+
+    if type( tea ) == "table" then
+        for _, buffName in ipairs( tea ) do
+            if buff[ buffName ] and buff[ buffName ].up then
+                removeStack( buffName )
+                tea = nil
+                break
+            end
+        end
+    elseif tea and buff[ tea ] and buff[ tea ].up then
+        removeStack( tea )
+        tea = nil
+    end
+
+    if tea ~= nil then
+        if buff.thunder_focus_tea.up then
+            trueTeaConsumed = 1
+        else
+            return
+        end
+    end
+
+    if talent.secret_infusion.enabled then
+        applyBuff( infusions[ spell ] )
+    end
+
+    if trueTeaConsumed > 0 then
+        removeStack( "thunder_focus_tea" )
+        if buff.thunder_focus_tea.down and talent.deep_clarity.enabled then
+            applyBuff( "zen_pulse" )
+        end
+    end
+
+end, state )
+
 spec:RegisterHook( "runHandler", function( action )
     if buff.soothing_mist.up and not sm_spells[ action ] then
         removeBuff( "soothing_mist" )
     end
-end )
 
+    if action and teaBuffs[ action ] then
+        ThunderFocusTea()
+    end
+
+end )
 
 -- Abilities
 spec:RegisterAbilities( {
@@ -736,29 +798,49 @@ spec:RegisterAbilities( {
         end,
     },
 
-        -- $?c2[The August Celestials empower you, causing you to radiate ${$443039s1*$s7} healing onto up to $s3 injured allies and ${$443038s1*$s7} Nature damage onto enemies within $s6 yds over $d, split evenly among them. Healing and damage increased by $s1% per target, up to ${$s1*$s3}%.]?c3[The August Celestials empower you, causing you to radiate ${$443038s1*$s7} Nature damage onto enemies and ${$443039s1*$s7} healing onto up to $s3 injured allies within $443038A2 yds over $d, split evenly among them. Healing and damage increased by $s1% per enemy struck, up to ${$s1*$s3}%.][]; You may move while channeling, but casting other healing or damaging spells cancels this effect.;
-        celestial_conduit = {
-            id = 443028,
-            cast = function() return talent.unity_within.enabled and buff.celestial_conduit.up and 0 or 4.0 end,
-            channeled = function() return not talent.unity_within.enabled or not buff.celestial_conduit.up end,
-            dual_cast = function() return talent.unity_within.enabled and buff.celestial_conduit.up end,
-            cooldown = 90.0,
-            gcd = "spell",
-    
-            spend = 0.050,
-            spendType = 'mana',
-    
-            talent = "celestial_conduit",
-            startsCombat = false,
-    
-            start = function()
-                applyBuff( "celestial_conduit" )
-            end,
-    
-            handler = function()
-                -- TODO: do whatever unity_within does.
-            end,
-        },
+    -- $?c2[The August Celestials empower you, causing you to radiate ${$443039s1*$s7} healing onto up to $s3 injured allies and ${$443038s1*$s7} Nature damage onto enemies within $s6 yds over $d, split evenly among them. Healing and damage increased by $s1% per target, up to ${$s1*$s3}%.]?c3[The August Celestials empower you, causing you to radiate ${$443038s1*$s7} Nature damage onto enemies and ${$443039s1*$s7} healing onto up to $s3 injured allies within $443038A2 yds over $d, split evenly among them. Healing and damage increased by $s1% per enemy struck, up to ${$s1*$s3}%.][]; You may move while channeling, but casting other healing or damaging spells cancels this effect.;
+    celestial_conduit = {
+        id = 443028,
+        cast = function() return talent.unity_within.enabled and buff.celestial_conduit.up and 0 or 4.0 end,
+        channeled = function() return not talent.unity_within.enabled or not buff.celestial_conduit.up end,
+        dual_cast = function() return talent.unity_within.enabled and buff.celestial_conduit.up end,
+        cooldown = 90.0,
+        gcd = "spell",
+
+        spend = 0.050,
+        spendType = 'mana',
+
+        talent = "celestial_conduit",
+        startsCombat = false,
+
+        start = function()
+            applyBuff( "celestial_conduit" )
+        end,
+
+        handler = function()
+            -- TODO: do whatever unity_within does.
+        end,
+    },
+
+    -- Channel Jade lightning, causing $o1 Nature damage over $117952d to the target$?a154436[, generating 1 Chi each time it deals damage,][] and sometimes knocking back melee attackers.
+    crackling_jade_lightning = {
+        id = 117952,
+        cast = 3,
+        channeled = true,
+        cooldown = 0,
+        gcd = "spell",
+        school = "nature",
+
+        startsCombat = true,
+
+        handler = function ()
+
+        end,
+
+        finish = function ()
+            removeStack( "jade_empowerment" )
+        end,
+    },
 
     enveloping_mist = {
         id = 124682,
@@ -778,12 +860,7 @@ spec:RegisterAbilities( {
         texture = 775461,
 
         handler = function ()
-            if buff.thunder_focus_tea.up then
-                removeStack( "thunder_focus_tea" )
-                if buff.thunder_focus_tea.down and talent.deep_clarity.enabled then applyBuff( "zen_pulse" ) end
-            elseif buff.tea_of_plenty_em.up then removeStack( "tea_of_plenty_em" )
-            elseif buff.tea_of_serenity_em.up then removeStack( "tea_of_serenity_em" )
-            elseif buff.invoke_chiji.stack == 3 then removeBuff( "invoke_chiji" ) end
+            removeBuff( "invoke_chiji" )
 
             gust_of_mist.count = 0
 
@@ -810,7 +887,6 @@ spec:RegisterAbilities( {
         texture = 627486,
 
         handler = function ()
-            if buff.tea_of_plenty_eh.up then removeStack( "tea_of_plenty_eh" ) end
         end,
     },
 
@@ -992,7 +1068,7 @@ spec:RegisterAbilities( {
     renewing_mist = {
         id = 115151,
         cast = 0,
-        charges = 2,
+        charges = function() return 2 + talent.pool_of_mists.rank end,
         cooldown = 9,
         recharge = 9,
         gcd = "spell",
@@ -1005,8 +1081,6 @@ spec:RegisterAbilities( {
 
         handler = function ()
             applyBuff( "renewing_mist" )
-            removeStack( "tea_of_serenity_rm" )
-            if talent.secret_infusion.enabled and buff.thunder_focus_tea.stack == buff.thunder_focus_tea.max_stack then applyBuff( "secret_infusion_haste" ) end
         end,
     },
 
@@ -1088,16 +1162,12 @@ spec:RegisterAbilities( {
                     if solo then applyBuff( "renewing_mist", 3 * talent.rapid_diffusion.rank )
                     else active_dot.renewing_mist = max( group_members, active_dot.renewing_mist + 1 ) end
                 end
-                if talent.secret_infusion.enabled and buff.thunder_focus_tea.stack == buff.thunder_focus_tea.max_stack then applyBuff( "secret_infusion_versatility" ) end
                 if pet.chiji.up then
                     addStack( "invoke_chiji" )
                     gust_of_mist.count = min( 10, gust_of_mist.count + 1 )
                     -- if talent.jade_bond.enabled then reduceCooldown( talent.invoke_chiji.enabled and "invoke_chiji" or "invoke_yulon", 0.5 ) end
                 end
-                if buff.thunder_focus_tea.up then
-                    removeStack( "thunder_focus_tea" )
-                    if buff.thunder_focus_tea.down and talent.deep_clarity.enabled then applyBuff( "zen_pulse" ) end
-                elseif buff.tea_of_plenty_rsk.up then removeStack( "tea_of_plenty_rsk" ) end
+
                 if buff.lifecycles_em_rsk.up then
                     addStack( "mana_tea_stack" )
                     removeBuff( "lifecycles_em_rsk" )
@@ -1237,6 +1307,8 @@ spec:RegisterAbilities( {
     thunder_focus_tea = {
         id = 116680,
         cast = 0,
+        charges = function() if talent.endless_draught.enabled then return 2 end end,
+        recharge = function() if talent.endless_draught.enabled then return 30 end end,
         cooldown = 30,
         gcd = "off",
 
@@ -1250,6 +1322,7 @@ spec:RegisterAbilities( {
             if talent.jadefire_teachings.enabled then applyBuff( "jadefire_teachings" ) end
             if talent.refreshing_jade_wind.enabled then applyBuff( "refreshing_jade_wind" ) end
             if set_bonus.tier30_4pc > 0 or set_bonus.tier31_4pc > 0 then applyBuff( "soulfang_vitality" ) end
+            if talent.aspect_of_harmony.enabled then applyBuff( "aspect_of_harmony" ) end
         end,
     },
 
@@ -1290,8 +1363,6 @@ spec:RegisterAbilities( {
         texture = 1360980,
 
         handler = function ()
-            removeStack( "tea_of_serenity_v" )
-            if talent.secret_infusion.enabled and buff.thunder_focus_tea.stack == buff.thunder_focus_tea.max_stack then applyBuff( "secret_infusion_mastery" ) end
             if buff.lifecycles_vivify.up then
                 addStack( "mana_tea_stack" )
                 removeBuff( "lifecycles_vivify" )
@@ -1396,4 +1467,4 @@ spec:RegisterOptions( {
 
 
 
-spec:RegisterPack( "Mistweaver", 20241109, [[Hekili:TJ1wVTTnu4Fl5f3KUgpl7CZfjbyxEynDTyyQf9njrlrBZAjsnrQKMbd9BFhkzjrrrjR0fJvmuuGKuXdpx)ox4XXY5do2bib259tNm9mlRjZhpz(0Pwx4ylEmg7yhJ83Gwb)bffb)8DeU4bm6ECI8OhdzOajl4S0eF4yh7fPKqXBOolmWxR5NnfOng7dF(Yjo2Rjbb4cAXCFh7FdJcXjzEXjewcrqW8mpucoZ7x)d7tHVGPcCqMhJg(y2Dz3jz9PwwNoz(RZ8EhAdq4F(P3M55ZOCqpbQb68sWXHiF5z2VTXTUaU1hJLAzM3DOa8sIuu2cwuS8wHOCHjavIk413CYPtNb30YA8KXNx95jZpD6vkmCjdSJpGr(Rj0vGzWwcSAnCW7yueOBj1wWKlpD2e4QFqE8NqW9(eraxZXoeScEEicVeLgkG)895HmKVGWO5(suI7AenWLlsiBGqaMIweIdC(zhb4LvjoLJDjcCexJOzQeTiKXcCxMM8OgvN1GkCchNSbmnnQoxLQqYQ1cU7Ntdwfb(qnsVqLuPVpx0AeDPkriQpgmtuORpkmuJYRAOFOvUSLUGlXFJU5oxLWywXVBqH1ejj1FY2haJ4eccOhlgdH0ptgNgdUFPaKxOMHjPu3I)2vg9kIHUfjp(jikoxawDkGJY84yHqcAgZH8m3LiCiHciJTBlbJJrpaGDkoW9Z7GTJ3XRmVrzElsxU0ajbShOn4s5jUIsyAB2yGgjFQT3kc4Y8MCJBANgN8sGjb6vuEU9T3K5nZOBugG70pIyfEXzdwqx)vjh4)k)NDCc2NfTa1o)Zi8Prsh40CxKMW1q)IcROKFdZik8wLCwSoLgGtCxY8t5Y4tLSnYT8W5FJPUXPHCCo8TKt3tUNS8XQsbdxzkGtv4vWICt4BusgiC4axoKtSbYeRkJ8mkHuUev6(abkbwkJZ7ugdp)PjUgCx1hvLkKxIzn2nQSK(yUaAxMd3oRqZh(fuaLcYkiUgJcJQQtA0AooZ7OQS5wEIg2KpJfktChRfsgNGJqeQmxmZBAM3lZ8w5hmoc9Lc9V(ETyFp38KCzE8Gn)BZJ0NO2fc(olvufsVCa5unBbWJjuQuJZR6wWi9uqE7m62zv9KCRJV7PVABGQH2R)VbZ2Dg4X54IJgsRSkDrZUkAKDYGmoPp4jyt7aILW3VrZU6jpP7If1tva)me7w1kO2pUVUdp9KqfuHEUxXWq92auqIGbpyUGv76VgLSQSTWoxHs2faHEq6aJi5nT7PpyjUJ6lForFZ(0MKQGY1g0bJ9J7UH6btpWCoggug0dQyyvwE2vH2df2DbHC(tO3Z2GDlMSUoxuP(cMEpoKfRgJVy4LIV8Puk(QVx8AFLGomfVMp4zdVTA0qdNyLBwkrPDGxFg1NLeiFfzdhWaIN9pwr1tgnBznrxwwdRajuI8E4v2sQk3HY5o2pGsKshEtB(2cirXSeXUTn8IDBj4fYTx8xPG6d2hNfb0HsbWxX(mGcPuOq64S7(98NvAz96mVFHbPxj5N)IU8faBfSEoV0xb0DS1xozVcO9tl1Kq3VpTwez3zWpaVs4P5dUWSg2cyRPGDMxTh9J)edrNFGJqDW)dL5NN5808at7WdO3ws3d0vNnDpGCHEFKYtJL6Pucf5NaNu7M(Ig0Fi1NZoW8)QdmIQd()mGOk4)8(9pkv67WdzOxWqLX)EFu2DVjQeODEnwlFBVWXYfoXwscXLTj4JR2a1pCZpwSZPS7mDw1q5sHSJa4ZTwtS6HvRfw9J1RbUXxRw7R6x1wZR6rvR1v9JnxJBd(RU2w1d0Sz4lA7z9vYn2DtELLxvSMVBSEfz5nQ7Rv96nNkts5rgx762TDfwh1ZAwRUv7wyJ6BTQQAO(MjlSqO1wd7R54p3EZS9Zc43DZHRNPGCGblbU06DnANRn2O(P6P06CVAaiPYSVCOrM3ZXObnH81NTD7Wi0stjBmpNupp(4J6sv3jddJ9FYEvZ04bQH3o7KrvQqlx8O9ns)TtF5UbY3UD)JXxt9jA(LIvdiDiDUDHrT2SGgpukz1bWqfrc4FtqsdazLuHD3QwB7rNkivZVzK9B3QVw6wCr3J(vYNV1Zrk0Y2jj)haqhD8G0Ei)rx9nGdloWWl(urK5FvgSvxbvECQ92RU(MY3b366gH0Dnw3O(xkZ1Dkf1PzpicODF1NDrOTjOQ8527q6wldHPU6wvrq3nSkj57TdA1oO01yizXWykqnpTVyn6OUNqFuNE39eBmKMPSVf49MRzjo2)ezdII2GYx6IZ)8]] )
+spec:RegisterPack( "Mistweaver", 20250329, [[Hekili:TRv3VnoUr8)wcoaNKRBCTSDs2Cija9Jh6LR7HI6TyFtYms02ATmPkPKZMcd93ENHY6dsrkR96g09H7LnzfhoCMHZ8B(GX3Z)J(lIizu)FD6KPxpz207g7D9eVP34Vi71uQ)Ius4wYA4xyKDW)(Hyz2luYEQax61eojczHKNlcHL9x8CECs2pZ8FUlFNF9TZNc0MsdHpF7e)fBIJIOL0sLH(l(BuscvuSmveZfXzXuzXsIGwS8V(pwCf8fklJgvSKZsET4PINawp)kpVRMC3pvS8dKTaH)Zp9lfld5mjiNa1aDlf00esiU2IFrBx3a76FLIszXYNir0vX4rTiJVlf3vcrDyzGiXYKn7CYvtNb70ZB8KXxx)5j3D1033IHR4GE8rkjCtmBnOg8vaR2al8boJaYMOrdMC7vZMaB9J4YFIa77tXzW28xKaAHuDfrxrYtYGF9xvxzKWSyotzljIGnewuGmteVfUcOmYZj0i))SFgyLBtCUKgeNr3jniAwBIEoHZJcwLlE1GQ5AurfsQylOAguDDBQsIxVjtg858O17aBObP30Mu02RoAdIUTnrewifutssqijjXGY3RjFK1b8vbGjjCRP6ExBct5L)uJcVjijnFAri4msfXeiOiEhniJhSJ8LGWneXA0f9(hkwUomAm8XgolOm6lGbkyhCjQ4QNtUUNa)a(84mkjipTHjOEgu(FcqNHsxIGYyXv8WCzaSff3N6K7P0SXGB4NJhJSg9tcXn0suZzopKqbHrvhWmNhWzflL0Sm0rFSeWgcwrOjXmWB(WHQaOXKxGaugnk4Zhd1gFKxflhvS858vRSqse)fMgxQwbv7YqRUSXcniFA03AcKySUs5M7u5WnbQeix7u4rpcx2ZSAg79YIWlTIxp4d6(FtNJYxd(uQGgY39mPlMHvxEnGcWOf8CUqAgXA6bWr3jAwZgR8JXFljNIzdG7d0PgcgtXlWxdeYTGFy5LQTL313Q0nwxfWIOSyCD77UEDhCVE99glVjNfrfb1rAQiiqlpASpgUQm44fSPPUZ(Tz1T6mu7idQuk)fQabqhRbniGmZjiaJImfwldbKTCrzW3)dLfKMNiPAmCF8(4vVwd1BD71H5G2I3KTWqILOSibOKTaOBDUGVw2KlXi2aa5mQMr34KrxudmestGCdXyUbolkpotdx4SA6(soLjdwNhhHztAi6YYRDBr7ZBNVnMHg5afSyTaER78fdg8thus5hoQXlTehtLtBdnyxvneJLzGxGcRyUUB9P3qleLS41GxAkjzxDMuxM7glzNRknDkKZtqu3XgogJf0DKygAAlwoTy5pwN6Su(B2xh23ZoVuDMxmy1h4WmyxTl7b(oppR(k9UHaiwwOqFohA0NvLoTcNOxxgwiwVBFj66ssTj6ElvK0fnQxiO3m5GkLui2dKdww)OvVzIq3kaCJ5P4FmBpFlnOSmQgNOwXqu2EAcpTDfFAfdBcq2tXWDbbTuuSRauTy0EWDQblmaEkl56YbH(yMlDyrDvXQFNcL0dOGBKXo5nuQQ1mkGxJroPkNxiZvixyKyA0GUppzkkn8mDfRpmTwzgmHYKDlTCq17mSaIzFnbeUdEpLD77X8VURB63dVFtdVDxNzt7TW)MqdQRGUXoEQIQVDifu8(bg71eG1BPecsC0P6gQvuM5el(AdxDN(0sxCTYC(LuAsWgIy3aseBRJnBMB3brUBCSVK5kZ(EQqIRJd1CUN3K78x8crGOTs)fQX3fdDRjYoo(VZpo2UZXXj(VZHGq42qY3b0rYHOXYbmgUHWwtLJlE6VRMzIhoDX)chKaHA9ZDfSdSnJ3Z6vrzaDx49Llp5b0DUjgNG7HV0CefpzXoupmIHAju8yfpjHJoKircceod9bdFpxIehZooq1Y7SIL4qqqh9Sk6yCLaaPKAtDuesCejJ8mrs)jqIxEfSMXqiCOiq)QdvfkT13y3u3PBvdlTZUznVlDWF9UCnyU9wGn587TZ5oGTgm3jw)jCruvR81zB9CeNy2kGzCIRUjmTatXX5ZK5POCINqLN25T7G5Cn6FlLhx4cFR4)TVX4oo4)3apQE9yTuDTdlKL6Vh6z8)UnYAuHCWiMLI31VzIxV8)BWvyXt)8UQ4SB0b1r1dsnNNTHl8x8NI3syKT47Ai4RIXHnxsSCCDAM)Wd)XYPCx8KT1QR(Y(YvtX(D4qEFitnJ33PgO9doNN9HdUMLT1vuvaPVIEPiowZch1QeQAjlZTgnXh1wqh78WHTxS(HcB)XMhgu7R1pey7VA8WFTxQ(H(A)r9h2tJ)TFiV2lyC)cFrR813fV6blVv39pu1iqRnA(EkL3712oKvgpqN2XQ)4zLBwLn7DLVDZdEihA)iCT3UE7ziLNz9T0oCWvS6OYbGz9TZQ3v3s3gP3DyM2BLDAZdujKM(He0mMJhFy2Pzb8t3C4(zOdBtaA91HTBASpN(IyCWg9oAkE6h(HJ)TfGLyQQxe)b0tBC5J3hdqYcSCu8KQ(ttaWgGYj5SZbqBiQcl2uqjjicoCuQklTF8nT9GQGlqc77TSphZ9P)mw2pu9gBCYHYhsRL9xIiJDWvmwVJfvFvZSaMCVUFxv07jsnnY(uBgnOHvC)8g3L(j0Zqi1gAakNxCXzUe1JNHLjWC5jfZ2W89kHpo7Yr1Iqht8OtnDLhN(JhHepC40tuPH6lnSlnEKoNvYOoZjXGhwYlB4y02JeqG63LSKaxVtATRVLxz1KhgHB2vHssnmZAgKJV2zNTyAThYMSmMxL3ORgihDM1U)U8WbtK75DmXFNhxwkLDdm))qqXOlgK0dXSDCt76778IwpZO672IeAFBz2d4XIgC9Qz3BwMu9P0U133KdOBbrFZpcxjb7(iFp61D3otYvtG78CvK87zr6KfPY04ayZaLAwhClVAeolTZpYP19e3nwcZA)wnz(()3d]] )
