@@ -1,6 +1,6 @@
 actions.precombat+=/potion
 actions.precombat+=/chi_burst
-actions.precombat+=/variable,name=tea_up,value=buff.tea_of_plenty_rsk.up|buff.tea_of_plenty_rm.up|buff.tea_of_plenty_eh.up|buff.tea_of_serenity_em.up|buff.tea_of_serenity_rm.up|buff.tea_of_serenity_v.up|buff.thunder_focus_tea.up
+actions.precombat+=/variable,name=tea_up,value=buff.tea_of_plenty_rsk.up|buff.tea_of_plenty_em.up|buff.tea_of_plenty_eh.up|buff.tea_of_serenity_em.up|buff.tea_of_serenity_rm.up|buff.tea_of_serenity_v.up|buff.thunder_focus_tea.up
 
 actions+=/spear_hand_strike
 actions+=/use_items
@@ -24,7 +24,7 @@ actions.focus_tea+=/rising_sun_kick
 ## only use these 3 if their rng buffs are up, don't spend real focus tea
 actions.focus_tea+=/expel_harm,if=buff.tea_of_plenty_eh.up
 actions.focus_tea+=/vivify,if=buff.tea_of_serenity_v.up
-actions.focus_tea+=/enveloping_mist,if=buff.tea_of_serenity_em.up
+actions.focus_tea+=/enveloping_mist,if=buff.tea_of_serenity_em.up|buff.tea_of_plenty_em.up
 
 actions.st+=/thunder_focus_tea
 actions.st+=/rising_sun_kick
