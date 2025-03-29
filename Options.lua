@@ -4178,8 +4178,8 @@ self:ForceUpdate( "SPEC_PACKAGE_CHANGED" )
 
             dotCap = {
                 type = "range",
-                name = "DoT Cap",
-                desc = "If set above zero, this ability will not be recommended if there are this many or more active DoTs from this ability, unless the DoT is refreshable on your main target.\n\n" ..
+                name = "Maximum Applications",
+                desc = "If set above zero, this ability will not be recommended when it has been applied to this number of targets (or more). If the aura is refreshable on your current target, this limit is ignored.\n\n" ..
                        "Set to zero to ignore this limit.",
                 width = 1.5,
                 min = 0,
@@ -4353,9 +4353,9 @@ self:ForceUpdate( "SPEC_PACKAGE_CHANGED" )
 
                     dotCap = {
                         type = "range",
-                        name = "DoT Cap",
-                        desc = "If set above zero, this ability will not be recommended if there are this many or more active DoTs from this ability, unless the DoT is refreshable on your main target.\n\n" ..
-                               "Set to zero to ignore this limit.",
+                        name = "Maximum Applications",
+                        desc = "If set above zero, this ability will not be recommended when it has been applied to this number of targets (or more). If the aura is refreshable on your current target, this limit is ignored.\n\n" ..
+                        "Set to zero to ignore this limit.",
                         width = 1.5,
                         min = 0,
                         max = 100,
