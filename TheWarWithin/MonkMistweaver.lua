@@ -724,9 +724,8 @@ local infusions = {
     vivify          = "secret_infusion_mastery"
 }
 
-local ThunderFocusTea = setfenv( function ()
+local ThunderFocusTea = setfenv( function ( spell )
 
-    local spell = this_action
     local trueTeaConsumed = 0
     local tea = teaBuffs[ spell ]
 
@@ -770,7 +769,7 @@ spec:RegisterHook( "runHandler", function( action )
     end
 
     if action and teaBuffs[ action ] then
-        ThunderFocusTea()
+        ThunderFocusTea( action )
     end
 
 end )
