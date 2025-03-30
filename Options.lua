@@ -8058,11 +8058,14 @@ n = tonumber( n ) + 1
                                     width = "full",
                                 },
                                 stressResults = {
-                                    type = "description",
-                                    name = function()
+                                    type = "input",
+                                    multiline = 20,
+                                    name = "Stress Test Results",
+                                    get = function()
                                         local info = Hekili.PackExports and Hekili.PackExports[ pack ]
                                         return info and info.stress or ""
                                     end,
+                                    set = function() end,
                                     fontSize = "medium",
                                     order = 2,
                                     width = "full",
