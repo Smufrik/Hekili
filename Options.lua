@@ -8000,13 +8000,110 @@ n = tonumber( n ) + 1
                                     name = "Priority Export String",
                                     desc = "Press CTRL+A to select, then CTRL+C to copy.",
                                     get = function( info )
-                                        return SerializeActionPack( pack )
+                                        Hekili.PackExports = Hekili.PackExports or {}
+
+                                        -- Wipe previous output for this pack.
+                                        local exportData = {
+                                            export = "",
+                                            stress = "",
+                                            linked = false,
+                                            unrelated = false
+                                        }
+                                        Hekili.PackExports[ pack ] = exportData
+
+                                        local export = SerializeActionPack( pack )
+                                        exportData.export = export
+
+                                        wipe( Hekili.ErrorDB )
+                                        wipe( Hekili.ErrorKeys )
+
+                                        Hekili.Scripts:LoadScripts()
+                                        local stressTestResults = Hekili:RunStressTest()
+
+                                        local function ColorizeAPLIdentifier( key )
+                                            local spec, list, entry, context = key:match( "^([^:]+):([^:]+):(%d+)%s+(%a+):" )
+                                            if not spec then return key end
+
+                                            return string.format(
+                                                "|cff00ccff%s|r:|cffffd100%s|r:%s |cff888888%s|r:",
+                                                spec, list, entry, context
+                                            )
+                                        end
+
+                                        local output, finalOutput = {}, {}
+                                        local lowerPack = pack:lower()
+                                        local shadowKey   = "error in " .. lowerPack .. ":"
+                                        local shadowLabel = "priority '" .. lowerPack .. "'"
+
+                                        for _, key in ipairs( Hekili.ErrorKeys ) do
+                                            local entry = Hekili.ErrorDB[ key ]
+                                            if entry then
+                                                local body = entry.text or "|cff777777<No message provided>|r"
+                                                local coloredKey = ColorizeAPLIdentifier( key )
+
+                                                table.insert( output, format(
+                                                    "|cff888888[%s (%dx)]|r %s\n%s",
+                                                    entry.last or "??", entry.n or 1, coloredKey, body
+                                                ))
+
+                                                local k = key:lower()
+                                                if k:find( shadowKey, 1, true ) or k:find( shadowLabel, 1, true ) then
+                                                    exportData.linked = true
+                                                else
+                                                    exportData.unrelated = true
+                                                end
+                                            end
+                                        end
+
+                                        -- 1. Stress Test
+                                        if type( stressTestResults ) == "string" and stressTestResults ~= "" then
+                                            table.insert( finalOutput, "|cffa0a0ffAutomatic Stress Test:|r " .. stressTestResults )
+                                        end
+                                        -- 2. Header
+                                        if exportData.linked then
+                                            table.insert( finalOutput, "|cffff0000WARNING:|r There are unresolved Warnings related to this priority. Please review before exporting." )
+                                        elseif exportData.unrelated then
+                                            table.insert( finalOutput, "|cffffff00NOTICE:|r There are unresolved Warnings since reloading the UI. These may not be related to this priority." )
+                                        end
+                                        -- 3. Error entries
+                                        for _, line in ipairs( output ) do
+                                            table.insert( finalOutput, line )
+                                        end
+                                        if not exportData.linked and not exportData.unrelated and #output == 0 then
+                                            table.insert( finalOutput, "|cff00ff00No warnings or errors detected!|r\n" )
+                                        end
+
+                                        exportData.stress = table.concat( finalOutput, "\n\n" )
+                                        return export
                                     end,
-                                    set = function () end,
+                                    set = function() end,
                                     order = 1,
-                                    width = "full"
+                                    width = "full",
+                                },
+                                stressResults = {
+                                    type = "input",
+                                    multiline = 20,
+                                    name = "Stress Test Results",
+                                    get = function()
+                                        local info = Hekili.PackExports and Hekili.PackExports[ pack ]
+                                        return info and info.stress or ""
+                                    end,
+                                    set = function() end,
+                                    fontSize = "medium",
+                                    order = 2,
+                                    width = "full",
+                                    hidden = function()
+                                        local info = Hekili.PackExports and Hekili.PackExports[ pack ]
+                                        return not ( info and info.stress and info.stress ~= "" )
+                                    end
                                 }
-                            }
+                            },
+                            hidden = function()
+                                if Hekili.PackExports then
+                                    Hekili.PackExports[ pack ] = nil
+                                end
+                                return false
+                            end
                         }
                     },
                 }
@@ -11235,10 +11332,15 @@ keyNamed = true end
     if count > 0 then
         Hekili:Print( results )
         Hekili:Error( results )
+        return results
     end
 
+
     if postErrorCount > preErrorCount then Hekili:Print( "New warnings were loaded in /hekili > Warnings." ) end
-    if count == 0 and postErrorCount == preErrorCount then Hekili:Print( "Stress test completed; no issues found." ) end
+    if count == 0 and postErrorCount == preErrorCount then 
+        Hekili:Print( "Stress test completed; no issues found." ) 
+        return "Stress test completed; no issues found."
+    end
 
     return true
 end
