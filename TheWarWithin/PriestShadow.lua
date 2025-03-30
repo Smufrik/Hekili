@@ -1019,7 +1019,7 @@ spec:RegisterHook( "reset_precast", function ()
         applyBuff( "shadowform" )
     end
 
-    if debuff.unfurling_darkness_cd.up then applyBuff( "unfurling_darkness_cd", debuff.unfurling_darkness_cd.remains ) end
+    applyBuff( "unfurling_darkness_cd", state.PlayerDebuffRemains( "unfurling_darkness_cd" ) )
 
     if pet.mindbender.active then
         applyBuff( "mindbender", pet.mindbender.remains )

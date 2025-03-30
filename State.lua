@@ -5936,6 +5936,11 @@ function state.PlayerDebuffUp( debuff )
     return aura and aura.expires > GetTime()
 end
 
+function state.PlayerDebuffRemains( debuff )
+    local aura = state.auras.player.debuff[ debuff ]
+    return aura and aura.expires > GetTime() and aura.expires - GetTime() or 0
+end
+
 function state.TargetBuffUp( buff )
     local aura = state.auras.target.buff[ buff ]
     return aura and aura.expires > GetTime()
