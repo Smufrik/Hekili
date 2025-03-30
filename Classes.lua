@@ -797,7 +797,7 @@ local HekiliSpecMixin = {
                     local link = actionItem:GetItemLink()
                     local texture = actionItem:GetItemIcon()
 
-                   
+
                     if name then
                         if not a.name or a.name == a.key then a.name = name end
                         if not a.link or a.link == a.key then a.link = link end
@@ -916,7 +916,7 @@ local HekiliSpecMixin = {
             -- Hekili:ContinueOnSpellLoad( a.id, function( success )
             a.onLoad = function()
                 local spellInfo = GetSpellInfo( a.id )
-                
+
                 if spellInfo == nil then
                     spellInfo = GetItemInfo( a.id )
                 end
@@ -1104,7 +1104,7 @@ local HekiliSpecMixin = {
             local spell = data.spell
             local duration = data.duration
             local copy = data.copy
-    
+
             -- Register the pet and handle the copy field if it exists.
             if copy then
                 self:RegisterPet( token, id, spell, duration, copy )
@@ -1118,7 +1118,7 @@ local HekiliSpecMixin = {
         -- Register the primary totem.
         self.totems[ token ] = id
         self.totems[ id ] = token
-    
+
         -- Handle copies if provided.
         local n = select( "#", ... )
         if n and n > 0 then
@@ -1128,7 +1128,7 @@ local HekiliSpecMixin = {
                 self.totems[ id ] = copy
             end
         end
-    
+
         -- Commit the primary token.
         CommitKey( token )
     end,
@@ -1137,11 +1137,11 @@ local HekiliSpecMixin = {
         for token, data in pairs( totems ) do
             local id = data.id
             local copy = data.copy
-    
+
             -- Register the primary totem.
             self.totems[ token ] = id
             self.totems[ id ] = token
-    
+
             -- Register any copies (aliases).
             if copy then
                 if type( copy ) == "string" then
@@ -1154,7 +1154,7 @@ local HekiliSpecMixin = {
                     end
                 end
             end
-    
+
             CommitKey( token )
         end
     end,
@@ -2655,6 +2655,13 @@ all:RegisterAuras( {
         end,
         copy = "unravel_absorb"
     },
+
+    devouring_rift = {
+        id = 440313,
+        duration = 15,
+        shared = "player",
+        max_stack = 1
+    }
 } )
 
 do

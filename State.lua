@@ -6790,7 +6790,7 @@ do
                             else insert( empowerment.stages, empowerment.stages[ i - 1 ] + n * 0.001 ) end
                         end
 
-                        empowerment.finish = state.buff.casting.expires
+                        empowerment.finish = empowerment.stages[ #empowerment.stages ]
                         empowerment.hold = empowerment.finish + GetUnitEmpowerHoldAtMaxTime( "player" ) * 0.001
                     end
 
