@@ -1019,9 +1019,7 @@ spec:RegisterHook( "reset_precast", function ()
         applyBuff( "shadowform" )
     end
 
-    local unfurlCD = auras.player.debuff.unfurling_darkness_cd
-
-    if unfurlCD.up then applyBuff( "unfurling_darkness_cd", unfurlCD.expires - query_time ) end
+    applyBuff( "unfurling_darkness_cd", state.PlayerDebuffRemains( "unfurling_darkness_cd" ) )
 
     if pet.mindbender.active then
         applyBuff( "mindbender", pet.mindbender.remains )
