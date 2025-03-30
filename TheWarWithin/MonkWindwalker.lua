@@ -1257,13 +1257,12 @@ spec:RegisterAbilities( {
         spend = function () return 20 * ( 1 - ( buff.the_emperors_capacitor.stack * 0.05 ) ) end,
         spendPerSec = function () return 20 * ( 1 - ( buff.the_emperors_capacitor.stack * 0.05 ) ) end,
 
-        toggle = function() if settings.dynamic_crackling_jade_lightning and raid and talent.power_of_the_thunder_king.enabled then return "essence" end end,
+        toggle = function() if settings.dynamic_crackling_jade_lightning and raid and talent.power_of_the_thunder_king.enabled then return "essences" end end,
 
         startsCombat = false,
 
         handler = function ()
             applyBuff( "crackling_jade_lightning" )
-
         end,
 
         finish = function ()
