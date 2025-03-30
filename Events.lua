@@ -1256,6 +1256,7 @@ do
     RegisterUnitEvent( "UNIT_SPELLCAST_EMPOWER_STOP", "player", nil, function( event, unit, cast, spellID )
         empowerment.spell = "none"
 
+        empowerment.active = false
         empowerment.start = 0
         empowerment.finish = 0
         empowerment.hold = 0

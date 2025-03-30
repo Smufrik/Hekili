@@ -1332,7 +1332,7 @@ function Hekili:GetPredictionFromAPL( dispName, packName, listName, slot, action
                                                         slot.actionName = ability.key
                                                         slot.actionID = ability.id
 
-                                                        slot.caption = not ability.empowered and ( ability.caption or entry.caption )
+                                                        slot.caption = ability.caption or entry.caption
                                                         slot.texture = ability.texture
                                                         slot.indicator = ability.indicator
 
@@ -1355,7 +1355,7 @@ function Hekili:GetPredictionFromAPL( dispName, packName, listName, slot, action
                                                         state.selection_time = state.delay
                                                         state.selected_action = rAction
 
-                                                        slot.empower_to = ability.empowered and ( ability.caption or state.args.empower_to or ability.empowerment_default or state.max_empower ) or nil
+                                                        slot.empower_to = ability.empowered and ( state.args.empower_to or ability.empowerment_default or state.max_empower ) or nil
 
                                                         if debug then
                                                             -- scripts:ImplantDebugData( slot )
@@ -1394,6 +1394,10 @@ function Hekili:GetPredictionFromAPL( dispName, packName, listName, slot, action
             actID = actID + 1
 
         end
+
+        action = rAction
+        wait = rWait
+        depth = rDepth
 
     else
         if debug then self:Debug( "ListActive: N (%s-%s)", packName, listName ) end
@@ -1623,9 +1627,7 @@ function Hekili.Update()
                 numRecs = 1
             end
 
-            if debug then 
-            Hekili:Debug( "Combat Timer: %.2f", state.time )
-            end
+            if debug then Hekili:Debug( "Combat Timer: %.2f", state.time ) end
 
             for i = 1, numRecs do
                 local chosen_depth = 0
@@ -1944,7 +1946,7 @@ function Hekili.Update()
                     slot.display = state.display
                     slot.pack = "Fallthrough"
                     slot.list = "Fallthrough"
-                    slot.listName = "Fallthrough"
+                    slot.listName = "Empowerment"
                     slot.action = 1
                     slot.actionName = ability.key
                     slot.actionID = ability.id
@@ -1958,7 +1960,7 @@ function Hekili.Update()
 
                     slot.resource = state.GetResourceType( action )
 
-                    slot.empower_to = "*"
+                    slot.empower_to = ability.empowerment_default or state.max_empower
 
                     slot.hook = nil
                     slot.script = nil

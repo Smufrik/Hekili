@@ -6497,6 +6497,15 @@ function state:RunHandler( key, noStart )
     self.prev_gcd.override = nil
     self.prev_off_gcd.override = nil
 
+    if ability.empowered then
+        local e = self.empowerment
+        e.active = false
+        e.spell = "none"
+        e.start = 0
+        e.finish = 0
+        e.hold = 0
+    end
+
     if self.time == 0 and ability.startsCombat and not noStart then -- and not ability.isProjectile
         -- Assume MH swing at combat start and OH swing half a swing later?
         self:StartCombat()
@@ -6772,6 +6781,9 @@ do
                     local empowerment = state.empowerment
                     local timeDiff = state.now - state.buff.casting.applied
 
+                    state.gainCharges( casting, 1 )
+                    state.setCooldown( casting, 0 )
+
                     if timeDiff >= 0 then
                         if Hekili.ActiveDebug then Hekili:Debug( "Empowerment [%s] is active; turning back time by %.2fs...", casting, timeDiff ) end
                         state.now = state.now - timeDiff
@@ -6790,15 +6802,17 @@ do
                             else insert( empowerment.stages, empowerment.stages[ i - 1 ] + n * 0.001 ) end
                         end
 
-                        empowerment.finish = empowerment.stages[ #empowerment.stages ]
+                        local stage = state.args.empower_to or ability.empowerment_default or #empowerment.stages
+
+                        empowerment.finish = empowerment.stages[ state.args.empower_to or ability.empowerment_default or #empowerment.stages ]
                         empowerment.hold = empowerment.finish + GetUnitEmpowerHoldAtMaxTime( "player" ) * 0.001
                     end
 
                     removeBuff( "casting" )
 
-                    cast_time = 0
                     casting = nil
                     ability = nil
+                    cast_time = 0
                 else
                     if castID == class.abilities.cyclotronic_blast.id then
                         -- Set up Pocket-Sized Computation Device.
@@ -7748,7 +7762,7 @@ function state:TimeToReady( action, pool )
     wait = ns.callHook( "TimeToReady", wait, action )
 
     if state.empowerment.active and action == state.empowerment.spell then
-        wait = max( wait, ( state.empowerment.stages[ state.args.empower_to or state.max_empower ] or 0 ) - now )
+        wait = max( wait, ( state.empowerment.stages[ state.args.empower_to or ability.empowerment_default or state.max_empower ] or 0 ) - now )
     end
 
     state.delay = delay
