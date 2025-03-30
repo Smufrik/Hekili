@@ -1512,15 +1512,15 @@ do
                     r.forecast[ idx ].e = e.name or "none"
                     r.fcount = idx
 
-                    local step = roundDown( type( e.interval ) == "number" and e.interval or 
-                                           ( type( e.interval ) == "function" and e.interval( now, v ) or 
+                    local step = roundDown( type( e.interval ) == "number" and e.interval or
+                                           ( type( e.interval ) == "function" and e.interval( now, v ) or
                                            ( type( e.interval ) == "string" and state[ e.interval ] or 0 ) ), 3 )
 
                     remains[ e.resource ] = finish - e.next
                     e.next = e.next + step
 
-                    if e.next > finish or step < 0 or 
-                       ( e.aura and state[ e.debuff and "debuff" or "buff" ][ e.aura ].expires < e.next ) or 
+                    if e.next > finish or step < 0 or
+                       ( e.aura and state[ e.debuff and "debuff" or "buff" ][ e.aura ].expires < e.next ) or
                        ( e.channel and state.buff.casting.expires < e.next ) then
                         table.remove( events, 1 )
                     end
@@ -2604,7 +2604,7 @@ do
 
                 local petGUID = UnitGUID( "pet" )
                 petGUID = petGUID and tonumber( petGUID:match( "%-(%d+)%-[0-9A-F]+$" ) )
-                
+
                 local id = t.id
                 if petGUID and id == petGUID and UnitHealth( "pet" ) > 0 then
                     t.expires = state.query_time + 3600
@@ -2612,7 +2612,7 @@ do
                     t.expires = 0
                 end
                 return t.expires
-                
+
 
             elseif k == "remains" then
                 return max( 0, t.expires - ( state.query_time ) )
@@ -6751,108 +6751,132 @@ do
             end
         end ]]
 
-        state.empowerment.active = state.empowerment.hold > state.now
-
         -- Hekili:Yield( "Reset Pre-Cast Hook" )
         ns.callHook( "reset_precast" )
         -- Hekili:Yield( "Reset Pre-Casting" )
 
-        if state.empowerment.active then
-            local timeDiff = state.now - state.empowerment.start
-            if timeDiff > 0 then
-                if Hekili.ActiveDebug then Hekili:Debug( "Empowerment is active; turning back time by " .. timeDiff .. "s..." ) end
-                state.now = state.now - timeDiff
-            end
-            removeBuff( "casting" )
-        else
-            -- TODO: All of this cast-queuing seems like it should be simpler, but that's for another time.
-            local cast_time, casting, ability = 0, nil, nil
-            state.buff.casting.generate( state.buff.casting, "buff" )
+        -- TODO: All of this cast-queuing seems like it should be simpler, but that's for another time.
+        local cast_time, casting, ability = 0, nil, nil
+        state.buff.casting.generate( state.buff.casting, "buff" )
 
-            if state.buff.casting.up then
-                cast_time = state.buff.casting.remains
+        if state.buff.casting.up then
+            cast_time = state.buff.casting.remains
 
-                local castID = state.buff.casting.v1
-                ability = class.abilities[ castID ]
+            local castID = state.buff.casting.v1
+            ability = class.abilities[ castID ] or class.abilities[ state.buff.casting.name ]
 
-                casting = ability and ability.key or formatKey( state.buff.casting.name )
+            if ability then
+                casting = ability.key
 
-                if castID == class.abilities.cyclotronic_blast.id then
-                    -- Set up Pocket-Sized Computation Device.
-                    if state.buff.casting.v3 == 1 then
-                        -- We are in the channeled part of the cast.
-                        setCooldown( "pocketsized_computation_device", state.buff.casting.applied + 120 - state.now )
-                        setCooldown( "global_cooldown", cast_time )
-                    else
-                        -- This is the casting portion.
-                        casting = class.abilities.pocketsized_computation_device.key
-                        state.buff.casting.v1 = class.abilities.pocketsized_computation_device.id
-                    end
-                end
-            end
+                if ability.empowered then
+                    local empowerment = state.empowerment
+                    local timeDiff = state.now - state.buff.casting.applied
 
-            -- Okay, two paths here.
-            -- 1.  We can cast while casting (i.e., Fire Blast for Fire Mage), so we want to hand off the current cast to the event system, and then let the recommendation engine sort it out.
-            -- 2.  We cannot cast anything while casting (typical), so we want to advance the clock, complete the cast, and then generate recommendations.
+                    if timeDiff >= 0 then
+                        if Hekili.ActiveDebug then Hekili:Debug( "Empowerment [%s] is active; turning back time by %.2fs...", casting, timeDiff ) end
+                        state.now = state.now - timeDiff
 
-            if casting and cast_time > 0 then
-                local channeled, destGUID = state.buff.casting.v3 == 1
+                        empowerment.active = true
+                        empowerment.spell = casting
+                        empowerment.start = state.now
 
-                if ability then
-                    channeled = channeled or ability.channeled
-                    destGUID  = Hekili:GetMacroCastTarget( ability.key, state.buff.casting.applied, "RESET" ) or state.target.unit
-                end
+                        wipe( empowerment.stages )
 
-                if not state:IsCasting() and not channeled then
-                    state:QueueEvent( casting, state.buff.casting.applied, state.buff.casting.expires, "CAST_FINISH", destGUID )
+                        for i = 1, 4 do
+                            local n = GetUnitEmpowerStageDuration( "player", i - 1 )
+                            if n == 0 then break end
 
-                    -- Projectile spells have two handlers, effectively.  An onCast handler, and then an onImpact handler.
-                    if ability and ability.isProjectile then
-                        state:QueueEvent( ability.key, state.buff.casting.expires, nil, "PROJECTILE_IMPACT", destGUID )
-                        -- state:QueueEvent( action, "projectile", true )
+                            if i == 1 then insert( empowerment.stages, state.now + n * 0.001 )
+                            else insert( empowerment.stages, empowerment.stages[ i - 1 ] + n * 0.001 ) end
+                        end
+
+                        empowerment.finish = state.buff.casting.expires
+                        empowerment.hold = empowerment.finish + GetUnitEmpowerHoldAtMaxTime( "player" ) * 0.001
                     end
 
-                elseif not state:IsChanneling() and channeled then
-                    state:QueueEvent( casting, state.buff.casting.applied, state.buff.casting.expires, "CHANNEL_FINISH", destGUID )
+                    removeBuff( "casting" )
 
-                    if channeled and ability then
-                        local tick_time = ability.tick_time or ( ability.aura and class.auras[ ability.aura ].tick_time )
-
-                        if tick_time and tick_time > 0 then
-                            local eoc = state.buff.casting.expires - tick_time
-
-                            while ( eoc > state.now ) do
-                                state:QueueEvent( casting, state.buff.casting.applied, eoc, "CHANNEL_TICK", destGUID )
-                                eoc = eoc - tick_time
-                            end
+                    cast_time = 0
+                    casting = nil
+                    ability = nil
+                else
+                    if castID == class.abilities.cyclotronic_blast.id then
+                        -- Set up Pocket-Sized Computation Device.
+                        if state.buff.casting.v3 == 1 then
+                            -- We are in the channeled part of the cast.
+                            setCooldown( "pocketsized_computation_device", state.buff.casting.applied + 120 - state.now )
+                            setCooldown( "global_cooldown", cast_time )
+                        else
+                            -- This is the casting portion.
+                            casting = class.abilities.pocketsized_computation_device.key
+                            state.buff.casting.v1 = class.abilities.pocketsized_computation_device.id
                         end
                     end
-
-                    -- Projectile spells have two handlers, effectively.  An onCast handler, and then an onImpact handler.
-                    if ability and ability.isProjectile then
-                        state:QueueEvent( ability.key, state.buff.casting.expires, nil, "PROJECTILE_IMPACT", destGUID )
-                        -- state:QueueEvent( action, "projectile", true )
-                    end
                 end
-
-                -- Delay to end of GCD.
-                if dispName == "Primary" or dispName == "AOE" then
-                    local delay = 0
-
-                    if not state.spec.can_dual_cast and state.buff.casting.up and state.buff.casting.v3 ~= 1 then -- v3=1 means it's channeled.
-                        delay = max( delay, state.buff.casting.remains )
-                    end
-
-                    delay = ns.callHook( "reset_postcast", delay )
-
-                    if delay > 0 then
-                        if Hekili.ActiveDebug then Hekili:Debug( "Advancing by %.2f per GCD or cast or channel or reset_postcast value.", delay ) end
-                        state.advance( delay )
-                    end
-                end
-
-                state.resetType = "none"
             end
+        end
+
+        -- Okay, two paths here.
+        -- 1.  We can cast while casting (i.e., Fire Blast for Fire Mage), so we want to hand off the current cast to the event system, and then let the recommendation engine sort it out.
+        -- 2.  We cannot cast anything while casting (typical), so we want to advance the clock, complete the cast, and then generate recommendations.
+
+        if casting and cast_time > 0 then
+            local channeled, destGUID = state.buff.casting.v3 == 1
+
+            if ability then
+                channeled = channeled or ability.channeled
+                destGUID  = Hekili:GetMacroCastTarget( ability.key, state.buff.casting.applied, "RESET" ) or state.target.unit
+            end
+
+            if not state:IsCasting() and not channeled then
+                state:QueueEvent( casting, state.buff.casting.applied, state.buff.casting.expires, "CAST_FINISH", destGUID )
+
+                -- Projectile spells have two handlers, effectively.  An onCast handler, and then an onImpact handler.
+                if ability and ability.isProjectile then
+                    state:QueueEvent( ability.key, state.buff.casting.expires, nil, "PROJECTILE_IMPACT", destGUID )
+                    -- state:QueueEvent( action, "projectile", true )
+                end
+
+            elseif not state:IsChanneling() and channeled then
+                state:QueueEvent( casting, state.buff.casting.applied, state.buff.casting.expires, "CHANNEL_FINISH", destGUID )
+
+                if channeled and ability then
+                    local tick_time = ability.tick_time or ( ability.aura and class.auras[ ability.aura ].tick_time )
+
+                    if tick_time and tick_time > 0 then
+                        local eoc = state.buff.casting.expires - tick_time
+
+                        while ( eoc > state.now ) do
+                            state:QueueEvent( casting, state.buff.casting.applied, eoc, "CHANNEL_TICK", destGUID )
+                            eoc = eoc - tick_time
+                        end
+                    end
+                end
+
+                -- Projectile spells have two handlers, effectively.  An onCast handler, and then an onImpact handler.
+                if ability and ability.isProjectile then
+                    state:QueueEvent( ability.key, state.buff.casting.expires, nil, "PROJECTILE_IMPACT", destGUID )
+                    -- state:QueueEvent( action, "projectile", true )
+                end
+            end
+
+            -- Delay to end of GCD.
+            if dispName == "Primary" or dispName == "AOE" then
+                local delay = 0
+
+                if not state.spec.can_dual_cast and state.buff.casting.up and state.buff.casting.v3 ~= 1 then -- v3=1 means it's channeled.
+                    delay = max( delay, state.buff.casting.remains )
+                end
+
+                delay = ns.callHook( "reset_postcast", delay )
+
+                if delay > 0 then
+                    if Hekili.ActiveDebug then Hekili:Debug( "Advancing by %.2f per GCD or cast or channel or reset_postcast value.", delay ) end
+                    state.advance( delay )
+                end
+            end
+
+            state.resetType = "none"
         end
 
         -- Hekili:Yield( "Reset Post-Casting" )
