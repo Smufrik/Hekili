@@ -7375,10 +7375,28 @@ do
         elseif option.targetMax > 0 and self.active_enemies > option.targetMax then
             return true, "active_enemies[" .. self.active_enemies .. "] is more than ability's maximum targets [" .. option.targetMax .. "]"
         end
+        -- New: DoT Cap
+        local dotCap = option.dotCap
+        if dotCap and dotCap > 0 then
+            local activeDot = state.active_dot[ spell ]
+            local aura = state.dot[ spell ]
+            if activeDot and activeDot >= dotCap then
+                if aura and not aura.refreshable then
+                    return true, "applications[" .. activeDot .. "] meet/exceed the ability's maximum targets [" .. dotCap .. "]"
+                end
+            end
+
+            if Hekili.ActiveDebug then
+                if activeDot < dotCap then
+                    Hekili:Debug( "    %s: current applications fewer than maximum applications [%d/%d].", spell, activeDot, dotCap )
+                elseif aura and aura.refreshable then
+                    Hekili:Debug( "    %s: target refreshable despite maximum applications [%d/%d]", spell, activeDot, dotCap )
+                end
+            end
+        end
 
         return false
     end
-
 
     -- TODO:  Finish this, need to support toggles that knock spells to their own display vs. toggles that disable an ability entirely.
     function state:IsFiltered( spell )

@@ -65,6 +65,7 @@ local specTemplate = {
             clash = 0,
             targetMin = 0,
             targetMax = 0,
+            dotCap = 0,
             boss = false
         }
     },
