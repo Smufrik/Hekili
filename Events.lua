@@ -1238,6 +1238,7 @@ do
 
         empowerment.spell = ability.key
         empowerment.start = start
+        empowerment.active = true
 
         for i = 1, 4 do
             local n = GetUnitEmpowerStageDuration( "player", i - 1 )

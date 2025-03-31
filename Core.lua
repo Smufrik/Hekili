@@ -597,6 +597,17 @@ do
     local disabledReasonCache = {}
 
     function Hekili:IsSpellEnabled( spell )
+        local ability = class.abilities[ spell ]
+        if not ability then return false, "ability not in class table" end
+
+        if ability.id > -100 and ability.id < 0 then
+            return true, "internal function"
+        end
+
+        if state.buff.empowering.up and not state.empowering[ spell ] then
+            return false, "empowerment: " .. state.buff.empowering.spell
+        end
+
         local disabled, reason = state:IsDisabled( spell )
         return not disabled, reason
     end
@@ -1931,13 +1942,12 @@ function Hekili.Update()
                 end
 
                 state.delay = wait
-
-                if not action and state.empowerment.active and not state:IsFiltered( state.empowerment.spell ) then
+                if not action and state.buff.empowering.up and not state:IsFiltered( state.buff.empowering.spell ) then
                     state.delay = 0
-                    action = state.empowerment.spell
+                    action = state.buff.empowering.spell
 
                     local ability = class.abilities[ action ]
-                    wait = ability.cast
+                    wait = ability.cast or 0
 
                     slot.scriptType = "simc"
                     slot.script = nil
@@ -1955,7 +1965,7 @@ function Hekili.Update()
                     slot.texture = ability.texture
                     slot.indicator = ability.indicator
 
-                    slot.wait = state.delay
+                    slot.wait = wait
                     slot.waitSec = nil
 
                     slot.resource = state.GetResourceType( action )

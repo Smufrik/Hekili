@@ -76,7 +76,7 @@ spec:RegisterTalents( {
     twin_guardian                   = {  93287, 370888, 1 }, -- Rescue protects you and your ally from harm, absorbing damage equal to 30% of your maximum health for 5 sec.
     unravel                         = {  93308, 368432, 1 }, -- Sunder an enemy's protective magic, dealing 197,312 Spellfrost damage to absorb shields.
     verdant_embrace                 = {  93341, 360995, 1 }, -- Fly to an ally and heal them for 141,237, or heal yourself for the same amount.
-    walloping_blow                  = {  93286, 387341, 1 }, -- Wing Buffet and Tail Swipe knock enemies further and daze them, reducing movement speed by 70% for 4 sec. 
+    walloping_blow                  = {  93286, 387341, 1 }, -- Wing Buffet and Tail Swipe knock enemies further and daze them, reducing movement speed by 70% for 4 sec.
     warp                            = {  94948, 429483, 1 }, -- Hover now causes you to briefly warp out of existence and appear at your destination. Hover's cooldown is also reduced by 5 sec. Hover continues to allow Evoker spells to be cast while moving.
     zephyr                          = {  93346, 374227, 1 }, -- Conjure an updraft to lift you and your 4 nearest allies within 20 yds into the air, reducing damage taken from area-of-effect attacks by 20% and increasing movement speed by 30% for 8 sec.
 
@@ -158,13 +158,13 @@ spec:RegisterTalents( {
 } )
 
 -- PvP Talents
-spec:RegisterPvpTalents( { 
+spec:RegisterPvpTalents( {
     chrono_loop          = 5456, -- (383005) Trap the enemy in a time loop for 5 sec. Afterwards, they are returned to their previous location and health. Cannot reduce an enemy's health below 20%.
-    divide_and_conquer   = 5556, -- (384689) 
-    dreamwalkers_embrace = 5617, -- (415651) 
+    divide_and_conquer   = 5556, -- (384689)
+    dreamwalkers_embrace = 5617, -- (415651)
     nullifying_shroud    = 5467, -- (378464) Wreathe yourself in arcane energy, preventing the next 3 full loss of control effects against you. Lasts 30 sec.
-    obsidian_mettle      = 5460, -- (378444) 
-    scouring_flame       = 5462, -- (378438) 
+    obsidian_mettle      = 5460, -- (378444)
+    scouring_flame       = 5462, -- (378438)
     swoop_up             = 5466, -- (370388) Grab an enemy and fly with them to the target location.
     time_stop            = 5464, -- (378441) Freeze an ally's timestream for 5 sec. While frozen in time they are invulnerable, cannot act, and auras do not progress. You may reactivate Time Stop to end this effect early.
     unburdened_flight    = 5469, -- (378437) Hover makes you immune to movement speed reduction effects.
@@ -767,8 +767,6 @@ spec:RegisterHook( "runHandler", function( action )
             if debuff.bombardments.up then debuff.bombardments.expires = debuff.bombardments.expires + 1 end
         end
     end
-
-    empowerment.active = false
 end )
 
 spec:RegisterGear({
@@ -885,9 +883,9 @@ do
         3.25
     }
 
-    empowered_cast_time = setfenv( function()
+    empowered_cast_time = setfenv( function( n )
         if buff.tip_the_scales.up then return 0 end
-        local power_level = args.empower_to or class.abilities[ this_action ].empowerment_default or max_empower
+        local power_level = n or args.empower_to or class.abilities[ this_action ].empowerment_default or max_empower
 
         -- Is this also impacting Eternity Surge?
         if settings.fire_breath_fixed > 0 then
@@ -897,6 +895,7 @@ do
         return stages[ power_level ] * ( talent.font_of_magic.enabled and 0.8 or 1 ) * ( buff.burning_adrenaline.up and 0.7 or 1 ) * haste
     end, state )
 end
+
 -- Support SimC expression release.dot_duration
 spec:RegisterStateTable( "release", setmetatable( {},{
     __index = function( t, k )
@@ -1137,7 +1136,7 @@ spec:RegisterAbilities( {
 
         startsCombat = false,
 
-        healing = function () return 2.5 * stat.spell_power end,   
+        healing = function () return 2.5 * stat.spell_power end,
 
         handler = function ()
             if state.spec.preservation then
@@ -1201,10 +1200,10 @@ spec:RegisterAbilities( {
         -- channeled = true,
         empowered = true,
         empowerment_default = function()
-            local byCount = min( max_empower, active_enemies / ( talent.eternitys_span.enabled and 2 or 1 ) )
-            local remainder = byCount % 1
-            if remainder > 0 then byCount = byCount - remainder + 1 end
-            return byCount
+            local n = min( max_empower, active_enemies / ( talent.eternitys_span.enabled and 2 or 1 ) )
+            if n % 1 > 0 then n = n + 0.5 end
+            if Hekili.ActiveDebug then Hekili:Debug( "Eternity Surge empowerment level, cast time: %.2f, %.2f", n, empowered_cast_time( n ) ) end
+            return n
         end,
         cooldown = function() return 30 - ( 3 * talent.event_horizon.rank ) end,
         gcd = "off",
@@ -1416,7 +1415,7 @@ spec:RegisterAbilities( {
 
         end,
 
-        impact = function() 
+        impact = function()
             if talent.ruby_embers.enabled then addStack( "living_flame" ) end
         end,
 

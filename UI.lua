@@ -1668,7 +1668,7 @@ do
                     end
 
                     if i == 1 and ability.empowered and conf.empowerment.glow then
-                        if cStart > 0 and duration == 0 then
+                        if state.empowerment.start > 0 and duration == 0 then
                             button.Empowerment:Show()
                         else
                             button.Empowerment:Hide()

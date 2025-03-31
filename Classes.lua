@@ -1885,12 +1885,48 @@ all:RegisterAuras( {
         duration = 3600,
     },
 
+    empowering = {
+        name = "Empowering",
+        duration = 3600,
+        generate = function( t )
+            local e = state.empowerment
+            local spell = e.spell
+
+            local ability = class.abilities[ spell ]
+
+            t.name = ability and ability.name or "Empowering"
+            t.count = e.start > 0 and 1 or 0
+            t.expires = e.hold
+            t.applied = e.start
+            t.duration = e.hold - e.start
+            t.v1 = ability and ability.id or 0
+            t.v2 = 0
+            t.v3 = 0
+            t.spell = spell
+            t.caster = "player"
+
+            if t.expires > 0 then
+                local timeDiff = state.now - t.applied
+                state.now = state.now - timeDiff
+
+                if Hekili.ActiveDebug then
+                    Hekili:Debug( "Empowerment spell: %s[%.2f], unit: %s; rewinding %.2f...", t.name, t.remains, t.caster, timeDiff )
+                end
+            end
+        end,
+    },
+
     casting = {
         name = "Casting",
         generate = function( t, auraType )
             local unit = auraType == "debuff" and "target" or "player"
 
-            if unit == "player" or UnitCanAttack( "player", "target" ) then
+            if unit == "player" and state.buff.empowering.up then
+                removeBuff( "casting" )
+                return
+            end
+
+            if unit == "player" or UnitCanAttack( "player", unit ) then
                 local spell, _, _, startCast, endCast, _, _, notInterruptible, spellID = UnitCastingInfo( unit )
 
                 if spell then

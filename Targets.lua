@@ -667,7 +667,7 @@ function ns.updateTarget( id, time, mine )
             end
         end
     else
-        if state.empowerment.start > 0 and state.empowerment.finish > GetTime() then
+        if state.empowerment.start > 0 and state.empowerment.hold > GetTime() then
             -- Don't expire targets mid-empowerment cast.
             return
         end
