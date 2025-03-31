@@ -6810,34 +6810,19 @@ break end
                                     fontSize = "medium",
                                     width = "full",
                                 },
-                                warnings = {
-                                    type = "input",
-                                    name = "Import Log",
-                                    order = 5.3,
-                                    -- fontSize = "medium",
-                                    width = "full",
-                                    multiline = 20,
-                                    hidden = function ()
-                                        local p = rawget( Hekili.DB.profile.packs, pack )
-                                        return not p.warnings or p.warnings == ""
-                                    end,
-                                },
-                                profileconsiderations = {
-                                    type = "description",
-                                    name = "|cFF00CCFFBefore trying to import a profile, please consider the following:|r\n\n" ..
-                                    " - SimulationCraft action lists tend not to change significantly for individual characters.  The profiles are written to include conditions that work for all gear, talent, and other factors combined.\n\n" ..
-                                    " - Most SimulationCraft action lists require some additional customization to work with the addon.  For example, |cFFFFD100target_if|r conditions don't translate directly to the addon and have to be rewritten.\n\n" ..
-                                    " - Some SimulationCraft action profiles are revised for the addon to be more efficient and use less processing time.\n\n" ..
-                                    " - This feature has been left in for tinkerers and advanced users.\n\n",
-                                    order = 5.2,
-                                    fontSize = "medium",
-                                    width = "full",
-                                },
+
                                 reimport = {
                                     type = "execute",
-                                    name = "Import",
-                                    desc = "Rebuild the action list(s) from the profile above.",
+                                    name = function()
+                                        local p = rawget( Hekili.DB.profile.packs, pack )
+                                        if p.spec ~= state.spec.id then
+                                            return "|A:UI-LFG-DeclineMark:16:16|a Import"
+                                        end
+                                        return format( "%sImport", p.spec ~= state.spec.id and "|A:UI-LFG-DeclineMark:16:16|a" or "" )
+                                    end,
+                                    desc = "Clear existing action list(s) and load the priority above.",
                                     order = 5.1,
+                                    width = 0.7,
                                     func = function ()
                                         local p = rawget( Hekili.DB.profile.packs, pack )
                                         local profile = p.profile:gsub( '"', '' )
@@ -6859,6 +6844,54 @@ break end
                                         if not p.lists[ packControl.listName ][ id ] then packControl.actionID = "zzzzzzzzzz" end
 
                                         self:LoadScripts()
+                                    end,
+                                    disabled = function()
+                                        local p = rawget( Hekili.DB.profile.packs, pack )
+                                        return p.spec ~= state.spec.id
+                                    end,
+                                },
+                                importWarningSpace = {
+                                    type = "description",
+                                    name = " ",
+                                    width = 0.1,
+                                    order = 5.11
+                                },
+                                importWarning = {
+                                    type = "description",
+                                    name = function()
+                                        local p = rawget( Hekili.DB.profile.packs, pack )
+                                        return format( "You must be in the |T%d:0|t |cFFFFD100%s|r specialization to import this priority.", class.specs[ p.spec ].texture, class.specs[ p.spec ].name )
+                                    end,
+                                    image = GetAtlasFile( "Ping_Chat_Warning" ),
+                                    imageCoords = GetAtlasCoords( "Ping_Chat_Warning" ),
+                                    fontSize = "medium",
+                                    width = 2.2,
+                                    order = 5.12,
+                                    hidden = function()
+                                        local p = rawget( Hekili.DB.profile.packs, pack )
+                                        return p.spec == state.spec.id
+                                    end
+                                },
+                                profileConsiderations = {
+                                    type = "description",
+                                    name = "\n|cFF00CCFFBefore trying to import a profile, please consider the following:|r\n\n" ..
+                                    " |cFFFFD100•|r SimulationCraft action lists tend not to change significantly for individual characters.  The profiles are written to include conditions that work for all gear, talent, and other factors combined.\n\n" ..
+                                    " |cFFFFD100•|r Most SimulationCraft action lists require some additional customization to work with the addon.  For example, |cFFFFD100target_if|r conditions don't translate directly to the addon and have to be rewritten.\n\n" ..
+                                    " |cFFFFD100•|r Some SimulationCraft action profiles are revised for the addon to be more efficient and use less processing time.\n\n" ..
+                                    " |cFFFFD100•|r This feature has been left in for tinkerers and advanced users.\n\n",
+                                    order = 5,
+                                    fontSize = "medium",
+                                    width = "full",
+                                },
+                                warnings = {
+                                    type = "input",
+                                    name = "Import Log",
+                                    order = 5.3,
+                                    width = "full",
+                                    multiline = 20,
+                                    hidden = function ()
+                                        local p = rawget( Hekili.DB.profile.packs, pack )
+                                        return not p.warnings or p.warnings == ""
                                     end,
                                 },
                             }
@@ -11732,7 +11765,7 @@ do
         { "hyperthread_wristwraps%.([%w_]+)%.count"         , "hyperthread_wristwraps.%1"               },
         { "cooldown"                                        , "action_cooldown"                         },
         { "covenant%.([%w_]+)%.enabled"                     , "covenant.%1"                             },
-        { "talent%.([%w_]+)"                                , "talent.%1.enabled"                       },
+        { "talent%.([%w_]+)"                                , "talent.%1.enabled",                      true },
         { "legendary%.([%w_]+)"                             , "legendary.%1.enabled"                    },
         { "runeforge%.([%w_]+)"                             , "runeforge.%1.enabled"                    },
         { "rune_word%.([%w_]+)"                             , "buff.rune_word_%1.up"                    },
@@ -11838,6 +11871,7 @@ do
             if token and token:len() > 0 then
                 pre = token
                 for _, subs in ipairs( expressions ) do
+                    local ignore = type( subs[3] ) == "boolean" and subs[3]
                     if subs[2] then
                         times = 0
                         local s1, s2, s3, s4, s5 = token:match( "^" .. subs[1] .. "$" )
@@ -11850,11 +11884,11 @@ do
                             if s4 then token = token:gsub( "%%4", s4 ) end
                             if s5 then token = token:gsub( "%%5", s5 ) end
 
-                            if times > 0 then
+                            if times > 0 and not ignore then
                                 insert( warnings, "Line " .. line .. ": Converted '" .. pre .. "' to '" .. token .. "' (" .. times .. "x)." )
                             end
                         end
-                    elseif subs[3] then
+                    elseif subs[3] and type( subs[3] ) == "function" then
                         local val, v2, v3, v4, v5 = token:match( "^" .. subs[1] .. "$" )
                         if val ~= nil then
                             token = subs[3]( val, v2, v3, v4, v5 )
