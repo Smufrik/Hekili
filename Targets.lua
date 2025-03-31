@@ -1202,8 +1202,9 @@ do
     end
 
     function Hekili:GetDeathClockByGUID( guid )
-        local time, validUnit = 0, false
+        if state.target.is_dummy then return 180 end
 
+        local time, validUnit = 0, false
         local enemy = db[ guid ]
 
         if enemy then
@@ -1296,6 +1297,8 @@ do
     end
 
     function Hekili:GetGreatestTTD()
+        if state.target.is_dummy then return 180 end
+
         local time, validUnit, now = 0, false, GetTime()
 
         for k, v in pairs( db ) do
@@ -1331,6 +1334,8 @@ do
     end
 
     function Hekili:GetLowestTTD()
+        if state.target.is_dummy then return 180 end
+
         local time, validUnit, now = 3600, false, GetTime()
 
         for k, v in pairs(db) do
@@ -1349,9 +1354,10 @@ do
 
     function Hekili:GetNumTTDsWithin( x )
         local count, now = 0, GetTime()
+        local dummy_override = state.target.is_dummy
 
         for k, v in pairs(db) do
-            if not CheckEnemyExclusion( k ) and max( 0, v.deathTime ) <= x then
+            if dummy_override or not CheckEnemyExclusion( k ) and max( 0, v.deathTime ) <= x then
                 count = count + 1
             end
         end
@@ -1362,10 +1368,10 @@ do
 
     function Hekili:GetNumTTDsAfter( x )
         local count = 0
-        local now = GetTime()
+        local dummy_override = state.target.is_dummy
 
         for k, v in pairs(db) do
-            if CheckEnemyExclusion( k ) and max( 0, v.deathTime ) > x then
+            if dummy_override or CheckEnemyExclusion( k ) and max( 0, v.deathTime ) > x then
                 count = count + 1
             end
         end
@@ -1428,7 +1434,9 @@ do
     local bosses = {}
 
     function Hekili:GetAddWaveTTD()
-        if not UnitExists("boss1") then
+        if state.target.is_dummy then return 180 end
+
+        if not UnitExists( "boss1" ) then
             return self:GetGreatestTTD()
         end
 
@@ -1456,6 +1464,10 @@ do
     function Hekili:GetTTDInfo()
         local output = "targets:"
         local found = false
+
+        if state.target.is_dummy then
+            output = output .. "    Target TTDs overridden; target is a training dummy"
+        end
 
         for k, v in pairs( db ) do
             local unit = ( v.unit or "unknown" )

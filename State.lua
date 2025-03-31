@@ -2977,7 +2977,8 @@ do
 
             elseif k == "level" then t[k] = UnitLevel( "target" ) or UnitLevel( "player" ) or MAX_PLAYER_LEVEL
             elseif k == "moving" then t[k] = GetUnitSpeed( "target" ) > 0
-            elseif k == "real_ttd" then t[k] = Hekili:GetTTD( "target" )
+            elseif k == "real_ttd" or k == "true_ttd" then
+                t[k] = Hekili:GetTTD( "target" )
             elseif k == "time_to_die" then
                 if state.IsCycling() then return state.raid_event.adds.remains end
 
