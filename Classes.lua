@@ -1965,16 +1965,17 @@ all:RegisterAuras( {
                 end
 
                 spell, _, _, startCast, endCast, _, notInterruptible, spellID = UnitChannelInfo( unit )
+                startCast = ( startCast or 0 ) / 1000
+                endCast = ( endCast or 0 ) / 1000
+                duration = endCast - startCast
 
-                if spell then
-                    startCast = startCast / 1000
-                    endCast = endCast / 1000
-
+                -- Channels greater than 10 seconds are nonsense.  Probably.
+                if spell and duration <= 10 then
                     t.name = spell
                     t.count = 1
                     t.expires = endCast
                     t.applied = startCast
-                    t.duration = endCast - startCast
+                    t.duration = duration
                     t.v1 = spellID
                     t.v2 = notInterruptible and 1 or 0
                     t.v3 = 1 -- channeled.
@@ -2017,44 +2018,6 @@ all:RegisterAuras( {
             t.caster = unit
         end,
     },
-
-    --[[ player_casting = {
-        name = "Casting",
-        generate = function ()
-            local aura = buff.player_casting
-
-            local name, _, _, startCast, endCast, _, _, notInterruptible, spell = UnitCastingInfo( "player" )
-
-            if name then
-                aura.name = name
-                aura.count = 1
-                aura.expires = endCast / 1000
-                aura.applied = startCast / 1000
-                aura.v1 = spell
-                aura.caster = "player"
-                return
-            end
-
-            name, _, _, startCast, endCast, _, _, notInterruptible, spell = UnitChannelInfo( "player" )
-
-            if notInterruptible == false then
-                aura.name = name
-                aura.count = 1
-                aura.expires = endCast / 1000
-                aura.applied = startCast / 1000
-                aura.v1 = spell
-                aura.caster = "player"
-                return
-            end
-
-            aura.name = "Casting"
-            aura.count = 0
-            aura.expires = 0
-            aura.applied = 0
-            aura.v1 = 0
-            aura.caster = "target"
-        end,
-    }, ]]
 
     movement = {
         duration = 5,
