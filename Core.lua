@@ -958,7 +958,7 @@ function Hekili:GetPredictionFromAPL( dispName, packName, listName, slot, action
 
                                             elseif name and pack.lists[ name ] then
                                                 if debug then self:Debug( "Action list (%s) was found.", name ) end
-                                                self:AddToStack( scriptID, name, caller, action == "run_action_list" )
+                                                self:AddToStack( scriptID, name, caller, not ts and action == "run_action_list" )
 
                                                 rAction, rWait, rDepth = self:GetPredictionFromAPL( dispName, packName, name, slot, rAction, rWait, rDepth, scriptID )
                                                 if debug then self:Debug( "Returned from list (%s), current recommendation is %s (+%.2f).", name, rAction or "NO ACTION", rWait ) end
