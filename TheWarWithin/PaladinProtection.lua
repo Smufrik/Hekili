@@ -1532,7 +1532,7 @@ spec:RegisterAbilities( {
                     spec.abilities.consecration.handler()
                     applyBuff( "shield_of_the_righteous", buff.shield_of_the_righteous.remains + 4.5 )
                 end
-                
+
 
                 if buff.hammer_of_light_free.up then
                     removeBuff( "hammer_of_light_free" )
@@ -1814,7 +1814,7 @@ spec:RegisterAbilities( {
 
         spend = function ()
             if buff.divine_purpose.up then return 0 end
-            return 3 - ( buff.the_magistrates_judgment.up and 1 or 0 )
+            return 3
         end,
         spendType = "holy_power",
 
@@ -1825,7 +1825,6 @@ spec:RegisterAbilities( {
         handler = function ()
             removeBuff( "bulwark_of_righteous_fury" )
             removeBuff( "divine_purpose" )
-            removeBuff( "the_magistrates_judgment" )
             removeDebuff( "target", "judgment" )
 
             if talent.faiths_armor.enabled then applyBuff( "faiths_armor" ) end
@@ -1874,7 +1873,7 @@ spec:RegisterAbilities( {
 
         spend = function ()
             if buff.divine_purpose.up or buff.shining_light_full.up or buff.royal_decree.up or buff.bastion_of_light.up then return 0 end
-            return 3 - ( buff.the_magistrates_judgment.up and 1 or 0 )
+            return 3
         end,
         spendType = "holy_power",
 
@@ -1888,7 +1887,6 @@ spec:RegisterAbilities( {
             elseif buff.bastion_of_light.up then removeStack( "bastion_of_light" )
             else removeBuff( "shining_light_full" ) end
 
-            removeBuff( "the_magistrates_judgment" )
             gain( 2.9 * stat.spell_power * ( 1 + stat.versatility_atk_mod ), "health" )
             removeBuff( "recompense" )
 
