@@ -850,8 +850,6 @@ return end
         local display, category, option = info[ 2 ], info[ 3 ], info[ n ]
         local set = false
 
-        local all = false
-
         if category == "shareDisplays" then
             self:SetDisplayShareOption( info, val, v2, v3, v4 )
             return
@@ -2632,8 +2630,7 @@ return "Position" end,
                             position = {
                                 type = "group",
                                 inline = true,
-                                name = function( info ) rangeIcon( info )
-return "Position" end,
+                                name = function( info ) rangeIcon( info ); return "Position" end,
                                 order = 3,
                                 args = {
                                     anchor = {
@@ -2700,7 +2697,8 @@ return "Position" end,
                         desc = "Empowerment stages are shown with additional text placed on the recommendation icon and can glow upon reaching the desired stage.",
                         order = 9.1,
                         hidden = function()
-                            return class.file ~= "EVOKER"
+                            local spec = class.specs[ state.spec.id ]
+                            return not spec or not spec.can_empower
                         end,
                         args = {
                             enabled = {
