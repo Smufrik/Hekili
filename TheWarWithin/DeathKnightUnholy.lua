@@ -588,7 +588,7 @@ spec:RegisterAuras( {
         copy = 377589
     },
     -- https://www.wowhead.com/spell=434153
-    -- Gift of the San'layn The effectiveness of Essence of the Blood Queen is increased by 100%. Scourge Strike has been replaced with Vampiric Strike.  
+    -- Gift of the San'layn The effectiveness of Essence of the Blood Queen is increased by 100%. Scourge Strike has been replaced with Vampiric Strike.
     gift_of_the_sanlayn = {
         id = 434153,
         duration = 15,
@@ -631,7 +631,7 @@ spec:RegisterAuras( {
         max_stack = 1
     },
     -- https://www.wowhead.com/spell=194879
-    -- Icy Talons Attack speed increased by 18%.  
+    -- Icy Talons Attack speed increased by 18%.
     icy_talons = {
         id = 194879,
         duration = 10,
@@ -644,7 +644,7 @@ spec:RegisterAuras( {
         max_stack = 5
     },
     -- https://www.wowhead.com/spell=460049
-    -- Infliction of Sorrow Scourge Strike consumes your Virulent Plague to deal 100% of their remaining damage to the target.  
+    -- Infliction of Sorrow Scourge Strike consumes your Virulent Plague to deal 100% of their remaining damage to the target.
     infliction_of_sorrow = {
         id = 460049,
         duration = 15,
@@ -1275,7 +1275,7 @@ spec:RegisterHook( "reset_precast", function ()
         any_dnd_set = true
     end
 
-    if IsActiveSpell( 433899 ) or IsActiveSpell( 433895 ) then applyBuff( "vampiric_strike" ) end
+    if IsActiveSpell( 433899 ) or IsActiveSpell( 433895 ) or buff.gift_of_the_sanlayn.up then applyBuff( "vampiric_strike" ) end
 
     if not talent.clawing_shadows.enabled or buff.vampiric_strike.up or buff.gift_of_the_sanlayn.up then
         class.abilities.wound_spender = class.abilities.scourge_strike
@@ -1563,7 +1563,7 @@ spec:RegisterAbilities( {
                 active_dot.undeath = min( active_enemies, active_dot.undeath + 1 )
             end
 
-            if buff.vampiric_strike.up or buff.gift_of_the_sanlayn.up then
+            if buff.vampiric_strike.up then
                 gain( 0.01 * health.max, "health" )
                 applyBuff( "essence_of_the_blood_queen" ) -- TODO: mod haste
 
@@ -1571,8 +1571,12 @@ spec:RegisterAbilities( {
                     dot.virulent_plague.expires = dot.virulent_plague.expires + 3
                 end
 
-                removeBuff( "vampiric_strike" )
+                -- Vampiric Strike is consumed unless it's from Gift of the San'layn.
+                if not buff.gift_of_the_sanlayn.up then
+                    removeBuff( "vampiric_strike" )
+                end
             end
+
 
             if buff.infliction_of_sorrow.up then
                 removeDebuff( "target", "virulent_plague" )
@@ -1684,7 +1688,10 @@ spec:RegisterAbilities( {
 
             if talent.unholy_pact.enabled then applyBuff( "unholy_pact" ) end
 
-            if talent.gift_of_the_sanlayn.enabled then applyBuff( "gift_of_the_sanlayn" ) end
+            if talent.gift_of_the_sanlayn.enabled then
+                applyBuff( "gift_of_the_sanlayn" )
+                applyBuff( "vampiric_strike" )
+            end
 
             if azerite.helchains.enabled then applyBuff( "helchains" ) end
             if legendary.frenzied_monstrosity.enabled then
@@ -2181,7 +2188,7 @@ spec:RegisterAbilities( {
         handler = function ()
             PopWounds( 1, min( action.scourge_strike.max_targets, active_enemies, active_dot.festering_wound ) )
 
-            if buff.vampiric_strike.up or buff.gift_of_the_sanlayn.up then
+            if buff.vampiric_strike.up then
                 gain( 0.01 * health.max, "health" )
                 applyBuff( "essence_of_the_blood_queen" ) -- TODO: mod haste
 
@@ -2189,7 +2196,10 @@ spec:RegisterAbilities( {
                     dot.virulent_plague.expires = dot.virulent_plague.expires + 3
                 end
 
-                removeBuff( "vampiric_strike" )
+                -- Vampiric Strike is consumed unless it's from Gift of the San'layn.
+                if not buff.gift_of_the_sanlayn.up then
+                    removeBuff( "vampiric_strike" )
+                end
             end
 
             if talent.plaguebringer.enabled then
