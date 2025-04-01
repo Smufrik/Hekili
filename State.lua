@@ -5995,6 +5995,7 @@ do
             e.time   = nil
             e.type   = nil
             e.target = nil
+            e.real   = nil
             e.func   = nil
 
             insert( eventPool, e )
@@ -6032,6 +6033,7 @@ do
             e.time   = time
             e.type   = type
             e.target = target
+            e.real   = real
             e.func   = nil
 
             insert( queue, e )
@@ -6059,6 +6061,7 @@ do
         e.time   = time
         e.type   = eType
         e.target = "nobody"
+        e.real   = false
         e.data   = data
 
         insert( queue, e )
@@ -6125,7 +6128,7 @@ do
                ( not type   or event.type   == type   ) and
                ( not target or event.target == target ) then
 
-               return event.action, event.start, event.time, event.type, event.target
+               return event.action, event.start, event.time, event.type, event.target, event.real
             end
         end
     end
@@ -6330,7 +6333,7 @@ do
                 self.SetupCycle( ability )
             end
 
-            if ability.impact then ability.impact() end
+            if ability.impact then ability.impact( e.real ) end
             self:StartCombat()
 
             if wasCycling then
