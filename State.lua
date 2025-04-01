@@ -1104,7 +1104,15 @@ state.removeStack = removeStack
 -- Add a debuff to the simulated game state.
 -- Needs to actually use "unit" !
 local function applyDebuff( unit, aura, duration, stacks, value, noPandemic )
-    if not aura then aura = unit; unit = "target" end
+    -- Off by 1.
+    if not aura or type( aura ) == "number" then
+        noPandemic = value
+        value = stacks
+        stacks = duration
+        duration = aura
+        aura = unit
+        unit = "target"
+    end
 
     if not class.auras[ aura ] then
         Error( "Attempted to apply unknown aura '%s'.", aura )
