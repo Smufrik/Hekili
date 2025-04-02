@@ -1,3 +1,4 @@
+
 -- MageFrost.lua
 -- January 2025
 
@@ -716,19 +717,27 @@ spec:RegisterStateExpr( "remaining_winters_chill", function ()
         if Hekili.ActiveDebug then Hekili:Debug( "Remaining Winters Chill(%s): No time to cast.", this_action ) end
         return 0
     end
-    --[[ if stacks > 1 and remains < cast + gcd.max then
+
+    if stacks > 1 and remains < 0.1 + cast + gcd.max then
         if Hekili.ActiveDebug then
-            Hekili:Debug( "Remaining Winters Chill(%s): Stacks reduced as cast time + GCD (%.2f) exceeds remaining time (%.2f).", this_action, cast + gcd.max, remains )
+            Hekili:Debug( "Remaining Winters Chill(%s): Stacks reduced as cast time + GCD (%.2f) exceeds remaining time (%.2f).", this_action, 0.1 + cast + gcd.max, remains )
         end
         stacks = stacks - 1
-    end ]]
+    end
 
     local projectiles = 0
     local fof_consumed = buff.fof_consumed.remains
 
     for spender in pairs( wc_spenders ) do
-        if action[ spender ].in_flight and action[ spender ].in_flight_remains < remains then
-            projectiles = projectiles + ( ( spender ~= "ice_lance" or fof_consumed < remains ) and 1 or 0 )
+        local a = action[ spender ]
+        local in_flight_remains = a.in_flight_remains
+        if in_flight_remains > 0 and in_flight_remains < remains then
+            if spender == "ice_lance" and fof_consumed > in_flight_remains then
+                if Hekili.ActiveDebug then Hekili:Debug( "Remaining Winters Chill(%s): Ice Lance in flight, but FoF consumed before it hits.", this_action ) end
+            else
+                if Hekili.ActiveDebug then Hekili:Debug( "Remaining Winters Chill(%s): Added %s projectile.", this_action, spender ) end
+                projectiles = projectiles + 1
+            end
         end
     end
 
@@ -777,8 +786,11 @@ spec:RegisterStateTable( "frost_info", {
 local lastCometCast = 0
 local lastAutoComet = 0
 
-local consumedFingersExpires = 0
-local pendingFinger = false
+local latestFingersLance = 0 -- Sorry, Lance
+local numLances = 0
+local lanceRemoved, lanceICD = 0, 0.3 -- Only count one Ice Lance impact per lanceICD seconds.
+
+local numFingers = 0
 
 local auraChanged = {
     SPELL_AURA_APPLIED = true,
@@ -802,12 +814,23 @@ spec:RegisterHook( "COMBAT_LOG_EVENT_UNFILTERED", function( _, subtype, _, sourc
                 local fof = GetPlayerAuraBySpellID( 44544 )
 
                 if fof then
-                    consumedFingersExpires = GetTime() + 1
-                    pendingFinger = true
+                    latestFingersLance = GetTime() + 1
+                    numLances = numLances + 1
+                    numFingers = numFingers + 1
                 end
-
-                -- print( "Ice Lance:", GetTime(), fof and max( 1, fof.applications ) or 0, pendingFinger )
             end
+        end
+
+        if spellID == 44544 and auraSpent[ subtype ] then
+            -- Decrement numberr of FoF stacks to remove.
+            numFingers = max( 0, numFingers - 1 )
+        end
+
+        local now = GetTime()
+
+        if subtype == "SPELL_DAMAGE" and spellID == 30455 and now - lanceRemoved > lanceICD then
+            numLances = max( 0, numLances - 1 )
+            if numLances == 0 then latestFingersLance = 0 end
         end
 
         if state.talent.glacial_spike.enabled and ( spellID == 205473 or spellID == 199844 ) and auraChanged[ subtype ] then
@@ -978,30 +1001,18 @@ end, state )
 spec:RegisterHook( "reset_precast", function ()
     frost_info.last_target_virtual = frost_info.last_target_actual
 
-    if Hekili.ActiveDebug then
-        Hekili:Debug( "Fingers of Frost status: finger_consumed_expires[%.2f, %.2f], pending finger[%s].", consumedFingersExpires, consumedFingersExpires - now, pendingFinger and "true" or "false" )
+    local fof_remains = max( 0, latestFingersLance - query_time )
+    if fof_remains > 0 then
+        applyBuff( "fof_consumed", fof_remains, numLances )
+        if Hekili.ActiveDebug then Hekili:Debug( "Applied fof_consumed for %.2f seconds with %d stacks.", fof_remains, numLances ) end
     end
 
-    if consumedFingersExpires > 0 and consumedFingersExpires < now then
-        consumedFingersExpires = 0
-        pendingFinger = false
-        if Hekili.ActiveDebug then Hekili:Debug( "Reset actuals for Fingers of Frost consumed." ) end
-    else
-        local lance_flight_remains = action.ice_lance.in_flight_remains
-        if lance_flight_remains > 0 then
-            applyBuff( "fof_consumed", 0.1 + lance_flight_remains )
-            if pendingFinger then
-                removeStack( "fingers_of_frost" )
-                if Hekili.ActiveDebug then Hekili:Debug( "Fingers of Frost virtually consumed; fof_consumed[%.2f], fingers_of_frost[x%d, %.2f].", buff.fof_consumed.remains, buff.fingers_of_frost.stack, buff.fingers_of_frost.remains ) end
-            else
-                if Hekili.ActiveDebug then Hekili:Debug( "Fingers of Frost was already consumed; fof_consumed[%.2f], fingers_of_frost[x%d, %.2f].", buff.fof_consumed.remains, buff.fingers_of_frost.stack, buff.fingers_of_frost.remains ) end
-            end
-        else
-            consumedFingersExpires = 0
-            pendingFinger = false
-            if Hekili.ActiveDebug then Hekili:Debug( "Rested actuals for Fingers of Frost consumed as no Ice Lance in flight." ) end
-        end
+    if numFingers > 0 then
+        removeStack( "fingers_of_frost", numFingers )
+        if Hekili.ActiveDebug then Hekili:Debug( "Removed %d stacks of fingers_of_frost due to buffed ice_lances in flight.", numFingers ) end
     end
+
+    if Hekili.ActiveDebug then Hekili:Debug( "Buffed Ice Lances in-flight: %d, FoF Consumed stacks: %d, FoF Consumed Remains: %.2f, Remaining FoF: %d", numLances, buff.fof_consumed.stack, buff.fof_consumed.remains, buff.fingers_of_frost.stack ) end
 
     if action.flurry.in_flight then
         if Hekili.ActiveDebug then Hekili:Debug( "Flurry is in-flight, keep Winter's Chill stacks at 2." ) end
@@ -1009,7 +1020,7 @@ spec:RegisterHook( "reset_precast", function ()
     end
 
     -- Icicles take a second to get used.
-    if not state.talent.glacial_spike.enabled and now - action.ice_lance.lastCast < gcd.max then removeBuff( "icicles" ) end
+    if not state.talent.glacial_spike.enabled and action.ice_lance.time_since < gcd.max then removeBuff( "icicles" ) end
 
     incanters_flow.reset()
 
@@ -1539,14 +1550,6 @@ spec:RegisterAbilities( {
         handler = function ()
             applyDebuff( "target", "chilled" )
 
-            if buff.fingers_of_frost.up or debuff.frozen.up then
-                if talent.chain_reaction.enabled then addStack( "chain_reaction" ) end
-                if talent.thermal_void.enabled and buff.icy_veins.up then
-                    buff.icy_veins.expires = buff.icy_veins.expires + 0.5
-                    pet.water_elemental.expires = buff.icy_veins.expires
-                end
-            end
-
             if not talent.glacial_spike.enabled then removeStack( "icicles" ) end
             if talent.bone_chilling.enabled then addStack( "bone_chilling" ) end
 
@@ -1555,6 +1558,12 @@ spec:RegisterAbilities( {
             end
 
             if buff.fingers_of_frost.up or debuff.frozen.up then
+                if talent.chain_reaction.enabled then addStack( "chain_reaction" ) end
+                if talent.thermal_void.enabled and buff.icy_veins.up then
+                    buff.icy_veins.expires = buff.icy_veins.expires + 0.5
+                    pet.water_elemental.expires = buff.icy_veins.expires
+                end
+
                 if buff.fingers_of_frost.up then
                     removeStack( "fingers_of_frost" )
                     addStack( "fof_consumed" )
