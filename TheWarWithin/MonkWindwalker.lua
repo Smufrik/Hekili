@@ -1257,7 +1257,15 @@ spec:RegisterAbilities( {
         spend = function () return 20 * ( 1 - ( buff.the_emperors_capacitor.stack * 0.05 ) ) end,
         spendPerSec = function () return 20 * ( 1 - ( buff.the_emperors_capacitor.stack * 0.05 ) ) end,
 
-        toggle = function() if settings.dynamic_crackling_jade_lightning and raid and talent.power_of_the_thunder_king.enabled then return "essences" end end,
+        toggle = function ()
+            if buff.emperors_capacitor.up then
+                local dyn = state.settings.dynamic_crackling_jade_lightning
+                if dyn and dyn ~= "none" and dyn ~= "default" then
+                    return dyn
+                end
+            end
+            return "none"
+        end,
 
         startsCombat = false,
 
@@ -2200,15 +2208,33 @@ spec:RegisterSetting( "dynamic_strike_of_the_windlord", false, {
     width = "full"
 } )
 
-spec:RegisterSetting( "dynamic_crackling_jade_lightning", false, {
-    name = strformat( "%s: Raid Cooldown", Hekili:GetSpellLinkWithTexture( spec.abilities.crackling_jade_lightning.id ) ),
+spec:RegisterSetting( "dynamic_crackling_jade_lightning", "none", {
+    name = strformat( "%s: Dynamic Toggle Override", Hekili:GetSpellLinkWithTexture( spec.abilities.crackling_jade_lightning.id ) ),
     desc = strformat(
-        "If checked, %s will require an active Minor Cooldowns toggle to be recommended in raid.\n\nThis feature ensures %s is only recommended when you are actively using cooldown abilities (e.g., add waves, burst windows).",
+        "You can temporarily override this ability’s toggle to treat it like a cooldown when %s is active.\n\n" ..
+        "%s will only be recommended when the selected toggle is enabled.\n\n" ..
+        "The override only applies while %s is active.\n\n" ..
+        "Set to |cffffd100Do Not Override|r to use normal behavior.",
+        Hekili:GetSpellLinkWithTexture( spec.auras.the_emperors_capacitor.id ),
         Hekili:GetSpellLinkWithTexture( spec.abilities.crackling_jade_lightning.id ),
-        Hekili:GetSpellLinkWithTexture( spec.abilities.crackling_jade_lightning.id )
+        Hekili:GetSpellLinkWithTexture( spec.auras.the_emperors_capacitor.id )
     ),
-    type = "toggle",
-    width = "full"
+    type = "select",
+    width = 2,
+    values = function ()
+        local toggles = {
+            none       = "Do Not Override",
+            default    = "Default |cffffd100(" .. ( spec.abilities.crackling_jade_lightning.toggle or "none" ) .. ")|r",
+            cooldowns  = "Cooldowns",
+            essences   = "Minor CDs",
+            defensives = "Defensives",
+            interrupts = "Interrupts",
+            potions    = "Potions",
+            custom1    = spec.custom1Name or "Custom 1",
+            custom2    = spec.custom2Name or "Custom 2",
+        }
+        return toggles
+    end
 } )
 
 spec:RegisterSetting( "check_wdp_range", false, {
