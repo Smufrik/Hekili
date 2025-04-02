@@ -1,5 +1,5 @@
 ## https://github.com/simulationcraft/simc/blob/thewarwithin/ActionPriorityLists/druid_balance.simc
-## Up to date with SimC: March 26 2025 - d16cac1
+## Up to date with SimC: April 1 - b775513
 
 actions.precombat+=/mark_of_the_wild
 ## actions.precombat+=/bear_form,if=talent.lycaras_meditation&talent.fluid_form
