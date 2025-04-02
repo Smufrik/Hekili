@@ -10,7 +10,7 @@
 
 Hekili displays a **sequential queue of icons** showing which abilities to use next — helping you make fast, informed decisions in combat. It supports **1 to 10 icons** at a time (default is 3), each one representing the **next best action**.
 
-The logic behind these decisions comes from **SimulationCraft ("Raidbots") Action Priority Lists (APLs)**. These are translated into addon logic as closely as possible and are **regularly updated** to reflect class balance changes and theorycrafting.
+The logic behind these decisions comes from **SimulationCraft Action Priority Lists (APLs)**, known to many as the tool [RaidBots](https://www.raidbots.com/simbot). These are translated into addon logic as closely as possible and are **regularly updated** to reflect class balance changes and theorycrafting.
 
 It’s a helpful tool for:
 
@@ -92,7 +92,7 @@ If something isn’t working:
 
 ## 🙏 Credits
 
-- Based on logic from [SimulationCraft](https://www.simulationcraft.org/), known to many people by the tool [RaidBots](https://www.raidbots.com/simbot)
+- Based on logic from [SimulationCraft](https://www.simulationcraft.org/), which is maintained by many wonderful developers and theorycrafters
 - Uses libraries like [Ace3](https://www.wowace.com/projects/ace3), [LibRangeCheck](https://www.wowace.com/projects/librangecheck-2-0), and others
 - Maintained by [Hekili](https://github.com/Hekili), [Syrif](https://github.com/syrifgit), [Nerien](https://github.com/johnnylam88) and lots of help from our community contributors
 
