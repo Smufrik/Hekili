@@ -25,9 +25,9 @@ If you cast something else, the addon **immediately re-evaluates** your game sta
 
 Other features include:
 - Optional Separate Displays for:
-  - AoE-specific rotation
+  - AoE abilities
   - Cooldowns
-  - Defensive abilities
+  - Defensives
   - Interrupts
     - Guides you to interrupt late in the enemy cast
     - Filter recommendations to Mythic+ priority spells
@@ -37,7 +37,7 @@ Other features include:
   - Rather than using the toggles, you can display these abilities in a dedicated Cooldowns display, allowing you to cast them manually when timing is ideal.
   - This system is especially powerful when paired with encounter knowledge — for example, holding cooldowns for a burn phase or add wave can result in substantial DPS gains.
 - Compatible with **ElvUI**, **Bartender**, and other UI mods
-- Highly customizable:
+- Customization
   - Choose from several display styles to match your needs — from a single Automatic display to AoE-specific or dual-display setups
   - Tailor the look and feel: adjust icon size, spacing, layout, fonts, and transparency
   - Show spell keybindings on icons, or swap out the default icon for another spell or texture
@@ -82,7 +82,7 @@ If something isn’t working:
 
 ## 🧪 Developer Notes
 
-If you're working on class modules or want to contribute:
+If you're working on custom spec modules, improving existing logic, or contributing to the addon’s development:
 
 - See the [Developer Stuff](https://github.com/Hekili/hekili/wiki/Developer-Stuff) page
 - Use `/hekili` and the Snapshots tab to inspect live decision-making
