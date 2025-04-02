@@ -1,6 +1,6 @@
 # Hekili
 
-**Hekili** is a powerful, highly configurable **rotation/priority helper** for **World of Warcraft**. It supports **all DPS and Tank specializations**. Healer specialiazations are supported with a focus on **DPS abilities**, great for solo content or downtime during PvE.
+**Hekili** is a powerful, highly configurable **rotation/priority helper** for **World of Warcraft**. It supports **all DPS and Tank specializations**. Healer specializations are supported with a focus on **DPS abilities**, great for solo content or downtime during PvE.
 
 [➡️ Latest Release](https://github.com/Hekili/hekili/releases/latest)
 
