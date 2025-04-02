@@ -1605,17 +1605,14 @@ spec:RegisterSetting( "mark_any", false, {
 spec:RegisterSetting( "dynamic_wildfire_bomb_toggle", "none", {
     name = strformat( "%s: Dynamic Toggle Override", Hekili:GetSpellLinkWithTexture( spec.abilities.wildfire_bomb.id ) ),
     desc = strformat(
-        "Select a toggle requirement to dynamically apply to %s when its next cast will trigger a %s. This setting will only take effect if you are talented into %s.\n\n" ..
-        "If you select a toggle (e.g., Cooldowns), and your next cast of %s will trigger a %s, then the ability will only be recommended when that toggle is enabled. " ..
-        "This allows toggle keybinding to 'hold' your Lunar Storm like a cooldown (such as %s or %s).\n\n" ..
-        "If set to |cffffd100Do Not Override|r, the ability will use its normal behavior.",
-        Hekili:GetSpellLinkWithTexture( spec.abilities.wildfire_bomb.id ),
+        "If talented into %s, you can temporarily override this ability’s toggle to treat %s like a cooldown. " ..
+        "%s will only be recommended when the selected toggle is enabled.\n\n" ..
+        "The override only applies if %s is available (e.g., off cooldown).\n\n" ..
+        "Set to |cffffd100Do Not Override|r to use normal behavior.",
         Hekili:GetSpellLinkWithTexture( spec.talents.lunar_storm[2] ),
         Hekili:GetSpellLinkWithTexture( spec.talents.lunar_storm[2] ),
         Hekili:GetSpellLinkWithTexture( spec.abilities.wildfire_bomb.id ),
-        Hekili:GetSpellLinkWithTexture( spec.talents.lunar_storm[2] ),
-        Hekili:GetSpellLinkWithTexture( spec.abilities.coordinated_assault.id ),
-        Hekili:GetSpellLinkWithTexture( spec.abilities.spearhead.id )
+        Hekili:GetSpellLinkWithTexture( spec.talents.lunar_storm[2] )
     ),
     type = "select",
     width = 2,

@@ -1653,16 +1653,11 @@ spec:RegisterSetting( "prevent_hardcasts", false, {
 spec:RegisterSetting( "dynamic_rapid_fire_toggle", "none", {
     name = strformat( "%s: Dynamic Toggle Override", Hekili:GetSpellLinkWithTexture( spec.abilities.rapid_fire.id ) ),
     desc = strformat(
-        "Select a toggle requirement to dynamically apply to %s when its next cast will trigger a %s. This setting will only take effect if you are talented into %s.\n\n" ..
-        "If you select a toggle (e.g., Cooldowns), and your next cast of %s will trigger a %s, then the ability will only be recommended when that toggle is enabled. " ..
-        "This allows toggle keybinding to 'hold' your Lunar Storm like a cooldown (such as %s or %s).\n\n" ..
-        "If set to |cffffd100Do Not Override|r, the ability will use its normal behavior.",
-        Hekili:GetSpellLinkWithTexture( spec.abilities.rapid_fire.id ),
+        "If talented into %s, you can override this ability’s toggle when its next cast will trigger a %s.\n\n" ..
+        "Use this to treat the ability like a cooldown (e.g., %s). It will only be recommended when the selected toggle is enabled.\n\n" ..
+        "Set to |cffffd100Do Not Override|r to use normal behavior.",
         Hekili:GetSpellLinkWithTexture( spec.talents.lunar_storm[2] ),
         Hekili:GetSpellLinkWithTexture( spec.talents.lunar_storm[2] ),
-        Hekili:GetSpellLinkWithTexture( spec.abilities.rapid_fire.id ),
-        Hekili:GetSpellLinkWithTexture( spec.talents.lunar_storm[2] ),
-        Hekili:GetSpellLinkWithTexture( spec.abilities.volley.id ),
         Hekili:GetSpellLinkWithTexture( spec.abilities.trueshot.id )
     ),
     type = "select",
