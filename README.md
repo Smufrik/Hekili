@@ -1,32 +1,27 @@
 # Hekili
 
-**Hekili** is a powerful, highly configurable **rotation/priority helper** for **World of Warcraft**. It supports **all 🗡️DPS and 🛡️Tank specializations**. ➕Healer specializations are supported with a focus on **DPS abilities**, great for solo content or downtime during PvE.
+**Hekili** is a powerful, highly configurable **priority helper** for **World of Warcraft**. It supports **all 🗡️DPS and 🛡️Tank specializations**. ➕Healer specializations are supported with a focus on **DPS abilities**, great for solo content or downtime during PvE.
 
 [➡️ Latest Release](https://github.com/Hekili/hekili/releases/latest)
 
----
-
 ## ✨ What Does It Do?
 
-Hekili displays a **sequential queue of icons** showing which abilities to use next — helping you make fast, informed decisions in combat. It supports **1 to 10 icons** at a time (default is 3), each one representing the **next best action**.
+Hekili helps you play more effectively by recommending which abilities to use during combat. 
 
-The logic behind these decisions comes from **SimulationCraft Action Priority Lists (APLs)**, known to many as the tool [RaidBots](https://www.raidbots.com/simbot). These are translated into addon logic as closely as possible and are **regularly updated** to reflect class balance changes and theorycrafting.
+Its **key feature** is the display of multiple upcoming sequential actions, allowing you to plan ahead instead of reacting to a single, constantly changing icon. This approach reduces tunnel vision and helps you stay focused on the encounter itself.
 
-It’s a helpful tool for:
+These recommendations are provided using **Action Priority List (APL) logic** inherited from [SimulationCraft](https://www.simulationcraft.org) and [RaidBots](https://www.raidbots.com/simbot). This integration helps ensure consistency between your in-game decisions and the tools you already use to optimize talents, gear, and stats. APLs are **frequently updated** to reflect changes in class balance, mechanics, and theorycrafting.
 
-- Increasing your **damage output**
-- Learning unfamiliar specializations
-- Gaining new insights into specs you already play
-
----
+Hekili can help:
+- Increase your **damage output**
+- Learn and master new specializations
+- Improve consistency and compare your decisions against theorycrafted simulations
 
 ## 🔧 How Does It Work?
 
-Hekili uses your current character state (cooldowns, resources, buffs/debuffs, enemies nearby, etc.) to **simulate several spells into the future**, assuming you follow its recommendations.
+Hekili uses your current character state — including cooldowns, resources, buffs/debuffs, and enemies nearby — to **simulate several spells into the future** using your spec’s APL logic. It assumes you follow its recommendations in sequence.
 
-As soon as you press a spell — even one that wasn’t the current recommendation — the addon will **instantly re-evaluate** and show updated suggestions.
-
-This makes Hekili incredibly responsive and helpful for both casual and competitive players.
+If you cast something else, the addon **immediately re-evaluates** your game state and updates its suggestions in real time.
 
 Other features include:
 - Optional Separate Displays for:
@@ -34,44 +29,31 @@ Other features include:
   - Cooldowns
   - Defensive abilities
   - Interrupts
-    - The addon can recommend interrupts on your primary target, guiding you to interrupt as late into the cast as possible
-    - A season mythic+ filter can be enabled to only recommend interrupting important spells
-- Toggle controls for cooldowns, defensives, and more:
-  - These keybindable and macroable toggles allow you to enable or disable the use of major abilities like **2-minute cooldowns**, giving you direct control over when they are used.
-  - This is a powerful feature of the addon: pairing your cooldown usage with encounter knowledge can lead to **significant DPS gains**.
-  - Instead of toggling on and off, these abilities can also be shown in a separate, dedicated**Cooldowns display**, letting you manually choose when to cast them.
+    - Guides you to interrupt late in the enemy cast
+    - Filter recommendations to Mythic+ priority spells
+- Toggle controls for cooldowns, defensives, interrupts, potions:
+  - You can manually control whether major abilities like 2-minute cooldowns are used by enabling or disabling toggle options.
+  - These toggles can be bound to hotkeys or macros, giving you flexible control on a fight-by-fight basis.
+  - Rather than using the toggles, you can display these abilities in a dedicated Cooldowns display, allowing you to cast them manually when timing is ideal.
+  - This system is especially powerful when paired with encounter knowledge — for example, holding cooldowns for a burn phase or add wave can result in substantial DPS gains.
 - Compatible with **ElvUI**, **Bartender**, and other UI mods
 - Highly customizable:
-  - Enable or disable different displays (Automatic, AOE, Single Target, Dual-Display, Dual-Reactive Display)
-  - Change icon layout, spacing, fonts, and sizing
-  - Adjust visibility settings by content (PvE, PvP, mounted, etc.)
-  - Even the rotation is customizble if you desire, using (mostly) SimulationCraft syntax and expressions
-
----
+  - Choose from several display styles to match your needs — from a single Automatic display to AoE-specific or dual-display setups
+  - Tailor the look and feel: adjust icon size, spacing, layout, fonts, and transparency
+  - Show spell keybindings on icons, or swap out the default icon for another spell or texture
+  - Disable individual abilities to fit your playstyle — for example, if you prefer to macro an on-use trinket into your cooldown, you can hide that trinket from the queue entirely
+  - Advanced users can edit or create their own action lists using familiar SimulationCraft-style syntax, giving full control over your spec’s behavior
 
 ## 🚀 Getting Started
 
 ### 1. Install the Addon
 
-- Recommended: Use [CurseForge](https://www.curseforge.com/wow/addons/hekili), or [Wago App](https://addons.wago.io/addons/hekili)
-- Manual: Download the `.zip` from [Releases](https://github.com/Hekili/hekili/releases/latest) and extract it into your `Interface/AddOns` folder
+- Recommended: Use [CurseForge](https://www.curseforge.com/wow/addons/hekili) or [Wago App](https://addons.wago.io/addons/hekili)
+- Manual: Download the `.zip` from [Releases](https://github.com/Hekili/hekili/releases/latest) and extract it to `Interface/AddOns`
 
 ### 2. Configure In-Game
 
-Use the command:
-
-```
-/hekili
-```
-
-In the options panel, you can:
-
-- Enable or disable different displays (Primary, AOE, etc.)
-- Change icon layout, spacing, fonts, and sizing
-- Set hotkeys to toggle cooldowns, defensives, interrupts, etc.
-- Adjust visibility settings by content (PvE, PvP, mounted, etc.)
-
----
+Use the minimap icon or the command: `/hekili`
 
 ## 🛠 Need Help?
 
@@ -106,4 +88,3 @@ If you're working on class modules or want to contribute:
 - Use `/hekili` and the Snapshots tab to inspect live decision-making
 - Review existing and past [Pull Requsts](https://github.com/Hekili/hekili/pulls)
 - Review existing and past [Issues](https://github.com/Hekili/hekili/issues)
-
