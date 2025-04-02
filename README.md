@@ -10,16 +10,16 @@ Hekili helps you play more effectively by recommending which abilities to use du
 
 Its **key feature** is the display of multiple upcoming sequential actions, allowing you to plan ahead instead of reacting to a single, constantly changing icon. This approach reduces tunnel vision and helps you stay focused on the encounter itself.
 
-These recommendations are provided using **Action Priority List (APL) logic** inherited from [SimulationCraft](https://www.simulationcraft.org) and [RaidBots](https://www.raidbots.com/simbot). This integration helps ensure consistency between your in-game decisions and the tools you already use to optimize talents, gear, and stats. APLs are **frequently updated** to reflect changes in class balance, mechanics, and theorycrafting.
+These recommendations are provided using **Action Priority List (APL) logic** inherited from [**SimulationCraft**](https://www.simulationcraft.org) and [**RaidBots**](https://www.raidbots.com/simbot). This integration helps ensure consistency between your in-game decisions and the tools you already use to optimize talents, gear, and stats. APLs are **frequently updated** to reflect changes in class balance, mechanics, and theorycrafting.
 
-Hekili can help:
-- Increase your **damage output**
+**Hekili** can help:
+- Increase your damage output
 - Learn and master new specializations
 - Improve consistency and compare your decisions against theorycrafted simulations
 
 ## 🔧 How Does It Work?
 
-Hekili uses your current character state — including cooldowns, resources, buffs/debuffs, and enemies nearby — to **simulate several spells into the future** using your spec’s APL logic. It assumes you follow its recommendations in sequence.
+**Hekili** uses your current character state — including cooldowns, resources, buffs/debuffs, and enemies nearby — to **simulate several spells into the future** using your spec’s APL logic. It assumes you follow its recommendations in sequence.
 
 If you cast something else, the addon **immediately re-evaluates** your game state and updates its suggestions in real time.
 
@@ -42,14 +42,14 @@ Other features include:
   - Tailor the look and feel: adjust icon size, spacing, layout, fonts, and transparency
   - Show spell keybindings on icons, or swap out the default icon for another spell or texture
   - Disable individual abilities to fit your playstyle — for example, if you prefer to macro an on-use trinket into your cooldown, you can hide that trinket from the queue entirely
-  - Advanced users can edit or create their own action lists using familiar SimulationCraft-style syntax, giving full control over your spec’s behavior
+  - Advanced users can edit or create their own action lists using familiar **SimulationCraft-style syntax**
 
 ## 🚀 Getting Started
 
 ### 1. Install the Addon
 
-- Recommended: Use [CurseForge](https://www.curseforge.com/wow/addons/hekili) or [Wago App](https://addons.wago.io/addons/hekili)
-- Manual: Download the `.zip` from [Releases](https://github.com/Hekili/hekili/releases/latest) and extract it to `Interface/AddOns`
+- Recommended: Use [**CurseForge**](https://www.curseforge.com/wow/addons/hekili) or [**Wago App**](https://addons.wago.io/addons/hekili)
+- Manual: Download the `.zip` from [**Releases**](https://github.com/Hekili/hekili/releases/latest) and extract it to `Interface/AddOns`
 
 ### 2. Configure In-Game
 
@@ -61,22 +61,22 @@ Use the minimap icon or the command: `/hekili`
 
 If something isn’t working:
 
-1. Install [BugSack](https://www.curseforge.com/wow/addons/bugsack) and [BugGrabber](https://www.curseforge.com/wow/addons/bug-grabber)
-2. Reproduce the issue, generate a [snapshot](https://github.com/Hekili/hekili/wiki/Report-An-Issue#how-do-i-get-a-snapshot), then open BugSack to check for LUA errors
-3. Submit a report on the [Issues page](https://github.com/Hekili/hekili/issues/new/choose), be sure to include your newly acquired snapshot and LUA errors (if applicable)
+1. Install [**BugSack**](https://www.curseforge.com/wow/addons/bugsack) and [**BugGrabber**](https://www.curseforge.com/wow/addons/bug-grabber)
+2. Reproduce the issue, generate a [**snapshot**](https://github.com/Hekili/hekili/wiki/Report-An-Issue#how-do-i-get-a-snapshot), then open BugSack to check for LUA errors
+3. Submit a report on the [**Issues page**](https://github.com/Hekili/hekili/issues/new/choose), be sure to include your newly acquired snapshot and LUA errors (if applicable)
 
 ### ❓ Other Support
 
-- Review the [Wiki](https://github.com/Hekili/hekili/wiki)
-- Ask questions in the [Hekili Discord](https://discord.gg/3vRJx5g)
+- Review the [**Wiki**](https://github.com/Hekili/hekili/wiki)
+- Ask questions in the [**Hekili Discord**](https://discord.gg/3vRJx5g)
 
 ---
 
 ## 🙏 Credits
 
-- Based on logic from [SimulationCraft](https://www.simulationcraft.org/), which is maintained by many wonderful developers and theorycrafters
-- Uses libraries like [Ace3](https://www.wowace.com/projects/ace3), [LibRangeCheck](https://www.wowace.com/projects/librangecheck-2-0), and others
-- Maintained by [Hekili](https://github.com/Hekili), [Syrif](https://github.com/syrifgit), [Nerien](https://github.com/johnnylam88) and lots of help from our community contributors
+- Based on logic from [**SimulationCraft**](https://www.simulationcraft.org/), which is maintained by many wonderful developers and theorycrafters
+- Uses libraries like [**Ace3**](https://www.wowace.com/projects/ace3), [**LibRangeCheck**](https://www.wowace.com/projects/librangecheck-2-0), and others
+- Maintained by [**Hekili**](https://github.com/Hekili), [**Syrif**](https://github.com/syrifgit), [**Nerien**](https://github.com/johnnylam88) and lots of help from our community contributors
 
 ---
 
@@ -84,7 +84,7 @@ If something isn’t working:
 
 If you're working on custom spec modules, improving existing logic, or contributing to the addon’s development:
 
-- See the [Developer Stuff](https://github.com/Hekili/hekili/wiki/Developer-Stuff) page
+- See the [**Developer Stuff**](https://github.com/Hekili/hekili/wiki/Developer-Stuff) page
 - Use `/hekili` and the Snapshots tab to inspect live decision-making
-- Review existing and past [Pull Requsts](https://github.com/Hekili/hekili/pulls)
-- Review existing and past [Issues](https://github.com/Hekili/hekili/issues)
+- Review existing and past [**Pull Requsts**](https://github.com/Hekili/hekili/pulls)
+- Review existing and past [**Issues**](https://github.com/Hekili/hekili/issues)
