@@ -929,8 +929,9 @@ spec:RegisterAuras( {
 } )
 
 spec:RegisterHook( "prespend", function( amount, resource )
-    -- You still need the holy power in order to cast, but it won't be consumed
+    -- You still need the holy power in order to cast, but it won't be consumed. It does trigger other effects as though it were consumed, though.
     if resource == "holy_power" and buff.all_in.up then
+        ns.callHook( "spend", amount, resource )
         return 0, resource
     end
 end )
