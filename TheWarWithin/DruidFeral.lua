@@ -1461,18 +1461,10 @@ end ) ]]
 
 spec:RegisterStateFunction( "check_bloodtalons", function ()
     if buff.bt_triggers.stack > 2 then
-
-        local bt_list = buff.bt_triggers.alias or {}
-        for _, k in ipairs( bt_list ) do
-            removeBuff( k )
-        end
-
-
         removeBuff( "bt_triggers" )
         applyBuff( "bloodtalons", nil, 3 )
     end
 end )
-
 
 spec:RegisterStateTable( "druid", setmetatable( {},{
     __index = function( t, k )
