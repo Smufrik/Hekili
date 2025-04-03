@@ -1258,11 +1258,11 @@ spec:RegisterAbilities( {
         spendPerSec = function () return 20 * ( 1 - ( buff.the_emperors_capacitor.stack * 0.05 ) ) end,
 
         toggle = function ()
-            if buff.emperors_capacitor.up then
-                local dyn = state.settings.dynamic_crackling_jade_lightning
-                if dyn and dyn ~= "none" and dyn ~= "default" then
-                    return dyn
-                end
+            if buff.the_emperors_capacitor.up then
+                local dyn = state.settings.cjl_capacitor_toggle
+                if dyn == "none" then return "none" end
+                if dyn == "default" then return nil end
+                return dyn
             end
             return "none"
         end,
@@ -2208,16 +2208,15 @@ spec:RegisterSetting( "dynamic_strike_of_the_windlord", false, {
     width = "full"
 } )
 
-spec:RegisterSetting( "dynamic_crackling_jade_lightning", "none", {
-    name = strformat( "%s: Dynamic Toggle Override", Hekili:GetSpellLinkWithTexture( spec.abilities.crackling_jade_lightning.id ) ),
+spec:RegisterSetting( "cjl_capacitor_toggle", "none", {
+    name = strformat( "%s: Special Toggle", Hekili:GetSpellLinkWithTexture( spec.abilities.crackling_jade_lightning.id ) ),
     desc = strformat(
-        "You can temporarily override this ability’s toggle to treat it like a cooldown when %s is active.\n\n" ..
-        "%s will only be recommended when the selected toggle is enabled.\n\n" ..
-        "The override only applies while %s is active.\n\n" ..
-        "Set to |cffffd100Do Not Override|r to use normal behavior.",
+        "When %s is talented and the aura is active, %s will only be recommended if the selected toggle is active.\n\n" ..
+        "This setting will be ignored if you have set %s's toggle in |cFFFFD100Abilities and Items|r.\n\n" ..
+        "Select |cFFFFD100Do Not Override|r to disable this feature.",
         Hekili:GetSpellLinkWithTexture( spec.auras.the_emperors_capacitor.id ),
         Hekili:GetSpellLinkWithTexture( spec.abilities.crackling_jade_lightning.id ),
-        Hekili:GetSpellLinkWithTexture( spec.auras.the_emperors_capacitor.id )
+        Hekili:GetSpellLinkWithTexture( spec.abilities.crackling_jade_lightning.id )
     ),
     type = "select",
     width = 2,
