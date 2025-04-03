@@ -1321,7 +1321,7 @@ spec:RegisterHook( "reset_precast", function ()
         any_dnd_set = true
     end
 
-    if IsActiveSpell( 433899 ) or IsActiveSpell( 433895 ) or buff.gift_of_the_sanlayn.up then applyBuff( "vampiric_strike" ) end
+    if IsActiveSpell( 433899 ) or IsActiveSpell( 433895 ) then applyBuff( "vampiric_strike" ) end
 
     if not talent.clawing_shadows.enabled or buff.vampiric_strike.up or buff.gift_of_the_sanlayn.up then
         class.abilities.wound_spender = class.abilities.scourge_strike
@@ -1622,7 +1622,6 @@ spec:RegisterAbilities( {
                     removeBuff( "vampiric_strike" )
                 end
             end
-
 
             if buff.infliction_of_sorrow.up then
                 removeDebuff( "target", "virulent_plague" )
