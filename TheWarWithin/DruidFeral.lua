@@ -1461,12 +1461,7 @@ end ) ]]
 
 spec:RegisterStateFunction( "check_bloodtalons", function ()
     if buff.bt_triggers.stack > 2 then
-        -- Remove each individual BT buff.
-        for _, k in ipairs( buff.bt_triggers.alias ) do
-            removeBuff( k )
-        end
-
-        removeBuff( "bt_triggers" ) -- optional, not strictly needed after removing the alias members
+        removeBuff( "bt_triggers" )
         applyBuff( "bloodtalons", nil, 3 )
     end
 end )
