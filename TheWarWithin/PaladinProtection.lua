@@ -891,10 +891,6 @@ spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _
         holy_power_generators_used = max( 0, holy_power_generators_used - 3 )
         return
     end
-
-    if subtype == "SPELL_CAST_SUCCESS" and ( spellID == consecrationSpellID or ( state.talent.undisputed_whatever.enabled and spellID == hammerOfLightSpellID ) or ( spellID == someOtherSpellID and state.talent.some_other_talent.enabled ) ) then
-        consecrations[ #consecrations + 1 ] = GetTime() + 12
-    end
 end )
 
 spec:RegisterStateExpr( "hpg_used", function() return holy_power_generators_used end )
