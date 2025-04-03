@@ -3787,13 +3787,17 @@ do
                 if comment then
                     -- Comments can have the form 'Caption::Description'.
                     -- Any whitespace around the '::' is truncated.
-                    local caption, description= comment:match( "(.+)::(.*)" )
+                    local caption, description = comment:match( "(.+)::(.*)" )
                     if caption and description then
                         -- Truncate whitespace and change commas to semicolons.
                         caption = caption:gsub( "%s+$", "" ):gsub( ",", ";" )
                         description = description:gsub( "^%s+", "" ):gsub( ",", ";" )
                         -- Replace "[<texture-id>]" in the caption with the escape sequence for the texture.
                         caption = caption:gsub( "%[(%d+)%]", "|T%1:0|t" )
+                        -- Replace "[h:<text>]" in the caption with the escape sequence for the texture string.
+                        caption = caption:gsub( "%[h:(.-)%]", "|TInterface\\AddOns\\Hekili\\Textures\\%1:0|t" )
+                        -- Replace "[<text>:<height>:<width>]" in the caption with the escape sequence for the atlas.
+                        caption = caption:gsub( "%[(.-):(%d+):(%d+)%]", "|A:%1:%2:%3|a" )
                         action = action .. ',caption=' .. caption .. ',description=' .. description
                     else
                         -- Change commas to semicolons.
@@ -5996,6 +6000,10 @@ found = true end
         if toggleToNumber[ option ] then val = val and 1 or 0 end
         if type( val ) == 'string' then val = val:trim() end
 
+        if option == "caption" then
+            val = val:gsub( "||", "|" )
+        end
+
         data[ option ] = val
 
         if option == "enable_moving" and not val then
@@ -7451,12 +7459,13 @@ packControl.actionID = format( "%04d", id ) end
                                                     name = "Caption",
                                                     desc = "Captions are |cFFFF0000very|r short descriptions that can appear on the icon of a recommended ability.\n\n" ..
                                                         "This can be useful for understanding why an ability was recommended at a particular time.\n\n" ..
-                                                        "Requires Captions to be Enabled on each display.",
+                                                        "Requires Captions to be enabled on each display.",
                                                     order = 3.202,
                                                     width = 1.5,
                                                     validate = function( info, val )
                                                         val = val:trim()
-                                                        if val:len() > 20 then return "Captions should be 20 characters or less." end
+                                                        val = val:gsub( "||", "|" ):gsub( "|T.-:0|t", "" ) -- Don't count icons.
+                                                        if val:len() > 20 then return "Caption text should be 20 characters or less." end
                                                         return true
                                                     end,
                                                     hidden = function()

@@ -577,9 +577,11 @@ local HekiliSpecMixin = {
             if type( arg2 ) == "table" then
                 if arg2.items then
                     for _, item in ipairs( arg2.items ) do
-                        table.insert( gear, item )
-                        gear[ item ] = true
-                        found = true
+                        if not gear[ item ] then
+                            table.insert( gear, item )
+                            gear[ item ] = true
+                            found = true
+                        end
                     end
                 end
 
@@ -592,25 +594,21 @@ local HekiliSpecMixin = {
             -- If the second arg is a number, this is a legacy registration with a single set/item
             if type( arg2 ) == "number" then
                 local n = select( "#", ... )
-                local i = 2
-                local item = select( i, ... )
 
-                while item do
-                    table.insert( gear, item )
-                    gear[ item ] = true
-                    found = true
+                for i = 2, n do
+                    local item = select( i, ... )
 
-                    i = i + 1
-                    item = select( i, ... )
+                    if not gear[ item ] then
+                        table.insert( gear, item )
+                        gear[ item ] = true
+                        found = true
+                    end
                 end
             end
 
             if found then
                 self.gear[ arg1 ] = gear
                 CommitKey( arg1 )
-            else
-                -- No valid items found, remove the set.
-                self.gear[ arg1 ] = nil
             end
 
             return
@@ -790,6 +788,15 @@ local HekiliSpecMixin = {
 
             -- Register the item if it doesn't already exist.
             class.specs[0]:RegisterGear( ability, item )
+            if data.copy then
+                if type( data.copy ) == "table" then
+                    for _, iID in ipairs( data.copy ) do
+                        if type( iID ) == "number" and iID < 0 then class.specs[0]:RegisterGear( ability, -iID ) end
+                    end
+                else
+                    if type( data.copy ) == "number" and data.copy < 0 then class.specs[0]:RegisterGear( ability, -data.copy ) end
+                end
+            end
 
             local actionItem = Item:CreateFromItemID( item )
             if not actionItem:IsItemEmpty() then
@@ -875,6 +882,7 @@ local HekiliSpecMixin = {
                                 local copyItem = Item:CreateFromItemID( id )
 
                                 if not copyItem:IsItemEmpty() then
+                                    self:RegisterGear( a.key, id )
                                     copyItem:ContinueOnItemLoad( function()
                                         local name = copyItem:GetItemName()
                                         local link = copyItem:GetItemLink()
