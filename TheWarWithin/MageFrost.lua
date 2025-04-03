@@ -308,6 +308,16 @@ spec:RegisterAuras( {
         duration = 18,
         max_stack = 8
     },
+    excess_frost = {
+        id = 438611,
+        duration = 30,
+        max_stack = 2,
+        meta = {
+            stack = function() return max( 0, ( state.buff.excess_frost.stack - ( action.flurry.in_flight and 1 or 0 ) ) ) end,
+            stacks = function() return max( 0, ( state.buff.excess_frost.stack - ( action.flurry.in_flight and 1 or 0 ) ) ) end,
+            react = function() return max( 0, ( state.buff.excess_frost.stack - ( action.flurry.in_flight and 1 or 0 ) ) ) end,
+        }
+    },
     fingers_of_frost = {
         id = 44544,
         duration = 15,
@@ -1191,7 +1201,7 @@ spec:RegisterAbilities( {
 
         talent = "flurry",
         startsCombat = true,
-        flightTime = 1,
+        flightTime = 0.5,
 
         handler = function ()
             removeBuff( "brain_freeze" )
@@ -1216,14 +1226,6 @@ spec:RegisterAbilities( {
                 end
             end
 
-            if talent.frostfire_mastery.enabled then
-                if buff.excess_frost.up then
-                    removeStack( "excess_frost" )
-                    spec.abilities.ice_nova.handler()
-                    reduceCooldown( "comet_storm", 3 )
-                end
-            end
-
             applyDebuff( "target", "flurry" )
             addStack( "icicles" )
             if talent.glacial_spike.enabled and buff.icicles.stack == buff.icicles.max_stack then
@@ -1243,6 +1245,11 @@ spec:RegisterAbilities( {
             if talent.frostfire_mastery.enabled then
                 if buff.frost_mastery.up then applyBuff( "frost_mastery", buff.frost_mastery.expires, min( buff.frost_mastery.stacks + 3, 6) )
                 else applyBuff( "frost_mastery", nil, 3 ) end
+                if buff.excess_frost.up then
+                    removeStack( "excess_frost" )
+                    spec.abilities.ice_nova.handler()
+                    reduceCooldown( "comet_storm", 3 )
+                end
             end
         end,
 
