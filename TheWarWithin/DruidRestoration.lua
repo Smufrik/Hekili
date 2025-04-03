@@ -27,7 +27,7 @@ spec:RegisterTalents( {
     circle_of_the_wild          = { 104078, 474530, 1 }, -- Physical damage dealt by your abilities increased by 25%.
     claw_rampage                = {  94613, 441835, 1 }, -- During Berserk, Shred, Swipe, and Thrash have a 25% chance to make your next Ferocious Bite become Ravage.
     cyclone                     = {  82229,  33786, 1 }, -- Tosses the enemy target into the air, disorienting them but making them invulnerable for up to 5 sec. Only one target can be affected by your Cyclone at a time.
-    dreadful_wound              = {  94620, 441809, 1 }, -- Ravage also inflicts a Bleed that causes 7,597 damage over 6 sec and saps its victims' strength, reducing damage they deal to you by 10%. Dreadful Wound is not affected by Circle of Life and Death. 
+    dreadful_wound              = {  94620, 441809, 1 }, -- Ravage also inflicts a Bleed that causes 7,597 damage over 6 sec and saps its victims' strength, reducing damage they deal to you by 10%. Dreadful Wound is not affected by Circle of Life and Death.
     empowered_shapeshifting     = {  94612, 441689, 1 }, -- Frenzied Regeneration can be cast in Cat Form for 40 Energy. Bear Form reduces magic damage you take by 4%. Shred and Swipe damage increased by 6%. Mangle damage increased by 15%.
     feline_swiftness            = {  82236, 131768, 1 }, -- Increases your movement speed by 15%.
     fluid_form                  = {  82246, 449193, 1 }, -- Shred, Rake, and Skull Bash can be used in any form and shift you into Cat Form, if necessary. Mangle can be used in any form and shifts you into Bear Form. Wrath and Starfire shift you into Moonkin Form, if known.
@@ -65,7 +65,7 @@ spec:RegisterTalents( {
     perfectlyhoned_instincts    = { 104082, 1213597, 1 }, -- Well-Honed Instincts can trigger up to once every 60 sec.
     primal_fury                 = {  82224, 159286, 1 }, -- While in Cat Form, when you critically strike with an attack that generates a combo point, you gain an additional combo point. Damage over time cannot trigger this effect. Mangle critical strike damage increased by 20%.
     rake                        = {  82199,   1822, 1 }, -- Rake the target for 8,415 Bleed damage and an additional 58,726 Bleed damage over 15 sec. While stealthed, Rake will also stun the target for 4 sec and deal 60% increased damage. Awards 1 combo point.
-    ravage                      = {  94609, 441583, 1 }, -- Your auto-attacks have a chance to make your next Ferocious Bite become Ravage. Ravage 
+    ravage                      = {  94609, 441583, 1 }, -- Your auto-attacks have a chance to make your next Ferocious Bite become Ravage. Ravage
     rejuvenation                = {  82217,    774, 1 }, -- Heals the target for 87,702 over 15 sec. Tree of Life: Healing increased by 40% and Mana cost reduced by 30%.
     renewal                     = {  82232, 108238, 1 }, -- Instantly heals you for 30% of maximum health. Usable in all shapeshift forms.
     rip                         = {  82222,   1079, 1 }, -- Finishing move that causes Bleed damage over time. Lasts longer per combo point. 1 point : 90,849 over 8 sec 2 points: 136,273 over 12 sec 3 points: 181,698 over 16 sec 4 points: 227,122 over 20 sec 5 points: 272,547 over 24 sec
@@ -76,7 +76,7 @@ spec:RegisterTalents( {
     starfire                    = {  91044, 197628, 1 }, -- Call down a burst of energy, causing 54,194 Arcane damage to the target, and 18,493 Arcane damage to all other enemies within 5 yards. Deals reduced damage beyond 8 targets.
     starlight_conduit           = { 100223, 451211, 1 }, -- Wrath, Starsurge, and Starfire damage increased by 5%. Starsurge's cooldown is reduced by 4 sec and its mana cost is reduced by 50%.
     starsurge                   = {  82200, 197626, 1 }, -- Launch a surge of stellar energies at the target, dealing 68,334 Astral damage.
-    strike_for_the_heart        = {  94614, 441845, 1 }, -- Shred, Swipe, and Mangle's critical strike chance and critical strike damage are increased by 15%. 
+    strike_for_the_heart        = {  94614, 441845, 1 }, -- Shred, Swipe, and Mangle's critical strike chance and critical strike damage are increased by 15%.
     sunfire                     = {  93714,  93402, 1 }, -- A quick beam of solar light burns the enemy for 3,390 Nature damage and then an additional 31,320 Nature damage over 18 sec.
     symbiotic_relationship      = { 100173, 474750, 1 }, -- Form a bond with an ally. Your self-healing also heals your bonded ally for 10% of the amount healed. Your healing to your bonded ally also heals you for 8% of the amount healed.
     tear_down_the_mighty        = {  94614, 441846, 1 }, -- The cooldown of Pulverize is reduced by 10 sec.
@@ -92,7 +92,7 @@ spec:RegisterTalents( {
     wild_charge                 = {  82198, 102401, 1 }, -- Fly to a nearby ally's position.
     wild_growth                 = {  82205,  48438, 1 }, -- Heals up to 5 injured allies within 30 yards of the target for 39,247 over 7 sec. Healing starts high and declines over the duration. Tree of Life: Affects 2 additional targets.
     wildpower_surge             = {  94612, 441691, 1 }, -- Mangle grants Feline Potential. When you have 6 stacks, the next time you transform into Cat Form, gain 5 combo points and your next Ferocious Bite or Rip deals 225% increased damage for its full duration.
-    wildshape_mastery           = {  94610, 441678, 1 }, -- Ironfur and Frenzied Regeneration persist in Cat Form. When transforming from Bear to Cat Form, you retain 80% of your Bear Form armor and health for 6 sec. For 6 sec after entering Bear Form, you heal for 10% of damage taken over 8 sec. 
+    wildshape_mastery           = {  94610, 441678, 1 }, -- Ironfur and Frenzied Regeneration persist in Cat Form. When transforming from Bear to Cat Form, you retain 80% of your Bear Form armor and health for 6 sec. For 6 sec after entering Bear Form, you heal for 10% of damage taken over 8 sec.
 
     -- Restoration
     abundance                   = {  82052, 207383, 1 }, -- For each Rejuvenation you have active, Regrowth's cost is reduced by 8% and critical effect chance is increased by 8%, up to a maximum of 96%.
@@ -190,17 +190,17 @@ spec:RegisterTalents( {
 } )
 
 -- PvP Talents
-spec:RegisterPvpTalents( { 
-    ancient_of_lore    = 5668, -- (473909) Shapeshift into an Ancient of Lore, preventing all crowd control effects, reducing damage taken by 20%, and granting you access to Blossom Burst and Mass Blooming. Reduces movement speed. Lasts 12 sec.  Blossom Burst:  Mass Blooming: 
-    deep_roots         =  700, -- (233755) 
-    disentanglement    =   59, -- (233673) 
-    early_spring       = 1215, -- (203624) 
+spec:RegisterPvpTalents( {
+    ancient_of_lore    = 5668, -- (473909) Shapeshift into an Ancient of Lore, preventing all crowd control effects, reducing damage taken by 20%, and granting you access to Blossom Burst and Mass Blooming. Reduces movement speed. Lasts 12 sec.  Blossom Burst:  Mass Blooming:
+    deep_roots         =  700, -- (233755)
+    disentanglement    =   59, -- (233673)
+    early_spring       = 1215, -- (203624)
     entangling_bark    =  692, -- (247543) Ironbark now also grants the target Nature's Grasp, rooting the first 3 melee attackers for 6 sec.
-    forest_guardian    = 5687, -- (1217474) 
+    forest_guardian    = 5687, -- (1217474)
     high_winds         =  838, -- (200931) Increases the range of Cyclone, Typhoon, and Entangling Roots by 5 yds.
-    malornes_swiftness = 5514, -- (236147) 
-    thorns             =  697, -- (1217017) 
-    tireless_pursuit   = 5649, -- (377801) 
+    malornes_swiftness = 5514, -- (236147)
+    thorns             =  697, -- (1217017)
+    tireless_pursuit   = 5649, -- (377801)
 } )
 
 local mod_liveliness_hot = setfenv( function( dur )
@@ -287,7 +287,7 @@ spec:RegisterAuras( {
                 t.caster = "player"
                 return
             end
-    
+
             t.count = 0
             t.expires = 0
             t.applied = 0
@@ -423,7 +423,7 @@ spec:RegisterAuras( {
                 t.duration = buff.casting.duration
                 t.expires  = buff.casting.expires
                 t.stack    = 1
-                t.caster   = "player"    
+                t.caster   = "player"
                 return
             end
 
@@ -927,7 +927,7 @@ spec:RegisterAbilities( {
         handler = function ()
             -- Main Rejuv buff
             if talent.germination.enabled then
-                if buff.rejuvenation.down or buff.rejuvenation.remains < buff.rejuvenation_germination.remains then 
+                if buff.rejuvenation.down or buff.rejuvenation.remains < buff.rejuvenation_germination.remains then
                     applyBuff( "rejuvenation" )
 
                 elseif buff.germination.remains < buff.rejuvenation.remains then applyBuff( "rejuvenation_germination" )
@@ -967,7 +967,7 @@ spec:RegisterAbilities( {
 
         talent = "skull_bash",
         startsCombat = true,
-        form = function () 
+        form = function ()
             if talent.fluid_form.enabled then return end
             return buff.bear_form.up and "bear_form" or "cat_form" end,
         toggle = "interrupts",
@@ -1260,4 +1260,4 @@ spec:RegisterSetting( "healing_mode", false, {
 } )
 
 
-spec:RegisterPack( "Restoration Druid", 20250315, [[Hekili:DRrAVTno2FlbdGHDsSJKSDC6aBd0zVqd22zX6UOFts0suXASSKGoIBac0V99rsDqrrQO4odWSlMP11Kp(UV4Z0u38RM7CrzyZVyOzSuBU(Yzgg6RwCV5USxIXM7Irohrpb)Jq0j4V)340SOeuMFuyH9Fnj33LaYlbrixcQsJYtCaWm3Tp3pi7tHM7LJFDa2ySJ5x01wAU7GVRlMblo1XChb2PAZNQp)NlS)h4qmqXOK0cBuwH9YcBNOt7JkSJJ8dHfohLCeLeLh6w8yXJSZAm14b4SF9BFRWEhgLsyxJc78ycZuc2IP6AtnmaW01NPnBz9YAFyQHoS8o)t)LoNb2uxd28V7)D4VWjro(r5aR9l(aq2NqF3IWVp9c)b0wCBHn5Zh6bRAeH9RNXOJf2zOKNWz(Hp1aWdtnwuF64e)Oe)Sx6INhMQVea7JU)wEAMeg0lkPW(B(bUPzOGJ4KwNKi0FgLamqKhWehWmqVTFcsLQpfMHtsYJbAIadH9UOiY5RbBfJ9)kfNikpKDWpe8EsI88daFMF6NkSpKLfN(Z3D3tWM57Nb257s9pLhqD4CsqEzKV7C3(GO93b4)mk5mfp39rhci)Rs28F6NMLENlX)0kPXLDg5WfpsO0)jgeqWhIkm2eKW0TmnGd8ThapgWxQWEk4W5SFLZQpqeh4SqSqC6Hiqutq(GSUp3ZddFcQ0mqrVhdkzmZlL4WUh)KFyAPEjobpnokJABT9HvDJcXZkEer5)0zW(SZDZM7obMcRiplqqTod2b5qDaJsYEBWCqzwaFD6wFVnGPhhMnlbDepdhI2hGvCiW4Coq5jQpdaz6X8GaR9O0d8RUhNKItosDKBwneLLdwfRN9FYNI9RiAWzuInlpEe7RPhqUrNpHdCH14pUdcOe7RwbGH(wsQPnGAiaOdbDPyQ(nDw5AwNICX8yOJk79Ze5PyliG6u67)OG5h(xV)ZLKh2vSbZ6TPzj(ozB0vyOE9vkERCa6OnhMFbb0OWNJoIPAT0yFiqJk9JPOVJofOZRV6effastOKTtWNqqCX271Mox76ss7aKnXpp16ji0ff6WjexvcsxmvcYKw(J5HE(j4BDEXja4yA(0uMkkb7bEFhiNzeBJzz(NaGISC9XBxoQKq(NalZZyxRsCjtLCkkAy0HJa6gTyu4mP5WXihHS8ZysfKt(401p87JeTAKaExjYauetICIXqSvjUNvTZw9sxiz2yEuDgsZEGlVaXNJ44c(teS319UeVvraLFnnN0oGf60(80d8KOeFsdFhx7QjXnTYzB9cTghjzWv5kbCsuA6ip)NoKzvF47f5ejbp9G1rJfSdBUFYOXxjgDoAqsYMNCCNbTBm6pnHFt6OD6lFbNap5ppYqhxx)yzbCJhZfY96RSo(2(bTr1whDnqQO9PArBtnDZYwjbkb8gJfV(64QVWd)1lwZbFfIVzHaqB5aAYeIi67qQ3oIhSTg3iezF2pgBbI41gDe5yqFtAAI2k)TGjYke)DO6IiCzhsGQ9eKCbPKwoQnd1GSTlejupj(g)wKzYORG(zE2IeSOx7Zjnb1BieJ5X7dJQ0ZGkVkQ2nIv6CTEvfeOR5tOalV8KxQZbuU1juk0WSfG8yGc(EWxQbrHTA7IUryC5F6MhP0T8ETrJ5dIiTevh6mUmnc4iaop0oMzAqGjcDTkbhuJL8TxaPNAkf605iJN6RK4y11eR1OGcLZKvA8RdSCZzTYFT2Shevumq3OprUvxLEDTspoGJ5WtLGjLx6GcUQQJhGnFSIsVK0dktokkrvhAjjtW7)yR6McVNUt2O346x3WYOoEHxMp7sT3Hh3qZy5vDzyR9qR7s9pBL1CUKukRNtuTcj2lz6naxttc4hxhFrQdmy)U)OsPACjj8AfEcPqUsDsTMkR94Idan8eB1711VBRrRABRx2JwKrkRbO8UuFQ0djyA)NnjB7N7619VCad)Ay50xYqHhBqqzYyI9d)B5pd6vY6CAiQZh3wR1RrhI8NGGxKHTaFp8(GOikpXxnREJ16c15A2XyeviQxGeex6mKh6c6eO3(SdCnyvYqVaA2uCG3fYqDilP62Bs4pdXKzWFkS)BEEbrYOnMSby4H2iDAU1sRvP0IIVSeuykTJcBaXrKfWyzyf8N9YobvufLOemJpVHBnsAARUlZBzNSTUjJe64MiZEcwVUEcLRBVf8PZXnZPm(hdoJEjLm4Ra3cBgTahes8AHDnZkts4yUQ6JKY0vhXC3Z4Ku4m1t8DH5UZOKqYazm39PtXrjzKHLTaihf5f2KPzKoR4rZDO8SdrjM7(m6i6G)rFZD09iJwgIsGp(cDI1LcP5Vald3QaN4JitCUZWtSF9v205QVHj3sI3YeOoLFm3rYoAMbcGsAnMmDV3(sAf2RbbvJr0RiHZV1velSNuYIW1plShvy36kOmeEFdR2P8oHVNRKVhcda0CmZ20KZfO7Mc77PChB)Rk1I8jViBnq1cGTYgpRqO6bmq1hV9TalS3cSOgDETZHpUUrFR6gHIggL3lKk4tAu7vsnrBVOpVKU6Oj)VIaZjTDnLebFPGGxh(4hlOfG)NR(lJjk)vsiYWh0O6KwEh6ACQk(kQf2BO)gqWoCfWP4Pgb3uyBSGrMXTxUnMUMMgATaMg1(iluEWTchCsD0lrdZUntzqb)H3s)POaCQODik6nOwGwTOrs(bQ97fu7v9Mq2U2g0Q9fYPwPWy10SeVnRL1Au1Vh1mrfoZmOQTtkilKlepOGDkV5LG)ZWzhMlZv0FNfX7)jNt(GkVysrGEujJ76)9qfXRT9tQDc5RJdyM61PxkmQARMF7EASwIrGZxAl1vvHVKUMYKxQsWZf3EVwtaQ8XlqbBmxU(sp76OevdCGZsQ8AGYthRl2HqfqvxF)T8TemQ6gDSQLM0UtPqingiE5v)w5GGtMsGetv1r3qDiM0VpC)261kJ30v3lJKjC8MYr3awcnu33X4b7hpUJ4voDIkp5sLFpvp7QH4rXs(80)iiALytbv7s1fQ7kqSZkMDVDAIM2U4YQiPxI2eNoOgk1fln)UcRxQDPHExwPjDv1MApVMo9FlutDUYsdRPB2yYv0orTkytToqyAoSec1DMCjXHQk89hDDydf8ZLw(RtAY6Abx1FjT2nG2B6GsqVSsBgQlTjgKXAiBKOJbyfxYfGvrxkYvFn0HAYKA6jOwmt9WcImuN8TBf7ELtYaTOyuDkmjjrKMriJEbvs9CzxDV2vJBUgSxageYX(sRbHjXekowewBvYU7EfXQhyKekvnJmHmnC0Q(0v9VjTbV2qXCT6mKm(M7KmVkIFTKRYpeXOAYAdvmKYG0rCniwu0nPIfBnYmb2uyoCMIJXP74267cNCdFQfvKoDo1ALQrXrVBg36Ct8sCR2(Etyzc5vBshoxJ(wYa6OfKMl7IEvIlh)iiWdBQEIn)1A8D0GwxShkpOzEB1k66h5fpJvfTvbvZJ(sak1POUQZy64A5P1m9AitRxrw)dIr6dcJpJv7hugBQJwSx8Avcmj(F)y8V0r3jAZ)Xir9Jut2ea(Xqn7rSj7Q8n4TkgG)5K1m)1wfpypHTwL4eEUBTmkL1kfBEPxsRONv1Tj8)dZOt5THLmOLH25cF(nvVrofDBQQQSS7M)MDCQQLw1PzkZC362vQUcLQYAxUIBfDtj8WkfcI68n9CTuDUqmzEUTL367REpFgC674RDY7mATc2ddwwZCTQd97)dKMZvr4rr3P8t38QdTk0GtAOUstVOGMFLQlz)N5)9]] )
+spec:RegisterPack( "Restoration Druid", 20250402, [[Hekili:TR1EVnoUr8plblGH9MSoYo2jzlSnW1ha9c6TTOU9VkQEyjQywlljqrLCbiqF27qQxKuKYoEtoShGb2njsKC48E(Xr0EI9)YEDGhfz)TPwtNBnZ6MXw3mF6Kj2RPVKISxN65VZ7r4pI92d)8FIYOjepkojUW9ptYXbSP8suIxaJuzj5eFyA2R3KJJO)CS9gf6pfMukY3(BtSMBVEloiavojuMp8mLMM9hU(6hX0T5Bg7NS)6m8(8i(g6t8cPSN9VEtuYMRPBrp7rEgMko(6FYNnL)bbNqW0x(B4mA21bm(ZH0YYJzlU4H)DAHlnPWLXyfUmcu4UgV)p9hkC)fpIp809fUm(TW9lfU((BUZ)UVw8qXdGsinBBcTWL4HdkC3KhgIGFNr9OzWJOWecqrGT34rzp)iogEVxmmNuc6lPjuko(Xcxm82GKy04Ih84mE2yy8Y1D5YR37r25Ke6asOZZ4Oa9ZAlYJqp80sjjphDfoCj1lcftht82HgJI92eHmScFpQdij7nUOMLbtoBxEuKZgVSTIVDdIKHi7ycRWBJ9O5G5W5j8JyolDbtdoMZHJZthu(y2wVGKN3JIcG3jUCFpyNkF0jcSWxX8jxcQHiyFyKldX1VzJRENZ(KaKif6OYE7mrEgYbtr7ZE7lfm)WF92xhjpURydgPRYOeSpD5edgQxFLt3AZzhT5bSYctnj(PKDiUwllfdryCPFiN8D0PW(86R(jjrG0eRzycAVhexS6wRVCJ1NR2AFyBj48mNhHywVyFbH4IQP0LsvtzKK)yECiMGUY)f)iGJ9ipIOzLQicke8(2YwZGYbgtX7HjL4eGrRMpOAJW7blZtOaNkAPtLSpj542hHnyYujgfwtwoSm2syV(jKdkgThJYwC)7JeD3af6ENkdWjmlYjfbXwv0EC9iRMu5cPZglsQNH8RBfYlW85yoUG)eJ6DDVROBDeq1Jz5SYboE73KNTvClQON2W3HnUAACtRD2wmZQ1rs38QDLaojjlBqi(XTuNMfFRkNOj4PhQoyOIDy5TJgm8c1OZbhLKS8r)GX79(1b)We(nQJ2PV8fcc8OFCKHoUU4uDbCdhkeY96RG9K84lR(Q1GgRZelqQyLstCstWXWcNlLeOAIxoD2RVoS(bX5)5zleMFnHVCMYKwjmPrJyIi2NvVDG40wn9sLi7NXPihqe)80oICkOVzOL4y4UcmroXOFfQUOop6wcuTNrKtiL08bYmulXwntDJ6jX3WdTnJgCbaP5jhwWYKgFoTjOoGqmuKU3pOwpdQ86O6GKYsNlMuxbjLG37f5eMtEPjhq1q79YOiIdq8uyhWHWdntXGTA1mWw9F(ROD4i8)fWOMeGdXmCNEzmWMTrjrCWLC4MCSVLQeGQXboTdZGOgZaXMLNMMqOOGX9LERBAQkV(BTguhxfgXqAZhVdYYsk2x9YHMly2OUbTTG9SYZOjQliVeG)NTgFVQwSCQlNmsVlHjL(cJUJahlqNAbtlV0HecLChEeoednuxML7WyMtvjQErZzPjE7l7UU537b6YYjTXfnOzg0XhQBjJJXJB(BXJ7ytNfIij(4eOUXgaxVw)tPuQ3OjFZIByQwLS(vm9sGR5ziWPn1TyfjoA)UpQ8TtpLSHsHNwaigZz8Al72JlomP(Y6P43vpwx)UvtLk8TyEpAXYTY5iuENQpv2wcIdoTnvz)CxVU)mG1)94cxiyf(Hx8U2vxLvNz8q)V8NaLk79cQhUNNWqlMuslp2)JIErhPIWHOnrjjCUrSixZalMOu(RDKPd4SFZlyHVvUb5XbG2aG8t3kG7IXnVak0muu4jYnD2twbX(31FbIdPW)lC)lHHrj62yeBaWyd4k9BpgJ0B5BuXduIxCghFHlq1eWirqiDKeCGdP7HYXQYcbvYHxk8owEzNUVw0AoAvdKdcV5tSorbVVPacNLLhc(T)UL3u8Wpf9S3lzSgGfbagk3iWPGfDcydQ5uDIHaNvxnKvuUEj2RzTPiJ3BruOxEef(ZVX71yjTSx321i71v8Q9F0MA)TPIZQTlskZ6g2SAFZAF4igic2ZE9fLDLR5KLfUdkCRFP0rqB3gP2sXi)mJKxBhMAPKAhQk1eoL9oTAjSny(7k)3PAoBlU9DDlA66fJ039Us6YUIXO79gPRU(t5(6RvewivjyH49eJ5U1Sdk9ptYOaRLT1F9TS1I27YDMrIjwgPXWkgvBBu4YXHpRBH7Qc3BT4TK(g4xFMvkO)Z9ws6lAMOXt)w4osqM6E4DU4nrr8AcLlHflkVcLv5EaDlTYLM5vd2Bt3a6kIiHzyzCZudCtnC8Ezhf(aiM(nXCAgzWhfUlkCVxqLuJpMtf1SjF)kU74dQHhUZGGyoFJEq)LQfHqmDEUYYlxuy71TIzW5nguo5nTntyDvbboJ9DGaKYLRwc0Jg1VA5qUoqmWxySMIl9Tz1OIucE1b6OCVGiNsTuFZAk3C1bwKO3VgqksbLnRtx1VoIrnCQJvm0YGCOnNklQ6ZlXIkyVe5sdqSA3fPX0vkvAN0cmZSwPgfwH7LsVxaVJ6qYUFJQdCAvBAXL1QV1GnRWDjKIxi6QbxLMY6sI7XHOtu(7cDRjYTvMldAzvk1eWQy7K)iwTjqAre08k1U9le3cfB1fVkz3oMMLZ9UNzPwiSNw13eqZ(maCZK0NcOKG3EaSxMRBCmmWaXSjTz3bNIB5Cx54x0f8dFOJuTauR67iutWF0rOidsra4Lz06d1PJg97fb(GqYut91e(Gtv0cW)KGwWyIYwtWLHVAX1jsEhtSeuvInVGNEAUwGuneaYroDwtHrXxltjqJnJhsjrPbYlzMXfUszHJAIEzA4YghxfuiU4v8kEann05jo5NYTa6qtPMcUUnqsN5qQtr6o0u9eB7l1jaeS0myQdF8PmtVqOEwREaLQ680l7mQ(iFAA1UEor9Oxsfb6rLmSR)391BEJTxl6mgLRHV1wOwthmfhUNEyQXii4lTI7QAWxQZHgLQN)H(nFS1CUD1Ijc5iU1Qr5AQd8goxSPdoQ7OA6816CATow5ktC3pqKsAnqfLxF51GqC2hOrJPREPlRX33NpD)2(fgJ)6CawzmzkFCPdkhDdG7)8RdpA)6HDepXZi2MKVNQPD1qIKyUyE7VhcDNkibPJLAgLGksRLnh9vhmmHSmAWwyQhahUHF9e6n)Kd9oTsvtmvRs(tL1bpUsn2BmwQybFWwtUb4fnQGLn6aLpKwzcHgKkNsCOPcHF01Ln1ZPtTCyN0Kw1HVx0FjozaP9MoOAQNwPUPM7pQAq2Q6wsi7yawX5shlUCF5e38XspwtMwtpJ0QzQpUGOPMt(2TQAVYj7BjYPO5uyAsIOnJaLxDP8I(EWUV9(FBNfQ9RCdNBoTV5ZvlWNhZrSpCd7nRo7Le8ozW1LG28jejJ9wHR3(ZEKy2NiYE9pVVeQfpQOC5fU8pn24Ih4ekehbb1F6tfU)2CZ3z70jF73H1((7s0(5f)WUa8(h5fD(nCR5BwZLNVa8VHLE(cW)rF7vV8756IF(cWREUIZxa(Zxa(Ji878fG)8fG)ytjD(cWFIxaEa(5hA)q7ld357aVIhj(8DG3m6LZ3b(Z3b(ovEpFh4)UVd8qfG3ZRbFf5(X5MWxXq)2Fz4)eR1pVJ3h(pXUOv)E8kXdm(XDhQ0jjcmxD9rLRwvoDBcHD)325TfVdZBHO9))d]] )
