@@ -1415,10 +1415,13 @@ spec:RegisterAbilities( {
         cooldown = function() return 20 * ( buff.trueshot.up and 0.4 or 1 ) end,
         gcd = "spell",
         school = "physical",
+        
         max_targets = function() return ( trick_shots and min( 6, active_enemies ) ) or ( talent.aspect_of_the_hydra.enabled and min ( 2, active_enemies ) ) or 1 end,
         shots = function() return ( 7 + 3 * talent.ammo_conservation.rank ) * ( buff.double_tap.up and 1.8 or 1 ) end,
+        
         talent = "rapid_fire",
         startsCombat = true,
+        texture = 461115,
 
         toggle = function ()
             if buff.lunar_storm_ready.up then
@@ -1431,7 +1434,6 @@ spec:RegisterAbilities( {
         end,
 
         start = function ()
-
             if talent.bulletstorm.enabled and trick_shots then
                 addStack( "bulletstorm", nil, action.rapid_fire.max_targets * action.rapid_fire.shots )
             end
@@ -1446,7 +1448,6 @@ spec:RegisterAbilities( {
             if conduit.brutal_projectiles.enabled then removeBuff( "brutal_projectiles" ) end
             if set_bonus.tier31_2pc > 0 then applyBuff( "volley", 2 * haste ) end
             removeBuff( "double_tap" )
-
         end,
 
         finish = function ()
@@ -1651,7 +1652,7 @@ spec:RegisterSetting( "prevent_hardcasts", false, {
 } )
 
 spec:RegisterSetting( "lunar_toggle", "none", {
-    name = strformat( "%s + %s: Special Toggle", Hekili:GetSpellLinkWithTexture( spec.abilities.rapid_fire.id ), Hekili:GetSpellLinkWithTexture( spec.talents.lunar_storm[2] ) ),
+    name = strformat( "|T461115:0|t%s: Special Toggle", Hekili:GetSpellLinkWithTexture( spec.talents.lunar_storm[2] ) ),
     desc = strformat(
         "When %s is talented and is not on cooldown, %s will only be recommended if the selected toggle is active.\n\n" ..
         "This setting will be ignored if you have set %s's toggle in |cFFFFD100Abilities and Items|r.\n\n" ..
