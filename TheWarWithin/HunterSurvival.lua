@@ -1500,14 +1500,13 @@ spec:RegisterAbilities( {
 
         toggle = function ()
             if buff.lunar_storm_ready.up then
-                local dyn = state.settings.dynamic_wildfire_bomb_toggle
-                if dyn and dyn ~= "none" and dyn ~= "default" then
-                    return dyn
-                end
+                local dyn = state.settings.lunar_toggle
+                if dyn == "none" then return "none" end
+                if dyn == "default" then return nil end
+                return dyn
             end
             return "none"
         end,
-
 
         start = function ()
             removeBuff( "flame_infusion" )
@@ -1586,15 +1585,6 @@ spec:RegisterSetting( "use_harpoon", true, {
     width = "full"
 } )
 
---[[spec:RegisterSetting( "allow_focus_overcap", false, {
-    name = "Allow Focus Overcap",
-    desc = "The default priority tries to avoid overcapping Focus by default. In simulations, this helps to avoid wasting Focus. However, in actual gameplay, this can " ..
-        "result in using Focus spenders when other important abilities (Wildfire Bomb, Kill Command) are available. On average, enabling this feature appears to be DPS neutral " ..
-        "but has higher variance. Your experience may vary.\n\nThe default setting is |cFFFFD100unchecked|r.",
-    type = "toggle",
-    width = "full"
-} )--]]
-
 spec:RegisterSetting( "mark_any", false, {
     name = strformat( "%s Any Target", Hekili:GetSpellLinkWithTexture( beastMastery.abilities.hunters_mark.id ) ),
     desc = strformat( "If checked, %s may be recommended for any target rather than only bosses.", Hekili:GetSpellLinkWithTexture( beastMastery.abilities.hunters_mark.id ) ),
@@ -1602,17 +1592,15 @@ spec:RegisterSetting( "mark_any", false, {
     width = "full"
 } )
 
-spec:RegisterSetting( "dynamic_wildfire_bomb_toggle", "none", {
-    name = strformat( "%s: Dynamic Toggle Override", Hekili:GetSpellLinkWithTexture( spec.abilities.wildfire_bomb.id ) ),
+spec:RegisterSetting( "lunar_toggle", "none", {
+    name = strformat( "%s + %s: Special Toggle", Hekili:GetSpellLinkWithTexture( spec.abilities.wildfire_bomb.id ), Hekili:GetSpellLinkWithTexture( spec.talents.lunar_storm[2] ) ),
     desc = strformat(
-        "If talented into %s, you can temporarily override this ability’s toggle to treat %s like a cooldown. " ..
-        "%s will only be recommended when the selected toggle is enabled.\n\n" ..
-        "The override only applies if %s is available (e.g., off cooldown).\n\n" ..
-        "Set to |cffffd100Do Not Override|r to use normal behavior.",
-        Hekili:GetSpellLinkWithTexture( spec.talents.lunar_storm[2] ),
+        "When %s is talented and is not on cooldown, %s will only be recommended if the selected toggle is active.\n\n" ..
+        "This setting will be ignored if you have set %s's toggle in |cFFFFD100Abilities and Items|r.\n\n" ..
+        "Select |cFFFFD100Do Not Override|r to disable this feature.",
         Hekili:GetSpellLinkWithTexture( spec.talents.lunar_storm[2] ),
         Hekili:GetSpellLinkWithTexture( spec.abilities.wildfire_bomb.id ),
-        Hekili:GetSpellLinkWithTexture( spec.talents.lunar_storm[2] )
+        Hekili:GetSpellLinkWithTexture( spec.abilities.wildfire_bomb.id )
     ),
     type = "select",
     width = 2,
@@ -1631,10 +1619,5 @@ spec:RegisterSetting( "dynamic_wildfire_bomb_toggle", "none", {
         return toggles
     end
 } )
-
-
---[[spec:RegisterStateExpr( "coordinated_assault_kill_shot", function()
-    return false -- ( settings.manual_kill_shot or false ) and buff.coordinated_assault.up
-end )--]]
 
 spec:RegisterPack( "Survival", 20250321, [[Hekili:TZvBZnkos4FlP2QyC2nXXGZR754QYLj7EZSzZm16m18ndem2MlyWlGtMSLl(TFDlWGaKaHnoVCv(YUtSK6UvR(LNwiPHYdVD4Gr6bMdVrPJYrD6Qi3wPB3JKpB4GGNMBoCWCDJ71Na)dh9zW)DWcVhSEq3gB4jBx9rib8Dx4zan(tHAtdcM7)RhCWeRGPlURTH7Sd8TMTWwpWY1XWtFCa(3ghmCWDlSSd(KZW7yjahE0PdhOViyQRhWtRzxoCWuRrJmJ6UPVXWby33Vt39vK)1qnOlgHAFBosPqTwtDF0w1FXSzUoQEM6JEkuB)97dsx6V3M877g(5WpVIsYDIO0LLrjQrOSVYPWiU97FhgMPUVRtOMsO2IOXs1n5tGU9vptBRzwo6EG0il3wou7IVEDC3oC)oNTVIYEqlDsMrxMJwqNoDFLdHobDUZPjDAUNLRNvWtS6USc0TFZ6hHA)HLTDO2LUZMP7mc6QpSQgQzbY8fF5QqThHfSqTz6)WeA83Cnw4ttMoOi9xM(Znncc1(plCcm9(GFO2FQ7DFOMVzqGLZK0bCY(k4u(pTCC9GMTMTs0(xiJnlqb6b2fvPtH(8DDySFhellNHdST8d8j2AMobg2M6pyc)1ne7xth97Snhn8FdMmgOD2WbpAzpASLNP6DUZITy8SMh12GRU52pDZvxhQTCzO2hV63U4BxFBSw4IlV9tF5MR)0aGSWiaz0sF4GDc1UBX4XTTxaREQ(bUEZunCDTh5(iAhnt3YXFyaybZrAUhu9WaiAEA6sikywatjBtFFvyHCMUT6ytpxdy9S9I5HAsX8oWAUQ7y1GPMQWQGUxB)aWZmuRhyYa08jqNOgO7nXeutGAbKMU5KMC8Lhbb3Koe2MmdZOmBBmf5IV6yVOPNUnzmYTpjsHw3HDw0WAfQfOJAI2y319gzz61ow6ZkoW)aA1bSMgPQ77RVWoy1IarDaUG)CO2eJrTbR5qTDJO)kIViWyQP3tSjDsR00lMs8mUan9HCw390Nd2kQ3b69cQF)apR7nvTcu9SmMMzPoxtmLfwl4hHIXkEVAQqlyqFoMRrXoLUaqRcRy9P619iB2vskJ1tuspz9nFtP94fEpTQBM6tSnrkFkxk3QcNTZjwxOUOQUbr33LsmS1DUhIqQgT0IcXz1mwXysizTFbu06(GLH5ethIMK0aFJc5o0wfM)yUTRV1dGap1niNTHC(OPRLkVG3HC(WI5i7it9GP3z7(yQLUuIXMVLHQ5SvgA5utK5aYH8H6QWbm1u3W1jqFIL7cFm7oOsd8t5ft1Py(6fhzaMfAmX4EvERvdD2I)5FalZSlgk09iWt35Vb8sw)dXiQ4sh)y9TsspJgjE3RQ780k3zu8AB5dRu((KaLGEhzjyEmYnO9ussAF1zKK8NVkVq84cSMbtrx15gbQN2HyfOqzgqpywXitLW5aXMAQBhmfPfXMg(jv8NaPMsnz6msfAjjuhJvbdDWSi6puridrahuJWUAmYV8qGXZDthZzwMrbC7sBmsadg7bG4IvbCiJsddcGta3Bd0krqjAUTFfX6Yls9jrG2QIum6QsduYvtTZ2tYqKFrQR8XofqDTLLRuDwu82kdSNbr63qiX5WNBngKyibUjcs2XfrbpjuZ0g7AGlc6hqmYjgvMOl6Eg6oONQNhiO5d5NjmZD6tiAgy(FVF(E2LUN2wtMg4R(FxmAYScuf(tq6mqycfd2fxlf6hZiGhLEls5AnBUP3yOQdaAGbeaq3X4jvFtVfZsjzj95nzOXOzUUnqka8K6Cs6bqsOGGYQXifVn)IJsN5IGLMAjdt2dHJhXAzQIuTBowxk8wtDNG9h9wtesrQ8HTl4ZvDy8Z8vjQQ6cSUbQdtetdwLz1i1yfrMc7stjGlZdeqqLBnaYpSmu8hpS6sU4NC)1wjx8Z3xPLkLwIvjxVxTttxTdZ4U5YcJaElztYaZK5U4)idyKl)YxU(JF573mG3UHLKZCHVPAmnitciP)dTZSIYiFro1bROmy4w04NUmTI9IPJqsQQuTBwkL2b6XleNOC0TDDhPIg6LdW4T7meGqzcr5GKGi0xbYI9MCwIoUK1sbYK8gAcgN6igekK1ik8Fxkdya(PPhMlByPfehH(f47yeVVAM0)hrL)8nKYjvjm3L8)zKHwGclgGb)ChpwfqUqkvS6YvsvRiANKzwFk0p7d5wAlxEQyXaOLbkxb9z6ueNgaLN5ZklDktJlSzeu1lgAaKAaA0XuXliFzO8P9dI3HJsYbLdaq(u6m2B2gaNEYhfOfdWMRQ2lV)dwbxMeLF9Il)JqTRV6IpE1FfrUbF6MF)6Rc1U9I)63V6w68NTlpvOyRPs1aDEHpAroSqLM3seUWP8qX2EuAeWy50GhYCyrfawdHKGLoJ7j72rXkQjlgy5kr7QtRSo9C3l3OLhQ63ZWWvfWVlBmL82RrotjrKgPYeMEjnMSnwsSutLwc8MvysPLMlIhghh8QRXyDzAwu50lnLgxRYQ)eRirLslsSWwcki)t2bGiZCpDRrQMpGgx6Jgbwt)a)M4rciV2Kk2e(f)bkFyNSFHkwvTTjLiv3cuj7bXHViBDHuLLHxNDKOKcafwafi6DHV51R3TvG73mB9R(NYTqeqbX56fPRvfOPxsqHyPe)0hDiGg4K)qEn3JQTQ7V8rzC)lAfNVOGQtKxDIpo6hEWVR6tQEJ8P0z5s3KKCB0ZzdfCpHcs(itLU75cDCG4RAR7PeQrnC5yJ(SGfSg29LMpTc)P1fcr54wkPizryk7kKtzhKzzIRlum2kml8bN1saZpIwC8cyk4zgf3wfHqtQWK(KrjLgxSYWq1iTWg(DisRotWevvLpn)rcReVZtfa4mF8KV6s9UbqpRl4WQIJvPZxwnqohF24JyMvOUbyFHHBuLdyVKVvvreh8bDuXUsNeVbxBzPBtdDLTRmnqke9QaKpbndsc2S(r4EPamvrwjMk8Y0GhlkQLyauvcdkFL3BreD8(CFvIOtH3PNznoq3LTBC1fnhkA1nEN4raQY9NpUnLnRytoa3u2GJoEPi3uQiSqvOOwpOBkBiGXAJDtHpyX3bVTnbVPCIaO3u4VfKV2GVPSM7CPaW36k25uuqg2GW36w34S))i8TUvCSj2YW36UbjaEBcFRBfzMQl8TUhjm8TUhlc8TUITlznb8TUIHuK1DCaK6hm98XEhFFoHkqh8OUNdEIHgoGCX(SMn31la9h8c1(q0oU9byLZ8VxaljqKuFx0sqFrG7mmIi4ypv3bcG2o8ZxB5anHxUWlDDawrA(dfIkdKdpK0fBy1mh6ql5FSBcfp7nafLpLnjzSaNJ2LycKNjkh34YTch5(1fj7YXOQH0UHFMHTF8ncQEg)CwG4CVgYjRvC7hYRu4Ot2k8IZs6wHxCCoByEXCnF1j0VEl6hYXEpgIBER9CNaBbxw3aVNMNIKBUodsgDgzZrUShC2kwbmg5xpLphjHbO9crg4Eo0kerJZSDvD55NW5pbCcsVgvM7(YXJ1wV8CiZCCwFo4XARxEoK5JE54XARxEoKzoz0Fo4XARx2UYmNmN1TobUg1ncKUkmqAqEil38Px5ei8vgj5AM1iAxMMzP3N36zS18ZEEuC9a918f218uSra9vU1yJz68jIvds6tIoXU41GI8ofbnJxbA3Xw4Z6WpvJNflC7nTc8pakT4rDVhjp(rhCbH2Fn(vE6AKdheDhIv9JFoUAJJo8ZiR(28Ozt0dyv0Z6e(or9RK3AjJP4(iGNMD8cCSpyfFQXDhn2aNqrZb)2jxE7F58dsVU2SBF19hyp8(pCo)R)a7rtFtO3ZA85TkCFSxUm7DXExjKomUf2N3rI5TVUVshrKCgxOAkvc09OhPd6FP4JYbDRpZtnucJFFmqUL9n1Oh17Pb9iY)SgePkGYJQUtyU49IEPeoxg5ySShFK171vk2zItXYIWHOGWLWL(kBmxI29XYNj70emrKjtLmcDVx33kcAXK(tPSxMnY9Cz6(L9TJGULmpve0nK7LHaDIaPM5Lkn1Vem5qxMO7skQAyDhtLkC)sZtG07LjsJs(2TlxUdF0OsgCV3uPJlPjPsOuua5SYOLZdU3dl6)aCVD0TvrPm2G39riIULZ4f4(N)AzgKv6ZEVqFDkJj3QZxNIx6DV81H8bPHsVCv9K7MxEJUMKezfssjL5MG2t5OLlF5Nc5fzrbLSh1L4mkKm1nZSF8xsD)oTL5XaFCmgcCqgwUK)KTGpMFH7sjYMCxbZ(NFmj2AXBHyHNYsk8pX5urGDRedrNcmPc1xemFEKeR7cV(lsLCQB6bA9ytQIV2lmfHYYLLidL(z8Lk5BA3tMjtZ89Jt4cBs0VtQLEvNlK(YTpHYwrGUFgv3lz1RNYpt0S5QvmvYY)SSeTqu82XYsBK7SEuH(4CL4fyonZwJVs(y2iJjoke7uOUZufqYpj(IdhBHchVMkThwl7yYPh5xspIl9spElSix2JCqdyeZxOrgKm8cVVjszQwVQOiX4fR1DRMMM(bcOkBTPXe2D5YwfFlPLOtKMPSZiXk7sIOXDLePtO3Ab(TrH4juOIW77W9UBNVGvqJ0xwrQ1o83ILLlrMZ6krFENDRRKXNns84sV4gIlhtI7fUUGSWk0ur7qoPdxTklCoOct)1NW9lAJwZq5YLhkxPi9RDWsWOH9X9A5s2)UuXJaw)dzycvVWFINMaskF4wmhUeJKALMMEdI9WmSYlrYwHcRZpdjydvDiFiME1DQC)0LljSSx3o7UX2BnHzV8r1oYzjrORdPyV4LhkcdtZyaaI9i9NsR0TyJLMoA1V0ZJkBkvLj3MAWi6eO5cnv)YlAvIxCLrR2TMLCWrHSvQZKdVkMoptZp)H)YW(6NaLhHkMPV1Mu12URPlKi11KHG8QSzd8Gkt0xVQBQJ1RqHCfLGK4N1)gXLLr(bNVXXqfkL9gNXDxgmDdQ7jHg1dhCElOTf6)eAN5(gieXzn9xmNbPlSW3QYf((fVih7JX(LklGYwoV1UBAIlgQg2zgEHafNAQUHzeeYrTud00jaNB9vXSTcX0Nfa9LzJ2tHgrpltc2oImVTqOsqIrZ8xuQxsmP1XpT5lZyDunmgDzz55vqrsBnvc3Qiw5fRuJ0Tnrrlc5sjIhX7jCf1y(9eUVNW99eUVNWTg(PVNWDts4sEOsmWN0JJi324H)Vd]] )
