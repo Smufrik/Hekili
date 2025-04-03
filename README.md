@@ -46,10 +46,19 @@ Other features include:
 
 ## 🚀 Getting Started
 
-### 1. Install the Addon
+### 1. **Install the Addon**
 
-- Recommended: Use [**CurseForge**](https://www.curseforge.com/wow/addons/hekili) or [**Wago App**](https://addons.wago.io/addons/hekili)
-- Manual: Download the `.zip` from [**Releases**](https://github.com/Hekili/hekili/releases/latest) and extract it to `Interface/AddOns`
+There are two main ways to install **Hekili**:
+
+- **Addon Managers** (recommended): Automatically install and keep the addon up to date
+- **Manual Download**: Install it yourself from [**GitHub Releases**](https://github.com/Hekili/hekili/releases/latest) by extracting the `.zip` to `Interface/AddOns`
+
+#### Recommended Addon Managers
+Because **Hekili** is frequently updated, we suggest using one of these trusted tools:
+- [**CurseForge**](https://www.curseforge.com/download) – A widely used manager for all types of addons. We recommend the standalone desktop version for Windows or macOS to avoid extra overlays.
+- [**Wago App**](https://addons.wago.io/download) – Ideal if you also use **WeakAuras**, **Plater scripts**, or other Wago-hosted content.
+- [**WowUp**](https://wowup.io/) – Supports both **CurseForge** and **Wago** backends, and includes its own addon library. We suggest using the **CurseForge** version unless you use another tool to manage your WeakAuras.
+- [**CurseBreaker**](https://github.com/AcidWeb/CurseBreaker) (for 💪 power users) – A lightweight command-line interface (CLI) tool that supports **Wago**, **WoWInterface**, **Tukui**, **ElvUI**, **GitHub**, and more. No extra setup is needed for **WoWInterface**-based updates.
 
 ### 2. Configure In-Game
 
