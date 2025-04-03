@@ -1496,6 +1496,7 @@ spec:RegisterAbilities( {
 
         talent = "wildfire_bomb",
         startsCombat = true,
+        texture = 2065634,
         velocity = 35,
 
         toggle = function ()
@@ -1593,7 +1594,7 @@ spec:RegisterSetting( "mark_any", false, {
 } )
 
 spec:RegisterSetting( "lunar_toggle", "none", {
-    name = strformat( "%s + %s: Special Toggle", Hekili:GetSpellLinkWithTexture( spec.abilities.wildfire_bomb.id ), Hekili:GetSpellLinkWithTexture( spec.talents.lunar_storm[2] ) ),
+    name = strformat( "|T2065634:0|t%s: Special Toggle", Hekili:GetSpellLinkWithTexture( spec.talents.lunar_storm[2] ) ),
     desc = strformat(
         "When %s is talented and is not on cooldown, %s will only be recommended if the selected toggle is active.\n\n" ..
         "This setting will be ignored if you have set %s's toggle in |cFFFFD100Abilities and Items|r.\n\n" ..
