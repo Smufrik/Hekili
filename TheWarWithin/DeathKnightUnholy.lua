@@ -149,12 +149,13 @@ spec:RegisterResource( Enum.PowerType.RunicPower, {
         value = function ()
             -- 20% chance * 4 RP = 0.8 RP per tick
             -- We'll lowball to 0.6 RP for conservative estimate
-            return 0.6 * min( state.active_dot.frost_fever or 0, state.spec.unholy.max_fever_targets or 5 )
+            return 0.6 * min( state.active_dot.frost_fever or 0, 5 )
         end,
     },
 
     -- Runic Attenuation (mainhand swings 50% chance to generate 3 RP)
     runic_attenuation = {
+        talent = "runic_attenuation",
         swing = "mainhand",
 
         last = function ()
@@ -169,7 +170,7 @@ spec:RegisterResource( Enum.PowerType.RunicPower, {
 
         interval = "mainhand_speed",
 
-        stop = function () return state.swings.mainhand == 0 or not state.talent.runic_attenuation.enabled end,
+        stop = function () return state.swings.mainhand == 0 end,
 
         value = function ()
             -- 50% chance * 3 RP = 1.5 RP per swing
