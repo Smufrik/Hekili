@@ -6746,7 +6746,7 @@ break end
 
                         profile = {
                             type = "group",
-                            name = "Profile",
+                            name = "Source",
                             desc = "If this Priority was generated with a SimulationCraft profile, the profile can be stored " ..
                                 "or retrieved here.  The profile can also be re-imported or overwritten with a newer profile.",
                             order = 2,
@@ -6801,10 +6801,12 @@ break end
 
                                 profile = {
                                     type = "input",
-                                    name = "Profile",
+                                    name = "Priority (SimulationCraft Action Priority List)",
                                     desc = "If this pack's action lists were imported from a SimulationCraft profile, the profile is included here.",
                                     order = 4,
                                     multiline = 10,
+                                    confirm = true,
+                                    confirmText = "Changes will not be applied until Import is clicked.",
                                     width = "full",
                                 },
 
