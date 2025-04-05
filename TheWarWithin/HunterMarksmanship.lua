@@ -988,10 +988,8 @@ spec:RegisterAbilities( {
             if talent.bullet_hell.enabled then reduceCooldown( "volley", 0.5 * action.aimed_shot.max_targets ) end
 
             -- Trick Shots
-            if buff.trick_shots.up then
-                if buff.volley.down then
-                    removeBuff( "trick_shots" )
-                end
+            if buff.trick_shots.up and buff.volley.down then
+                removeBuff( "trick_shots" )
             end
 
             --- Legacy / PvP stuff
@@ -1560,9 +1558,9 @@ spec:RegisterAbilities( {
             if talent.salvo.enabled then
                 if active_enemies < 3 then
                     spec.abilities.explosive_shot.handler()
-                    if active_enemies > 1 then active_dot.explosive_shot = active_dot.explosive_shot + 1 end
+                    if active_enemies > 1 then active_dot.explosive_shot = min( true_active_enemies, active_dot.explosive_shot + 1 ) end
                 else
-                   active_dot.explosive_shot = active_dot.explosive_shot + 2
+                   active_dot.explosive_shot = min( true_active_enemies, active_dot.explosive_shot + 2 )
                 end
             end
 

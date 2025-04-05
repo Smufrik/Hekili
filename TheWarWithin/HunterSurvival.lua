@@ -1164,7 +1164,7 @@ spec:RegisterAbilities( {
             removeStack ( "tip_of_the_spear" )
             if buff.bombardier.up then
                 removeBuff( "bombardier" )
-                active_dot.explosive_shot = active_dot.explosive_shot + 2
+                active_dot.explosive_shot = min( true_active_enemies, active_dot.explosive_shot + 2 )
             end
             if talent.grenade_juggler.enabled then reduceCooldown( "wildfire_bomb", 2 ) end
         end,
