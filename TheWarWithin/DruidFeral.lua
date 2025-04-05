@@ -1296,7 +1296,7 @@ spec:RegisterHook( "reset_precast", function ()
     debuff.thrash_cat.pmultiplier = nil
 
     eclipse.reset()
-    spec.SwarmOnReset()
+    if talent.adaptive_swarm.enabled then spec.SwarmOnReset() end
 
     -- Bloodtalons
     if talent.bloodtalons.enabled then
@@ -1337,6 +1337,7 @@ spec:RegisterHook( "reset_precast", function ()
                     Hekili:Debug( "        %s: %.2f", bt, buff[ bt ].remains )
                 end
             end
+            Hekili:Debug( "\n")
         end
 
 
