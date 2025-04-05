@@ -245,7 +245,7 @@ spec:RegisterAuras( {
     bombardier = {
         id = 459859,
         duration = 60.0,
-        max_stack = 2
+        max_stack = 1
     },
     -- Disoriented.
     bursting_shot = {
@@ -571,12 +571,12 @@ spec:RegisterAuras( {
     -- Building up to an Explosive Shot...
     sulfurlined_pockets = {
         id = 459830,
-        duration = 120.0,
-        max_stack = 3
+        duration = 3600,
+        max_stack = 2
     },
     sulfurlined_pockets_ready = {
         id = 459834,
-        duration = 180,
+        duration = 3600,
         max_stack = 1
     },
     terms_of_engagement = {
@@ -783,7 +783,7 @@ end, state )
 
 local TriggerBombardier = setfenv( function()
     setCooldown( "explosive_shot", 1 ) -- There is a slight delay before you actually get it
-    applyBuff( "bombardier", nil, 2 )
+    applyBuff( "bombardier", nil, 1 )
 end, state )
 
 spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _, _, destGUID, destName, destFlags, _, spellID, spellName )
@@ -1160,12 +1160,12 @@ spec:RegisterAbilities( {
         startsCombat = true,
 
         handler = function ()
-            applyDebuff( "target", "explosive_shot" )
+            applyDebuff( "target", "explosive_shot", debuff.explosive_shot.remains + spec.auras.explosive_shot.duration )
             removeStack ( "tip_of_the_spear" )
-            -- If triggered by Kill Command, don't consume Bombardier or reduce WfB's cooldown.
-            if buff.sulfurlined_pockets_ready.up and buff.sulfurlined_pockets_ready.v1 == 259489 then return end
-
-            removeStack( "bombardier" )
+            if buff.bombardier.up then
+                removeBuff( "bombardier" )
+                active_dot.explosive_shot = min( true_active_enemies, active_dot.explosive_shot + 2 )
+            end
             if talent.grenade_juggler.enabled then reduceCooldown( "wildfire_bomb", 2 ) end
         end,
     },
@@ -1276,13 +1276,6 @@ spec:RegisterAbilities( {
             removeBuff( "deadly_duo" )
 
             if talent.howl_of_the_pack_leader.enabled then howl_summon.trigger_summon( false ) end
-
-            if buff.sulfurlined_pockets_ready.up then
-                buff.sulfurlined_pockets_ready.v1 = 259489
-                class.abilities.explosive_shot.handler()
-                buff.sulfurlined_pockets_ready.v1 = 0
-                removeBuff( "sulfurlined_pockets_ready" )
-            end
 
             if talent.bloodseeker.enabled then
                 applyBuff( "predator", 8 )
