@@ -944,14 +944,29 @@ all:RegisterAbilities( {
 
     -- https://www.wowhead.com/item=169344/ingenious-mana-battery
     ingenious_mana_battery = {
-        cast = 0,
+        cast = 8,
+        channeled = true,
         cooldown = 60,
-        gcd = "off",
+        gcd = "spell",
 
         item = 169344,
         toggle = "cooldowns",
 
-        proc = "mana",
+        proc = "versatility",
+        usable = function()
+            return true
+        end,
+
+        handler = function()
+        end,
+
+        auras = {
+            ingenious_mana_battery = {
+                id = 300989,
+                duration = 3600,
+                max_stack = 1
+            }
+        }
     },
 } )
 
