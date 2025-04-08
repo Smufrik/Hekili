@@ -941,6 +941,18 @@ all:RegisterAbilities( {
             }
         }
     },
+
+    -- https://www.wowhead.com/item=169344/ingenious-mana-battery
+    ingenious_mana_battery = {
+        cast = 0,
+        cooldown = 60,
+        gcd = "off",
+
+        item = 169344,
+        toggle = "cooldowns",
+
+        proc = "mana",
+    },
 } )
 
 all:RegisterGear( "bestinslots_melee", 232526 )
