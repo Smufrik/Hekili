@@ -734,7 +734,7 @@ local function spendCharges( action, charges )
     elseif cd.charges > cd.charge then
         local addl = cd.charges_fractional - cd.charges
         cd.charge = cd.charges
-        cd.recharge_began = state.query_time - ( addl * ability.recharge )
+        cd.recharge_began = state.query_time - ( addl * ( ability.recharge or ability.cooldown ) )
     end
 
     cd.charge = max( 0, cd.charge - charges )
@@ -3164,7 +3164,7 @@ do
                     if not duration then duration = max( ability.recharge or 0, ability.cooldown or 0 ) end
 
                     t.true_duration = duration
-                    duration = max( duration, ability.recharge )
+                    duration = max( duration, ability.recharge or 0 )
 
                     t.charge = charges or 1
                     t.duration = duration
@@ -3234,8 +3234,8 @@ do
                     if not state:IsKnown( t.key ) then return ability.charges or 1 end
                 end
 
-                if t.charge == ability.charges then return t.charge end
-                return min( ability.charges, t.charge + max( 0, ( state.query_time - t.recharge_began ) / ability.recharge ) )
+                if not ability.charges or t.charge == ability.charges then return t.charge or 1 end
+                return min( ability.charges, t.charge + max( 0, ( state.query_time - t.recharge_began ) / ( ability.recharge or ability.cooldown ) ) )
 
             elseif k == "recharge_time" then
                 if not ability.charges then return t.duration or 0 end
@@ -6245,7 +6245,7 @@ do
 
             -- Put the action on cooldown. (It's slightly premature, but addresses CD resets like Echo of the Elements.)
             -- if ability.charges and ability.charges > 1 and ability.recharge > 0 then
-            if ability.charges and ability.recharge > 0 then
+            if ability.charges and ( ability.recharge or ability.cooldown ) > 0 then
                 self.spendCharges( action, 1 )
 
             elseif action ~= "global_cooldown" then
