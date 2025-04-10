@@ -941,6 +941,42 @@ all:RegisterAbilities( {
             }
         }
     },
+
+    -- https://www.wowhead.com/item=169344/ingenious-mana-battery
+    ingenious_mana_battery = {
+        cast = 8,
+        channeled = true,
+        cooldown = 60,
+        gcd = "spell",
+
+        item = 169344,
+        toggle = "cooldowns",
+        proc = "versatility",
+
+        start = function()
+            applyBuff( "ingenious_mana_battery_mana" )
+            applyBuff( "ingenious_mana_battery_vers" )
+        end,
+
+        auras = {
+            ingenious_mana_battery = {
+                alias = { "ingenious_mana_battery_mana", "ingenious_mana_battery_vers" },
+                aliasMode = "first",
+                aliasType = "buff",
+                duration = 3600
+            },      
+            ingenious_mana_battery_mana = {
+                id = 300989,
+                duration = 3600,
+                max_stack = 1
+            },
+            ingenious_mana_battery_vers = {
+                id = 300970,
+                durration = 3600,
+                max_stack = 1
+            },
+        }
+    },
 } )
 
 all:RegisterGear( "bestinslots_melee", 232526 )
