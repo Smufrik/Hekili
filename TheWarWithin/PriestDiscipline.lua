@@ -329,7 +329,7 @@ spec:RegisterAuras( {
         max_stack = 5
     },
     premonition_of_insight = {
-        id = 428993,
+        id = 428933,
         duration = 20,
         max_stack = 3
     },
