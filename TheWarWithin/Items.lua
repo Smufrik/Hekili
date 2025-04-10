@@ -953,9 +953,6 @@ all:RegisterAbilities( {
         toggle = "cooldowns",
 
         proc = "versatility",
-        usable = function()
-            return true
-        end,
 
         handler = function()
         end,
