@@ -213,13 +213,14 @@ local enemyExclusions = {
     [231788] = true,              -- Mug'Zee: Unstable Crawler Mine
     [233474] = true,              -- Mug'Zee: Gallagio Goon (they are within a cage with LoS restrictions)
     [231727] = true,              -- Gallywix: 1500-Pound "Dud"
+    [151579] = true               -- Operation: Mechagon - Shield Generator
 }
 
 local requiredForInclusion = {
     [131825] = 260805,    -- Focusing Iris (damage on others is wasted)
     [131823] = 260805,    -- Same
     [131824] = 206805,    -- Same
-    [230312] = 467454,    -- Mug'Zee: Volunteer Rocketeer, only attackable with "Charred"
+    [230312] = 467454     -- Mug'Zee: Volunteer Rocketeer, only attackable with "Charred"
 }
 
 if Hekili.IsDev then
