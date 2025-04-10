@@ -132,7 +132,21 @@ state.off_hand = {
 
 state.gcd = {}
 
-state.hero_tree = setmetatable( {}, { __index = function( t, k ) return state.talent[ k ].enabled end } ) -- TODO: Update hero tree detection for 11.0 launch.
+state.hero_tree = setmetatable( {}, {
+    __index = function( t, k )
+
+        if state.level < 71 then
+            return false
+        end
+
+        if k == "current" then
+            return ns.getActiveHeroTreeName()
+        end
+
+        return ns.getActiveHeroTreeName() == k
+    end
+} )
+
 
 state.history = {
     casts = {},
