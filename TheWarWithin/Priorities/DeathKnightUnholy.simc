@@ -1,5 +1,5 @@
 ## https://github.com/simulationcraft/simc/commits/thewarwithin/ActionPriorityLists/deathknight_unholy.simc
-## Up to date with SimC: April 1 2025 - 3f807ad
+## Up to date with SimC: April 10 2025 - 1d628cd
 
 actions.precombat+=/raise_dead
 actions.precombat+=/army_of_the_dead,precombat_time=2
