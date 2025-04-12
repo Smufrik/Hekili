@@ -1913,10 +1913,10 @@ all:RegisterAuras( {
             t.caster = "player"
 
             if t.remains > 0 then
+                local timeDiff = state.now - e.start - 0.1
                 if Hekili.ActiveDebug then
                     Hekili:Debug( "Empowerment spell: %s[%.2f], unit: %s; rewinding %.2f...", t.name, t.remains, t.caster, timeDiff )
                 end
-                local timeDiff = state.now - e.start - 0.1
                 state.now = state.now - timeDiff
             end
         end,
