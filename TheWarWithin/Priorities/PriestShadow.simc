@@ -1,5 +1,5 @@
 ## https://github.com/simulationcraft/simc/commits/thewarwithin/ActionPriorityLists/priest_shadow.simc
-## Up to date with SimC: March 19 2025 - af22603
+## Up to date with SimC: April 12 2025 - 9b983fb
 
 actions.precombat+=/power_word_fortitude
 actions.precombat+=/shadowform,if=!buff.shadowform.up
