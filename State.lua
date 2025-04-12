@@ -4946,6 +4946,7 @@ local cycle_debuff = {
 -- Table of default handlers for debuffs.
 -- Needs review.
 local mt_default_debuff, mt_debuffs
+local flagged_debuffs = {}
 
 do
     local autoReset = {
@@ -5025,82 +5026,64 @@ do
                 end
 
                 return rawget( t, k )
-
-            elseif k == "up" or k == "ticking" then
-                return t.remains > 0
-
-            elseif k == "i_up" or k == "rank" then
-                return t.up and 1 or 0
-
-            elseif k == "down" then
-                return t.remains == 0
-
-            elseif k == "duration" then
-                return ( t.remains > 0 and t.expires - t.applied ) or aura.duration or 30
-
-            elseif k == "remains" then
-                return t.applied <= state.query_time and max( 0, t.expires - state.query_time ) or 0
-
-            elseif k == "refreshable" then
-                local tr = t.remains
-                return tr == 0 or tr < 0.3 * ( aura.duration or 30 )
-
-            elseif k == "time_to_refresh" then
-                return t.up and max( 0, 0.01 + t.remains - ( 0.3 * ( aura.duration or 30 ) ) ) or 0
-
-            elseif k == "stack" or k == "stacks" or k == "react" then
-                if t.remains == 0 then return 0 end
-                return t.count
-
-            elseif k == "max_stack" or k == "max_stacks" then
-                return max( t.count, aura and aura.max_stack or 1 )
-
-            elseif k == "stack_pct" then
-                if t.remains == 0 then return 0 end
-                if aura then
-                    return ( 100 * t.count / max( aura and aura.max_stack or 1, t.count ) )
-                end
-                return 100
-
-            elseif k == "at_max_stacks" then
-                return t.stack_pct >= 100
-
-            elseif k == "value" then
-                if t.remains == 0 then return 0 end
-                return t.v1 or 0
-
-            elseif k == "stack_value" then
-                return t.value * t.stack
-
-            elseif k == "pmultiplier" then
-                if t.remains == 0 then return 0 end
-
-                -- Persistent modifier, used by Druids.
-                t[ k ] = ns.getModifier( aura.id, state.target.unit )
-                return t[ k ]
-
-            elseif k == "ticks" then
-                if t.remains == 0 then return 0 end
-                return t.duration / t.tick_time - t.ticks_remain
-
-            elseif k == "tick_time" then
-                return aura and aura.tick_time or ( 3 * state.haste )
-
-            elseif k == "ticks_remain" then
-                return ceil( t.remains / t.tick_time )
-
-            elseif k == "tick_time_remains" then
-                if t.remains == 0 then return 0 end
-                if not aura.tick_time then return t.remains end
-                return aura.tick_time - ( ( query_time - t.applied ) % aura.tick_time )
-
-            else
-                if aura and aura[ k ] ~= nil then
-                    return aura[ k ]
-                end
             end
 
-            Error ( "UNK: debuff." .. t.key .. "." .. k )
+            -- 20250412: Revamped to avoid having this metatable call this metatable call this metatable...
+            -- This change means that any references to t.X should only occur where X is a real value and not a metatable lookup.
+
+            local moment = state.query_time
+            local remains = t.applied > 0 and t.applied <= moment and t.expires > moment and t.expires - moment or 0
+
+            if k == "remains" then return remains end
+
+            if k == "up" or
+                k == "ticking" then return remains > 0 end
+
+            if k == "down" then return remains == 0 end
+
+            -- These should be long since deprecated.
+            if k == "i_up" or
+                k == "rank" then return remains > 0 and 1 or 0 end
+
+            if k == "stack" or
+                k == "stacks" or
+                k == "react" then return remains > 0 and t.count or 0 end
+
+            if k == "max_stack" or
+               k == "max_stacks" then return max( t.count, aura.max_stack or 1 ) end
+
+            if k == "at_max_stacks" then return remains > 0 and t.count >= ( aura.max_stack or 1 ) end
+            if k == "stack_pct" then return remains > 0 and ( 100 * t.count / ( aura.max_stack or 1 ) ) end
+            if k == "value" then return remains > 0 and t.v1 or 0 end
+            if k == "stack_value" then return remains > 0 and t.v1 * t.count or 0 end
+
+            local duration = remains > 0 and ( t.expires - t.applied ) or aura.duration or 30
+            local apply_duration = aura.duration or duration
+
+            if k == "duration" then return duration end
+            if k == "apply_duration" then return apply_duration end
+            if k == "refreshable" then return remains < 0.3 * apply_duration end
+            if k == "time_to_refresh" then return remains > 0 and max( 0, 0.01 + remains - ( 0.3 * apply_duration ) ) or 0 end
+
+            if k == "pmultiplier" then
+                t.pmultiplier = remains > 0 and ns.getModifier( aura.id, state.target.unit ) or 0
+                return t.pmultiplier
+            end
+
+            local tick_time = aura.tick_time or ( 3 * state.haste )
+
+            if k == "tick_time" then return tick_time end
+            if k == "ticks" then return remains > 0 and floor( ( moment - t.applied ) / tick_time ) or 0 end
+            if k == "ticks_remain" then return remains > 0 and ceil( remains / tick_time ) or 0 end
+            if k == "tick_time_remains" then return remains > 0 and ( tick_time - ( remains % tick_time ) ) or 0 end
+
+            local attr = aura[ k ]
+            if attr ~= nil then return attr end
+
+            if not flagged_debuffs[ t.key ] then
+                Error( "UNK: debuff." .. t.key .. "." .. k )
+                flagged_debuffs[ t.key ] = true
+            end
         end,
         __newindex = function( t, k, v )
             if v ~= nil and autoReset[ k ] then Mark( t, k ) end
