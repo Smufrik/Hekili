@@ -5061,6 +5061,7 @@ do
                     return ( 100 * t.count / max( aura and aura.max_stack or 1, t.count ) )
                 end
                 return 100
+
             elseif k == "at_max_stacks" then
                 return t.stack_pct >= 100
 
