@@ -653,6 +653,7 @@ all:RegisterAbilities( {
         gcd = "off",
 
         item = 225649,
+        items = { 225648, 225649 },
         toggle = "cooldowns",
 
         proc = "haste",
@@ -964,7 +965,7 @@ all:RegisterAbilities( {
                 aliasMode = "first",
                 aliasType = "buff",
                 duration = 3600
-            },      
+            },
             ingenious_mana_battery_mana = {
                 id = 300989,
                 duration = 3600,
