@@ -1898,28 +1898,26 @@ all:RegisterAuras( {
         duration = 3600,
         generate = function( t )
             local e = state.empowerment
-            local spell = e.spell
-
-            local ability = class.abilities[ spell ]
+            local ability = class.abilities[ e.spell ]
+            local spell = ability and ability.key or e.spell
 
             t.name = ability and ability.name or "Empowering"
             t.count = e.start > 0 and 1 or 0
             t.expires = e.hold
-            t.applied = e.start
-            t.duration = e.hold - e.start
+            t.applied = e.start - 0.1
+            t.duration = e.hold - t.applied
             t.v1 = ability and ability.id or 0
             t.v2 = 0
             t.v3 = 0
             t.spell = spell
             t.caster = "player"
 
-            if t.expires > 0 then
-                local timeDiff = state.now - t.applied
-                state.now = state.now - timeDiff
-
+            if t.remains > 0 then
                 if Hekili.ActiveDebug then
                     Hekili:Debug( "Empowerment spell: %s[%.2f], unit: %s; rewinding %.2f...", t.name, t.remains, t.caster, timeDiff )
                 end
+                local timeDiff = state.now - e.start - 0.1
+                state.now = state.now - timeDiff
             end
         end,
     },
