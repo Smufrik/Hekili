@@ -5062,6 +5062,9 @@ do
                 end
                 return 100
 
+            elseif k == "at_max_stacks" then
+                return t.stack_pct >= 100
+
             elseif k == "value" then
                 if t.remains == 0 then return 0 end
                 return t.v1 or 0

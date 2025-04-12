@@ -233,7 +233,7 @@ ns.HeroTrees = {
     },
 
     [34] = {
-        name = "fel_scarred",
+        name = "felscarred",
         keyTalent = "demonsurge",
         specIDs = { 577, 581 }
     },
