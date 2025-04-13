@@ -282,7 +282,7 @@ local HekiliSpecMixin = {
                     local val = original( ... )
                     return ( val or 3 ) * haste
                 end, state )
-                a.base_tick_time = original
+                a.funcs.base_tick_time = original
             else
                 local original = a.tick_time
                 a.funcs.tick_time = setfenv( function( ... )
