@@ -1192,10 +1192,18 @@ spec:RegisterHook( "reset_precast", function ()
         reduceCooldown( "lava_lash", latency * 2 )
     end
 
-    if talent.ashen_catalyst.enabled and cooldown.lava_lash.remains > 0.1 and dot.flame_shock.ticking then
-        local reduction = min( dot.flame_shock.ticks_remain * 0.5, cooldown.lava_lash.remains - 0.25 )
-        reduceCooldown( "lava_lash", reduction )
-        if Hekili.ActiveDebug then Hekili:Debug( "[Ashen Catalyst] Lava Lash cooldown reduced by %.2f to %.2f.", reduction, cooldown.lava_lash.remains ) end
+    if talent.ashen_catalyst.enabled and dot.flame_shock.ticking and cooldown.lava_lash.remains > 0.25 and cooldown.lava_lash.expires > dot.flame_shock.next_tick then
+        local use_ticks = min( 1, dot.flame_shock.ticks_remain, cooldown.lava_lash.remains / dot.flame_shock.tick_time )
+        local original = cooldown.lava_lash.remains
+
+        while( cooldown.lava_lash.remains > 0.25 and use_ticks > 0 ) do
+            reduceCooldown( "lava_lash", min( cooldown.lava_lash.remains - 0.25, active_dot.flame_shock * 0.5 ) )
+            addStack( "ashen_catalyst", nil, active_dot.flame_shock )
+            if use_ticks == 1 then break end
+            use_ticks = use_ticks - 1
+        end
+
+        if Hekili.ActiveDebug then Hekili:Debug( "[Ashen Catalyst] Lava Lash cooldown reduced from %.2f to %.2f.", original, cooldown.lava_lash.remains ) end
     end
 
     if talent.ascendance.enabled and buff.ascendance.up then
