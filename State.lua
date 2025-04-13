@@ -4963,11 +4963,33 @@ do
         v1 = 1,
         v2 = 1,
         v3 = 1,
-        pmultiplier = 1
+        pmultiplier = 1,
+
+        haste = 1,
+        last_tick = 1,
+        next_tick = 1
     }
 
     mt_default_debuff = {
         mtID = "default_debuff",
+
+        ticks_before = function( t, span )
+            if span <= 0 then return 0 end
+
+            local remains = t.remains
+            if remains == 0 then return 0 end
+
+            local ticks_remain = t.ticks_remain
+            span = min( span, remains )
+
+            local real_delay = state.delay
+            state.delay = state.delay + span
+
+            local ticks_before = max( 0, ticks_remain - t.ticks_remain )
+            state.delay = real_delay
+
+            return ticks_before
+        end,
 
         __index = function( t, k )
             local aura = class.auras[ t.key ]
@@ -5032,7 +5054,9 @@ do
             -- This change means that any references to t.X should only occur where X is a real value and not a metatable lookup.
 
             local moment = state.query_time
-            local remains = t.applied > 0 and t.applied <= moment and t.expires > moment and t.expires - moment or 0
+            local applied = t.applied
+            local expires = t.expires
+            local remains = applied > 0 and applied <= moment and expires > moment and expires - moment or 0
 
             if k == "remains" then return remains end
 
@@ -5057,7 +5081,7 @@ do
             if k == "value" then return remains > 0 and t.v1 or 0 end
             if k == "stack_value" then return remains > 0 and t.v1 * t.count or 0 end
 
-            local duration = remains > 0 and ( t.expires - t.applied ) or aura.duration or 30
+            local duration = remains > 0 and ( expires - applied ) or aura.duration or 30
             local apply_duration = aura.duration or duration
 
             if k == "duration" then return duration end
@@ -5071,11 +5095,24 @@ do
             end
 
             local tick_time = aura.tick_time or ( 3 * state.haste )
-
             if k == "tick_time" then return tick_time end
-            if k == "ticks" then return remains > 0 and floor( ( moment - t.applied ) / tick_time ) or 0 end
-            if k == "ticks_remain" then return remains > 0 and ceil( remains / tick_time ) or 0 end
-            if k == "tick_time_remains" then return remains > 0 and ( tick_time - ( remains % tick_time ) ) or 0 end
+
+            local last_tick = remains > 0 and max( ns.GetDebuffNextTick( t.key, state.target.unit ), applied ) or 0
+            if last_tick > 0 and moment - last_tick > tick_time then
+                last_tick = last_tick + floor( ( moment - last_tick ) / tick_time ) * tick_time
+            end
+
+            if k == "last_tick" then return last_tick end
+            if k == "ticks" then return remains > 0 and floor( ( last_tick - applied ) / tick_time ) or 0 end
+
+            local next_tick = remains > 0 and max( ns.GetDebuffNextTick( t.key, state.target.unit ), last_tick + tick_time ) or 0
+            if next_tick > 0 and next_tick < moment then
+                next_tick = next_tick + ceil( ( moment - last_tick ) / tick_time ) * tick_time
+            end
+
+            if k == "next_tick" then return next_tick end
+            if k == "tick_time_remains" then return max( 0, next_tick - moment ) end
+            if k == "ticks_remain" then return expires > moment and max( 0, 1 + floor( ( expires - next_tick ) / tick_time ) ) or 0 end
 
             local attr = aura[ k ]
             if attr ~= nil then return attr end
