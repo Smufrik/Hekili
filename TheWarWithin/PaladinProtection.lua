@@ -1276,13 +1276,13 @@ spec:RegisterAbilities( {
 
             -- Only use on a spell targeted at the player.
             if not t.up then
-                return false, "Target is not casting"
+                return false, "target is not casting"
             end
             if not state.target.is_dummy and not class.spellsFilters[ t.v1 ] then
                 return false, "spell[" .. t.v1 .. "] in zone[" .. zone .. "] by npc[" .. npcid .. "] is not on filter"
             end
             if not UnitIsUnit( "player", t.caster .. "target" ) then
-                return false, "Player is not target of cast"
+                return false, "player is not target of cast"
             end
             return true
         end,
@@ -1942,14 +1942,14 @@ spec:RegisterAbilities( {
 
 spec:RegisterSetting( "bosp_filter", true, {
     name = "|T135880:0|t Blessing of Spellwarding spell filter",
-    desc = "If checked, then the addon will suggest |T135880:0|t Blessing of Spellwarding on spells that target the player.",
+    desc = "If checked, |T135880:0|t Blessing of Spellwarding may be suggested on spells that target the player.",
     type = "toggle",
     width = "full",
 } )
 
 spec:RegisterSetting( "wog_health", 40, {
     name = "|T133192:0|t Word of Glory Health Threshold",
-    desc = "When set above zero, the addon may recommend |T133192:0|t Word of Glory when your health falls below this percentage.",
+    desc = "When set above zero, |T133192:0|t Word of Glory may be recommend when your health falls below this percentage.",
     type = "range",
     min = 0,
     max = 100,
