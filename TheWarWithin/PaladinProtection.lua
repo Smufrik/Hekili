@@ -1943,7 +1943,7 @@ local wog_str = Hekili:GetSpellLinkWithTexture( spec.abilities.word_of_glory.id 
 
 spec:RegisterSetting( "wog_health", 40, {
     name = format( "%s Health Threshold", wog_str ),
-    desc = format( "When set above zero, %s may be recommended when your health falls below this percentage.", wog_str ),
+    desc = format( "If set above zero, %s may be recommended when your health falls below this percentage.", wog_str ),
     type = "range",
     min = 0,
     max = 100,
