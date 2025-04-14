@@ -1022,7 +1022,7 @@ spec:RegisterAbilities( {
             if buff.recall.up then
                 removeBuff( "recall" )
             else
-                setCooldown( "global_cooldown", 6 ) -- TODO: Check.
+                setCooldown( "global_cooldown", 4 * haste ) -- TODO: Check.
                 applyBuff( "recall", 9 )
                 buff.recall.applied = query_time + 6
             end
