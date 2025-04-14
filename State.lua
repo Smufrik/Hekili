@@ -5077,7 +5077,7 @@ do
                k == "max_stacks" then return max( t.count, aura.max_stack or 1 ) end
 
             if k == "at_max_stacks" then return remains > 0 and t.count >= ( aura.max_stack or 1 ) end
-            if k == "stack_pct" then return remains > 0 and ( 100 * t.count / ( aura.max_stack or 1 ) ) end
+            if k == "stack_pct" then return remains > 0 and ( 100 * t.count / ( aura.max_stack or 1 ) ) or 0 end
             if k == "value" then return remains > 0 and t.v1 or 0 end
             if k == "stack_value" then return remains > 0 and t.v1 * t.count or 0 end
 
