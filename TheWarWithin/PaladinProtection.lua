@@ -1939,17 +1939,11 @@ spec:RegisterAbilities( {
     },
 } )
 
-
-spec:RegisterSetting( "bosp_filter", true, {
-    name = "|T135880:0|t Blessing of Spellwarding spell filter",
-    desc = "If checked, |T135880:0|t Blessing of Spellwarding may be suggested on spells that target the player.",
-    type = "toggle",
-    width = "full",
-} )
+local wog_str = Hekili:GetSpellLinkWithTexture( spec.abilities.word_of_glory.id )
 
 spec:RegisterSetting( "wog_health", 40, {
-    name = "|T133192:0|t Word of Glory Health Threshold",
-    desc = "When set above zero, |T133192:0|t Word of Glory may be recommend when your health falls below this percentage.",
+    name = format( "%s Health Threshold", wog_str ),
+    desc = format( "When set above zero, %s may be recommended when your health falls below this percentage.", wog_str ),
     type = "range",
     min = 0,
     max = 100,
@@ -1961,10 +1955,11 @@ spec:RegisterStateExpr( "wog_health", function ()
     return settings.wog_health or 0
 end )
 
+local loh_str = Hekili:GetSpellLinkWithTexture( spec.abilities.lay_on_hands.id )
 
 spec:RegisterSetting( "loh_health", 30, {
-    name = "|T135928:0|t Lay on Hands Health Threshold",
-    desc = "When set above zero, the addon may recommend |T135928:0|t Lay on Hands when your health falls below this percentage.",
+    name = format( "%s Health Threshold", loh_str ),
+    desc = format( "If set above zero, %s may be recommended when your health falls below this percentage.", loh_str ),
     type = "range",
     min = 0,
     max = 100,
@@ -1976,30 +1971,13 @@ spec:RegisterStateExpr( "loh_health", function ()
     return settings.loh_health or 0
 end )
 
-spec:RegisterSetting( "goak_damage", 40, {
-    name = "|T135919:0|t Guardian of Ancient Kings Damage Threshold",
-    desc = function() return "When set above zero, the addon may recommend |T135919:0|t " .. ( GetSpellInfo( class.abilities.guardian_of_ancient_kings.id ) or "Guardian of Ancient Kings" )
-            .. " when you take this percentage of your maximum health in damage in the past 5 seconds.\n\n"
-            .. "By default, your Defensives toggle must also be enabled."
-        end,
-    type = "range",
-    min = 0,
-    max = 100,
-    step = 1,
-    width = "full",
-} )
-
-spec:RegisterStateExpr( "goak_damage", function ()
-    return ( settings.goak_damage or 0 ) * health.max * 0.01
-end )
-
+local ad_str = Hekili:GetSpellLinkWithTexture( spec.abilities.ardent_defender.id )
 
 spec:RegisterSetting( "ad_damage", 40, {
-    name = "|T135870:0|t Ardent Defender Damage Threshold",
-    desc = function() return "When set above zero, the addon may recommend |T135870:0|t " .. ( GetSpellInfo( class.abilities.ardent_defender.id ) or "Ardent Defender" )
-            .. " when you take this percentage of your maximum health in damage in the past 5 seconds.\n\n"
-            .. "By default, your Defensives toggle must also be enabled."
-        end,
+    name = format( "%s Damage Threshold", ad_str ),
+    desc = format( "If set above zero, %s may be recommended when you take this percentage of your maximum health in damage over 5 seconds.\n\n"
+        .. "It is better to learn to use your defensive abilities proactively before taking damage, but this setting may help you learn (and prevent death).\n\n"
+        .. "By default, your |cFFFFD100Defensives|r toggle must also be enabled.", ad_str ),
     type = "range",
     min = 0,
     max = 100,
@@ -2011,13 +1989,32 @@ spec:RegisterStateExpr( "ad_damage", function ()
     return ( settings.ad_damage or 0 ) * health.max * 0.01
 end )
 
+local goak_str = Hekili:GetSpellLinkWithTexture( spec.abilities.guardian_of_ancient_kings.id )
+
+spec:RegisterSetting( "goak_damage", 40, {
+    name = format( "%s Damage Threshold", goak_str ),
+    desc = format( "If set above zero, %s may be recommended when you take this percentage of your maximum health in damage over 5 seconds.\n\n"
+        .. "It is better to learn to use your defensive abilities proactively before taking damage, but this setting may help you learn (and prevent death).\n\n"
+        .. "By default, your |cFFFFD100Defensives|r toggle must also be enabled.", goak_str ),
+    type = "range",
+    min = 0,
+    max = 100,
+    step = 1,
+    width = "full",
+} )
+
+spec:RegisterStateExpr( "goak_damage", function ()
+    return ( settings.goak_damage or 0 ) * health.max * 0.01
+end )
+
+local ds_str = Hekili:GetSpellLinkWithTexture( spec.abilities.divine_shield.id )
 
 spec:RegisterSetting( "ds_damage", 60, {
-    name = "|T524354:0|t Divine Shield Damage Threshold",
-    desc = function() return "When set above zero, the addon may recommend |T524354:0|t " .. ( GetSpellInfo( class.abilities.divine_shield.id ) or "Divine Shield" )
-            .. " when you take this percentage of your maximum health in damage in the past 5 seconds.\n\n"
-            .. "By default, your Defensives toggle must also be enabled."
-        end,
+    name = format( "%s Damage Threshold", ds_str ),
+    desc = format( "If set above zero, %s may be recommended when you take this percentage of your maximum health in damage over 5 seconds.\n\n"
+        .. "It is better to learn to use your defensive abilities proactively before taking damage, but this setting may help you learn (and prevent death).\n\n"
+        .. "If you are actively tanking for a group and use %s, you will lose threat on all enemies and need to taunt to regain it.\n\n"
+        .. "By default, your |cFFFFD100Defensives|r toggle must also be enabled.", ds_str, spec.abilities.divine_shield.name ),
     type = "range",
     min = 0,
     max = 100,
@@ -2029,13 +2026,22 @@ spec:RegisterStateExpr( "ds_damage", function ()
     return ( settings.ds_damage or 0 ) * health.max * 0.01
 end )
 
+local bosp_str = Hekili:GetSpellLinkWithTexture( spec.abilities.blessing_of_spellwarding.id )
+
+spec:RegisterSetting( "bosp_filter", false, {
+    name = format( "%s: Cast Filter", bosp_str ),
+    desc = format( "If checked, %s may be recommended |cffff0000ONLY|r when your target is casting specific spells on you.\n\n"
+        .. "The spell filter is updated behind the scenes for each season and raid tier.", bosp_str ),
+    type = "toggle",
+    width = "full",
+} )
+
+local sent_str = Hekili:GetSpellLinkWithTexture( 389539 )
 
 spec:RegisterSetting( "sentinel_def", false, {
-    name = strformat( "%s: Use Defensively", Hekili:GetSpellLinkWithTexture( 389539 ) ),
-    desc = function()
-        return strformat( "When enabled, %s is placed on the Defensives toggle by default (rather than Cooldowns) and is recommended based on your Guardian of Ancient Kings "
-            .. "Damage Threshold setting.", Hekili:GetSpellLinkWithTexture( 389539 ) )
-    end,
+    name = strformat( "%s: Use Defensively", sent_str ),
+    desc = format( "If enabled, %s is placed on the |cFFFFD100Defensives|r toggle by default (rather than |cFFFFD100Cooldowns|r) and is recommended based on your %s Damage Threshold Setting.",
+        sent_str, goak_str ),
     type = "toggle",
     width = "full",
 } )
