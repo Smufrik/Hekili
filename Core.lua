@@ -908,11 +908,23 @@ function Hekili:GetPredictionFromAPL( dispName, packName, listName, slot, action
                                 if action == "call_action_list" or action == "run_action_list" or action == "use_items" then
                                     -- We handle these here to avoid early forking between starkly different APLs.
                                     local aScriptPass = true
+                                    local strict_if = false
+
+                                    if scripts:CheckScript( scriptID, action, "strict_if" ) == false then
+                                        aScriptPass = false
+                                        strict_if = true
+                                        strict = true
+                                    end
+
                                     local ts = not strict and entry.strict ~= 1 and scripts:IsTimeSensitive( scriptID )
 
-                                    if not entry.criteria or entry.criteria == "" then
+                                    if strict_if then
+                                        if debug then self:Debug( "Strict Conditions [%s] for %s were not met.", entry.strict_if, action == "use_items" and "Use Items" or state.args.list_name or "this action list" ) end
+
+                                    elseif not entry.criteria or entry.criteria == "" then
                                         if debug then self:Debug( "There is no criteria for %s.", action == "use_items" and "Use Items" or state.args.list_name or "this action list" ) end
                                         -- aScriptPass = ts or self:CheckStack()
+
                                     else
                                         aScriptPass = scripts:CheckScript( scriptID ) -- and self:CheckStack() -- we'll check the stack with the list's entries.
 
@@ -1070,9 +1082,9 @@ function Hekili:GetPredictionFromAPL( dispName, packName, listName, slot, action
                                                 end
 
                                                 if not aScriptPass then
-                                                    Timer:Track("Pre-Recheck")
+                                                    Timer:Track( "Pre-Recheck" )
                                                     state.recheck( action, script, Stack, Block )
-                                                    Timer:Track("Post-Recheck Times")
+                                                    Timer:Track( "Post-Recheck Times" )
 
                                                     local cap_sec = spec.throttleForecastingTime or 0
 

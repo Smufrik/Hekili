@@ -1260,6 +1260,7 @@ local newModifiers = {
     sec = 'raw',
     value = 'raw',
     value_else = 'raw',
+    strict_if = 'raw',
 
     sync = 'string', -- should be an ability's name.
     action_name = 'string',
@@ -1277,6 +1278,7 @@ local valueModifiers = {
     line_cd = true,
     max_cycle_targets = true,
     empower_to = true,
+    strict_if = true
 }
 
 
@@ -1489,7 +1491,8 @@ local function ConvertScript( node, hasModifiers, header )
                     if m == "empower_to" and ( o == "max" or o == "maximum" ) then
                         emulated = SimToLua( scripts:EmulateSyntax( "max_empower", true ) )
                     else
-                        emulated = SimToLua( scripts:EmulateSyntax( node[ m ], true ) )
+                        emulated = node[ m ] ~= "" and node[ m ]
+                        emulated = SimToLua( scripts:EmulateSyntax( emulated, true ) )
                     end
 
                     --[[ if modChecks then modChecks = modChecks .. " | " .. node[ m ]
@@ -1502,7 +1505,9 @@ local function ConvertScript( node, hasModifiers, header )
                     else modChecks = node[ m ] end ]]
                 end
 
-                sf, e = Hekili:Loadstring( "return " .. emulated )
+                if emulated then
+                    sf, e = Hekili:Loadstring( "return " .. emulated )
+                end
 
                 if sf then
                     setfenv( sf, state )
@@ -1521,7 +1526,8 @@ local function ConvertScript( node, hasModifiers, header )
                     modEmulates[ m ] = emulated
                     if type( node[ m ] ) == 'string' then modSimC[ m ] = SimcWithResources( node[ m ]:trim() ) end
                 else
-                    modifiers[ m ] = e
+                    modifiers[ m ] = nil
+                    modifiers[ "error:" .. m ] = e
                 end
             end
         end
@@ -1564,7 +1570,7 @@ end
 scripts.ConvertScript = ConvertScript
 
 
-function scripts:CheckScript( scriptID, action, elem )
+function scripts:CheckScript( scriptID, action, elem, default )
     local prev_action = state.this_action
     if action then
         state.this_action = action
@@ -1588,22 +1594,21 @@ function scripts:CheckScript( scriptID, action, elem )
 
         end
 
+        local result = script.Conditions()
         state.this_action = prev_action
-        return script.Conditions()
+        return result
+    end
 
-    else
-        if not script.Modifiers[ elem ] then
-            state.this_action = prev_action
-            return nil, elem .. " not set."
+    if not script.Modifiers[ elem ] then
+        state.this_action = prev_action
+        return nil, elem .. " not set."
+    end
 
-        else
-            local success, value = pcall( script.Modifiers[ elem ] )
+    local success, value = pcall( script.Modifiers[ elem ] )
 
-            if success then
-                state.this_action = prev_action
-                return value
-            end
-        end
+    if success then
+        state.this_action = prev_action
+        return value
     end
 
     state.this_action = prev_action

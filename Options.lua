@@ -440,6 +440,7 @@ local actionTemplate = {
     -- Call/Run Action List
     list_name = nil,
     strict = nil,
+    strict_if = "",
 
     -- Pool Resource
     wait = "0.5",
@@ -5980,6 +5981,17 @@ found = true end
     end
 
 
+    -- Options to nil if val is false.
+    local review_options = {
+        enable_moving = 1,
+        line_cd = 1,
+        only_cwc = 1,
+        strict = 1,
+        strict_if = 1,
+        use_off_gcd = 1,
+        use_while_casting = 1
+    }
+
     function Hekili:SetActionOption( info, val )
         local n = #info
         local pack, option = info[ 2 ], info[ n ]
@@ -5997,34 +6009,20 @@ found = true end
 
         if option == "inputName" or option == "selectName" then option = nameMap[ data.action ] end
 
-        if toggleToNumber[ option ] then val = val and 1 or 0 end
-        if type( val ) == 'string' then val = val:trim() end
+        if toggleToNumber[ option ] then
+            if review_options[ option ] and not val then val = nil
+            else val = val and 1 or 0 end
+        end
+        if type( val ) == 'string' then
+            val = val:trim()
+            if val:len() == 0 then val = nil end
+        end
 
         if option == "caption" then
             val = val:gsub( "||", "|" )
         end
 
         data[ option ] = val
-
-        if option == "enable_moving" and not val then
-            data.moving = nil
-        end
-
-        if option == "line_cd" and not val then
-            data.line_cd = nil
-        end
-
-        if option == "use_off_gcd" and not val then
-            data.use_off_gcd = nil
-        end
-
-        if option =="only_cwc" and not val then
-            data.only_cwc = nil
-        end
-
-        if option == "strict" and not val then
-            data.strict = nil
-        end
 
         if option == "use_while_casting" and not val then
             data.use_while_casting = nil
@@ -6171,9 +6169,8 @@ found = true end
 
                 shareBtn = {
                     type = "execute",
-                    name = "Share Priorities",
-                    desc = "Each Priority can be shared with other addon users with these export strings.\n\n" ..
-                        "You can also import a shared export string here.",
+                    name = "Import / Export",
+                    desc = "Priorities can be Imported or Exported using encoded strings.",
                     func = function ()
                         ACD:SelectGroup( "Hekili", "packs", "sharePacks" )
                     end,
@@ -6182,9 +6179,8 @@ found = true end
 
                 sharePacks = {
                     type = "group",
-                    name = "|cFF1EFF00Share Priorities|r",
-                    desc = "Your Priorities can be shared with other addon users with these export strings.\n\n" ..
-                        "You can also import a shared export string here.",
+                    name = "|cFF1EFF00Import / Export|r",
+                    desc = "Priorities can be Imported or Exported using encoded strings.",
                     childGroups = "tab",
                     get = 'GetPackShareOption',
                     set = 'SetPackShareOption',
@@ -6680,8 +6676,10 @@ found = true end
                                             for pId, pData in pairs( Hekili.DB.profile.packs ) do
                                                 if pData.builtIn and pData.spec == specId then
                                                     defPack = pId
-                                                    if spec.package == pack then spec.package = pId
-break end
+                                                    if spec.package == pack then
+                                                        spec.package = pId
+                                                        break
+                                                    end
                                                 end
                                             end
                                         end
@@ -7603,6 +7601,7 @@ n = tonumber( n ) + 1
                                                 criteria = {
                                                     type = "input",
                                                     name = "Conditions",
+                                                    desc = "Specify Conditions that must be met for this action to be recommended or used in generating recommendations.",
                                                     order = 3.6,
                                                     width = "full",
                                                     multiline = 6,
@@ -7645,7 +7644,8 @@ n = tonumber( n ) + 1
                                                 value = {
                                                     type = "input",
                                                     name = "Value",
-                                                    desc = "Provide the value to store (or calculate) when this variable is invoked.",
+                                                    desc = "Provide the value to store (or calculate) when this variable is invoked.\n\n"
+                                                        .. "If Conditions are provided, this value is set when Conditions are met.",
                                                     order = 3.61,
                                                     width = "full",
                                                     multiline = 3,
@@ -7690,8 +7690,8 @@ n = tonumber( n ) + 1
 
                                                 value_else = {
                                                     type = "input",
-                                                    name = "Value Else",
-                                                    desc = "Provide the value to store (or calculate) if this variable's conditions are not met.",
+                                                    name = "Value when Conditions are Not Met",
+                                                    desc = "Provide the value to store (or calculate) if Conditions are not met.",
                                                     order = 3.62,
                                                     width = "full",
                                                     multiline = 3,
@@ -7737,9 +7737,9 @@ n = tonumber( n ) + 1
 
                                                 showModifiers = {
                                                     type = "toggle",
-                                                    name = "Show Modifiers",
-                                                    desc = "If checked, some additional modifiers and conditions may be set.",
-                                                    order = 20,
+                                                    name = "Show Unused Modifiers (if applicable)",
+                                                    desc = "If checked, additional modifiers that are not currently used by this entry.",
+                                                    order = 999,
                                                     width = "full",
                                                     hidden = function ()
                                                         local e = GetListEntry( pack )
@@ -7779,7 +7779,9 @@ n = tonumber( n ) + 1
                                                         local e = GetListEntry( pack )
                                                         local ability = e.action and class.abilities[ e.action ]
 
-                                                        return not packControl.showModifiers or ( not ability or ( ability.id < 0 and ability.id > -100 ) )
+                                                        return not e.cycle_targets and
+                                                            not e.max_cycle_targets and
+                                                            not packControl.showModifiers or ( not ability or ( ability.id < 0 and ability.id > -100 ) )
                                                     end,
                                                 },
 
@@ -7816,7 +7818,8 @@ n = tonumber( n ) + 1
                                                         local e = GetListEntry( pack )
                                                         local ability = e.action and class.abilities[ e.action ]
 
-                                                        return not packControl.showModifiers or ( not ability or ( ability.id < 0 and ability.id > -100 ) )
+                                                        return not e.enable_moving and
+                                                            not packControl.showModifiers or ( not ability or ( ability.id < 0 and ability.id > -100 ) )
                                                     end,
                                                 },
 
@@ -7852,7 +7855,10 @@ n = tonumber( n ) + 1
                                                         local e = GetListEntry( pack )
                                                         local ability = e.action and class.abilities[ e.action ]
 
-                                                        return not packControl.showModifiers or ( not ability or ( ability.id < 0 and ability.id > -100 ) )
+                                                        return not e.use_off_gcd and
+                                                            not e.use_while_casting and
+                                                            not e.only_cwc and
+                                                            not packControl.showModifiers or ( not ability or ( ability.id < 0 and ability.id > -100 ) )
                                                     end,
                                                 },
 
@@ -7875,17 +7881,14 @@ n = tonumber( n ) + 1
                                                             desc = "If set, this entry cannot be recommended unless this time has passed since the last time the ability was used.",
                                                             order = 1,
                                                             width = "full",
-                                                            --[[ disabled = function( info )
-                                                                local e = GetListEntry( pack )
-                                                                return not e.enable_line_cd
-                                                            end, ]]
                                                         },
                                                     },
                                                     hidden = function ()
                                                         local e = GetListEntry( pack )
                                                         local ability = e.action and class.abilities[ e.action ]
 
-                                                        return not packControl.showModifiers or ( not ability or ( ability.id < 0 and ability.id > -100 ) )
+                                                        return not e.line_cd and
+                                                            not packControl.showModifiers or ( not ability or ( ability.id < 0 and ability.id > -100 ) )
                                                     end,
                                                 },
 
@@ -7897,9 +7900,51 @@ n = tonumber( n ) + 1
                                                     args = {
                                                         strict = {
                                                             type = "toggle",
-                                                            name = "Strict / Time Insensitive",
-                                                            desc = "If checked, the addon will assume this entry is not time-sensitive and will not test actions in the linked priority list if criteria are not presently met.",
+                                                            name = "Test Conditions Immediately",
+                                                            desc = "If checked, the Conditions (above) must be met immediately for this action to be recommended or used.",
                                                             order = 1,
+                                                            width = "full",
+                                                        },
+                                                        strict_if = {
+                                                            type = "input",
+                                                            name = "Additional Immediate Criteria",
+                                                            desc = "If entered, these Immediate Criteria must be met before the Conditions above to be tested.",
+                                                            multiline = 3,
+                                                            dialogControl = "HekiliCustomEditor",
+                                                            arg = function( info )
+                                                                local pack, list, action = info[ 2 ], packControl.listName, tonumber( packControl.actionID )
+                                                                local results = {}
+
+                                                                state.reset( "Primary", true )
+
+                                                                local apack = rawget( self.DB.profile.packs, pack )
+
+                                                                -- Let's load variables, just in case.
+                                                                for name, alist in pairs( apack.lists ) do
+                                                                    state.this_list = name
+
+                                                                    for i, entry in ipairs( alist ) do
+                                                                        if name ~= list or i ~= action then
+                                                                            if entry.action == "variable" and entry.var_name then
+                                                                                state:RegisterVariable( entry.var_name, pack .. ":" .. name .. ":" .. i, name )
+                                                                            end
+                                                                        end
+                                                                    end
+                                                                end
+
+                                                                local entry = apack and apack.lists[ list ]
+                                                                entry = entry and entry[ action ]
+
+                                                                state.this_action = entry.action
+                                                                state.this_list = list
+
+                                                                local scriptID = pack .. ":" .. list .. ":" .. action
+                                                                state.scriptID = scriptID
+                                                                scripts:StoreValues( results, scriptID, "strict_if" )
+
+                                                                return results, list, action
+                                                            end,
+                                                            order = 2,
                                                             width = "full",
                                                         }
                                                     },
@@ -7907,7 +7952,9 @@ n = tonumber( n ) + 1
                                                         local e = GetListEntry( pack )
                                                         local ability = e.action and class.abilities[ e.action ]
 
-                                                        return not packControl.showModifiers or ( not ability or not ( ability.key == "call_action_list" or ability.key == "run_action_list" ) )
+                                                        return not e.strict and
+                                                            not e.strict_if and
+                                                            not packControl.showModifiers or ( not ability or not ( ability.key == "call_action_list" or ability.key == "run_action_list" ) )
                                                     end,
                                                 },
 
@@ -12081,7 +12128,7 @@ do
                         -- TODO:  Automerge multiple criteria.
                         if key == 'if' or key == 'condition' then key = 'criteria' end
 
-                        if key == 'criteria' or key == 'target_if' or key == 'value' or key == 'value_else' or key == 'sec' or key == 'wait' then
+                        if key == 'criteria' or key == 'target_if' or key == 'value' or key == 'value_else' or key == 'sec' or key == 'wait' or key == 'strict_if' then
                             value = Sanitize( 'c', value, line, warnings )
                             value = SpaceOut( value )
                         end
@@ -12115,8 +12162,10 @@ do
             if result.use_off_gcd then result.use_off_gcd = tonumber( result.use_off_gcd ) end
             if result.use_while_casting then result.use_while_casting = tonumber( result.use_while_casting ) end
             if result.strict then result.strict = tonumber( result.strict ) end
-            if result.moving then result.enable_moving = true
-result.moving = tonumber( result.moving ) end
+            if result.moving then
+                result.enable_moving = true
+                result.moving = tonumber( result.moving )
+            end
 
             if result.target_if and not result.criteria then
                 result.criteria = result.target_if
