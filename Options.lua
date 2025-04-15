@@ -10142,9 +10142,7 @@ do
                         name = BlizzBlue .. "Monitor Performance|r",
                         desc = "If checked, the addon will track processing time and volume of events.",
                         order = 3,
-                        hidden = function()
-                            return not Hekili.Version:match("Dev")
-                        end,
+                        hidden = true
                     },
 
                     welcome = {
@@ -10162,37 +10160,82 @@ do
                         type = "description",
                         name = function ()
                             return "|cFF00CCFFTHANK YOU TO OUR SUPPORTERS!|r\n\n" .. ns.Patrons .. "\n\n" ..
-                                "Please see the |cFFFFD100Snapshots (Troubleshooting)|r link for information about reporting bugs.\n\n"
+                                "See the |cFFFFD100Snapshots (Troubleshooting)|r section for information about reporting bugs.\n\n"
                         end,
                         fontSize = "medium",
                         order = 6,
                         width = "full"
                     },
 
+                    discord = {
+                        type = "input",
+                        name = "Discord",
+                        desc = "Join the Hekili Discord server for support and discussion.",
+                        order = 7,
+                        get = function () return "https://discord.gg/3cCTFxM" end,
+                        set = function () end,
+                        width = "full",
+                        dialogControl = "SFX-Info-URL",
+                    },
+                    discordSpace = {
+                        type = "description",
+                        name = " ",
+                        order = 8,
+                        width = "full",
+                    },
+
+
+                    github = {
+                        type = "input",
+                        name = "GitHub",
+                        desc = "Find updates on GitHub.",
+                        order = 10,
+                        get = function () return "https://github.com/Hekili/hekili/releases" end,
+                        set = function () end,
+                        width = "full",
+                        dialogControl = "SFX-Info-URL",
+                    },
                     curse = {
                         type = "input",
-                        name = "Curse",
-                        order = 10,
+                        name = "CurseForge",
+                        desc = "Find updates on Curseforge.",
+                        order = 11,
                         get = function () return "https://www.curseforge.com/wow/addons/hekili" end,
                         set = function () end,
                         width = "full",
                         dialogControl = "SFX-Info-URL",
                     },
-
-                    github = {
+                    wago = {
                         type = "input",
-                        name = "GitHub",
-                        order = 11,
-                        get = function () return "https://github.com/Hekili/hekili/" end,
+                        name = "Wago",
+                        desc = "Find updates on Wago.",
+                        order = 12,
+                        get = function () return "https://addons.wago.io/addons/hekili" end,
                         set = function () end,
                         width = "full",
                         dialogControl = "SFX-Info-URL",
                     },
+                    wowi = {
+                        type = "input",
+                        name = "WoW Interface",
+                        desc = "Find updates on WoW Interface.",
+                        order = 13,
+                        get = function () return "https://www.wowinterface.com/downloads/info24608-HekiliPriorityHelper.html" end,
+                        set = function () end,
+                        width = "full",
+                        dialogControl = "SFX-Info-URL",
+                    },
+                    updaterSpace = {
+                        type = "description",
+                        name = " ",
+                        order = 14,
+                        width = "full",
+                    },
 
                     link = {
                         type = "input",
-                        name = "Issue Reports",
-                        order = 12,
+                        name = "Report Issue",
+                        order = 20,
                         width = "full",
                         get = function() return "http://github.com/Hekili/hekili/issues" end,
                         set = function() end,
@@ -10200,8 +10243,8 @@ do
                     },
                     faq = {
                         type = "input",
-                        name = "FAQ / Help",
-                        order = 13,
+                        name = "Help",
+                        order = 21,
                         width = "full",
                         get = function() return "https://github.com/Hekili/hekili/wiki/Frequently-Asked-Questions" end,
                         set = function() end,
@@ -10209,8 +10252,8 @@ do
                     },
                     simulationcraft = {
                         type = "input",
-                        name = "SimC",
-                        order = 14,
+                        name = "SimC Wiki",
+                        order = 22,
                         get = function () return "https://github.com/simulationcraft/simc/wiki" end,
                         set = function () end,
                         width = "full",
@@ -10222,7 +10265,7 @@ do
             gettingStarted = {
                 type = "group",
                 name = "Getting Started",
-                desc = "This sections serves as a quick tutorial and explanation of the addon.",
+                desc = "This section serves as a quick tutorial and explanation of the addon.",
                 order = 11,
                 childGroups = "tab",
                 args = {
@@ -10471,23 +10514,56 @@ do
                     },
                     issueReporting_snapshot_next = {
                         type = "group",
-                        name = "What do I do with it now?",
+                        name = "How to Submit",
                         order = 6,
                         args = {
                             issueReporting_snapshot_next_info = {
                                 type = "description",
-                                name = "|cFFFFD100Now that the snapshot is in your clipboard ready to be pasted|r\n\n" ..
-                                "1. Head to the Pastebin website: https://pastebin.com/" ..
-                                "\n\n2. Create a paste with it and post the link wherever it's required (probably the discord, or a github ticket)",
-                                order = 5.1,
+                                name = "With the Snapshot Data copied to your clipboard, navigate to Pastebin.",
                                 fontSize = "medium",
+                                order = 1,
+                                width = "full",
+                            },
+                            issueReporting_snapshot_next_info_2 = {
+                                type = "input",
+                                name = "Pastebin",
+                                dialogControl = "SFX-Info-URL",
+                                get = function() return "https://pastebin.org/" end,
+                                set = function() end,
+                                order = 2,
+                                width = "full",
+                            },
+                            issueReporting_snapshot_next_info_3 = {
+                                type = "description",
+                                name = "Paste the Snapshot Data in the large textbox ( |cFFFFD100CTRL+V|r ), then click |cFFFFD100Create New Paste|r.\n\n"
+                                    .. "Copy the link address from your browser and provide it where appropriate, whether Discord or in a GitHub issue report.",
+                                fontSize = "medium",
+                                order = 3,
+                                width = "full"
+                            },
+                            issueReporting_snapshot_next_info_3 = {
+                                type = "input",
+                                name = "Discord",
+                                dialogControl = "SFX-Info-URL",
+                                get = function() return "https://discord.gg/3cCTFxM" end,
+                                set = function() end,
+                                order = 2,
+                                width = "full",
+                            },
+                            issueReporting_snapshot_next_info_2 = {
+                                type = "input",
+                                name = "GitHub Issues",
+                                dialogControl = "SFX-Info-URL",
+                                get = function() return "http://github.com/Hekili/hekili/issues" end,
+                                set = function() end,
+                                order = 2,
                                 width = "full",
                             },
                         },
                     },
                     Snapshot = {
                         type = 'input',
-                        name = "Grab your Snapshot from this textbox",
+                        name = "Snapshot Data",
                         desc = "Click here and press CTRL+A, CTRL+C to copy the snapshot.\n\nPaste in a text editor to review or upload to Pastebin to support an issue ticket.",
                         order = 20,
                         get = function( info )
@@ -10501,12 +10577,13 @@ do
 
                     SnapshotInstructions = {
                         type = "description",
-                        name = "|cFF00CCFFClick the textbox above and press CTRL+A, CTRL+C to select ALL text and copy it to the clipboard. It should be hundreds of lines long.|r\n\n",
+                        name = "|cFF00CCFFClick the textbox above and press |cFFFFD100CTRL+A|r to select ALL text and |cFFFFD100CTRL+C|r to copy it to the clipboard.\n\n"
+                            .. "When pasted to a text file or Pastebin.org, the snapshot should be hundreds or thousands of lines long.",
                         order = 30,
                         width = "full",
                         fontSize = "medium",
                         hidden = function() return snapshots.selected == 0 or #ns.snapshots == 0 end,
-                        }
+                    }
 
                 },
             },
