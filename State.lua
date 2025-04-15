@@ -1411,7 +1411,7 @@ do
             -- Adjust timeout based on rune cooldowns and regen models for Frost DK
             timeout = max( timeout, 0.01 + state.runes.expiry[ 6 ] - state.query_time )
         elseif state.spec.assassination then
-            timeout = 15.01
+            timeout = max( timeout, 0.01 + state.energy.max / max( 0.001, state.energy.regen_combined ) )
         end
 
         timeout = timeout + state.gcd.remains
@@ -1464,9 +1464,11 @@ do
         local finish = now + timeout
         local prev = now
         local iter = 0
-        local regen = r.regen > 0.001 and r.regen or 0
 
-        while ( #events > 0 and now <= finish and iter < 20 ) do
+        local regen = r.regen_combined and r.regen_combined or r.regen or 0
+        regen = regen > 0.001 and regen or 0
+
+        while ( #events > 0 and now <= finish and iter < 30 ) do
             local e = events[ 1 ]
             iter = iter + 1
 
@@ -1542,6 +1544,7 @@ do
                 r.forecast[ idx ] = r.forecast[ idx ] or {}
                 r.forecast[ idx ].t = finish
                 r.forecast[ idx ].v = min( r.max, val + ( v * regen ) )
+                r.forecast[ idx ].e = "to_max"
                 r.fcount = idx
             end
         end
@@ -6940,8 +6943,8 @@ Hekili:ProfileCPU( "state.reset", state.reset )
 
 
 function state:SetConstraint( min, max )
-    state.delayMin = min or 0
-    state.delayMax = max or 15
+    if min then state.delayMin = min end
+    if max then state.delayMax = max end
 end
 
 

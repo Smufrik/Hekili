@@ -713,7 +713,7 @@ function Hekili:GetPredictionFromAPL( dispName, packName, listName, slot, action
     local precombatFilter = listName == "precombat" and state.time > 0
 
     local rAction = action
-    local rWait = wait or 15
+    local rWait = wait or state.delayMax
     local rDepth = depth or 0
 
     local strict = false -- disabled for now.
@@ -1105,9 +1105,9 @@ function Hekili:GetPredictionFromAPL( dispName, packName, listName, slot, action
                                                             elseif cap_sec > 0 and new_wait > cap_sec then
                                                                 if debug then self:Debug( "Rechecking stopped at step #%d.  The recheck time ( %.2f ) exceeds the preferred Maximum Forecasting Time ( %.2f ).", i, new_wait, cap_sec ) end
                                                                 break
-                                                            elseif new_wait >= 10 then
+                                                            --[[ elseif new_wait >= 10 then
                                                                     if debug then self:Debug( "Rechecking stopped at step #%d.  The recheck ( %.2f ) isn't ready within a reasonable time frame ( 10s ).", i, new_wait ) end
-                                                                    break
+                                                                    break ]]
                                                             elseif ( action ~= state.channel ) and waitValue <= base_delay + step + 0.05 then
                                                                 if debug then self:Debug( "Rechecking stopped at step #%d.  The previously chosen ability is ready before this recheck would occur ( %.2f <= %.2f + 0.05 ).", i, waitValue, new_wait ) end
                                                                 break
@@ -1448,7 +1448,7 @@ function Hekili:GetNextPrediction( dispName, packName, slot )
 
     if not pack then return end
 
-    local action, wait, depth = nil, 10, 0
+    local action, wait, depth = nil, nil, 0
 
     state.this_action = nil
     state.this_list = nil
@@ -1871,9 +1871,8 @@ function Hekili.Update()
                     if class.file == "DEATHKNIGHT" then
                         state:SetConstraint( 0, min( state.delayMax, max( 0.01 + state.rune.cooldown * 2, 10 ) ) )
                     elseif state.spec.assassination then
-                        state:SetConstraint( 0, max( 3, min( state.delayMax, state.energy.time_to_pct_70 ) ) )
-                    else
-                        state:SetConstraint( 0, min( state.delayMax, 10 ) )
+                        -- Cap recommend generation above worst-case energy generation.
+                        state:SetConstraint( 0, max( state.delayMax, 0.01 + state.energy.max / state.energy.regen_combined ) )
                     end
 
                     if hadProj and debug then Hekili:Debug( "[ ** ] No recommendation before queued event(s), checking recommendations after %.2f.", state.offset ) end
@@ -1907,7 +1906,7 @@ function Hekili.Update()
 
                             state.delay = 0
                             state.delayMin = 0
-                            state.delayMax = dispName ~= "Primary" and dispName ~= "AOE" and display.forecastPeriod or 15
+                            state.delayMax = dispName ~= "Primary" and dispName ~= "AOE" and max( state.delayMax, display.forecastPeriod or 15 )
 
                             action, wait = nil, 10
 
@@ -1925,7 +1924,7 @@ function Hekili.Update()
 
                             state.delay = 0
                             state.delayMin = 0
-                            state.delayMax = dispName ~= "Primary" and dispName ~= "AOE" and display.forecastPeriod or 15
+                            state.delayMax = dispName ~= "Primary" and dispName ~= "AOE" and max( state.delayMax, display.forecastPeriod or 15 )
 
                             action, wait = nil, 10
 
