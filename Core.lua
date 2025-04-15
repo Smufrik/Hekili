@@ -1306,8 +1306,8 @@ function Hekili:GetPredictionFromAPL( dispName, packName, listName, slot, action
                                                                     if debug then self:Debug( "The currently chosen action ( %s ) is ready at or before the next action ( %.2fs <= %.2fs ).  Skipping.", ( rAction or "???" ), rWait, next_wait ) end
                                                                 elseif state.delayMax and next_wait >= state.delayMax then
                                                                     if debug then self:Debug( "Attempted to Pool Resources for Next Entry ( %s ), but we would exceed our time ceiling in %.2fs.  Skipping.", next_action, next_wait ) end
-                                                                elseif next_wait >= 10 then
-                                                                    if debug then self:Debug( "Attempted to Pool Resources for Next Entry ( %s ), but we'd have to wait much too long ( %.2f ).  Skipping.", next_action, next_wait ) end
+                                                                --[[ elseif next_wait >= 15 then
+                                                                    if debug then self:Debug( "Attempted to Pool Resources for Next Entry ( %s ), but we'd have to wait much too long ( %.2f ).  Skipping.", next_action, next_wait ) end ]]
                                                                 else
                                                                     -- Pad the wait value slightly, to make sure the resource is actually generated.
                                                                     next_wait = next_wait + 0.01
@@ -1465,7 +1465,7 @@ function Hekili:GetNextPrediction( dispName, packName, slot )
     state.this_action = nil
     state.this_list = nil
 
-    state.selection_time = 10
+    state.selection_time = nil
     state.selected_action = nil
 
     if self.ActiveDebug then
@@ -1881,7 +1881,7 @@ function Hekili.Update()
                     state.delayMax = not isMain and display.forecastPeriod or 15
 
                     if class.file == "DEATHKNIGHT" then
-                        state:SetConstraint( 0, min( state.delayMax, max( 0.01 + state.rune.cooldown * 2, 10 ) ) )
+                        state:SetConstraint( 0, max( state.delayMax, 0.01 + 20 * state.haste ) )
                     elseif state.spec.assassination then
                         -- Cap recommend generation above worst-case energy generation.
                         state:SetConstraint( 0, max( state.delayMax, 0.01 + state.energy.max / state.energy.regen_combined ) )
