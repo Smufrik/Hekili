@@ -50,10 +50,10 @@ actions+=/call_action_list,name=cds_cleave_san,strict=1,if=talent.vampiric_strik
 actions+=/call_action_list,name=cds_san,strict=1,if=talent.vampiric_strike&active_enemies=1
 actions+=/call_action_list,name=cds,strict=1,if=!talent.vampiric_strike&active_enemies=1
 actions+=/call_action_list,name=cleave,strict=1,if=active_enemies=2
-actions+=/call_action_list,name=aoe_setup,if=active_enemies>=3&!death_and_decay.ticking&cooldown.any_dnd.remains<10
-actions+=/call_action_list,name=aoe_burst,if=active_enemies>=3&(death_and_decay.ticking|buff.death_and_decay.up&death_knight.fwounded_targets>=(cycle_enemies*0.5))
-actions+=/call_action_list,name=aoe,if=active_enemies>=3&!buff.death_and_decay.up
-actions+=/run_action_list,name=san_fishing,if=active_enemies=1&talent.gift_of_the_sanlayn&!cooldown.dark_transformation.ready&!buff.gift_of_the_sanlayn.up&buff.essence_of_the_blood_queen.remains<cooldown.dark_transformation.remains+3
+actions+=/call_action_list,name=aoe_setup,strict_if=active_enemies>=3,if=active_enemies>=3&!death_and_decay.ticking&cooldown.any_dnd.remains<10
+actions+=/call_action_list,name=aoe_burst,strict_if=active_enemies>=3,if=active_enemies>=3&(death_and_decay.ticking|buff.death_and_decay.up&death_knight.fwounded_targets>=(cycle_enemies*0.5))
+actions+=/call_action_list,name=aoe,strict_if=active_enemies>=3,if=active_enemies>=3&!buff.death_and_decay.up
+actions+=/run_action_list,name=san_fishing,strict_if=active_enemies=1&talent.gift_of_the_sanlayn,if=active_enemies=1&talent.gift_of_the_sanlayn&!cooldown.dark_transformation.ready&!buff.gift_of_the_sanlayn.up&buff.essence_of_the_blood_queen.remains<cooldown.dark_transformation.remains+3
 actions+=/call_action_list,name=san_st,strict=1,if=active_enemies=1&talent.vampiric_strike
 actions+=/call_action_list,name=st,strict=1,if=active_enemies=1&!talent.vampiric_strike
 
