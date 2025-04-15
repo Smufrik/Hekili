@@ -193,7 +193,7 @@ local spendHook = function( amt, resource )
             addStack( "rune_carved_plates" )
         end
     end
-    
+
 end
 
 spec:RegisterHook( "spend", spendHook )
@@ -545,7 +545,7 @@ spec:RegisterAuras( {
         duration = function () return ( pvptalent.last_dance.enabled and 6 or 8 ) + ( talent.everlasting_bond.enabled and 6 or 0 ) end,
         type = "Magic",
         max_stack = 1,
-        active_weapons = function() return 
+        active_weapons = function() return
             buff.dancing_rune_weapon.up and 1 + talent.everlasting_bond.rank or 0
         end
     },
@@ -1072,7 +1072,7 @@ spec:RegisterAuras( {
 spec:RegisterGear( "tww2", 229253, 229251, 229256, 229254, 229252 )
 spec:RegisterAuras( {
     -- https://www.wowhead.com/spell=1218601
-    -- Luck of the Draw! Damage increased by 15%. Death Strike costs 10 less Runic Power and strikes 2 additional nearby targets.  
+    -- Luck of the Draw! Damage increased by 15%. Death Strike costs 10 less Runic Power and strikes 2 additional nearby targets.
     luck_of_the_draw = {
         id = 1218601,
         duration = function() if set_bonus.tww2 >= 4 then return 12 end
@@ -1081,7 +1081,7 @@ spec:RegisterAuras( {
         max_stack = 1,
     },
     -- https://www.wowhead.com/spell=1222698
-    -- Murderous Frenzy Your Haste is increased by 12%.  
+    -- Murderous Frenzy Your Haste is increased by 12%.
     murderous_frenzy = {
         id = 1222698,
         duration = 6,
@@ -1250,6 +1250,10 @@ end )
 
 spec:RegisterStateExpr( "save_blood_shield", function ()
     return ( settings.save_blood_shield or false )
+end )
+
+spec:RegisterStateExpr( "drw.bp_ticking", function ()
+    return buff.dancing_rune_weapon.up and dot.blood_plague.ticking
 end )
 
 spec:RegisterStateExpr( "ibf_damage", function ()
@@ -1641,7 +1645,7 @@ spec:RegisterAbilities( {
                 if talent.perseverance_of_the_ebon_blade.enabled then applyBuff( "perseverance_of_the_ebon_blade" ) end
                 removeBuff( "crimson_scourge" )
                 if talent.relish_in_blood.enabled then
-                    gain( 10, "runic_power" ) 
+                    gain( 10, "runic_power" )
                     gain( 0.25 * buff.bone_shield.stack, "health" )
                 end
             end
@@ -1761,7 +1765,7 @@ spec:RegisterAbilities( {
         cooldown = 0,
         gcd = "spell",
 
-        spend = function () return ( ( talent.ossuary.enabled and buff.bone_shield.stack >= 5 ) and 40 or 45 ) 
+        spend = function () return ( ( talent.ossuary.enabled and buff.bone_shield.stack >= 5 ) and 40 or 45 )
                 - ( talent.improved_death_strike.enabled and 5 or 0 )
                 - ( buff.blood_draw.up and 10 or 0 )
                 - ( set_bonus.tww2 >= 4 and buff.luck_of_the_draw.up and 10 or 0 )
@@ -1900,7 +1904,7 @@ spec:RegisterAbilities( {
             -- PvP
             if pvptalent.blood_for_blood.enabled then
                 health.current = health.current - 0.03 * health.max
-            end 
+            end
 
             --- Legacy
             if set_bonus.tier31_4pc > 0 and debuff.ashen_decay.up and set_bonus.tier31_4pc > 0 then debuff.ashen_decay.expires = debuff.ashen_decay.expires + 1 end
