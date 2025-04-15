@@ -518,6 +518,7 @@ do
         { "^!?stealthed%.(all)$"                    , "stealthed.%1_remains"                                          },
 
         { "^!?death_and_decay.ticking$"             , "death_and_decay.remains"                                       }, -- DKs
+        { "^!?drw.bp_ticking$"                      , "debuff.drw_blood_plague.remains" },
 
         { "^!?time_to_hpg$"           , "time_to_hpg"          }, -- Retribution Paladin
         { "^!?time_to_hpg[<=]=?(.-)$" , "time_to_hpg-%1"       }, -- Retribution Paladin

@@ -1340,6 +1340,11 @@ spec:RegisterHook( "reset_precast", function ()
             end
         end
     end
+
+    if buff.death_and_decay.up and buff.death_and_decay.duration == 10 then
+        -- Extend by 4 to support on-leave effect.
+        buff.death_and_decay.expires = buff.death_and_decay.expires + 4
+    end
 end )
 
 spec:RegisterStateExpr( "save_blood_shield", function ()

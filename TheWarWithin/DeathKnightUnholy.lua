@@ -1150,7 +1150,7 @@ spec:RegisterStateFunction( "time_to_wounds", function( x )
 end )
 
 spec:RegisterHook( "step", function ( time )
-    if Hekili.ActiveDebug then Hekili:Debug( "Rune Regeneration Tispec: 1=%.2f, 2=%.2f, 3=%.2f, 4=%.2f, 5=%.2f, 6=%.2f\n", runes.time_to_1, runes.time_to_2, runes.time_to_3, runes.time_to_4, runes.time_to_5, runes.time_to_6 ) end
+    if Hekili.ActiveDebug then Hekili:Debug( "Rune Regeneration Time: 1=%.2f, 2=%.2f, 3=%.2f, 4=%.2f, 5=%.2f, 6=%.2f\n", runes.time_to_1, runes.time_to_2, runes.time_to_3, runes.time_to_4, runes.time_to_5, runes.time_to_6 ) end
 end )
 
 local Glyphed = IsSpellKnownOrOverridesKnown
@@ -1847,6 +1847,7 @@ spec:RegisterAbilities( {
                 if talent.rotten_touch.enabled then applyDebuff( "target", "rotten_touch" ) end
                 if talent.death_rot.enabled then applyDebuff( "target", "death_rot", nil, 2 ) end
             elseif talent.death_rot.enabled then applyDebuff( "target", "death_rot", nil, 1 ) end
+
             if buff.dark_transformation.up then buff.dark_transformation.expires = buff.dark_transformation.expires + 1 end
             if buff.gift_of_the_sanlayn.up then buff.gift_of_the_sanlayn.expires = buff.gift_of_the_sanlayn.expires + 1 end
 
