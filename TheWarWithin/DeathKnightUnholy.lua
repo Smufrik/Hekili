@@ -1161,7 +1161,7 @@ spec:RegisterGear({
         items = { 229253, 229251, 229256, 229254, 229252 },
         auras = {
             -- https://www.wowhead.com/spell=1216813
-            winning_streak_unholy = {
+            winning_streak = {
                 id = 1216813,
                 duration = 3600,
                 max_stack = 10
@@ -1779,7 +1779,7 @@ spec:RegisterAbilities( {
                 applyBuff( "frenzied_monstrosity_pet" )
             end
 
-            if set_bonus.tww2 >= 4 then addStack( "winning_streak_unholy", nil, 10 ) end
+            if set_bonus.tww2 >= 4 then addStack( "winning_streak", nil, 10 ) end
 
         end,
 
