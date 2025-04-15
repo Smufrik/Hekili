@@ -8730,23 +8730,6 @@ do
                             },
                         },
                     },
-
-
-                --[[q5 = {
-                        type = "header",
-                        name = "Something's Wrong",
-                        order = 5,
-                        width = "full",
-                    },
-                    a5 = {
-                        type = "description",
-                        name = "You can submit questions, concerns, and ideas via the link found in the |cFFFFD100Snapshots (Troubleshooting)|r section.\n\n" ..
-                            "If you disagree with the addon's recommendations, the |cFFFFD100Snapshot|r feature allows you to capture a log of the addon's decision-making taken at the exact moment specific recommendations are shown.  " ..
-                            "When you submit your question, be sure to take a snapshot (not a screenshot!), place the text on Pastebin, and include the link when you submit your issue ticket.",
-                        order = 5.1,
-                        fontSize = "medium",
-                        width = "full",
-                    }--]]
                 }
             },
 
@@ -8927,7 +8910,7 @@ do
                                 order = 3,
                                 width = "full"
                             },
-                            issueReporting_snapshot_next_info_3 = {
+                            issueReporting_snapshot_next_info_4 = {
                                 type = "input",
                                 name = "Discord",
                                 dialogControl = "SFX-Info-URL",
@@ -8936,7 +8919,7 @@ do
                                 order = 2,
                                 width = "full",
                             },
-                            issueReporting_snapshot_next_info_2 = {
+                            issueReporting_snapshot_next_info_5 = {
                                 type = "input",
                                 name = "GitHub Issues",
                                 dialogControl = "SFX-Info-URL",
@@ -9329,7 +9312,6 @@ local function decodeB64(str)
     return table.concat(bit8, "", 1, decoded_size)
 end
 
-
 -- Import/Export Strings
 local Compresser = LibStub:GetLibrary("LibCompress")
 local Encoder = Compresser:GetChatEncodeTable()
@@ -9339,14 +9321,12 @@ local ldConfig = { level = 5 }
 
 local Serializer = LibStub:GetLibrary("AceSerializer-3.0")
 
-
 TableToString = function( inTable, forChat )
     local serialized = Serializer:Serialize( inTable )
     local compressed = LibDeflate:CompressDeflate( serialized, ldConfig )
 
     return format( "Hekili:%s", forChat and ( LibDeflate:EncodeForPrint( compressed ) ) or ( LibDeflate:EncodeForWoWAddonChannel( compressed ) ) )
 end
-
 
 StringToTable = function( inString, fromChat )
     local modern = false
@@ -9377,7 +9357,6 @@ StringToTable = function( inString, fromChat )
     return deserialized
 end
 
-
 SerializeDisplay = function( display )
     local serial = rawget( Hekili.DB.profile.displays, display )
     if not serial then return end
@@ -9385,12 +9364,10 @@ SerializeDisplay = function( display )
     return TableToString( serial, true )
 end
 
-
 DeserializeDisplay = function( str )
     local display = StringToTable( str, true )
     return display
 end
-
 
 SerializeActionPack = function( name )
     local pack = rawget( Hekili.DB.profile.packs, name )
@@ -9408,7 +9385,6 @@ SerializeActionPack = function( name )
     return TableToString( serial, true )
 end
 
-
 DeserializeActionPack = function( str )
     local serial = StringToTable( str, true )
 
@@ -9421,7 +9397,6 @@ DeserializeActionPack = function( str )
     return serial
 end
 Hekili.DeserializeActionPack = DeserializeActionPack
-
 
 SerializeStyle = function( ... )
     local serial = {
@@ -9446,7 +9421,6 @@ SerializeStyle = function( ... )
     return TableToString( serial, true )
 end
 
-
 DeserializeStyle = function( str )
     local serial = StringToTable( str, true )
 
@@ -9458,7 +9432,6 @@ DeserializeStyle = function( str )
 end
 
 -- End Import/Export Strings
-
 
 local Sanitize
 
@@ -9578,16 +9551,6 @@ do
         local output, pre = "", ""
 
         for op1, token, op2 in gmatch( i, "([^%w%._ ]*)([%w%._]+)([^%w%._ ]*)" ) do
-            --[[ if op1 and op1:len() > 0 then
-                pre = op1
-                for _, subs in ipairs( operations ) do
-                    op1, times = op1:gsub( subs[1], subs[2] )
-
-                    if times > 0 then
-                        insert( warnings, "Line " .. line .. ": Converted '" .. pre .. "' to '" .. op1 .. "' (" ..times .. "x)." )
-                    end
-                end
-            end ]]
 
             if token and token:len() > 0 then
                 pre = token
@@ -9618,16 +9581,6 @@ do
                     end
                 end
             end
-
-            --[[
-            if op2 and op2:len() > 0 then
-                for _, subs in ipairs( operations ) do
-                    op2, times = op2:gsub( subs[1], subs[2] )
-                    if times > 0 then
-                        insert( warnings, "Line " .. line .. ": Converted '" .. pre .. "' to '" .. op2 .. "' (" ..times .. "x)." )
-                    end
-                end
-            end ]]
 
             output = output .. ( op1 or "" ) .. ( token or "" ) .. ( op2 or "" )
         end
@@ -9733,21 +9686,6 @@ do
                     insert( warnings, "Line " .. line .. ": Removed unnecessary expel_harm cooldown check from action entry for jab (" .. times .. "x)." )
                 end
             end
-
-            --[[ for token in i:gmatch( 'spell_targets[.%a_]-' ) do
-
-                local times = 0
-                while (i:find(token)) do
-                    local strpos, strend = i:find(token)
-
-                    local start = strpos > 2 and i:sub( 1, strpos - 1 ) or ''
-                    local finish = strend < i:len() - 1 and i:sub( strend + 1 ) or ''
-
-                    i = start .. enemies .. finish
-                    times = times + 1
-                end
-                insert( warnings, "Line " .. line .. ": Replaced unsupported '" .. token .. "' with '" .. enemies .. "' (" .. times .. "x)." )
-            end ]]
 
             if i:sub(1, 13) == 'fists_of_fury' then
                 for token in i:gmatch( "energy.time_to_max>cast_time" ) do
@@ -9893,7 +9831,6 @@ end
 
 -- End APL Parsing
 
-
 local warnOnce = false
 
 -- Begin Toggles
@@ -9904,15 +9841,6 @@ function Hekili:TogglePause( ... )
     if not self.Pause then
         self:MakeSnapshot()
         self.Pause = true
-
-        --[[ if self:SaveDebugSnapshot() then
-            if not warnOnce then
-                self:Print( "Snapshot saved; snapshots are viewable via /hekili (until you reload your UI)." )
-                warnOnce = true
-            else
-                self:Print( "Snapshot saved." )
-            end
-        end ]]
 
     else
         self.Pause = false
@@ -9937,7 +9865,6 @@ function Hekili:TogglePause( ... )
 
 end
 
-
 -- Key Bindings
 function Hekili:MakeSnapshot( isAuto )
     if isAuto and not Hekili.DB.profile.autoSnapshot then
@@ -9953,8 +9880,6 @@ function Hekili:MakeSnapshot( isAuto )
     HekiliDisplayPrimary.activeThread = nil
 end
 
-
-
 function Hekili:Notify( str, duration )
     if not self.DB.profile.notifications.enabled then
         self:Print( str )
@@ -9965,7 +9890,6 @@ function Hekili:Notify( str, duration )
     HekiliNotificationText:SetTextColor( 1, 0.8, 0, 1 )
     UIFrameFadeOut( HekiliNotificationText, duration or 3, 1, 0 )
 end
-
 
 do
     local modes = {
@@ -9999,7 +9923,6 @@ do
         end,
     } )
 
-
     function Hekili:SetMode( mode )
         mode = lower( mode:trim() )
 
@@ -10016,7 +9939,6 @@ do
             self:Print( modeIndex[ mode ][2] .. " mode activated." )
         end
     end
-
 
     function Hekili:FireToggle( name, explicitState )
         local toggle = name and self.DB.profile.toggles[ name ]
@@ -10088,12 +10010,9 @@ do
         self:ForceUpdate( "HEKILI_TOGGLE", true )
     end
 
-
     function Hekili:GetToggleState( name, class )
         local t = name and self.DB.profile.toggles[ name ]
 
         return t and t.value
     end
 end
-
--- End Toggles
