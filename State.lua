@@ -694,6 +694,7 @@ state.remove = table.remove
 state.tonumber = tonumber
 state.tostring = tostring
 state.type = type
+state.unpack = unpack
 
 state.safenum = function( val )
     if type( val ) == "number" then return val end
@@ -1636,13 +1637,27 @@ do
         end
     end
 
+    local recurseRechecks
+    recurseRechecks = function( script, seen )
+        if not seen then seen = {}
+        else seen[ script.ID ] = script.Recheck or true end
 
-    local function channelInfo( ability )
-        if state.system.packName and scripts.Channels[ state.system.packName ] then
-            return scripts.Channels[ state.system.packName ][ state.channel ], class.auras[ state.channel ]
+        if script.Variables then
+            for _, var in ipairs( script.Variables ) do
+                local varIDs = state:GetVariableIDs( var )
+                if varIDs then
+                    for _, entry in ipairs( varIDs ) do
+                        if not seen[ entry.id ] then
+                            local subscript = scripts.DB[ entry.id ]
+                            if subscript then recurseRechecks( subscript, seen ) end
+                        end
+                    end
+                end
+            end
         end
-    end
 
+        return seen
+    end
 
     function state.recheck( ability, script, stack, block )
         local times = state.recheckTimes
@@ -1656,21 +1671,17 @@ do
                 recheckHelper( workTable, script.Recheck() )
             end
 
-            -- This can be CPU intensive but is needed for some APLs (i.e., Unholy).
             if script.Variables then
-                -- if Hekili.ActiveDebug then table.insert( steps, debugprofilestop() ) end
-                for i, var in ipairs( script.Variables ) do
-                    local varIDs = state:GetVariableIDs( var )
+                if not script.AllRechecks then
+                    script.AllRechecks = recurseRechecks( script )
 
-                    if varIDs then
-                        for _, entry in ipairs( varIDs ) do
-                            local vr = scripts.DB[ entry.id ].VarRecheck
-                            if vr then
-                                recheckHelper( workTable, vr() )
-                            end
-                        end
+                    for id, func in pairs( script.AllRechecks ) do
+                        if type( func ) ~= "function" then script.AllRechecks[ id ] = nil end
                     end
-                    -- if Hekili.ActiveDebug then table.insert( steps, debugprofilestop() ) end
+                end
+
+                for id, func in pairs( script.AllRechecks ) do
+                    recheckHelper( workTable, func() )
                 end
             end
         end
@@ -1699,6 +1710,20 @@ do
 
                 if callScript and callScript.Recheck then
                     recheckHelper( workTable, callScript.Recheck() )
+
+                    if callScript.Variables then
+                        if not callScript.AllRechecks then
+                            callScript.AllRechecks = recurseRechecks( callScript )
+
+                            for id, func in pairs( callScript.AllRechecks ) do
+                                if type( func ) ~= "function" then callScript.AllRechecks[ id ] = nil end
+                            end
+                        end
+
+                        for id, func in pairs( callScript.AllRechecks ) do
+                            recheckHelper( workTable, func() )
+                        end
+                    end
                 end
             end
         end
@@ -1711,45 +1736,26 @@ do
                 if callScript and callScript.Recheck then
                     recheckHelper( workTable, callScript.Recheck() )
                 end
-            end
-        end
 
-        -- if Hekili.ActiveDebug then table.insert( steps, debugprofilestop() ) end
+                if callScript and callScript.Recheck then
+                    recheckHelper( workTable, callScript.Recheck() )
 
-        --[[ if state.channeling then
-            local aura = class.auras[ state.channel ]
-            local remains = state.channel_remains
+                    if callScript.Variables then
+                        if not callScript.AllRechecks then
+                            callScript.AllRechecks = recurseRechecks( callScript )
 
-            if aura and aura.tick_time then
-                -- Put tick times into recheck.
-                local i = 1
-                while ( true ) do
-                    if remains - ( i * aura.tick_time ) > 0 then
-                        workTable[ roundUp( remains - ( i * aura.tick_time ), 3 ) ] = true
-                    else break end
-                    i = i + 1
-                end
+                            for id, func in pairs( callScript.AllRechecks ) do
+                                if type( func ) ~= "function" then callScript.AllRechecks[ id ] = nil end
+                            end
+                        end
 
-                for time in pairs( workTable ) do
-                    if ( ( remains - time ) / aura.tick_time ) % 1 <= 0.5 then
-                        workTable[ time ] = nil
+                        for id, func in pairs( callScript.AllRechecks ) do
+                            recheckHelper( workTable, func() )
+                        end
                     end
                 end
             end
-
-            workTable[ remains ] = true
-        end ]]
-
-        --[[ if #steps > 0 then
-            -- table.insert( steps, debugprofilestop() )
-            local str = string.format( "RECHECK: %.2f", steps[#steps] - steps[1] )
-
-            for i = 2, #steps do
-                str = string.format( "%s, %.2f ", str, steps[i] - steps[i-1] )
-            end
-
-            print( str )
-        end ]]
+        end
 
         wipe( times )
 
