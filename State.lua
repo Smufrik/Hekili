@@ -2273,7 +2273,7 @@ do
             local cooldown = t.cooldown[ action ]
 
             -- Empowerment oddity.
-            if k == "duration" and action and model and state.empowering[ action ] then return model.cast_time end -- Ugh.
+            if k == "duration" and action and model and model.empowered then return max( t.gcd.max, model.cast_time ) end -- Still ugh.
 
             if k == "action_cooldown" then return ability and ability.cooldown or 0
             elseif k == "cast_delay" then return 0
@@ -5552,7 +5552,8 @@ local mt_aura = {
 
 local mt_empowering = {
     __index = function( t, k )
-        return state.buff.empowering.up and state.buff.empowering.spell == k
+        if state.buff.empowering.down then return false end
+        return state.buff.empowering.spell == k
     end
 }
 

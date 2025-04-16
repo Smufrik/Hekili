@@ -1950,43 +1950,50 @@ function Hekili.Update()
                 end
 
                 state.delay = wait
-                if not action and state.buff.empowering.up and not state:IsFiltered( state.buff.empowering.spell ) then
+
+                if not action then
                     state.delay = 0
-                    action = state.buff.empowering.spell
 
-                    local ability = class.abilities[ action ]
-                    wait = ability.cast or 0
+                    if state.buff.empowering.up and not state:IsFiltered( state.buff.empowering.spell ) then
+                        state.delay = 0
+                        action = state.buff.empowering.spell
 
-                    slot.scriptType = "simc"
-                    slot.script = nil
-                    slot.hook = nil
+                        local ability = class.abilities[ action ]
+                        wait = ability.cast or 0
+/rl
+                        slot.scriptType = "simc"
+                        slot.script = nil
+                        slot.hook = nil
 
-                    slot.display = state.display
-                    slot.pack = "Fallthrough"
-                    slot.list = "Fallthrough"
-                    slot.listName = "Empowerment"
-                    slot.action = 1
-                    slot.actionName = ability.key
-                    slot.actionID = ability.id
+                        slot.display = state.display
+                        slot.pack = "Fallthrough"
+                        slot.list = "Fallthrough"
+                        slot.listName = "Empowerment"
+                        slot.action = 1
+                        slot.actionName = ability.key
+                        slot.actionID = ability.id
 
-                    slot.caption = nil
-                    slot.texture = ability.texture
-                    slot.indicator = ability.indicator
+                        slot.caption = nil
+                        slot.texture = ability.texture
+                        slot.indicator = ability.indicator
 
-                    slot.wait = wait
-                    slot.waitSec = nil
+                        slot.wait = 0
+                        slot.waitSec = nil
 
-                    slot.resource = state.GetResourceType( action )
+                        slot.resource = state.GetResourceType( action )
 
-                    slot.empower_to = ability.empowerment_default or state.max_empower
+                        slot.empower_to = ability.empowerment_default or state.max_empower
 
-                    slot.hook = nil
-                    slot.script = nil
+                        slot.hook = nil
+                        slot.script = nil
 
-                    if debug then
-                        -- scripts:ImplantDebugData( slot )
-                        Hekili:Debug( "Fallthrough Empowerment:  %s at %.2f!", action, state.delay )
-                        Hekili:Debug( "Texture shown:  %s", slot.texture or "NOT SET" )
+                        if debug then
+                            -- scripts:ImplantDebugData( slot )
+                            Hekili:Debug( "Fallthrough Empowerment:  %s at %.2f!", action, state.delay )
+                            Hekili:Debug( "Texture shown:  %s", slot.texture or "NOT SET" )
+                        end
+                    else
+                        state.delay = wait
                     end
                 end
 
