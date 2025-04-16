@@ -1983,7 +1983,7 @@ all:RegisterAuras( {
                 spell, _, _, startCast, endCast, _, notInterruptible, spellID = UnitChannelInfo( unit )
                 startCast = ( startCast or 0 ) / 1000
                 endCast = ( endCast or 0 ) / 1000
-                duration = endCast - startCast
+                local duration = endCast - startCast
 
                 -- Channels greater than 10 seconds are nonsense.  Probably.
                 if spell and duration <= 10 then
