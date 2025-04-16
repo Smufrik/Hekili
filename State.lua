@@ -5067,9 +5067,10 @@ do
             -- This change means that any references to t.X should only occur where X is a real value and not a metatable lookup.
 
             local moment = state.query_time
-            local applied = t.applied
-            local expires = t.expires
-            local remains = applied > 0 and applied <= moment and expires > moment and expires - moment or 0
+            local meta = rawget( aura, "meta" )
+            local applied = meta and meta.applied and meta.applied( t, "debuff" ) or t.applied
+            local expires = meta and meta.expires and meta.expires( t, "debuff" ) or t.expires
+            local remains = meta and meta.remains and meta.remains( t, "debuff" ) or applied > 0 and applied <= moment and expires > moment and expires - moment or 0
 
             if k == "remains" then return remains end
 
