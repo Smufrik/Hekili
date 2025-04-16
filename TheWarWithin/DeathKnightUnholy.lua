@@ -1031,13 +1031,13 @@ spec:RegisterAuras( {
 -- Pets
 spec:RegisterPets({
     apoc_ghoul = {
-        id = 24207,
+        id = 237409,
         spell = "apocalypse",
         duration = 15,
         copy = "army_ghoul",
     },
     magus_of_the_dead = {
-        id = 148797,
+        id = 163366,
         spell = "apocalypse",
         duration = 15,
         copy = "t31_magus",
@@ -1213,31 +1213,6 @@ spec:RegisterGear({
 
 local any_dnd_set, wound_spender_set = false, false
 
---[[local ExpireRunicCorruption = setfenv( function()
-    local debugstr
-
-    local mod = ( 2 + 0.1 * talent.runic_mastery.rank )
-
-    if Hekili.ActiveDebug then debugstr = format( "Runic Corruption expired; updating regen from %.2f to %.2f at %.2f + %.2f.", rune.cooldown, rune.cooldown * mod, offset, delay ) end
-    rune.cooldown = rune.cooldown * mod
-
-    for i = 1, 6 do
-        local exp = rune.expiry[ i ] - query_time
-
-        if exp > 0 then
-            rune.expiry[ i ] = query_time + exp * mod
-            if Hekili.ActiveDebug then debugstr = format( "%s\n - rune %d extended by %.2f [%.2f].", debugstr, i, exp * mod, rune.expiry[ i ] - query_time ) end
-        end
-    end
-
-    table.sort( rune.expiry )
-    rune.actual = nil
-    if Hekili.ActiveDebug then debugstr = format( "%s\n - %d, %.2f %.2f %.2f %.2f %.2f %.2f.", debugstr, rune.current, rune.expiry[1] - query_time, rune.expiry[2] - query_time, rune.expiry[3] - query_time, rune.expiry[4] - query_time, rune.expiry[5] - query_time, rune.expiry[6] - query_time ) end
-    forecastResources( "runes" )
-    if Hekili.ActiveDebug then debugstr = format( "%s\n - %d, %.2f %.2f %.2f %.2f %.2f %.2f.", debugstr, rune.current, rune.expiry[1] - query_time, rune.expiry[2] - query_time, rune.expiry[3] - query_time, rune.expiry[4] - query_time, rune.expiry[5] - query_time, rune.expiry[6] - query_time ) end
-    if debugstr then Hekili:Debug( debugstr ) end
-end, state )--]]
-
 local TriggerInflictionOfSorrow = setfenv( function ()
     applyBuff( "infliction_of_sorrow" )
 end, state )
@@ -1289,20 +1264,21 @@ spec:RegisterHook( "reset_precast", function ()
     end
 
     local apoc_expires = action.apocalypse.lastCast + 15
-    if apoc_expires > now then
+    if pet.apoc_ghoul.down and apoc_expires > now then
         summonPet( "apoc_ghoul", apoc_expires - now )
-        if talent.magus_of_the_dead.enabled then
+
+        if talent.magus_of_the_dead.enabled and pet.magus_of_the_dead.down then
             summonPet( "magus_of_the_dead", apoc_expires - now )
         end
 
         -- TODO: Accommodate extensions from spending runes.
-        if set_bonus.tier31_2pc > 0 then
+        if set_bonus.tier31_2pc > 0 and pet.t31_magus.down then
             summonPet( "t31_magus", apoc_expires - now )
         end
     end
 
     local army_expires = action.army_of_the_dead.lastCast + 30
-    if army_expires > now then
+    if pet.army_ghoul.down and army_expires > now then
         summonPet( "army_ghoul", army_expires - now )
     end
 
@@ -1626,7 +1602,8 @@ spec:RegisterAbilities( {
         startsCombat = true,
         max_targets = function()
             if talent.cleaving_strikes.enabled and buff.death_and_decay_cleave_buff.up then return 8 end
-            return 1 end,
+            return 1
+        end,
 
         texture = function() return ( buff.vampiric_strike.up or buff.gift_of_the_sanlayn.up ) and 5927645 or 615099 end,
 

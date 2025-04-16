@@ -1258,7 +1258,6 @@ state.dismissPet = dismissPet
 
 
 local function summonTotem( name, elem, duration )
-
     if elem then
         state.totem[ elem ] = rawget( state.totem, elem ) or {}
         state.totem[ elem ].name = name
@@ -2691,7 +2690,7 @@ do
                     local token = petData.token or alias
                     local entry = rawget( t, token )
                     if entry and type( entry ) == "table" then
-                        rawset( entry, "expires", 0 )
+                        t.expires = 0
                     end
                 end
             end
