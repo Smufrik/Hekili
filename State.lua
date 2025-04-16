@@ -2272,6 +2272,9 @@ do
             local ability = class.abilities[ action ]
             local cooldown = t.cooldown[ action ]
 
+            -- Empowerment oddity.
+            if k == "duration" and action and model and state.empowering[ action ] then return model.cast_time end -- Ugh.
+
             if k == "action_cooldown" then return ability and ability.cooldown or 0
             elseif k == "cast_delay" then return 0
             elseif k == "cast_regen" then
@@ -2314,6 +2317,7 @@ do
                 return c or 0
 
             elseif k == "crit_pct_current" or k == "crit_percent_current" then return ability and ability.critical or t.stat.crit
+
             elseif k == "execute_remains" then
                 -- TODO:  Check out if this is functioning as expected.
                 -- Should buff.casting already suffice for a cast?  A queued cast should already trigger a casting buff.
@@ -2574,7 +2578,6 @@ do
     -- Table of default handlers for specific pets/totems.
     mt_default_pet = {
         __index = function( t, k )
-
             if k == "expires" then
                 local totemIcon = rawget( t, "icon" )
 
@@ -2624,7 +2627,6 @@ do
                 end
                 return t.expires
 
-
             elseif k == "remains" then
                 return max( 0, t.expires - ( state.query_time ) )
 
@@ -2637,7 +2639,6 @@ do
             elseif k == "id" then
                 local id = t.model and t.model.id
                 if type( id ) == "function" then id = id() end
-
                 return id
 
             elseif k == "spec" then
@@ -2989,6 +2990,7 @@ do
             elseif k == "moving" then t[k] = GetUnitSpeed( "target" ) > 0
             elseif k == "real_ttd" or k == "true_ttd" then
                 t[k] = Hekili:GetTTD( "target" )
+
             elseif k == "time_to_die" then
                 if state.IsCycling() then return state.raid_event.adds.remains end
 
@@ -3278,6 +3280,9 @@ do
                 return remains * reduction
 
             elseif k == "duration_guess" or k == "duration_expected" then
+                local expected = class.abilities[ t.key ].cooldown_estimate
+                if expected then return expected end
+
                 local remains, duration = t.remains, t.duration
                 if remains == 0 or remains == duration then return duration end
 
@@ -6629,7 +6634,6 @@ do
 
         for i = 1, 5 do
             local _, _, start, duration, icon = GetTotemInfo( i )
-
             if icon and class.totems[ icon ] then
                 summonPet( class.totems[ icon ], start + duration - state.now )
             end
