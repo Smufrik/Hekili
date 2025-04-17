@@ -106,7 +106,7 @@ actions.aoe_totemic+=/surging_totem
 actions.aoe_totemic+=/ascendance,if=ti_chain_lightning
 actions.aoe_totemic+=/crash_lightning,if=talent.crashing_storms.enabled&(active_enemies>=15-5*talent.unruly_winds.enabled)
 actions.aoe_totemic+=/feral_spirit,if=(cooldown.doom_winds.remains>13|cooldown.doom_winds.remains<=7)|buff.earthen_weapon.stack>=2
-actions.aoe_totemic+=/primordial_storm,if=(buff.maelstrom_weapon.stack>=10)&(cooldown.doom_winds.remains>3)&(buff.doom_winds.remains<=3|!buff.doom_winds.up&cooldown.doom_winds.remains>15|buff.earthen_weapon.stack>=4)
+actions.aoe_totemic+=/primordial_storm,if=(buff.maelstrom_weapon.stack>=10)&(cooldown.doom_winds.remains>3)&(buff.doom_winds.remains<=3|!buff.doom_winds.up&cooldown.doom_winds.remains>15|buff.earthen_weapon.stack>=4)|buff.primordial_storm.remains<3*gcd.max
 actions.aoe_totemic+=/flame_shock,if=!ticking&(talent.ashen_catalyst.enabled|talent.primordial_wave.enabled)&(active_dot.flame_shock<active_enemies|active_dot.flame_shock<6)
 actions.aoe_totemic+=/doom_winds
 actions.aoe_totemic+=/primordial_wave,if=dot.flame_shock.ticking&(active_dot.flame_shock>=active_enemies|active_dot.flame_shock=6)
@@ -151,10 +151,10 @@ actions.aoe_totemic_open+=/surging_totem
 actions.aoe_totemic_open+=/fire_nova,if=talent.swirling_maelstrom.enabled&dot.flame_shock.ticking&(active_dot.flame_shock>=active_enemies|active_dot.flame_shock=6)
 actions.aoe_totemic_open+=/feral_spirit
 actions.aoe_totemic_open+=/primordial_wave,if=dot.flame_shock.ticking&(active_dot.flame_shock>=active_enemies|active_dot.flame_shock=6)
+actions.aoe_totemic_open+=/primordial_storm,if=(buff.maelstrom_weapon.stack>=10)&(cooldown.doom_winds.remains>3)&(buff.doom_winds.remains<=gcd.max|!buff.doom_winds.up&cooldown.doom_winds.remains>15)|buff.primordial_storm.remains<3*gcd.max
 actions.aoe_totemic_open+=/elemental_blast,if=buff.maelstrom_weapon.stack>=10&!buff.legacy_of_the_frost_witch.up&cooldown.doom_winds.remains=0
 actions.aoe_totemic_open+=/doom_winds,if=buff.legacy_of_the_frost_witch.up
 actions.aoe_totemic_open+=/crash_lightning,if=(buff.electrostatic_wager.stack>9&buff.doom_winds.up)|!buff.crash_lightning.up
-actions.aoe_totemic_open+=/primordial_storm,if=(buff.maelstrom_weapon.stack>=10)&(cooldown.doom_winds.remains>3)&(buff.doom_winds.remains<=gcd.max|!buff.doom_winds.up&cooldown.doom_winds.remains>15)
 actions.aoe_totemic_open+=/lava_lash,if=buff.hot_hand.up
 actions.aoe_totemic_open+=/sundering,if=buff.legacy_of_the_frost_witch.up|(buff.earthen_weapon.stack>=2&buff.primordial_storm.up)
 actions.aoe_totemic_open+=/lava_lash,if=(buff.legacy_of_the_frost_witch.up&buff.whirling_fire.up)
