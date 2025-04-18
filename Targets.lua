@@ -1387,7 +1387,7 @@ do
         local dummy_override = state.target.is_dummy
 
         for k, v in pairs(db) do
-            if dummy_override or not CheckEnemyExclusion( k ) and max( 0, v.deathTime ) <= x then
+            if not dummy_override and not CheckEnemyExclusion( k ) and max( 0, v.deathTime ) <= x then
                 count = count + 1
             end
         end
@@ -1501,7 +1501,7 @@ do
 
         for k, v in pairs( db ) do
             local unit = ( v.unit or "unknown" )
-            local excluded = CheckEnemyExclusions( k )
+            local excluded = CheckEnemyExclusion( k )
 
             if v.n > 3 then
                 output = output .. format( "\n    %-11s: %4ds [%d] #%6s%s %s", unit, v.deathTime, v.n, v.npcid, excluded and "*" or "", UnitName( v.unit ) or "Unknown" )
