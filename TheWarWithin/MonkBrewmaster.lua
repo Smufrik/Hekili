@@ -1088,6 +1088,13 @@ spec:RegisterStateExpr( "persistent_multiplier", function( act )
     return mult
 end )
 
+spec:RegisterStateExpr( "heal_multiplier", function()
+    return ( 1 + 0.02 * talent.chi_proficiency.rank )
+        * ( 1 + ( talent.flow_of_chi.enabled and health.pct < 35 ) and 0.1 or 0 )
+        * ( 1 + 0.03 * buff.balanced_stratagem.stack )
+        * ( 1 + stat.versatility_atk_mod )
+end )
+
 spec:RegisterCombatLogEvent( function( ... )
     local _, subtype, _, sourceGUID, _, _, _, destGUID, _, _, _, spellID = ...
 
@@ -1484,7 +1491,9 @@ spec:RegisterAbilities( {
         startsCombat = true,
 
         handler = function ()
-            gain( ( healing_sphere.count * stat.attack_power ) + stat.spell_power * ( 1 + stat.versatility_atk_mod ), "health" )
+            local heal = ( healing_sphere.count * 3.3 * stat.attack_power ) + ( 1.2 * stat.spell_power ) * ( 1 + 0.05 * talent.vigorous_expulsion.rank ) * ( 1 + talent.strength_of_spirit.enabled and ( ( 100 - health.pct ) / 100 ) or 0 )
+            gain( heal * heal_multiplier, "health" )
+
             if pvptalent.reverse_harm.enabled then gain( 1, "chi" ) end
             removeBuff( "gift_of_the_ox" )
             if talent.tranquil_spirit.enabled and healing_sphere.count > 0 then stagger.amount_remains = 0.95 * stagger.amount_remains end
@@ -1768,10 +1777,6 @@ spec:RegisterAbilities( {
                 addStack( "elusive_brawler" )
                 removeBuff( "blackout_combo" )
             end
-            if talent.balanced_stratagem.enabled then
-                removeBuff( "balanced_stratagem_magic" )
-                addStack( "balanced_stratagem_physical" )
-            end
             applyBuff( "purified_chi" )
 
             if talent.pretense_of_instability.enabled then applyBuff( "pretense_of_instability" ) end
@@ -1782,7 +1787,12 @@ spec:RegisterAbilities( {
 
             local reduction = stagger.amount_remains * ( 0.5 + 0.03 * buff.brewmasters_rhythm.stack )
             stagger.amount_remains = stagger.amount_remains - reduction
-            gain( 0.25 * reduction, "health" )
+            gain( 0.25 * reduction * heal_multiplier, "health" )
+
+            if talent.balanced_stratagem.enabled then
+                removeBuff( "balanced_stratagem_magic" )
+                addStack( "balanced_stratagem_physical" )
+            end
 
             applyBuff( "recent_purifies", nil, 1, reduction )
         end,
