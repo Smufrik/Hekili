@@ -1091,7 +1091,7 @@ end )
 spec:RegisterStateExpr( "heal_multiplier", function()
     return ( 1 + 0.02 * talent.chi_proficiency.rank )
         * ( 1 + ( talent.flow_of_chi.enabled and health.pct < 35 ) and 0.1 or 0 )
-        * ( 1 + 0.03 * buff.balanced_stratagem.stack )
+        * ( 1 + 0.03 * buff.balanced_stratagem_magic.stack )
         * ( 1 + stat.versatility_atk_mod )
 end )
 
