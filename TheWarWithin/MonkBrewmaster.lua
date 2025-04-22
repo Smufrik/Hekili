@@ -556,6 +556,11 @@ spec:RegisterAuras( {
         tick_time = 0.75,
         max_stack = 1
     },
+    save_them_all = {
+        id = 390105,
+        duration = 4,
+        max_stack = 1,
+    },
     shuffle = {
         id = 322120,
         duration = 9,
@@ -1090,7 +1095,9 @@ end )
 
 spec:RegisterStateExpr( "heal_multiplier", function()
     return ( 1 + 0.02 * talent.chi_proficiency.rank )
+        * ( 1 + 0.04 * talent.grace_of_the_crane.rank )
         * ( 1 + ( talent.flow_of_chi.enabled and health.pct < 35 ) and 0.1 or 0 )
+        * ( 1 + 0.1 * buff.save_them_all.stack )
         * ( 1 + 0.03 * buff.balanced_stratagem_magic.stack )
         * ( 1 + stat.versatility_atk_mod )
 end )
