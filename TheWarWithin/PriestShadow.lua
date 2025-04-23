@@ -2158,13 +2158,8 @@ spec:RegisterAbilities( {
 
             if talent.inescapable_torment.enabled then InescapableTorment() end
 
-            if talent.expiation.enabled then
-                local swp = talent.purge_the_wicked.enabled and "purge_the_wicked" or "shadow_word_pain"
-                if debuff[ swp ].up then
-                    if debuff[ swp ].remains <= 6 then removeDebuff( "target", swp )
-                    else debuff[ swp ].expires = debuff[ swp ].expires - 6 end
-                end
-            end
+            local swp_reduction = 3 * talent.expiation.rank
+            if swp_reduction > 0 then debuff.shadow_word_pain.expires = max( 0, debuff.shadow_word_pain.expires - swp_reduction ) end
 
             if legendary.painbreaker_psalm.enabled then
                 local power = 0
