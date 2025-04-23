@@ -1096,7 +1096,7 @@ end )
 spec:RegisterStateExpr( "heal_multiplier", function()
     return ( 1 + 0.02 * talent.chi_proficiency.rank )
         * ( 1 + 0.04 * talent.grace_of_the_crane.rank )
-        * ( 1 + ( talent.flow_of_chi.enabled and health.pct < 35 ) and 0.1 or 0 )
+        * ( 1 + ( ( talent.flow_of_chi.enabled and health.pct < 35 ) and 0.1 or 0 ) )
         * ( 1 + 0.1 * buff.save_them_all.stack )
         * ( 1 + 0.03 * buff.balanced_stratagem_magic.stack )
         * ( 1 + stat.versatility_atk_mod )
@@ -1498,7 +1498,7 @@ spec:RegisterAbilities( {
         startsCombat = true,
 
         handler = function ()
-            local heal = ( healing_sphere.count * 3.3 * stat.attack_power ) + ( 1.2 * stat.spell_power ) * ( 1 + 0.05 * talent.vigorous_expulsion.rank ) * ( 1 + talent.strength_of_spirit.enabled and ( ( 100 - health.pct ) / 100 ) or 0 )
+            local heal = ( healing_sphere.count * 3.3 * stat.attack_power ) + ( 1.2 * stat.spell_power ) * ( 1 + 0.05 * talent.vigorous_expulsion.rank ) * ( 1 + ( talent.strength_of_spirit.enabled and ( ( 100 - health.pct ) / 100 ) or 0 ) )
             gain( heal * heal_multiplier, "health" )
 
             if pvptalent.reverse_harm.enabled then gain( 1, "chi" ) end
