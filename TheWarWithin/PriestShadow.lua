@@ -1023,7 +1023,7 @@ spec:RegisterHook( "reset_precast", function ()
 
     if not unfurlingDarknessInitialized then
         auras.player.buff.unfurling_darkness_cd = auras.player.debuff.unfurling_darkness_cd
-        debuff.unfurling_darkness_cd = buff.unfurling_darkness_cd
+        rawset( debuff, "unfurling_darkness_cd", buff.unfurling_darkness_cd )
     end
 
     if pet.mindbender.active then
