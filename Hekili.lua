@@ -524,8 +524,8 @@ function Hekili:SaveDebugSnapshot( dispName )
 
             sort( tdOrder )
 
-            local header = "    n  | Token" .. string.rep( " ", longestKey - 4 ) .. " | Name" .. string.rep( " ", longestName - 4 ) .. " | A. Count | A. Remains | S. Count | S. Remains\n"
-                .. "    -- | " .. string.rep( "-", longestKey + 1 ) .. " | " .. string.rep( "-", longestName ) .. " | -------- | ---------- | -------- | ----------"
+            local header = "     n  | ID      | Token" .. string.rep( " ", longestKey - 4 ) .. " | Name" .. string.rep( " ", longestName - 4 ) .. " | A. Count | A. Remains | S. Count | S. Remains\n"
+                .. "    --- | ------- | " .. string.rep( "-", longestKey + 1 ) .. " | " .. string.rep( "-", longestName ) .. " | -------- | ---------- | -------- | ----------"
 
 
             if #pbOrder > 0 then
@@ -534,8 +534,8 @@ function Hekili:SaveDebugSnapshot( dispName )
                 for i, token in ipairs( pbOrder ) do
                     local aura = playerBuffs[ token ]
 
-                    auraString = format( "%s\n    %-2d | %s%-" .. longestKey .. "s | %-" .. longestName .. "s | %8d | %10.2f | %8d | %10.2f",
-                        auraString, i, ( class.auras[ token ] and " " or "*" ), token, aura.name, aura.count, aura.remains, aura.sCount or -1, aura.sRemains or - 1 )
+                    auraString = format( "%s\n     %-2d | %7d | %s%-" .. longestKey .. "s | %-" .. longestName .. "s | %8d | %10.2f | %8d | %10.2f",
+                        auraString, i, class.auras[ token ] and class.auras[ token ].id or -1, ( class.auras[ token ] and " " or "*" ), token, aura.name, aura.count, aura.remains, aura.sCount or -1, aura.sRemains or - 1 )
                 end
 
             else
@@ -548,8 +548,8 @@ function Hekili:SaveDebugSnapshot( dispName )
                 for i, token in ipairs( pdOrder ) do
                     local aura = playerDebuffs[ token ]
 
-                    auraString = format( "%s\n    %-2d | %s%-" .. longestKey .. "s | %-" .. longestName .. "s | %8d | %10.2f | %8d | %10.2f",
-                        auraString, i, ( class.auras[ token ] and " " or "*" ), token, aura.name, aura.count, aura.remains, aura.sCount or -1, aura.sRemains or - 1 )
+                    auraString = format( "%s\n     %-2d | %7d | %s%-" .. longestKey .. "s | %-" .. longestName .. "s | %8d | %10.2f | %8d | %10.2f",
+                        auraString, i, class.auras[ token ] and class.auras[ token ].id or -1, ( class.auras[ token ] and " " or "*" ), token, aura.name, aura.count, aura.remains, aura.sCount or -1, aura.sRemains or - 1 )
                 end
             else
                 auraString = auraString .. "\n\nplayer_debuffs: none"
@@ -560,9 +560,10 @@ function Hekili:SaveDebugSnapshot( dispName )
 
                 for i, token in ipairs( tbOrder ) do
                     local aura = targetBuffs[ token ]
+                    local model = class.auras[ token ]
 
-                    auraString = format( "%s\n    %-2d | %s%-" .. longestKey .. "s | %-" .. longestName .. "s | %8d | %10.2f | %8d | %10.2f",
-                        auraString, i, ( class.auras[ token ] and " " or "*" ), token, aura.name, aura.count, aura.remains, aura.sCount or -1, aura.sRemains or - 1 )
+                    auraString = format( "%s\n     %-2d | %7d | %s%-" .. longestKey .. "s | %-" .. longestName .. "s | %8d | %10.2f | %8d | %10.2f",
+                        auraString, i, model and model.id or -1, model and " " or "*", token, aura.name, aura.count, aura.remains, aura.sCount or -1, aura.sRemains or - 1 )
                 end
 
             else
@@ -575,8 +576,8 @@ function Hekili:SaveDebugSnapshot( dispName )
                 for i, token in ipairs( tdOrder ) do
                     local aura = targetDebuffs[ token ]
 
-                    auraString = format( "%s\n    %-2d | %s%-" .. longestKey .. "s | %-" .. longestName .. "s | %8d | %10.2f | %8d | %10.2f",
-                        auraString, i, ( class.auras[ token ] and " " or "*" ), token, aura.name, aura.count, aura.remains, aura.sCount or -1, aura.sRemains or - 1 )
+                    auraString = format( "%s\n     %-2d | %7d | %s%-" .. longestKey .. "s | %-" .. longestName .. "s | %8d | %10.2f | %8d | %10.2f",
+                        auraString, i, class.auras[ token ] and class.auras[ token ].id or -1, ( class.auras[ token ] and " " or "*" ), token, aura.name, aura.count, aura.remains, aura.sCount or -1, aura.sRemains or - 1 )
                 end
 
             else
