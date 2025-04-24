@@ -5826,14 +5826,14 @@ do
 
         local i = 1
         while ( true ) do
-            local name, _, count, _, duration, expires, caster, _, _, spellID, _, _, _, _, timeMod, v1, v2, v3 = UnitBuff( unit, i )
+            local name, _, count, _, duration, expires, caster, _, _, spellID, _, _, isFromPlayerOrPlayerPet, _, timeMod, v1, v2, v3 = UnitBuff( unit, i )
             if not name then break end
 
             local aura = class.auras[ spellID ]
             local shared = aura and aura.shared
             local key = aura and aura.key or autoAuraKey[ spellID ]
 
-            if key and ( shared or caster and ( UnitIsUnit( "pet", caster ) or UnitIsUnit( "player", caster ) ) ) then
+            if key and ( shared or isFromPlayerOrPlayerPet ) then
                 db.buff[ key ] = db.buff[ key ] or {}
                 local buff = db.buff[ key ]
 
@@ -5872,14 +5872,14 @@ do
         i = 1
         while ( true ) do
 
-            local name, _, count, _, duration, expires, caster, _, _, spellID, _, _, _, _, timeMod, v1, v2, v3 = UnitDebuff( unit, i )
+            local name, _, count, _, duration, expires, caster, _, _, spellID, _, _, isFromPlayerOrPlayerPet, _, timeMod, v1, v2, v3 = UnitDebuff( unit, i )
             if not name then break end
 
             local aura = class.auras[ spellID ]
             local shared = aura and aura.shared
             local key = aura and aura.key or autoAuraKey[ spellID ]
 
-            if key and ( shared or caster and ( UnitIsUnit( "pet", caster ) or UnitIsUnit( "player", caster ) ) ) then
+            if key and ( shared or isFromPlayerOrPlayerPet ) then
                 db.debuff[ key ] = db.debuff[ key ] or {}
                 local debuff = db.debuff[ key ]
 
