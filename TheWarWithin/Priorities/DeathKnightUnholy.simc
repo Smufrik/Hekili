@@ -112,7 +112,8 @@ actions.cds_aoe+=/abomination_limb,if=variable.adds_remain
 
 ## San'layn AoE Cooldowns
 actions.cds_aoe_san+=/vile_contagion,cycle_targets=1,if=debuff.festering_wound.stack>=4&variable.adds_remain
-actions.cds_aoe_san+=/unholy_assault,target_if=debuff.festering_wound.stack<3,if=variable.adds_remain&talent.vile_contagion&debuff.festering_wound.stack<=2&cooldown.vile_contagion.remains<6
+actions.cds_aoe_san+=/dark_transformation,if=variable.adds_remain&(buff.death_and_decay.up|active_enemies<=3)
+actions.cds_aoe_san+=/unholy_assault,cycle_targets=1,if=debuff.festering_wound.stack<3&variable.adds_remain&talent.vile_contagion&debuff.festering_wound.stack<=2&cooldown.vile_contagion.remains<6
 actions.cds_aoe_san+=/unholy_assault,cycle_targets=1,if=variable.adds_remain&!talent.vile_contagion&buff.dark_transformation.up&buff.dark_transformation.remains<12
 actions.cds_aoe_san+=/outbreak,if=dot.virulent_plague.ticks_remain<5&(dot.virulent_plague.refreshable|talent.morbidity&!buff.gift_of_the_sanlayn.up&talent.superstrain&dot.frost_fever.refreshable&dot.blood_plague.refreshable)&(!dot.virulent_plague.ticking&variable.epidemic_targets<active_enemies|(!talent.unholy_blight|talent.unholy_blight&cooldown.dark_transformation.remains>5)&(!talent.raise_abomination|talent.raise_abomination&cooldown.raise_abomination.remains>6))
 actions.cds_aoe_san+=/apocalypse,cycle_targets=1,if=variable.adds_remain&rune<=3
