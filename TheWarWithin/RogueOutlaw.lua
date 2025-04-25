@@ -568,7 +568,7 @@ spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _
 
     -- SPELL_DAMAGE
     if subtype == "SPELL_DAMAGE" then
-        if spellID == 441146 then  -- Unseen Blade damage event.
+        if spellID == 441144 then  -- Unseen Blade damage event.
             if disorientStacks < 0 then
                 lastUnseenBlade = now
             end
