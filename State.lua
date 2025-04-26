@@ -7457,7 +7457,7 @@ do
 
         -- New: DoT Cap
         local dotCap = option.dotCap
-        if dotCap and dotCap > 0 then
+        if dotCap and dotCap > 0 and class.auras[ spell ] then
             local activeDot = state.active_dot[ spell ]
             local aura = state.dot[ spell ]
             if activeDot and activeDot >= dotCap then
