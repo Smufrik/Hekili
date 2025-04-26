@@ -1603,6 +1603,7 @@ spec:RegisterAbilities( {
             return 207311
         end,
         known = 55090,
+        flash = { 55090, 207311, 433895 },
         cast = 0,
         cooldown = 0,
         gcd = "spell",
