@@ -669,8 +669,8 @@ spec:RegisterHook( "runHandler", function( action )
         applyBuff( "power_swell" ) -- TODO: Modify Essence regen rate.
     end
 
-    if talent.extended_battle.enabled and ability.spendType == "essence" and debuff.bombardment.up then
-        debuff.bombardment.expires = debuff.bombardment.expires + 1
+    if talent.extended_battle.enabled and ability.spendType == "essence" and debuff.bombardments.up then
+        debuff.bombardments.expires = debuff.bombardments.expires + 1
     end
 end )
 
