@@ -1,30 +1,33 @@
-name: Priority/Recommendation Issue
-description: The addon appears fully functional, but its recommendations are incomplete or don't match my expectations.
-title: "[REC] Provide a short, descriptive title of you Recommendation issue"
+name: Priority/Recommendation Issue (incorrect rotation)
+description: The addon is working, but the recommended abilities seem wrong, incomplete, or unexpected.
+title: "[REC] ⚠️ Replace this text with a short, descriptive title of your Recommendation issue"
 labels: [recommendation, triage]
 assignees:
   - Hekili
+  - syrifgit
 body:
+
   - type: checkboxes
     id: precheck
     attributes:
       label: Before You Begin
-      description: Please confirm that you've taken these preliminary steps before submitting your issue report.
+      description: Please confirm that you have completed each of these steps before submitting your issue.
       options:
-        - label: I confirm that I have downloaded the latest version of the addon.
+        - label: I confirm I am using the latest version of the addon (outdated versions may have problems that were fixed on the newest release).
           required: true
-        - label: I am not playing on a private server.
+        - label: I confirm I am playing on official Blizzard servers (not private servers).
           required: true
         - label: I checked for an [existing, open ticket](https://github.com/Hekili/hekili/labels/recommendation) for this issue and was not able to find one.
           required: true
-        - label: I edited the title of this issue (above) so that it describes the issue I am reporting.
+        - label: I have updated the issue title to clearly describe the problem.
           required: true
-        - label: I am reporting an issue with the default priority included with the specialization (imported or edited priorities are not supported).
+        - label: I am reporting an issue with the default specialization priority (not a custom or imported priority).
           required: true
+
   - type: dropdown
     id: spec
     attributes:
-      label: Spec
+      label: Specialization
       description: Which spec
       options: 
         - DK - Blood
@@ -68,6 +71,7 @@ body:
       default: 0
     validations:
       required: true
+
   - type: textarea
     id: description
     attributes:
@@ -76,11 +80,12 @@ body:
       placeholder: "Example: For my Retribution Paladin, I expect the addon to recommend a Holy Power spender when I have 5 Holy Power.  However, the addon recommended Crusader Strike instead."
     validations:
       required: true
+
   - type: textarea
     id: reproduction
     attributes:
       label: How to Reproduce
-      description: Tell me what I need to do to see the issue you are reporting.
+      description: Tell me exactly how I can recreate the problem, step-by-step.
       placeholder: |
         1. Enter game as a Retribution Paladin.
         2. Take the Seraphim, Final Reckoning, and Execution Sentence talents.
@@ -89,46 +94,39 @@ body:
         5. See recommendations.
     validations:
       required: true
+
   - type: input
     id: player-info
     attributes:
       label: Snapshot (Link)
       description: |
-        Please supply a Snapshot of the addon's decision-making when you are seeing this issue in-game.  **This is not a screenshot.**  To generate a Snapshot, please complete the following steps.
-        * Log into your WoW character.
-        * Recreate the issue you are reporting (i.e., generate 5 Holy Power).
-        * When you see the recommendation you disagree with, press `ALT-SHIFT-P` to Pause and Snapshot (or use `ALT-SHIFT-[` to Snapshot without pausing).
-          * You can change these keybindings in `/hekili` > Toggles if needed.
-        * Type `/hekili` and press Enter.
-        * Open the Snapshots section on the left side.
-        * Select the display which is showing the recommendation (usually Primary).
-        * Select the snapshot number (usually 1, if you took only 1 snapshot).
-        * Copy all of the text in the lower box.
-        * Paste the text to Pastebin (https://pastebin.com).
-        * Provide the Pastebin link here.
-        
-        This step is essential, as most issues are related to specific classes, specializations, gear, talent choices, or other game systems.
-        If you do not provide this information, I cannot triage your problem.
+        Please provide a **Snapshot** from the addon, which is a **text** output created by a built-in command, **not** a screenshot.  
+        👉 [How to get a Snapshot (Click here)](https://github.com/Hekili/hekili/wiki/Report-An-Issue#how-do-i-get-a-snapshot)
+
+        ⚠️ **If you do not provide this information, your ticket may be declined.**
       placeholder: http://pastebin.com/AbCdEfGh
     validations:
       required: true
+
   - type: input
     id: sim-result
     attributes:
       label: Raidbots Sim Report (Link)
       description: |
-        The addon's recommendations are based on the SimulationCraft profiles generated for each specialization.  It is very helpful, for testing purposes, to compare the addon's recommendations to your sim's actions.  [Raidbots](https://www.raidbots.com/) is the fastest, easiest way to simulate your character.
-        * If the issue happens in single-target, link to your Patchwerk sim with 1 boss target.
-        * If the issue happens in sustained multi-target, link to your Patchwerk sim with the appropriate number of boss targets.
-        * If the issue happens in more chaotic scenarios, link to your Hectic Add Cleave sim with 1 boss target.
-        * You're welcome to link multiple sims using the **Additional Information** box, below.
+        Please provide a [**Raidbots Quick Sim**](https://www.raidbots.com/simbot/quick) link for your character.  
+        Your simulation should use the **same talents, gear, and target count** you had when encountering the issue.  
+        This is needed for all 🛡️**Tank** and 🗡️**DPS** specializations. (➕**Healers may skip this step.**)
+
+        ⚠️ **If you do not provide a Raidbots link, your ticket may be declined.**
       placeholder: https://www.raidbots.com/simbot/report/abcdEFghIjKlMNOPqrst
+
   - type: textarea
     id: addl-info
     attributes:
       label: Additional Information
       description: Please provide any additional information regarding this issue that was not included above.
       placeholder: Leave blank, if all necessary details are included above.
+      
   - type: input
     id: contact
     attributes:
