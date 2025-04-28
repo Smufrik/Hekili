@@ -1037,13 +1037,13 @@ spec:RegisterPets({
     apoc_ghoul = {
         id = 237409,
         spell = "apocalypse",
-        duration = 15,
+        duration = 20,
         copy = "army_ghoul",
     },
     magus_of_the_dead = {
         id = 163366,
         spell = "apocalypse",
-        duration = 15,
+        duration = 20,
         copy = "t31_magus",
     },
     ghoul = {
@@ -1332,7 +1332,7 @@ end )
 
 local ghoul_applicators = {
     raise_abomination = {
-        abom_ghoul = { 30 },
+        abomination = { 30 },
         abom_magus = { 30, "magus_of_the_dead" },
     },
 
@@ -1348,7 +1348,7 @@ local ghoul_applicators = {
     },
 
     summon_gargoyle = {
-        gargoyle = 25
+        gargoyle = { 25 }
     }
 }
 
@@ -1366,7 +1366,7 @@ spec:RegisterHook( "reset_precast", function ()
     end
 
     for spell, ghouls in pairs( ghoul_applicators ) do
-        local cast_time = action[ spell ].cast_time
+        local cast_time = action[ spell ].lastCast
 
         for ghoul, info in pairs( ghouls ) do
             dismissPet( ghoul )
@@ -1566,7 +1566,7 @@ spec:RegisterAbilities( {
             if pvptalent.necrotic_wounds.enabled and debuff.festering_wound.up and debuff.necrotic_wound.down then
                 applyDebuff( "target", "necrotic_wound" )
             else
-                summonPet( "apoc_ghoul", 15 )
+                summonPet( "apoc_ghoul" )
                 if set_bonus.tww1_4pc > 0 then addStack( "unholy_commander" ) end
             end
 
