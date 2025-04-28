@@ -101,9 +101,10 @@ body:
       label: What is your information source?
       description: Please select the option that best describes what information you referenced to decide the addon is making incorrect recommendations.
       options:
+        - APL Conditions - I found a possible typo or mistake
+        - snapshot - Contains errors/warnings
         - Based on Class Guides (e.g., IcyVeins, Wowhead)
         - Based on my own Raidbots Quick Sim results
-        - I reviewed the APL/conditions and found a possible typo or mistake
         - Based on my in-game experience and intuition
         - Other
     validations:
