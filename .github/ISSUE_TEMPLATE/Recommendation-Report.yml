@@ -102,7 +102,7 @@ body:
       description: Please select the option that best describes what information you referenced to decide the addon is making incorrect recommendations.
       options:
         - APL Conditions - I found a possible typo or mistake
-        - snapshot - Contains errors/warnings
+        - Snapshot - Contains errors/warnings
         - Based on Class Guides (e.g., IcyVeins, Wowhead)
         - Based on my own Raidbots Quick Sim results
         - Based on my in-game experience and intuition
