@@ -892,6 +892,13 @@ spec:RegisterHook( "reset_precast", function()
         else
             removeBuff( "disorienting_strikes" )
         end
+        if Hekili.ActiveDebug then
+            Hekili:Debug( "UB-Status: unseen_blades_available=%d DS=%d  ICD=%.1f",
+              unseen_blades_available,
+              buff.disorienting_strikes.stack or 0,
+              unseenBladeCD
+            )
+        end
     end
 
     -- Debugging for Roll the Bones
@@ -1215,6 +1222,7 @@ spec:RegisterAbilities( {
         cooldown = 0,
         gcd = "totem",
         school = "physical",
+        known    = 2098,
 
         spend = function() return 35 * ( talent.tight_spender.enabled and 0.94 or 1 ) - ( 5 * buff.summarily_dispatched.stack ) end,
         spendType = "energy",
@@ -1233,7 +1241,7 @@ spec:RegisterAbilities( {
             removeBuff( "coup_de_grace" )
             removeBuff( "escalating_blade" )
 
-            setCooldown( "global_cooldown", 1.2 * ( buff.adrenaline_rush.up and haste or 1) )
+          -- setCooldown( "global_cooldown", 1.2 * ( buff.adrenaline_rush.up and haste or 1) ) -- this was used for coup de grace bug which was fixed
 
         end,
 
