@@ -1241,7 +1241,7 @@ spec:RegisterAbilities( {
             removeBuff( "coup_de_grace" )
             removeBuff( "escalating_blade" )
 
-          -- setCooldown( "global_cooldown", 1.2 * ( buff.adrenaline_rush.up and haste or 1) ) -- this was used for coup de grace bug which was fixed
+            setCooldown( "global_cooldown", 1.2 * ( buff.adrenaline_rush.up and haste or 1) ) -- this was used for coup de grace bug which was fixed
 
         end,
 
