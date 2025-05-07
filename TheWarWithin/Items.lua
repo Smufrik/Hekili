@@ -790,9 +790,9 @@ all:RegisterAbilities( {
         gcd = "off",
 
         item = 219309,
-        toggle = "defensives",
+        toggle = "cooldowns",
 
-        proc = "absorb",
+        proc = "crit",
         self_buff = "radiance_tome",
 
         handler = function()
