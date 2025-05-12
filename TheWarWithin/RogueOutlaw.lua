@@ -645,9 +645,8 @@ local TriggerUnseenBlade = setfenv( function( )
 end, state )
 
 spec:RegisterStateExpr( "rtb_primary_remains", function ()
-  --  local baseTime = max( lastRoll or 0, action.roll_the_bones.lastCast or 0 )
-  --  return max( 0, baseTime + rollDuration - query_time )
-    return max( 0, ( lastRoll or 0 ) + rollDuration - query_time )
+    local baseTime = max( lastRoll or 0, action.roll_the_bones.lastCast or 0 )
+    return max( 0, baseTime + rollDuration - query_time )
 end )
 
 --[[   local remains = 0
@@ -913,12 +912,16 @@ spec:RegisterHook( "reset_precast", function()
 
     -- Debugging for Roll the Bones
     if Hekili.ActiveDebug and buff.roll_the_bones.up then
-        local elapsed   = query_time - lastRoll
-        local remaining = max( 0, rollDuration - elapsed )
-        local pandemic  = min( 9, remaining )
-        Hekili:Debug( "RTB: elapsed=%.2f  pandemic=%.2f  duration=%.2f",
-                      elapsed, pandemic, rollDuration )
-
+       -- local elapsed = query_time - lastRoll
+       -- local remaining = max( 0, rollDuration - elapsed )
+       -- local pandemic = min( 9, remaining )
+       -- Hekili:Debug( "RTB: elapsed=%.2f  pandemic=%.2f  duration=%.2f",
+       --               elapsed, pandemic, rollDuration )
+        Hekili:Debug( "RTB   queueBase=%.2f (lastRoll=%.2f / lastCast=%.2f)  rollDur=%.2f",
+                      max( lastRoll or 0, action.roll_the_bones.lastCast or 0 ),
+                      lastRoll or 0,
+                      action.roll_the_bones.lastCast or 0,
+                      rollDuration )
         Hekili:Debug( "\nRoll the Bones Debugging:" )
         Hekili:Debug( " - lastRoll: %.2f", lastRoll )
         Hekili:Debug( " - rollDuration: %.2f", rollDuration )
@@ -1238,7 +1241,7 @@ spec:RegisterAbilities( {
         cooldown = 0,
         gcd = "totem",
         school = "physical",
-        known    = 2098,
+        known = 2098,
 
         spend = function() return 35 * ( talent.tight_spender.enabled and 0.94 or 1 ) - ( 5 * buff.summarily_dispatched.stack ) end,
         spendType = "energy",
