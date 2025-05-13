@@ -2171,40 +2171,42 @@ local function ReadKeybindings( event )
         elseif _G["Dominos"] then
             table.wipe( slotsUsed )
 
-            for i = 1, 180 do
-                local bar = ceil( i / 12 )
-                local btn = _G["DominosActionButton" .. i]
+            for i = 1, 14 do
+                local bar = _G["DominosFrame" .. i]
+                for b = 1, 12 do
+                    local btn = bar.buttons[b]
 
-                if btn.action then
-                    local keybind
-                    local action = btn.action
-                    if action <= 0 then
-                        keybind = "CLICK " .. btn:GetName() .. ":HOTKEY"
-                    elseif action <= 12 then
-                        keybind = "ACTIONBUTTON" .. action
-                    elseif action <= 24 then
-                        keybind = "CLICK " .. btn:GetName() .. ":HOTKEY"
-                    elseif action <= 36 then
-                        keybind = "MULTIACTIONBAR3BUTTON" .. (action - 24)
-                    elseif action <= 48 then
-                        keybind = "MULTIACTIONBAR4BUTTON" .. (action - 36)
-                    elseif action <= 60 then
-                        keybind = "MULTIACTIONBAR2BUTTON" .. (action - 48)
-                    elseif action <= 72 then
-                        keybind = "MULTIACTIONBAR1BUTTON" .. (action - 60)
-                    elseif action <= 132 then
-                        keybind = "CLICK " .. btn:GetName() .. ":HOTKEY"
-                    elseif action <= 144 then
-                        keybind = "MULTIACTIONBAR5BUTTON" .. (action - 132)
-                    elseif action <= 156 then
-                        keybind = "MULTIACTIONBAR6BUTTON" .. (action - 144)
-                    elseif action <= 168 then
-                        keybind = "MULTIACTIONBAR7BUTTON" .. (action - 156)
-                    end
+                    if btn.action then
+                        local keybind
+                        local action = btn.action
+                        if action <= 0 then
+                            keybind = "CLICK " .. btn:GetName() .. ":HOTKEY"
+                        elseif action <= 12 then
+                            keybind = "ACTIONBUTTON" .. action
+                        elseif action <= 24 then
+                            keybind = "CLICK " .. btn:GetName() .. ":HOTKEY"
+                        elseif action <= 36 then
+                            keybind = "MULTIACTIONBAR3BUTTON" .. (action - 24)
+                        elseif action <= 48 then
+                            keybind = "MULTIACTIONBAR4BUTTON" .. (action - 36)
+                        elseif action <= 60 then
+                            keybind = "MULTIACTIONBAR2BUTTON" .. (action - 48)
+                        elseif action <= 72 then
+                            keybind = "MULTIACTIONBAR1BUTTON" .. (action - 60)
+                        elseif action <= 132 then
+                            keybind = "CLICK " .. btn:GetName() .. ":HOTKEY"
+                        elseif action <= 144 then
+                            keybind = "MULTIACTIONBAR5BUTTON" .. (action - 132)
+                        elseif action <= 156 then
+                            keybind = "MULTIACTIONBAR6BUTTON" .. (action - 144)
+                        elseif action <= 168 then
+                            keybind = "MULTIACTIONBAR7BUTTON" .. (action - 156)
+                        end
 
-                    if keybind and GetBindingKey( keybind ) then
-                        StoreKeybindInfo( bar, GetBindingKey( keybind ), GetActionInfo( i ) )
-                        slotsUsed[ i ] = true
+                        if keybind and GetBindingKey( keybind ) then
+                            StoreKeybindInfo( i, GetBindingKey( keybind ), GetActionInfo( btn.action ) )
+                            slotsUsed[ btn.action ] = true
+                        end
                     end
                 end
             end
