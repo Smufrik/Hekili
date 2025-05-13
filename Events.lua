@@ -2166,7 +2166,51 @@ local function ReadKeybindings( event )
                     slotsUsed[ i ] = true
                 end
             end
+        -- Dominos support
+        elseif _G["Dominos"] then
+            table.wipe( slotsUsed )
 
+            for i = 1, 14 do
+                local bar = _G["DominosFrame" .. i]
+                for b = 1, 12 do
+                    local btn = bar.buttons[b]
+
+                    if btn:HasAction() then
+                        local keybind
+                        local action = btn.action
+
+                        if action <= 0 then
+                            keybind = "CLICK " .. btn:GetName() .. ":LeftButton"
+                        elseif action <= 12 then
+                            keybind = "ACTIONBUTTON" .. action
+                        elseif action <= 24 then
+                            keybind = "CLICK " .. btn:GetName() .. ":LeftButton"
+                        elseif action <= 36 then
+                            keybind = "MULTIACTIONBAR3BUTTON" .. (action - 24)
+                        elseif action <= 48 then
+                            keybind = "MULTIACTIONBAR4BUTTON" .. (action - 36)
+                        elseif action <= 60 then
+                            keybind = "MULTIACTIONBAR2BUTTON" .. (action - 48)
+                        elseif action <= 72 then
+                            keybind = "MULTIACTIONBAR1BUTTON" .. (action - 60)
+                        elseif action <= 132 then
+                            keybind = "CLICK " .. btn:GetName() .. ":LeftButton"
+                        elseif action <= 144 then
+                            keybind = "MULTIACTIONBAR5BUTTON" .. (action - 132)
+                        elseif action <= 156 then
+                            keybind = "MULTIACTIONBAR6BUTTON" .. (action - 144)
+                        elseif action <= 168 then
+                            keybind = "MULTIACTIONBAR7BUTTON" .. (action - 156)
+                        end
+
+                        if keybind and GetBindingKey( keybind ) then
+                            StoreKeybindInfo( bar, GetBindingKey( keybind ), GetActionInfo( i ) )
+                            slotsUsed[ i ] = true
+                        end
+                    end
+                end
+            end
+        
         -- Use ElvUI's actionbars only if they are actually enabled.
         elseif _G["ElvUI"] and _G[ "ElvUI_Bar1Button1" ] then
             table.wipe( slotsUsed )
@@ -2331,6 +2375,44 @@ local function ReadOneKeybinding( event, slot )
         if GetBindingKey( keybind ) then
             StoreKeybindInfo( actionBarNumber, GetBindingKey( keybind ), GetActionInfo( slot ) )
             completed = true
+        end
+
+    -- Dominos support
+    elseif _G["Dominos"] then
+        local button = _G["DominosActionButton" .. slot]
+
+        if button:HasAction() then
+            local keybind
+            local action = button.action
+
+            if action <= 0 then
+                keybind = "CLICK " .. button:GetName() .. ":LeftButton"
+            elseif action <= 12 then
+                keybind = "ACTIONBUTTON" .. action
+            elseif action <= 24 then
+                keybind = "CLICK " .. button:GetName() .. ":LeftButton"
+            elseif action <= 36 then
+                keybind = "MULTIACTIONBAR3BUTTON" .. (action - 24)
+            elseif action <= 48 then
+                keybind = "MULTIACTIONBAR4BUTTON" .. (action - 36)
+            elseif action <= 60 then
+                keybind = "MULTIACTIONBAR2BUTTON" .. (action - 48)
+            elseif action <= 72 then
+                keybind = "MULTIACTIONBAR1BUTTON" .. (action - 60)
+            elseif action <= 132 then
+                keybind = "CLICK " .. button:GetName() .. ":LeftButton"
+            elseif action <= 144 then
+                keybind = "MULTIACTIONBAR5BUTTON" .. (action - 132)
+            elseif action <= 156 then
+                keybind = "MULTIACTIONBAR6BUTTON" .. (action - 144)
+            elseif action <= 168 then
+                keybind = "MULTIACTIONBAR7BUTTON" .. (action - 156)
+            end
+
+            if keybind and GetBindingKey( keybind ) then
+                StoreKeybindInfo( actionBarNumber, GetBindingKey( keybind ), GetActionInfo( slot ) )
+                completed = true
+            end
         end
 
     elseif _G["ElvUI"] and _G["ElvUI_Bar1Button1"] then
