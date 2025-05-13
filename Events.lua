@@ -2166,6 +2166,7 @@ local function ReadKeybindings( event )
                     slotsUsed[ i ] = true
                 end
             end
+
         -- Dominos support
         elseif _G["Dominos"] then
             table.wipe( slotsUsed )
