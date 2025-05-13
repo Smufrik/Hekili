@@ -2379,9 +2379,10 @@ local function ReadOneKeybinding( event, slot )
 
     -- Dominos support
     elseif _G["Dominos"] then
-        local button = _G["DominosActionButton" .. slot]
+        local bar = _G["DominosFrame" .. actionBarNumber]
+        local button = bar.buttons[keyNumber]
 
-        if button:HasAction() then
+        if button.action then
             local keybind
             local action = button.action
 
