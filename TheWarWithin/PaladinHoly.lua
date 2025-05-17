@@ -640,7 +640,7 @@ end, state )
 local InfusionOfLight = setfenv( function()
     removeStack( "infusion_of_light" )
     if talent.valiance.enabled then reduceCooldown( "holy_armaments", 3 ) end
-    if talent.imbued_infusions.enabled then reduceCooldown( "holy_shock", 1) end
+    if talent.imbued_infusions.enabled then reduceCooldown( "holy_shock", 1 ) end
 end, state )
 
 
@@ -1489,7 +1489,7 @@ spec:RegisterAbilities( {
         cast = 0,
         cooldown = function() return 9.5 * ( talent.sanctified_wrath.enabled and buff.avenging_wrath.up and 0.5 or 1 ) * haste end,
         charges = function() return talent.lights_conviction.enabled and 2 or nil end,
-        recharge = function() return talent.lights_conviction.enabled and 9.5 * ( talent.sanctified_wrath.enabled and buff.avenging_wrath.up and 0.5 or 1 ) * haste or nil end,
+        recharge = function() return talent.lights_conviction.enabled and ( 9.5 * ( talent.sanctified_wrath.enabled and buff.avenging_wrath.up and 0.5 or 1 ) * haste ) or nil end,
         gcd = "spell",
 
         spend = 0.028,
