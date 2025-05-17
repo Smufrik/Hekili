@@ -278,6 +278,11 @@ spec:RegisterAuras( {
         duration = 12,
         max_stack = 1
     },
+    crashing_lightning = {
+        id = 242286,
+        duration = 16,
+        max_stack = 15
+    },
     -- Talent: Damage of your next Crash Lightning increased by $s1%.
     -- https://wowhead.com/ptr-2/spell=333964
     cl_crash_lightning = {
@@ -2549,6 +2554,7 @@ spec:RegisterAbilities( {
         handler = function ()
         end,
     },
+
     -- Talent / Covenant (Necrolord): Blast your target with a Primordial Wave, dealing $375984s1 Shadow damage and apply Flame Shock to them.; Your next $?a137040[Lava Burst]?a137041[Lightning Bolt][Healing Wave] will also hit all targets affected by your $?a137040|a137041[Flame Shock][Riptide] for $?a137039[$s2%]?a137040[$s3%][$s4%] of normal $?a137039[healing][damage].$?s384405[; Primordial Wave generates $s5 stacks of Maelstrom Weapon.][]
     primordial_storm = {
         id = 1218090,
@@ -2574,6 +2580,7 @@ spec:RegisterAbilities( {
 
         bind = "primordial_wave"
     },
+
     -- Talent / Covenant (Necrolord): Blast your target with a Primordial Wave, dealing $375984s1 Shadow damage and apply Flame Shock to them.; Your next $?a137040[Lava Burst]?a137041[Lightning Bolt][Healing Wave] will also hit all targets affected by your $?a137040|a137041[Flame Shock][Riptide] for $?a137039[$s2%]?a137040[$s3%][$s4%] of normal $?a137039[healing][damage].$?s384405[; Primordial Wave generates $s5 stacks of Maelstrom Weapon.][]
     primordial_wave = {
         id = function() return talent.primordial_wave.enabled and 375982 or 326059 end,
@@ -2600,8 +2607,11 @@ spec:RegisterAbilities( {
 
         handler = function ()
             if talent.primal_maelstrom.enabled then gain_maelstrom( 5 ) end
-            applyBuff( "primordial_wave" )
+
+            applyBuff( "primordial_storm" )
+
             if talent.conductive_energy.enabled then active_dot.lightning_rod = min( active_enemies, max( active_dot.lightning_rod, active_dot.flame_shock ) ) end
+
             if set_bonus.tier31_2pc > 0 then
                 insert( virtual_spirits, {
                     expires = query_time + 15,
