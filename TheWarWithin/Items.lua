@@ -1323,7 +1323,7 @@ all:RegisterAbilities( {
         toggle = "cooldowns",
 
         proc = "secondary",
-        self_buff = "funhouse_lens",
+        self_buff = "funhouse_lens_crit",
 
         handler = function ()
             applyBuff( "funhouse_lens" )
