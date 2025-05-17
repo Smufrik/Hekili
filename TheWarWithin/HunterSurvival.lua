@@ -1329,13 +1329,13 @@ spec:RegisterAbilities( {
         gcd = "off",
         hidden = true,
     },
-    lunar_storm = {
+    --[[lunar_storm = {
         cast = 0,
         cooldown = 30,
         gcd = "off",
         hidden = true,
-        readyTime = function() return debuff.lunar_storm_cooldown.remains end,
-    },
+       nodebuff = lunar_storm_cooldown,
+    },--]]
     masters_call = {
         id = 272682,
         cast = 0,

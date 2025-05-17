@@ -1344,13 +1344,13 @@ spec:RegisterAbilities( {
         bind = "black_arrow"
     },
 
-    lunar_storm = {
+    --[[lunar_storm = {
         cast = 0,
         cooldown = 30,
         gcd = "off",
         hidden = true,
-        readyTime = function() return debuff.lunar_storm_cooldown.remains end,
-    },
+       nodebuff = lunar_storm_cooldown,
+    },--]]
 
         -- Your pet removes all root and movement impairing effects from itself and a friendly target, and grants immunity to all such effects for 4 sec.
         masters_call = {
