@@ -1533,6 +1533,7 @@ spec:RegisterAbilities( {
             if talent.withering_fire.enabled then
                 applyBuff ( "withering_fire" )
                 applyBuff( "deathblow" )
+                gainCharges( "black_arrow", 1 )
             end
             if talent.feathered_frenzy.enabled then applyDebuff( "target", "spotters_mark" ) end
 
