@@ -425,14 +425,14 @@ spec:RegisterAuras( {
         end,
         -- This is a player debuff, use generate to create the buff version in order to align with SimulationCraft
         generate = function( t )
-        local src = auras.player.debuff.lunar_storm_cooldown
-        if src and src.expires > now then
-            t.applied = src.applied
-            t.duration = src.duration
-            t.expires = src.expires
-        return
+            local src = auras.player.debuff.lunar_storm_cooldown
+            if src and src.expires > now then
+                t.applied = src.applied
+                t.duration = src.duration
+                t.expires = src.expires
+            return
+            end
         end
-    end
     },
     lunar_storm_ready = {
         id = 451805,
