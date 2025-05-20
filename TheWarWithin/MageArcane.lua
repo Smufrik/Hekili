@@ -1269,6 +1269,14 @@ spec:RegisterAbilities( {
             removeBuff( "arcane_harmony" )
             removeBuff( "bursting_energy" )
 
+            if buff.burden_of_power.up then
+                removeBuff( "burden_of_power" )
+                applyBuff( "glorious_incandescence" )
+            elseif buff.glorious_incandescence.up then
+                gain( 4, "arcane_charges")
+                removeBuff( "glorious_incandescence" )
+            end
+
             if talent.spellfire_spheres.enabled then
                 if buff.next_blast_spheres.stacks == 5 then
                     removeBuff( "next_blast_spheres" )
@@ -1276,14 +1284,6 @@ spec:RegisterAbilities( {
                     applyBuff( "burden_of_power" )
                 else addStack( "next_blast_spheres" )
                 end
-            end
-
-            if buff.burden_of_power.up then
-                removeBuff( "burden_of_power" )
-                applyBuff( "glorious_incandescence" )
-            elseif buff.glorious_incandescence.up then
-                gain( 4, "arcane_charges")
-                removeBuff( "glorious_incandescence" )
             end
 
             if buff.arcane_soul.up then
@@ -1344,6 +1344,11 @@ spec:RegisterAbilities( {
             -- removeBuff( "concentration" )
             removeBuff( "leydrinker" )
 
+            if buff.burden_of_power.up then
+                removeBuff( "burden_of_power" )
+                applyBuff( "glorious_incandescence" )
+            end
+
             if talent.spellfire_spheres.enabled then
                 if buff.next_blast_spheres.stacks == 5 then
                     removeBuff( "next_blast_spheres" )
@@ -1351,11 +1356,6 @@ spec:RegisterAbilities( {
                     applyBuff( "burden_of_power" )
                 else addStack( "next_blast_spheres" )
                 end
-            end
-
-            if buff.burden_of_power.up then
-                removeBuff( "burden_of_power" )
-                applyBuff( "glorious_incandescence" )
             end
 
             if buff.nether_precision.up then
