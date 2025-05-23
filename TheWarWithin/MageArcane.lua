@@ -204,7 +204,8 @@ spec:RegisterAuras( {
     aether_attunement_stack = {
         id = 458388,
         duration = 180,
-        max_stack = 3
+        max_stack = 3,
+        copy = "aether_attunement_counter"
     },
     --[[aethervision = {
         id = 467634,
