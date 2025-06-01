@@ -423,6 +423,16 @@ spec:RegisterAuras( {
         onRemove = function()
             applyBuff( "lunar_storm_ready" )
         end,
+        -- This is a player debuff, use generate to create the buff version in order to align with SimulationCraft
+        generate = function( t )
+            local src = auras.player.debuff.lunar_storm_cooldown
+            if src and src.expires > now then
+                t.applied = src.applied
+                t.duration = src.duration
+                t.expires = src.expires
+            return
+            end
+        end
     },
     lunar_storm_ready = {
         id = 451805,
@@ -1329,13 +1339,13 @@ spec:RegisterAbilities( {
         gcd = "off",
         hidden = true,
     },
-    lunar_storm = {
+    --[[lunar_storm = {
         cast = 0,
         cooldown = 30,
         gcd = "off",
         hidden = true,
-        readyTime = function() return buff.lunar_storm_cooldown.remains end,
-    },
+       nodebuff = lunar_storm_cooldown,
+    },--]]
     masters_call = {
         id = 272682,
         cast = 0,
@@ -1509,9 +1519,10 @@ spec:RegisterAbilities( {
                 removeBuff( "contained_explosion" )
                 gainCharges( 1, "wildfire_bomb" )
             end
-            if talent.lunar_storm.enabled and buff.lunar_storm_cooldown.down then
+            if talent.lunar_storm.enabled and buff.lunar_storm_ready.up then
+                removeBuff( "lunar_storm_ready" )
+                applyDebuff( "player", "lunar_storm_cooldown" )
                 applyDebuff( "target", "lunar_storm" )
-                applyBuff( "lunar_storm_cooldown" )
             end
         end,
 
