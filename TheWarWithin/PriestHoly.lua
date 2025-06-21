@@ -236,9 +236,9 @@ spec:RegisterAuras( {
         max_stack = 5
     },
     divine_image = {
-        id = 392990,
+        id = 405963,
         duration = 9,
-        max_stack = 1
+        max_stack = 2 
     },
     divine_word = {
         id = 372760,
