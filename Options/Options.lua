@@ -121,7 +121,6 @@ local oneTimeFixes = {
         end
     end,
 }
-
 function Hekili:RunOneTimeFixes()
     local profile = Hekili.DB.profile
     if not profile then return end
@@ -464,7 +463,9 @@ do
                 screenshot = true,
 
                 flashTexture = "Interface\\Cooldown\\star4",
-
+                performance = {
+                    mode = 1,    -- 1=Low, 2=Medium, 3=High
+                },
                 toggles = {
                     pause = {
                         key = "ALT-SHIFT-P",
@@ -5102,35 +5103,28 @@ found = true end
                             name = "Performance",
                             order = 10,
                             args = {
-                                placeboBar = {
-                                    type = "range",
-                                    name = "Not a Placebo",
-                                    desc = "This adjusts the VROOOM of your current specialization.",
-                                    order = 100,
-                                    width = "full",
-                                    min = 3,
-                                    max = 20,
-                                    step = 1
+                                mode = {
+                                    type = "select",
+                                    name = "Mode",
+                                        desc   = "Choose a performance preset:\n" ..
+                                        "• Low: Same as the setting during v11.1.5-1.0.8, best for slower/older systems.\n" ..
+                                        "• Medium: balanced updates for mid-range computers.\n" ..
+                                        "• High: maximum update frequency for high-end machines.",
+                                    order = 1,
+
+                                values = { "Low", "Medium", "High" },
+
+                                get = function(info)
+                                    return Hekili.DB.profile.performance.mode
+                                end,
+                                set = function(info, v)
+                                    Hekili.DB.profile.performance.mode = v
+                                end,
+
+                                width = 1.5,
                                 },
-
-                                vroom = {
-                                    type = "header",
-                                    name = function()
-                                        local amount = self.DB.profile.specs[ id ].placeboBar or 5
-
-                                        if amount > 19 then
-                                            return "|cFFFF0000MAXIMAL VROOM|r - Secret Optimal Mode Unlocked"
-                                        elseif amount > 14 then
-                                            return "|cFFFF0000DANGER|r - Approaching Maximum VROOOM"
-                                        end
-
-                                        return format( "VR%sM!", string.rep( "O", amount ) )
-                                    end,
-                                    order = 101,
-                                    width = "full"
-                                },
-                            }
-                        }
+                            },
+                        },
                     },
                 }
 
