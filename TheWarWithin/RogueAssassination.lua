@@ -1633,7 +1633,7 @@ spec:RegisterHook( "reset_precast", function ()
 
     if talent.master_assassin.enabled and buff.stealth.up then
         applyBuff( "master_assassin_aura", 3600 )
-        removeBuff( "master_assasin" )
+        removeBuff( "master_assassin" )
     end
 
     -- Tracking Envenom buff stacks.
