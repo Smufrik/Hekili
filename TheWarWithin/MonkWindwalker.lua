@@ -529,7 +529,7 @@ spec:RegisterAuras( {
     mystic_touch = {
         id = 113746,
         duration = 3600,
-        max_stack = 1,
+        max_stack = 1
     },
     -- Reduces the Chi Cost of your abilities by $s1.
     ordered_elements = {
