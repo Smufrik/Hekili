@@ -1004,7 +1004,6 @@ spec:RegisterGear( {
     }
 } )
 
-
 -- Don't need to actually snapshot this, the APL only cares about the power of the cast.
 spec:RegisterStateExpr( "pmultiplier", function ()
     if this_action ~= "devouring_plague" then return 1 end
@@ -1024,7 +1023,7 @@ spec:RegisterHook( "reset_precast", function ()
     end
 
     if not unfurlingDarknessInitialized then
-        -- Copy actual scraped debuff to buff table.        
+        -- Copy actual scraped debuff to buff table.
         auras.player.buff.unfurling_darkness_cd = auras.player.debuff.unfurling_darkness_cd
         -- Make debuff.unfurling_darkness_cd reference buff.unfurling_darkness_cd (incl. buff metatable).
         rawset( debuff, "unfurling_darkness_cd", buff.unfurling_darkness_cd )

@@ -517,29 +517,39 @@ spec:RegisterAuras( {
     },
 } )
 
--- The War Within
-spec:RegisterGear( "tww1", 212084, 212083, 212081, 212086, 212082 )
-spec:RegisterAuras( {
-    darkness_from_light = {
-        id = 455033,
-        duration = 30,
-        max_stack = 3
+spec:RegisterGear({
+    -- The War Within
+    tww1 = {
+        items = { 212084, 212083, 212081, 212086, 212082 },
+        auras = {
+            darkness_from_light = {
+                id = 455033,
+                duration = 30,
+                max_stack = 3
+            }
+        }
+    },
+    tww2 = {
+        items = { 229334, 229332, 229337, 229335, 229333 }
+    },
+    -- Dragonflight
+    tier29 = {
+        items = { 200327, 200329, 200324, 200326, 200328 }
+    },
+    tier30 = {
+        items = { 202543, 202542, 202541, 202545, 202540 },
+        auras = {
+            radiant_providence = {
+                id = 410638,
+                duration = 3600,
+                max_stack = 2
+            }
+        }
+    },
+    tier31 = {
+        items = { 207279, 207280, 207281, 207282, 207284, 217202, 217204, 217205, 217201, 217203 }
     }
 } )
-spec:RegisterGear( "tww2", 229334, 229332, 229337, 229335, 229333 )
-
--- Dragonflight
-spec:RegisterGear( "tier29", 200327, 200329, 200324, 200326, 200328 )
-spec:RegisterGear( "tier30", 202543, 202542, 202541, 202545, 202540 )
-spec:RegisterAuras( {
-    radiant_providence = {
-        id = 410638,
-        duration = 3600,
-        max_stack = 2
-    }
-} )
-spec:RegisterGear( "tier31", 207279, 207280, 207281, 207282, 207284, 217202, 217204, 217205, 217201, 217203 )
-
 
 spec:RegisterStateTable( "priest", {
     self_power_infusion = true
@@ -549,7 +559,6 @@ local holy_schools = {
     holy = true,
     holyfire = true
 }
-
 
 local entropic_rift_expires = 0
 local er_extensions = 0
@@ -579,7 +588,6 @@ local premonitions = {
     solace = "premonition_of_solace",
     clairvoyance = "premonition_of_clairvoyance"
 }
-
 
 spec:RegisterHook( "reset_precast", function ()
     if talent.premonition.enabled then

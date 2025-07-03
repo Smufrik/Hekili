@@ -24,7 +24,7 @@ spec:RegisterTalents( {
     astral_bulwark              = { 103611, 377933, 1 }, -- Astral Shift reduces damage taken by an additional 20%.
     astral_shift                = { 103616, 108271, 1 }, -- Shift partially into the elemental planes, taking 60% less damage for 12 sec.
     awakening_storms            = {  94867, 455129, 1 }, -- Lightning Bolt and Chain Lightning have a chance to strike your target for 137,966 Nature damage. Every 3 times this occurs, your next Lightning Bolt is replaced by Tempest.
-    brimming_with_life          = { 103582, 381689, 1 }, -- Maximum health increased by 10%, and while you are at full health, Reincarnation cools down 75% faster. 
+    brimming_with_life          = { 103582, 381689, 1 }, -- Maximum health increased by 10%, and while you are at full health, Reincarnation cools down 75% faster.
     call_of_the_elements        = { 103592, 383011, 1 }, -- Reduces the cooldown of Totemic Recall by 60 sec.
     capacitor_totem             = { 103579, 192058, 1 }, -- Summons a totem at the target location that gathers electrical energy from the surrounding air and explodes after 2 sec, stunning all enemies within 10 yards for 3 sec.
     chain_heal                  = { 103588,   1064, 1 }, -- Heals the friendly target for 260,213, then jumps up to 30 yards to heal the 4 most injured nearby allies. Healing is reduced by 30% with each jump.
@@ -62,7 +62,7 @@ spec:RegisterTalents( {
     poison_cleansing_totem      = { 103609, 383013, 1 }, -- Summons a totem at your feet that removes all Poison effects from a nearby party or raid member within 39 yards every 1.5 sec for 9 sec.
     primordial_bond             = { 103612, 381764, 1 }, -- While you have an elemental active, your damage taken is reduced by 5%.
     purge                       = { 103624,    370, 1 }, -- Purges the enemy target, removing 1 beneficial Magic effect.
-    refreshing_waters           = { 103594, 378211, 1 }, -- Your Healing Surge is 25% more effective on yourself. 
+    refreshing_waters           = { 103594, 378211, 1 }, -- Your Healing Surge is 25% more effective on yourself.
     rolling_thunder             = {  94889, 454026, 1 }, -- Tempest summons a Nature Feral Spirit for 15 sec.
     seasoned_winds              = { 103628, 355630, 1 }, -- Interrupting a spell with Wind Shear decreases your damage taken from that spell school by 15% for 18 sec. Stacks up to 2 times.
     spirit_walk                 = { 103591,  58875, 1 }, -- Removes all movement impairing effects and increases your movement speed by 60% for 8 sec.
@@ -71,11 +71,11 @@ spec:RegisterTalents( {
     spiritwalkers_grace         = { 103584,  79206, 1 }, -- Calls upon the guidance of the spirits for 15 sec, permitting movement while casting Shaman spells. Castable while casting. Increases movement speed by 20%.
     static_charge               = { 103618, 265046, 1 }, -- Reduces the cooldown of Capacitor Totem by 5 sec for each enemy it stuns, up to a maximum reduction of 20 sec.
     stone_bulwark_totem         = { 103629, 108270, 1 }, -- Summons a totem at your feet that grants you an absorb shield preventing 2.4 million damage for 15 sec, and an additional 248,338 every 5 sec for 30 sec.
-    storm_swell                 = {  94873, 455088, 1 }, -- Tempest grants 15% Mastery for 6 sec. 
+    storm_swell                 = {  94873, 455088, 1 }, -- Tempest grants 15% Mastery for 6 sec.
     stormcaller                 = {  94893, 454021, 1 }, -- Increases the critical strike chance of your Nature damage spells by 5% and the critical strike damage of your Nature spells by 5%.
     supercharge                 = {  94873, 455110, 1 }, -- Lightning Bolt, Tempest, and Chain Lightning have a 35% chance to refund 2 Maelstrom Weapon stacks.
     surging_currents            = {  94880, 454372, 1 }, -- When you cast Tempest you gain Surging Currents, increasing the effectiveness of your next Chain Heal or Healing Surge by 20%, up to 100%.
-    tempest                     = {  94892, 454009, 1 }, -- Every 40 Maelstrom Weapon stacks spent replaces your next Lightning Bolt with Tempest. 
+    tempest                     = {  94892, 454009, 1 }, -- Every 40 Maelstrom Weapon stacks spent replaces your next Lightning Bolt with Tempest.
     thunderous_paws             = { 103581, 378075, 1 }, -- Ghost Wolf removes snares and increases your movement speed by an additional 25% for the first 3 sec. May only occur once every 20 sec.
     thundershock                = { 103621, 378779, 1 }, -- Thunderstorm knocks enemies up instead of away and its cooldown is reduced by 5 sec.
     thunderstorm                = { 103603,  51490, 1 }, -- Calls down a bolt of lightning, dealing 10,451 Nature damage to all enemies within 10 yards, reducing their movement speed by 40% for 5 sec, and knocking them away from the Shaman. Usable while stunned.
@@ -110,7 +110,7 @@ spec:RegisterTalents( {
     earthliving_weapon          = {  81049, 382021, 1 }, -- Imbue your weapon with the element of Earth for 1 |4hour:hrs;. Your Riptide, Healing Wave, Healing Surge, and Chain Heal healing a 20% chance to trigger Earthliving on the target, healing for 132,837 over 9 sec.
     echo_of_the_elements        = {  81044, 333919, 1 }, -- Riptide and Lava Burst have an additional charge.
     first_ascendant             = { 103433, 462440, 1 }, -- The cooldown of Ascendance is reduced by 60 sec.
-    flow_of_the_tides           = {  81031, 382039, 1 }, -- Chain Heal bounces an additional time and casting Chain Heal on a target affected by Riptide consumes Riptide, increasing the healing of your Chain Heal by 30%. 
+    flow_of_the_tides           = {  81031, 382039, 1 }, -- Chain Heal bounces an additional time and casting Chain Heal on a target affected by Riptide consumes Riptide, increasing the healing of your Chain Heal by 30%.
     healing_rain                = {  81040,  73920, 1 }, -- Blanket the target area in healing rains, restoring 243,096 health to up to 5 allies over 10 sec.
     healing_stream_totem_2      = {  81022,   5394, 1 }, -- Summons a totem at your feet for 18 sec that heals an injured party or raid member within 52 yards for 63,140 every 1.9 sec. If you already know Healing Stream Totem, instead gain 1 additional charge of Healing Stream Totem.
     healing_tide_totem          = {  81032, 108280, 1 }, -- Summons a totem at your feet for 10 sec, which pulses every 1.9 sec, healing all party or raid members within 52 yards for 123587.3. Healing reduced beyond 5 targets.
@@ -127,11 +127,11 @@ spec:RegisterTalents( {
     riptide                     = {  81027,  61295, 1 }, -- Restorative waters wash over a friendly target, healing them for 250,372 and an additional 183,851 over 21 sec.
     spirit_link_totem           = {  81033,  98008, 1 }, -- Summons a totem at the target location for 6 sec, which reduces damage taken by all party and raid members within 13 yards by 15%. Immediately and every 1 sec, the health of all affected players is redistributed evenly.
     spiritwalkers_tidal_totem   = {  81045, 404522, 1 }, -- After using Healing Tide Totem, the cast time of your next 3 Healing Surges within 30 sec is reduced by 100% and their mana cost is reduced by 50%.
-    spouting_spirits            = { 103432, 462383, 1 }, -- Spirit Link Totem reduces damage taken by an additional 5%, and it restores 564,970 health to all nearby allies 1 second after it is dropped. Healing reduced beyond 5 targets. 
+    spouting_spirits            = { 103432, 462383, 1 }, -- Spirit Link Totem reduces damage taken by an additional 5%, and it restores 564,970 health to all nearby allies 1 second after it is dropped. Healing reduced beyond 5 targets.
     therazanes_resilience       = { 103435, 1217622, 1 }, -- Earth Shield and Water Shield no longer lose charges and are 115% effective.
     tidal_waves                 = {  81021,  51564, 1 }, -- Casting Riptide grants 2 stacks of Tidal Waves. Tidal Waves reduces the cast time of your next Healing Wave or Chain Heal by 20%, or increases the critical effect chance of your next Healing Surge by 30%.
     tide_turner                 = {  92675, 404019, 1 }, -- The lowest health target of Healing Tide Totem is healed for 30% more and receives 15% increased healing from you for 4 sec.
-    tidebringer                 = {  81041, 236501, 1 }, -- Every 10 sec, the cast time of your next Chain Heal is reduced by 50%, and jump distance increased by 100%. Maximum of 2 charges. 
+    tidebringer                 = {  81041, 236501, 1 }, -- Every 10 sec, the cast time of your next Chain Heal is reduced by 50%, and jump distance increased by 100%. Maximum of 2 charges.
     tidewaters                  = { 103434, 462424, 1 }, -- When you cast Surging Totem, each ally with your Riptide on them is healed for 260,755.
     torrent                     = {  81047, 200072, 1 }, -- Riptide's initial heal is increased 20% and has a 10% increased critical strike chance.
     undercurrent                = {  81052, 382194, 2 }, -- For each Riptide active on an ally, your heals are 0.5% more effective.
@@ -146,13 +146,13 @@ spec:RegisterTalents( {
     -- Totemic
     amplification_core          = {  94874, 445029, 1 }, -- While Surging Totem is active, your damage and healing done is increased by 3%.
     earthsurge                  = {  94881, 455590, 1 }, -- Allies affected by your Earthen Wall Totem, Ancestral Protection Totem, and Earthliving effect receive 15% increased healing from you.
-    imbuement_mastery           = {  94871, 445028, 1 }, -- Increases the duration of your Earthliving effect by 3 sec. 
+    imbuement_mastery           = {  94871, 445028, 1 }, -- Increases the duration of your Earthliving effect by 3 sec.
     lively_totems               = {  94882, 445034, 1 }, -- When you summon a Healing Tide Totem, Healing Stream Totem, Cloudburst Totem, Mana Tide Totem, or Spirit Link Totem you cast a free instant Chain Heal at 100% effectiveness.
     oversized_totems            = {  94859, 445026, 1 }, -- Increases the size and radius of your totems by 15%, and the health of your totems by 30%.
     oversurge                   = {  94874, 445030, 1 }, -- Surging Totem heals for 150% more during Ascendance.
     pulse_capacitor             = {  94866, 445032, 1 }, -- Increases the healing done by Surging Totem by 25%.
     reactivity                  = {  94872, 445035, 1 }, -- Your Healing Stream Totems now also heals a second ally at 50% effectiveness. Cloudburst Totem stores 25% additional healing.
-    supportive_imbuements       = {  94866, 445033, 1 }, -- Learn a new weapon imbue, Tidecaller's Guard.  Tidecaller's Guard Imbue your shield with the element of Water for 1 |4hour:hrs;. Your healing done is increased by 2.4% and the duration of your Healing Stream Totem and Cloudburst Totem is increased by 3.6 sec. 
+    supportive_imbuements       = {  94866, 445033, 1 }, -- Learn a new weapon imbue, Tidecaller's Guard.  Tidecaller's Guard Imbue your shield with the element of Water for 1 |4hour:hrs;. Your healing done is increased by 2.4% and the duration of your Healing Stream Totem and Cloudburst Totem is increased by 3.6 sec.
     surging_totem               = {  94877, 444995, 1, "totemic" }, -- Summons a totem at the target location that maintains Healing Rain for 24 sec. Heals for 30% more than a normal Healing Rain. Replaces Healing Rain.
     swift_recall                = {  94859, 445027, 1 }, -- Successfully removing a harmful effect with Tremor Totem or Poison Cleansing Totem, or controlling an enemy with Capacitor Totem or Earthgrab Totem reduces the cooldown of the totem used by 5 sec. Cannot occur more than once every 20 sec per totem.
     totemic_coordination        = {  94881, 445036, 1 }, -- Chain Heals from Lively Totem and Totemic Rebound are 25% more effective.
@@ -178,16 +178,16 @@ spec:RegisterTalents( {
 } )
 
 -- PvP Talents
-spec:RegisterPvpTalents( { 
+spec:RegisterPvpTalents( {
     burrow              = 5576, -- (409293) Burrow beneath the ground, becoming unattackable, removing movement impairing effects, and increasing your movement speed by 50% for 5 sec. When the effect ends, enemies within 6 yards are knocked in the air and take 455,287 Physical damage.
-    counterstrike_totem =  708, -- (204331) Summons a totem at your feet for 15 sec. Whenever enemies within 26 yards of the totem deal direct damage, the totem will deal 100% of the damage dealt back to attacker. 
+    counterstrike_totem =  708, -- (204331) Summons a totem at your feet for 15 sec. Whenever enemies within 26 yards of the totem deal direct damage, the totem will deal 100% of the damage dealt back to attacker.
     electrocute         =  714, -- (206642) When you successfully Purge a beneficial effect, the enemy suffers 165,559 Nature damage over 3 sec.
     grounding_totem     =  715, -- (204336) Summons a totem at your feet that will redirect all harmful spells cast within 39 yards on a nearby party or raid member to itself. Will not redirect area of effect spells. Lasts 3 sec.
-    living_tide         = 5388, -- (353115) 
-    rain_dance          = 3755, -- (290250) 
+    living_tide         = 5388, -- (353115)
+    rain_dance          = 3755, -- (290250)
     static_field_totem  = 5567, -- (355580) Summons a totem with 5% of your health at the target location for 6 sec that forms a circuit of electricity that enemies cannot pass through.
     storm_conduit       = 5704, -- (1217092) Casting Lightning Bolt or Chain Lightning reduces the cooldown of Astral Shift, Gust of Wind, Wind Shear, and Nature Totems by 3.0 sec. Interrupt duration reduced by 50% on Lightning Bolt and Chain Lightning casts.
-    totem_of_wrath      = 5705, -- (460697) Nature's Swiftness summons a totem at your feet for 15 sec that increases the critical effect of damage and healing spells of all nearby allies within 53 yards by 15% for 15 sec. 
+    totem_of_wrath      = 5705, -- (460697) Nature's Swiftness summons a totem at your feet for 15 sec that increases the critical effect of damage and healing spells of all nearby allies within 53 yards by 15% for 15 sec.
     unleash_shield      = 5437, -- (356736) Unleash your Elemental Shield's energy on an enemy target: Lightning Shield: Knocks them away. Earth Shield: Roots them in place for 2 sec. Water Shield: Summons a whirlpool for 6 sec, reducing damage and healing by 50% while they stand within it.
 } )
 
@@ -301,25 +301,34 @@ spec:RegisterAuras( {
     },
 } )
 
--- The War Within
-spec:RegisterGear( "tww2", 229260, 229261, 229262, 229263, 229265 )
-
--- Dragonflight
-spec:RegisterGear( "tier29", 200399, 200401, 200396, 200398, 200400, 217238, 217240, 217236, 217237, 217239 )
-spec:RegisterGear( "tier30", 202473, 202471, 202470, 202469, 202468 )
-spec:RegisterAuras( {
-    rainstorm = {
-        id = 409386,
-        duration = 6,
-        max_stack = 40
+spec:RegisterGear({
+    -- The War Within
+    tww2 = {
+        items = { 229260, 229261, 229262, 229263, 229265 }
     },
-    swelling_rain = {
-        id = 409391,
-        duration = 15,
-        max_stack = 40
+    -- Dragonflight
+    tier29 = {
+        items = { 200399, 200401, 200396, 200398, 200400, 217238, 217240, 217236, 217237, 217239 }
+    },
+    tier30 = {
+        items = { 202473, 202471, 202470, 202469, 202468 },
+        auras = {
+            rainstorm = {
+                id = 409386,
+                duration = 6,
+                max_stack = 40
+            },
+            swelling_rain = {
+                id = 409391,
+                duration = 15,
+                max_stack = 40
+            }
+        }
+    },
+    tier31 = {
+        items = { 207207, 207208, 207209, 207210, 207212 }
     }
 } )
-spec:RegisterGear( "tier31", 207207, 207208, 207209, 207210, 207212 )
 
 local recall_totems = {
     capacitor_totem = 1,
@@ -698,10 +707,10 @@ spec:RegisterAbilities( {
         notalent = "surging_totem",
 
         handler = function ()
-            
+
             applyBuff( "healing_rain" )
 
-            if talent.downpour.enabled then 
+            if talent.downpour.enabled then
                 applyBuff( "downpour" )
                 setCooldown( "downpour", 0 )
             end
@@ -722,7 +731,7 @@ spec:RegisterAbilities( {
             if talent.healing_stream_totem.rank + talent.healing_stream_totem_2.rank > 1 then return 2 end
         end,
         cooldown = function () return 30 - ( talent.totemic_surge.enabled and 6 or 0 ) end,
-        recharge = function() 
+        recharge = function()
             if talent.healing_stream_totem.rank + talent.healing_stream_totem_2.rank > 1 then return ( 30 - (talent.totemic_surge.enabled and 6 or 0 ))
             else return nil end
         end,
@@ -988,7 +997,7 @@ spec:RegisterAbilities( {
 
         handler = function ()
             summonTotem( "surging_totem" )
-            
+
             if talent.downpour.enabled then
                 setCooldown( "downpour", 0 )
                 applyBuff( "downpour" )
@@ -1013,7 +1022,7 @@ spec:RegisterAbilities( {
             applyBuff( "tidecallers_guard" )
         end,
     },
-	
+
 	-- Talent: Resets the cooldown of your most recently used totem with a base cooldown shorter than 3 minutes.
     totemic_recall = {
         id = 108285,
@@ -1032,7 +1041,7 @@ spec:RegisterAbilities( {
             if talent.creation_core.enabled and recall_totem_2 then setCooldown( recall_totem_2, 0 ) end
         end,
     },
-	
+
     -- Unleash elemental forces of Life, healing a friendly target for 12,592 and increasing the effect of your next healing spell. Riptide, Healing Wave, or Healing Surge: 35% increased healing. Chain Heal: 15% increased healing and bounces to 1 additional target. Healing Rain or Downpour: 2 additional allies healed. Wellspring: 25% of overhealing done is converted to an absorb effect.
     unleash_life = {
         id = 73685,

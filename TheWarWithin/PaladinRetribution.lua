@@ -931,6 +931,43 @@ spec:RegisterAuras( {
     }
 } )
 
+spec:RegisterGear({
+    -- The War Within
+    tww2 = {
+        items = { 229244, 229242, 229243, 229245, 229247 },
+        auras = {
+            winning_streak = {
+                id = 1216828,
+                duration = 30,
+                max_stack = 10
+            },
+            all_in = {
+                id = 1216837,
+                duration = 4,
+                max_stack = 1
+            }
+            -- TODO: Incorporate free spends?
+        }
+    },
+    -- Dragonflight
+    tier31 = {
+        items = { 207189, 207190, 207191, 207192, 207194, 217198, 217200, 217196, 217197, 217199 },
+        auras = {
+            echoes_of_wrath = {
+                id = 423590,
+                duration = 12,
+                max_stack = 1
+            }
+        }
+    },
+    tier30 = {
+        items = { 202455, 202453, 202452, 202451, 202450 }
+    },
+    tier29 = {
+        items = { 200417, 200419, 200414, 200416, 200418 }
+    }
+} )
+
 spec:RegisterHook( "prespend", function( amount, resource )
     -- You still need the holy power in order to cast, but it won't be consumed. It does trigger other effects as though it were consumed, though.
     if resource == "holy_power" and buff.all_in.up then
@@ -1042,36 +1079,6 @@ spec:RegisterUnitEvent( "UNIT_POWER_UPDATE", "player", nil, function( event, uni
 end )
 
 spec:RegisterStateExpr( "consecration", function () return buff.consecration end )
-
--- The War Within
-spec:RegisterGear( "tww2", 229244, 229242, 229243, 229245, 229247 )
-spec:RegisterAuras( {
-   -- 2-set
-    winning_streak = {
-        id = 1216828,
-        duration = 30,
-        max_stack = 10
-    },
-    all_in = {
-        id = 1216837,
-        duration = 4,
-        max_stack = 1
-    },
-
-    -- TODO: Incorporate free spends?
-
-} )
-
--- Legacy
-spec:RegisterGear( "tier31", 207189, 207190, 207191, 207192, 207194, 217198, 217200, 217196, 217197, 217199 )
-spec:RegisterAura( "echoes_of_wrath", {
-    id = 423590,
-    duration = 12,
-    max_stack = 1
-} )
-spec:RegisterGear( "tier30", 202455, 202453, 202452, 202451, 202450 )
-spec:RegisterGear( "tier29", 200417, 200419, 200414, 200416, 200418 )
-
 
 local tempDebug = { 387174, 255937, 427453, 429826, 427441 }
 local IsSpellOverlayed = IsSpellOverlayed

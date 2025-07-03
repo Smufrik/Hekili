@@ -1120,13 +1120,56 @@ spec:RegisterAuras( {
     },
 } )
 
+spec:RegisterGear({
+    -- The War Within
+    tww2 = {
+        items = { 229325, 229323, 229328, 229326, 229324 },
+        auras = {
+            jackpot = {
+                id = 1217798,
+                duration = 10,
+                max_stack = 1
+            }
+        }
+    },
+    -- Dragonflight
+    tier31 = {
+        items = { 207270, 207271, 207272, 207273, 207275 },
+        auras = {
+            searing_bolt = {
+                id = 423886,
+                duration = 10,
+                max_stack = 1
+            }
+        }
+    },
+    tier30 = {
+        items = { 202534, 202533, 202532, 202536, 202531 },
+        auras = {
+            umbrafire_embers = {
+                id = 409652,
+                duration = 13,
+                max_stack = 8
+            }
+        }
+    },
+    tier29 = {
+        items = { 200336, 200338, 200333, 200335, 200337, 217212, 217214, 217215, 217211, 217213 },
+        auras = {
+            chaos_maelstrom = {
+                id = 394679,
+                duration = 10,
+                max_stack = 1
+            }
+        }
+    }
+} )
 
 spec:RegisterHook( "runHandler", function( a )
     if talent.rolling_havoc.enabled and havoc_active and not debuff.havoc.up and action[ a ].startsCombat then
         addStack( "rolling_havoc" )
     end
 end )
-
 
 spec:RegisterHook( "spend", function( amt, resource )
     if resource == "soul_shards" then
@@ -1175,7 +1218,6 @@ spec:RegisterHook( "spend", function( amt, resource )
     end
 end )
 
-
 spec:RegisterHook( "advance_end", function( time )
     if buff.art_mother.expires > query_time - time and buff.art_mother.down then
         summon_demon( "mother_of_chaos", 6 )
@@ -1183,7 +1225,6 @@ spec:RegisterHook( "advance_end", function( time )
         if talent.secrets_of_the_coven.enabled then applyBuff( "infernal_bolt" ) end
     end
 end )
-
 
 local lastTarget
 local lastMayhem = 0
@@ -1197,7 +1238,6 @@ spec:RegisterHook( "COMBAT_LOG_EVENT_UNFILTERED", function( _, subtype, _, sourc
         end
     end
 end, false )
-
 
 spec:RegisterStateExpr( "last_havoc", function ()
     if talent.mayhem.enabled then return lastMayhem end
@@ -1220,8 +1260,6 @@ spec:RegisterStateExpr( "diabolic_ritual", function ()
     return buff.ritual_overlord.up or buff.ritual_mother.up or buff.ritual_pit_lord.up
 end )
 
-
-
 spec:RegisterHook( "TimeToReady", function( wait, action )
     local ability = action and class.abilities[ action ]
 
@@ -1233,41 +1271,6 @@ spec:RegisterHook( "TimeToReady", function( wait, action )
 end )
 
 spec:RegisterStateExpr( "soul_shard", function () return soul_shards.current end )
-
-
--- The War Within
-spec:RegisterGear( "tww2", 229325, 229323, 229328, 229326, 229324 )
-spec:RegisterAuras( {
--- 2-set
--- https://www.wowhead.com/ptr-2/spell=1217798/jackpot
--- Hitting a Jackpot! increases your Mastery by 3% and your spells gain maximum benefit from Mastery: Chaotic Energies for 10 sec.
-    jackpot = {
-        id = 1217798,
-        duration = 10,
-        max_stack = 1,
-    },
-} )
-
--- Dragonflight
--- Tier 29
-spec:RegisterGear( "tier29", 200336, 200338, 200333, 200335, 200337, 217212, 217214, 217215, 217211, 217213 )
-spec:RegisterAura( "chaos_maelstrom", {
-    id = 394679,
-    duration = 10,
-    max_stack = 1
-} )
-spec:RegisterGear( "tier30", 202534, 202533, 202532, 202536, 202531 )
-spec:RegisterAura( "umbrafire_embers", {
-    id = 409652,
-    duration = 13,
-    max_stack = 8
-} )
-spec:RegisterGear( "tier31", 207270, 207271, 207272, 207273, 207275 )
-spec:RegisterAura( "searing_bolt", {
-    id = 423886,
-    duration = 10,
-    max_stack = 1
-} )
 
 local SUMMON_DEMON_TEXT
 
@@ -1302,7 +1305,6 @@ spec:RegisterHook( "reset_precast", function ()
         applyBuff( "infernal_bolt" )
     end
 end )
-
 
 spec:RegisterCycle( function ()
     if active_enemies == 1 then return end

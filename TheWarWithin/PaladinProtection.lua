@@ -815,77 +815,83 @@ spec:RegisterAuras( {
     },
 } )
 
--- The War Within
-spec:RegisterGear( "tww2", 229244, 229242, 229243, 229245, 229247 )
-spec:RegisterAura( "luck_of_the_draw", {
-    -- https://www.wowhead.com/ptr-2/spell=1218114/luck-of-the-draw
-    -- Each time you take damage you have a chance to activate Luck of the Draw! causing you to cast Guardian of Ancient Kings for 4.0 sec. Your damage done is increased by 15% for 10 sec after Luck of the Draw! activates.
-        id = 1218114,
-        duration = 10,
-        max_stack = 1
-} )
-
--- Legacy
-spec:RegisterGear( "tier31", 207189, 207190, 207191, 207192, 207194 )
-spec:RegisterAuras( {
-    sanctification = { -- TODO: Explore reset of stacks when empowered Consecration expires.
-        id = 424616,
-        duration = 20,
-        max_stack = 5
+spec:RegisterGear({
+    -- The War Within
+    tww2 = {
+        items = { 229244, 229242, 229243, 229245, 229247 },
+        auras = {
+            luck_of_the_draw = {
+                id = 1218114,
+                duration = 10,
+                max_stack = 1
+            }
+        }
     },
-    sanctification_empower = {
-        id = 424622,
-        duration = 30,
-        max_stack = 1
+    -- Dragonflight
+    tier31 = {
+        items = { 207189, 207190, 207191, 207192, 207194 },
+        auras = {
+            sanctification = {
+                id = 424616,
+                duration = 20,
+                max_stack = 5
+            },
+            sanctification_empower = {
+                id = 424622,
+                duration = 30,
+                max_stack = 1
+            }
+        }
     },
-})
-
--- Tier 30
-spec:RegisterGear( "tier30", 202455, 202453, 202452, 202451, 202450 )
-spec:RegisterAura( "heartfire", {
-    id = 408399,
-    duration = 5,
-    max_stack = 1
-} )
-
-
--- Gear Sets
-spec:RegisterGear( "tier29", 200417, 200419, 200414, 200416, 200418, 217198, 217200, 217196, 217197, 217199 )
-spec:RegisterAuras( {
-    ally_of_the_light = {
-        id = 394714,
-        duration = 8,
-        max_stack = 1
+    tier30 = {
+        items = { 202455, 202453, 202452, 202451, 202450 },
+        auras = {
+            heartfire = {
+                id = 408399,
+                duration = 5,
+                max_stack = 1
+            }
+        }
     },
-    deflecting_light = {
-        id = 394727,
-        duration = 10,
-        max_stack = 1
-    }
+    tier29 = {
+        items = { 200417, 200419, 200414, 200416, 200418, 217198, 217200, 217196, 217197, 217199 },
+        auras = {
+            ally_of_the_light = {
+                id = 394714,
+                duration = 8,
+                max_stack = 1
+            },
+            deflecting_light = {
+                id = 394727,
+                duration = 10,
+                max_stack = 1
+            }
+        }
+    },
+    -- Legacy
+    tier21 = { items = { 152151, 152153, 152149, 152148, 152150, 152152 } },
+    tier20 = {
+        items = { 147160, 147162, 147158, 147157, 147159, 147161 },
+        auras = {
+            sacred_judgment = {
+                id = 246973,
+                duration = 8,
+                max_stack = 1
+            }
+        }
+    },
+    tier19 = { items = { 138350, 138353, 138356, 138359, 138362, 138369 } },
+    class =  { items = { 139690, 139691, 139692, 139693, 139694, 139695, 139696, 139697 } },
+    breastplate_of_the_golden_valkyr = { items = { 137017 } },
+    heathcliffs_immortality = { items = { 137047 } },
+    justice_gaze = { items = { 137065 } },
+    saruans_resolve = { items = { 144275 } },
+    tyelca_ferren_marcuss_stature = { items = { 137070 } },
+    tyrs_hand_of_faith = { items = { 137059 } },
+    uthers_guard = { items = { 137105 } },
+    soul_of_the_highlord = { items = { 151644 } },
+    pillars_of_inmost_light = { items = { 151812 } }
 } )
-
-spec:RegisterGear( "tier19", 138350, 138353, 138356, 138359, 138362, 138369 )
-spec:RegisterGear( "tier20", 147160, 147162, 147158, 147157, 147159, 147161 )
-    spec:RegisterAura( "sacred_judgment", {
-        id = 246973,
-        duration = 8,
-        max_stack = 1,
-    } )
-
-spec:RegisterGear( "tier21", 152151, 152153, 152149, 152148, 152150, 152152 )
-spec:RegisterGear( "class", 139690, 139691, 139692, 139693, 139694, 139695, 139696, 139697 )
-
-spec:RegisterGear( "breastplate_of_the_golden_valkyr", 137017 )
-spec:RegisterGear( "heathcliffs_immortality", 137047 )
-spec:RegisterGear( "justice_gaze", 137065 )
-spec:RegisterGear( "saruans_resolve", 144275 )
-spec:RegisterGear( "tyelca_ferren_marcuss_stature", 137070 )
-spec:RegisterGear( "tyrs_hand_of_faith", 137059 )
-spec:RegisterGear( "uthers_guard", 137105 )
-
-spec:RegisterGear( "soul_of_the_highlord", 151644 )
-spec:RegisterGear( "pillars_of_inmost_light", 151812 )
-
 
 spec:RegisterStateExpr( "last_consecration", function () return action.consecration.lastCast end )
 spec:RegisterStateExpr( "last_blessed_hammer", function () return action.blessed_hammer.lastCast end )

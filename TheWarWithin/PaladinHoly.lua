@@ -596,36 +596,40 @@ spec:RegisterAuras( {
     },
 } )
 
--- Current Expansion
-spec:RegisterGear( "tww2", 229244, 229242, 229243, 229245, 229247 )
-
--- Legacy
-
-spec:RegisterGear( "tier31", 207189, 207190, 207191, 207192, 207194 )
-spec:RegisterAuras( {
-    holy_reverberation = { -- TODO: Is actually multiple applications, not true stacks; check SimC.
-        id = 423377,
-        duration = 8,
-        max_stack = 6,
-        friendly = true,
-        copy = { "holy_reverberation_heal", "holy_reverberation_buff" }
+spec:RegisterGear({
+    -- The War Within
+    tww2 = {
+        items = { 229244, 229242, 229243, 229245, 229247 }
     },
-    holy_reverberation_dot = {
-        id = 423379,
-        duration = 8,
-        max_stack = 6,
-        copy = { "holy_reverberation_dmg", "holy_reverberation_debuff" }
+    -- Dragonflight
+    tier31 = {
+        items = { 207189, 207190, 207191, 207192, 207194 },
+        auras = {
+            holy_reverberation = {
+                id = 423377,
+                duration = 8,
+                max_stack = 6,
+                friendly = true,
+                copy = { "holy_reverberation_heal", "holy_reverberation_buff" }
+            },
+            holy_reverberation_dot = {
+                id = 423379,
+                duration = 8,
+                max_stack = 6,
+                copy = { "holy_reverberation_dmg", "holy_reverberation_debuff" }
+            },
+            first_light = {
+                id = 427946,
+                duration = 6,
+                max_stack = 1
+            }
+        }
     },
-    first_light = {
-        id = 427946,
-        duration = 6,
-        max_stack = 1
+    tier30 = {
+        items = { 202455, 202453, 202452, 202451, 202450, 217198, 217200, 217196, 217197, 217199 }
     }
-} )
+})
 
-
-spec:RegisterGear( "tier30", 202455, 202453, 202452, 202451, 202450, 217198, 217200, 217196, 217197, 217199 )
--- 2pc is based on crits which aren't guaranteed, so we can't proactively model them.
 
 local HandleAwakening = setfenv( function()
         if buff.awakening.at_max_stacks then

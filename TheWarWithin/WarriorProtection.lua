@@ -570,47 +570,66 @@ spec:RegisterAuras( {
     }
 } )
 
--- The War
-spec:RegisterGear( "tww2", 229235, 229233, 229238, 229236, 229234 )
-spec:RegisterAuras( {
--- 2-set
--- https://www.wowhead.com/ptr-2/spell=1218163/luck-of-the-draw
--- Each time you take damage you have a chance to cast Shield Wall for 4.0 sec and gain Luck of the Draw!, which increases your damage dealt by 15% for 10 sec.
-    luck_of_the_draw = {
-        id = 1218163,
-        duration = 10,
-        max_stack = 1,
+spec:RegisterGear({
+    -- The War Within
+    tww2 = {
+        items = { 229235, 229233, 229238, 229236, 229234 },
+        auras = {
+            luck_of_the_draw = {
+                id = 1218163,
+                duration = 10,
+                max_stack = 1
+            }
+        }
     },
-} )
-
--- Dragonflight
-spec:RegisterGear( "tier29", 200426, 200428, 200423, 200425, 200427 )
-spec:RegisterSetBonuses( "tier29_2pc", 393710, "tier29_4pc", 393711 ) -- Dragonflight Season 1
-spec:RegisterAura( "vanguards_determination", {
-    id = 394056,
-    duration = 5,
-    max_stack = 1,
-} )
-spec:RegisterGear( "tier30", 202446, 202444, 202443, 202442, 202441 )
-spec:RegisterSetBonuses( "tier30_2pc", 405581, "tier30_4pc", 405582 )
-spec:RegisterAura( "earthen_tenacity", {
-    id = 410218,
-    duration = 5,
-    max_stack = 1
-} )
-spec:RegisterGear( "tier31", 207180, 207181, 207182, 207183, 207185, 217218, 217220, 217216, 217217, 217219 )
-spec:RegisterSetBonuses( "tier31_2pc", 422927, "tier31_4pc", 422928 )
-spec:RegisterAuras( {
-    fervid = {
-        id = 425517,
-        duration = 10,
-        max_stack = 1
+    -- Dragonflight
+    tier31 = {
+        items = { 207180, 207181, 207182, 207183, 207185, 217218, 217220, 217216, 217217, 217219 },
+        setBonuses = {
+            tier31_2pc = 422927,
+            tier31_4pc = 422928
+        },
+        auras = {
+            fervid = {
+                id = 425517,
+                duration = 10,
+                max_stack = 1
+            },
+            fervid_opposition = {
+                id = 427413,
+                duration = 5,
+                max_stack = 1
+            }
+        }
     },
-    fervid_opposition = {
-        id = 427413,
-        duration = 5,
-        max_stack = 1
+    tier30 = {
+        items = { 202446, 202444, 202443, 202442, 202441 },
+        setBonuses = {
+            tier30_2pc = 405581,
+            tier30_4pc = 405582
+        },
+        auras = {
+            earthen_tenacity = {
+                id = 410218,
+                duration = 5,
+                max_stack = 1
+            }
+        }
     },
+    tier29 = {
+        items = { 200426, 200428, 200423, 200425, 200427 },
+        setBonuses = {
+            tier29_2pc = 393710,
+            tier29_4pc = 393711
+        },
+        auras = {
+            vanguards_determination = {
+                id = 394056,
+                duration = 5,
+                max_stack = 1
+            }
+        }
+    }
 } )
 
 local rageSpent_10 = 0

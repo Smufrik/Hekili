@@ -438,25 +438,32 @@ spec:RegisterAuras( {
     },
 } )
 
-
-
--- The War Within
-spec:RegisterGear( "tww2", 229334, 229332, 229337, 229335, 229333 )
-
--- Dragonflight
-spec:RegisterGear( "tier30", 202543, 202542, 202541, 202545, 202540 )
-spec:RegisterAuras( {
-    inspired_word = {
-        id = 409479,
-        duration = 3600,
-        max_stack = 15
+spec:RegisterGear({
+    -- The War Within
+    tww2 = {
+        items = { 229334, 229332, 229337, 229335, 229333 }
+    },
+    -- Dragonflight
+    tier30 = {
+        items = { 202543, 202542, 202541, 202545, 202540 },
+        auras = {
+            inspired_word = {
+                id = 409479,
+                duration = 3600,
+                max_stack = 15
+            }
+        }
+    },
+    tier31 = {
+        items = { 207279, 207280, 207281, 207282, 207284, 217202, 217204, 217205, 217201, 217203 },
+        auras = {
+            sacred_reverence = {
+                id = 423510,
+                duration = 3600,
+                max_stack = 2
+            }
+        }
     }
-} )
-spec:RegisterGear( "tier31", 207279, 207280, 207281, 207282, 207284, 217202, 217204, 217205, 217201, 217203 )
-spec:RegisterAura( "sacred_reverence", {
-    id = 423510,
-    duration = 3600,
-    max_stack = 2
 } )
 
 local naaruMulti = 1 + ( 0.1 * state.talent.light_of_the_naaru.rank )
