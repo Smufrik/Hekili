@@ -913,63 +913,60 @@ do
     end
 end
 
-
--- The War Within
-spec:RegisterGear( "tww2", 229346, 229344, 229342, 229343, 229341 )
-spec:RegisterAuras( {
-   -- 2-set
-   clarity = {
-    id = 1216178,
-    duration = 12,
-    max_stack = 1
+spec:RegisterGear({
+    -- The War Within
+    tww2 = {
+        items = { 229346, 229344, 229342, 229343, 229341 },
+        auras = {
+            clarity = {
+                id = 1216178,
+                duration = 12,
+                max_stack = 1
+            }
+        }
     },
-} )
-
-
--- Dragonflight
-spec:RegisterGear( "tier31", 207288, 207289, 207290, 207291, 207293, 217232, 217234, 217235, 217231, 217233 )
-spec:RegisterAuras( {
-    forethought = {
-        id = 424293,
-        duration = 20,
-        max_stack = 5
+    -- Dragonflight
+    tier31 = {
+        items = { 207288, 207289, 207290, 207291, 207293, 217232, 217234, 217235, 217231, 217233 },
+        auras = {
+            forethought = {
+                id = 424293,
+                duration = 20,
+                max_stack = 5
+            },
+            arcane_battery = {
+                id = 424334,
+                duration = 30,
+                max_stack = 3
+            },
+            arcane_artillery = {
+                id = 424331,
+                duration = 30,
+                max_stack = 1
+            }
+        }
     },
-    arcane_battery = {
-        id = 424334,
-        duration = 30,
-        max_stack = 3
+    tier30 = {
+        items = { 202554, 202552, 202551, 202550, 202549 },
+        auras = {
+            arcane_overload = {
+                id = 409022,
+                duration = 18,
+                max_stack = 25
+            }
+        }
     },
-    arcane_artillery = {
-        id = 424331,
-        duration = 30,
-        max_stack = 1
+    tier29 = {
+        items = { 200318, 200320, 200315, 200317, 200319 },
+        auras = {
+            bursting_energy = {
+                id = 395006,
+                duration = 12,
+                max_stack = 4
+            }
+        }
     }
 } )
-
--- Tier 30
-spec:RegisterGear( "tier30", 202554, 202552, 202551, 202550, 202549 )
-spec:RegisterAura( "arcane_overload", {
-    id = 409022,
-    duration = 18,
-    max_stack = 25
-} )
-
-local TriggerArcaneOverloadT30 = setfenv( function()
-    applyBuff( "arcane_overload" )
-end, state )
-
--- Hero Talents
-local TriggerArcaneSoul = setfenv( function()
-    applyBuff( "arcane_soul" )
-end, state )
-
-spec:RegisterGear( "tier29", 200318, 200320, 200315, 200317, 200319 )
-spec:RegisterAura( "bursting_energy", {
-    id = 395006,
-    duration = 12,
-    max_stack = 4
-} )
-
 
 spec:RegisterHook( "spend", function( amt, resource )
     if resource == "arcane_charges" then

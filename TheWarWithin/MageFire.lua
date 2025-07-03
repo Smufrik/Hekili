@@ -894,53 +894,54 @@ spec:RegisterStateTable( "improved_scorch", setmetatable( {}, {
     end, state )
 } ) )
 
-
--- The War Within
-spec:RegisterGear( "tww2", 229346, 229344, 229342, 229343, 229341 )
-spec:RegisterAuras( {
-   -- 2-set
-rollin_hot = {
-    id = 1219035,
-    duration = 15,
-    max_stack = 1
-},
-   --[[ 4-set
-    jackpot = {
-        -- When you hit Jackpot you gain 7% more dps for 12s. If you gain jackpot from combustion the duration is increased by 100%
-    }, ]]--
-
-} )
-
--- Dragonflight
-spec:RegisterGear( "tier31", 207288, 207289, 207290, 207291, 207293 )
-spec:RegisterAura( "searing_rage", {
-    id = 424285,
-    duration = 12,
-    max_stack = 5
-} )
-
-spec:RegisterGear( "tier30", 202554, 202552, 202551, 202550, 202549, 217232, 217234, 217235, 217231, 217233 )
-spec:RegisterAuras( {
-    charring_embers = {
-        id = 408665,
-        duration = 14,
-        max_stack = 1,
-        copy = 453122
+spec:RegisterGear({
+    -- The War Within
+    tww2 = {
+        items = { 229346, 229344, 229342, 229343, 229341 },
+        auras = {
+            rollin_hot = {
+                id = 1219035,
+                duration = 15,
+                max_stack = 1
+            }
+        }
     },
-    calefaction = {
-        id = 408673,
-        duration = 60,
-        max_stack = 20
+    -- Dragonflight
+    tier31 = {
+        items = { 207288, 207289, 207290, 207291, 207293 },
+        auras = {
+            searing_rage = {
+                id = 424285,
+                duration = 12,
+                max_stack = 5
+            }
+        }
     },
-    flames_fury = {
-        id = 409964,
-        duration = 30,
-        max_stack = 2
+    tier30 = {
+        items = { 202554, 202552, 202551, 202550, 202549, 217232, 217234, 217235, 217231, 217233 },
+        auras = {
+            charring_embers = {
+                id = 408665,
+                duration = 14,
+                max_stack = 1,
+                copy = 453122
+            },
+            calefaction = {
+                id = 408673,
+                duration = 60,
+                max_stack = 20
+            },
+            flames_fury = {
+                id = 409964,
+                duration = 30,
+                max_stack = 2
+            }
+        }
+    },
+    tier29 = {
+        items = { 200318, 200320, 200315, 200317, 200319 }
     }
 } )
-
-
-spec:RegisterGear( "tier29", 200318, 200320, 200315, 200317, 200319 )
 
 local TriggerHyperthermia = setfenv( function()
 

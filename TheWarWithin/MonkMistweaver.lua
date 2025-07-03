@@ -646,29 +646,36 @@ spec:RegisterAuras( {
     },
 } )
 
--- The War Within
-spec:RegisterGear( "tww2", 229301, 229299, 229298, 229297, 229296 )
-
--- Dragonflight
-spec:RegisterGear( "tier31", 207243, 207244, 207245, 207246, 207248, 217188, 217190, 217186, 217187, 217189 )
-spec:RegisterAuras( {
-    chi_harmony = {
-        id = 423439,
-        duration = 8,
-        max_stack = 1
-    }
-} )
-spec:RegisterGear( "tier30", 202509, 202507, 202506, 202505, 202504 )
-spec:RegisterAuras( {
-    soulfang_infusion = {
-        id = 410007,
-        duration = 3,
-        max_stack = 1
+spec:RegisterGear({
+    -- The War Within
+    tww2 = {
+        items = { 229301, 229299, 229298, 229297, 229296 }
     },
-    soulfang_vitality = {
-        id = 410082,
-        duration = 6,
-        max_stack = 1
+    -- Dragonflight
+    tier31 = {
+        items = { 207243, 207244, 207245, 207246, 207248, 217188, 217190, 217186, 217187, 217189 },
+        auras = {
+            chi_harmony = {
+                id = 423439,
+                duration = 8,
+                max_stack = 1
+            }
+        }
+    },
+    tier30 = {
+        items = { 202509, 202507, 202506, 202505, 202504 },
+        auras = {
+            soulfang_infusion = {
+                id = 410007,
+                duration = 3,
+                max_stack = 1
+            },
+            soulfang_vitality = {
+                id = 410082,
+                duration = 6,
+                max_stack = 1
+            }
+        }
     }
 } )
 

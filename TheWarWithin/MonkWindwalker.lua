@@ -787,70 +787,75 @@ spec:RegisterAuras( {
     },
 } )
 
--- The War Within
-spec:RegisterGear( "tww2", 229301, 229299, 229298, 229297, 229296 )
-spec:RegisterAuras( {
-    -- 2-set
-    -- https://www.wowhead.com/ptr-2/spell=1216182/winning-streak // https://www.wowhead.com/ptr-2/spell=1215717/monk-windwalker-11-1-class-set-2pc
-    -- [Your spells and abilities have a chance to activate a Winning Streak! increasing the damage of your Rising Sun Kick and Spinning Crane Kick by 3% stacking up to 10 times. Rising Sun Kick and Spinning Crane Kick have a 15% chance to remove Winning Streak!] = {
-    winning_streak = {
-        id = 1216182,
-        duration = 3600,
-        max_stack = 10
+spec:RegisterGear({
+    -- The War Within
+    tww2 = {
+        items = { 229301, 229299, 229298, 229297, 229296 },
+        auras = {
+            winning_streak = {
+                id = 1216182,
+                duration = 3600,
+                max_stack = 10
+            },
+            cashout = {
+                id = 1216498,
+                duration = 30,
+                max_stack = 10
+            }
+        }
     },
-    -- https://www.wowhead.com/ptr-2/spell=1216498/cashout // https://www.wowhead.com/ptr-2/spell=1215718/monk-windwalker-11-1-class-set-4pc
-    cashout = {
-        id = 1216498,
-        duration = 30,
-        max_stack = 10
+    -- Dragonflight
+    tier31 = {
+        items = { 207243, 207244, 207245, 207246, 207248 }
     },
-} )
-
--- Dragonflight
-spec:RegisterGear( "tier31", 207243, 207244, 207245, 207246, 207248 )
-spec:RegisterGear( "tier30", 202509, 202507, 202506, 202505, 202504 )
-spec:RegisterAura( "shadowflame_vulnerability", {
-    id = 411376,
-    duration = 15,
-    max_stack = 1
-} )
-spec:RegisterGear( "tier29", 200360, 200362, 200363, 200364, 200365, 217188, 217190, 217186, 217187, 217189 )
-spec:RegisterAuras( {
-    kicks_of_flowing_momentum = {
-        id = 394944,
-        duration = 30,
-        max_stack = 2,
+    tier30 = {
+        items = { 202509, 202507, 202506, 202505, 202504 },
+        auras = {
+            shadowflame_vulnerability = {
+                id = 411376,
+                duration = 15,
+                max_stack = 1
+            }
+        }
     },
-    fists_of_flowing_momentum = {
-        id = 394949,
-        duration = 30,
-        max_stack = 3,
-    }
+    tier29 = {
+        items = { 200360, 200362, 200363, 200364, 200365, 217188, 217190, 217186, 217187, 217189 },
+        auras = {
+            kicks_of_flowing_momentum = {
+                id = 394944,
+                duration = 30,
+                max_stack = 2
+            },
+            fists_of_flowing_momentum = {
+                id = 394949,
+                duration = 30,
+                max_stack = 3
+            }
+        }
+    },
+    -- Legacy
+    tier21 = { items = { 152145, 152147, 152143, 152142, 152144, 152146 } },
+    tier20 = { items = { 147154, 147156, 147152, 147151, 147153, 147155 } },
+    tier19 = { items = { 138325, 138328, 138331, 138334, 138337, 138367 } },
+    class =  { items = { 139731, 139732, 139733, 139734, 139735, 139736, 139737, 139738 } },
+    cenedril_reflector_of_hatred = { items = { 137019 } },
+    cinidaria_the_symbiote = { items = { 133976 } },
+    drinking_horn_cover = { items = { 137097 } },
+    firestone_walkers = { items = { 137027 } },
+    fundamental_observation = { items = { 137063 } },
+    gai_plins_soothing_sash = { items = { 137079 } },
+    hidden_masters_forbidden_touch = { items = { 137057 } },
+    jewel_of_the_lost_abbey = { items = { 137044 } },
+    katsuos_eclipse = { items = { 137029 } },
+    march_of_the_legion = { items = { 137220 } },
+    prydaz_xavarics_magnum_opus = { items = { 132444 } },
+    salsalabims_lost_tunic = { items = { 137016 } },
+    sephuzs_secret = { items = { 132452 } },
+    the_emperors_capacitor = { items = { 144239 } },
+    soul_of_the_grandmaster = { items = { 151643 } },
+    stormstouts_last_gasp = { items = { 151788 } },
+    the_wind_blows = { items = { 151811 } }
 } )
-
--- Legacy
-spec:RegisterGear( "tier19", 138325, 138328, 138331, 138334, 138337, 138367 )
-spec:RegisterGear( "tier20", 147154, 147156, 147152, 147151, 147153, 147155 )
-spec:RegisterGear( "tier21", 152145, 152147, 152143, 152142, 152144, 152146 )
-spec:RegisterGear( "class", 139731, 139732, 139733, 139734, 139735, 139736, 139737, 139738 )
-spec:RegisterGear( "cenedril_reflector_of_hatred", 137019 )
-spec:RegisterGear( "cinidaria_the_symbiote", 133976 )
-spec:RegisterGear( "drinking_horn_cover", 137097 )
-spec:RegisterGear( "firestone_walkers", 137027 )
-spec:RegisterGear( "fundamental_observation", 137063 )
-spec:RegisterGear( "gai_plins_soothing_sash", 137079 )
-spec:RegisterGear( "hidden_masters_forbidden_touch", 137057 )
-spec:RegisterGear( "jewel_of_the_lost_abbey", 137044 )
-spec:RegisterGear( "katsuos_eclipse", 137029 )
-spec:RegisterGear( "march_of_the_legion", 137220 )
-spec:RegisterGear( "prydaz_xavarics_magnum_opus", 132444 )
-spec:RegisterGear( "salsalabims_lost_tunic", 137016 )
-spec:RegisterGear( "sephuzs_secret", 132452 )
-spec:RegisterGear( "the_emperors_capacitor", 144239 )
-spec:RegisterGear( "soul_of_the_grandmaster", 151643 )
-spec:RegisterGear( "stormstouts_last_gasp", 151788 )
-spec:RegisterGear( "the_wind_blows", 151811 )
-
 
 spec:RegisterStateTable( "combos", {
     blackout_kick = true,

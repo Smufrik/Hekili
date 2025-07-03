@@ -770,6 +770,68 @@ spec:RegisterAuras( {
     }
 } )
 
+spec:RegisterGear({
+    -- The War Within
+    tww2 = {
+        items = { 229301, 229299, 229298, 229297, 229296 },
+        auras = {
+            luck_of_the_draw = {
+                id = 1217990,
+                duration = 8,
+                max_stack = 1
+            },
+            opportunistic_strike = {
+                id = 1217999,
+                duration = 20,
+                max_stack = 2
+            }
+        }
+    },
+    -- Dragonflight
+    tier31 = {
+        items = { 207243, 207244, 207245, 207246, 207248, 217188, 217190, 217186, 217187, 217189 }
+    },
+    tier30 = {
+        items = { 202509, 202507, 202506, 202505, 202504 },
+        auras = {
+            leverage = {
+                id = 408503,
+                duration = 30,
+                max_stack = 5
+            }
+        }
+    },
+    tier29 = {
+        items = { 200363, 200365, 200360, 200362, 200364 },
+        auras = {
+            brewmasters_rhythm = {
+                id = 394797,
+                duration = 15,
+                max_stack = 4
+            }
+        }
+    },
+    -- Legacy
+    tier21 = { items = { 152145, 152147, 152143, 152142, 152144, 152146 } },
+    tier20 = { items = { 147154, 147156, 147152, 147151, 147153, 147155 } },
+    tier19 = { items = { 138325, 138328, 138331, 138334, 138337, 138367 } },
+    class =  { items = { 139731, 139732, 139733, 139734, 139735, 139736, 139737, 139738 } },
+    cenedril_reflector_of_hatred = { items = { 137019 } },
+    cinidaria_the_symbiote = { items = { 133976 } },
+    drinking_horn_cover = { items = { 137097 } },
+    firestone_walkers = { items = { 137027 } },
+    fundamental_observation = { items = { 137063 } },
+    gai_plins_soothing_sash = { items = { 137079 } },
+    hidden_masters_forbidden_touch = { items = { 137057 } },
+    jewel_of_the_lost_abbey = { items = { 137044 } },
+    katsuos_eclipse = { items = { 137029 } },
+    march_of_the_legion = { items = { 137220 } },
+    salsalabims_lost_tunic = { items = { 137016 } },
+    soul_of_the_grandmaster = { items = { 151643 } },
+    stormstouts_last_gasp = { items = { 151788 } },
+    the_emperors_capacitor = { items = { 144239 } },
+    the_wind_blows = { items = { 151811 } }
+} )
 
 spec:RegisterHook( "reset_postcast", function( x )
     for k, v in pairs( stagger ) do
@@ -777,63 +839,6 @@ spec:RegisterHook( "reset_postcast", function( x )
     end
     return x
 end )
-
--- The War Within
-spec:RegisterGear( "tww2", 229301, 229299, 229298, 229297, 229296 )
-spec:RegisterAuras( {
-    -- 2-set
-    -- https://www.wowhead.com/ptr-2/spell=1217990/luck-of-the-draw
-    -- Each time you take damage you have a chance to activate Luck of the Draw! causing you to cast Fortifying Brew for 6.0 sec. Your damage done is increased by 15% for 8 sec after Luck of the Draw! activates.
-    luck_of_the_draw = {
-        id = 1217990,
-        duration = 8,
-        max_stack = 1
-    },
-    -- tier_4_set_placeholder =https://www.wowhead.com/ptr-2/spell=1217999/opportunistic-strike
-    --[When you gain Luck of the Draw!, your next 2 casts of Blackout Kick deal 150% increased damage and incur a 2.0 sec reduced cooldown.]
-    opportunistic_strike = {
-        id = 1217999,
-        duration = 20,
-        max_stack = 2
-    },
-} )
-
-
--- Dragonflight
-spec:RegisterGear( "tier31", 207243, 207244, 207245, 207246, 207248, 217188, 217190, 217186, 217187, 217189 )
-spec:RegisterGear( "tier30", 202509, 202507, 202506, 202505, 202504 )
-spec:RegisterAura( "leverage", {
-    id = 408503,
-    duration = 30,
-    max_stack = 5
-} )
-spec:RegisterGear( "tier29", 200363, 200365, 200360, 200362, 200364 )
-spec:RegisterAura( "brewmasters_rhythm", {
-    id = 394797,
-    duration = 15,
-    max_stack = 4
-} )
-
--- Legacy
-spec:RegisterGear( "tier19", 138325, 138328, 138331, 138334, 138337, 138367 )
-spec:RegisterGear( "tier20", 147154, 147156, 147152, 147151, 147153, 147155 )
-spec:RegisterGear( "tier21", 152145, 152147, 152143, 152142, 152144, 152146 )
-spec:RegisterGear( "class", 139731, 139732, 139733, 139734, 139735, 139736, 139737, 139738 )
-spec:RegisterGear( "cenedril_reflector_of_hatred", 137019 )
-spec:RegisterGear( "cinidaria_the_symbiote", 133976 )
-spec:RegisterGear( "drinking_horn_cover", 137097 )
-spec:RegisterGear( "firestone_walkers", 137027 )
-spec:RegisterGear( "fundamental_observation", 137063 )
-spec:RegisterGear( "gai_plins_soothing_sash", 137079 )
-spec:RegisterGear( "hidden_masters_forbidden_touch", 137057 )
-spec:RegisterGear( "jewel_of_the_lost_abbey", 137044 )
-spec:RegisterGear( "katsuos_eclipse", 137029 )
-spec:RegisterGear( "march_of_the_legion", 137220 )
-spec:RegisterGear( "salsalabims_lost_tunic", 137016 )
-spec:RegisterGear( "soul_of_the_grandmaster", 151643 )
-spec:RegisterGear( "stormstouts_last_gasp", 151788 )
-spec:RegisterGear( "the_emperors_capacitor", 144239 )
-spec:RegisterGear( "the_wind_blows", 151811 )
 
 spec:RegisterHook( "spend", function( amount, resource )
     if equipped.the_emperors_capacitor and resource == "chi" then

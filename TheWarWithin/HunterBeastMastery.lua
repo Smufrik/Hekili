@@ -1228,37 +1228,40 @@ spec:RegisterPets({
     }
 } )
 
---- The War Within
-spec:RegisterGear( "tww1", 212018, 212019, 212020, 212021, 212023 )
-spec:RegisterGear( "tww2", 229271, 229269, 229274, 229272, 229270 )
-spec:RegisterAuras( {
-   -- 2-set
-    jackpot = {
-
+spec:RegisterGear({
+    -- The War Within
+    tww2 = {
+        items = { 229271, 229269, 229274, 229272, 229270 },
+        auras = {
+            -- 2-set
+            jackpot = {
+                -- TODO: Add ID and aura properties
+            },
+            -- Possible TODO: pet attacks reduce Bestial Wrath CD?
+            potent_mutagen = {
+                id = 1218003,
+                duration = 8,
+                max_stack = 1
+            }
+        }
     },
-    -- Possible TODO: pet attacks reduce bestial wrath cd?
-    potent_mutagen = {
-        id = 1218003,
-        duration = 8,
-        max_stack = 1
+    tww1 = {
+        items = { 212018, 212019, 212020, 212021, 212023 }
     },
-
-} )
-
--- Legacy
---- Shadowlands
-local ExpireNesingwarysTrappingApparatus = setfenv( function()
-    focus.regen = focus.regen * 0.5
-    forecastResources( "focus" )
-end, state )
-
---- Dragonflight
-spec:RegisterGear( "tier31", 207216, 207217, 207218, 207219, 207221, 217183, 217185, 217181, 217182, 217184 )
-spec:RegisterGear( "tier29", 200390, 200392, 200387, 200389, 200391 )
-spec:RegisterAura( "lethal_command", {
-    id = 394298,
-    duration = 15,
-    max_stack = 1
+    -- Dragonflight
+    tier31 = {
+        items = { 207216, 207217, 207218, 207219, 207221, 217183, 217185, 217181, 217182, 217184 }
+    },
+    tier29 = {
+        items = { 200390, 200392, 200387, 200389, 200391 },
+        auras = {
+            lethal_command = {
+                id = 394298,
+                duration = 15,
+                max_stack = 1
+            }
+        }
+    },
 } )
 
 spec:RegisterStateExpr( "barbed_shot_grace_period", function ()
