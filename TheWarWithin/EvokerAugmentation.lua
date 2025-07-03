@@ -624,6 +624,38 @@ spec:RegisterAuras( {
     },
 } )
 
+spec:RegisterGear({
+    -- The War Within
+    tww2 = {
+        items = { 229283, 229281, 229279, 229280, 229278 }
+    },
+    -- Dragonflight
+    tier31 = {
+        items = { 207225, 207226, 207227, 207228, 207230, 217178, 217180, 217176, 217177, 217179 },
+        auras = {
+            t31_2pc_proc = {
+                duration = 3600,
+                max_stack = 1
+            },
+            t31_2pc_stacks = {
+                duration = 3600,
+                max_stack = 3
+            },
+            trembling_earth = {
+                id = 424368,
+                duration = 3600,
+                max_stack = 5
+            }
+        }
+    },
+    tier30 = {
+        items = { 202491, 202489, 202488, 202487, 202486 }
+    },
+    tier29 = {
+        items = { 200381, 200383, 200378, 200380, 200382 }
+    }
+} )
+
 local lastEssenceTick = 0
 
 do
@@ -678,30 +710,6 @@ spec:RegisterHook( "runHandler_startCombat", function( action )
     if talent.onslaught.enabled then addStack( "burnout" ) end
     if talent.unrelenting_siege.enabled then applyBuff( "unrelenting_siege" ) end
 end )
-
--- TheWarWithin
-spec:RegisterGear( "tww2", 229283, 229281, 229279, 229280, 229278 )
-
--- Dragonflight
-spec:RegisterGear( "tier29", 200381, 200383, 200378, 200380, 200382 )
-spec:RegisterGear( "tier30", 202491, 202489, 202488, 202487, 202486 )
-spec:RegisterGear( "tier31", 207225, 207226, 207227, 207228, 207230, 217178, 217180, 217176, 217177, 217179 )
-spec:RegisterAuras( {
-    t31_2pc_proc = {
-        duration = 3600,
-        max_stack = 1
-    },
-    t31_2pc_stacks = {
-        duration = 3600,
-        max_stack = 3
-    },
-    trembling_earth = {
-        id = 424368,
-        duration = 3600,
-        max_stack = 5
-    }
-} )
-
 
 spec:RegisterHook( "reset_precast", function()
     max_empower = talent.font_of_magic.enabled and 4 or 3

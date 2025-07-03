@@ -832,7 +832,7 @@ spec:RegisterGear({
             }
         }
     }
-})
+} )
 
 local EmeraldTranceTick = setfenv( function()
     addStack( "emerald_trance" )
