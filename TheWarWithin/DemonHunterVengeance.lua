@@ -649,6 +649,59 @@ spec:RegisterAuras( {
     },
 } )
 
+spec:RegisterGear({
+    -- The War Within
+    tww2 = {
+        items = { 229316, 229314, 229319, 229317, 229315 }
+    },
+    -- Dragonflight
+    tier31 = {
+        items = { 207261, 207262, 207263, 207264, 207266, 217228, 217230, 217226, 217227, 217229 },
+        auras = {
+            fiery_resolve = {
+                id = 425653,
+                duration = 8,
+                max_stack = 5
+            }
+        }
+    },
+    tier30 = {
+        items = { 202527, 202525, 202524, 202523, 202522 },
+        auras = {
+            fires_of_fel = {
+                id = 409645,
+                duration = 6,
+                max_stack = 1
+            },
+            recrimination = {
+                id = 409877,
+                duration = 30,
+                max_stack = 1
+            }
+        }
+    },
+    tier29 = {
+        items = { 200345, 200347, 200342, 200344, 200346 },
+        auras = {
+            decrepit_souls = {
+                id = 394958,
+                duration = 8,
+                max_stack = 1
+            }
+        }
+    },
+    -- Legacy Tier Sets
+    tier21 = { items = { 152121, 152123, 152119, 152118, 152120, 152122 } },
+    tier20 = { items = { 147130, 147132, 147128, 147127, 147129, 147131 } },
+    tier19 = { items = { 138375, 138376, 138377, 138378, 138379, 138380 } },
+
+    -- Class Hall
+    class = { items = { 139715, 139716, 139717, 139718, 139719, 139720, 139721, 139722 } },
+    -- Notable Trinkets
+    convergence_of_fates = { items = { 140806 } }
+} )
+
+
 spec:RegisterStateExpr( "soul_fragments", function ()
     return buff.soul_fragments.stack
 end )
@@ -841,38 +894,7 @@ spec:RegisterVariable( "incoming_souls", function()
     return souls
 end )--]]
 
--- The War Within
-spec:RegisterGear( "tww2", 229316, 229314, 229319, 229317, 229315 )
 
--- Dragonflight
-spec:RegisterGear( "tier29", 200345, 200347, 200342, 200344, 200346 )
-spec:RegisterAura( "decrepit_souls", {
-    id = 394958,
-    duration = 8,
-    max_stack = 1
-} )
-spec:RegisterGear( "tier30", 202527, 202525, 202524, 202523, 202522 )
--- 2 pieces (Vengeance) : Soul Fragments heal for 10% more and generating a Soul Fragment increases your Fire damage by 2% for 6 sec. Multiple applications may overlap.
--- TODO: Track each application to keep count for Recrimination.
-spec:RegisterAura( "fires_of_fel", {
-    id = 409645,
-    duration = 6,
-    max_stack = 1
-} )
--- 4 pieces (Vengeance) : Shear and Fracture deal Fire damage, and after consuming 20 Soul Fragments, your next cast of Shear or Fracture will apply Fiery Brand for 6 sec to its target.
-spec:RegisterAura( "recrimination", {
-    id = 409877,
-    duration = 30,
-    max_stack = 1
-} )
-spec:RegisterGear( "tier31", 207261, 207262, 207263, 207264, 207266, 217228, 217230, 217226, 217227, 217229 )
--- (2) When you attack a target afflicted by Sigil of Flame, your damage and healing are increased by 2% and your Stamina is increased by 2% for 8 sec, stacking up to 5.
--- (4) Sigil of Flame's periodic damage has a chance to flare up, shattering an additional Soul Fragment from a target and dealing $425672s1 additional damage. Each $s1 Fury you spend reduces its cooldown by ${$s2/1000}.1 sec.
-spec:RegisterAura( "fiery_resolve", {
-    id = 425653,
-    duration = 8,
-    max_stack = 5
-} )
 
 local furySpent = 0
 
@@ -896,12 +918,6 @@ spec:RegisterStateExpr( "fury_spent", function ()
     return furySpent
 end )
 
--- Legacy
-spec:RegisterGear( "tier19", 138375, 138376, 138377, 138378, 138379, 138380 )
-spec:RegisterGear( "tier20", 147130, 147132, 147128, 147127, 147129, 147131 )
-spec:RegisterGear( "tier21", 152121, 152123, 152119, 152118, 152120, 152122 )
-spec:RegisterGear( "class", 139715, 139716, 139717, 139718, 139719, 139720, 139721, 139722 )
-spec:RegisterGear( "convergence_of_fates", 140806 )
 
 local ConsumeSoulFragments = setfenv( function( amt )
     if talent.soul_furnace.enabled then
