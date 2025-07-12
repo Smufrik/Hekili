@@ -1184,123 +1184,122 @@ spec:RegisterAuras( {
     },
 } )
 
-
--- The War Within
-spec:RegisterGear( "tww2", 229253, 229251, 229256, 229254, 229252 )
-spec:RegisterAuras( {
-    -- https://www.wowhead.com/spell=1218601
-    -- Luck of the Draw! Damage increased by 15%. Death Strike costs 10 less Runic Power and strikes 2 additional nearby targets.
-    luck_of_the_draw = {
-        id = 1218601,
-        duration = function() if set_bonus.tww2 >= 4 then return 12 end
-            return 10
-        end,
-        max_stack = 1,
+spec:RegisterGear({
+    -- The War Within
+    tww2 = {
+        items = { 229253, 229251, 229256, 229254, 229252 },
+        auras = {
+            luck_of_the_draw = {
+                id = 1218601,
+                duration = function()
+                    if set_bonus.tww2 >= 4 then return 12 end
+                    return 10
+                end,
+                max_stack = 1
+            },
+            murderous_frenzy = {
+                id = 1222698,
+                duration = 6,
+                max_stack = 1
+            }
+        }
     },
-    -- https://www.wowhead.com/spell=1222698
-    -- Murderous Frenzy Your Haste is increased by 12%.
-    murderous_frenzy = {
-        id = 1222698,
-        duration = 6,
-        max_stack = 1,
+    tww1 = {
+        items = { 212005, 212003, 212002, 212001, 212000 },
+        auras = {
+            unbreakable = {
+                id = 457468,
+                duration = 3600,
+                max_stack = 1
+            },
+            unbroken = {
+                id = 457473,
+                duration = 6,
+                max_stack = 1
+            },
+            piledriver = {
+                id = 457506,
+                duration = 3600,
+                max_stack = 10
+            },
+            icy_vigor = {
+                id = 457189,
+                duration = 8,
+                max_stack = 1
+            },
+            unholy_commander = {
+                id = 456698,
+                duration = 8,
+                max_stack = 1
+            }
+        }
     },
+    -- Dragonflight
+    tier31 = {
+        items = { 207198, 207199, 207200, 207201, 207203 },
+        auras = {
+            ashen_decay_proc = {
+                id = 425721,
+                duration = 20,
+                max_stack = 1
+            },
+            ashen_decay = {
+                id = 425719,
+                duration = 8,
+                max_stack = 1,
+                copy = "ashen_decay_debuff"
+            }
+        }
+    },
+    tier30 = {
+        items = { 202464, 202462, 202461, 202460, 202459, 217223, 217225, 217221, 217222, 217224 },
+        auras = {
+            vampiric_strength = {
+                id = 408356,
+                duration = 5,
+                max_stack = 1
+            }
+        }
+    },
+    tier29 = {
+        items = { 200405, 200407, 200408, 200409, 200410 },
+        auras = {
+            vigorous_lifeblood = {
+                id = 394570,
+                duration = 10,
+                max_stack = 1
+            }
+        }
+    },
+    -- Legacy
+    acherus_drapes = { items = { 132376 } },
+    cold_heart = { items = { 151796 } }, -- chilled_heart stacks NYI
+    consorts_cold_core = { items = { 144293 } },
+    death_march = { items = { 144280 } },
+    draugr_girdle_of_the_everlasting_king = { items = { 132441 } },
+    koltiras_newfound_will = { items = { 132366 } },
+    lanathels_lament = { items = { 133974 } },
+    perseverance_of_the_ebon_martyr = { items = { 132459 } },
+    rethus_incessant_courage = { items = { 146667 } },
+    seal_of_necrofantasia = { items = { 137223 } },
+    service_of_gorefiend = { items = { 132367 } },
+    shackles_of_bryndaor = { items = { 132365 } }, -- NYI (Death Strike heals refund RP...)
+    skullflowers_haemostasis = {
+        items = { 144281 },
+        auras = {
+            haemostasis = {
+                id = 235559,
+                duration = 3600,
+                max_stack = 5
+            }
+        }
+    },
+    soul_of_the_deathlord = { items = { 151740 } },
+    soulflayers_corruption = { items = { 151795 } },
+    the_instructors_fourth_lesson = { items = { 132448 } },
+    toravons_whiteout_bindings = { items = { 132458 } },
+    uvanimor_the_unbeautiful = { items = { 137037 } }
 } )
-spec:RegisterGear( "tww1", 212005, 212003, 212002, 212001, 212000 )
-spec:RegisterAuras( {
-    unbreakable = {
-        id = 457468,
-        duration = 3600,
-        max_stack = 1
-    },
-    unbroken = {
-        id = 457473,
-        duration = 6,
-        max_stack = 1
-    },
-    piledriver = {
-        id = 457506,
-        duration = 3600,
-        max_stack = 10
-    },
-
-    icy_vigor = {
-        id = 457189,
-        duration = 8,
-        max_stack = 1
-    },
-
-    unholy_commander = {
-        id = 456698,
-        duration = 8,
-        max_stack = 1
-    }
-})
-
--- Tier 29
-spec:RegisterGear( "tier29", 200405, 200407, 200408, 200409, 200410 )
--- TODO: Proactively count Bone Shields consumed and proactively model Vigorous Lifeblood proc.
-spec:RegisterAura( "vigorous_lifeblood", {
-    id = 394570,
-    duration = 10,
-    max_stack = 1
-} )
-
--- Tier 30
-spec:RegisterGear( "tier30", 202464, 202462, 202461, 202460, 202459, 217223, 217225, 217221, 217222, 217224 )
--- 2 pieces (Blood) : Heart Strike and Blood Boil deal 20% increased damage and have a 10% chance to grant Vampiric Blood for 5 sec.
--- 4 pieces (Blood) : When you would gain Vampiric Blood you are infused with Vampiric Strength, granting you 10% Strength for 5 sec. Your Heart Strike and Blood Boil extend the duration of Vampiric Strength by 0.5 sec.
-spec:RegisterAura( "vampiric_strength", {
-    id = 408356,
-    duration = 5,
-    max_stack = 1
-} )
-
-spec:RegisterGear( "tier31", 207198, 207199, 207200, 207201, 207203 )
--- (2) Consuming Runic Power has a chance to cause your next Heart Strike to apply Ashen Decay, reducing damage dealt to you by $425719s1% and increasing your damage dealt to afflicted targets by $425719s2% for $425719d.
--- (4) Soul Reaper's execute damage and Abomination Limb's damage applies Ashen Decay to enemy targets, and Heart Strike and Blood Boil's direct damage extends Ashen Decay by ${$s1/1000}.1 sec.
-spec:RegisterAuras( {
-    ashen_decay_proc = {
-        id = 425721,
-        duration = 20,
-        max_stack = 1
-    },
-    ashen_decay = {
-        id = 425719,
-        duration = 8,
-        max_stack = 1,
-        copy = "ashen_decay_debuff"
-    }
-} )
-
-
-
-
--- Legacy Legendaries
-spec:RegisterGear( "acherus_drapes", 132376 )
-spec:RegisterGear( "cold_heart", 151796 ) -- chilled_heart stacks NYI
-spec:RegisterGear( "consorts_cold_core", 144293 )
-spec:RegisterGear( "death_march", 144280 )
--- spec:RegisterGear( "death_screamers", 151797 )
-spec:RegisterGear( "draugr_girdle_of_the_everlasting_king", 132441 )
-spec:RegisterGear( "koltiras_newfound_will", 132366 )
-spec:RegisterGear( "lanathels_lament", 133974 )
-spec:RegisterGear( "perseverance_of_the_ebon_martyr", 132459 )
-spec:RegisterGear( "rethus_incessant_courage", 146667 )
-spec:RegisterGear( "seal_of_necrofantasia", 137223 )
-spec:RegisterGear( "service_of_gorefiend", 132367 )
-spec:RegisterGear( "shackles_of_bryndaor", 132365 ) -- NYI (Death Strike heals refund RP...)
-spec:RegisterGear( "skullflowers_haemostasis", 144281 )
-    spec:RegisterAura( "haemostasis", {
-        id = 235559,
-        duration = 3600,
-        max_stack = 5
-    } )
-
-spec:RegisterGear( "soul_of_the_deathlord", 151740 )
-spec:RegisterGear( "soulflayers_corruption", 151795 )
-spec:RegisterGear( "the_instructors_fourth_lesson", 132448 )
-spec:RegisterGear( "toravons_whiteout_bindings", 132458 )
-spec:RegisterGear( "uvanimor_the_unbeautiful", 137037 )
 
 
 spec:RegisterTotem( "ghoul", 1100170 ) -- Texture ID

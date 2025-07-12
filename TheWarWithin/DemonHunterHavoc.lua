@@ -913,6 +913,100 @@ spec:RegisterAuras( {
     },
 } )
 
+spec:RegisterGear({
+    -- The War Within
+    tww2 = {
+        items = { 229316, 229314, 229319, 229317, 229315 },
+        auras = {
+            winning_streak = {
+                id = 1217011,
+                duration = 3600,
+                max_stack = 10
+            },
+            necessary_sacrifice = {
+                id = 1217055,
+                duration = 15,
+                max_stack = 10
+            },
+            winning_streak_temporary = {
+                id = 1220706,
+                duration = 7,
+                max_stack = 10
+            }
+        }
+    },
+    tww1 = {
+        items = { 212068, 212066, 212065, 212064, 212063 },
+        auras = {
+            blade_rhapsody = {
+                id = 454628,
+                duration = 12,
+                max_stack = 1
+            }
+        }
+    },
+    -- Dragonflight
+    tier31 = {
+        items = { 207261, 207262, 207263, 207264, 207266, 217228, 217230, 217226, 217227, 217229 }
+    },
+    tier30 = {
+        items = { 202527, 202525, 202524, 202523, 202522 },
+        auras = {
+            seething_fury = {
+                id = 408737,
+                duration = 6,
+                max_stack = 1
+            },
+            seething_potential = {
+                id = 408754,
+                duration = 60,
+                max_stack = 5
+            }
+        }
+    },
+    tier29 = {
+        items = { 200345, 200347, 200342, 200344, 200346 },
+        auras = {
+            seething_chaos = {
+                id = 394934,
+                duration = 6,
+                max_stack = 1
+            }
+        }
+    },
+    -- Legacy Tier Sets
+    tier21 = {
+        items = { 152121, 152123, 152119, 152118, 152120, 152122 },
+        auras = {
+            havoc_t21_4pc = {
+                id = 252165,
+                duration = 8
+            }
+        }
+    },
+    tier20 = { items = { 147130, 147132, 147128, 147127, 147129, 147131 } },
+    tier19 = { items = { 138375, 138376, 138377, 138378, 138379, 138380 } },
+    -- Class Hall Set
+    class = { items = { 139715, 139716, 139717, 139718, 139719, 139720, 139721, 139722 } },
+    -- Legion/Trinkets/Legendaries
+    convergence_of_fates = { items = { 140806 } },
+    achor_the_eternal_hunger = { items = { 137014 } },
+    anger_of_the_halfgiants = { items = { 137038 } },
+    cinidaria_the_symbiote = { items = { 133976 } },
+    delusions_of_grandeur = { items = { 144279 } },
+    kiljaedens_burning_wish = { items = { 144259 } },
+    loramus_thalipedes_sacrifice = { items = { 137022 } },
+    moarg_bionic_stabilizers = { items = { 137090 } },
+    prydaz_xavarics_magnum_opus = { items = { 132444 } },
+    raddons_cascading_eyes = { items = { 137061 } },
+    sephuzs_secret = { items = { 132452 } },
+    the_sentinels_eternal_refuge = { items = { 146669 } },
+    soul_of_the_slayer = { items = { 151639 } },
+    chaos_theory = { items = { 151798 } },
+    oblivions_embrace = { items = { 151799 } }
+} )
+
+
 spec:RegisterStateExpr( "soul_fragments", function ()
     return GetSpellCastCount(232893) -- only works with Reaver hero tree
 end )
@@ -1002,67 +1096,6 @@ spec:RegisterHook( "UNIT_ELIMINATED", function( id )
     initiative_actual[ id ] = nil
 end )
 
--- Gear Sets
-spec:RegisterGear( "tier29", 200345, 200347, 200342, 200344, 200346 )
-spec:RegisterAura( "seething_chaos", {
-    id = 394934,
-    duration = 6,
-    max_stack = 1
-} )
-
--- Tier 30
-spec:RegisterGear( "tier30", 202527, 202525, 202524, 202523, 202522 )
--- 2 pieces (Havoc) : Every 175 Fury you spend, gain Seething Fury, increasing your Agility by 8% for 6 sec.
--- TODO: Track Fury spent toward Seething Fury.  New expressions: seething_fury_threshold, seething_fury_spent, seething_fury_deficit.
-spec:RegisterAura( "seething_fury", {
-    id = 408737,
-    duration = 6,
-    max_stack = 1
-} )
--- 4 pieces (Havoc) : Each time you gain Seething Fury, gain 15 Fury and the damage of your next Eye Beam is increased by 15%, stacking 5 times.
-spec:RegisterAura( "seething_potential", {
-    id = 408754,
-    duration = 60,
-    max_stack = 5
-} )
-
-spec:RegisterGear( "tier31", 207261, 207262, 207263, 207264, 207266, 217228, 217230, 217226, 217227, 217229 )
--- (2) Blade Dance automatically triggers Throw Glaive on your primary target for $s3% damage and each slash has a $s2% chance to Throw Glaive an enemy for $s1% damage.
--- (4) Throw Glaive reduces the remaining cooldown of The Hunt by ${$s1/1000}.1 sec, and The Hunt's damage over time effect lasts ${$s2/1000} sec longer.
-
-spec:RegisterGear( "tww2", 229316, 229314, 229319, 229317, 229315 )
-
-spec:RegisterAuras( {
-    -- 2-set
-    -- Winning Streak! Increase the DPS of Blade Dance and Chaos Strike by 3% stacking pu to 10 times. Blade Dance and Chaos Strike have 15% chance of removing Winning Streak! .
-    winning_streak = {
-        id = 1217011,
-        duration = 3600,
-        max_stack = 10
-        },
-    --4-set
-    -- Winning Streak persists for 7s after being cancelled. Entering Demon Form sacrifices all Winning Streak! stacks to gain 0% (?) Crit Strike Chance per stack consumed. Lasts 15s
-    necessary_sacrifice = {
-    id = 1217055,
-    duration = 15,
-    max_stack = 10
-    },
-    -- https://www.wowhead.com/spell=1220706
-    -- Winning Streak! Ending a Winning Streak! Blade Dance and Chaos Strike damage increased by 6%.
-    winning_streak_temporary = {
-        id = 1220706,
-        duration = 7,
-        max_stack = 10
-    },
-
-} )
-
-spec:RegisterGear( "tww1", 212068, 212066, 212065, 212064, 212063 )
-spec:RegisterAura( "blade_rhapsody", {
-    id = 454628,
-    duration = 12,
-    max_stack = 1
-} )
 
 -- Abilities that may trigger Demonsurge.
 local demonsurge = {
@@ -1202,38 +1235,6 @@ spec:RegisterHook( "spend", function( amt, resource )
         end
     end
 end )
-
-
-
-
-spec:RegisterGear( "tier19", 138375, 138376, 138377, 138378, 138379, 138380 )
-spec:RegisterGear( "tier20", 147130, 147132, 147128, 147127, 147129, 147131 )
-spec:RegisterGear( "tier21", 152121, 152123, 152119, 152118, 152120, 152122 )
-    spec:RegisterAura( "havoc_t21_4pc", {
-        id = 252165,
-        duration = 8
-    } )
-
-spec:RegisterGear( "class", 139715, 139716, 139717, 139718, 139719, 139720, 139721, 139722 )
-
-spec:RegisterGear( "convergence_of_fates", 140806 )
-
-spec:RegisterGear( "achor_the_eternal_hunger", 137014 )
-spec:RegisterGear( "anger_of_the_halfgiants", 137038 )
-spec:RegisterGear( "cinidaria_the_symbiote", 133976 )
-spec:RegisterGear( "delusions_of_grandeur", 144279 )
-spec:RegisterGear( "kiljaedens_burning_wish", 144259 )
-spec:RegisterGear( "loramus_thalipedes_sacrifice", 137022 )
-spec:RegisterGear( "moarg_bionic_stabilizers", 137090 )
-spec:RegisterGear( "prydaz_xavarics_magnum_opus", 132444 )
-spec:RegisterGear( "raddons_cascading_eyes", 137061 )
-spec:RegisterGear( "sephuzs_secret", 132452 )
-spec:RegisterGear( "the_sentinels_eternal_refuge", 146669 )
-
-spec:RegisterGear( "soul_of_the_slayer", 151639 )
-spec:RegisterGear( "chaos_theory", 151798 )
-spec:RegisterGear( "oblivions_embrace", 151799 )
-
 
 do
     local wasWarned = false
