@@ -694,51 +694,60 @@ spec:RegisterPets({
     }
 } )
 
--- The War Within
-spec:RegisterGear( "tww2", 229271, 229269, 229274, 229272, 229270 )
-spec:RegisterAuras( {
-    -- 2-set
-    -- https://www.wowhead.com/spell=1216874
-    -- Winning Streak! Wildfire Bomb damage increased by 6%.
-    winning_streak = {
-        id = 1216874,
-        duration = 30,
-        max_stack = 6,
+spec:RegisterGear({
+    -- The War Within
+    tww2 = {
+        items = { 229271, 229269, 229274, 229272, 229270 },
+        auras = {
+            -- 2-set
+            winning_streak = {
+                id = 1216874,
+                duration = 30,
+                max_stack = 6
+            },
+            -- 4-set
+            strike_it_rich = {
+                id = 1216879,
+                duration = 10,
+                max_stack = 1
+            }
+        }
     },
-    -- 4-set
-    -- https://www.wowhead.com/spell=1216879
-    strike_it_rich = {
-        id = 1216879,
-        duration = 10,
-        max_stack = 1,
+    -- Dragonflight
+    tier31 = {
+        items = { 207216, 207217, 207218, 207219, 207221 },
+        auras = {
+            fury_strikes = {
+                id = 425830,
+                duration = 12,
+                max_stack = 1
+            },
+            contained_explosion = {
+                id = 426344,
+                duration = 12,
+                max_stack = 1
+            }
+        }
     },
-
-} )
-
--- Dragonflight
-spec:RegisterGear( "tier29", 200390, 200392, 200387, 200389, 200391, 217183, 217185, 217181, 217182, 217184 )
-spec:RegisterAura( "bestial_barrage", {
-    id = 394388,
-    duration = 15,
-    max_stack = 1
-} )
-spec:RegisterGear( "tier30", 202482, 202480, 202479, 202478, 202477 )
-spec:RegisterAura( "shredded_armor", {
-    id = 410167,
-    duration = 8,
-    max_stack = 1
-} )
-spec:RegisterGear( "tier31", 207216, 207217, 207218, 207219, 207221 )
-spec:RegisterAuras( {
-    fury_strikes = {
-        id = 425830,
-        duration = 12,
-        max_stack = 1
+    tier30 = {
+        items = { 202482, 202480, 202479, 202478, 202477 },
+        auras = {
+            shredded_armor = {
+                id = 410167,
+                duration = 8,
+                max_stack = 1
+            }
+        }
     },
-    contained_explosion = {
-        id = 426344,
-        duration = 12,
-        max_stack = 1
+    tier29 = {
+        items = { 200390, 200392, 200387, 200389, 200391, 217183, 217185, 217181, 217182, 217184 },
+        auras = {
+            bestial_barrage = {
+                id = 394388,
+                duration = 15,
+                max_stack = 1
+            }
+        }
     }
 } )
 

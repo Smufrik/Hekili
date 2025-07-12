@@ -977,37 +977,39 @@ spec:RegisterStateTable( "incanters_flow", {
     end, state ),
 } )
 
-
 spec:RegisterStateExpr( "bf_flurry", function () return false end )
 spec:RegisterStateExpr( "comet_storm_remains", function () return buff.active_comet_storm.remains end )
 
--- The War Within
-spec:RegisterGear( "tww2", 229346, 229344, 229342, 229343, 229341 )
-spec:RegisterAuras( {
-   --[[ 2-set
-    jackpot = {
-        -- spells have a chance to proc a jackpot that generates a frostbolt valley hitting a primary target and spreading to surrounding mobs (until 8). Casting Icy Veins always procs it
-    },--]]
-   -- 4-set
-    extended_bankroll = {
-        id = 1216914,
-        duration = 30,
-        max_stack = 1
+spec:RegisterGear({
+    -- The War Within
+    tww2 = {
+        items = { 229346, 229344, 229342, 229343, 229341 },
+        auras = {
+            extended_bankroll = {
+                id = 1216914,
+                duration = 30,
+                max_stack = 1
+            }
+        }
     },
-
+    -- Dragonflight
+    tier31 = {
+        items = { 207288, 207289, 207290, 207291, 207293, 217232, 217234, 217235, 217231, 217233 }
+    },
+    tier30 = {
+        items = { 202554, 202552, 202551, 202550, 202549 }
+    },
+    tier29 = {
+        items = { 200318, 200320, 200315, 200317, 200319 },
+        auras = {
+            touch_of_ice = {
+                id = 394994,
+                duration = 6,
+                max_stack = 1
+            }
+        }
+    }
 } )
-
--- Dragonflight
-
-spec:RegisterGear( "tier31", 207288, 207289, 207290, 207291, 207293, 217232, 217234, 217235, 217231, 217233 )
-spec:RegisterGear( "tier30", 202554, 202552, 202551, 202550, 202549 )
-spec:RegisterGear( "tier29", 200318, 200320, 200315, 200317, 200319 )
-spec:RegisterAura( "touch_of_ice", {
-    id = 394994,
-    duration = 6,
-    max_stack = 1
-} )
-
 
 local BrainFreeze = setfenv( function()
     if talent.perpetual_winter.enabled then gainCharges( "flurry", 1 ) else setCooldown( "flurry", 0 ) end

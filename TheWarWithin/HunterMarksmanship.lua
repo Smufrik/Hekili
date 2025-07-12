@@ -821,46 +821,52 @@ spec:RegisterStateTable( "tar_trap", setmetatable( {}, {
     end
 } ) )
 
-
-
-spec:RegisterGear( "tww1", 212018, 212019, 212020, 212021, 212023 )
-spec:RegisterGear( "tww2", 229271, 229269, 229274, 229272, 229270 )
-spec:RegisterAuras( {
-    -- 2-set
-    -- https://www.wowhead.com/spell=1218033
-    -- Jackpot! Auto shot damage increased by 200% and the time between auto shots is reduced by 0.5 sec.
-    jackpot = {
-        id = 1218033,
-        duration = 10,
-        max_stack = 1,
+spec:RegisterGear({
+    -- The War Within
+    tww2 = {
+        items = { 229271, 229269, 229274, 229272, 229270 },
+        auras = {
+            -- 2-set
+            jackpot = {
+                id = 1218033,
+                duration = 10,
+                max_stack = 1
+            }
+        }
     },
-
-} )
-
--- Dragonflight
-spec:RegisterGear( "tier29", 200390, 200392, 200387, 200389, 200391 )
-spec:RegisterAuras( {
-    -- 2pc
-    find_the_mark = {
-        id = 394366,
-        duration = 15,
-        max_stack = 1
+    tww1 = {
+        items = { 212018, 212019, 212020, 212021, 212023 }
     },
-    hit_the_mark = {
-        id = 394371,
-        duration = 6,
-        max_stack = 1
+    -- Dragonflight
+    tier31 = {
+        items = { 207216, 207217, 207218, 207219, 207221, 217183, 217185, 217181, 217182, 217184 }
     },
-    -- 4pc
-    focusing_aim = {
-        id = 394384,
-        duration = 15,
-        max_stack = 1
+    tier30 = {
+        items = { 202482, 202480, 202479, 202478, 202477 }
+    },
+    tier29 = {
+        items = { 200390, 200392, 200387, 200389, 200391 },
+        auras = {
+            -- 2pc
+            find_the_mark = {
+                id = 394366,
+                duration = 15,
+                max_stack = 1
+            },
+            hit_the_mark = {
+                id = 394371,
+                duration = 6,
+                max_stack = 1
+            },
+            -- 4pc
+            focusing_aim = {
+                id = 394384,
+                duration = 15,
+                max_stack = 1
+            }
+        }
     }
 } )
-spec:RegisterGear( "tier30", 202482, 202480, 202479, 202478, 202477 )
-spec:RegisterGear( "tier31", 207216, 207217, 207218, 207219, 207221, 217183, 217185, 217181, 217182, 217184 )
-
 
 local SpottersMarkConsumer = setfenv( function ( max_targets )
 
