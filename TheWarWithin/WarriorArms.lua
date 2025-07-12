@@ -554,6 +554,76 @@ spec:RegisterAuras( {
     },
 } )
 
+spec:RegisterGear({
+    -- The War Within
+    tww2 = {
+        items = { 229235, 229233, 229238, 229236, 229234 },
+        auras = {
+            winning_streak = {
+                id = 1216552,
+                duration = 30,
+                max_stack = 10,
+                copy = "winning_streak_arms"
+            },
+            hedged_bets = {
+                id = 1216556,
+                duration = 12,
+                max_stack = 1
+            }
+        }
+    },
+    -- Dragonflight
+    tier31 = {
+        items = { 207180, 207181, 207182, 207183, 207185 },
+        setBonuses = {
+            tier31_2pc = 422923,
+            tier31_4pc = 422924
+        },
+        auras = {
+            finishing_wound = {
+                id = 426284,
+                duration = 5,
+                max_stack = 1
+            }
+        }
+    },
+    tier30 = {
+        items = { 202446, 202444, 202443, 202442, 202441 },
+        setBonuses = {
+            tier30_2pc = 405577,
+            tier30_4pc = 405578
+        },
+        auras = {
+            crushing_advance = {
+                id = 410138,
+                duration = 30,
+                max_stack = 3
+            }
+        }
+    },
+    tier29 = {
+        items = { 200426, 200428, 200423, 200425, 200427, 217218, 217220, 217216, 217217, 217219 },
+        setBonuses = {
+            tier29_2pc = 393705,
+            tier29_4pc = 393706
+        },
+        auras = {
+            strike_vulnerabilities = {
+                id = 394173,
+                duration = 6,
+                max_stack = 1
+            }
+        }
+    },
+    auras = {
+        lethal_blows = {
+            id = 455485,
+            duration = 12,
+            max_stack = 1
+        }
+    }
+} )
+
 local rageSpent = 0
 local gloryRage = 0
 
@@ -607,7 +677,6 @@ spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _
     end
 end )
 
-
 local RAGE = Enum.PowerType.Rage
 local lastRage = -1
 
@@ -629,7 +698,6 @@ spec:RegisterUnitEvent( "UNIT_POWER_FREQUENT", "player", nil, function( event, u
     end
 end )
 
-
 spec:RegisterHook( "TimeToReady", function( wait, action )
     local id = class.abilities[ action ].id
     if buff.bladestorm.up and ( id < -99 or id > 0 ) then
@@ -647,7 +715,6 @@ end, state )
 local TriggerTestOfMight = setfenv( function()
     addStack( "test_of_might" )
 end, state )
-
 
 spec:RegisterHook( "reset_precast", function ()
     rage_spent = nil
@@ -690,64 +757,7 @@ spec:RegisterStateExpr( "cycle_for_execute", function ()
     return Hekili:GetNumTargetsBelowHealthPct( talent.massacre.enabled and 35 or 20, false, max( settings.cycle_min, offset + delay ) ) > 0
 end )
 
--- The War Within
-spec:RegisterGear( "tww2", 229235, 229233, 229238, 229236, 229234 )
-spec:RegisterAuras( {
-    -- 2-set
-    -- https://www.wowhead.com/ptr-2/spell=1216552/winning-streak
-    -- Mortal Strike and Cleave damage increased by 2%. = {
-    winning_streak = {
-        id = 1216552,
-        duration = 30,
-        max_stack = 10,
-        copy = "winning_streak_arms"
-    },
-    -- https://www.wowhead.com/ptr-2/spell=1216556/hedged-bets
-    -- Overpower damage increased by 20%and recharge rate increased by 75%.
-    hedged_bets = {
-        id = 1216556,
-        duration = 12,
-        max_stack = 1
-    },
-} )
 
-spec:RegisterGear( "tier29", 200426, 200428, 200423, 200425, 200427, 217218, 217220, 217216, 217217, 217219 )
-spec:RegisterSetBonuses( "tier29_2pc", 393705, "tier29_4pc", 393706 )
---(2) Set Bonus: Mortal Strike and Cleave damage and chance to critically strike increased by 10%.
---(4) Set Bonus: Mortal Strike, Cleave, & Execute critical strikes increase your damage and critical strike chance by 5% for 6 seconds.
-spec:RegisterAura( "strike_vulnerabilities", {
-    id = 394173,
-    duration = 6,
-    max_stack = 1
-} )
-
-spec:RegisterGear( "tier30", 202446, 202444, 202443, 202442, 202441 )
-spec:RegisterSetBonuses( "tier30_2pc", 405577, "tier30_4pc", 405578 )
---(2) Set Bonus: Deep Wounds increases your chance to critically strike and critical strike damage dealt to afflicted targets by 5%.
---(4) Deep Wounds critical strikes have a chance to increase the damage of your next Mortal Strike by 10% and cause it to deal
---    [(19.32% of Attack power) * 2] Physical damage to enemies in front of you, stacking up to 3 times. Damage reduced above 5 targets. (2s cooldown)
-spec:RegisterAura( "crushing_advance", {
-    id = 410138,
-    duration = 30,
-    max_stack = 3
-} )
-
-spec:RegisterGear( "tier31", 207180, 207181, 207182, 207183, 207185 )
-spec:RegisterSetBonuses( "tier31_2pc", 422923, "tier31_4pc", 422924 )
--- (4) Sudden Death also makes your next Execute powerfully slam the ground, causing a Thunder Clap that deals 100% increased damage. In addition, the Execute target bleeds for 50% of Execute's damage over 5 sec. If this bleed is reapplied, remaining damage is added to the new bleed.
-spec:RegisterAura( "finishing_wound", {
-    id = 426284,
-    duration = 5,
-    max_stack = 1
-} )
-
-spec:RegisterAuras( {
-    lethal_blows = {
-        id = 455485,
-        duration = 12,
-        max_stack = 1
-    }
-} )
 
 -- Abilities
 spec:RegisterAbilities( {

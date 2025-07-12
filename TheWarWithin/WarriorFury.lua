@@ -113,14 +113,14 @@ spec:RegisterTalents( {
     berserker_shout              = {  90348, 384100, 1 }, -- Go berserk, removing and granting immunity to Fear, Sap, and Incapacitate effects for 6 sec. Also remove fear effects from group members within 12 yds.
     berserker_stance             = {  90325, 386196, 1 }, -- An aggressive combat state that increases the damage of your auto-attacks by 15% and reduces the duration of Fear, Sap and Incapacitate effects on you by 10%. Lasts until canceled.
     berserkers_torment           = {  90362, 390123, 1 }, -- Activating Avatar or Recklessness grants 8 sec of the other.
-    bitter_immunity              = {  90356, 383762, 1 }, -- Restores 20% health instantly and removes all diseases, poisons and curses affecting you. 
+    bitter_immunity              = {  90356, 383762, 1 }, -- Restores 20% health instantly and removes all diseases, poisons and curses affecting you.
     bounding_stride              = {  90355, 202163, 1 }, -- Reduces the cooldown of Heroic Leap by 15 sec, and Heroic Leap now also increases your movement speed by 70% for 3 sec.
     cacophonous_roar             = {  90383, 382954, 1 }, -- Intimidating Shout can withstand 200% more damage before breaking.
     champions_might              = {  90323, 386284, 1 }, -- The duration of Champion's Spear is increased by 2 sec. You deal 25% increased critical strike damage to targets chained to your Spear.
     champions_spear              = {  90380, 376079, 1 }, -- Throw a spear at the target location, dealing 43,399 Physical damage instantly and an additional 48,350 damage over 4 sec. Deals reduced damage beyond 5 targets. Enemies hit are chained to the spear's location for the duration. Generates 10 Rage.
     concussive_blows             = {  90354, 383115, 1 }, -- Cooldown of Pummel reduced by 1.0 sec. Successfully interrupting an enemy increases the damage you deal to them by 5% for 10 sec.
     crackling_thunder            = {  95959, 203201, 1 }, -- Thunder Clap's radius is increased by 50%, and it reduces movement speed by an additional 20%.
-    cruel_strikes                = {  90381, 392777, 2 }, -- Critical strike chance increased by 1% and critical strike damage of Execute increased by 5%. 
+    cruel_strikes                = {  90381, 392777, 2 }, -- Critical strike chance increased by 1% and critical strike damage of Execute increased by 5%.
     crushing_force               = {  90347, 382764, 2 }, -- Bloodthirst deals an additional 5% damage and deals 5% increased critical strike damage.
     defensive_stance             = {  92538, 386208, 1 }, -- A defensive combat state that reduces all damage you take by 15%, and all damage you deal by 10%. Lasts until canceled.
     double_time                  = {  90382, 103827, 1 }, -- Increases the maximum number of charges on Charge by 1, and reduces its cooldown by 3 sec.
@@ -183,7 +183,7 @@ spec:RegisterTalents( {
     invigorating_fury            = {  90393, 383468, 1 }, -- Enraged Regeneration lasts 3 sec longer and instantly heals for 10% of your maximum health.
     massacre                     = {  90410, 206315, 1 }, -- Execute is now usable on targets below 35% health, and its cooldown is reduced by 1.5 sec.
     meat_cleaver                 = {  90391, 280392, 1 }, -- Whirlwind and Thunder Clap deal 25% more damage and now affect your next 4 single-target melee attacks, instead of the next 2 attacks.
-    odyns_fury                   = {  90418, 385059, 1 }, -- Unleashes your power, dealing 81,570 Physical damage and an additional 39,272 Physical damage over 4 sec to all enemies within 12 yards. Deals reduced damage beyond 5 targets. Generates 15 Rage. 
+    odyns_fury                   = {  90418, 385059, 1 }, -- Unleashes your power, dealing 81,570 Physical damage and an additional 39,272 Physical damage over 4 sec to all enemies within 12 yards. Deals reduced damage beyond 5 targets. Generates 15 Rage.
     onslaught                    = {  90424, 315720, 1 }, -- Brutally attack an enemy for 75,074 Physical damage. Generates 30 Rage.
     powerful_enrage              = {  90398, 440277, 1 }, -- Enrage increases the damage your abilities deal by an additional 15% and Enrage's duration is increased by 1 sec.
     raging_blow                  = {  90396,  85288, 1 }, -- A mighty blow with both weapons that deals a total of 56,918 Physical damage. Raging Blow has a 25% chance to instantly reset its own cooldown. Generates 12 Rage.
@@ -197,12 +197,12 @@ spec:RegisterTalents( {
     sudden_death                 = {  90429, 280721, 1 }, -- Your attacks have a chance to reset the cooldown of Execute and make it usable on any target, regardless of their health.
     swift_strikes                = {  90416, 383459, 2 }, -- Haste increased by 1% and Raging Blow and Bloodthirst generate an additional 1 Rage.
     tenderize                    = {  90423, 388933, 1 }, -- Onslaught Enrages you, and if you have Slaughtering Strikes grants you 3 stacks of Slaughtering Strikes.
-    titanic_rage                 = {  90417, 394329, 1 }, -- Odyn's Fury's Enrages you, deals 10% increased damage and grants you 4 stacks of Whirlwind. 
+    titanic_rage                 = {  90417, 394329, 1 }, -- Odyn's Fury's Enrages you, deals 10% increased damage and grants you 4 stacks of Whirlwind.
     unbridled_ferocity           = {  90414, 389603, 1 }, -- Rampage has a 6% chance to grant Recklessness for 4 sec.
-    unhinged                     = {  90389, 386628, 1 }, -- Every other time Bladestorm or Ravager deal damage, you automatically cast a Bloodthirst at your target or random nearby enemy. 
+    unhinged                     = {  90389, 386628, 1 }, -- Every other time Bladestorm or Ravager deal damage, you automatically cast a Bloodthirst at your target or random nearby enemy.
     vicious_contempt             = {  90404, 383885, 2 }, -- Bloodthirst deals 25% increased damage to enemies who are below 35% health.
     warpaint                     = {  90394, 208154, 1 }, -- You take 10% reduced damage while Enrage is active.
-    wrath_and_fury               = {  90387, 392936, 1 }, -- Raging Blow deals 15% increased damage and while Enraged, Raging Blow has a 10% increased chance to instantly reset its own cooldown. 
+    wrath_and_fury               = {  90387, 392936, 1 }, -- Raging Blow deals 15% increased damage and while Enraged, Raging Blow has a 10% increased chance to instantly reset its own cooldown.
 
     -- Mountain Thane
     avatar_of_the_storm          = {  94805, 437134, 1 }, -- Casting Avatar grants you 2 charges of Thunder Blast and resets the cooldown of Thunder Clap. While Avatar is not active, Lightning Strikes have a 10% chance to grant you Avatar for 4 secs. Thunder Blast Your next Thunder Clap becomes a Thunder Blast that deals Stormstrike damage.
@@ -229,8 +229,8 @@ spec:RegisterTalents( {
     imminent_demise              = {  94788, 444769, 1 }, -- Every 3 Slayer's Strikes you gain Sudden Death. Using Sudden Death accelerates your next Bladestorm, striking 1 additional time (max 3). Bladestorm's total duration is unchanged.
     opportunist                  = {  94787, 444774, 1 }, -- When Raging Blow resets its own cooldown, your next Raging Blow deals 20% additional damage and 20% additional critical damage.
     overwhelming_blades          = {  94810, 444772, 1 }, -- Each strike of Bladestorm applies Overwhelmed to all enemies affected, increasing damage you deal to them by 1% for 20 sec, max 10 stacks.
-    reap_the_storm               = {  94809, 444775, 1 }, -- Bloodthirst has a 20% chance to cause you to unleash a flurry of steel, striking all nearby enemies for 51,783 damage and applying Overwhelmed. Deals reduced damage beyond 8 targets. 
-    relentless_pursuit           = {  94795, 444776, 1 }, -- Charge grants you 70% movement speed for 3 sec. Charge removes all movement impairing effects, this effect cannot occur more than once every 30 sec. 
+    reap_the_storm               = {  94809, 444775, 1 }, -- Bloodthirst has a 20% chance to cause you to unleash a flurry of steel, striking all nearby enemies for 51,783 damage and applying Overwhelmed. Deals reduced damage beyond 8 targets.
+    relentless_pursuit           = {  94795, 444776, 1 }, -- Charge grants you 70% movement speed for 3 sec. Charge removes all movement impairing effects, this effect cannot occur more than once every 30 sec.
     show_no_mercy                = {  94784, 444771, 1 }, -- Marked for Execution increases the critical strike chance and critical strike damage of your next Execute on the target by 15%.
     slayers_dominance            = {  94814, 444767, 1, "slayer" }, -- Your attacks against your primary target have a high chance to overwhelm their defenses and trigger a Slayer's Strike, dealing 60,496 damage and applying Marked for Execution, increasing the damage they take from your next Execute by 15%. Stacks 3 times.
     slayers_malice               = {  94801, 444779, 1 }, -- Raging Blow damage increased by 30%.
@@ -240,7 +240,7 @@ spec:RegisterTalents( {
 
 
 -- PvP Talents
-spec:RegisterPvpTalents( { 
+spec:RegisterPvpTalents( {
     battlefield_commander = 5629, -- (424742) Your Shout abilities have additional effects.  Battle Shout: Increases Stamina by 3%.  Piercing Howl: Radius increased by 50%  Berserker Shout: Range increased by 8 yds.  Intimidating Shout: Cooldown reduced by 15 sec.  Rallying Cry: Removes movement impairing effects and grants 30% movement speed to allies.  Thunderous Roar: Targets receive 5% more damage from all sources while bleeding.
     bodyguard             =  168, -- (213871) Protect an ally, causing 40% of all Physical damage they take to be transfered to you. When the target takes Physical damage, your Shield Slam cooldown has a 30% chance to be reset. Bodyguard is cancelled if the target is further than 20 yards from you. Lasts 1 min. Only one target can be Bodyguarded at a time.
     demolition            = 5374, -- (329033) Reduces the cooldown of your Shattering Throw or Wrecking Throw by 50% and increases its damage to absorb shields by an additional 250%.
@@ -535,100 +535,131 @@ spec:RegisterAuras( {
     },
 } )
 
--- The War Within
-spec:RegisterGear( "tww2", 229235, 229233, 229238, 229236, 229234 )
-spec:RegisterAuras( {
-    -- 2-set
-    -- https://www.wowhead.com/ptr-2/spell=1216561/winning-streak
-    -- Rampage damage increased by 2%.
-    winning_streak = {
-        id = 1216561,
-        duration = 30,
-        max_stack = 10,
-        copy = "winning_streak_fury"
+spec:RegisterGear({
+    -- The War Within
+    tww2 = {
+        items = { 229235, 229233, 229238, 229236, 229234 },
+        auras = {
+            winning_streak = {
+                id = 1216561,
+                duration = 30,
+                max_stack = 10,
+                copy = "winning_streak_fury"
+            },
+            double_down_bt = {
+                id = 1216565,
+                duration = 12,
+                max_stack = 1
+            },
+            double_down_rb = {
+                id = 1216569,
+                duration = 12,
+                max_stack = 1
+            }
+        }
     },
-    -- https://www.wowhead.com/ptr-2/spell=1216565/double-down
-    -- Bloodthirst damage increased by 15% and critical strike chance increased by 25%.
-    double_down_bt = {
-        id = 1216565,
-        duration = 12,
-        max_stack = 1
+    -- Dragonflight
+    tier31 = {
+        items = { 207180, 207181, 207182, 207183, 207185 },
+        setBonuses = {
+            tier31_2pc = 422925,
+            tier31_4pc = 422926
+        },
+        auras = {
+            furious_bloodthirst = {
+                id = 423211,
+                duration = 20,
+                max_stack = 3
+            }
+        }
     },
-    --https://www.wowhead.com/ptr-2/spell=1216569/double-down
-    --Raging Blow damage increased by 15% and Rage generated increased by (w2 / 10).
-    double_down_rb = {
-        id = 1216569,
-        duration = 12,
-        max_stack = 1
+    tier30 = {
+        items = { 202446, 202444, 202443, 202442, 202441, 217218, 217220, 217216, 217217, 217219 },
+        setBonuses = {
+            tier30_2pc = 405579,
+            tier30_4pc = 405580
+        },
+        auras = {
+            merciless_assault = {
+                id = 409983,
+                duration = 14,
+                max_stack = 10
+            }
+        }
     },
+    tier29 = {
+        items = { 200426, 200428, 200423, 200425, 200427 },
+        setBonuses = {
+            tier29_2pc = 393708,
+            tier29_4pc = 393709
+        }
+    },
+    -- Legacy
+    tier21 = {
+        items = { 152178, 152179, 152180, 152181, 152182, 152183 },
+        auras = {
+            slaughter = {
+                id = 253384,
+                duration = 4
+            },
+            outrage = {
+                id = 253385,
+                duration = 8
+            }
+        }
+    },
+    tier20 = {
+        items = { 147187, 147188, 147189, 147190, 147191, 147192 },
+        auras = {
+            raging_thirst = {
+                id = 242300,
+                duration = 8
+            },
+            bloody_rage = {
+                id = 242952,
+                duration = 10,
+                max_stack = 10
+            }
+        }
+    },
+    ceannar_charger = { items = { 137088 } },
+    timeless_stratagem = { items = { 143728 } },
+    kazzalax_fujiedas_fury = {
+        items = { 137053 },
+        auras = {
+            fujiedas_fury = {
+                id = 207776,
+                duration = 10,
+                max_stack = 4
+            }
+        }
+    },
+    mannoroths_bloodletting_manacles = { items = { 137107 } },
+    najentuss_vertebrae = { items = { 137087 } },
+    valarjar_berserkers = { items = { 151824 } },
+    ayalas_stone_heart = {
+        items = { 137052 },
+        auras = {
+            stone_heart = {
+                id = 225947,
+                duration = 10
+            }
+        }
+    },
+    the_great_storms_eye = {
+        items = { 151823 },
+        auras = {
+            tornados_eye = {
+                id = 248142,
+                duration = 6,
+                max_stack = 6
+            }
+        }
+    },
+    archavons_heavy_hand = { items = { 137060 } },
+    weight_of_the_earth = { items = { 137077 } },
+    soul_of_the_battlelord = { items = { 151650 } }
 } )
-
--- Dragonflight
-spec:RegisterGear( "tier29", 200426, 200428, 200423, 200425, 200427 )
-spec:RegisterSetBonuses( "tier29_2pc", 393708, "tier29_4pc", 393709 )
-
-spec:RegisterGear( "tier30", 202446, 202444, 202443, 202442, 202441, 217218, 217220, 217216, 217217, 217219 )
-spec:RegisterSetBonuses( "tier30_2pc", 405579, "tier30_4pc", 405580 )
-spec:RegisterAura( "merciless_assault", {
-    id = 409983,
-    duration = 14,
-    max_stack = 10
-} )
-
-spec:RegisterGear( "tier31", 207180, 207181, 207182, 207183, 207185 )
-spec:RegisterSetBonuses( "tier31_2pc", 422925, "tier31_4pc", 422926 )
-spec:RegisterAura( "furious_bloodthirst", {
-    id = 423211,
-    duration = 20,
-    max_stack = 3
-} )
--- Legacy
-spec:RegisterGear( 'tier20', 147187, 147188, 147189, 147190, 147191, 147192 )
-    spec:RegisterAura( "raging_thirst", {
-        id = 242300,
-        duration = 8
-        } ) -- fury 2pc.
-    spec:RegisterAura( "bloody_rage", {
-        id = 242952,
-        duration = 10,
-        max_stack = 10
-        } ) -- fury 4pc.
-
-spec:RegisterGear( 'tier21', 152178, 152179, 152180, 152181, 152182, 152183 )
-    spec:RegisterAura( "slaughter", {
-        id = 253384,
-        duration = 4
-    } ) -- fury 2pc dot.
-    spec:RegisterAura( "outrage", {
-        id = 253385,
-        duration = 8
-    } ) -- fury 4pc.
-
-spec:RegisterGear( "ceannar_charger", 137088 )
-spec:RegisterGear( "timeless_stratagem", 143728 )
-spec:RegisterGear( "kazzalax_fujiedas_fury", 137053 )
-    spec:RegisterAura( "fujiedas_fury", {
-        id = 207776,
-        duration = 10,
-        max_stack = 4
-    } )
-spec:RegisterGear( "mannoroths_bloodletting_manacles", 137107 ) -- NYI.
-spec:RegisterGear( "najentuss_vertebrae", 137087 )
-spec:RegisterGear( "valarjar_berserkers", 151824 )
-spec:RegisterGear( "ayalas_stone_heart", 137052 )
-    spec:RegisterAura( "stone_heart", { id = 225947,
-        duration = 10
-    } )
-spec:RegisterGear( "the_great_storms_eye", 151823 )
-    spec:RegisterAura( "tornados_eye", {
-        id = 248142,
-        duration = 6,
-        max_stack = 6
-    } )
-spec:RegisterGear( "archavons_heavy_hand", 137060 )
-spec:RegisterGear( "weight_of_the_earth", 137077 ) -- NYI.
-
-spec:RegisterGear( "soul_of_the_battlelord", 151650 )
 
 state.IsActiveSpell = IsActiveSpell
 
@@ -706,7 +737,7 @@ spec:RegisterUnitEvent( "UNIT_POWER_FREQUENT", "player", nil, function( event, u
             end
             if state.legendary.glory.enabled and FindPlayerAuraByID( 324143 ) then
                 gloryRage = ( gloryRage + lastRage - current ) % 25
-            end 
+            end
         end
         lastRage = current
     end
@@ -1123,7 +1154,7 @@ spec:RegisterAbilities( {
         },
     },
 
-    
+
     champions_spear = {
         id = function() return talent.champions_spear.enabled and 376079 or 307865 end,
         cast = 0,
@@ -1748,8 +1779,8 @@ spec:RegisterAbilities( {
 
         -- Add usable check for Unrelenting Onslaught talent
         usable = function()
-            if buff.bladestorm.up and not talent.unrelenting_onslaught.enabled then 
-                return false, "can't use during bladestorm without unrelenting onslaught" 
+            if buff.bladestorm.up and not talent.unrelenting_onslaught.enabled then
+                return false, "can't use during bladestorm without unrelenting onslaught"
             end
             return true
         end,

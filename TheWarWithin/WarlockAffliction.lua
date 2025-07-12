@@ -896,77 +896,84 @@ spec:RegisterHook( "combatExit", function()
     wipe( corruptionTargets )
 end )
 
--- The War Within
-spec:RegisterGear( "tww2", 229325, 229323, 229328, 229326, 229324 )
-spec:RegisterAuras( {
--- 2-set
--- https://www.wowhead.com/spell=1219034/jackpot
--- Your spells and abilities have a chance to hit a Jackpot! that increases your haste by 12% for 12 sec. Casting Summon Darkglare always hits a Jackpot!
-    jackpot = {
-        id = 1219034,
-        duration = 12,
-        max_stack = 1
+spec:RegisterGear({
+    -- The War Within
+    tww2 = {
+        items = { 229325, 229323, 229328, 229326, 229324 },
+        auras = {
+            jackpot = {
+                id = 1219034,
+                duration = 12,
+                max_stack = 1
+            }
+        }
     },
-
-} )
-
--- Dragonflight
-spec:RegisterGear( "tier31", 207270, 207271, 207272, 207273, 207275, 217212, 217214, 217215, 217211, 217213 )
--- (4) Soul Rot grants 3 Umbrafire Kindling which increase the damage of your next Malefic Rapture to deal 50% or your next Seed of Corruption by 60%. Additionally, Umbrafire Kindling causes Malefic Rapture to extend the duration of your damage over time effects and Haunt by 2 sec.
-spec:RegisterAura( "umbrafire_kindling", {
-    id = 423765,
-    duration = 20,
-    max_stack = 3
-} )
-spec:RegisterGear( "tier30", 202534, 202533, 202532, 202536, 202531 )
-spec:RegisterAura( "infirmity", {
-    id = 409765,
-    duration = 16, -- spelldata says 2 sec, but applies for 16 seconds from PS and 10 seconds from VT.
-    max_stack = 1
-} )
--- Tier 29
-spec:RegisterGear( "tier29", 200336, 200338, 200333, 200335, 200337 )
-spec:RegisterAuras( {
-    cruel_inspiration = {
-        id = 394215,
-        duration = 6,
-        max_stack = 1
+    -- Dragonflight
+    tier31 = {
+        items = { 207270, 207271, 207272, 207273, 207275, 217212, 217214, 217215, 217211, 217213 },
+        auras = {
+            umbrafire_kindling = {
+                id = 423765,
+                duration = 20,
+                max_stack = 3
+            }
+        }
     },
-    cruel_epiphany = {
-        id = 394253,
-        duration = 40,
-        max_stack = 5
-    }
+    tier30 = {
+        items = { 202534, 202533, 202532, 202536, 202531 },
+        auras = {
+            infirmity = {
+                id = 409765,
+                duration = 16,
+                max_stack = 1
+            }
+        }
+    },
+    tier29 = {
+        items = { 200336, 200338, 200333, 200335, 200337 },
+        auras = {
+            cruel_inspiration = {
+                id = 394215,
+                duration = 6,
+                max_stack = 1
+            },
+            cruel_epiphany = {
+                id = 394253,
+                duration = 40,
+                max_stack = 5
+            }
+        }
+    },
+    tier28 = {
+        items = { 188884, 188887, 188888, 188889, 188890 },
+        bonuses = {
+            tier28_2pc = 364437,
+            tier28_4pc = 363953
+        },
+        auras = {
+            calamitous_crescendo = {
+                id = 364322,
+                duration = 10,
+                max_stack = 1
+            }
+        }
+    },
+    -- Legacy
+    tier21 = { items = { 152174, 152177, 152172, 152176, 152173, 152175 } },
+    tier20 = { items = { 147183, 147186, 147181, 147185, 147182, 147184 } },
+    tier19 = { items = { 138314, 138323, 138373, 138320, 138311, 138317 } },
+    class =  { items = { 139765, 139768, 139767, 139770, 139764, 139769, 139766, 139763 } },
+    amanthuls_vision = { items = { 154172 } },
+    hood_of_eternal_disdain = { items = { 132394 } },
+    norgannons_foresight = { items = { 132455 } },
+    pillars_of_the_dark_portal = { items = { 132357 } },
+    power_cord_of_lethtendris = { items = { 132457 } },
+    reap_and_sow = { items = { 144364 } },
+    sacrolashs_dark_strike = { items = { 132378 } },
+    soul_of_the_netherlord = { items = { 151649 } },
+    stretens_sleepless_shackles = { items = { 132381 } },
+    the_master_harvester = { items = { 151821 } }
 } )
--- Tier 28
-spec:RegisterGear( "tier28", 188884, 188887, 188888, 188889, 188890 )
-spec:RegisterSetBonuses( "tier28_2pc", 364437, "tier28_4pc", 363953 )
--- 2-Set - Deliberate Malice - Malefic Rapture's damage is increased by 15% and each cast extends the duration of Corruption, Agony, and Unstable Affliction by 2 sec.
--- 4-Set - Calamitous Crescendo - While Agony, Corruption, and Unstable Affliction are active, your Drain Soul has a 10% chance / Shadow Bolt has a 20% chance to make your next Malefic Rapture cost no Soul Shards and cast instantly.
-spec:RegisterAura( "calamitous_crescendo", {
-    id = 364322,
-    duration = 10,
-    max_stack = 1,
-} )
-
--- Legacy
-
-spec:RegisterGear( "tier21", 152174, 152177, 152172, 152176, 152173, 152175 )
-spec:RegisterGear( "tier20", 147183, 147186, 147181, 147185, 147182, 147184 )
-spec:RegisterGear( "tier19", 138314, 138323, 138373, 138320, 138311, 138317 )
-spec:RegisterGear( "class", 139765, 139768, 139767, 139770, 139764, 139769, 139766, 139763 )
-
-spec:RegisterGear( "amanthuls_vision", 154172 )
-spec:RegisterGear( "hood_of_eternal_disdain", 132394 )
-spec:RegisterGear( "norgannons_foresight", 132455 )
-spec:RegisterGear( "pillars_of_the_dark_portal", 132357 )
-spec:RegisterGear( "power_cord_of_lethtendris", 132457 )
-spec:RegisterGear( "reap_and_sow", 144364 )
-spec:RegisterGear( "sacrolashs_dark_strike", 132378 )
-spec:RegisterGear( "soul_of_the_netherlord", 151649 )
-spec:RegisterGear( "stretens_sleepless_shackles", 132381 )
-spec:RegisterGear( "the_master_harvester", 151821 )
-
 
 --[[ spec:RegisterStateFunction( "applyUnstableAffliction", function( duration )
     for i = 1, 5 do
@@ -979,13 +986,11 @@ spec:RegisterGear( "the_master_harvester", 151821 )
     end
 end ) ]]
 
-
 spec:RegisterHook( "reset_preauras", function ()
     if class.abilities.summon_darkglare.realCast and state.now - class.abilities.summon_darkglare.realCast < 20 then
         target.updated = true
     end
 end )
-
 
 local SUMMON_DEMON_TEXT
 
@@ -1056,14 +1061,12 @@ spec:RegisterHook( "reset_precast", function ()
     class.abilities.summon_pet = class.abilities[ settings.default_pet or "summon_sayaad" ]
 end )
 
-
 spec:RegisterHook( "spend", function( amt, resource )
     if resource == "soul_shards" and amt > 0 and talent.summon_darkglare.enabled then
         if talent.grand_warlocks_design.enabled then reduceCooldown( "summon_darkglare", amt * 2 ) end
         if legendary.wilfreds_sigil_of_superior_summoning.enabled then reduceCooldown( "summon_darkglare", amt * 2 ) end
     end
 end )
-
 
 spec:RegisterStateExpr( "target_uas", function ()
     return active_dot.unstable_affliction
@@ -1078,7 +1081,6 @@ spec:RegisterStateExpr( "can_seed", function ()
     if active_dot.seed_of_corruption < seed_targets - ( state:IsInFlight( "seed_of_corruption" ) and 1 or 0 ) then return true end
     return false
 end )
-
 
 local Glyphed = IsSpellKnownOrOverridesKnown
 

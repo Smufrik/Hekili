@@ -220,9 +220,6 @@ local function UpdateShardsForGuldan()
     shards_for_guldan = UnitPower( "player", Enum.PowerType.SoulShards )
 end
 
-
-
-
 local dreadstalkers_travel_time = 1
 
 spec:RegisterCombatLogEvent( function( _, subtype, _, source, _, _, _, destGUID, _, _, _, spellID, spellName )
@@ -357,7 +354,6 @@ spec:RegisterCombatLogEvent( function( _, subtype, _, source, _, _, _, destGUID,
     end
 end )
 
-
 local ExpireDreadstalkers = setfenv( function()
     addStack( "demonic_core", nil, 2 )
     if talent.shadows_bite.enabled then applyBuff( "shadows_bite" ) end
@@ -377,32 +373,6 @@ spec:RegisterStateFunction( "SoulStrikeIfNotCapped", function()
         if Hekili.ActiveDebug then Hekili:Debug( "*** Soul Strike not cast at %.2f due to capped shards; requeuing in cast by pet at %.2f.", query_time, gcd.remains > 0 and gcd.expires or ( query_time + gcd.max ) ) end
     end
 end )
-
--- The War Within
-spec:RegisterGear( "tww2", 229325, 229323, 229328, 229326, 229324 )
-
--- Dragonflight
-
-spec:RegisterGear( "tier29", 200336, 200338, 200333, 200335, 200337 )
-spec:RegisterAura( "blazing_meteor", {
-    id = 394215,
-    duration = 6,
-    max_stack = 1
-} )
-spec:RegisterGear( "tier30", 202534, 202533, 202532, 202536, 202531 )
-spec:RegisterAura( "rite_of_ruvaraad", {
-    id = 409725,
-    duration = 17,
-    max_stack = 1
-} )
-spec:RegisterGear( "tier31", 207270, 207271, 207272, 207273, 207275, 217212, 217214, 217215, 217211, 217213 )
-spec:RegisterAuras( {
-    doom_brand = {
-        id = 423583,
-        duration = 20,
-        max_stack = 1
-    }
-} )
 
 local wipe = table.wipe
 
@@ -576,7 +546,6 @@ spec:RegisterHook( "reset_precast", function()
     if Hekili.ActiveDebug then Hekili:Debug( "Should have seen demons." ) end
 end )
 
-
 spec:RegisterHook( "advance_end", function ()
     -- For virtual imps, assume they'll take 0.5s to start casting and then chain cast.
     local longevity = 0.5 + ( state.level > 55 and 7 or 6 ) * 2 * state.haste
@@ -591,7 +560,6 @@ spec:RegisterHook( "advance_end", function ()
         end
     end
 end )
-
 
 -- Provide a way to confirm if all Hand of Gul'dan imps have landed.
 spec:RegisterStateExpr( "spawn_remains", function ()
@@ -635,7 +603,6 @@ spec:RegisterVariable( "imp_despawn", function ()
 
     return val
 end )
-
 
 spec:RegisterHook( "spend", function( amt, resource )
     if resource == "soul_shards" then
@@ -697,7 +664,6 @@ spec:RegisterHook( "spend", function( amt, resource )
     end
 end )
 
-
 spec:RegisterHook( "advance_end", function( time )
     if buff.ritual_overlord.expires > query_time - time and buff.ritual_overlord.down then
         applyBuff( "art_overlord" )
@@ -711,7 +677,6 @@ spec:RegisterHook( "advance_end", function( time )
         applyBuff( "art_pit_lord" )
     end
 end )
-
 
 spec:RegisterStateFunction( "summon_demon", function( name, duration, count )
     local db = other_demon_v
@@ -735,7 +700,6 @@ spec:RegisterStateFunction( "summon_demon", function( name, duration, count )
     end
 end )
 
-
 spec:RegisterStateFunction( "extend_demons", function( duration )
     duration = duration or 15
 
@@ -753,7 +717,6 @@ spec:RegisterStateFunction( "extend_demons", function( duration )
         if n == 0 then break end
     end
 end )
-
 
 spec:RegisterStateFunction( "consume_demons", function( name, count )
     local db = other_demon_v
@@ -810,7 +773,6 @@ spec:RegisterStateFunction( "consume_demons", function( name, count )
     end
 end )
 
-
 spec:RegisterStateExpr( "soul_shard", function () return soul_shards.current end )
 spec:RegisterStateExpr( "soul_shard_deficit", function () return soul_shards.max - soul_shards.current end )
 
@@ -833,11 +795,9 @@ spec:RegisterStateExpr( "time_to_hog", function ()
     return cast_time
 end )
 
-
 spec:RegisterStateExpr( "major_demons_active", function ()
     return ( buff.grimoire_felguard.up and 1 or 0 ) + ( buff.vilefiend.up and 1 or 0 ) + ( buff.dreadstalkers.up and 1 or 0 )
 end )
-
 
 -- When the next major demon (anything but Wild Imps) expires.
 spec:RegisterStateExpr( "major_demon_remains", function ()
@@ -851,7 +811,6 @@ spec:RegisterStateExpr( "major_demon_remains", function ()
     return expire
 end )
 
-
 -- New imp forecasting expressions for Demo.
 spec:RegisterStateExpr( "incoming_imps", function ()
     local n = 0
@@ -864,7 +823,6 @@ spec:RegisterStateExpr( "incoming_imps", function ()
 
     return n
 end )
-
 
 local time_to_n = 0
 
@@ -895,7 +853,6 @@ spec:RegisterStateTable( "query_imp_spawn", setmetatable( {}, {
         return remains
     end,
 } ) )
-
 
 local valid_demons = {
     grimoire_felguard = "grimoire_felguard",
@@ -936,7 +893,7 @@ spec:RegisterStateExpr( "there_would_really_be_no_point_to_generate_shards", fun
     local hog_cast = action.hand_of_guldan.cast_time
     local padding = gcd.max * 2
 
-    
+
     local shortest = 999
 
     for k in pairs( valid_demons ) do
@@ -959,7 +916,6 @@ spec:RegisterStateTable( "time_to_imps", setmetatable( {}, {
         return query_imp_spawn.remains
     end
 } ) )
-
 
 spec:RegisterStateTable( "imps_spawned_during", setmetatable( {}, {
     __index = function( t, k )
@@ -987,6 +943,43 @@ spec:RegisterStateTable( "imps_spawned_during", setmetatable( {}, {
     end,
 } ) )
 
+spec:RegisterGear({
+    -- The War Within
+    tww2 = {
+        items = { 229325, 229323, 229328, 229326, 229324 }
+    },
+    -- Dragonflight
+    tier31 = {
+        items = { 207270, 207271, 207272, 207273, 207275, 217212, 217214, 217215, 217211, 217213 },
+        auras = {
+            doom_brand = {
+                id = 423583,
+                duration = 20,
+                max_stack = 1
+            }
+        }
+    },
+    tier30 = {
+        items = { 202534, 202533, 202532, 202536, 202531 },
+        auras = {
+            rite_of_ruvaraad = {
+                id = 409725,
+                duration = 17,
+                max_stack = 1
+            }
+        }
+    },
+    tier29 = {
+        items = { 200336, 200338, 200333, 200335, 200337 },
+        auras = {
+            blazing_meteor = {
+                id = 394215,
+                duration = 6,
+                max_stack = 1
+            }
+        }
+    }
+} )
 
 -- Auras
 spec:RegisterAuras( {
