@@ -2016,7 +2016,7 @@ spec:RegisterAbilities( {
         gcd = "spell",
         school = "physical",
 
-        spend = 50,
+        spend = 25,
         spendType = "energy",
 
         startsCombat = true,
