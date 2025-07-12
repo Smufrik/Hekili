@@ -5105,23 +5105,20 @@ found = true end
                             args = {
                                 mode = {
                                     type = "select",
-                                    name = "Mode",
-                                        desc   = "Choose a performance preset:\n" ..
-                                        "• Low: Same as the setting during v11.1.5-1.0.8, best for slower/older systems.\n" ..
-                                        "• Medium: balanced updates for mid-range computers.\n" ..
-                                        "• High: maximum update frequency for high-end machines.",
+                                    name = "CPU Utilization",
+                                    desc = "Select the performance option that works best for your system/CPU.\n" ..
+                                        "• Low (default): Minimize CPU usage to reduce FPS impact, especially on older systems.\n" ..
+                                        "• Medium: Increased CPU usage for smoother updates, likely to impact FPS on older systems.\n" ..
+                                        "• High: Optimized CPU usage for smoothest updates, intended only for high-end processors.",
                                     order = 1,
-
-                                values = { "Low", "Medium", "High" },
-
-                                get = function(info)
-                                    return Hekili.DB.profile.performance.mode
-                                end,
-                                set = function(info, v)
-                                    Hekili.DB.profile.performance.mode = v
-                                end,
-
-                                width = 1.5,
+                                    values = { "Low", "Medium", "High" },
+                                    get = function(info)
+                                        return Hekili.DB.profile.performance.mode
+                                    end,
+                                    set = function(info, v)
+                                        Hekili.DB.profile.performance.mode = v
+                                    end,
+                                    width = 1.5,
                                 },
                             },
                         },
