@@ -4678,7 +4678,7 @@ found = true end
         while( true ) do
             local id, name, description, texture, role = GetSpecializationInfo( i )
 
-            if not id then break end
+            if not id or id == 0 then break end
             if description then description = description:match( "^(.-)\n" ) end
 
             local spec = class.specs[ id ]
