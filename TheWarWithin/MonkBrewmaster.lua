@@ -504,6 +504,11 @@ spec:RegisterAuras( {
         duration = 5.0,
         max_stack = 1,
     },
+    mystic_touch = {
+        id = 113746,
+        duration = 3600,
+        max_stack = 1
+    },
     ox_stance = {
         id = 455071,
         duration = 30,

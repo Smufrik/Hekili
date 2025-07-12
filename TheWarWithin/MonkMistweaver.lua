@@ -406,7 +406,9 @@ spec:RegisterAuras( {
         id = 117907,
     },
     mystic_touch = {
-        id = 8647,
+        id = 113746,
+        duration = 3600,
+        max_stack = 1
     },
     overflowing_mists = {
         id = 388513,
