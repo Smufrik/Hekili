@@ -396,23 +396,32 @@ do
     end )
 end
 
--- TheWarWithin
-spec:RegisterGear( "tww2", 229283, 229281, 229279, 229280, 229278 )
-
--- Dragonflight
-spec:RegisterGear( "tier30", 202491, 202489, 202488, 202487, 202486 )
-spec:RegisterAura( "spiritbloom", {
-    id = 409895,
-    duration = 8,
-    tick_time = 2,
-    max_stack = 1
+spec:RegisterGear({
+    -- The War Within
+    tww2 = {
+        items = { 229283, 229281, 229279, 229280, 229278 }
+    },
+    -- Dragonflight
+    tier31 = {
+        items = { 207225, 207226, 207227, 207228, 207230 }
+    },
+    tier30 = {
+        items = { 202491, 202489, 202488, 202487, 202486 },
+        auras = {
+            spiritbloom = {
+                id = 409895,
+                duration = 8,
+                tick_time = 2,
+                max_stack = 1
+            },
+            essence_rush = {
+                id = 409899,
+                duration = 3,
+                max_stack = 1
+            }
+        }
+    }
 } )
-spec:RegisterAura( "essence_rush", {
-    id = 409899,
-    duration = 3,
-    max_stack = 1
-} )
-spec:RegisterGear( "tier31", 207225, 207226, 207227, 207228, 207230 )
 
 spec:RegisterStateExpr( "empowered_spell_count", function()
     return actual_empowered_spell_count

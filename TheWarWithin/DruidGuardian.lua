@@ -171,7 +171,7 @@ spec:RegisterTalents( {
     gore                          = {  82126, 210706, 1 }, -- Thrash, Swipe, Moonfire, and Maul have a 15% chance to reset the cooldown on Mangle, and to cause it to generate an additional 4 Rage.
     gory_fur                      = {  82132, 200854, 1 }, -- Mangle has a 15% chance to reduce the Rage cost of your next Ironfur by 25%.
     guardian_of_elune             = {  82140, 155578, 1 }, -- Mangle increases the duration of your next Ironfur by 3 sec, or the healing of your next Frenzied Regeneration by 20%.
-    improved_survival_instincts   = {  82128, 328767, 1 }, -- Survival Instincts now has 2 charges. 
+    improved_survival_instincts   = {  82128, 328767, 1 }, -- Survival Instincts now has 2 charges.
     incarnation                   = {  82136, 102558, 1 }, -- An improved Bear Form that grants the benefits of Berserk, causes Mangle to hit up to 3 targets, and increases maximum health by 30%. Lasts 30 sec. You may freely shapeshift in and out of this improved Bear Form for its duration.
     incarnation_guardian_of_ursoc = {  82136, 102558, 1 }, -- An improved Bear Form that grants the benefits of Berserk, causes Mangle to hit up to 3 targets, and increases maximum health by 30%. Lasts 30 sec. You may freely shapeshift in and out of this improved Bear Form for its duration.
     infected_wounds               = {  82162, 345208, 1 }, -- Mangle and Maul cause an Infected Wound in the target, reducing their movement speed by 50% for 12 sec.
@@ -205,7 +205,7 @@ spec:RegisterTalents( {
     aggravate_wounds              = {  94616, 441829, 1 }, -- Every Maul, Raze, Mangle, Thrash, or Swipe you cast extends the duration of your Dreadful Wounds by 0.6 sec, up to 8 additional sec.
     bestial_strength              = {  94611, 441841, 1 }, -- Maul and Raze damage increased by 20%.
     claw_rampage                  = {  94613, 441835, 1 }, -- During Berserk, Mangle, Swipe, and Thrash have a 25% chance to make your next Maul become Ravage.
-    dreadful_wound                = {  94620, 441809, 1 }, -- Ravage also inflicts a Bleed that causes 23,428 damage over 6.0 sec and saps its victims' strength, reducing damage they deal to you by 10%. Dreadful Wound is not affected by Circle of Life and Death. 
+    dreadful_wound                = {  94620, 441809, 1 }, -- Ravage also inflicts a Bleed that causes 23,428 damage over 6.0 sec and saps its victims' strength, reducing damage they deal to you by 10%. Dreadful Wound is not affected by Circle of Life and Death.
     empowered_shapeshifting       = {  94612, 441689, 1 }, -- Frenzied Regeneration can be cast in Cat Form for 40 Energy. Bear Form reduces magic damage you take by 4%. Shred and Swipe damage increased by 6%. Mangle damage increased by 15%.
     fount_of_strength             = {  94618, 441675, 1 }, -- Your maximum Energy and Rage are increased by 20. Frenzied Regeneration also increases your maximum health by 10%.
     killing_strikes               = {  94619, 441824, 1 }, -- Ravage increases your Agility by 8% and the armor granted by Ironfur by 20% for 8 sec. Your first Mangle after entering combat makes your next Maul become Ravage.
@@ -215,7 +215,7 @@ spec:RegisterTalents( {
     strike_for_the_heart          = {  94614, 441845, 1 }, -- Shred, Swipe, and Mangle's critical strike chance and critical strike damage are increased by 15%. Mangle heals you for 1% of maximum health.
     tear_down_the_mighty          = {  94614, 441846, 1 }, -- The cooldown of Pulverize is reduced by 10 sec.
     wildpower_surge               = {  94612, 441691, 1 }, -- Mangle grants Feline Potential. When you have 6 stacks, the next time you transform into Cat Form, gain 5 combo points and your next Ferocious Bite or Rip deals 225% increased damage for its full duration.
-    wildshape_mastery             = {  94610, 441678, 1 }, -- Ironfur and Frenzied Regeneration persist in Cat Form. When transforming from Bear to Cat Form, you retain 80% of your Bear Form armor and health for 6 sec. For 6 sec after entering Bear Form, you heal for 10% of damage taken over 8 sec. 
+    wildshape_mastery             = {  94610, 441678, 1 }, -- Ironfur and Frenzied Regeneration persist in Cat Form. When transforming from Bear to Cat Form, you retain 80% of your Bear Form armor and health for 6 sec. For 6 sec after entering Bear Form, you heal for 10% of damage taken over 8 sec.
 
     -- Elune's Chosen
     arcane_affinity               = {  94586, 429540, 1 }, -- All Arcane damage from your spells and abilities is increased by 3%.
@@ -226,7 +226,7 @@ spec:RegisterTalents( {
     lunar_amplification           = {  94596, 429529, 1 }, -- Each non-Arcane damaging ability you use increases the damage of your next Arcane damaging ability by 3%, stacking up to 3 times.
     lunar_calling                 = {  94590, 429523, 1 }, -- Thrash now deals Arcane damage and its damage is increased by 12%.
     lunar_insight                 = {  94588, 429530, 1 }, -- Moonfire deals 8% additional damage.
-    lunation                      = {  94586, 429539, 1 }, -- Your Arcane abilities reduce the cooldown of Lunar Beam by 3.0 sec. 
+    lunation                      = {  94586, 429539, 1 }, -- Your Arcane abilities reduce the cooldown of Lunar Beam by 3.0 sec.
     moon_guardian                 = {  94598, 429520, 1 }, -- Free automatic Moonfires from Galactic Guardian generate 5 Rage.
     moondust                      = {  94597, 429538, 1 }, -- Enemies affected by Moonfire are slowed by 20%.
     stellar_command               = {  94590, 429668, 1 }, -- Increases the damage of Lunar Beam by 30% and Fury of Elune by 15%.
@@ -904,6 +904,99 @@ spec:RegisterAuras( {
     }
 } )
 
+spec:RegisterGear({
+    -- The War Within
+    tww2 = {
+        items = { 229310, 229308, 229306, 229307, 229305 },
+        auras = {
+            luck_of_the_draw = {
+                id = 1218553,
+                duration = 8,
+                max_stack = 1
+            },
+            stacked_deck = {
+                id = 1218537,
+                duration = 20,
+                max_stack = 10
+            }
+        }
+    },
+    -- Dragonflight
+    tier31 = {
+        items = { 207252, 207253, 207254, 207255, 207257 },
+        auras = {
+            dream_thorns = {
+                id = 425407,
+                duration = 45,
+                max_stack = 1,
+                copy = "blazing_thorns"
+            }
+        }
+    },
+    tier30 = {
+        items = { 202518, 202516, 202515, 202514, 202513, 217193, 217195, 217191, 217192, 217194 },
+        auras = {
+            furious_regeneration = {
+                id = 408504,
+                duration = 8,
+                max_stack = 1
+            },
+            indomitable_guardian = {
+                id = 408522,
+                duration = 12,
+                max_stack = 5
+            }
+        }
+    },
+    tier29 = {
+        items = { 200351, 200353, 200354, 200355, 200356 },
+        auras = {
+            bloody_healing = {
+                id = 394504,
+                duration = 6,
+                max_stack = 1
+            }
+        }
+    },
+    -- Legacy
+    tier21 = { items = { 152127, 152129, 152125, 152124, 152126, 152128 } },
+    tier20 = { items = { 147136, 147138, 147134, 147133, 147135, 147137 } },
+    tier19 = { items = { 138330, 138336, 138366, 138324, 138327, 138333 } },
+    class = { items = { 139726, 139728, 139723, 139730, 139725, 139729, 139727, 139724 } },
+    ailuro_pouncers = { items = { 137024 } },
+    behemoth_headdress = { items = { 151801 } },
+    chatoyant_signet = { items = { 137040 } },
+    dual_determination = { items = { 137041 } },
+    ekowraith_creator_of_worlds = { items = { 137015 } },
+    elizes_everlasting_encasement = { items = { 137067 } },
+    fiery_red_maimers = { items = { 144354 } },
+    lady_and_the_child = { items = { 144295 } },
+    luffa_wrappings = { items = { 137056 } },
+    oakhearts_puny_quods = {
+        items = { 144432 },
+        auras = {
+            oakhearts_puny_quods = {
+                id = 236479,
+                duration = 3,
+                max_stack = 1
+            }
+        }
+    },
+    skysecs_hold = {
+        items = { 137025 },
+        auras = {
+            skysecs_hold = {
+                id = 208218,
+                duration = 3,
+                max_stack = 1
+            }
+        }
+    },
+    the_wildshapers_clutch = { items = { 137094 } },
+    soul_of_the_archdruid = { items = { 151636 } }
+} )
+
+
 Hekili:EmbedAdaptiveSwarm( spec )
 
 -- Function to remove any form currently active.
@@ -947,96 +1040,6 @@ end )
 spec:RegisterStateExpr( "ironfur_damage_threshold", function ()
     return ( settings.ironfur_damage_threshold or 0 ) / 100 * health.max * ( solo and 0.5 or 1 )
 end )
-
--- The War Within
-spec:RegisterGear( "tww2", 229310, 229308, 229306, 229307, 229305  )
-spec:RegisterAuras( {
-    -- 2-set
-    -- https://www.wowhead.com/ptr-2/spell=1218553/luck-of-the-draw
-    -- Each time you take damage you have a chance to activate Luck of the Draw! causing you to cast Survival Instincts for 4.0 sec. Your damage done is increased by 15% for 8 sec after Luck of the Draw! activates.
-    luck_of_the_draw = {
-    id = 1218553,
-    duration = 8,
-    max_stack = 1,
-    },
-    stacked_deck = {
-    -- https://www.wowhead.com/ptr-2/spell=1218537/stacked-deck
-    --After you gain Luck of the Draw! your next 10 Druid abilities cast another Druid ability at 125% effectiveness.
-    id = 1218537,
-    duration = 20,
-    max_stack = 10,
-    },
-
-    } )
-
--- Tier 29
-spec:RegisterGear( "tier29", 200351, 200353, 200354, 200355, 200356 )
-spec:RegisterAura( "bloody_healing", {
-    id = 394504,
-    duration = 6,
-    max_stack = 1,
-} )
-
--- Tier 30
-spec:RegisterGear( "tier30", 202518, 202516, 202515, 202514, 202513, 217193, 217195, 217191, 217192, 217194 )
--- 2 pieces (Guardian) : When you take damage, Mangle and Thrash damage and Rage generation are increased by 15% for 8 sec and you heal for 6% of damage taken over 8 sec.
-spec:RegisterAura( "furious_regeneration", {
-    id = 408504,
-    duration = 8,
-    max_stack = 1
-} )
--- 4 pieces (Guardian) : Raze Raze Maul damage increased by 20% and casting Ironfur or Raze Raze Maul increases your maximum health by 3% for 12 sec, stacking 5 times.
-spec:RegisterAura( "indomitable_guardian", {
-    id = 408522,
-    duration = 12,
-    max_stack = 5
-} )
-
-spec:RegisterGear( "tier31", 207252, 207253, 207254, 207255, 207257 )
--- (2) Rage you spend during Rage of the Sleeper fuel the growth of Dream Thorns, which wreath you in their protection after Rage of the Sleeper expires, absorbing $425407s2% of damage dealt to you while the thorns remain, up to ${$s2/100*$AP} per $s1 Rage spent.
--- (4) Each $s1 Rage you spend while Rage of the Sleeper is active extends its duration by ${$s4/1000}.1 sec, up to ${$s3/1000}.1. Your Dream Thorns become Blazing Thorns, causing $s2% of damage absorbed to be reflected at the attacker.
-spec:RegisterAuras( {
-    dream_thorns = {
-        id = 425407,
-        duration = 45,
-        max_stack = 1,
-        copy = "blazing_thorns" -- ???
-    },
-
-})
-
--- Gear.
-spec:RegisterGear( "class", 139726, 139728, 139723, 139730, 139725, 139729, 139727, 139724 )
-spec:RegisterGear( "tier19", 138330, 138336, 138366, 138324, 138327, 138333 )
-spec:RegisterGear( "tier20", 147136, 147138, 147134, 147133, 147135, 147137 ) -- Bonuses NYI
-spec:RegisterGear( "tier21", 152127, 152129, 152125, 152124, 152126, 152128 )
-
-spec:RegisterGear( "ailuro_pouncers", 137024 )
-spec:RegisterGear( "behemoth_headdress", 151801 )
-spec:RegisterGear( "chatoyant_signet", 137040 )
-spec:RegisterGear( "dual_determination", 137041 )
-spec:RegisterGear( "ekowraith_creator_of_worlds", 137015 )
-spec:RegisterGear( "elizes_everlasting_encasement", 137067 )
-spec:RegisterGear( "fiery_red_maimers", 144354 )
-spec:RegisterGear( "lady_and_the_child", 144295 )
-spec:RegisterGear( "luffa_wrappings", 137056 )
-spec:RegisterGear( "oakhearts_puny_quods", 144432 )
-    spec:RegisterAura( "oakhearts_puny_quods", {
-        id = 236479,
-        duration = 3,
-        max_stack = 1,
-    } )
-spec:RegisterGear( "skysecs_hold", 137025 )
-    spec:RegisterAura( "skysecs_hold", {
-        id = 208218,
-        duration = 3,
-        max_stack = 1,
-    } )
-
-spec:RegisterGear( "the_wildshapers_clutch", 137094 )
-
-spec:RegisterGear( "soul_of_the_archdruid", 151636 )
-
 
 spec:RegisterStateExpr( "lunar_eclipse", function ()
     return eclipse.wrath_counter
@@ -1621,7 +1624,7 @@ spec:RegisterAbilities( {
         end,
 
         handler = function ()
-            
+
             -- Regular talents
             if talent.fluid_form.enabled and buff.bear_form.down then shift( "bear_form" ) end
             if talent.infected_wounds.enabled then applyDebuff( "target", "infected_wounds" ) end
@@ -1705,7 +1708,7 @@ spec:RegisterAbilities( {
             -- Ravage specific interactions
             if talent.ravage.enabled then spec.abilities.ravage_maul.handler() end
 
-            -- Legacy / PvP         
+            -- Legacy / PvP
             if conduit.savage_combatant.enabled then removeBuff( "savage_combatant" ) end
             if set_bonus.tier30_4pc > 0 then addStack( "indomitable_guardian" ) end
             if pvptalent.sharpened_claws.enabled or essence.conflict_and_strife.major then applyBuff( "sharpened_claws" ) end

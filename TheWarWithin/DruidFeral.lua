@@ -1009,6 +1009,89 @@ spec:RegisterAuras( {
     }
 } )
 
+spec:RegisterGear({
+    -- The War Within
+    tww2 = {
+        items = { 229310, 229308, 229306, 229307, 229305 },
+        auras = {
+            winning_streak = {
+                id = 1217236,
+                duration = 10,
+                max_stack = 10
+            },
+            big_winner = {
+                id = 1217245,
+                duration = 6,
+                max_stack = 1
+            }
+        }
+    },
+    -- Dragonflight
+    tier31 = {
+        items = { 207252, 207253, 207254, 207255, 207257, 217193, 217195, 217191, 217192, 217194 },
+        auras = {
+            smoldering_frenzy = {
+                id = 422751,
+                duration = 8,
+                max_stack = 1
+            },
+            burning_frenzy = {
+                id = 422779,
+                duration = 10,
+                max_stack = 1
+            }
+        }
+    },
+    tier30 = {
+        items = { 202518, 202516, 202515, 202514, 202513 },
+        auras = {
+            shadows_of_the_predator = {
+                id = 408340,
+                duration = 20,
+                max_stack = 12
+            },
+            predator_revealed = {
+                id = 408468,
+                duration = 6,
+                tick_time = 1.5,
+                max_stack = 1
+            }
+        }
+    },
+    tier29 = {
+        items = { 200354, 200356, 200351, 200353, 200355 },
+        auras = {
+            sharpened_claws = {
+                id = 394465,
+                duration = 4,
+                max_stack = 1
+            }
+        }
+    },
+    -- Legacy
+    tier21 = {
+        items = { 152127, 152129, 152125, 152124, 152126, 152128 },
+        auras = {
+            apex_predator = {
+                id = 252752,
+                duration = 25
+            }
+        }
+    },
+    tier20 = { items = { 147136, 147138, 147134, 147133, 147135, 147137 } },
+    tier19 = { items = { 138330, 138336, 138366, 138324, 138327, 138333 } },
+    class = { items = { 139726, 139728, 139723, 139730, 139725, 139729, 139727, 139724 } },
+    ailuro_pouncers = { items = { 137024 } },
+    behemoth_headdress = { items = { 151801 } },
+    chatoyant_signet = { items = { 137040 } },
+    ekowraith_creator_of_worlds = { items = { 137015 } },
+    fiery_red_maimers = { items = { 144354 } },
+    luffa_wrappings = { items = { 137056 } },
+    soul_of_the_archdruid = { items = { 151636 } },
+    the_wildshapers_clutch = { items = { 137094 } }
+} )
+
+
 -- Snapshotting
 local tf_spells = { rake = true, rip = true, thrash_cat = true, lunar_inspiration = true, primal_wrath = true }
 local bt_spells = { rip = true, primal_wrath = true }
@@ -1484,86 +1567,6 @@ spec:RegisterStateExpr( "effective_stealth", function ()
     return buff.prowl.up or buff.incarnation.up or buff.shadowmeld.up or buff.sudden_ambush.up
 end )
 
--- The War Within
-spec:RegisterGear( "tww2", 229310, 229308, 229306, 229307, 229305  )
-spec:RegisterAuras( {
-    -- https://www.wowhead.com/ptr-2/spell=1217236/winning-streak
-    -- Your spells and abilities have a chance to activate a Winning Streak! increasing the damage of your Ferocious Bite, Rip, and Primal Wrath by 3% stacking up to 10 times. Ferocious Bite, Rip, and Primal Wrath have a 15% chance to remove Winning Streak!
-    winning_streak = {
-    id = 1217236,
-    duration = 10,
-    max_stack = 10,
-    },
-
-    big_winner = {
-    -- https://www.wowhead.com/ptr-2/spell=1217245/big-winner
-    id = 1217245,
-    duration = 6,
-    max_stack = 1,
-    },
-
-} )
-
--- Legendaries.  Ugh.
-spec:RegisterGear( "ailuro_pouncers", 137024 )
-spec:RegisterGear( "behemoth_headdress", 151801 )
-spec:RegisterGear( "chatoyant_signet", 137040 )
-spec:RegisterGear( "ekowraith_creator_of_worlds", 137015 )
-spec:RegisterGear( "fiery_red_maimers", 144354 )
-spec:RegisterGear( "luffa_wrappings", 137056 )
-spec:RegisterGear( "soul_of_the_archdruid", 151636 )
-spec:RegisterGear( "the_wildshapers_clutch", 137094 )
-
--- Dragonflight
-spec:RegisterGear( "tier29", 200354, 200356, 200351, 200353, 200355 )
-spec:RegisterAura( "sharpened_claws", {
-    id = 394465,
-    duration = 4,
-    max_stack = 1
-} )
-
--- Tier 30
-spec:RegisterGear( "tier30", 202518, 202516, 202515, 202514, 202513 )
--- 2 pieces (Feral) : Your auto-attacks have a 25% chance to grant Shadows of the Predator, increasing your Agility by 1%. Each application past 5 has an increasing chance to reset to 2 stacks.
-spec:RegisterAura( "shadows_of_the_predator", {
-    id = 408340,
-    duration = 20,
-    max_stack = 12
-} )
--- 4 pieces (Feral) : When a Shadows of the Predator application resets stacks, you gain 5% increased Agility and you generate 1 combo point every 1.5 secs for 6 sec.
-spec:RegisterAura( "predator_revealed", {
-    id = 408468,
-    duration = 6,
-    tick_time = 1.5,
-    max_stack = 1
-} )
-
-spec:RegisterGear( "tier31", 207252, 207253, 207254, 207255, 207257, 217193, 217195, 217191, 217192, 217194 )
--- (2) Feral Frenzy grants Smoldering Frenzy, increasing all damage you deal by $422751s1% for $422751d.
--- (4) Feral Frenzy's cooldown is reduced by ${$s1/-1000} sec. During Smoldering Frenzy, enemies burn for $422751s6% of damage you deal as Fire over $422779d.
-spec:RegisterAuras( {
-    smoldering_frenzy = {
-        id = 422751,
-        duration = 8,
-        max_stack = 1
-    },
-    burning_frenzy = {
-        id = 422779,
-        duration = 10,
-        max_stack = 1
-    }
-} )
-
--- Legion Sets (for now).
-spec:RegisterGear( "tier21", 152127, 152129, 152125, 152124, 152126, 152128 )
-    spec:RegisterAura( "apex_predator", {
-        id = 252752,
-        duration = 25
-     } ) -- T21 Feral 4pc Bonus.
-
-spec:RegisterGear( "tier20", 147136, 147138, 147134, 147133, 147135, 147137 )
-spec:RegisterGear( "tier19", 138330, 138336, 138366, 138324, 138327, 138333 )
-spec:RegisterGear( "class", 139726, 139728, 139723, 139730, 139725, 139729, 139727, 139724 )
 
 local function calculate_damage( coefficient, masteryFlag, armorFlag, critChanceMult )
     local feralAura = 1

@@ -1038,6 +1038,88 @@ spec:RegisterAuras( {
     },
 } )
 
+spec:RegisterGear({
+    -- The War Within
+    tww1 = {
+        items = { 212059, 212057, 212056, 212055, 212054 }
+    },
+    tww2 = {
+        items = { 229310, 229308, 229306, 229307, 229305 }
+    },
+    -- Dragonflight
+    tier31 = {
+        items = { 207252, 207253, 207254, 207255, 207257 },
+        auras = {
+            dreamstate = {
+                id = 424248,
+                duration = 3600,
+                max_stack = 2,
+                copy = 450346
+            }
+        }
+    },
+    tier30 = {
+        items = { 202518, 202516, 202515, 202514, 202513 }
+    },
+    tier29 = {
+        items = { 200351, 200353, 200354, 200355, 200356, 217193, 217195, 217191, 217192, 217194 },
+        auras = {
+            gathering_starstuff = {
+                id = 394412,
+                duration = 15,
+                max_stack = 3
+            },
+            touch_the_cosmos = {
+                id = 394414,
+                duration = 15,
+                max_stack = 1
+            }
+        }
+    },
+
+    -- Legacy
+    tier21 = {
+        items = { 152127, 152129, 152125, 152124, 152126, 152128 },
+        auras = {
+            solar_solstice = {
+                id = 252767,
+                duration = 6,
+                max_stack = 1
+            }
+        }
+    },
+    tier20 = { items = { 147136, 147138, 147134, 147133, 147135, 147137 } },
+    tier19 = { items = { 138330, 138336, 138366, 138324, 138327, 138333 } },
+    class = { items = { 139726, 139728, 139723, 139730, 139725, 139729, 139727, 139724 } },
+    impeccable_fel_essence = { items = { 137039 } },
+    oneths_intuition = {
+        items = { 137092 },
+        auras = {
+            oneths_intuition = {
+                id = 209406,
+                duration = 3600,
+                max_stacks = 1
+            },
+            oneths_overconfidence = {
+                id = 209407,
+                duration = 3600,
+                max_stacks = 1
+            }
+        }
+    },
+    radiant_moonlight = { items = { 151800 } },
+    the_emerald_dreamcatcher = {
+        items = { 137062 },
+        auras = {
+            the_emerald_dreamcatcher = {
+                id = 224706,
+                duration = 5,
+                max_stack = 2
+            }
+        }
+    }
+} )
+
 -- Adaptive Swarm Stuff
 do
     local applications = {
@@ -1749,92 +1831,6 @@ spec:RegisterHook( "spend", function( amt, resource )
     end
 end )
 
---The War Within
-spec:RegisterGear( "tww1", 212059, 212057, 212056, 212055, 212054 )
-spec:RegisterGear( "tww2", 229310, 229308, 229306, 229307, 229305  )
-spec:RegisterAuras( {
-    -- 2-set
-    -- https://www.wowhead.com/spell=1218033
-    -- Jackpot! Auto shot damage increased by 200% and the time between auto shots is reduced by 0.5 sec.
-    --[[jackpot = {
-        id = 1218033,
-        duration = 10,
-        max_stack = 1,
-    },--]]
-
-} )
--- Tier 29
-spec:RegisterGear( "tier29", 200351, 200353, 200354, 200355, 200356, 217193, 217195, 217191, 217192, 217194 )
-spec:RegisterSetBonuses( "tier29_2pc", 393632, "tier29_4pc", 393633 )
-spec:RegisterAuras( {
-    gathering_starstuff = {
-        id = 394412,
-        duration = 15,
-        max_stack = 3,
-    },
-    touch_the_cosmos = {
-        id = 394414,
-        duration = 15,
-        max_stack = 1,
-    }
-} )
-
--- Tier 30
-spec:RegisterGear( "tier30", 202518, 202516, 202515, 202514, 202513 )
--- 2 pieces (Balance) : Sunfire radius increased by 3 yds. Sunfire, Moonfire and Shooting Stars damage increased by 20%.
--- 4 pieces (Balance) : Shooting Stars has a 20% chance to instead call down a Crashing Star, dealing (76.5% of Spell power) Astral damage to the target and generating 5 Astral Power.
-
-spec:RegisterGear( "tier31", 207252, 207253, 207254, 207255, 207257 )
--- (2) When Eclipse ends or when you enter combat, enter a Dreamstate, reducing the cast time of your next $s3 Starfires or Wraths by $s1% and increasing their damage by $s2%.
-spec:RegisterAuras( {
-    dreamstate = {
-        id = 424248,
-        duration = 3600,
-        max_stack = 2,
-        copy = 450346
-    },
-
-} )
-spec:RegisterHook( "runHandler_startCombat", function()
-    if set_bonus.tier31_2pc > 0 then applyBuff( "dreamstate", nil, 2 ) end
-end )
--- (4) Starsurge or Starfall increase your current Eclipse's Arcane or Nature damage bonus by an additional $s1%, up to $s2%.
-
-
--- Legion Sets (for now).
-spec:RegisterGear( "tier21", 152127, 152129, 152125, 152124, 152126, 152128 )
-    spec:RegisterAura( "solar_solstice", {
-        id = 252767,
-        duration = 6,
-        max_stack = 1,
-     } )
-
-spec:RegisterGear( "tier20", 147136, 147138, 147134, 147133, 147135, 147137 )
-spec:RegisterGear( "tier19", 138330, 138336, 138366, 138324, 138327, 138333 )
-spec:RegisterGear( "class", 139726, 139728, 139723, 139730, 139725, 139729, 139727, 139724 )
-
-spec:RegisterGear( "impeccable_fel_essence", 137039 )
-spec:RegisterGear( "oneths_intuition", 137092 )
-    spec:RegisterAuras( {
-        oneths_intuition = {
-            id = 209406,
-            duration = 3600,
-            max_stacks = 1,
-        },
-        oneths_overconfidence = {
-            id = 209407,
-            duration = 3600,
-            max_stacks = 1,
-        },
-    } )
-
-spec:RegisterGear( "radiant_moonlight", 151800 )
-spec:RegisterGear( "the_emerald_dreamcatcher", 137062 )
-    spec:RegisterAura( "the_emerald_dreamcatcher", {
-        id = 224706,
-        duration = 5,
-        max_stack = 2,
-    } )
 
 
 -- Abilities
