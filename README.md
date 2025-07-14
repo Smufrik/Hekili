@@ -77,7 +77,7 @@ If something isn’t working:
 ### ❓ Other Support
 
 - Review the [**Wiki**](https://github.com/Hekili/hekili/wiki)
-- Ask questions in the [**Hekili Discord**](https://discord.gg/3vRJx5g)
+- Ask questions in the [**Hekili Discord**](https://discord.gg/3cCTFxM)
 
 ---
 
