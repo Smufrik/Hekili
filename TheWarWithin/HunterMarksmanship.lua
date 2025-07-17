@@ -1556,6 +1556,9 @@ spec:RegisterAbilities( {
                 applyBuff ( "withering_fire" )
                 applyBuff( "deathblow" )
                 gainCharges( "black_arrow", 1 )
+                if set_bonus.tww2 >= 4 then
+                    removeBuff( "blighted_quiver" )
+                end
             end
             if talent.feathered_frenzy.enabled then applyDebuff( "target", "spotters_mark" ) end
 
