@@ -1728,6 +1728,9 @@ spec:RegisterAbilities( {
             if talent.withering_fire.enabled then
                 applyBuff( "withering_fire" )
                 applyBuff( "deathblow" )
+                if set_bonus.tww2 >= 4 then
+                    removeBuff( "blighted_quiver" )
+                end
             end
         end,
     },
