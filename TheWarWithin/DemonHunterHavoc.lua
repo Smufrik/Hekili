@@ -10,7 +10,7 @@ local class, state = Hekili.Class, Hekili.State
 local strformat, wipe = string.format, table.wipe
 local GetSpellInfo = ns.GetUnpackedSpellInfo
 local GetSpellCastCount = C_Spell.GetSpellCastCount
-local IsSpellOverlayed = IsSpellOverlayed
+local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
 local spec = Hekili:NewSpecialization( 577 )
 
 spec:RegisterResource( Enum.PowerType.Fury, {
