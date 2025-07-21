@@ -1583,9 +1583,6 @@ spec:RegisterAbilities( {
         startsCombat = true,
         disabled = function() return not talent.apocalypse.enabled end,
 
-        spend = -2,
-        spendType = "runes",
-
         toggle = function () return not talent.army_of_the_damned.enabled and "cooldowns" or nil end,
 
         debuff = "festering_wound",
@@ -1600,10 +1597,11 @@ spec:RegisterAbilities( {
 
             if talent.the_blood_is_life.enabled then summonPet( "blood_beast" ) end
             spec.abilities.raise_dead.handler()
+            spec.abilities.dark_transformation.handler()
 
             PopWounds( 4, 1 )
 
-            if level > 57 then gain( 2, "runes" ) end
+            gain( 2, "runes" )
             if set_bonus.tier29_2pc > 0 then applyBuff( "vile_infusion" ) end
             if pvptalent.necromancers_bargain.enabled then applyDebuff( "target", "crypt_fever" ) end
         end,
@@ -1949,7 +1947,7 @@ spec:RegisterAbilities( {
             applyBuff( "death_and_decay" )
             applyDebuff( "target", "death_and_decay" )
             if talent.grip_of_the_dead.enabled then applyDebuff( "target", "grip_of_the_dead" ) end
-            if talent.desecrate.enabled then applybuff( "desecrate" ) end
+            if talent.desecrate.enabled then applyBuff( "desecrate" ) end
         end,
 
         bind = { "defile", "any_dnd", "deaths_due" },
