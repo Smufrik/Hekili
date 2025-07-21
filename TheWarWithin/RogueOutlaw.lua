@@ -13,7 +13,7 @@ local GetUnitChargedPowerPoints = GetUnitChargedPowerPoints
 local PTR = ns.PTR
 local FindPlayerAuraByID = ns.FindPlayerAuraByID
 local strformat, abs, max, min = string.format, math.abs, math.max, math.min
-local IsSpellOverlayed = IsSpellOverlayed
+local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
 
 local spec = Hekili:NewSpecialization( 260 )
 

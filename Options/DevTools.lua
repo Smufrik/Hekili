@@ -62,6 +62,9 @@ local GetSpellCharges = function(spellID)
     end
 end
 
+local GetSpecialization = C_SpecializationInfo.GetSpecialization
+local GetSpecializationInfo = C_SpecializationInfo.GetSpecializationInfo
+
 function Hekili:RunStressTest()
     if InCombatLockdown() then
         self:Print( "Cannot run stress test while in combat." )

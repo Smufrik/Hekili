@@ -1081,7 +1081,7 @@ end )
 spec:RegisterStateExpr( "consecration", function () return buff.consecration end )
 
 local tempDebug = { 387174, 255937, 427453, 429826, 427441 }
-local IsSpellOverlayed = IsSpellOverlayed
+local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
 local C_Spell, C_UnitAuras = C_Spell, C_UnitAuras
 local tostringall = tostringall
 

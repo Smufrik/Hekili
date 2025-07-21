@@ -33,6 +33,8 @@ local GetSpellCharges = function(spellID)
 end
 local FindPlayerAuraByID, IsAbilityDisabled, IsDisabledCovenantSpell = ns.FindPlayerAuraByID, ns.IsAbilityDisabled, ns.IsDisabledCovenantSpell
 
+local GetSpecialization = C_SpecializationInfo.GetSpecialization
+
 -- Clean up table_x later.
 ---@diagnostic disable-next-line: deprecated
 local insert, remove, sort, tcopy, unpack, wipe = table.insert, table.remove, table.sort, ns.tableCopy, table.unpack, table.wipe
@@ -650,9 +652,9 @@ state.GetTime = GetTime
 state.GetTotemInfo = GetTotemInfo
 state.InCombatLockdown = InCombatLockdown
 state.IsActiveSpell = ns.IsActiveSpell
-state.IsPlayerSpell = IsPlayerSpell
-state.IsSpellKnown = IsSpellKnown
-state.IsSpellKnownOrOverridesKnown = IsSpellKnownOrOverridesKnown
+state.IsPlayerSpell = C_SpellBook.IsSpellKnown
+state.IsSpellKnown = C_SpellBook.IsSpellInSpellBook
+state.IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
 state.IsUsableItem = C_Item.IsUsableItem
 state.IsUsableSpell = C_Spell.IsSpellUsable
 state.UnitAura = UnitAura

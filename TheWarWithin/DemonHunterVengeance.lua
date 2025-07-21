@@ -11,7 +11,7 @@ local class, state = Hekili.Class, Hekili.State
 
 local floor = math.floor
 local strformat = string.format
-local IsSpellOverlayed = IsSpellOverlayed
+local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
 
 local spec = Hekili:NewSpecialization( 581 )
 
