@@ -155,27 +155,8 @@ spec:RegisterResource( Enum.PowerType.Runes, {
     end
 }))
 
-spec:RegisterStateExpr( "breath_ticks_left", function()
-    if not buff.breath_of_sindragosa.up then
-        return 0
-    end
-    return floor( runic_power.current / 17 ) + ( runic_power.current % 17 + ( floor( runes.current / 2 )  * 20 ) / gcd.max ) / 17
-end )
 
 spec:RegisterResource( Enum.PowerType.RunicPower, {
-    breath_of_sindragosa = {
-        aura = "breath_of_sindragosa",
-        stop = function( x )
-            return state.buff.breath_of_sindragosa.down or x < 17 or breath_ticks_left == 0
-        end,
-        interval = 1,
-        value = -17,
-
-        last = function()
-            local app = state.buff.breath_of_sindragosa.applied
-            return app + floor( state.query_time - app )
-        end,
-    },
 
     empower_rp = {
         aura = "empower_rune_weapon",
@@ -199,145 +180,140 @@ spec:RegisterResource( Enum.PowerType.RunicPower, {
 
 -- Talents
 spec:RegisterTalents( {
-    -- DeathKnight
-    abomination_limb            = {  76049, 383269, 1 }, -- Sprout an additional limb, dealing 54,565 Shadow damage over 12 sec to all nearby enemies. Deals reduced damage beyond 5 targets. Every 1 sec, an enemy is pulled to your location if they are further than 8 yds from you. The same enemy can only be pulled once every 4 sec.
-    antimagic_barrier           = {  76046, 205727, 1 }, -- Reduces the cooldown of Anti-Magic Shell by 20 sec and increases its duration and amount absorbed by 40%.
-    antimagic_zone              = {  76065,  51052, 1 }, -- Places an Anti-Magic Zone that reduces spell damage taken by party or raid members by 20%. The Anti-Magic Zone lasts for 8 sec or until it absorbs 1.3 million damage.
-    asphyxiate                  = {  76064, 221562, 1 }, -- Lifts the enemy target off the ground, crushing their throat with dark energy and stunning them for 5 sec.
-    assimilation                = {  76048, 374383, 1 }, -- The amount absorbed by Anti-Magic Zone is increased by 10% and its cooldown is reduced by 30 sec.
-    blinding_sleet              = {  76044, 207167, 1 }, -- Targets in a cone in front of you are blinded, causing them to wander disoriented for 5 sec. Damage may cancel the effect. When Blinding Sleet ends, enemies are slowed by 50% for 6 sec.
-    blood_draw                  = {  76056, 374598, 1 }, -- When you fall below 30% health you drain 17,735 health from nearby enemies, the damage you take is reduced by 10% and your Death Strike cost is reduced by 10 for 8 sec. Can only occur every 2 min.
-    blood_scent                 = {  76078, 374030, 1 }, -- Increases Leech by 3%.
-    brittle                     = {  76061, 374504, 1 }, -- Your diseases have a chance to weaken your enemy causing your attacks against them to deal 6% increased damage for 5 sec.
-    cleaving_strikes            = {  76073, 316916, 1 }, -- Obliterate hits up to 2 additional enemies while you remain in Death and Decay. When leaving your Death and Decay you retain its bonus effects for 4 sec.
-    coldthirst                  = {  76083, 378848, 1 }, -- Successfully interrupting an enemy with Mind Freeze grants 10 Runic Power and reduces its cooldown by 3 sec.
-    control_undead              = {  76059, 111673, 1 }, -- Dominates the target undead creature up to level 71, forcing it to do your bidding for 5 min.
-    death_pact                  = {  76075,  48743, 1 }, -- Create a death pact that heals you for 50% of your maximum health, but absorbs incoming healing equal to 30% of your max health for 15 sec.
-    death_strike                = {  76071,  49998, 1 }, -- Focuses dark power into a strike with both weapons, that deals a total of 8,500 Physical damage and heals you for 40.00% of all damage taken in the last 5 sec, minimum 11.2% of maximum health.
-    deaths_echo                 = { 102007, 356367, 1 }, -- Death's Advance, Death and Decay, and Death Grip have 1 additional charge.
-    deaths_reach                = { 102006, 276079, 1 }, -- Increases the range of Death Grip by 10 yds. Killing an enemy that yields experience or honor resets the cooldown of Death Grip.
-    enfeeble                    = {  76060, 392566, 1 }, -- Your ghoul's attacks have a chance to apply Enfeeble, reducing the enemies movement speed by 30% and the damage they deal to you by 12% for 6 sec.
-    gloom_ward                  = {  76052, 391571, 1 }, -- Absorbs are 15% more effective on you.
-    grip_of_the_dead            = {  76057, 273952, 1 }, -- Death and Decay reduces the movement speed of enemies within its area by 90%, decaying by 10% every sec.
-    ice_prison                  = {  76086, 454786, 1 }, -- Chains of Ice now also roots enemies for 4 sec but its cooldown is increased to 12 sec.
-    icebound_fortitude          = {  76081,  48792, 1 }, -- Your blood freezes, granting immunity to Stun effects and reducing all damage you take by 30% for 8 sec.
-    icy_talons                  = {  76085, 194878, 1 }, -- Your Runic Power spending abilities increase your melee attack speed by 6% for 10 sec, stacking up to 5 times.
-    improved_death_strike       = {  76067, 374277, 1 }, -- Death Strike's cost is reduced by 10, and its healing is increased by 60%.
-    insidious_chill             = {  76051, 391566, 1 }, -- Your auto-attacks reduce the target's auto-attack speed by 5% for 30 sec, stacking up to 4 times.
-    march_of_darkness           = {  76074, 391546, 1 }, -- Death's Advance grants an additional 25% movement speed over the first 3 sec.
-    mind_freeze                 = {  76084,  47528, 1 }, -- Smash the target's mind with cold, interrupting spellcasting and preventing any spell in that school from being cast for 3 sec.
-    null_magic                  = { 102008, 454842, 1 }, -- Magic damage taken is reduced by 8% and the duration of harmful Magic effects against you are reduced by 35%.
-    osmosis                     = {  76088, 454835, 1 }, -- Anti-Magic Shell increases healing received by 15%.
-    permafrost                  = {  76066, 207200, 1 }, -- Your auto attack damage grants you an absorb shield equal to 40% of the damage dealt.
-    proliferating_chill         = { 101708, 373930, 1 }, -- Chains of Ice affects 1 additional nearby enemy.
-    raise_dead                  = {  76072,  46585, 1 }, -- Raises a ghoul to fight by your side. You can have a maximum of one ghoul at a time. Lasts 1 min.
-    rune_mastery                = {  76079, 374574, 2 }, -- Consuming a Rune has a chance to increase your Strength by 3% for 8 sec.
-    runic_attenuation           = {  76045, 207104, 1 }, -- Auto attacks have a chance to generate 3 Runic Power.
-    runic_protection            = {  76055, 454788, 1 }, -- Your chance to be critically struck is reduced by 3% and your Armor is increased by 6%.
-    sacrificial_pact            = {  76060, 327574, 1 }, -- Sacrifice your ghoul to deal 11,084 Shadow damage to all nearby enemies and heal for 25% of your maximum health. Deals reduced damage beyond 8 targets.
-    soul_reaper                 = {  76063, 343294, 1 }, -- Strike an enemy for 9,914 Shadowfrost damage and afflict the enemy with Soul Reaper. After 5 sec, if the target is below 35% health this effect will explode dealing an additional 45,489 Shadowfrost damage to the target. If the enemy that yields experience or honor dies while afflicted by Soul Reaper, gain Runic Corruption.
-    subduing_grasp              = {  76080, 454822, 1 }, -- When you pull an enemy, the damage they deal to you is reduced by 6% for 6 sec.
-    suppression                 = {  76087, 374049, 1 }, -- Damage taken from area of effect attacks reduced by 3%. When suffering a loss of control effect, this bonus is increased by an additional 6% for 6 sec.
-    unholy_bond                 = {  76076, 374261, 1 }, -- Increases the effectiveness of your Runeforge effects by 20%.
-    unholy_endurance            = {  76058, 389682, 1 }, -- Increases Lichborne duration by 2 sec and while active damage taken is reduced by 15%.
-    unholy_ground               = {  76069, 374265, 1 }, -- Gain 5% Haste while you remain within your Death and Decay.
-    unyielding_will             = {  76050, 457574, 1 }, -- Anti-Magic shell now removes all harmful magical effects when activated, but it's cooldown is increased by 20 sec.
-    vestigial_shell             = {  76053, 454851, 1 }, -- Casting Anti-Magic Shell grants 2 nearby allies a Lesser Anti-Magic Shell that Absorbs up to 55,050 magic damage and reduces the duration of harmful Magic effects against them by 50%.
-    veteran_of_the_third_war    = {  76068,  48263, 1 }, -- Stamina increased by 20%.
-    will_of_the_necropolis      = {  76054, 206967, 2 }, -- Damage taken below 30% Health is reduced by 20%.
-    wraith_walk                 = {  76077, 212552, 1 }, -- Embrace the power of the Shadowlands, removing all root effects and increasing your movement speed by 70% for 4 sec. Taking any action cancels the effect. While active, your movement speed cannot be reduced below 170%.
+
+    -- Death Knight
+    antimagic_barrier              = {  76046,  205727, 1 }, -- Reduces the cooldown of Anti-Magic Shell by $s1 sec and increases its duration and amount absorbed by $s2%
+    antimagic_zone                 = {  76065,   51052, 1 }, -- Places an Anti-Magic Zone for $s1 sec, reducing the magic damage taken by party or raid members by $s2%
+    asphyxiate                     = {  76064,  221562, 1 }, -- Lifts the enemy target off the ground, crushing their throat with dark energy and stunning them for $s1 sec
+    assimilation                   = {  76048,  374383, 1 }, -- The cooldown of Anti-Magic Zone is reduced by $s1 sec and its duration is increased by $s2 sec
+    blinding_sleet                 = {  76044,  207167, 1 }, -- Targets in a cone in front of you are blinded, causing them to wander disoriented for $s1 sec. Damage may cancel the effect. When Blinding Sleet ends, enemies are slowed by $s2% for $s3 sec
+    blood_draw                     = {  76056,  374598, 1 }, -- When you fall below $s1% health you drain $s2 health from nearby enemies, the damage you take is reduced by $s3% and your Death Strike cost is reduced by $s4 for $s5 sec. Can only occur every $s6 min
+    blood_scent                    = {  76078,  374030, 1 }, -- Increases Leech by $s1%
+    brittle                        = {  76061,  374504, 1 }, -- Your diseases have a chance to weaken your enemy causing your attacks against them to deal $s1% increased damage for $s2 sec
+    cleaving_strikes               = {  76073,  316916, 1 }, -- Frostscythe deals $s1% increased damage during Remorseless Winter
+    coldthirst                     = {  76083,  378848, 1 }, -- Successfully interrupting an enemy with Mind Freeze grants $s1 Runic Power and reduces its cooldown by $s2 sec
+    control_undead                 = {  76059,  111673, 1 }, -- Dominates the target undead creature up to level $s1, forcing it to do your bidding for $s2 min
+    death_pact                     = {  76075,   48743, 1 }, -- Create a death pact that heals you for $s1% of your maximum health, but absorbs incoming healing equal to $s2% of your max health for $s3 sec
+    death_strike                   = {  76071,   49998, 1 }, -- Focuses dark power into a strike with both weapons, that deals a total of $s$s2 Physical damage and heals you for $s3% of all damage taken in the last $s4 sec, minimum $s5% of maximum health
+    deaths_echo                    = { 102007,  356367, 1 }, -- Death's Advance, Death and Decay, and Death Grip have $s1 additional charge
+    deaths_reach                   = { 102006,  276079, 1 }, -- Increases the range of Death Grip by $s1 yds. Killing an enemy that yields experience or honor resets the cooldown of Death Grip
+    enfeeble                       = {  76060,  392566, 1 }, -- Your ghoul's attacks have a chance to apply Enfeeble, reducing the enemies movement speed by $s1% and the damage they deal to you by $s2% for $s3 sec
+    gloom_ward                     = {  76052,  391571, 1 }, -- Absorbs are $s1% more effective on you
+    grip_of_the_dead               = {  76057,  273952, 1 }, -- Death and Decay reduces the movement speed of enemies within its area by $s1%, decaying by $s2% every sec
+    ice_prison                     = {  76086,  454786, 1 }, -- Chains of Ice now also roots enemies for $s1 sec but its cooldown is increased to $s2 sec
+    icebound_fortitude             = {  76081,   48792, 1 }, -- Your blood freezes, granting immunity to Stun effects and reducing all damage you take by $s1% for $s2 sec
+    icy_talons                     = {  76085,  194878, 1 }, -- Your Runic Power spending abilities increase your melee attack speed by $s1% for $s2 sec, stacking up to $s3 times
+    improved_death_strike          = {  76067,  374277, 1 }, -- Death Strike's cost is reduced by $s1, and its healing is increased by $s2%
+    insidious_chill                = {  76051,  391566, 1 }, -- Your auto-attacks reduce the target's auto-attack speed by $s1% for $s2 sec, stacking up to $s3 times
+    march_of_darkness              = {  76074,  391546, 1 }, -- Death's Advance grants an additional $s1% movement speed over the first $s2 sec
+    mind_freeze                    = {  76084,   47528, 1 }, -- Smash the target's mind with cold, interrupting spellcasting and preventing any spell in that school from being cast for $s1 sec
+    null_magic                     = { 102008,  454842, 1 }, -- Magic damage taken is reduced by $s1% and the duration of harmful Magic effects against you are reduced by $s2%
+    osmosis                        = {  76088,  454835, 1 }, -- Anti-Magic Shell increases healing received by $s1%
+    permafrost                     = {  76066,  207200, 1 }, -- Your auto attack damage grants you an absorb shield equal to $s1% of the damage dealt
+    proliferating_chill            = { 101708,  373930, 1 }, -- Chains of Ice affects $s1 additional nearby enemy
+    raise_dead                     = {  76072,   46585, 1 }, -- Raises a ghoul to fight by your side. You can have a maximum of one ghoul at a time. Lasts $s1 min
+    rune_mastery                   = {  76079,  374574, 2 }, -- Consuming a Rune has a chance to increase your Strength by $s1% for $s2 sec
+    runic_attenuation              = {  76045,  207104, 1 }, -- Auto attacks have a chance to generate $s1 Runic Power
+    runic_protection               = {  76055,  454788, 1 }, -- Your chance to be critically struck is reduced by $s1% and your Armor is increased by $s2%
+    sacrificial_pact               = {  76060,  327574, 1 }, -- Sacrifice your ghoul to deal $s$s2 Shadow damage to all nearby enemies and heal for $s3% of your maximum health. Deals reduced damage beyond $s4 targets
+    soul_reaper                    = {  76063,  343294, 1 }, -- Strike an enemy for $s$s3 Shadowfrost damage and afflict the enemy with Soul Reaper. After $s4 sec, if the target is below $s5% health this effect will explode dealing an additional $s$s6 Shadowfrost damage to the target. If the enemy that yields experience or honor dies while afflicted by Soul Reaper, gain Runic Corruption
+    subduing_grasp                 = {  76080,  454822, 1 }, -- When you pull an enemy, the damage they deal to you is reduced by $s1% for $s2 sec
+    suppression                    = {  76087,  374049, 1 }, -- Damage taken from area of effect attacks reduced by $s1%. When suffering a loss of control effect, this bonus is increased by an additional $s2% for $s3 sec
+    unholy_bond                    = {  76076,  374261, 1 }, -- Increases the effectiveness of your Runeforge effects by $s1%
+    unholy_endurance               = {  76058,  389682, 1 }, -- Increases Lichborne duration by $s1 sec and while active damage taken is reduced by $s2%
+    unholy_momentum                = {  76069,  374265, 1 }, -- Increases Haste by $s1%
+    unyielding_will                = {  76050,  457574, 1 }, -- Anti-Magic Shell now removes all harmful magical effects when activated, but its cooldown is increased by $s1 sec
+    vestigial_shell                = {  76053,  454851, 1 }, -- Casting Anti-Magic Shell grants $s2 nearby allies a Lesser Anti-Magic Shell that Absorbs up to $s$s3 magic damage and reduces the duration of harmful Magic effects against them by $s4%
+    veteran_of_the_third_war       = {  76068,   48263, 1 }, -- Stamina increased by $s1%
+    will_of_the_necropolis         = {  76054,  206967, 2 }, -- Damage taken below $s1% Health is reduced by $s2%
+    wraith_walk                    = {  76077,  212552, 1 }, -- Embrace the power of the Shadowlands, removing all root effects and increasing your movement speed by $s1% for $s2 sec. Taking any action cancels the effect. While active, your movement speed cannot be reduced below $s3%
+
+    -- Frost
+    arctic_assault                 = {  76118,  456230, 1 }, -- Consuming Killing Machine fires a Glacial Advance through your target at $s1% effectiveness
+    avalanche                      = {  76105,  207142, 1 }, -- Casting Howling Blast with Rime active causes jagged icicles to fall on enemies nearby your target, applying Razorice and dealing $s$s2 Frost damage
+    biting_cold                    = {  76112,  377056, 1 }, -- Remorseless Winter damage is increased by $s1%. The first time Remorseless Winter deals damage to $s2 different enemies, you gain Rime
+    bonegrinder                    = {  76122,  377098, 2 }, -- Consuming Killing Machine grants $s1% critical strike chance for $s2 sec, stacking up to $s3 times. At $s4 stacks your next Killing Machine consumes the stacks and grants you $s5% increased Frost damage for $s6 sec
+    breath_of_sindragosa           = {  76093, 1249658, 1 }, -- Call upon Sindragosa's aid in battle for $s2 sec, continuously dealing $s$s3 Frost damage every $s4 sec to enemies in a cone in front of you. Consuming Killing Machine or Rime increases the duration by $s5 sec. Deals reduced damage to secondary targets. Grants a charge of Empower Rune Weapon at the start and $s6 Runes at the end
+    cryogenic_chamber              = { 106790,  456237, 1 }, -- When Howling Blast consumes Rime, $s1% of the damage it deals is gathered into the next cast of Remorseless Winter, up to $s2 times
+    empower_rune_weapon            = {  76096,   47568, 1 }, -- Drain the will of your enemy to empower your rune weapon, dealing $s$s2 Shadowfrost damage and reduced damage to enemies nearby, gaining $s3 Runic Power, and grants you Killing Machine
+    enduring_strength              = { 101930,  377190, 1 }, -- When Pillar of Frost expires, your Strength is increased by $s1% for $s2 sec. This effect lasts $s3 sec longer, up to $s4 sec, for each Obliterate and Frostscythe critical strike during Pillar of Frost
+    everfrost                      = {  76099,  376938, 1 }, -- Rime empowered Howling Blast deals $s1% increased damage to secondary targets. Remorseless Winter deals $s2% increased damage to enemies it hits, stacking up to $s3 times
+    frigid_executioner             = {  76092,  377073, 1 }, -- Runic Empowerment has a $s1% chance to refund $s2 additional Rune
+    frost_strike                   = {  76115,   49143, 1 }, -- Chill your weapon with icy power and quickly strike the enemy, dealing $s$s2 Frost damage
+    frostbane                      = {  76094,  455993, 1 }, -- Each foe struck with Glacial Advance has a chance to transform your next Frost Strike into Frostbane. The chance increases with the number of Razorice stacks on the target. Frostbane Start a frozen onslaught that strikes twice, unleashing the chilling essence of winter, dealing $s$s4 Frost damage to all enemies caught in its wake with each strike. Each enemy struck reduces the damage dealt to the next foe by $s5%, down to $s6%
+    frostbound_will                = { 107994, 1238680, 1 }, -- Consuming Rime reduces the cooldown of Empower Rune Weapon by $s1 sec
+    frostreaper                    = {  76098, 1230301, 1 }, -- Obliterate deals $s2% increased damage and has a chance to tether the souls of its target and a nearby enemy to yours. Frost Strike severs the tethers, dealing $s$s3 Shadowfrost damage to both foes
+    frostscythe                    = {  76113,  207230, 1 }, -- A sweeping attack that strikes all enemies in front of you for $s$s2 Frost damage. Deals reduced damage beyond $s3 targets. Consumes Killing Machine to have its critical strikes deal $s4 times the normal damage
+    frostwyrms_fury                = {  76106,  279302, 1 }, -- Summons a frostwyrm who breathes on all enemies within $s2 yd in front of you, dealing $s$s3 Frost damage, stunning enemies for $s4 sec, and slowing movement speed by $s5% for $s6 sec
+    frozen_dominion                = { 102009,  377226, 1 }, -- Pillar of Frost now summons a Remorseless Winter that lasts $s1 sec longer. Each enemy Remorseless Winter damages grants you $s2% Mastery, up to $s3% for $s4 sec
+    gathering_storm                = {  76110,  194912, 1 }, -- Each Rune spent during Remorseless Winter increases its damage by $s1%, and extends its duration by $s2 sec
+    howling_blades                 = {  76121, 1230223, 1 }, -- Rime empowered Howling Blast unleashes $s2 icy blades at its target that deal $s$s3 Frost damage and have $s4% chance to grant Killing Machine
+    howling_blast                  = {  76114,   49184, 1 }, -- Blast the target with a frigid wind, dealing $s$s3 Frost damage to that foe, and reduced damage to all other enemies within $s4 yards, infecting all targets with Frost Fever.  Frost Fever A disease that deals $s$s7 Frost damage over $s8 sec and has a chance to grant the Death Knight $s9 Runic Power each time it deals damage
+    hyperpyrexia                   = {  76108,  456238, 1 }, -- Your Runic Power spending abilities have a chance to additionally deal $s1% of the damage dealt over $s2 sec
+    icebreaker                     = {  76033,  392950, 2 }, -- When empowered by Rime, Howling Blast deals $s1% increased damage to your primary target
+    icy_death_torrent              = { 101933,  435010, 1 }, -- Your auto attack critical strikes have a chance to send out a torrent of ice dealing $s$s2 Frost damage to enemies in front of you
+    icy_onslaught                  = { 106791, 1230272, 1 }, -- Frost Strike and Glacial Advance now cause your next Frost Strike and Glacial Advance to deal $s1% increased damage and cost $s2 more Runic Power. This effect stacks until the next Runic Empowerment
+    inexorable_assault             = {  76100,  253593, 1 }, -- Gain Inexorable Assault every $s2 sec, stacking up to $s3 times. Obliterate and Frostscythe consume up to $s4 stacks, dealing an additional $s$s5 Frost damage for each stack consumed
+    killing_machine                = {  76117,   51128, 1 }, -- Your auto attack critical strikes have a chance to make your next Obliterate deal Frost damage and critically strike, or make your next Frostscythe critically strike for $s1 times the normal damage
+    killing_streak                 = {  76091, 1230153, 1 }, -- Obliterate and Frostscythe consume all Killing Machines to deal $s1% increased critical strike damage and grant $s2% Haste for $s3 sec for each stack consumed. Multiple applications may overlap
+    murderous_efficiency           = {  76037,  207061, 1 }, -- Consuming the Killing Machine effect has a $s1% chance to grant you $s2 Rune
+    northwinds                     = {  76109, 1230284, 1 }, -- Howling Blast now hits an additional target with maximum effectiveness. Rime increases Howling Blast damage done by an additional $s1%
+    obliterate                     = {  76116,   49020, 1 }, -- A brutal attack that deals $s$s2 Physical damage
+    obliteration                   = {  76123,  281238, 1 }, -- During Pillar of Frost, Frost Strike, Glacial Advance, and Howling Blast always grant Killing Machine and have a $s1% chance to generate a Rune. Additionally during Pillar of Frost, Empower Rune Weapon causes your next Obliterate or Frostscythe to cost no Runes
+    pillar_of_frost                = { 101929,   51271, 1 }, -- The power of frost increases your Strength by $s1% for $s2 sec
+    rage_of_the_frozen_champion    = { 101931,  377076, 1 }, -- Frost Strike and Glacial Advance have a $s1% increased chance to trigger Rime and Howling Blast generates $s2 Runic Power while Rime is active
+    runic_command                  = {  76102,  376251, 2 }, -- Increases your maximum Runic Power by $s1. Increases Rune regeneration rate by $s2%
+    runic_overflow                 = {  76103,  316803, 2 }, -- Increases Frost Strike and Glacial Advance damage by $s1%
+    shattering_blade               = {  76095,  207057, 1 }, -- When Frost Strike damages an enemy with $s1 stacks of Razorice it will consume them to deal an additional $s2% damage
+    smothering_offense             = {  76101,  435005, 1 }, -- Your auto attack damage is increased by $s1%. This amount is increased for each stack of Icy Talons you have and it can stack up to $s2 additional times
+    the_long_winter                = { 101932,  456240, 1 }, -- While Pillar of Frost is active your auto-attack critical strikes increase its duration by $s1 sec, up to a maximum of $s2 sec
 
     -- Deathbringer
-    absolute_zero               = { 102009, 377047, 1 }, -- Frostwyrm's Fury has 50% reduced cooldown and Freezes all enemies hit for 3 sec.
-    arctic_assault              = {  76091, 456230, 1 }, -- Consuming Killing Machine fires a Glacial Advance through your target at 80% effectiveness.
-    avalanche                   = {  76105, 207142, 1 }, -- Casting Howling Blast with Rime active causes jagged icicles to fall on enemies nearby your target, applying Razorice and dealing 4,963 Frost damage.
-    biting_cold                 = {  76111, 377056, 1 }, -- Remorseless Winter damage is increased by 35%. The first time Remorseless Winter deals damage to 3 different enemies, you gain Rime.
-    bonegrinder                 = {  76122, 377098, 2 }, -- Consuming Killing Machine grants 1% critical strike chance for 10 sec, stacking up to 5 times. At 5 stacks your next Killing Machine consumes the stacks and grants you 10% increased Frost damage for 10 sec.
-    breath_of_sindragosa        = {  76093, 152279, 1 }, -- Continuously deal 25,472 Frost damage every 1 sec to enemies in a cone in front of you, until your Runic Power is exhausted. Deals reduced damage to secondary targets. Generates 2 Runes at the start and end.
-    chill_streak                = {  76098, 305392, 1 }, -- Deals 25,420 Frost damage to the target and reduces their movement speed by 70% for 4 sec. Chill Streak bounces up to 12 times between closest targets within 10 yards.
-    cold_heart                  = {  76035, 281208, 1 }, -- Every 2 sec, gain a stack of Cold Heart, causing your next Chains of Ice to deal 2,481 Frost damage. Stacks up to 20 times.
-    cryogenic_chamber           = {  76109, 456237, 1 }, -- Each time Frost Fever deals damage, 15% of the damage dealt is gathered into the next cast of Remorseless Winter, up to 20 times.
-    empower_rune_weapon         = {  76110,  47568, 1 }, -- Empower your rune weapon, gaining 15% Haste and generating 1 Rune and 5 Runic Power instantly and every 5 sec for 20 sec.
-    enduring_chill              = {  76097, 377376, 1 }, -- Chill Streak's bounce range is increased by 2 yds and each time Chill Streak bounces it has a 25% chance to increase the maximum number of bounces by 1.
-    enduring_strength           = {  76100, 377190, 1 }, -- When Pillar of Frost expires, your Strength is increased by 15% for 6 sec. This effect lasts 2 sec longer for each Obliterate and Frostscythe critical strike during Pillar of Frost.
-    everfrost                   = {  76113, 376938, 1 }, -- Remorseless Winter deals 6% increased damage to enemies it hits, stacking up to 10 times.
-    frigid_executioner          = {  76120, 377073, 1 }, -- Obliterate deals 15% increased damage and has a 15% chance to refund 2 runes.
-    frost_strike                = {  76115,  49143, 1 }, -- Chill your weapon with icy power and quickly strike the enemy, dealing 26,260 Frost damage.
-    frostscythe                 = {  76096, 207230, 1 }, -- A sweeping attack that strikes all enemies in front of you for 18,880 Frost damage. This attack always critically strikes and critical strikes with Frostscythe deal 4 times normal damage. Deals reduced damage beyond 5 targets. Consuming Killing Machine reduces the cooldown of Frostscythe by 1.0 sec.
-    frostwhelps_aid             = {  76106, 377226, 1 }, -- Pillar of Frost summons a Frostwhelp who breathes on all enemies within 40 yards in front of you for 9,278 Frost damage. Each unique enemy hit by Frostwhelp's Aid grants you 8% Mastery for 15 sec, up to 40%.
-    frostwyrms_fury             = { 101931, 279302, 1 }, -- Summons a frostwyrm who breathes on all enemies within 40 yd in front of you, dealing 81,901 Frost damage and slowing movement speed by 50% for 10 sec.
-    gathering_storm             = {  76099, 194912, 1 }, -- Each Rune spent during Remorseless Winter increases its damage by 10%, and extends its duration by 0.5 sec.
-    glacial_advance             = {  76092, 194913, 1 }, -- Summon glacial spikes from the ground that advance forward, each dealing 10,985 Frost damage and applying Razorice to enemies near their eruption point.
-    horn_of_winter              = {  76089,  57330, 1 }, -- Blow the Horn of Winter, gaining 2 Runes and generating 25 Runic Power.
-    howling_blast               = {  76114,  49184, 1 }, -- Blast the target with a frigid wind, dealing 4,770 Frost damage to that foe, and reduced damage to all other enemies within 10 yards, infecting all targets with Frost Fever.  Frost Fever A disease that deals 57,047 Frost damage over 24 sec and has a chance to grant the Death Knight 5 Runic Power each time it deals damage.
-    hyperpyrexia                = {  76108, 456238, 1 }, -- Your Runic Power spending abilities have a chance to additionally deal 45% of the damage dealt over 4 sec.
-    icebreaker                  = {  76033, 392950, 2 }, -- When empowered by Rime, Howling Blast deals 30% increased damage to your primary target.
-    icecap                      = { 101930, 207126, 1 }, -- Reduces Pillar of Frost cooldown by 15 sec.
-    icy_death_torrent           = { 101933, 435010, 1 }, -- Your auto attack critical strikes have a chance to send out a torrent of ice dealing 24,555 Frost damage to enemies in front of you.
-    improved_frost_strike       = {  76103, 316803, 2 }, -- Increases Frost Strike damage by 10%.
-    improved_obliterate         = {  76119, 317198, 1 }, -- Increases Obliterate damage by 10%.
-    improved_rime               = {  76112, 316838, 1 }, -- Increases Howling Blast damage done by an additional 75%.
-    inexorable_assault          = {  76037, 253593, 1 }, -- Gain Inexorable Assault every 8 sec, stacking up to 5 times. Obliterate consumes a stack to deal an additional 5,815 Frost damage.
-    killing_machine             = {  76117,  51128, 1 }, -- Your auto attack critical strikes have a chance to make your next Obliterate deal Frost damage and critically strike.
-    murderous_efficiency        = {  76121, 207061, 1 }, -- Consuming the Killing Machine effect has a 25% chance to grant you 1 Rune.
-    obliterate                  = {  76116,  49020, 1 }, -- A brutal attack that deals 28,347 Physical damage.
-    obliteration                = {  76123, 281238, 1 }, -- While Pillar of Frost is active, Frost Strike Soul Reaper, and Howling Blast always grant Killing Machine and have a 30% chance to generate a Rune. to deal additional damage.
-    piercing_chill              = {  76097, 377351, 1 }, -- Enemies suffer 12% increased damage from Chill Streak each time they are struck by it.
-    pillar_of_frost             = { 101929,  51271, 1 }, -- The power of frost increases your Strength by 30% for 12 sec.
-    rage_of_the_frozen_champion = {  76120, 377076, 1 }, -- Obliterate has a 15% increased chance to trigger Rime and Howling Blast generates 6 Runic Power while Rime is active.
-    runic_command               = {  76102, 376251, 2 }, -- Increases your maximum Runic Power by 5.
-    shattered_frost             = {  76094, 455993, 1 }, -- When Frost Strike consumes 5 Razorice stacks, it deals 60% of the damage dealt to nearby enemies. Deals reduced damage beyond 8 targets.
-    shattering_blade            = {  76095, 207057, 1 }, -- When Frost Strike damages an enemy with 5 stacks of Razorice it will consume them to deal an additional 115% damage.
-    smothering_offense          = {  76101, 435005, 1 }, -- Your auto attack damage is increased by 10%. This amount is increased for each stack of Icy Talons you have and it can stack up to 2 additional times.
-    the_long_winter             = { 101932, 456240, 1 }, -- While Pillar of Frost is active your auto-attack critical strikes increase its duration by 2 sec, up to a maximum of 6 sec.
-    unleashed_frenzy            = {  76118, 376905, 1 }, -- Damaging an enemy with a Runic Power ability increases your Strength by 2% for 10 sec, stacks up to 3 times.
+    bind_in_darkness               = {  95043,  440031, 1 }, -- Rime empowered Howling Blast deals $s2% increased damage to its main target, and is now Shadowfrost$s$s3 Shadowfrost damage applies $s4 stacks to Reaper's Mark and $s5 stacks when it is a critical strike
+    dark_talons                    = {  95057,  436687, 1 }, -- Consuming Killing Machine or Rime has a $s1% chance to grant $s2 stacks of Icy Talons and increase its maximum stacks by the same amount for $s3 sec. Runic Power spending abilities count as Shadowfrost while Icy Talons is active
+    deaths_messenger               = {  95049,  437122, 1 }, -- Reduces the cooldowns of Lichborne and Raise Dead by $s1 sec
+    expelling_shield               = {  95049,  439948, 1 }, -- When an enemy deals direct damage to your Anti-Magic Shell, their cast speed is reduced by $s1% for $s2 sec
+    exterminate                    = {  95068,  441378, 1 }, -- After Reaper's Mark explodes, your next $s3 Obliterates or Frostscythes cost $s4 Rune and summon $s5 scythes to strike your enemies. The first scythe strikes your target for $s$s6 Shadowfrost damage and has a $s7% chance to grant Killing Machine, the second scythe strikes all enemies around your target for $s$s8 Shadowfrost damage and applies Frost Fever. Deals reduced damage beyond $s9 targets
+    grim_reaper                    = {  95034,  434905, 1 }, -- Reaper's Mark initial strike grants Killing Machine. Reaper's Mark explosion deals up to $s1% increased damage based on your target's missing health
+    pact_of_the_deathbringer       = {  95035,  440476, 1 }, -- When you suffer a damaging effect equal to $s1% of your maximum health, you instantly cast Death Pact at $s2% effectiveness. May only occur every $s3 min. When a Reaper's Mark explodes, the cooldowns of this effect and Death Pact are reduced by $s4 sec
+    reaper_of_souls                = {  95034,  440002, 1 }, -- When you apply Reaper's Mark, the cooldown of Soul Reaper is reset, your next Soul Reaper costs no runes, and it explodes on the target regardless of their health. Soul Reaper damage is increased by $s1%
+    reapers_mark                   = {  95062,  439843, 1 }, -- Viciously slice into the soul of your enemy, dealing $s$s2 Shadowfrost damage and applying Reaper's Mark. Each time you deal Shadow or Frost damage, add a stack of Reaper's Mark. After $s3 sec or reaching $s4 stacks, the mark explodes, dealing $s5 damage per stack. Reaper's Mark travels to an unmarked enemy nearby if the target dies
+    reapers_onslaught              = {  95057,  469870, 1 }, -- Reduces the cooldown of Reaper's Mark by $s1 sec, but the amount of Obliterates and Frostscythes empowered by Exterminate is reduced by $s2
+    rune_carved_plates             = {  95035,  440282, 1 }, -- Each Rune spent reduces the magic damage you take by $s1% and each Rune generated reduces the physical damage you take by $s2% for $s3 sec, up to $s4 times
+    soul_rupture                   = {  95061,  437161, 1 }, -- When Reaper's Mark explodes, it deals $s1% of the damage dealt to nearby enemies and causes them to deal $s2% reduced Physical damage to you for $s3 sec
+    swift_and_painful              = {  95032,  443560, 1 }, -- If no enemies are struck by Soul Rupture, you gain $s1% Strength for $s2 sec. Wave of Souls is $s3% more effective on the main target of your Reaper's Mark
+    wave_of_souls                  = {  95036,  439851, 1 }, -- Reaper's Mark sends forth bursts of Shadowfrost energy and back, dealing $s$s2 Shadowfrost damage both ways to all enemies caught in its path. Wave of Souls critical strikes cause enemies to take $s3% increased Shadowfrost damage for $s4 sec, stacking up to $s5 times, and it is always a critical strike on its way back
+    wither_away                    = {  95058,  441894, 1 }, -- Frost Fever deals its damage $s1% faster, and the second scythe of Exterminate applies Frost Fever
 
-    -- Rider of the Apocalypse
-    a_feast_of_souls            = {  95042, 444072, 1 }, -- While you have 2 or more Horsemen aiding you, your Runic Power spending abilities deal 20% increased damage.
-    apocalypse_now              = {  95041, 444040, 1 }, -- Army of the Dead and Frostwyrm's Fury call upon all 4 Horsemen to aid you for 20 sec.
-    death_charge                = {  95060, 444010, 1 }, -- Call upon your Death Charger to break free of movement impairment effects. For 10 sec, while upon your Death Charger your movement speed is increased by 100%, you cannot be slowed below 100% of normal speed, and you are immune to forced movement effects and knockbacks.
-    fury_of_the_horsemen        = {  95042, 444069, 1 }, -- Every 50 Runic Power you spend extends the duration of the Horsemen's aid in combat by 1 sec, up to 5 sec.
-    horsemens_aid               = {  95037, 444074, 1 }, -- While at your aid, the Horsemen will occasionally cast Anti-Magic Shell on you and themselves at 80% effectiveness. You may only benefit from this effect every 45 sec.
-    hungering_thirst            = {  95044, 444037, 1 }, -- The damage of your diseases and Frost Strike are increased by 10%.
-    mawsworn_menace             = {  95054, 444099, 1 }, -- Obliterate deals 10% increased damage and the cooldown of your Death and Decay is reduced by 10 sec.
-    mograines_might             = {  95067, 444047, 1 }, -- Your damage is increased by 5% and you gain the benefits of your Death and Decay while inside Mograine's Death and Decay.
-    nazgrims_conquest           = {  95059, 444052, 1 }, -- If an enemy dies while Nazgrim is active, the strength of Apocalyptic Conquest is increased by 3%. Additionally, each Rune you spend increase its value by 1%.
-    on_a_paler_horse            = {  95060, 444008, 1 }, -- While outdoors you are able to mount your Acherus Deathcharger in combat.
-    pact_of_the_apocalypse      = {  95037, 444083, 1 }, -- When you take damage, 5% of the damage is redirected to each active horsemen.
-    riders_champion             = {  95066, 444005, 1, "rider_of_the_apocalypse" }, -- Spending Runes has a chance to call forth the aid of a Horsemen for 10 sec. Mograine Casts Death and Decay at his location that follows his position. Whitemane Casts Undeath on your target dealing 2,608 Shadowfrost damage per stack every 3 sec, for 24 sec. Each time Undeath deals damage it gains a stack. Cannot be Refreshed. Trollbane Casts Chains of Ice on your target slowing their movement speed by 40% and increasing the damage they take from you by 5% for 8 sec. Nazgrim While Nazgrim is active you gain Apocalyptic Conquest, increasing your Strength by 5%.
-    trollbanes_icy_fury         = {  95063, 444097, 1 }, -- Obliterate shatters Trollbane's Chains of Ice when hit, dealing 31,015 Shadowfrost damage to nearby enemies, and slowing them by 40% for 4 sec. Deals reduced damage beyond 8 targets.
-    whitemanes_famine           = {  95047, 444033, 1 }, -- When Obliterate damages an enemy affected by Undeath it gains 1 stack and infects another nearby enemy.
-
-    -- Deathbringer
-    bind_in_darkness            = {  95043, 440031, 1 }, -- Rime empowered Howling Blast deals 30% increased damage to its main target, and is now Shadowfrost. Shadowfrost damage applies 2 stacks to Reaper's Mark and 4 stacks when it is a critical strike.
-    dark_talons                 = {  95057, 436687, 1 }, -- Consuming Killing Machine or Rime has a 25% chance to grant 3 stacks of Icy Talons and increase its maximum stacks by the same amount for 6 sec. Runic Power spending abilities count as Shadowfrost while Icy Talons is active.
-    deaths_messenger            = {  95049, 437122, 1 }, -- Reduces the cooldowns of Lichborne and Raise Dead by 30 sec.
-    expelling_shield            = {  95049, 439948, 1 }, -- When an enemy deals direct damage to your Anti-Magic Shell, their cast speed is reduced by 10% for 6 sec.
-    exterminate                 = {  95068, 441378, 1 }, -- After Reaper's Mark explodes, your next 2 Obliterates cost 1 Rune and summon 2 scythes to strike your enemies. The first scythe strikes your target for 74,146 Shadowfrost damage and has a 30% chance to apply Reaper's Mark, the second scythe strikes all enemies around your target for 25,308 Shadowfrost damage. Deals reduced damage beyond 8 targets.
-    grim_reaper                 = {  95034, 434905, 1 }, -- Reaper's Mark initial strike grants Killing Machine. Reaper's Mark explosion deals up to 30% increased damage based on your target's missing health.
-    pact_of_the_deathbringer    = {  95035, 440476, 1 }, -- When you suffer a damaging effect equal to 25% of your maximum health, you instantly cast Death Pact at 50% effectiveness. May only occur every 2 min. When a Reaper's Mark explodes, the cooldowns of this effect and Death Pact are reduced by 5 sec.
-    reaper_of_souls             = {  95034, 440002, 1 }, -- When you apply Reaper's Mark, the cooldown of Soul Reaper is reset, your next Soul Reaper costs no runes, and it explodes on the target regardless of their health. Soul Reaper damage is increased by 20%.
-    reapers_mark                = {  95062, 439843, 1, "deathbringer" }, -- Viciously slice into the soul of your enemy, dealing 55,138 Shadowfrost damage and applying Reaper's Mark. Each time you deal Shadow or Frost damage, add a stack of Reaper's Mark. After 12 sec or reaching 40 stacks, the mark explodes, dealing 4,233 damage per stack. Reaper's Mark travels to an unmarked enemy nearby if the target dies, or explodes below 35% health when there are no enemies to travel to. This explosion cannot occur again on a target for 3 min.
-    reapers_onslaught           = {  95057, 469870, 1 }, -- Reduces the cooldown of Reaper's Mark by 15 sec, but the amount of Obliterates empowered by Exterminate is reduced by 1.
-    rune_carved_plates          = {  95035, 440282, 1 }, -- Each Rune spent reduces the magic damage you take by 1.5% and each Rune generated reduces the physical damage you take by 1.5% for 5 sec, up to 5 times.
-    soul_rupture                = {  95061, 437161, 1 }, -- When Reaper's Mark explodes, it deals 30% of the damage dealt to nearby enemies and causes them to deal 5% reduced Physical damage to you for 10 sec.
-    swift_and_painful           = {  95032, 443560, 1 }, -- If no enemies are struck by Soul Rupture, you gain 10% Strength for 8 sec. Wave of Souls is 100% more effective on the main target of your Reaper's Mark.
-    wave_of_souls               = {  95036, 439851, 1 }, -- Reaper's Mark sends forth bursts of Shadowfrost energy and back, dealing 17,091 Shadowfrost damage both ways to all enemies caught in its path. Wave of Souls critical strikes cause enemies to take 5% increased Shadowfrost damage for 15 sec, stacking up to 2 times, and it is always a critical strike on its way back.
-    wither_away                 = {  95058, 441894, 1 }, -- Frost Fever deals its damage 100% faster, and the second scythe of Exterminate applies Frost Fever.
+    -- Rider Of The Apocalypse
+    a_feast_of_souls               = {  95042,  444072, 1 }, -- While you have $s1 or more Horsemen aiding you, your Runic Power spending abilities deal $s2% increased damage
+    apocalypse_now                 = {  95041,  444040, 1 }, -- Army of the Dead and Frostwyrm's Fury call upon all $s1 Horsemen to aid you for $s2 sec
+    death_charge                   = {  95060,  444010, 1 }, -- Call upon your Death Charger to break free of movement impairment effects. For $s1 sec, while upon your Death Charger your movement speed is increased by $s2%, you cannot be slowed below $s3% of normal speed, and you are immune to forced movement effects and knockbacks
+    fury_of_the_horsemen           = {  95042,  444069, 1 }, -- Every $s1 Runic Power you spend extends the duration of the Horsemen's aid in combat by $s2 sec, up to $s3 sec
+    horsemens_aid                  = {  95037,  444074, 1 }, -- While at your aid, the Horsemen will occasionally cast Anti-Magic Shell on you and themselves at $s1% effectiveness. You may only benefit from this effect every $s2 sec
+    hungering_thirst               = {  95044,  444037, 1 }, -- The damage of your diseases and Frost Strike are increased by $s1%
+    mawsworn_menace                = {  95054,  444099, 1 }, -- Obliterate deals $s1% increased damage and your Remorseless Winter lasts $s2 sec longer
+    mograines_might                = {  95067,  444047, 1 }, -- Your damage is increased by $s1% and you gain $s2% critical strike chance while inside Mograine's Death and Decay
+    nazgrims_conquest              = {  95059,  444052, 1 }, -- If an enemy dies while Nazgrim is active, the strength of Apocalyptic Conquest is increased by $s1%. Additionally, each Rune you spend increase its value by $s2%
+    on_a_paler_horse               = {  95060,  444008, 1 }, -- While outdoors you are able to mount your Acherus Deathcharger in combat
+    pact_of_the_apocalypse         = {  95037,  444083, 1 }, -- When you take damage, $s1% of the damage is redirected to each active horsemen
+    riders_champion                = {  95066,  444005, 1 }, -- Spending Runes has a chance to call forth the aid of a Horsemen for $s2 sec. Mograine Casts Death and Decay at his location that follows his position. Whitemane Casts Undeath on your target dealing $s$s3 Shadowfrost damage per stack every $s4 sec, for $s5 sec. Each time Undeath deals damage it gains a stack. Cannot be refreshed. Trollbane Casts Chains of Ice on your target slowing their movement speed by $s6% and increasing the damage they take from you by $s7% for $s8 sec. Nazgrim While Nazgrim is active you gain Apocalyptic Conquest, increasing your Strength by $s9%
+    trollbanes_icy_fury            = {  95063,  444097, 1 }, -- Obliterate and Frostscythe shatter Trollbane's Chains of Ice when hit, dealing $s$s2 Shadowfrost damage to nearby enemies, and slowing them by $s3% for $s4 sec. Deals reduced damage beyond $s5 targets
+    whitemanes_famine              = {  95047,  444033, 1 }, -- When Obliterate or Frostscythe damages an enemy affected by Undeath it gains $s1 stack and infects another nearby enemy
 } )
 
 -- PvP Talents
 spec:RegisterPvpTalents( {
-    bitter_chill      = 5435, -- (356470)
-    bloodforged_armor = 5586, -- (410301)
-    dark_simulacrum   = 3512, -- (77606) Places a dark ward on an enemy player that persists for 12 sec, triggering when the enemy next spends mana on a spell, and allowing the Death Knight to unleash an exact duplicate of that spell.
-    dead_of_winter    = 3743, -- (287250)
-    deathchill        =  701, -- (204080)
-    delirium          =  702, -- (233396)
-    rot_and_wither    = 5510, -- (202727)
-    shroud_of_winter  = 3439, -- (199719)
-    spellwarden       = 5591, -- (410320)
-    strangulate       = 5429, -- (47476) Shadowy tendrils constrict an enemy's throat, silencing them for 4 sec.
+    bitter_chill                   = 5435, -- (356470)
+    bloodforged_armor              = 5586, -- (410301) Death Strike reduces all Physical damage taken by $s1% for $s2 sec
+    dark_simulacrum                = 3512, -- (77606) Places a dark ward on an enemy player that persists for $s1 sec, triggering when the enemy next spends mana on a spell, and allowing the Death Knight to unleash an exact duplicate of that spell
+    deathchill                     =  701, -- (204080)
+    deaths_cold_embrace            = 5693, -- (1218603)
+    delirium                       =  702, -- (233396)
+    rot_and_wither                 = 5510, -- (202727) Your Death and Decay rots enemies each time it deals damage, absorbing healing equal to $s1% of damage dealt
+    shroud_of_winter               = 3439, -- (199719)
+    spellwarden                    = 5591, -- (410320) Anti-Magic Shell is now usable on allies and its cooldown is reduced by $s1 sec
+    strangulate                    = 5429, -- (47476) Shadowy tendrils constrict an enemy's throat, silencing them for $s1 sec
 } )
 
 -- Auras
@@ -355,9 +331,9 @@ spec:RegisterAuras( {
         duration = function () return ( legendary.deaths_embrace.enabled and 2 or 1 ) * 5 + ( conduit.reinforced_shell.mod * 0.001 ) end,
         max_stack = 1
     },
-    antimagic_zone = { -- TODO: Modify expiration based on last cast.
+    antimagic_zone = {
         id = 145629,
-        duration = 8,
+        duration = function () return 6 + ( 2 * talent.assimilation.rank ) end,
         max_stack = 1
     },
     asphyxiate = {
@@ -425,8 +401,8 @@ spec:RegisterAuras( {
     -- Talent: Continuously dealing Frost damage every $t1 sec to enemies in a cone in front of you.
     -- https://wowhead.com/beta/spell=152279
     breath_of_sindragosa = {
-        id = 152279,
-        duration = 3600,
+        id = 1249658,
+        duration = 8,
         tick_time = 1,
         max_stack = 1
     },
@@ -446,22 +422,8 @@ spec:RegisterAuras( {
         type = "Magic",
         max_stack = 1
     },
-    cold_heart_item = {
-        id = 235599,
-        duration = 3600,
-        max_stack = 20
-    },
-    -- Talent: Your next Chains of Ice will deal $281210s1 Frost damage.
-    -- https://wowhead.com/beta/spell=281209
-    cold_heart_talent = {
-        id = 281209,
-        duration = 3600,
-        max_stack = 20
-    },
     cold_heart = {
-        alias = { "cold_heart_item", "cold_heart_talent" },
-        aliasMode = "first",
-        aliasType = "buff",
+        id = 235599,
         duration = 3600,
         max_stack = 20
     },
@@ -527,14 +489,6 @@ spec:RegisterAuras( {
         type = "Magic",
         max_stack = 1
     },
-    -- Talent: Haste increased by $s3%.  Generating $s1 $LRune:Runes; and ${$m2/10} Runic Power every $t1 sec.
-    -- https://wowhead.com/beta/spell=47568
-    empower_rune_weapon = {
-        id = 47568,
-        duration = 20,
-        tick_time = 5,
-        max_stack = 1
-    },
     -- Talent: When Pillar of Frost expires, you will gain $s1% Strength for $<duration> sec.
     -- https://wowhead.com/beta/spell=377192
     enduring_strength = {
@@ -567,6 +521,17 @@ spec:RegisterAuras( {
         duration = 6,
         max_stack = 3
     },
+    -- Frostbane Your Frost Strike has become Frostbane. $s1 seconds remaining
+    -- https://www.wowhead.com/spell=1229310
+    frostbane = {
+        id = 1229310,
+        duration = 30
+    },
+    -- https://www.wowhead.com/spell=1233351
+    frostreaper = {
+        id = 1233351,
+        duration = 8
+    },
     -- Suffering $w1 Frost damage every $t1 sec.
     -- https://wowhead.com/beta/spell=55095
     frost_fever = {
@@ -575,14 +540,6 @@ spec:RegisterAuras( {
         tick_time = function() return 3 * ( talent.wither_away.enabled and 0.5 or 1 ) end,
         max_stack = 1
     },
-    -- Talent: Grants ${$s1*$mas}% Mastery.
-    -- https://wowhead.com/beta/spell=377253
-    frostwhelps_aid = {
-        id = 377253,
-        duration = 15,
-        type = "Magic",
-        max_stack = 5
-    },
     -- Talent: Movement speed slowed by $s2%.
     -- https://wowhead.com/beta/spell=279303
     frostwyrms_fury = {
@@ -590,6 +547,13 @@ spec:RegisterAuras( {
         duration = 10,
         type = "Magic",
         max_stack = 1
+    },
+    -- Frozen Dominion Grants $s1% Mastery. $s2 seconds remaining
+    -- https://www.wowhead.com/spell=377253
+    frozen_dominion = {
+        id = 377253,
+        duration = 15,
+        max_stack = 5
     },
     frozen_pulse = {
         -- Pseudo aura for legacy talent.
@@ -645,6 +609,13 @@ spec:RegisterAuras( {
         tick_time = 1.0,
         max_stack = 1
     },
+    -- Icy Onslaught Damage of Frost Strike and Glacial Advance increased by $s1% and their cost by $s2 Runic Power. $s3 seconds remaining
+    -- https://www.wowhead.com/spell=1230273
+    icy_onslaught = {
+        id = 1230273,
+        duration = 30,
+        max_stack = 5
+    },
     icy_talons = {
         id = 194879,
         duration = 10,
@@ -666,6 +637,13 @@ spec:RegisterAuras( {
         id = 51124,
         duration = 10,
         max_stack = 2
+    },
+    -- Killing Streak Haste increased by $s1%. $s2 seconds remaining
+    -- https://www.wowhead.com/spell=1230916
+    killing_streak = {
+        id = 1230916,
+        duration = 8,
+        max_stack = 10
     },
     -- Absorbing up to $w1 magic damage.; Duration of harmful magic effects reduced by $s2%.
     lesser_antimagic_shell = {
@@ -739,13 +717,20 @@ spec:RegisterAuras( {
         id = 434765,
         duration = 12.0,
         tick_time = 1.0,
-        max_stack = 40
+        max_stack = function() if set_bonus.tww3 >= 4 then return 55 else
+            return 40 end end,
+        copy = "reapers_mark_debuff",
+        onRemove = function()
+            if set_bonus.tww3 >= 4 then
+                applyBuff( "empowered_soul" )
+            end
+        end,
     },
     -- Talent: Dealing $196771s1 Frost damage to enemies within $196771A1 yards each second.
     -- https://wowhead.com/beta/spell=196770
     remorseless_winter = {
-        id = 196770,
-        duration = 8,
+        id = function() if talent.frozen_dominion.enabled then return 1233152 else return 196770 end end,
+        duration = function() return 8 + ( 4 * talent.frozen_dominion.rank ) + ( 2 * talent.mawsworn_menace.rank ) end,
         tick_time = 1,
         max_stack = 1
     },
@@ -928,6 +913,18 @@ spec:RegisterTotem( "ghoul", 1100170 )
 
 spec:RegisterGear({
     -- The War Within
+    tww3 = {
+        items = { 237631, 237629, 237627, 237628, 237626 },
+        auras = {
+            -- Deathbringer
+            -- Crit Buff
+            empowered_soul = {
+                id = 1236996,
+                duration = 8,
+                max_stack = 1
+            },
+        }
+    },
     tww2 = {
         items = { 229253, 229251, 229256, 229254, 229252 },
         auras = {
@@ -1004,6 +1001,21 @@ spec:RegisterHook( "TALENTS_UPDATED", function()
     rawset( cooldown, "any_dnd", cooldown.death_and_decay )
 end )
 
+local ERWDiscount = 0
+
+spec:RegisterStateExpr( "erw_discount", function()
+    return ERWDiscount
+end )
+
+spec:RegisterCombatLogEvent( function( _, subtype, _, sourceGUID, sourceName, sourceFlags, _, destGUID, destName, destFlags, _, spellID, spellName )
+    if spellID == 47568 and ( subtype == "SPELL_CAST_SUCCESS" ) and state.talent.obliteration.enabled and state.buff.pillar_of_frost.up then
+        ERWDiscount = 1
+    elseif spellID == 49020 or spellID == 207230 then
+        ERWDiscount = 0
+    end
+
+end )
+
 spec:RegisterHook( "reset_precast", function ()
     local control_expires = action.control_undead.lastCast + 300
     if talent.control_undead.enabled and control_expires > now and pet.up then
@@ -1019,6 +1031,40 @@ spec:RegisterHook( "reset_precast", function ()
     end
 
 end )
+
+local KillingMachineConsumer = setfenv( function ()
+
+    local stacksConsumed = 0
+    -- Killing Streak
+    if talent.killing_streak.enabled then
+        stacksConsumed = buff.killing_machine.stack
+        removeBuff( "killing_machine" )
+        addStack( "killing_streak", stacksConsumed )
+    else
+        stacksConsumed = 1
+        removeStack( "killing_machine" )
+    end
+
+    -- Bonegrinder
+    if talent.bonegrinder.enabled then
+        local current = buff.bonegrinder_crit.stack or 0
+        local totalStacks = current + stacksConsumed
+        if totalStacks >= 5 then
+            removeBuff( "bonegrinder_crit" )
+            applyBuff( "bonegrinder_frost" )
+
+            -- Handle overflow: if we added 2 but only needed 1 to cap
+            local overflow = totalStacks - 5
+            if overflow > 0 then applyBuff( "bonegrinder_crit", nil, overflow ) end
+        else
+            addStack( "bonegrinder_crit", stacksConsumed )
+        end
+    end
+
+    -- Breath of Sindragosa
+    if buff.breath_of_sindragosa.up then buff.breath_of_sindragosa.expires = buff.breath_of_sindragosa.expires + 0.8 * stacksConsumed end
+
+end, state )
 
 -- Abilities
 spec:RegisterAbilities( {
@@ -1049,7 +1095,7 @@ spec:RegisterAbilities( {
     antimagic_zone = {
         id = 51052,
         cast = 0,
-        cooldown = function() return 120 - ( talent.assimilation.enabled and 30 or 0 ) end,
+        cooldown = function() return 240 - ( talent.assimilation.enabled and 60 or 0 ) end,
         gcd = "spell",
 
         talent = "antimagic_zone",
@@ -1103,24 +1149,23 @@ spec:RegisterAbilities( {
 
     -- Talent: Continuously deal ${$155166s2*$<CAP>/$AP} Frost damage every $t1 sec to enemies in a cone in front of you, until your Runic Power is exhausted. Deals reduced damage to secondary targets.    |cFFFFFFFFGenerates $303753s1 $lRune:Runes; at the start and end.|r
     breath_of_sindragosa = {
-        id = 152279,
+        id = 1249658,
         cast = 0,
-        cooldown = 120,
+        cooldown = 150,
         gcd = "off",
 
-        spend = 17,
+        spend = 60,
         spendType = "runic_power",
-        readySpend = function () return settings.bos_rp end,
 
         talent = "breath_of_sindragosa",
         startsCombat = true,
+        texture = 1029007,
 
         toggle = "cooldowns",
 
         handler = function ()
-            gain( 2, "runes" )
-            applyBuff( "breath_of_sindragosa" )
-            if talent.unleashed_frenzy.enabled then addStack( "unleashed_frenzy", nil, 3 ) end
+            gainCharges( "empower_rune_weapon", 1 )
+            applyBuff( "breath_of_sindragosa", 8 )
         end,
     },
 
@@ -1139,29 +1184,7 @@ spec:RegisterAbilities( {
         handler = function ()
             applyDebuff( "target", "chains_of_ice" )
             if talent.ice_prison.enabled then applyDebuff( "target", "ice_prison" ) end
-            removeBuff( "cold_heart_item" )
-            removeBuff( "cold_heart_talent" )
-        end,
-    },
-
-    -- Talent: Deals $204167s4 Frost damage to the target and reduces their movement speed by $204206m2% for $204206d.    Chill Streak bounces up to $m1 times between closest targets within $204165A1 yards.
-    chill_streak = {
-        id = 305392,
-        cast = 0,
-        cooldown = 45,
-        gcd = "spell",
-
-        spend = 1,
-        spendType = "runes",
-
-        talent = "chill_streak",
-        startsCombat = true,
-
-        handler = function ()
-            applyDebuff( "target", "chilled" )
-            if set_bonus.tier31_2pc > 0 then
-                applyBuff( "chilling_rage", 5 ) -- TODO: Check if reliable.
-            end
+            removeBuff( "cold_heart" )
         end,
     },
 
@@ -1254,7 +1277,7 @@ spec:RegisterAbilities( {
         cooldown = 0,
         gcd = "spell",
 
-        spend = 30,
+        spend = 35,
         spendType = "runic_power",
 
         startsCombat = true,
@@ -1286,8 +1309,8 @@ spec:RegisterAbilities( {
         id = 49576,
         cast = 0,
         charges = function() if talent.deaths_echo.enabled then return 2 end end,
-        cooldown = 25,
-        recharge = function() if talent.deaths_echo.enabled then return 25 end end,
+        cooldown = 15,
+        recharge = function() if talent.deaths_echo.enabled then return 15 end end,
 
         gcd = "off",
 
@@ -1363,30 +1386,32 @@ spec:RegisterAbilities( {
     empower_rune_weapon = {
         id = 47568,
         cast = 0,
-        cooldown = function () return ( conduit.accelerated_cold.enabled and 0.9 or 1 ) * ( essence.vision_of_perfection.enabled and 0.87 or 1 ) * ( level > 55 and 105 or 120 ) end,
+        cooldown = 30,
+        charges = 2,
+        recharge = 30,
+
         gcd = "off",
+        school = "shadowfrost",
 
         talent = "empower_rune_weapon",
         startsCombat = false,
 
         handler = function ()
-            stat.haste = state.haste + 0.15 + ( conduit.accelerated_cold.mod * 0.01 )
-            gain( 1, "runes" )
-            gain( 5, "runic_power" )
-            applyBuff( "empower_rune_weapon" )
+            gain( 40, "runic_power" )
+            addStack( "killing_machine" )
         end,
 
-        copy = "empowered_rune_weapon"
     },
 
     -- Talent: Chill your $?$owb==0[weapon with icy power and quickly strike the enemy, dealing $<2hDamage> Frost damage.][weapons with icy power and quickly strike the enemy with both, dealing a total of $<dualWieldDamage> Frost damage.]
     frost_strike = {
-        id = 49143,
+        id = function() return buff.frostbane.up and 1228436 or 49143 end,
+        texture = function() return buff.frostbane.up and 1273742 or 237520 end,
         cast = 0,
         cooldown = 0,
         gcd = "spell",
 
-        spend = 30,
+        spend = 35,
         spendType = "runic_power",
         school = function() if talent.dark_talons.enabled and buff.icy_talons.up then return "shadowfrost" end return "frost" end,
 
@@ -1403,10 +1428,10 @@ spec:RegisterAbilities( {
             if talent.obliteration.enabled and buff.pillar_of_frost.up then addStack( "killing_machine" ) end
             if talent.shattering_blade.enabled and debuff.razorice.stack == 5 then removeDebuff( "target", "razorice" ) end
             -- if debuff.razorice.stack > 5 then applyDebuff( "target", "razorice", nil, debuff.razorice.stack - 5 ) end
-
-
+            if talent.icy_onslaught.enabled then addStack( "icy_onslaught" ) end
+            removeBuff( "frostbane" )
             if death_knight.runeforge.razorice then applyDebuff( "target", "razorice", nil, min( 5, buff.razorice.stack + 1 ) ) end
-
+            if talent.frostreaper.enabled then removeBuff( "frost_reaper" ) end
             -- Legacy / PvP
             if pvptalent.bitter_chill.enabled and debuff.chains_of_ice.up then
                 applyDebuff( "target", "chains_of_ice" )
@@ -1429,10 +1454,14 @@ spec:RegisterAbilities( {
     frostscythe = {
         id = 207230,
         cast = 0,
-        cooldown = 30,
+        cooldown = 0,
         gcd = "spell",
 
-        spend = 2,
+        spend = function()
+            if talent.obliteration.enabled and erw_discount > 0 then return 0 end
+            if talent.exterminate.enabled and buff.exterminate.up then return 1 end
+            return 2
+        end,
         spendType = "runes",
 
         talent = "frostscythe",
@@ -1441,17 +1470,21 @@ spec:RegisterAbilities( {
         range = 7,
 
         handler = function ()
-            removeStack( "inexorable_assault" )
+            removeStack( "inexorable_assault", 3 )
 
-            if buff.killing_machine.up and talent.bonegrinder.enabled then
-                if buff.bonegrinder_crit.stack_pct == 100 then
-                    removeBuff( "bonegrinder_crit" )
-                    applyBuff( "bonegrinder_frost" )
-                else
-                    addStack( "bonegrinder_crit" )
+            if talent.obliteration.enabled then erw_discount = 0 end
+
+            if buff.killing_machine.up then KillingMachineConsumer( ) end
+
+            if buff.exterminate.up then
+                removeStack( "exterminate" )
+                if talent.wither_away.enabled then
+                    applyDebuff( "target", "frost_fever" )
+                    active_dot.frost_fever = max ( active_dot.frost_fever, active_enemies ) -- it applies in AoE around your target
                 end
-                removeBuff( "killing_machine" )
+                addStack( "killing_machine" )
             end
+
         end,
     },
 
@@ -1459,7 +1492,7 @@ spec:RegisterAbilities( {
     frostwyrms_fury = {
         id = 279302,
         cast = 0,
-        cooldown = function () return legendary.absolute_zero.enabled and 90 or 180 end,
+        cooldown = 90,
         gcd = "spell",
 
         talent = "frostwyrms_fury",
@@ -1482,10 +1515,9 @@ spec:RegisterAbilities( {
         cooldown = 0,
         gcd = "spell",
 
-        spend = 30,
+        spend = 35,
         spendType = "runic_power",
 
-        talent = "glacial_advance",
         startsCombat = true,
 
         handler = function ()
@@ -1493,22 +1525,7 @@ spec:RegisterAbilities( {
             if active_enemies > 1 then active_dot.razorice = active_enemies end
             if talent.obliteration.enabled and buff.pillar_of_frost.up then addStack( "killing_machine" ) end
             if talent.unleashed_frenzy.enabled then addStack( "unleashed_frenzy", nil, 3 ) end
-        end,
-    },
-
-    -- Talent: Blow the Horn of Winter, gaining $s1 $LRune:Runes; and generating ${$s2/10} Runic Power.
-    horn_of_winter = {
-        id = 57330,
-        cast = 0,
-        cooldown = 45,
-        gcd = "spell",
-
-        talent = "horn_of_winter",
-        startsCombat = false,
-
-        handler = function ()
-            gain( 2, "runes" )
-            gain( 25, "runic_power" )
+            if talent.icy_onslaught.enabled then addStack( "icy_onslaught" ) end
         end,
     },
 
@@ -1535,10 +1552,12 @@ spec:RegisterAbilities( {
 
             if buff.rime.up then
                 removeBuff( "rime" )
-                if talent.rage_of_the_frozen_champion.enabled then gain( 6, "runic_power") end
+                if talent.rage_of_the_frozen_champion.enabled then gain( 8, "runic_power") end
                 if talent.avalanche.enabled then applyDebuff( "target", "razorice", nil, min( 5, buff.razorice.stack + 1 ) ) end
                 if legendary.rage_of_the_frozen_champion.enabled then gain( 8, "runic_power" ) end
                 if set_bonus.tier30_2pc > 0 then addStack( "wrath_of_the_frostwyrm" ) end
+                if talent.frostbound_will.enabled then reduceCooldown( "empower_rune_weapon", 6 ) end
+                if buff.breath_of_sindragosa.up then buff.breath_of_sindragosa.expires = buff.breath_of_sindragosa.expires + 0.8 end
             end
 
             if pvptalent.delirium.enabled then applyDebuff( "target", "delirium" ) end
@@ -1608,6 +1627,7 @@ spec:RegisterAbilities( {
         gcd = "spell",
 
         spend = function()
+            if talent.obliteration.enabled and erw_discount > 0 then return 0 end
             if talent.exterminate.enabled and buff.exterminate.up then return 1 end
             return 2
         end,
@@ -1623,26 +1643,18 @@ spec:RegisterAbilities( {
         end,
 
         handler = function ()
-            if talent.inexorable_assault.enabled then removeStack( "inexorable_assault" ) end
-
+            if talent.inexorable_assault.enabled then removeStack( "inexorable_assault", 3 ) end
+            if talent.obliteration.enabled then erw_discount = 0 end
             if buff.exterminate.up then
                 removeStack( "exterminate" )
                 if talent.wither_away.enabled then
                     applyDebuff( "target", "frost_fever" )
                     active_dot.frost_fever = max ( active_dot.frost_fever, active_enemies ) -- it applies in AoE around your target
                 end
+                addStack( "killing_machine" )
             end
 
-            if buff.killing_machine.up then
-                if talent.bonegrinder.enabled and buff.bonegrinder_crit.stack_pct == 100 then
-                    removeBuff( "bonegrinder_crit" )
-                    applyBuff( "bonegrinder_frost" )
-                else
-                    addStack( "bonegrinder_crit" )
-                end
-                removeStack( "killing_machine" )
-                if talent.arctic_assault.enabled then applyDebuff( "target", "razorice", nil, min( 5, buff.razorice.stack + 1 ) ) end
-            end
+            if buff.killing_machine.up then KillingMachineConsumer( ) end
 
             -- Koltira's Favor is not predictable.
             if conduit.eradicating_blow.enabled then addStack( "eradicating_blow", nil, 1 ) end
@@ -1679,7 +1691,7 @@ spec:RegisterAbilities( {
     pillar_of_frost = {
         id = 51271,
         cast = 0,
-        cooldown = function() return 60 - ( talent.icecap.enabled and 15 or 0 ) end,
+        cooldown = 60,
         gcd = "off",
 
         talent = "pillar_of_frost",
@@ -1687,6 +1699,7 @@ spec:RegisterAbilities( {
 
         handler = function ()
             applyBuff( "pillar_of_frost" )
+            if talent.frozen_dominion.enabled then spec.abilities.remorseless_winter.handler() end
 
             -- Legacy
             if set_bonus.tier30_2pc > 0 then
@@ -1773,6 +1786,7 @@ spec:RegisterAbilities( {
         spendType = "runes",
 
         startsCombat = true,
+        notalent = "frozen_dominion",
 
         handler = function ()
             applyBuff( "remorseless_winter" )
@@ -1941,16 +1955,6 @@ spec:RegisterSetting( "dnd_while_moving", true, {
     desc = strformat( "If checked, then allow recommending %s while the player is moving otherwise only recommend it if the player is standing still.", Hekili:GetSpellLinkWithTexture( spec.abilities.death_and_decay.id ) ),
     type = "toggle",
     width = "full",
-} )
-
-spec:RegisterSetting( "bos_rp", 50, {
-    name = strformat( "%s for %s", _G.RUNIC_POWER, Hekili:GetSpellLinkWithTexture( spec.abilities.breath_of_sindragosa.id ) ),
-    desc = strformat( "%s will only be recommended when you have at least this much |W%s|w.", Hekili:GetSpellLinkWithTexture( spec.abilities.breath_of_sindragosa.id ), _G.RUNIC_POWER ),
-    type = "range",
-    min = 18,
-    max = 100,
-    step = 1,
-    width = "full"
 } )
 
 spec:RegisterSetting( "ams_usage", "damage", {
