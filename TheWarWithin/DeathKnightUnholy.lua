@@ -2321,6 +2321,7 @@ spec:RegisterAbilities( {
                 else
                     spec.abilities.epidemic.handler()
                 end
+                removeBuff( "visceral_strength_discount" )
             end
         end
     },
@@ -2486,7 +2487,7 @@ spec:RegisterAbilities( {
             if buff.infliction_of_sorrow.up then
                 removeDebuff( "target", "virulent_plague" )
                 removeBuff( "infliction_of_sorrow" )
-                applyBuff( "" )
+                applyBuff( "visceral_strength_discount" )
             end
 
             if conduit.lingering_plague.enabled and debuff.virulent_plague.up then
