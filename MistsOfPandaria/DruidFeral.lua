@@ -176,7 +176,7 @@ spec:RegisterAuras( {
         max_stack = 1,
     },
     savage_roar = {
-        id = 52610,
+        id = 127538,
         duration = function() return 12 + (combo_points.current * 6) end, -- MoP: 12s + 6s per combo point
         max_stack = 1,
     },
