@@ -927,7 +927,7 @@ spec:RegisterGear({
                 duration = 13,
                 max_stack = 1
             },
-            lesser_time_warp= {
+            lesser_time_warp = {
                 id = 1236231,
                 duration = 13,
                 max_stack = 1
