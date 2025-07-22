@@ -44,7 +44,6 @@ MistsOfPandaria\HunterSurvival.lua
 MistsOfPandaria\MageArcane.lua
 MistsOfPandaria\MageFire.lua
 MistsOfPandaria\MageFrost.lua
-MistsOfPandaria\MonkBrewmaster.lua
 MistsOfPandaria\MonkMistweaver.lua
 MistsOfPandaria\MonkWindwalker.lua
 MistsOfPandaria\PaladinHoly.lua

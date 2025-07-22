@@ -12,9 +12,12 @@ local class, state = Hekili.Class, Hekili.State
 
 local strformat = string.format
 
+-- Module-level variables
+local last_combo = nil
+
 local spec = Hekili:NewSpecialization( 269 )
 -- local GetSpellCount = C_Spell.GetSpellCastCount -- Retail API not available in MoP
-local GetSpellCount = function() return 0 end -- MoP fallback
+local GetSpellCount = function(spellID) return 0 end -- MoP fallback
 
 spec:RegisterResource( 3, { -- Energy
     crackling_jade_lightning = {

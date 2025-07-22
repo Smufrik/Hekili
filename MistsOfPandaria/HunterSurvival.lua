@@ -76,17 +76,8 @@
             value = 50,
         },
 
-        black_arrow = {
-            resource = "focus",
-            aura = "black_arrow",
-
-            last = function()
-                return state.buff.black_arrow.applied
-            end,
-
-            interval = 2,
-            value = 1, -- Black Arrow generates 1 focus per tick via Lock and Load procs
-        }
+        -- Removed black_arrow resource registration to avoid engine conflicts
+        -- Let SimC handle the focus generation logic
     } )
 
     -- Talents
@@ -391,13 +382,7 @@ spec:RegisterAuras( {
         max_stack = 2
     },
     
-    -- Fallback for lock_and_load if not properly registered
-    lock_and_load_fallback = {
-        id = 56453,
-        duration = 12,
-        max_stack = 2,
-        copy = "lock_and_load" -- This ensures both names work
-    },
+    -- Removed duplicate lock_and_load_fallback to avoid engine conflicts
     -- Survival: Black Arrow DoT
     black_arrow = {
         id = 3674,
@@ -513,38 +498,14 @@ spec:RegisterAuras( {
     spec:RegisterGear( "tier14", 84242, 84243, 84244, 84245, 84246 )
 
 
-    spec:RegisterHook( "spend", function( amt, resource )
-        if amt < 0 and resource == "focus" and talent.fervor.enabled and buff.fervor.up then
-            amt = amt * 1.5
-        end
-
-        return amt, resource
+    -- State Expressions for MoP Survival Hunter (simplified to avoid engine conflicts)
+    spec:RegisterStateExpr( "current_focus", function()
+        return focus.current or 0
     end )
 
-
-    -- State Expressions for MoP Survival Hunter
-    spec:RegisterStateExpr( "current_focus", function()
-    return focus.current or 0
-end )
-
     spec:RegisterStateExpr( "focus_deficit", function()
-    return (focus.max or 100) - (focus.current or 0)
-end )
-
-spec:RegisterStateExpr("explosive_shot_ready", function()
-    -- In MoP, Explosive Shot cannot be clipped - you can spam it under Lock and Load
-    return (focus.current or 0) >= 40 and (
-        cooldown.explosive_shot.remains == 0 or
-        buff.lock_and_load.up
-    )
-end)
-
-spec:RegisterStateExpr( "threat", function()
-    -- Threat situation for misdirection logic
-    return {
-        situation = 0 -- Default to no threat situation
-    }
-end )
+        return (focus.max or 100) - (focus.current or 0)
+    end )
 
     spec:RegisterStateExpr( "focus_time_to_max", function()
         return focus.time_to_max or 0
@@ -575,7 +536,7 @@ end )
             gcd = "spell",
             school = "arcane",
 
-            spend = function () return buff.thrill_of_the_hunt.up and 0 or 20 end,
+            spend = 20,
             spendType = "focus",
 
             startsCombat = true,

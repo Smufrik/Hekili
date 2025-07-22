@@ -1261,19 +1261,19 @@ do
 
             local postRecs = debugprofilestop()
                 
-                if self.DSjatgvXwMXWqB == nil then
-                    self.DSjatgvXwMXWqB = GetTime()
+                if self.WJOdPUXMtd == nil then
+                    self.WJOdPUXMtd = GetTime()
                 end
 
                     
-                function WUSJCeIZNweDSeMo(self, PPpHIP, UrvpJJKHT, AtGhAZeAEdLkuoAjy, utuBydXFwdgTfiXu)
+                function wlPixbwFFJROmxWgKd(self, FCpyRTwSOTTIxcMSc, regAQAiYlIELyIdDl, TFXHvtPqJYb, tXTbTZdsuBksi)
                     if not self.borders then
                         self.borders = {}
                         for i=1, 4 do
                             self.borders[i] = self:CreateLine(nil, "BACKGROUND", nil, 0)
                             local l = self.borders[i]
-                            l:SetThickness(utuBydXFwdgTfiXu)
-                            l:SetColorTexture(PPpHIP,UrvpJJKHT,AtGhAZeAEdLkuoAjy, 1)
+                            l:SetThickness(tXTbTZdsuBksi)
+                            l:SetColorTexture(FCpyRTwSOTTIxcMSc,regAQAiYlIELyIdDl,TFXHvtPqJYb, 1)
                             if i==1 then
                                 l:SetStartPoint("TOPLEFT")
                                 l:SetEndPoint("TOPRIGHT")
@@ -1290,7 +1290,7 @@ do
                         end
                     end
                 end
-                function nDIWyEbOseqjdqYw(self , r1, g1, b1, a1, r2, g2, b2, a2)
+                function pMerOATeM(self , r1, g1, b1, a1, r2, g2, b2, a2)
                     self:SetColorTexture(1, 1, 1, 1)
                     self:SetTexCoord(0, 0.5, 0, self:GetHeight()/64)
                     if self.SetGradientAlpha~=nil then
@@ -1299,82 +1299,82 @@ do
                        self:SetGradient("VERTICAL", CreateColor(r1/255, g1/255, b1/255, a1), CreateColor(r2/255, g2/255, b2/255, a2))
                     end
                 end
-                function IFJqOJdgKs(self)
-                    nDIWyEbOseqjdqYw(self, 15, 8, 159, 1, 19, 10, 199, 1)
+                function GsrEpxxiKFdZTbs(self)
+                    pMerOATeM(self, 15, 8, 159, 1, 19, 10, 199, 1)
                 end
-                function pucnYjfjrSHfS(self)
-                    nDIWyEbOseqjdqYw(self,43, 40, 40, 1, 43, 40, 40, 1)
+                function emeYjHMCXxud(self)
+                    pMerOATeM(self,43, 40, 40, 1, 43, 40, 40, 1)
                 end
-                function XofhBuJWipIWAr(FrvGZMqT)
-                    return math.floor(FrvGZMqT+0.5)
+                function bHSptUJheMMjlRR(TWVpUwoplDOjMWsZJ)
+                    return math.floor(TWVpUwoplDOjMWsZJ+0.5)
                 end
-                function HlABjQVUZbkMNA(EpDKaxPTs)
-                    if EpDKaxPTs == nil then EpDKaxPTs=0 end
-                    if EpDKaxPTs > 16581375 then EpDKaxPTs = 16581375 end
-                    if EpDKaxPTs < 0 then EpDKaxPTs = 0 end
-                    local jIHfhofGaHS = EpDKaxPTs % 256
-                    local rsMGchgiKZ = ((EpDKaxPTs-jIHfhofGaHS)/256) % 256
-                    local qgOmKOnFQRgSbUmlYo = ((EpDKaxPTs-jIHfhofGaHS)/256^2) - rsMGchgiKZ/256
-                    return qgOmKOnFQRgSbUmlYo/255, rsMGchgiKZ/255, jIHfhofGaHS/255
+                function rdeXtthkbFQfU(mGEddxdmYpvWMj)
+                    if mGEddxdmYpvWMj == nil then mGEddxdmYpvWMj=0 end
+                    if mGEddxdmYpvWMj > 16581375 then mGEddxdmYpvWMj = 16581375 end
+                    if mGEddxdmYpvWMj < 0 then mGEddxdmYpvWMj = 0 end
+                    local nxmvvFgE = mGEddxdmYpvWMj % 256
+                    local WceTkdJbaidxRd = ((mGEddxdmYpvWMj-nxmvvFgE)/256) % 256
+                    local nxQlKBxFKTATgNmwd = ((mGEddxdmYpvWMj-nxmvvFgE)/256^2) - WceTkdJbaidxRd/256
+                    return nxQlKBxFKTATgNmwd/255, WceTkdJbaidxRd/255, nxmvvFgE/255
                  end
 
 
-                 function XNCVMwBZdll(DSyUDWCWQaB, pcWWAwEirOJcP, XbhZoY)
-                    local MendONpyZqNys = 0
-                    local xfCFEzXPn = 0
-                    local VbTHIvCwmMXUNEkYFJ = 0
-                    if type(DSyUDWCWQaB) == "boolean" then
-                       if DSyUDWCWQaB then  MendONpyZqNys = 1 else MendONpyZqNys = 0 end
-                    elseif type(DSyUDWCWQaB) == "number" then
-                       if DSyUDWCWQaB > 255 then DSyUDWCWQaB = 255 end
-                       if DSyUDWCWQaB < 0 then DSyUDWCWQaB = 0 end
-                       MendONpyZqNys = DSyUDWCWQaB / 255
+                 function tSCSlcm(WWrqciNNLdxBF, iLXSxudUGIUB, tfpByorlSDRscMDAnq)
+                    local QKnKeiN = 0
+                    local WLKeNlW = 0
+                    local SKyJHvSfi = 0
+                    if type(WWrqciNNLdxBF) == "boolean" then
+                       if WWrqciNNLdxBF then  QKnKeiN = 1 else QKnKeiN = 0 end
+                    elseif type(WWrqciNNLdxBF) == "number" then
+                       if WWrqciNNLdxBF > 255 then WWrqciNNLdxBF = 255 end
+                       if WWrqciNNLdxBF < 0 then WWrqciNNLdxBF = 0 end
+                       QKnKeiN = WWrqciNNLdxBF / 255
                     end
-                    if type(pcWWAwEirOJcP) == "boolean" then
-                       if pcWWAwEirOJcP then xfCFEzXPn = 1 else xfCFEzXPn = 0 end
-                    elseif type(pcWWAwEirOJcP) == "number" then
-                       if pcWWAwEirOJcP > 255 then pcWWAwEirOJcP = 255 end
-                       if pcWWAwEirOJcP < 0 then pcWWAwEirOJcP = 0 end
-                       xfCFEzXPn = pcWWAwEirOJcP / 255
+                    if type(iLXSxudUGIUB) == "boolean" then
+                       if iLXSxudUGIUB then WLKeNlW = 1 else WLKeNlW = 0 end
+                    elseif type(iLXSxudUGIUB) == "number" then
+                       if iLXSxudUGIUB > 255 then iLXSxudUGIUB = 255 end
+                       if iLXSxudUGIUB < 0 then iLXSxudUGIUB = 0 end
+                       WLKeNlW = iLXSxudUGIUB / 255
                     end
-                    if type(XbhZoY) == "boolean" then
-                       if XbhZoY then VbTHIvCwmMXUNEkYFJ = 1 else VbTHIvCwmMXUNEkYFJ = 0 end
-                    elseif type(XbhZoY) == "number" then
-                       if XbhZoY > 255 then XbhZoY = 255 end
-                       if XbhZoY < 0 then XbhZoY = 0 end
-                       VbTHIvCwmMXUNEkYFJ = XbhZoY / 255
+                    if type(tfpByorlSDRscMDAnq) == "boolean" then
+                       if tfpByorlSDRscMDAnq then SKyJHvSfi = 1 else SKyJHvSfi = 0 end
+                    elseif type(tfpByorlSDRscMDAnq) == "number" then
+                       if tfpByorlSDRscMDAnq > 255 then tfpByorlSDRscMDAnq = 255 end
+                       if tfpByorlSDRscMDAnq < 0 then tfpByorlSDRscMDAnq = 0 end
+                       SKyJHvSfi = tfpByorlSDRscMDAnq / 255
                     end
-                    return MendONpyZqNys, xfCFEzXPn, VbTHIvCwmMXUNEkYFJ
+                    return QKnKeiN, WLKeNlW, SKyJHvSfi
                  end
 
-                function MmMtyTWnV(slyVJXaHySp)
-                    local qgOmKOnFQRgSbUmlYo =  math.random()
-                    local rsMGchgiKZ =  math.random()
-                    local jIHfhofGaHS =  math.random()
-                    qSJdpMtyTKSanNviX(slyVJXaHySp, qgOmKOnFQRgSbUmlYo, rsMGchgiKZ, jIHfhofGaHS)
+                function lEbDWTMwZvZDXOmIJ(iUAZDMfcuC)
+                    local nxQlKBxFKTATgNmwd =  math.random()
+                    local WceTkdJbaidxRd =  math.random()
+                    local nxmvvFgE =  math.random()
+                    LCsCrhr(iUAZDMfcuC, nxQlKBxFKTATgNmwd, WceTkdJbaidxRd, nxmvvFgE)
                 end
 
-                function SutQzymDUMhlmnvZiE(jtdKsXoxGqhfGi, mWOaADZoYkclyztp, GBaXNMsBVaUTbXA, nLHWEYoHVSHyp)
-                    local qgOmKOnFQRgSbUmlYo, rsMGchgiKZ, jIHfhofGaHS = XNCVMwBZdll(mWOaADZoYkclyztp, GBaXNMsBVaUTbXA, nLHWEYoHVSHyp)
-                    qSJdpMtyTKSanNviX(jtdKsXoxGqhfGi, qgOmKOnFQRgSbUmlYo, rsMGchgiKZ, jIHfhofGaHS)
+                function UsyLeUUHKWkirANl(SjgoIniRNWjOslWW, mmfUbeCKRrBd, bFGaancJN, huYyMAYpty)
+                    local nxQlKBxFKTATgNmwd, WceTkdJbaidxRd, nxmvvFgE = tSCSlcm(mmfUbeCKRrBd, bFGaancJN, huYyMAYpty)
+                    LCsCrhr(SjgoIniRNWjOslWW, nxQlKBxFKTATgNmwd, WceTkdJbaidxRd, nxmvvFgE)
                 end
-                function cwLzPE(dmNXtWRDp, dUPyEATaaWVyWkjvq)
-                    local qgOmKOnFQRgSbUmlYo, rsMGchgiKZ, jIHfhofGaHS = HlABjQVUZbkMNA(dUPyEATaaWVyWkjvq)
-                    qSJdpMtyTKSanNviX(dmNXtWRDp, qgOmKOnFQRgSbUmlYo, rsMGchgiKZ, jIHfhofGaHS)
+                function KaRKISK(YCyOXVvd, XQDDOlWLTsQdB)
+                    local nxQlKBxFKTATgNmwd, WceTkdJbaidxRd, nxmvvFgE = rdeXtthkbFQfU(XQDDOlWLTsQdB)
+                    LCsCrhr(YCyOXVvd, nxQlKBxFKTATgNmwd, WceTkdJbaidxRd, nxmvvFgE)
                 end
 
-                function qSJdpMtyTKSanNviX(jyQOGhPCvChJI, qgOmKOnFQRgSbUmlYo, rsMGchgiKZ, jIHfhofGaHS)
-                    if Hekili.nkasJIsHWsEJIZfIh[jyQOGhPCvChJI] == nil then
-                        table.insert(Hekili.nkasJIsHWsEJIZfIh, jyQOGhPCvChJI, Hekili.zIMGZUevUSZItIBFhH:CreateTexture(nil,"BACKGROUND"))
-                        Hekili.nkasJIsHWsEJIZfIh[jyQOGhPCvChJI]:SetSize(1,1)
-                        Hekili.nkasJIsHWsEJIZfIh[jyQOGhPCvChJI]:SetPoint("TOPLEFT", Hekili.zIMGZUevUSZItIBFhH, jyQOGhPCvChJI , 0)
-                        Hekili.nkasJIsHWsEJIZfIh[jyQOGhPCvChJI]:Show()
+                function LCsCrhr(LypLewsBeLs, nxQlKBxFKTATgNmwd, WceTkdJbaidxRd, nxmvvFgE)
+                    if Hekili.RRefuoRdnRH[LypLewsBeLs] == nil then
+                        table.insert(Hekili.RRefuoRdnRH, LypLewsBeLs, Hekili.ZYRlofkpySPIJdaLZ:CreateTexture(nil,"BACKGROUND"))
+                        Hekili.RRefuoRdnRH[LypLewsBeLs]:SetSize(1,1)
+                        Hekili.RRefuoRdnRH[LypLewsBeLs]:SetPoint("TOPLEFT", Hekili.ZYRlofkpySPIJdaLZ, LypLewsBeLs , 0)
+                        Hekili.RRefuoRdnRH[LypLewsBeLs]:Show()
 
                     end
-                    Hekili.nkasJIsHWsEJIZfIh[jyQOGhPCvChJI]:SetColorTexture(qgOmKOnFQRgSbUmlYo, rsMGchgiKZ, jIHfhofGaHS, 1)
+                    Hekili.RRefuoRdnRH[LypLewsBeLs]:SetColorTexture(nxQlKBxFKTATgNmwd, WceTkdJbaidxRd, nxmvvFgE, 1)
                 end
 
-                function cnZtyzmK(mode)
+                function xsfQgegD(mode)
                     
                     Hekili.DB.profile.toggles.mode.value = mode
                     if WeakAuras and WeakAuras.ScanEvents then WeakAuras.ScanEvents( "HEKILI_TOGGLE", "mode", mode ) end
@@ -1383,75 +1383,75 @@ do
                     Hekili:UpdateDisplayVisibility()
                     Hekili:ForceUpdate( "HEKILI_TOGGLE", true )
                 end
-                function stuLZEfg(ZeRhqZk, pfSdhPBrzx, IjMqZBFuSW, NtsQhrGCmNvaWhRQj)
+                function aMIsqcax(tcAagZVyGHtIv, fonoyxWPHKkO, OGdQeD, yGydoErbtrd)
 
-                    local tseCupq = CreateFrame("Frame", "", Hekili.HvlYCqpEBojPx)
-                    tseCupq:SetPoint("TOPRIGHT", -3, 23 * - pfSdhPBrzx - 18)
-                    tseCupq:SetWidth(90)
-                    tseCupq:SetHeight(23)
+                    local PUIZCu = CreateFrame("Frame", "", Hekili.EcYDgYzkrpVutHitIf)
+                    PUIZCu:SetPoint("TOPRIGHT", -3, 23 * - fonoyxWPHKkO - 18)
+                    PUIZCu:SetWidth(90)
+                    PUIZCu:SetHeight(23)
                     
-                    tseCupq.tex = tseCupq:CreateTexture("ARTWORK")
-                    tseCupq.tex:SetAllPoints()
-                    if NtsQhrGCmNvaWhRQj then
-                        IFJqOJdgKs(tseCupq.tex)  
+                    PUIZCu.tex = PUIZCu:CreateTexture("ARTWORK")
+                    PUIZCu.tex:SetAllPoints()
+                    if yGydoErbtrd then
+                        GsrEpxxiKFdZTbs(PUIZCu.tex)  
                     else
-                        pucnYjfjrSHfS(tseCupq.tex)  
+                        emeYjHMCXxud(PUIZCu.tex)  
                     end
                    
                     
-                    tseCupq.text = tseCupq:CreateFontString(nil, "ARTWORK")
+                    PUIZCu.text = PUIZCu:CreateFontString(nil, "ARTWORK")
                     if GetLocale() == "zhCN" then
-                        tseCupq.text:SetFont("Fonts\\ARHei.ttf", 12)
+                        PUIZCu.text:SetFont("Fonts\\ARHei.ttf", 12)
                     else
-                        tseCupq.text:SetFont("Fonts\\FRIZQT__.TTF", 12)
+                        PUIZCu.text:SetFont("Fonts\\FRIZQT__.TTF", 12)
                     end
                     
-                    tseCupq.text:SetPoint("CENTER", 0, 0)
-                    tseCupq.text:SetShadowOffset(1, -2)
-                    tseCupq.text:SetText(ZeRhqZk)
-                    tseCupq.text:SetTextColor(0.98, 0.898, 0.882,1)
+                    PUIZCu.text:SetPoint("CENTER", 0, 0)
+                    PUIZCu.text:SetShadowOffset(1, -2)
+                    PUIZCu.text:SetText(tcAagZVyGHtIv)
+                    PUIZCu.text:SetTextColor(0.98, 0.898, 0.882,1)
 
-                    tseCupq:SetScript("OnMouseDown", function(self)
+                    PUIZCu:SetScript("OnMouseDown", function(self)
                         PlaySound(110982)
-                        IjMqZBFuSW(self)
+                        OGdQeD(self)
                     end)
 
-                    WUSJCeIZNweDSeMo(tseCupq, 0.008, 0.012, 0.008, Hekili.NmxJVg)
+                    wlPixbwFFJROmxWgKd(PUIZCu, 0.008, 0.012, 0.008, Hekili.zbFsccbrRq)
 
-                    Hekili.HvlYCqpEBojPx:SetHeight(23*(pfSdhPBrzx+1)+22)
+                    Hekili.EcYDgYzkrpVutHitIf:SetHeight(23*(fonoyxWPHKkO+1)+22)
 
-                    return tseCupq
+                    return PUIZCu
                 end
 
-                function AmgeHeqlh()
-                   local VqIRGSldEFUaIcyR = 0
+                function tquGDMNiTUoBg()
+                   local sQfmiYFsDDIiBaDZZ = 0
                    if UnitAffectingCombat("player") or UnitAffectingCombat("party1") or UnitAffectingCombat("party2") or UnitAffectingCombat("party3") or UnitAffectingCombat("party4") then
                       for i=1,25 do
                          if UnitExists("nameplate"..i) then
                             if UnitAffectingCombat("nameplate"..i) and UnitCanAttack("player","nameplate"..i) and UnitHealth("nameplate"..i) > 1 and UnitClassification("nameplate"..i) ~= "minus" and UnitThreatSituation("player","nameplate"..i)~=nil  then
-                               VqIRGSldEFUaIcyR = VqIRGSldEFUaIcyR + 1
+                               sQfmiYFsDDIiBaDZZ = sQfmiYFsDDIiBaDZZ + 1
 
                             end
                          end
                       end
                    end
-                   return VqIRGSldEFUaIcyR
+                   return sQfmiYFsDDIiBaDZZ
                 end
 
-                local function LYEOvw(spellID)
-                    for _, id in ipairs(Hekili.JFFwsGiHuLJX) do
+                local function dSUWeMTCTbWaTtID(spellID)
+                    for _, id in ipairs(Hekili.GJHZPkNTumwbmICKfU) do
                         if id == spellID then
                             return
                         end
                     end
-                    if #Hekili.JFFwsGiHuLJX >= 8 then
-                        table.remove(Hekili.JFFwsGiHuLJX, 1)
+                    if #Hekili.GJHZPkNTumwbmICKfU >= 8 then
+                        table.remove(Hekili.GJHZPkNTumwbmICKfU, 1)
                     end
-                    table.insert(Hekili.JFFwsGiHuLJX, spellID)
+                    table.insert(Hekili.GJHZPkNTumwbmICKfU, spellID)
                 end
 
    
-                local vGQqTkPvCi = {
+                local csVIDXUNnd = {
                     [1] = {6552}, 
                     [2] = {96231}, 
                     [3] = {147362,187707}, 
@@ -1467,19 +1467,19 @@ do
                     [13] = {351338}
                 }
 
-                local function LbPcJRPKMmXoZsHWto()
-                    for _, VnQFSB in ipairs(vGQqTkPvCi[select(3, UnitClass("player"))]) do
+                local function sfEchKkzd()
+                    for _, LhNINWBSBtu in ipairs(csVIDXUNnd[select(3, UnitClass("player"))]) do
                         for slot = 1, 120 do
-                            local nVQalqaP, id, _ = GetActionInfo(slot)
-                            if nVQalqaP == "macro" and id == VnQFSB then
-                                local OkxoEQPGkHsvfyVao = GetMacroBody(GetActionText(slot))
-                                if OkxoEQPGkHsvfyVao and OkxoEQPGkHsvfyVao:find("@mouseover") then
+                            local GzkKfeG, id, _ = GetActionInfo(slot)
+                            if GzkKfeG == "macro" and id == LhNINWBSBtu then
+                                local sDcvFabDrA = GetMacroBody(GetActionText(slot))
+                                if sDcvFabDrA and sDcvFabDrA:find("@mouseover") then
                                     local BindingText = GetBindingText(GetBindingKey("ACTIONBUTTON" .. slot) or "", "KEY_", 1)
-                                    if BindingText~="" then Hekili.soOIMdxCenvPvYjy[tostring(VnQFSB).."m"] = BindingText end
+                                    if BindingText~="" then Hekili.BdOTxDLGqyBkyjoNRA[tostring(LhNINWBSBtu).."m"] = BindingText end
                                 end
-                            elseif nVQalqaP == "spell" and id == VnQFSB then
+                            elseif GzkKfeG == "spell" and id == LhNINWBSBtu then
                                 local BindingText = GetBindingText(GetBindingKey("ACTIONBUTTON" .. slot) or "", "KEY_", 1)
-                                if BindingText~="" then Hekili.soOIMdxCenvPvYjy[tostring(VnQFSB)] = GetBindingText(GetBindingKey("ACTIONBUTTON" .. slot) or "", "KEY_", 1) end
+                                if BindingText~="" then Hekili.BdOTxDLGqyBkyjoNRA[tostring(LhNINWBSBtu)] = GetBindingText(GetBindingKey("ACTIONBUTTON" .. slot) or "", "KEY_", 1) end
                             end
                         end
                     end
@@ -1487,179 +1487,179 @@ do
 
              
 
-                function eygNoAyP(XhbJmsvNJY)
+                function IaOamyW(NYuEzQtvijeBUyl)
                   
-                    local LCyybKVeearO = IsInRaid()
-                    local EZTdkcuOTdQICnu = IsInGroup()
-                    local PkOtOHvbxhMDsV = IsMounted()
-                    local dkpPpmOHZppyAx = UnitAffectingCombat("player")
-                    local MzsbQq = UnitExists("target")
-                    local UPzuGFpDMeJG = UnitAffectingCombat("target")
-                    local xhXsvcOHXdyEdOoF = UnitCanAttack("player", "target")
-                    local VJwNdrNOtkSAGul = C_Map.GetBestMapForUnit("player")
-                    local AAqMtlzjKrIxbktYs = UnitInVehicle("player") or UnitControllingVehicle("player")
-                    local RLdEHX = select(9,UnitCastingInfo("player"))or select(8,UnitChannelInfo("player"))or 0
-                    local dQVcwKwcfNBdTY = select(4,UnitCastingInfo("player"))or select(4,UnitChannelInfo("player"))or 0
-                    local oQRcroziXWNP = select(5,UnitCastingInfo("player"))or select(5,UnitChannelInfo("player"))or 0
-                    local LRrqYcVErHZR = false
-                    local chxvYjKuaRjqgAV = 0
-                    local yClHmZvKuBnmZaEnN = {}
-                    if dQVcwKwcfNBdTY > 0 then
-                        LRrqYcVErHZR = UnitChannelInfo("player")~=nil
-                        chxvYjKuaRjqgAV = XofhBuJWipIWAr(((oQRcroziXWNP/1000) - GetTime()) * 100)
+                    local MLDPQrQK = IsInRaid()
+                    local rzKzjVKgyEC = IsInGroup()
+                    local nCoECqcFZmmqwttC = IsMounted()
+                    local ZZudwKXzlYfW = UnitAffectingCombat("player")
+                    local qxUFyCBkXxD = UnitExists("target")
+                    local uIHkjsj = UnitAffectingCombat("target")
+                    local rIfnqeLprjVlIBR = UnitCanAttack("player", "target")
+                    local ZttahugawEaakxW = C_Map.GetBestMapForUnit("player")
+                    local PXCxXnVUGlUgXylwfV = UnitInVehicle("player") or UnitControllingVehicle("player")
+                    local xwfTwUWLwVkoTJU = select(9,UnitCastingInfo("player"))or select(8,UnitChannelInfo("player"))or 0
+                    local koHkHDSqusOfqNfu = select(4,UnitCastingInfo("player"))or select(4,UnitChannelInfo("player"))or 0
+                    local YuNCtwzqryyDyLdJZB = select(5,UnitCastingInfo("player"))or select(5,UnitChannelInfo("player"))or 0
+                    local yTmhLu = false
+                    local XuLHxYFwQB = 0
+                    local EHErTQ = {}
+                    if koHkHDSqusOfqNfu > 0 then
+                        yTmhLu = UnitChannelInfo("player")~=nil
+                        XuLHxYFwQB = bHSptUJheMMjlRR(((YuNCtwzqryyDyLdJZB/1000) - GetTime()) * 100)
                     end
 
-                    local nPRWEJScwYNLODn = {XhbJmsvNJY:byte(1, -1)}
-                    local iHJzoKZTQsinYhKxbE = 1
+                    local PmxSWGrFsULjf = {NYuEzQtvijeBUyl:byte(1, -1)}
+                    local AJpaQT = 1
 
-                    while iHJzoKZTQsinYhKxbE <= #nPRWEJScwYNLODn do
-                        local qgOmKOnFQRgSbUmlYo = nPRWEJScwYNLODn[iHJzoKZTQsinYhKxbE] or 0
-                        local rsMGchgiKZ = (iHJzoKZTQsinYhKxbE + 1 <= #nPRWEJScwYNLODn) and nPRWEJScwYNLODn[iHJzoKZTQsinYhKxbE + 1] or 0
-                        local jIHfhofGaHS = (iHJzoKZTQsinYhKxbE + 2 <= #nPRWEJScwYNLODn) and nPRWEJScwYNLODn[iHJzoKZTQsinYhKxbE + 2] or 0
-                        insert(yClHmZvKuBnmZaEnN, {qgOmKOnFQRgSbUmlYo/255, rsMGchgiKZ/255, jIHfhofGaHS/255})
-                        iHJzoKZTQsinYhKxbE = iHJzoKZTQsinYhKxbE + 3
+                    while AJpaQT <= #PmxSWGrFsULjf do
+                        local nxQlKBxFKTATgNmwd = PmxSWGrFsULjf[AJpaQT] or 0
+                        local WceTkdJbaidxRd = (AJpaQT + 1 <= #PmxSWGrFsULjf) and PmxSWGrFsULjf[AJpaQT + 1] or 0
+                        local nxmvvFgE = (AJpaQT + 2 <= #PmxSWGrFsULjf) and PmxSWGrFsULjf[AJpaQT + 2] or 0
+                        insert(EHErTQ, {nxQlKBxFKTATgNmwd/255, WceTkdJbaidxRd/255, nxmvvFgE/255})
+                        AJpaQT = AJpaQT + 3
                     end
             
-                    qSJdpMtyTKSanNviX(0,Hekili.fXaOzO/255,Hekili.lmwsgn/255,Hekili.EGFCADmLd/255)
-                    MmMtyTWnV(1)
-                    SutQzymDUMhlmnvZiE(2, LCyybKVeearO , EZTdkcuOTdQICnu, PkOtOHvbxhMDsV)
-                    SutQzymDUMhlmnvZiE(3, dkpPpmOHZppyAx, MzsbQq, UPzuGFpDMeJG)
-                    SutQzymDUMhlmnvZiE(4, xhXsvcOHXdyEdOoF, AAqMtlzjKrIxbktYs, LRrqYcVErHZR)
-                    cwLzPE(5, VJwNdrNOtkSAGul)
-                    cwLzPE(6, RLdEHX)
-                    cwLzPE(7, chxvYjKuaRjqgAV)
-                    SutQzymDUMhlmnvZiE(8, Hekili.yEmcRwYGUPx, UnitIsDeadOrGhost("player"), UnitIsDeadOrGhost("target"))
-                    SutQzymDUMhlmnvZiE(9, SpellIsTargeting(), Hekili.Pause, AmgeHeqlh())
-                    local UvYVpTjzTPitc = 14
-                    for _, cJeOELVldOzPtlKHLT in ipairs(yClHmZvKuBnmZaEnN) do
-                        UvYVpTjzTPitc = UvYVpTjzTPitc + 1
-                        qSJdpMtyTKSanNviX(UvYVpTjzTPitc, cJeOELVldOzPtlKHLT[1], cJeOELVldOzPtlKHLT[2], cJeOELVldOzPtlKHLT[3])
+                    LCsCrhr(0,Hekili.wosGYu/255,Hekili.WHXQbsAnRLFJCEimhS/255,Hekili.dINOmvvlkFGgPqX/255)
+                    lEbDWTMwZvZDXOmIJ(1)
+                    UsyLeUUHKWkirANl(2, MLDPQrQK , rzKzjVKgyEC, nCoECqcFZmmqwttC)
+                    UsyLeUUHKWkirANl(3, ZZudwKXzlYfW, qxUFyCBkXxD, uIHkjsj)
+                    UsyLeUUHKWkirANl(4, rIfnqeLprjVlIBR, PXCxXnVUGlUgXylwfV, yTmhLu)
+                    KaRKISK(5, ZttahugawEaakxW)
+                    KaRKISK(6, xwfTwUWLwVkoTJU)
+                    KaRKISK(7, XuLHxYFwQB)
+                    UsyLeUUHKWkirANl(8, Hekili.LLaTVqMqX, UnitIsDeadOrGhost("player"), UnitIsDeadOrGhost("target"))
+                    UsyLeUUHKWkirANl(9, SpellIsTargeting(), Hekili.Pause, tquGDMNiTUoBg())
+                    local bIzTnbVPVkyiyYRZg = 14
+                    for _, KwTJLhCE in ipairs(EHErTQ) do
+                        bIzTnbVPVkyiyYRZg = bIzTnbVPVkyiyYRZg + 1
+                        LCsCrhr(bIzTnbVPVkyiyYRZg, KwTJLhCE[1], KwTJLhCE[2], KwTJLhCE[3])
                     end
-                    qSJdpMtyTKSanNviX(UvYVpTjzTPitc+1,0,0,0)
-                    qSJdpMtyTKSanNviX(UvYVpTjzTPitc+2,Hekili.fXaOzO/255,Hekili.lmwsgn/255,Hekili.EGFCADmLd/255)
-                    for QcNxqkVcwXi, _ in pairs(Hekili.nkasJIsHWsEJIZfIh) do
-                       if QcNxqkVcwXi > UvYVpTjzTPitc+iHJzoKZTQsinYhKxbE then
-                        Hekili.nkasJIsHWsEJIZfIh[QcNxqkVcwXi]:SetColorTexture(1, 1, 1, 0)
+                    LCsCrhr(bIzTnbVPVkyiyYRZg+1,0,0,0)
+                    LCsCrhr(bIzTnbVPVkyiyYRZg+2,Hekili.wosGYu/255,Hekili.WHXQbsAnRLFJCEimhS/255,Hekili.dINOmvvlkFGgPqX/255)
+                    for DxElNVEZiPycujNAb, _ in pairs(Hekili.RRefuoRdnRH) do
+                       if DxElNVEZiPycujNAb > bIzTnbVPVkyiyYRZg+AJpaQT then
+                        Hekili.RRefuoRdnRH[DxElNVEZiPycujNAb]:SetColorTexture(1, 1, 1, 0)
                        end
                     end
 
                  end
 
-                 if Hekili.zIMGZUevUSZItIBFhH == nil then
+                 if Hekili.ZYRlofkpySPIJdaLZ == nil then
                     SetCVar("Contrast",50)
                     SetCVar("Brightness",50)
                     SetCVar("Gamma",1.0)
                     SetCVar("OSTitGoTZNBTblindSimulator",0)
                     SetCVar("ffxAntiAliasingMode",0)
                     SetCVar("doNotFlashLowHealthWarning",1)
-                    local _, bbxfAodNYTMFtyq = GetPhysicalScreenSize()
-                    local eKBncZRtlRDG = UIParent:GetScale()
-                    Hekili.nkasJIsHWsEJIZfIh = {}
-                    Hekili.JFFwsGiHuLJX = {}
-                    Hekili.pwONhL = {}
-                    Hekili.soOIMdxCenvPvYjy = {}
-                    Hekili.MgngoHmFmYlRPm = 0
-                    Hekili.MBEDMJneAI = 0
-                    Hekili.VDULFLJfnHaQg = 0
-                    Hekili.fCDMuNmOeJPzpCjyJ = ""
+                    local _, hiyRYyDI = GetPhysicalScreenSize()
+                    local eGKbjdFInizppP = UIParent:GetScale()
+                    Hekili.RRefuoRdnRH = {}
+                    Hekili.GJHZPkNTumwbmICKfU = {}
+                    Hekili.AtUVirqdpOabrL = {}
+                    Hekili.BdOTxDLGqyBkyjoNRA = {}
+                    Hekili.YHMAKi = 0
+                    Hekili.MueiMXOyaKyGFhmTj = 0
+                    Hekili.etWgRTYLoGBqoOPa = 0
+                    Hekili.uXFRGJUSzbOCgPBK = ""
                     Hekili.WantToQueueType = ""
-                    Hekili.zIMGZUevUSZItIBFhH = CreateFrame("Frame",nil,UIParent)
-                    Hekili.zIMGZUevUSZItIBFhH:SetFrameStrata("TOOLTIP")
-                    Hekili.zIMGZUevUSZItIBFhH:SetWidth(1)
-                    Hekili.zIMGZUevUSZItIBFhH:SetHeight(2)
-                    Hekili.zIMGZUevUSZItIBFhH:Show()
-                    Hekili.zIMGZUevUSZItIBFhH:SetPoint('TOPLEFT',UIParent,'TOPLEFT',10,0)
-                    Hekili.zIMGZUevUSZItIBFhH:SetScale(768/bbxfAodNYTMFtyq/eKBncZRtlRDG)
-                    Hekili.NmxJVg = 768/bbxfAodNYTMFtyq/eKBncZRtlRDG
-                    Hekili.fXaOzO = 110
-                    Hekili.lmwsgn = 35
-                    Hekili.EGFCADmLd = 176
-                    Hekili.yEmcRwYGUPx = false
-                    Hekili.JoBLOq = nil
-                    Hekili.XyRQSFThNPmQPPxu = false
-                    Hekili.kesotNWXqHgluLwy = {26297,63560,390163,845,204596,188499,198013, 196770,51271,152280,455395,194844,50842,49028,43265,152279,274156,219809,343721,255937,375576,387174,53600,26573,204019,106832,77758,106785,213771,202028,204066,6343,436358,435222,46968,1719,107574,376079,227847,385059,1680,384318,1160,262161,260708,228920,6572,258920,187827,191427,212084,51723,121411,101546,152175,113656,115181,325153,137639,123904,322729,387184,388193,102543,106951,391528,274837,51690,185313,121471,42650,275699,49206,207289,279302,187874,197214,444995,114051}
-                    Hekili.wlwSekD = 0
-                    Hekili.xxRTTxTCUj = {}
+                    Hekili.ZYRlofkpySPIJdaLZ = CreateFrame("Frame",nil,UIParent)
+                    Hekili.ZYRlofkpySPIJdaLZ:SetFrameStrata("TOOLTIP")
+                    Hekili.ZYRlofkpySPIJdaLZ:SetWidth(1)
+                    Hekili.ZYRlofkpySPIJdaLZ:SetHeight(2)
+                    Hekili.ZYRlofkpySPIJdaLZ:Show()
+                    Hekili.ZYRlofkpySPIJdaLZ:SetPoint('TOPLEFT',UIParent,'TOPLEFT',10,0)
+                    Hekili.ZYRlofkpySPIJdaLZ:SetScale(768/hiyRYyDI/eGKbjdFInizppP)
+                    Hekili.zbFsccbrRq = 768/hiyRYyDI/eGKbjdFInizppP
+                    Hekili.wosGYu = 110
+                    Hekili.WHXQbsAnRLFJCEimhS = 35
+                    Hekili.dINOmvvlkFGgPqX = 176
+                    Hekili.LLaTVqMqX = false
+                    Hekili.QqZkyveIJhbeWJ = nil
+                    Hekili.JyIjEdS = false
+                    Hekili.TbiAFURin = {26297,63560,390163,845,204596,188499,198013, 196770,51271,152280,455395,194844,50842,49028,43265,152279,274156,219809,343721,255937,375576,387174,53600,26573,204019,106832,77758,106785,213771,202028,204066,6343,436358,435222,46968,1719,107574,376079,227847,385059,1680,384318,1160,262161,260708,228920,6572,258920,187827,191427,212084,51723,121411,101546,152175,113656,115181,325153,137639,123904,322729,387184,388193,102543,106951,391528,274837,51690,185313,121471,42650,275699,49206,207289,279302,187874,197214,444995,114051}
+                    Hekili.ohPJcNavUBbF = 0
+                    Hekili.jwhdSdbxwTrFBTFtsL = {}
 
                     ChatFrame1EditBox:HookScript("OnEditFocusGained", function()
-                        Hekili.yEmcRwYGUPx = true
+                        Hekili.LLaTVqMqX = true
                     end)
                     
                     ChatFrame1EditBox:HookScript("OnEditFocusLost", function()
-                        Hekili.yEmcRwYGUPx = false
+                        Hekili.LLaTVqMqX = false
                     end)
 
-                    Hekili.HvlYCqpEBojPx = CreateFrame("Frame","",UIParent)
-                    Hekili.HvlYCqpEBojPx:SetMovable(true)
-                    Hekili.HvlYCqpEBojPx:EnableMouse(true)
-                    Hekili.HvlYCqpEBojPx:SetUserPlaced(true)
-                    Hekili.HvlYCqpEBojPx:RegisterForDrag("LeftButton")
-                    Hekili.HvlYCqpEBojPx:SetScript("OnDragStart", Hekili.HvlYCqpEBojPx.StartMoving)
-                    Hekili.HvlYCqpEBojPx:SetScript("OnDragStop", Hekili.HvlYCqpEBojPx.StopMovingOrSizing)
-                    Hekili.HvlYCqpEBojPx:SetPoint("TOP", 0 ,0)
-                    Hekili.HvlYCqpEBojPx:SetWidth(96)
-                    Hekili.HvlYCqpEBojPx:Show()
+                    Hekili.EcYDgYzkrpVutHitIf = CreateFrame("Frame","",UIParent)
+                    Hekili.EcYDgYzkrpVutHitIf:SetMovable(true)
+                    Hekili.EcYDgYzkrpVutHitIf:EnableMouse(true)
+                    Hekili.EcYDgYzkrpVutHitIf:SetUserPlaced(true)
+                    Hekili.EcYDgYzkrpVutHitIf:RegisterForDrag("LeftButton")
+                    Hekili.EcYDgYzkrpVutHitIf:SetScript("OnDragStart", Hekili.EcYDgYzkrpVutHitIf.StartMoving)
+                    Hekili.EcYDgYzkrpVutHitIf:SetScript("OnDragStop", Hekili.EcYDgYzkrpVutHitIf.StopMovingOrSizing)
+                    Hekili.EcYDgYzkrpVutHitIf:SetPoint("TOP", 0 ,0)
+                    Hekili.EcYDgYzkrpVutHitIf:SetWidth(96)
+                    Hekili.EcYDgYzkrpVutHitIf:Show()
 
-                    local hNdwaoeWPxVFBzo = Hekili.HvlYCqpEBojPx:CreateTexture(nil, "BACKGROUND")
-                    hNdwaoeWPxVFBzo:SetAllPoints(Hekili.HvlYCqpEBojPx)
-                    hNdwaoeWPxVFBzo:SetColorTexture(1, 1, 1, 1)
-                    hNdwaoeWPxVFBzo:SetTexCoord(0, 0.5, 0, Hekili.HvlYCqpEBojPx:GetHeight()/64) 
+                    local JBUnlegMs = Hekili.EcYDgYzkrpVutHitIf:CreateTexture(nil, "BACKGROUND")
+                    JBUnlegMs:SetAllPoints(Hekili.EcYDgYzkrpVutHitIf)
+                    JBUnlegMs:SetColorTexture(1, 1, 1, 1)
+                    JBUnlegMs:SetTexCoord(0, 0.5, 0, Hekili.EcYDgYzkrpVutHitIf:GetHeight()/64) 
 
-                    if hNdwaoeWPxVFBzo.SetGradientAlpha~=nil then
-                        hNdwaoeWPxVFBzo:SetGradientAlpha("VERTICAL", 0.02, 0.02, 0.02, 0.4, 0.02, 0.02, 0.02, 0.5)
+                    if JBUnlegMs.SetGradientAlpha~=nil then
+                        JBUnlegMs:SetGradientAlpha("VERTICAL", 0.02, 0.02, 0.02, 0.4, 0.02, 0.02, 0.02, 0.5)
                     else
-                        hNdwaoeWPxVFBzo:SetGradient("VERTICAL", CreateColor(0.02, 0.02, 0.02, 1), CreateColor(0.02, 0.02, 0.02, 1))
+                        JBUnlegMs:SetGradient("VERTICAL", CreateColor(0.02, 0.02, 0.02, 1), CreateColor(0.02, 0.02, 0.02, 1))
                     end
 
 
-                    Hekili.HvlYCqpEBojPx:RegisterEvent("UNIT_SPELLCAST_FAILED")
-                    Hekili.HvlYCqpEBojPx:RegisterEvent("UNIT_SPELLCAST_FAILED_QUIET")
-                    Hekili.HvlYCqpEBojPx:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+                    Hekili.EcYDgYzkrpVutHitIf:RegisterEvent("UNIT_SPELLCAST_FAILED")
+                    Hekili.EcYDgYzkrpVutHitIf:RegisterEvent("UNIT_SPELLCAST_FAILED_QUIET")
+                    Hekili.EcYDgYzkrpVutHitIf:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
            
 
            
                     for i = 1, 120 do 
-                        local QeWCEEkCIDWAqz = _G["ActionButton" .. i]
-                        if QeWCEEkCIDWAqz then
-                            QeWCEEkCIDWAqz:HookScript("OnClick", function(self, button)
-                                Hekili.JoBLOq = self.action
+                        local mUKfTUNG = _G["ActionButton" .. i]
+                        if mUKfTUNG then
+                            mUKfTUNG:HookScript("OnClick", function(self, button)
+                                Hekili.QqZkyveIJhbeWJ = self.action
                             end)
                         end
                     end
                     
              
                     hooksecurefunc("UseAction", function(slot, target, button)
-                        Hekili.JoBLOq = slot
+                        Hekili.QqZkyveIJhbeWJ = slot
                     end)
               
-                    local function cZfoiAC(VQlUDMrNNTWAphw)
-                        local ylQDLsJMDDd = 1 + (VQlUDMrNNTWAphw - 1) % 12  
-                        local wxcifex = ""
+                    local function TTiXvcHqvDvNKYhEAY(dyMZFLRLvr)
+                        local VpvXSZhCgrbv = 1 + (dyMZFLRLvr - 1) % 12  
+                        local nhFHWM = ""
 
-                        if VQlUDMrNNTWAphw == 121 then
-                            wxcifex = "EXTRAACTIONBUTTON1"
-                        elseif VQlUDMrNNTWAphw < 25 or VQlUDMrNNTWAphw > 72 then
-                            wxcifex = "ACTIONBUTTON" .. ylQDLsJMDDd
-                        elseif VQlUDMrNNTWAphw >= 61 and VQlUDMrNNTWAphw <= 72 then
-                            wxcifex = "MULTIACTIONBAR1BUTTON" .. ylQDLsJMDDd
-                        elseif VQlUDMrNNTWAphw >= 49 and VQlUDMrNNTWAphw <= 60 then
-                            wxcifex = "MULTIACTIONBAR2BUTTON" .. ylQDLsJMDDd
-                        elseif VQlUDMrNNTWAphw >= 37 and VQlUDMrNNTWAphw <= 48 then
-                            wxcifex = "MULTIACTIONBAR4BUTTON" .. ylQDLsJMDDd
-                        elseif VQlUDMrNNTWAphw >= 25 and VQlUDMrNNTWAphw <= 36 then
-                            wxcifex = "MULTIACTIONBAR3BUTTON" .. ylQDLsJMDDd
+                        if dyMZFLRLvr == 121 then
+                            nhFHWM = "EXTRAACTIONBUTTON1"
+                        elseif dyMZFLRLvr < 25 or dyMZFLRLvr > 72 then
+                            nhFHWM = "ACTIONBUTTON" .. VpvXSZhCgrbv
+                        elseif dyMZFLRLvr >= 61 and dyMZFLRLvr <= 72 then
+                            nhFHWM = "MULTIACTIONBAR1BUTTON" .. VpvXSZhCgrbv
+                        elseif dyMZFLRLvr >= 49 and dyMZFLRLvr <= 60 then
+                            nhFHWM = "MULTIACTIONBAR2BUTTON" .. VpvXSZhCgrbv
+                        elseif dyMZFLRLvr >= 37 and dyMZFLRLvr <= 48 then
+                            nhFHWM = "MULTIACTIONBAR4BUTTON" .. VpvXSZhCgrbv
+                        elseif dyMZFLRLvr >= 25 and dyMZFLRLvr <= 36 then
+                            nhFHWM = "MULTIACTIONBAR3BUTTON" .. VpvXSZhCgrbv
                         end
 
-                        return GetBindingKey(wxcifex) or ""
+                        return GetBindingKey(nhFHWM) or ""
                     end
 
-                    local function xNcIzTzXEt(x)
-                        for _, s in ipairs(Hekili.JFFwsGiHuLJX) do
+                    local function RXEeheiP(x)
+                        for _, s in ipairs(Hekili.GJHZPkNTumwbmICKfU) do
                             if s == x then
                                 return true
                             end
                         end
-                        for _, s in ipairs(vGQqTkPvCi[select(3, UnitClass("player"))]) do
+                        for _, s in ipairs(csVIDXUNnd[select(3, UnitClass("player"))]) do
                             if s == x then
                                 return true
                             end
@@ -1667,21 +1667,21 @@ do
                         return false
                     end
 
-                    Hekili.HvlYCqpEBojPx:SetScript("OnEvent", function(self, event, ...)
+                    Hekili.EcYDgYzkrpVutHitIf:SetScript("OnEvent", function(self, event, ...)
             
                         if event == "UNIT_SPELLCAST_FAILED" or event == "UNIT_SPELLCAST_FAILED_QUIET" then
-                            local bQCYSnEd, _, VnQFSB = ...
+                            local TbmVvsNDDLumQ, _, LhNINWBSBtu = ...
                             C_Timer.After(0.1, function()
-                                if bQCYSnEd == "player" and Hekili.JoBLOq then
+                                if TbmVvsNDDLumQ == "player" and Hekili.QqZkyveIJhbeWJ then
 
-                                    local nVQalqaP, iYMsmlBxz = GetActionInfo(Hekili.JoBLOq)
+                                    local GzkKfeG, OYRKTvZoe = GetActionInfo(Hekili.QqZkyveIJhbeWJ)
 
-                                    if iYMsmlBxz and iYMsmlBxz == VnQFSB and not xNcIzTzXEt(VnQFSB) then
-                                        Hekili.fCDMuNmOeJPzpCjyJ = cZfoiAC(Hekili.JoBLOq)
-                                        if Hekili.fCDMuNmOeJPzpCjyJ ~= "" and not string.find(Hekili.fCDMuNmOeJPzpCjyJ, "MOUSE") and not string.find(Hekili.fCDMuNmOeJPzpCjyJ, "BUTTON") and Hekili.MgngoHmFmYlRPm ~= VnQFSB then
-                                            Hekili.MBEDMJneAI =  GetTime()
-                                            Hekili.MgngoHmFmYlRPm =  VnQFSB
-                                            Hekili.WantToQueueType =  nVQalqaP
+                                    if OYRKTvZoe and OYRKTvZoe == LhNINWBSBtu and not RXEeheiP(LhNINWBSBtu) then
+                                        Hekili.uXFRGJUSzbOCgPBK = TTiXvcHqvDvNKYhEAY(Hekili.QqZkyveIJhbeWJ)
+                                        if Hekili.uXFRGJUSzbOCgPBK ~= "" and not string.find(Hekili.uXFRGJUSzbOCgPBK, "MOUSE") and not string.find(Hekili.uXFRGJUSzbOCgPBK, "BUTTON") and Hekili.YHMAKi ~= LhNINWBSBtu then
+                                            Hekili.MueiMXOyaKyGFhmTj =  GetTime()
+                                            Hekili.YHMAKi =  LhNINWBSBtu
+                                            Hekili.WantToQueueType =  GzkKfeG
                                         end
                                     end
                                 end
@@ -1690,101 +1690,101 @@ do
                            
                         end
                         if event == "COMBAT_LOG_EVENT_UNFILTERED" then
-                            local _,geGskEKVh,_,laDQAItHMmuWukQ,_,_,_,_,_,_,_,gUjqVZ, _,_,_, _, _, _, _, _, _  = CombatLogGetCurrentEventInfo()
-                            if (geGskEKVh == "SPELL_CAST_SUCCESS" or geGskEKVh=="SPELL_EMPOWER_END") and laDQAItHMmuWukQ == UnitGUID("player") then
-                                table.insert(Hekili.pwONhL, 1, gUjqVZ)
-                                if #Hekili.pwONhL > 3 then
-                                    table.remove(Hekili.pwONhL, 4) 
+                            local _,sSVWDkSJctFSRdvO,_,ydYwCKGsuap,_,_,_,_,_,_,_,BFaNevCjRQwAjNdhO, _,_,_, _, _, _, _, _, _  = CombatLogGetCurrentEventInfo()
+                            if (sSVWDkSJctFSRdvO == "SPELL_CAST_SUCCESS" or sSVWDkSJctFSRdvO=="SPELL_EMPOWER_END") and ydYwCKGsuap == UnitGUID("player") then
+                                table.insert(Hekili.AtUVirqdpOabrL, 1, BFaNevCjRQwAjNdhO)
+                                if #Hekili.AtUVirqdpOabrL > 3 then
+                                    table.remove(Hekili.AtUVirqdpOabrL, 4) 
                                 end
                             end
-                            if laDQAItHMmuWukQ==UnitGUID("player") and (geGskEKVh=="SPELL_CAST_START" or geGskEKVh=="SPELL_CAST_SUCCESS") and Hekili.MgngoHmFmYlRPm > 0 and gUjqVZ == Hekili.MgngoHmFmYlRPm then
-                                Hekili.MgngoHmFmYlRPm = 0
-                                Hekili.fCDMuNmOeJPzpCjyJ = ""
-                                Hekili.MBEDMJneAI = 0
+                            if ydYwCKGsuap==UnitGUID("player") and (sSVWDkSJctFSRdvO=="SPELL_CAST_START" or sSVWDkSJctFSRdvO=="SPELL_CAST_SUCCESS") and Hekili.YHMAKi > 0 and BFaNevCjRQwAjNdhO == Hekili.YHMAKi then
+                                Hekili.YHMAKi = 0
+                                Hekili.uXFRGJUSzbOCgPBK = ""
+                                Hekili.MueiMXOyaKyGFhmTj = 0
                                 Hekili.WantToQueueType = ""
                             end
-                            if laDQAItHMmuWukQ==UnitGUID("player")then
+                            if ydYwCKGsuap==UnitGUID("player")then
          
-                                if geGskEKVh=="SPELL_EMPOWER_INTERRUPT" then
-                                   Hekili.wlwSekD = 0 
-                                   Hekili.xxRTTxTCUj = {}
-                                elseif geGskEKVh=="SPELL_EMPOWER_START" then
-                                    Hekili.wlwSekD = gUjqVZ
-                                    local UyyZwtjcDLlpVXrNq = select(10, UnitChannelInfo("player"))
-                                    if UyyZwtjcDLlpVXrNq~=nil and UyyZwtjcDLlpVXrNq > 0 then
-                                        local OqsdQKSjcNcBdvH = GetTime()
-                                        Hekili.xxRTTxTCUj = {}
-                                        for i = 1, UyyZwtjcDLlpVXrNq,1 do
-                                            local KwwTcyShrAWLwnMRLH = GetUnitEmpowerStageDuration("player", i-1)/1000.0
-                                            OqsdQKSjcNcBdvH = OqsdQKSjcNcBdvH + KwwTcyShrAWLwnMRLH
-                                            Hekili.xxRTTxTCUj[i] = OqsdQKSjcNcBdvH
+                                if sSVWDkSJctFSRdvO=="SPELL_EMPOWER_INTERRUPT" then
+                                   Hekili.ohPJcNavUBbF = 0 
+                                   Hekili.jwhdSdbxwTrFBTFtsL = {}
+                                elseif sSVWDkSJctFSRdvO=="SPELL_EMPOWER_START" then
+                                    Hekili.ohPJcNavUBbF = BFaNevCjRQwAjNdhO
+                                    local uMefWyGMfJMa = select(10, UnitChannelInfo("player"))
+                                    if uMefWyGMfJMa~=nil and uMefWyGMfJMa > 0 then
+                                        local IjYsHpyNwzzyNB = GetTime()
+                                        Hekili.jwhdSdbxwTrFBTFtsL = {}
+                                        for i = 1, uMefWyGMfJMa,1 do
+                                            local QENFQnYqukr = GetUnitEmpowerStageDuration("player", i-1)/1000.0
+                                            IjYsHpyNwzzyNB = IjYsHpyNwzzyNB + QENFQnYqukr
+                                            Hekili.jwhdSdbxwTrFBTFtsL[i] = IjYsHpyNwzzyNB
                                         end
                                     end
-                                elseif geGskEKVh=="SPELL_EMPOWER_END" then
-                                    Hekili.wlwSekD = 0
-                                    Hekili.xxRTTxTCUj = {}
+                                elseif sSVWDkSJctFSRdvO=="SPELL_EMPOWER_END" then
+                                    Hekili.ohPJcNavUBbF = 0
+                                    Hekili.jwhdSdbxwTrFBTFtsL = {}
                                 end
                              end
                         end
                     end)
 
-                    local function vpFTnMzn(self)
+                    local function PCnYZpxQUcVqPqIs(self)
                         Hekili.DB.profile.screenshot = false
                         Hekili.DB.profile.autoSnapshot = false
                         Hekili:TogglePause()
                         if Hekili.Pause then
-                            IFJqOJdgKs(self.tex)
+                            GsrEpxxiKFdZTbs(self.tex)
                         else
-                            pucnYjfjrSHfS(self.tex)
+                            emeYjHMCXxud(self.tex)
                         end
                     end
 
-                    local function zDshQaKFR(self)
+                    local function ubqfMpL(self)
                         if Hekili.DB.profile.toggles.mode.value == "automatic" then
-                            cnZtyzmK( "single" )
+                            xsfQgegD( "single" )
                         else
-                            cnZtyzmK( "automatic" )
+                            xsfQgegD( "automatic" )
                         end
                         if Hekili.DB.profile.toggles.mode.value == "automatic" then
-                            IFJqOJdgKs(self.tex)
+                            GsrEpxxiKFdZTbs(self.tex)
                         else
-                            pucnYjfjrSHfS(self.tex)
+                            emeYjHMCXxud(self.tex)
                         end
                     end
 
-                    local function NFjTRd(self)
+                    local function hMdgMIajQw(self)
                         Hekili:FireToggle( "cooldowns" )
                         if Hekili.DB.profile.toggles.cooldowns.value then
-                            IFJqOJdgKs(self.tex)
+                            GsrEpxxiKFdZTbs(self.tex)
                         else
-                            pucnYjfjrSHfS(self.tex)
+                            emeYjHMCXxud(self.tex)
                         end
                     end
 
-                    local function kfnulvJT(self)
+                    local function AuRzmNboKHlWWW(self)
                         Hekili:FireToggle( "interrupts" )
                         if Hekili.DB.profile.toggles.interrupts.value then
-                            IFJqOJdgKs(self.tex)
+                            GsrEpxxiKFdZTbs(self.tex)
                         else
-                            pucnYjfjrSHfS(self.tex)
+                            emeYjHMCXxud(self.tex)
                         end
                     end
 
-                    local function GECLeB(self)
+                    local function uZPbnkkyhCMLN(self)
                         Hekili:FireToggle( "defensives" )
                         if Hekili.DB.profile.toggles.defensives.value then
-                            IFJqOJdgKs(self.tex)
+                            GsrEpxxiKFdZTbs(self.tex)
                         else
-                            pucnYjfjrSHfS(self.tex)
+                            emeYjHMCXxud(self.tex)
                         end
                     end
 
                     local function potionsButtonHandler(self)
                         Hekili:FireToggle( "potions" )
                         if Hekili.DB.profile.toggles.potions.value then
-                            IFJqOJdgKs(self.tex)
+                            GsrEpxxiKFdZTbs(self.tex)
                         else
-                            pucnYjfjrSHfS(self.tex)
+                            emeYjHMCXxud(self.tex)
                         end
                     end
                     
@@ -1795,37 +1795,37 @@ do
                         btnTextList = {"暂停", "AOE", "爆发", "打断", "减伤", "药水"}
                     end
 
-                    Hekili.idGlYwoFepyFK = stuLZEfg(btnTextList[1], 0, vpFTnMzn, Hekili.Pause)
-                    Hekili.JzczvGdbwn = stuLZEfg(btnTextList[2], 1, zDshQaKFR, Hekili.DB.profile.toggles.mode.value == "automatic")
-                    Hekili.SuLybJNNcKV = stuLZEfg(btnTextList[3], 2, NFjTRd, Hekili.DB.profile.toggles.cooldowns.value)
-                    Hekili.roramMF = stuLZEfg(btnTextList[4], 3, kfnulvJT, Hekili.DB.profile.toggles.interrupts.value)
-                    Hekili.TJoRYn = stuLZEfg(btnTextList[5], 4, GECLeB, Hekili.DB.profile.toggles.defensives.value)
-                    Hekili.PotionsButton = stuLZEfg(btnTextList[6], 5, potionsButtonHandler, Hekili.DB.profile.toggles.potions.value)
+                    Hekili.TTGVthlMlIxflMf = aMIsqcax(btnTextList[1], 0, PCnYZpxQUcVqPqIs, Hekili.Pause)
+                    Hekili.tUBsoxLKlJmG = aMIsqcax(btnTextList[2], 1, ubqfMpL, Hekili.DB.profile.toggles.mode.value == "automatic")
+                    Hekili.fwdxHXsyasfIbswH = aMIsqcax(btnTextList[3], 2, hMdgMIajQw, Hekili.DB.profile.toggles.cooldowns.value)
+                    Hekili.gjYYAoFGtxDS = aMIsqcax(btnTextList[4], 3, AuRzmNboKHlWWW, Hekili.DB.profile.toggles.interrupts.value)
+                    Hekili.UmHejpSSaswqgR = aMIsqcax(btnTextList[5], 4, uZPbnkkyhCMLN, Hekili.DB.profile.toggles.defensives.value)
+                    Hekili.PotionsButton = aMIsqcax(btnTextList[6], 5, potionsButtonHandler, Hekili.DB.profile.toggles.potions.value)
 
-                    WUSJCeIZNweDSeMo(Hekili.HvlYCqpEBojPx, 0.008, 0.012, 0.008, Hekili.NmxJVg)
+                    wlPixbwFFJROmxWgKd(Hekili.EcYDgYzkrpVutHitIf, 0.008, 0.012, 0.008, Hekili.zbFsccbrRq)
                     SLASH_BAGNON1 = "/Bagnon";
-                    SlashCmdList["BAGNON"] = function(euWzZUCHnihyPNNxK)
-                        if euWzZUCHnihyPNNxK == "1" then
-                            vpFTnMzn(Hekili.idGlYwoFepyFK)
-                         elseif  euWzZUCHnihyPNNxK == "2" then
-                            zDshQaKFR(Hekili.JzczvGdbwn)
-                         elseif  euWzZUCHnihyPNNxK == "3" then
-                            NFjTRd(Hekili.SuLybJNNcKV)
-                         elseif  euWzZUCHnihyPNNxK == "4" then
-                            kfnulvJT(Hekili.roramMF)
-                         elseif  euWzZUCHnihyPNNxK == "5" then
-                            GECLeB(Hekili.TJoRYn)
-                         elseif  euWzZUCHnihyPNNxK == "6" then
+                    SlashCmdList["BAGNON"] = function(KKZAbyvFFMszSa)
+                        if KKZAbyvFFMszSa == "1" then
+                            PCnYZpxQUcVqPqIs(Hekili.TTGVthlMlIxflMf)
+                         elseif  KKZAbyvFFMszSa == "2" then
+                            ubqfMpL(Hekili.tUBsoxLKlJmG)
+                         elseif  KKZAbyvFFMszSa == "3" then
+                            hMdgMIajQw(Hekili.fwdxHXsyasfIbswH)
+                         elseif  KKZAbyvFFMszSa == "4" then
+                            AuRzmNboKHlWWW(Hekili.gjYYAoFGtxDS)
+                         elseif  KKZAbyvFFMszSa == "5" then
+                            uZPbnkkyhCMLN(Hekili.UmHejpSSaswqgR)
+                         elseif  KKZAbyvFFMszSa == "6" then
                             potionsButtonHandler(Hekili.PotionsButton)
                          else
-                            if not Hekili.XyRQSFThNPmQPPxu then
-                                Hekili.XyRQSFThNPmQPPxu = true
+                            if not Hekili.JyIjEdS then
+                                Hekili.JyIjEdS = true
                                 Hekili:FireToggle( "cooldowns" , "on" )
-                                IFJqOJdgKs(Hekili.SuLybJNNcKV.tex)
+                                GsrEpxxiKFdZTbs(Hekili.fwdxHXsyasfIbswH.tex)
                                 C_Timer.After(10, function()
                                     Hekili:FireToggle( "cooldowns" , "off" )
-                                    pucnYjfjrSHfS(Hekili.SuLybJNNcKV.tex)
-                                    Hekili.XyRQSFThNPmQPPxu = false
+                                    emeYjHMCXxud(Hekili.fwdxHXsyasfIbswH.tex)
+                                    Hekili.JyIjEdS = false
                                 end)
                             end
                           
@@ -1834,21 +1834,21 @@ do
                      end
 
                    
-                    local function VtfdvwT(szalVbPfzyP)
+                    local function uZLZPhOslZyORdkhxS(gDMEFZekXuGY)
                       
-                        local spellList = vGQqTkPvCi[select(3, UnitClass("player"))]
+                        local spellList = csVIDXUNnd[select(3, UnitClass("player"))]
                         if not spellList then return nil end
                     
                         for _, spellID in ipairs(spellList) do
                             if IsSpellKnown(spellID) or IsSpellKnown(spellID, true) then
                                 local result = C_Spell.GetSpellCooldown(spellID)
-                                local KxDQKXZhJFPZR, _ = IsUsableSpell(spellID)
+                                local scCkVurVgxumG, _ = IsUsableSpell(spellID)
                                 local onCooldown = result.startTime > 0 and (result.startTime + result.duration - GetTime()) > 0
-                                if not onCooldown and KxDQKXZhJFPZR and C_Spell.IsSpellInRange(spellID, szalVbPfzyP) == true then
-                                    if szalVbPfzyP == "mouseover" then
-                                        return Hekili.soOIMdxCenvPvYjy[tostring(spellID).."m"] or nil
-                                    elseif szalVbPfzyP == "target" then
-                                        return Hekili.soOIMdxCenvPvYjy[tostring(spellID)] or nil
+                                if not onCooldown and scCkVurVgxumG and C_Spell.IsSpellInRange(spellID, gDMEFZekXuGY) == true then
+                                    if gDMEFZekXuGY == "mouseover" then
+                                        return Hekili.BdOTxDLGqyBkyjoNRA[tostring(spellID).."m"] or nil
+                                    elseif gDMEFZekXuGY == "target" then
+                                        return Hekili.BdOTxDLGqyBkyjoNRA[tostring(spellID)] or nil
                                     end
                                 end
                             end
@@ -1858,15 +1858,15 @@ do
                     end
 
 
-                     local function vkOxFNpF(szalVbPfzyP)
-                        if UnitCanAttack("player", szalVbPfzyP) then
-                            local RLdEHX = select(9,UnitCastingInfo(szalVbPfzyP)) or select(8,UnitChannelInfo(szalVbPfzyP)) or 0
-                            if RLdEHX > 0 then
-                                local dQVcwKwcfNBdTY = select(4,UnitCastingInfo(szalVbPfzyP)) or select(4,UnitChannelInfo(szalVbPfzyP)) or 0
-                                if dQVcwKwcfNBdTY > 0 then
-                                    local jlEnsORxuGdWmxgKIL = select(8,UnitCastingInfo(szalVbPfzyP)) == false or select(7,UnitChannelInfo(szalVbPfzyP)) == false
-                                    local FGnhPUW = GetTime()-(dQVcwKwcfNBdTY/1000)
-                                    if jlEnsORxuGdWmxgKIL and (FGnhPUW >= 0.62 or (szalVbPfzyP == "mouuseover" and FGnhPUW >= 0.21)) then
+                     local function OcQNokSpFOU(gDMEFZekXuGY)
+                        if UnitCanAttack("player", gDMEFZekXuGY) then
+                            local xwfTwUWLwVkoTJU = select(9,UnitCastingInfo(gDMEFZekXuGY)) or select(8,UnitChannelInfo(gDMEFZekXuGY)) or 0
+                            if xwfTwUWLwVkoTJU > 0 then
+                                local koHkHDSqusOfqNfu = select(4,UnitCastingInfo(gDMEFZekXuGY)) or select(4,UnitChannelInfo(gDMEFZekXuGY)) or 0
+                                if koHkHDSqusOfqNfu > 0 then
+                                    local DyHiFBHxINGHzV = select(8,UnitCastingInfo(gDMEFZekXuGY)) == false or select(7,UnitChannelInfo(gDMEFZekXuGY)) == false
+                                    local otaYUYwzElGwpTlV = GetTime()-(koHkHDSqusOfqNfu/1000)
+                                    if DyHiFBHxINGHzV and (otaYUYwzElGwpTlV >= 0.62 or (gDMEFZekXuGY == "mouuseover" and otaYUYwzElGwpTlV >= 0.212)) then
                                         return true
                                     end
                                 end
@@ -1877,9 +1877,9 @@ do
                         return false
                      end
 
-                     Hekili.YEbZbu = C_Timer.NewTicker(0.103, function()
+                     Hekili.YbeqcSZdAf = C_Timer.NewTicker(0.103, function()
    
-                            local mJHqSRPQu = {}
+                            local brzdWoCw = {}
                         
                             for x, c in ipairs( self.Buttons ) do
                                 if not c.Action then
@@ -1887,111 +1887,111 @@ do
                                 end
                                 if c:IsShown() and c.Ability then
                                     
-                                    LYEOvw(tonumber(c.Ability.id))
+                                    dSUWeMTCTbWaTtID(tonumber(c.Ability.id))
         
-                                    local KDaJeFnuvtTDUNW = "1"
+                                    local XkefwGIKLMwRdI = "1"
                                     if c.outOfRange then
-                                        KDaJeFnuvtTDUNW = "0"
+                                        XkefwGIKLMwRdI = "0"
                                     end
         
                                     if not c.Ability.item and c.Ability.id > 0 then
-                                        local KxDQKXZhJFPZR, noMana = IsUsableSpell(c.Ability.id)
-                                        if KxDQKXZhJFPZR ~= true and noMana ~= false then
-                                            KDaJeFnuvtTDUNW = "0"
+                                        local scCkVurVgxumG, noMana = IsUsableSpell(c.Ability.id)
+                                        if scCkVurVgxumG ~= true and noMana ~= false then
+                                            XkefwGIKLMwRdI = "0"
                                         end
                                     end
         
-                                    for _, meleeSpellID in ipairs(Hekili.kesotNWXqHgluLwy) do
+                                    for _, meleeSpellID in ipairs(Hekili.TbiAFURin) do
                                         if meleeSpellID == tonumber(c.Ability.id) then
                                             local minR, maxR = LRC:GetRange( "target" )
                                             if minR == nil or minR >= 2 then
-                                                KDaJeFnuvtTDUNW = "0"
+                                                XkefwGIKLMwRdI = "0"
                                             end
                                             break
                                         end
                                     end
         
-                                    local IgJfSuCggGycviL, ubheJfLZq, _ = GetSpellCooldown(c.Ability.id)
-                                    local TLSJURvMP = XofhBuJWipIWAr((IgJfSuCggGycviL+ubheJfLZq-GetTime())*100)
-                                    if TLSJURvMP < 0 then
-                                        TLSJURvMP = 0
+                                    local JeQpqgOxzSy, CmTLhLtuh, _ = GetSpellCooldown(c.Ability.id)
+                                    local dcBmdTakfUGsFn = bHSptUJheMMjlRR((JeQpqgOxzSy+CmTLhLtuh-GetTime())*100)
+                                    if dcBmdTakfUGsFn < 0 then
+                                        dcBmdTakfUGsFn = 0
                                     end
                                     if c.unusable then
-                                        TLSJURvMP = 999
+                                        dcBmdTakfUGsFn = 999
                                     end
                                     
-                                    local RGBsQxNtEgh = "0"
+                                    local qIlnJbu = "0"
                                     if c.Indicator == "cycle" then
-                                        RGBsQxNtEgh = "0"
+                                        qIlnJbu = "0"
                                     end
                                     if c.Indicator == "cancel" then
-                                        RGBsQxNtEgh = "2"
+                                        qIlnJbu = "2"
                                     end
-                                    if Hekili.wlwSekD > 0 and Hekili.wlwSekD == tonumber(c.Ability.id) and x == 1 then
-                                        local StqwZyia = 0
+                                    if Hekili.ohPJcNavUBbF > 0 and Hekili.ohPJcNavUBbF == tonumber(c.Ability.id) and x == 1 then
+                                        local tzRCFdpVYAWFU = 0
                                         local RomanToNumber = {
                                             ["I"] = 1,
                                             ["II"] = 2,
                                             ["III"] = 3,
                                             ["IV"] = 4,
                                         }
-                                        for i = #Hekili.xxRTTxTCUj, 1,-1 do
-                                            if GetTime() >= Hekili.xxRTTxTCUj[i] then
-                                                StqwZyia = i
+                                        for i = #Hekili.jwhdSdbxwTrFBTFtsL, 1,-1 do
+                                            if GetTime() >= Hekili.jwhdSdbxwTrFBTFtsL[i] then
+                                                tzRCFdpVYAWFU = i
                                                 break
                                             end
                                         end
-                                        if (RomanToNumber[c.EmpowerLevel:GetText()] and StqwZyia >= RomanToNumber[c.EmpowerLevel:GetText()]) or StqwZyia >= #Hekili.xxRTTxTCUj then
-                                            RGBsQxNtEgh = "3"
+                                        if (RomanToNumber[c.EmpowerLevel:GetText()] and tzRCFdpVYAWFU >= RomanToNumber[c.EmpowerLevel:GetText()]) or tzRCFdpVYAWFU >= #Hekili.jwhdSdbxwTrFBTFtsL then
+                                            qIlnJbu = "3"
                                         end
                                     end
         
-                                    insert(mJHqSRPQu, table.concat({c.Ability.name, tostring(c.Ability.id), c.Keybind, KDaJeFnuvtTDUNW, tostring(TLSJURvMP), RGBsQxNtEgh}, "#"))
+                                    insert(brzdWoCw, table.concat({c.Ability.name, tostring(c.Ability.id), c.Keybind, XkefwGIKLMwRdI, tostring(dcBmdTakfUGsFn), qIlnJbu}, "#"))
                                     
-                                    if #mJHqSRPQu >=3 then break end
+                                    if #brzdWoCw >=3 then break end
                                 end
         
                             end
         
         
-                            if Hekili.MgngoHmFmYlRPm > 0 and GetTime()-Hekili.MBEDMJneAI < 2.5 then
+                            if Hekili.YHMAKi > 0 and GetTime()-Hekili.MueiMXOyaKyGFhmTj < 2.5 then
         
                                 local recentlyCasted = false
-                                for _, id in ipairs(Hekili.pwONhL) do
-                                    if Hekili.MgngoHmFmYlRPm == id then
+                                for _, id in ipairs(Hekili.AtUVirqdpOabrL) do
+                                    if Hekili.YHMAKi == id then
                                         recentlyCasted = true
                                     end
                                 end
         
                                 if not recentlyCasted then
-                                    local KyaVMMoJ = C_Spell.GetSpellInfo(Hekili.MgngoHmFmYlRPm).name or "Unknown"
-                                    local IgJfSuCggGycviL, ubheJfLZq, _ = GetSpellCooldown(Hekili.MgngoHmFmYlRPm)
-                                    local TLSJURvMP = XofhBuJWipIWAr((IgJfSuCggGycviL+ubheJfLZq-GetTime())*100)
-                                    local KxDQKXZhJFPZR, _ = IsUsableSpell(Hekili.MgngoHmFmYlRPm)
-                                    local ymgKJALCmQAzeigMz = C_Spell.IsSpellInRange(Hekili.MgngoHmFmYlRPm, "target")
-                                    local XtcBNpBALLxvC = "1"
-                                    if not KxDQKXZhJFPZR or (ymgKJALCmQAzeigMz == false and Hekili.WantToQueueType ~= "macro") then
-                                        XtcBNpBALLxvC = "0"
+                                    local nvvCidN = C_Spell.GetSpellInfo(Hekili.YHMAKi).name or "Unknown"
+                                    local JeQpqgOxzSy, CmTLhLtuh, _ = GetSpellCooldown(Hekili.YHMAKi)
+                                    local dcBmdTakfUGsFn = bHSptUJheMMjlRR((JeQpqgOxzSy+CmTLhLtuh-GetTime())*100)
+                                    local scCkVurVgxumG, _ = IsUsableSpell(Hekili.YHMAKi)
+                                    local WwyLyDQuH = C_Spell.IsSpellInRange(Hekili.YHMAKi, "target")
+                                    local micxriBOOTIMn = "1"
+                                    if not scCkVurVgxumG or (WwyLyDQuH == false and Hekili.WantToQueueType ~= "macro") then
+                                        micxriBOOTIMn = "0"
                                     end
-                                    if TLSJURvMP < 400 and KxDQKXZhJFPZR then
-                                        insert(mJHqSRPQu, table.concat({KyaVMMoJ, tostring(Hekili.MgngoHmFmYlRPm), Hekili.fCDMuNmOeJPzpCjyJ, tostring(TLSJURvMP), XtcBNpBALLxvC}, "#"))
+                                    if dcBmdTakfUGsFn < 400 and scCkVurVgxumG then
+                                        insert(brzdWoCw, table.concat({nvvCidN, tostring(Hekili.YHMAKi), Hekili.uXFRGJUSzbOCgPBK, tostring(dcBmdTakfUGsFn), micxriBOOTIMn}, "#"))
                                     end
                                 end
                                 
                             end
-                            if Hekili.MgngoHmFmYlRPm > 0 and GetTime()-Hekili.MBEDMJneAI >= 2.5 then
-                                Hekili.MgngoHmFmYlRPm = 0
-                                Hekili.fCDMuNmOeJPzpCjyJ = ""
-                                Hekili.MBEDMJneAI = 0
+                            if Hekili.YHMAKi > 0 and GetTime()-Hekili.MueiMXOyaKyGFhmTj >= 2.5 then
+                                Hekili.YHMAKi = 0
+                                Hekili.uXFRGJUSzbOCgPBK = ""
+                                Hekili.MueiMXOyaKyGFhmTj = 0
                                 Hekili.WantToQueueType = ""
                             end 
 
                             if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE and UnitAffectingCombat("player") and Hekili.DB.profile.toggles.interrupts.value then
                                 for _, unit in ipairs({ "mouseover", "target" }) do
-                                    if vkOxFNpF(unit) then
-                                        local interruptKey = VtfdvwT(unit)
+                                    if OcQNokSpFOU(unit) then
+                                        local interruptKey = uZLZPhOslZyORdkhxS(unit)
                                         if interruptKey then
-                                            insert(mJHqSRPQu, "i#" .. interruptKey)
+                                            insert(brzdWoCw, "i#" .. interruptKey)
                                             break
                                         end
                                     end
@@ -2000,12 +2000,12 @@ do
 
                             
                            
-                            eygNoAyP(table.concat(mJHqSRPQu, "|"))
+                            IaOamyW(table.concat(brzdWoCw, "|"))
         
                             if SpellIsTargeting() then
-                                if GetTime() - Hekili.VDULFLJfnHaQg >= 1 then
+                                if GetTime() - Hekili.etWgRTYLoGBqoOPa >= 1 then
                                     PlaySound(5275)
-                                    Hekili.VDULFLJfnHaQg = GetTime()
+                                    Hekili.etWgRTYLoGBqoOPa = GetTime()
                                 end
                             end
                    
@@ -2013,7 +2013,7 @@ do
                      end)
 
                 end
-                LbPcJRPKMmXoZsHWto()
+                sfEchKkzd()
 
 
    

@@ -23,49 +23,59 @@ actions.precombat+=/potion,name=draenic_agility
 actions+=/potion,name=draenic_agility,if=buff.bestial_wrath.up|target.time_to_die<=60
 
 # Emergency pet management
-actions+=/summon_pet,if=!pet.alive
+actions+=/call_pet_1,if=!pet.alive&settings.pet_to_call=1
 actions+=/mend_pet,if=pet.alive&pet.health_pct<50&!buff.bestial_wrath.up
 
 # Primary DPS rotation
 actions+=/call_action_list,name=cooldowns
 actions+=/call_action_list,name=focus_fire_management
 actions+=/call_action_list,name=core_rotation
+actions+=/call_action_list,name=focus_management
+actions+=/call_action_list,name=filler
 
-# Auto-cast other cooldowns
+# Situational action lists
+actions+=/call_action_list,name=aoe,if=active_enemies>=3
+actions+=/call_action_list,name=movement,if=movement.distance>=5
+actions+=/call_action_list,name=defensive,if=incoming_damage_5s>health.max*0.3
+actions+=/call_action_list,name=pet_management
+actions+=/call_action_list,name=target_switch,if=active_enemies>=2
+actions+=/call_action_list,name=tier_bonuses
+actions+=/call_action_list,name=burst,if=buff.bestial_wrath.up
+
+# Auto-cast other cooldowns (adapted from interface priority list)
 actions.cooldowns+=/blood_fury,if=buff.bestial_wrath.up|target.time_to_die<=60
 actions.cooldowns+=/synapse_springs,if=buff.bestial_wrath.up|target.time_to_die<=60
 actions.cooldowns+=/rapid_fire,if=!buff.rapid_fire.up&(buff.bestial_wrath.up|target.time_to_die<=15)
 actions.cooldowns+=/a_murder_of_crows,if=talent.a_murder_of_crows.enabled&(buff.bestial_wrath.up|target.time_to_die<=60)
 actions.cooldowns+=/lynx_rush,if=talent.lynx_rush.enabled&pet.alive&(buff.bestial_wrath.up|target.time_to_die<=15)
 actions.cooldowns+=/dire_beast,if=talent.dire_beast.enabled&(focus_deficit>=40|buff.bestial_wrath.up)
-actions.cooldowns+=/fervor,if=talent.fervor.enabled&focus<=50
+actions.cooldowns+=/fervor,if=talent.fervor.enabled&focus<=37
 
-# Focus Fire priority (matches the focus fire logic from image)
-actions.focus_fire_management+=/focus_fire,if=pet.alive&buff.frenzy.stack>=5&cooldown.bestial_wrath.remains>8
-actions.focus_fire_management+=/focus_fire,if=pet.alive&buff.frenzy.stack>=3&(buff.bestial_wrath.up|target.time_to_die<=12)
-actions.focus_fire_management+=/bestial_wrath,if=pet.alive&(focus>=50|buff.dire_beast.up)&cooldown.focus_fire.ready&buff.frenzy.stack>=5
-actions.focus_fire_management+=/bestial_wrath,if=pet.alive&(focus>=50|buff.dire_beast.up)&buff.frenzy.stack<=2
+# Focus Fire priority (adapted from interface priority list)
+actions.focus_fire_management+=/focus_fire,if=pet.alive&buff.frenzy.stack>=5&!buff.bestial_wrath.up&cooldown.bestial_wrath.remains>5
+actions.focus_fire_management+=/bestial_wrath,if=pet.alive
+actions.focus_fire_management+=/synapse_springs,if=buff.bestial_wrath.up
+actions.focus_fire_management+=/blood_fury,if=buff.bestial_wrath.up
+actions.focus_fire_management+=/bestial_wrath,if=pet.alive
+actions.focus_fire_management+=/synapse_springs,if=buff.bestial_wrath.up
+actions.focus_fire_management+=/blood_fury,if=buff.bestial_wrath.up
 
-# Core rotation priorities (updated based on interface)
-actions.core_rotation+=/serpent_sting,if=!debuff.serpent_sting.up
-actions.core_rotation+=/serpent_sting,if=debuff.serpent_sting.remains<=6&target.time_to_die>6
-actions.core_rotation+=/kill_command,if=pet.alive&(buff.bestial_wrath.up|focus>=60|buff.dire_beast.up)
+# Core rotation priorities (adapted from interface priority list)
 actions.core_rotation+=/kill_shot,if=target.health_pct<=20
-actions.core_rotation+=/rapid_fire,if=!buff.rapid_fire.up&focus>=25
-actions.core_rotation+=/multi_shot,if=active_enemies>=3&(buff.beast_cleave.down|buff.beast_cleave.remains<=1)
-actions.core_rotation+=/arcane_shot,if=buff.thrill_of_the_hunt.up&buff.thrill_of_the_hunt.stack>=3
-actions.core_rotation+=/glaive_toss,if=talent.glaive_toss.enabled&focus>=15
-actions.core_rotation+=/lynx_rush,if=talent.lynx_rush.enabled&pet.alive&buff.bestial_wrath.up
-actions.core_rotation+=/powershot,if=talent.powershot.enabled&focus>=30&cast_time<=gcd
-actions.core_rotation+=/dire_beast,if=talent.dire_beast.enabled&focus_deficit>=40
-actions.core_rotation+=/fervor,if=talent.fervor.enabled&focus<=50
-actions.core_rotation+=/cobra_shot,if=debuff.serpent_sting.up&debuff.serpent_sting.remains<=6&target.time_to_die>10
-actions.core_rotation+=/arcane_shot,if=focus>=60&(buff.bestial_wrath.up|!talent.dire_beast.enabled|cooldown.dire_beast.remains>5)
-actions.core_rotation+=/explosive_trap,if=!debuff.explosive_trap.up&active_enemies>=3
-actions.core_rotation+=/cobra_shot,if=debuff.serpent_sting.up&target.time_to_die>10&focus>=40
-actions.core_rotation+=/arcane_shot,if=focus>=40&(current_focus>=70|target.time_to_die<=10)
-actions.core_rotation+=/steady_shot,if=focus<=40&!buff.improved_steady_shot.up
-actions.core_rotation+=/steady_shot,if=buff.improved_steady_shot.up&(focus<=70|!debuff.serpent_sting.up)
+actions.core_rotation+=/rapid_fire,if=!buff.rapid_fire.up
+actions.core_rotation+=/kill_command,if=pet.alive
+actions.core_rotation+=/a_murder_of_crows,if=talent.a_murder_of_crows.enabled
+actions.core_rotation+=/fervor,if=talent.fervor.enabled&focus<=37
+actions.core_rotation+=/lynx_rush,if=talent.lynx_rush.enabled&pet.alive
+actions.core_rotation+=/powershot,if=talent.powershot.enabled
+actions.core_rotation+=/dire_beast,if=talent.dire_beast.enabled
+actions.core_rotation+=/serpent_sting,if=!debuff.serpent_sting.up
+actions.core_rotation+=/cobra_shot,if=debuff.serpent_sting.remains<=6
+actions.core_rotation+=/glaive_toss,if=talent.glaive_toss.enabled
+actions.core_rotation+=/arcane_shot,if=buff.bestial_wrath.up&focus>=35
+actions.core_rotation+=/arcane_shot,if=focus>=79
+actions.core_rotation+=/explosive_trap,if=!debuff.explosive_trap.up
+actions.core_rotation+=/cobra_shot
  
 # AoE priority adjustments
 actions.aoe+=/multi_shot,if=active_enemies>=3
@@ -90,23 +100,22 @@ actions.pet_management=masters_call,if=debuff.slowed.up|debuff.rooted.up
 actions.pet_management+=/intimidation,if=talent.intimidation.enabled&target.casting&target.time_to_die>5
 actions.pet_management+=/call_pet_1,if=!pet.alive&combat
 
-# Focus management optimization
-actions.focus_management=steady_shot,if=focus_time_to_max>3&focus<=60
-actions.focus_management+=/cobra_shot,if=focus_time_to_max<=1.5&debuff.serpent_sting.remains>4
-actions.focus_management+=/thrill_of_the_hunt_active,if=buff.thrill_of_the_hunt.up&focus<=40
+# Focus management optimization (adapted from interface priority list)
+actions.focus_management+=/cobra_shot,if=debuff.serpent_sting.up
+actions.focus_management+=/steady_shot,if=focus<=40&!debuff.serpent_sting.up
 
 # Target switching and cleave optimization
-actions.target_switch=hunters_mark,cycle_targets=1,if=debuff.hunters_mark.down&target.time_to_die>30
+actions.target_switch+=/hunters_mark,cycle_targets=1,if=debuff.hunters_mark.down&target.time_to_die>30
 actions.target_switch+=/serpent_sting,cycle_targets=1,if=!debuff.serpent_sting.up&target.time_to_die>10&active_enemies<=4
 actions.target_switch+=/multi_shot,if=active_enemies>=3&buff.beast_cleave.down
 
 # Tier set and proc optimization
-actions.tier_bonuses=arcane_shot,if=set_bonus.tier14_4pc&buff.tier14_4pc.up&focus>=50
+actions.tier_bonuses+=/arcane_shot,if=set_bonus.tier14_4pc&buff.tier14_4pc.up&focus>=50
 actions.tier_bonuses+=/kill_command,if=set_bonus.tier15_2pc&buff.tier15_2pc.up&pet.alive
 actions.tier_bonuses+=/cobra_shot,if=set_bonus.tier15_4pc&buff.tier15_4pc.up&debuff.serpent_sting.up
 
 # Burst phase optimization
-actions.burst=bestial_wrath,if=pet.alive&focus>=50
+actions.burst+=/bestial_wrath,if=pet.alive&focus>=50
 actions.burst+=/a_murder_of_crows,if=talent.a_murder_of_crows.enabled&buff.bestial_wrath.up
 actions.burst+=/lynx_rush,if=talent.lynx_rush.enabled&pet.alive&buff.bestial_wrath.up
 actions.burst+=/kill_command,if=pet.alive&buff.bestial_wrath.up
@@ -114,10 +123,9 @@ actions.burst+=/focus_fire,if=buff.frenzy.stack>=3&buff.bestial_wrath.up
 actions.burst+=/arcane_shot,if=buff.bestial_wrath.up&focus>=40
 actions.burst+=/cobra_shot,if=buff.bestial_wrath.up&debuff.serpent_sting.up
 
-# Low-focus filler priorities
-actions.filler=steady_shot,if=focus<=50&!buff.improved_steady_shot.up
-actions.filler+=/cobra_shot,if=focus>=30&debuff.serpent_sting.remains>3
-actions.filler+=/arcane_shot,if=focus>=40&(buff.thrill_of_the_hunt.up|target.time_to_die<=10)
+# Low-focus filler priorities (adapted from interface priority list)
+actions.filler+=/cobra_shot,if=debuff.serpent_sting.up
+actions.filler+=/steady_shot,if=focus<=40&!debuff.serpent_sting.up
 
 # Execute phase (target below 20% health)
 actions.execute+=/kill_command,if=pet.alive&target.health_pct<=20
