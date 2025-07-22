@@ -1,4 +1,4 @@
-## https://github.com/simulationcraft/simc/blob/thewarwithin/ActionPriorityLists/evoker_augmentation.simc
+## https://github.com/simulationcraft/simc/blob/thewarwithin/ActionPriorityLists/default/evoker_augmentation.simc
 ## Up to date with SimC: April 12 2025 - 72033f9
 
 actions.precombat+=/variable,name=spam_heal,default=1,op=reset

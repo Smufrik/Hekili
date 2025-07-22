@@ -1,4 +1,4 @@
-## https://github.com/simulationcraft/simc/blob/thewarwithin/ActionPriorityLists/rogue_outlaw.simc
+## https://github.com/simulationcraft/simc/blob/thewarwithin/ActionPriorityLists/default/rogue_outlaw.simc
 ## Up to date with SimC: April 16 2025 - b23bf5e
 
 actions.precombat+=/apply_poison

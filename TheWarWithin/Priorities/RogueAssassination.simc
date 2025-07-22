@@ -1,4 +1,4 @@
-## https://github.com/simulationcraft/simc/blob/thewarwithin/ActionPriorityLists/rogue_assassination.simc
+## https://github.com/simulationcraft/simc/blob/thewarwithin/ActionPriorityLists/default/rogue_assassination.simc
 ## Up to date with SimC: April 7 2025 - 0307d7f
 
 actions.precombat+=/apply_poison

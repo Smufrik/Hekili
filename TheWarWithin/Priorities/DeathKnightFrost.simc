@@ -1,4 +1,4 @@
-## https://github.com/simulationcraft/simc/commits/thewarwithin/ActionPriorityLists/deathknight_frost.simc
+## https://github.com/simulationcraft/simc/blob/thewarwithin/ActionPriorityLists/default/deathknight_frost.simc
 ## Up to date with SimC: March 5 2025 - 04347cf
 
 ## Evaluates a trinkets cooldown, divided by pillar of frost, empower rune weapon, or breath of sindragosa's cooldown. If it's value has no remainder return 1, else return 0.5.

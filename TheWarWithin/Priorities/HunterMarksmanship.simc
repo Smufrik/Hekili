@@ -1,4 +1,4 @@
-## https://github.com/simulationcraft/simc/commits/thewarwithin/ActionPriorityLists/hunter_marksmanship.simc
+## https://github.com/simulationcraft/simc/blob/thewarwithin/ActionPriorityLists/default/hunter_marksmanship.simc
 ## Up to date with SimC: March 28 2025 - 9b7cf47
 
 actions.precombat+=/summon_pet,if=talent.unbreakable_bond

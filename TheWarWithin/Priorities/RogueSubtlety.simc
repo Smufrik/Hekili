@@ -1,4 +1,4 @@
-## https://github.com/simulationcraft/simc/blob/thewarwithin/ActionPriorityLists/rogue_subtlety.simc
+## https://github.com/simulationcraft/simc/blob/thewarwithin/ActionPriorityLists/default/rogue_subtlety.simc
 ## Up to date with SimC: April 5 2025 - ed7963f
 
 actions.precombat+=/apply_poison
