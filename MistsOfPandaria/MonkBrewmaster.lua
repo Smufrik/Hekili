@@ -18,6 +18,11 @@ if not spec then
     return
 end
 
+-- Module-level variables for advanced tracking
+ns.last_defensive_ability = "none"
+ns.last_defensive_time = 0
+ns.purify_count = 0
+
 --[[
     Resource registration for Energy (3) and Chi (12).
     This models the passive regeneration and max resources, modified by talents like Ascension.
@@ -98,23 +103,37 @@ spec:RegisterTalents({
     chi_torpedo = { 6, 3, 115008 },
 })
 
-
---[[
-    Comprehensive Monk Glyphs for MoP
---]]
 spec:RegisterGlyphs( {
     -- Major Glyphs
-    [125731] = "afterlife", [125872] = "blackout_kick", [125671] = "breath_of_fire",
-    [146961] = "clash", [125697] = "crackling_jade_lightning", [125732] = "detox",
-    [125757] = "enduring_healing_sphere", [125672] = "expel_harm", [125676] = "fighting_pose",
-    [125675] = "fists_of_fury", [125687] = "fortifying_brew", [125677] = "guard",
-    [146960] = "jab", [146959] = "leer_of_the_ox", [123763] = "mana_tea",
-    [125767] = "paralysis", [125674] = "renewing_mist", [125755] = "retreat",
-    [125708] = "rising_sun_kick", [125678] = "spinning_crane_kick", [146958] = "stoneskin",
-    [125750] = "surging_mist", [125709] = "touch_of_karma", [125679] = "touch_of_death",
-    [125680] = "transcendence", [125681] = "uplift", [125682] = "zen_meditation",
+    [125731] = "afterlife",                 -- Your Healing Spheres have a 100% chance to summon a Healing Sphere when they expire.
+    [125872] = "blackout_kick",             -- Your Blackout Kick can be used from 10 yards away.
+    [125671] = "breath_of_fire",            -- Your Breath of Fire also disorients targets for 3 sec if they are facing you.
+    [146961] = "clash",                     -- You and your target are stunned for 3 sec at the destination.
+    [125697] = "crackling_jade_lightning",  -- Your Crackling Jade Lightning also knocks the target back.
+    [125732] = "detox",                     -- Your Detox also heals the target for 4% of their maximum health.
+    [125757] = "enduring_healing_sphere",   -- Increases the duration of your Healing Spheres by 30 sec.
+    [125672] = "expel_harm",                -- Increases the range of Expel Harm by 10 yards.
+    [125676] = "fighting_pose",             -- Your Guard now also causes all spells cast against you to be redirected to your Black Ox Statue.
+    [125675] = "fists_of_fury",             -- Increases your chance to parry by 100% while channeling Fists of Fury.
+    [125687] = "fortifying_brew",           -- Your Fortifying Brew also makes you immune to movement impairing effects.
+    [125677] = "guard",                    -- Your Guard also increases healing received by 10%.
+    [146960] = "jab",                       -- Your Jab deals 10% more damage but no longer generates Chi.
+    [146959] = "leer_of_the_ox",            -- Teaches you the ability Leer of the Ox, which forces all targets within 10 yards of your Black Ox Statue to attack it for 6 sec.
+    [123763] = "mana_tea",                  -- Your Mana Tea can now be channeled while moving.
+    [125767] = "paralysis",                 -- Your Paralysis now removes all damage over time effects from the target.
+    [125674] = "renewing_mist",             -- Your Renewing Mist now travels to the 2 nearest injured targets within 20 yards.
+    [125755] = "retreat",                   -- Your Roll or Chi Torpedo now causes you to travel backwards.
+    [125708] = "rising_sun_kick",           -- Your Rising Sun Kick now also applies a healing absorb effect on the target for 100% of the damage dealt.
+    [125678] = "spinning_crane_kick",       -- You move at full speed while channeling Spinning Crane Kick.
+    [146958] = "stoneskin",                 -- Increases the physical damage reduction of your Fortifying Brew by 5%.
+    [125750] = "surging_mist",              -- Your Surging Mist can now be cast while moving.
+    [125709] = "touch_of_karma",            -- Increases the range of your Touch of Karma by 10 yards.
+    [125679] = "touch_of_death",            -- Your Touch of Death no longer has a Chi cost.
+    [125680] = "transcendence",             -- Reduces the cooldown of your Transcendence: Transfer by 5 sec.
+    [125681] = "uplift",                    -- Your Uplift can now be cast on targets that do not have your Renewing Mist active.
+    [125682] = "zen_meditation",            -- You can now move while channeling Zen Meditation.
 
-    -- Minor Glyphs
+    -- Minor Glyphs (Cosmetic / Utility)
     [125703] = "blackout_kick_visual", [125705] = "breath_of_fire_visual", [146955] = "crackling_tiger_lightning",
     [125698] = "honor", [146953] = "jab_visual", [146954] = "rising_sun_kick_visual",
     [125699] = "spirit_roll", [125694] = "spinning_fire_blossom", [125701] = "water_roll", [125700] = "zen_flight",
@@ -122,13 +141,19 @@ spec:RegisterGlyphs( {
 
 
 --[[
-    Robust Aura Definitions
+    Robust Aura Definitions with Verbose Generate Functions
     Includes all buffs, debuffs, procs, and cooldowns.
 --]]
 spec:RegisterAuras({
     -- Core Brewmaster Buffs
-    shuffle = { id = 115307, duration = 6 },
-    guard = { id = 115295, duration = 30 },
+    shuffle = { 
+        id = 115307, duration = 6, 
+        generate = function(t) local n,_,c,_,d,e,s=FindUnitBuffByID("player", t.id) if n then t.name,t.count,t.expires,t.applied,t.caster,t.up,t.down,t.remains=n,c or 1,e,e-d,s,true,false,e-GetTime() else t.count=0;t.up=false;t.down=true;t.remains=0 end end
+    },
+    guard = { 
+        id = 115295, duration = 30, 
+        generate = function(t) local n,_,c,_,d,e,s=FindUnitBuffByID("player", t.id) if n then t.name,t.count,t.expires,t.applied,t.caster,t.up,t.down,t.remains=n,c or 1,e,e-d,s,true,false,e-GetTime() else t.count=0;t.up=false;t.down=true;t.remains=0 end end
+    },
     elusive_brew = { id = 128939 }, -- Active Dodge Buff
     elusive_brew_stack = { id = 128938, duration = 30, max_stack = 15 },
     fortifying_brew = { id = 115203, duration = 20 },
@@ -144,18 +169,15 @@ spec:RegisterAuras({
     keg_smash_debuff = { id = 121253, duration = 8, debuff = true, key = "keg_smash" },
     breath_of_fire_dot = { id = 123725, duration = 8, tick_time = 1, debuff = true, key = "breath_of_fire" },
 
-    -- Talent Auras
+    -- Talent Auras & Procs
+    power_strikes = { id = 129914, duration = 30 },
     dampen_harm = { id = 122278, duration = 45, max_stack = 3 },
     diffuse_magic = { id = 122783, duration = 6 },
     rushing_jade_wind = { id = 116847, duration = 6 },
-    invoke_xuen = { id = 123904, duration = 45 }, -- The buff for having Xuen out
+    invoke_xuen = { id = 123904, duration = 45 },
     
     -- Tier Set Procs
     dancing_mists = { id = 146193, duration = 10 }, -- T16 4pc
-    
-    -- Trinket Procs
-    steadfast_resolve = { id = 146045, duration = 20 }, -- Proc from Steadfast Talisman
-    thoks_acid_breath = { id = 146039, duration = 10, debuff = true }, -- Proc from Thok's Tail Tip
     
     -- External/Raid Buffs
     bloodlust = { id = 2825 }, heroism = { id = 32182 }, time_warp = { id = 80353 },
@@ -163,67 +185,96 @@ spec:RegisterAuras({
 })
 
 
---[[
-    Complete Ability List (Declarative Style)
---]]
+
+spec:RegisterHook( "runHandler", function( key )
+    -- This hook fires after any handler runs, allowing for centralized tracking.
+    local ability = class.abilities[ key ]
+    if not ability then return end
+
+    if ability.toggle == "defensives" or ability.toggle == "cooldowns" then
+        ns.last_defensive_ability = key
+        ns.last_defensive_time = state.query_time
+    end
+end )
+
+spec:RegisterCombatLogEvent( function( _, subtype, _, sourceGUID, _, _, _, _, _, _, _, spellID )
+    -- This uses Hekili's safe, built-in combat log event system.
+    if sourceGUID == state.GUID and subtype == "SPELL_CAST_SUCCESS" then
+        if spellID == 119582 then -- Purifying Brew
+            ns.purify_count = (ns.purify_count or 0) + 1
+        end
+    end
+end )
+
+
+
 spec:RegisterAbilities({
-    -- Core Rotational Abilities
-    keg_smash = { id = 121253, cooldown = 8, spend = 40, spend_type = "energy", gain = 2, gain_type = "chi", debuff = "keg_smash_debuff" },
-    blackout_kick = { id = 100784, spend = 2, spend_type = "chi", buff = "shuffle" },
-    jab = { id = 100780, spend = 40, spend_type = "energy", gain = 1, gain_type = "chi" },
-    tiger_palm = { id = 100787, spend = 25, spend_type = "energy", gain = 1, gain_type = "chi" },
-    expel_harm = { id = 115072, cooldown = 15, spend = 40, spend_type = "energy", gain = 1, gain_type = "chi" },
-    spinning_crane_kick = { id = 101546, spend = 40, spend_type = "energy" },
-    breath_of_fire = { id = 115181, cooldown = 15, spend = 2, spend_type = "chi", debuff = "breath_of_fire_dot" },
+    -- Core Rotation
+    keg_smash = { id = 121253, cooldown = 8, spend = 40, spendType = "energy", startsCombat = true, handler = function() gain(2, "chi"); applyDebuff("target", "keg_smash_debuff") end },
+    blackout_kick = { id = 100784, spend = 2, spendType = "chi", startsCombat = true, handler = function() applyBuff("shuffle") end },
+    jab = { id = 100780, spend = 40, spendType = "energy", startsCombat = true, handler = function() gain(1, "chi") end },
+    tiger_palm = { id = 100787, spend = 25, spendType = "energy", startsCombat = true, handler = function() gain(1, "chi") end },
+    expel_harm = { id = 115072, cooldown = 15, spend = 40, spendType = "energy", startsCombat = true, handler = function() gain(1, "chi") end },
+    spinning_crane_kick = { id = 101546, spend = 40, spendType = "energy", startsCombat = true, handler = function() end },
+    breath_of_fire = { id = 115181, cooldown = 15, spend = 2, spendType = "chi", startsCombat = true, handler = function() applyDebuff("target", "breath_of_fire_dot") end },
 
     -- Mitigation & Cooldowns
-    purifying_brew = { id = 119582, cooldown = 1, spend = 1, spend_type = "chi", toggle = "defensives" },
-    guard = { id = 115295, cooldown = 30, spend = 2, spend_type = "chi", buff = "guard", toggle = "defensives" },
-    elusive_brew = { id = 115308, cooldown = 1, buff = "elusive_brew", consume_buff = "elusive_brew_stack", toggle = "defensives" },
-    fortifying_brew = { id = 115203, cooldown = 180, buff = "fortifying_brew", toggle = "cooldowns" },
-    zen_meditation = { id = 115176, cooldown = 180, buff = "zen_meditation", toggle = "defensives" },
-    energizing_brew = { id = 115288, cooldown = 60, buff = "energizing_brew", toggle = "cooldowns" },
+    purifying_brew = { id = 119582, cooldown = 1, spend = 1, spendType = "chi", toggle = "defensives", handler = function() removeBuff("heavy_stagger"); removeBuff("moderate_stagger"); removeBuff("light_stagger") end },
+    guard = { id = 115295, cooldown = 30, spend = 2, spendType = "chi", toggle = "defensives", handler = function() applyBuff("guard") end },
+    elusive_brew = { id = 115308, cooldown = 1, toggle = "defensives", usable = function() return state.buff.elusive_brew_stack.stack > 0 end, handler = function() local s = state.buff.elusive_brew_stack.stack; removeBuff("elusive_brew_stack"); applyBuff("elusive_brew", s) end },
+    fortifying_brew = { id = 115203, cooldown = 180, toggle = "cooldowns", handler = function() applyBuff("fortifying_brew") end },
+    zen_meditation = { id = 115176, cooldown = 180, toggle = "defensives", handler = function() applyBuff("zen_meditation") end },
+    energizing_brew = { id = 115288, cooldown = 60, toggle = "cooldowns", handler = function() applyBuff("energizing_brew") end },
 
     -- Talented Abilities
-    chi_brew = { id = 115399, cooldown = 45, charges = 2, gain = 2, gain_type = "chi", talent = "chi_brew" },
-    chi_wave = { id = 115098, cooldown = 15, talent = "chi_wave" },
-    dampen_harm = { id = 122278, cooldown = 90, buff = "dampen_harm", talent = "dampen_harm", toggle = "defensives" },
-    diffuse_magic = { id = 122783, cooldown = 90, buff = "diffuse_magic", talent = "diffuse_magic", toggle = "defensives" },
-    invoke_xuen = { id = 123904, cooldown = 180, buff = "invoke_xuen", talent = "invoke_xuen", toggle = "cooldowns" },
-    leg_sweep = { id = 119381, cooldown = 45, talent = "leg_sweep" },
-    rushing_jade_wind = { id = 116847, cooldown = 6, spend = 2, spend_type = "chi", buff = "rushing_jade_wind", talent = "rushing_jade_wind" },
+    chi_brew = { id = 115399, cooldown = 45, charges = 2, talent = "chi_brew", handler = function() gain(2, "chi") end },
+    chi_wave = { id = 115098, cooldown = 15, talent = "chi_wave", handler = function() end },
+    dampen_harm = { id = 122278, cooldown = 90, toggle = "defensives", talent = "dampen_harm", handler = function() applyBuff("dampen_harm") end },
+    diffuse_magic = { id = 122783, cooldown = 90, toggle = "defensives", talent = "diffuse_magic", handler = function() applyBuff("diffuse_magic") end },
+    invoke_xuen = { id = 123904, cooldown = 180, toggle = "cooldowns", talent = "invoke_xuen", handler = function() summonPet("xuen_the_white_tiger", 45); applyBuff("invoke_xuen") end },
+    leg_sweep = { id = 119381, cooldown = 45, talent = "leg_sweep", handler = function() end },
+    rushing_jade_wind = { id = 116847, cooldown = 6, spend = 2, spendType = "chi", talent = "rushing_jade_wind", handler = function() applyBuff("rushing_jade_wind") end },
     
-    -- Utility
-    provoke = { id = 115546, cooldown = 8 },
-    roll = { id = 109132, cooldown = 20, charges = 2 },
-    detox = { id = 115450, cooldown = 8 },
-    transcendence = { id = 101643, cooldown = 45 },
-    transcendence_transfer = { id = 119996, cooldown = 25 },
-    clash = { id = 122425, cooldown = 35 },
-    spear_hand_strike = { id = 116705, cooldown = 15, interrupt = true },
-    
-    -- Racials
-    blood_fury = { id = 20572, cooldown = 120, toggle = "cooldowns" }, -- Orc
-    berserking = { id = 26297, cooldown = 180, toggle = "cooldowns" }, -- Troll
-    arcane_torrent = { id = 28730, cooldown = 120 }, -- Blood Elf
+    -- Utility & Racials
+    provoke = { id = 115546, cooldown = 8, handler = function() end },
+    roll = { id = 109132, cooldown = 20, charges = 2, handler = function() end },
+    spear_hand_strike = { id = 116705, cooldown = 15, interrupt = true, handler = function() interrupt() end },
+    blood_fury = { id = 20572, cooldown = 120, toggle = "cooldowns", handler = function() applyBuff("blood_fury") end },
+    berserking = { id = 26297, cooldown = 180, toggle = "cooldowns", handler = function() applyBuff("berserking") end },
 })
 
--- State Expressions for easier APL conditions
-spec:RegisterStateExpr("stagger_percent_of_health", function()
-    local hp = state.health.max
-    if hp == 0 then return 0 end
-    if state.buff.heavy_stagger.up then return 0.06 * 100 end -- Stagger DOT is 6% of health per second
-    if state.buff.moderate_stagger.up then return 0.03 * 100 end -- 3%
-    if state.buff.light_stagger.up then return 0.015 * 100 end -- 1.5%
-    return 0
-end)
+spec:RegisterSetting( "purify_threshold", "heavy", {
+    name = "Purify Stagger Threshold",
+    desc = "Determines when to recommend Purifying Brew.\n\n|cFFFFD100Heavy|r: Only purify at heavy (red) stagger.\n|cFFFFD100Moderate|r: Purify at moderate (yellow) or heavy stagger.\n|cFFFFD100Aggressive|r: Purify frequently, even at light stagger.",
+    type = "select",
+    width = 1.5,
+    values = {
+        heavy = "Heavy Stagger",
+        moderate = "Moderate Stagger",
+        aggressive = "Aggressive (Any Stagger)"
+    }
+} )
 
-spec:RegisterStateExpr("should_purify", function()
-    -- Purify heavy stagger always, or moderate if health is dropping.
-    if state.buff.heavy_stagger.up then return true end
-    if state.buff.moderate_stagger.up and state.health.percent < 70 then return true end
-    return false
-end)
+spec:RegisterSetting( "guard_usage", "reactive", {
+    name = "Guard Usage",
+    desc = "Controls the logic for recommending Guard.\n\n|cFFFFD100Reactive|r: Use Guard in response to high incoming damage or when health is low.\n|cFFFFD100Uptime|r: Use Guard as often as possible to maximize uptime.",
+    type = "select",
+    width = 1.5,
+    values = {
+        reactive = "Reactive",
+        uptime = "Maximize Uptime"
+    }
+} )
 
--- The string below is a placeholder.
+spec:RegisterSetting( "fortify_health_pct", 35, {
+    name = strformat( "Use %s Below Health %%", Hekili:GetSpellLinkWithTexture( spec.abilities.fortifying_brew.id ) ),
+    desc = "The health percentage at which Fortifying Brew will be recommended as an emergency defensive cooldown.",
+    type = "range",
+    min = 0,
+    max = 100,
+    step = 5,
+    width = "full"
+} )
+
+-- APL Placeholder
 spec:RegisterPack("Brewmaster", 20250722, [[Hekili: PLACEHOLDER - REPLACE WITH NEW STRING]])
