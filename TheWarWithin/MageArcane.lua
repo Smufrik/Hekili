@@ -35,163 +35,149 @@ spec:RegisterResource( Enum.PowerType.Mana )
 
 -- Talents
 spec:RegisterTalents( {
+
     -- Mage
-    accumulative_shielding     = {  62093, 382800, 1 }, -- Your barrier's cooldown recharges 30% faster while the shield persists.
-    alter_time                 = {  62115, 342245, 1 }, -- Alters the fabric of time, returning you to your current location and health when cast a second time, or after 10 sec. Effect negated by long distance or death.
-    arcane_warding             = {  62114, 383092, 2 }, -- Reduces magic damage taken by 3%.
-    barrier_diffusion          = {  62091, 455428, 1 }, -- Whenever one of your Barriers is removed, reduce its cooldown by 4 sec.
-    blast_wave                 = {  62103, 157981, 1 }, -- Causes an explosion around yourself, dealing 42,073 Fire damage to all enemies within 8 yds, knocking them back, and reducing movement speed by 80% for 6 sec.
-    cryofreeze                 = {  62107, 382292, 2 }, -- While inside Ice Block, you heal for 40% of your maximum health over the duration.
-    displacement               = {  62095, 389713, 1 }, -- Teleports you back to where you last Blinked and heals you for 1.4 million health. Only usable within 12 sec of Blinking.
-    diverted_energy            = {  62101, 382270, 2 }, -- Your Barriers heal you for 10% of the damage absorbed.
-    dragons_breath             = { 101883,  31661, 1 }, -- Enemies in a cone in front of you take 51,870 Fire damage and are disoriented for 4 sec. Damage will cancel the effect.
-    elemental_affinity         = {  94633, 431067, 1 }, --
-    energized_barriers         = {  62100, 386828, 1 }, -- When your barrier receives melee attacks, you have a 10% chance to be granted Clearcasting. Casting your barrier removes all snare effects.
-    excess_fire                = {  94637, 438595, 1 }, -- Casting Comet Storm causes your next to explode in a Frostfire Burst, dealing 205,655 Frostfire damage to nearby enemies. Damage reduced beyond 8 targets. Frostfire Burst, .
-    excess_frost               = {  94639, 438600, 1 }, -- Consuming Excess Fire causes your next to also cast Ice Nova at 200% effectiveness. Ice Novas cast this way do not freeze enemies in place. When you consume Excess Frost, the cooldown of is reduced by 5 sec.
-    flame_and_frost            = {  94633, 431112, 1 }, --
-    flash_freezeburn           = {  94635, 431178, 1 }, -- Frostfire Empowerment grants you maximum benefit of Frostfire Mastery, refreshes its duration, and grants you Excess Frost and Excess Fire. Activating Combustion or Icy Veins grants you Frostfire Empowerment.
-    flow_of_time               = {  62096, 382268, 2 }, -- The cooldowns of Blink and Shimmer are reduced by 2 sec.
-    freezing_cold              = {  62087, 386763, 1 }, -- Enemies hit by Cone of Cold are frozen in place for 5 sec instead of snared. When your roots expire or are dispelled, your target is snared by 90%, decaying over 3 sec.
-    frigid_winds               = {  62128, 235224, 2 }, -- All of your snare effects reduce the target's movement speed by an additional 10%.
-    frostfire_bolt             = {  94641, 431044, 1 }, -- Launches a bolt of frostfire at the enemy, causing 97,949 Frostfire damage, slowing movement speed by 60%, and causing an additional 42,758 Frostfire damage over 8 sec. Frostfire Bolt generates stacks for both Fire Mastery and Frost Mastery.
-    frostfire_empowerment      = {  94632, 431176, 1 }, -- Your Frost and Fire spells have a chance to activate Frostfire Empowerment, causing your next Frostfire Bolt to be instant cast, deal 60% increased damage, explode for 80% of its damage to nearby enemies.
-    frostfire_infusion         = {  94634, 431166, 1 }, -- Your Frost and Fire spells have a chance to trigger an additional bolt of Frostfire, dealing 52,265 damage. This effect generates Frostfire Mastery when activated.
-    frostfire_mastery          = {  94636, 431038, 1 }, -- Your damaging Fire spells generate 1 stack of Fire Mastery and Frost spells generate 1 stack of Frost Mastery. Fire Mastery increases your haste by 2%, and Frost Mastery increases your Mastery by 2% for 14 sec, stacking up to 6 times each. Adding stacks does not refresh duration.
-    greater_invisibility       = {  93524, 110959, 1 }, -- Makes you invisible and untargetable for 20 sec, removing all threat. Any action taken cancels this effect. You take 60% reduced damage while invisible and for 3 sec after reappearing.
-    ice_block                  = {  62122,  45438, 1 }, -- Encases you in a block of ice, protecting you from all attacks and damage for 10 sec, but during that time you cannot attack, move, or cast spells. While inside Ice Block, you heal for 40% of your maximum health over the duration. Causes Hypothermia, preventing you from recasting Ice Block for 30 sec.
-    ice_cold                   = {  62085, 414659, 1 }, -- Ice Block now reduces all damage taken by 70% for 6 sec but no longer grants Immunity, prevents movement, attacks, or casting spells. Does not incur the Global Cooldown.
-    ice_floes                  = {  62105, 108839, 1 }, -- Makes your next Mage spell with a cast time shorter than 10 sec castable while moving. Unaffected by the global cooldown and castable while casting.
-    ice_nova                   = {  62088, 157997, 1 }, -- Causes a whirl of icy wind around the enemy, dealing 106,854 Frost damage to the target and all other enemies within 8 yds, freezing them in place for 2 sec. Damage reduced beyond 8 targets.
-    ice_ward                   = {  62086, 205036, 1 }, -- Frost Nova now has 2 charges.
-    imbued_warding             = {  94642, 431066, 1 }, --
-    improved_frost_nova        = {  62108, 343183, 1 }, -- Frost Nova duration is increased by 2 sec.
-    incantation_of_swiftness   = {  62112, 382293, 2 }, -- Greater Invisibility increases your movement speed by 40% for 6 sec.
-    incanters_flow             = {  62118,   1463, 1 }, -- Magical energy flows through you while in combat, building up to 10% increased damage and then diminishing down to 2% increased damage, cycling every 10 sec.
-    inspired_intellect         = {  62094, 458437, 1 }, -- Arcane Intellect grants you an additional 3% Intellect.
-    isothermic_core            = {  94638, 431095, 1 }, -- Comet Storm now also calls down a Meteor at 150% effectiveness onto your target's location. Meteor now also calls down a Comet Storm at 200% effectiveness onto your target location.
-    mass_barrier               = {  62092, 414660, 1 }, -- Cast Prismatic Barrier on yourself and 4 allies within 40 yds.
-    mass_invisibility          = {  62092, 414664, 1 }, -- You and your allies within 40 yards instantly become invisible for 12 sec. Taking any action will cancel the effect. Does not affect allies in combat.
-    mass_polymorph             = {  62106, 383121, 1 }, -- Transforms all enemies within 10 yards into sheep, wandering around incapacitated for 15 sec. While affected, the victims cannot take actions but will regenerate health very quickly. Damage will cancel the effect. Only works on Beasts, Humanoids and Critters.
-    master_of_time             = {  62102, 342249, 1 }, -- Reduces the cooldown of Alter Time by 10 sec. Alter Time resets the cooldown of Blink and Shimmer when you return to your original location.
-    meltdown                   = {  94642, 431131, 1 }, -- You melt slightly out of your Ice Block and Ice Cold, allowing you to move slowly during Ice Block and increasing your movement speed over time. Ice Block and Ice Cold trigger a Blazing Barrier when they end.
-    mirror_image               = {  62124,  55342, 1 }, -- Creates 4 copies of you nearby for 40 sec, which cast spells and attack your enemies. While your images are active damage taken is reduced by 25%. Taking direct damage will cause one of your images to dissipate.
-    overflowing_energy         = {  62120, 390218, 1 }, -- Your spell critical strike damage is increased by 10%. When your direct damage spells fail to critically strike a target, your spell critical strike chance is increased by 2%, up to 10% for 8 sec. When your spells critically strike Overflowing Energy is reset.
-    prismatic_barrier          = {  62121, 235450, 1 }, -- Shields you with an arcane force, absorbing 1.5 million damage and reducing magic damage taken by 25% for 1 min. The duration of harmful Magic effects against you is reduced by 40%.
-    quick_witted               = {  62104, 382297, 1 }, -- Successfully interrupting an enemy with Counterspell reduces its cooldown by 4 sec.
-    reabsorption               = {  62125, 382820, 1 }, -- You are healed for 3% of your maximum health whenever a Mirror Image dissipates due to direct damage.
-    reduplication              = {  62125, 382569, 1 }, -- Mirror Image's cooldown is reduced by 10 sec whenever a Mirror Image dissipates due to direct damage.
-    remove_curse               = {  62116,    475, 1 }, -- Removes all Curses from a friendly target.
-    rigid_ice                  = {  62110, 382481, 1 }, -- Frost Nova can withstand 80% more damage before breaking.
-    ring_of_frost              = {  62088, 113724, 1 }, -- Summons a Ring of Frost for 10 sec at the target location. Enemies entering the ring are incapacitated for 10 sec. Limit 10 targets. When the incapacitate expires, enemies are slowed by 75% for 4 sec.
-    severe_temperatures        = {  94640, 431189, 1 }, -- Casting damaging Frost or Fire spells has a high chance to increase the damage of your next Frostfire Bolt by 10%, stacking up to 5 times.
-    shifting_power             = {  62113, 382440, 1 }, -- Draw power from within, dealing 200,132 Arcane damage over 3.3 sec to enemies within 18 yds. While channeling, your Mage ability cooldowns are reduced by 12 sec over 3.3 sec.
-    shimmer                    = {  62105, 212653, 1 }, -- Teleports you 20 yds forward, unless something is in the way. Unaffected by the global cooldown and castable while casting. Gain a shield that absorbs 3% of your maximum health for 15 sec after you Shimmer.
-    slow                       = {  62097,  31589, 1 }, -- Reduces the target's movement speed by 60% for 15 sec.
-    spellsteal                 = {  62084,  30449, 1 }, -- Steals a beneficial magic effect from the target. This effect lasts a maximum of 2 min.
-    supernova                  = { 101883, 157980, 1 }, -- Pulses arcane energy around the target enemy or ally, dealing 35,243 Arcane damage to all enemies within 8 yds, and knocking them upward. A primary enemy target will take 100% increased damage.
-    tempest_barrier            = {  62111, 382289, 2 }, -- Gain a shield that absorbs 3% of your maximum health for 15 sec after you Blink.
-    temporal_velocity          = {  62099, 382826, 2 }, -- Increases your movement speed by 5% for 3 sec after casting Blink and 20% for 6 sec after returning from Alter Time.
-    thermal_conditioning       = {  94640, 431117, 1 }, -- Frostfire Bolt's cast time is reduced by 10%.
-    time_anomaly               = {  62094, 383243, 1 }, -- At any moment, you have a chance to gain Arcane Surge for 4 sec, Clearcasting, or Time Warp for 6 sec.
-    time_manipulation          = {  62129, 387807, 1 }, -- Casting Clearcasting Arcane Missiles reduces the cooldown of your loss of control abilities by 2 sec.
-    tome_of_antonidas          = {  62098, 382490, 1 }, -- Increases Haste by 2%.
-    tome_of_rhonin             = {  62127, 382493, 1 }, -- Increases Critical Strike chance by 2%.
-    volatile_detonation        = {  62089, 389627, 1 }, -- Greatly increases the effect of Blast Wave's knockback. Blast Wave's cooldown is reduced by 5 sec
-    winters_protection         = {  62123, 382424, 2 }, -- The cooldown of Ice Block is reduced by 30 sec.
+    accumulative_shielding         = {  62093,  382800, 1 }, -- Your barrier's cooldown recharges $s1% faster while the shield persists
+    alter_time                     = {  62115,  342245, 1 }, -- Alters the fabric of time, returning you to your current location and health when cast a second time, or after $s1 sec. Effect negated by long distance or death
+    arcane_warding                 = {  62114,  383092, 2 }, -- Reduces magic damage taken by $s1%
+    barrier_diffusion              = {  62091,  455428, 1 }, -- Whenever one of your Barriers is removed, reduce its cooldown by $s1 sec
+    blast_wave                     = {  62103,  157981, 1 }, -- Causes an explosion around yourself, dealing $s$s2 Fire damage to all enemies within $s3 yds, knocking them back, and reducing movement speed by $s4% for $s5 sec
+    cryofreeze                     = {  62107,  382292, 2 }, -- While inside Ice Block, you heal for $s1% of your maximum health over the duration
+    displacement                   = {  62095,  389713, 1 }, -- Teleports you back to where you last Blinked and heals you for $s1 million health. Only usable within $s2 sec of Blinking
+    diverted_energy                = {  62101,  382270, 2 }, -- Your Barriers heal you for $s1% of the damage absorbed
+    dragons_breath                 = { 101883,   31661, 1 }, -- Enemies in a cone in front of you take $s$s2 Fire damage and are disoriented for $s3 sec. Damage will cancel the effect
+    energized_barriers             = {  62100,  386828, 1 }, -- When your barrier receives melee attacks, you have a $s1% chance to be granted Clearcasting. Casting your barrier removes all snare effects
+    flow_of_time                   = {  62096,  382268, 2 }, -- The cooldowns of Blink and Shimmer are reduced by $s1 sec
+    freezing_cold                  = {  62087,  386763, 1 }, -- Enemies hit by Cone of Cold are frozen in place for $s1 sec instead of snared. When your roots expire or are dispelled, your target is snared by $s2%, decaying over $s3 sec
+    frigid_winds                   = {  62128,  235224, 2 }, -- All of your snare effects reduce the target's movement speed by an additional $s1%
+    greater_invisibility           = {  93524,  110959, 1 }, -- Makes you invisible and untargetable for $s1 sec, removing all threat. Any action taken cancels this effect. You take $s2% reduced damage while invisible and for $s3 sec after reappearing
+    ice_block                      = {  62122,   45438, 1 }, -- Encases you in a block of ice, protecting you from all attacks and damage for $s1 sec, but during that time you cannot attack, move, or cast spells. While inside Ice Block, you heal for $s2% of your maximum health over the duration. Causes Hypothermia, preventing you from recasting Ice Block for $s3 sec
+    ice_cold                       = {  62085,  414659, 1 }, -- Ice Block now reduces all damage taken by $s1% for $s2 sec but no longer grants Immunity, prevents movement, attacks, or casting spells. Does not incur the Global Cooldown
+    ice_floes                      = {  62105,  108839, 1 }, -- Makes your next Mage spell with a cast time shorter than $s1 sec castable while moving. Unaffected by the global cooldown and castable while casting
+    ice_nova                       = {  62088,  157997, 1 }, -- Causes a whirl of icy wind around the enemy, dealing $s$s2 Frost damage to the target and all other enemies within $s3 yds, freezing them in place for $s4 sec. Damage reduced beyond $s5 targets
+    ice_ward                       = {  62086,  205036, 1 }, -- Frost Nova now has $s1 charges
+    improved_frost_nova            = {  62108,  343183, 1 }, -- Frost Nova duration is increased by $s1 sec
+    incantation_of_swiftness       = {  62112,  382293, 2 }, -- Greater Invisibility increases your movement speed by $s1% for $s2 sec
+    incanters_flow                 = {  62118,    1463, 1 }, -- Magical energy flows through you while in combat, building up to $s1% increased damage and then diminishing down to $s2% increased damage, cycling every $s3 sec
+    inspired_intellect             = {  62094,  458437, 1 }, -- Arcane Intellect grants you an additional $s1% Intellect
+    mass_barrier                   = {  62092,  414660, 1 }, -- Cast Prismatic Barrier on yourself and $s1 allies within $s2 yds
+    mass_invisibility              = {  62092,  414664, 1 }, -- You and your allies within $s1 yards instantly become invisible for $s2 sec. Taking any action will cancel the effect. Does not affect allies in combat
+    mass_polymorph                 = {  62106,  383121, 1 }, -- Transforms all enemies within $s1 yards into sheep, wandering around incapacitated for $s2 sec. While affected, the victims cannot take actions but will regenerate health very quickly. Damage will cancel the effect. Only works on Beasts, Humanoids and Critters
+    master_of_time                 = {  62102,  342249, 1 }, -- Reduces the cooldown of Alter Time by $s1 sec. Alter Time resets the cooldown of Blink and Shimmer when you return to your original location
+    mirror_image                   = {  62124,   55342, 1 }, -- Creates $s1 copies of you nearby for $s2 sec, which cast spells and attack your enemies. While your images are active damage taken is reduced by $s3%. Taking direct damage will cause one of your images to dissipate
+    overflowing_energy             = {  62120,  390218, 1 }, -- Your spell critical strike damage is increased by $s1%. When your direct damage spells fail to critically strike a target, your spell critical strike chance is increased by $s2%, up to $s3% for $s4 sec. When your spells critically strike Overflowing Energy is reset
+    quick_witted                   = {  62104,  382297, 1 }, -- Successfully interrupting an enemy with Counterspell reduces its cooldown by $s1 sec
+    reabsorption                   = {  62125,  382820, 1 }, -- You are healed for $s1% of your maximum health whenever a Mirror Image dissipates due to direct damage
+    reduplication                  = {  62125,  382569, 1 }, -- Mirror Image's cooldown is reduced by $s1 sec whenever a Mirror Image dissipates due to direct damage
+    remove_curse                   = {  62116,     475, 1 }, -- Removes all Curses from a friendly target
+    rigid_ice                      = {  62110,  382481, 1 }, -- Frost Nova can withstand $s1% more damage before breaking
+    ring_of_frost                  = {  62088,  113724, 1 }, -- Summons a Ring of Frost for $s1 sec at the target location. Enemies entering the ring are incapacitated for $s2 sec. Limit $s3 targets. When the incapacitate expires, enemies are slowed by $s4% for $s5 sec
+    shifting_power                 = {  62113,  382440, 1 }, -- Draw power from within, dealing $s$s2 Arcane damage over $s3 sec to enemies within $s4 yds. While channeling, your Mage ability cooldowns are reduced by $s5 sec over $s6 sec
+    shimmer                        = {  62105,  212653, 1 }, -- Teleports you $s1 yds forward, unless something is in the way. Unaffected by the global cooldown and castable while casting. Gain a shield that absorbs $s2% of your maximum health for $s3 sec after you Shimmer
+    slow                           = {  62097,   31589, 1 }, -- Reduces the target's movement speed by $s1% for $s2 sec
+    spellsteal                     = {  62084,   30449, 1 }, -- Steals a beneficial magic effect from the target. This effect lasts a maximum of $s1 min
+    supernova                      = { 101883,  157980, 1 }, -- Pulses arcane energy around the target enemy or ally, dealing $s$s2 Arcane damage to all enemies within $s3 yds, and knocking them upward. A primary enemy target will take $s4% increased damage
+    tempest_barrier                = {  62111,  382289, 2 }, -- Gain a shield that absorbs $s1% of your maximum health for $s2 sec after you Blink
+    temporal_velocity              = {  62099,  382826, 2 }, -- Increases your movement speed by $s1% for $s2 sec after casting Blink and $s3% for $s4 sec after returning from Alter Time
+    time_manipulation              = {  62129,  387807, 1 }, -- Casting Clearcasting Arcane Missiles reduces the cooldown of your loss of control abilities by $s1 sec
+    tome_of_antonidas              = {  62098,  382490, 1 }, -- Increases Haste by $s1%
+    tome_of_rhonin                 = {  62127,  382493, 1 }, -- Increases Critical Strike chance by $s1%
+    volatile_detonation            = {  62089,  389627, 1 }, -- Greatly increases the effect of Blast Wave's knockback. Blast Wave's cooldown is reduced by $s1 sec
+    winters_protection             = {  62123,  382424, 2 }, -- The cooldown of Ice Block is reduced by $s1 sec
 
     -- Arcane
-    aether_attunement          = { 102476, 453600, 1 }, -- Every 3 times you consume Clearcasting, gain Aether Attunement. Aether Attunement: Your next Arcane Missiles deals 100% increased damage to your primary target and fires at up to 4 nearby enemies dealing 50% increased damage.
-    aether_fragment            = { 102477, 1222947, 1 }, -- Intuition's damage bonus increased by 20%.
-    amplification              = { 102448, 236628, 1 }, -- Arcane Missiles fires 3 additional missiles.
-    arcane_bombardment         = { 102465, 384581, 1 }, -- Arcane Barrage deals an additional 100% damage against targets below 35% health.
-    arcane_debilitation        = { 102463, 453598, 2 }, -- Damaging a target with Arcane Missiles increases the damage they take from Arcane Missiles, Arcane Barrage, and Arcane Blast by 0.0% for 6 sec. Multiple instances may overlap.
-    arcane_echo                = { 102457, 342231, 1 }, -- Direct damage you deal to enemies affected by Touch of the Magi, causes an explosion that deals 10,215 Arcane damage to all nearby enemies. Deals reduced damage beyond 8 targets.
-    arcane_familiar            = { 102439, 205022, 1 }, -- Casting Arcane Intellect summons a Familiar that attacks your enemies and increases your maximum mana by 10% for 1 |4hour:hrs;.
-    arcane_harmony             = { 102447, 384452, 1 }, -- Each time Arcane Missiles hits an enemy, the damage of your next Arcane Barrage is increased by 5%. This effect stacks up to 20 times.
-    arcane_missiles            = { 102467,   5143, 1 }, -- Only castable when you have Clearcasting. Launches five waves of Arcane Missiles at the enemy over 2.1 sec, causing a total of 295,535 Arcane damage.
-    arcane_rebound             = { 102438, 1223800, 1 }, -- When Arcane Barrage hits more than 2 targets, it explodes for 80,441 additional Arcane damage to all enemies within 10 yds of the primary target.
-    arcane_surge               = { 102449, 365350, 1 }, -- Expend all of your current mana to annihilate your enemy target and nearby enemies for up to 440,780 Arcane damage based on Mana spent. Deals reduced damage beyond 5 targets. Generates Clearcasting. For the next 15 sec, your Mana regeneration is increased by 425% and spell damage is increased by 35%.
-    arcane_tempo               = { 102446, 383980, 1 }, -- Consuming Arcane Charges increases your Haste by 2% for 12 sec, stacks up to 5 times.
-    arcing_cleave              = { 102458, 231564, 1 }, -- For each Arcane Charge, Arcane Barrage hits 1 additional nearby target for 40% damage.
-    big_brained                = { 102446, 461261, 1 }, -- Gaining Clearcasting increases your Intellect by 1% for 8 sec. Multiple instances may overlap.
-    charged_orb                = { 102475, 384651, 1 }, -- Arcane Orb gains 1 additional charge. Arcane Orb damage increased by 15%.
-    concentrated_power         = { 104113, 414379, 1 }, -- Arcane Missiles channels 20% faster. Clearcasting makes Arcane Explosion echo for 40% damage.
-    consortiums_bauble         = { 102453, 461260, 1 }, -- Reduces Arcane Blast's mana cost by 5% and increases its damage by 8%.
-    dematerialize              = { 102456, 461456, 1 }, -- Spells empowered by Nether Precision cause their target to suffer an additional 8% of the damage dealt over 6 sec.
-    energized_familiar         = { 102462, 452997, 1 }, -- During Arcane Surge, your Familiar fires 4 bolts instead of 1. Damage from your Arcane Familiar has a small chance to grant you up to 2% of your maximum mana.
-    energy_reconstitution      = { 102454, 461457, 1 }, -- Damage from Dematerialize has a small chance to summon an Arcane Explosion at its target's location at 50% effectiveness. Arcane Explosions summoned from Energy Reconstitution do not generate Arcane Charges.
-    enlightened                = { 102470, 321387, 1 }, -- Arcane damage dealt is increased based on your current mana, up to 6% at full mana. Mana Regen is increased based on your current mana, up to 20% when out of mana.
-    eureka                     = { 102455, 452198, 1 }, -- When a spell consumes Clearcasting, its damage is increased by 10%.
-    evocation                  = { 102459,  12051, 1 }, -- Increases your mana regeneration by 1,500% for 2.5 sec and grants Clearcasting. While channeling Evocation, your Intellect is increased by 2% every 0.4 sec. Lasts 20 sec.
-    high_voltage               = { 102472, 461248, 1 }, -- Damage from Arcane Missiles has a 10% chance to grant you 1 Arcane Charge. Chance is increased by 15% every time your Arcane Missiles fails to grant you an Arcane Charge.
-    illuminated_thoughts       = { 102444, 384060, 1 }, -- Clearcasting has a 5% increased chance to proc.
-    impetus                    = { 102480, 383676, 1 }, -- Arcane Blast has a 10% chance to generate an additional Arcane Charge. If you were to gain an Arcane Charge while at maximum charges instead gain 10% Arcane damage for 10 sec.
-    improved_clearcasting      = { 102445, 321420, 1 }, -- Clearcasting can stack up to 2 additional times.
-    improved_touch_of_the_magi = { 102452, 453002, 1 }, -- Your Touch of the Magi now accumulates 25% of the damage you deal.
-    intuition                  = { 102471, 1223798, 1 }, -- Casting a damaging spell has a 5% chance to make your next Arcane Barrage deal 20% increased damage and generate 4 Arcane Charges.
-    leydrinker                 = { 102474, 452196, 1 }, -- Consuming Clearcasting has a 40% chance to make your next Arcane Blast echo, repeating its damage at 70% effectiveness to the primary target and up to 4 nearby enemies. Casting Touch of the Magi grants Leydrinker.
-    leysight                   = { 102477, 452187, 1 }, -- Nether Precision damage bonus increased by 10%.
-    magis_spark                = { 102435, 454016, 1 }, -- Your Touch of the Magi now also conjures a spark, causing the damage from your next Arcane Barrage, Arcane Blast, and Arcane Missiles to echo for 100% of their damage. Upon receiving damage from all three spells, the spark explodes, dealing 328,304 Arcane damage to all nearby enemies.
-    nether_munitions           = { 102435, 450206, 1 }, -- When your Touch of the Magi detonates, it increases the damage all affected targets take from you by 8% for 12 sec.
-    nether_precision           = { 102473, 383782, 1 }, -- Consuming Clearcasting increases the damage of your next 2 Arcane Blasts or Arcane Barrages by 30%.
-    orb_barrage                = { 102443, 384858, 1 }, -- Arcane Barrage has a 10% chance per Arcane Charge consumed to launch an Arcane Orb in front of you at 100% effectiveness.
-    presence_of_mind           = { 102460, 205025, 1 }, -- Causes your next 2 Arcane Blasts to be instant cast.
-    prodigious_savant          = { 102450, 384612, 2 }, -- Arcane Charges further increase Mastery effectiveness of Arcane Blast and Arcane Barrage by 20%.
-    resonance                  = { 102437, 205028, 1 }, -- Arcane Barrage deals 15% increased damage per target it hits beyond the first.
-    reverberate                = { 102448, 281482, 1 }, -- If Arcane Explosion hits at least 3 targets, it has a 50% chance to generate an extra Arcane Charge.
-    slipstream                 = { 102469, 236457, 1 }, -- Arcane Missiles can now be channeled while moving. Evocation can be channeled while moving.
-    static_cloud               = { 102441, 461257, 1 }, -- Each time you cast Arcane Explosion, its damage increases by 25%. Bonus resets after reaching 100% damage.
-    surging_urge               = { 102440, 457521, 1 }, -- Arcane Surge damage increased by 5% per Arcane Charge.
-    time_loop                  = { 102451, 452924, 1 }, -- Arcane Debilitation's duration is increased by 2 sec. When you apply a stack of Arcane Debilitation, you have a 25% chance to apply another stack of Arcane Debilitation. This effect can trigger off of itself.
-    touch_of_the_magi          = { 102468, 321507, 1 }, -- Applies Touch of the Magi to your current target, accumulating 25% of the damage you deal to the target for 12 sec, and then exploding for that amount of Arcane damage to the target and reduced damage to all nearby enemies. Generates 4 Arcane Charges.
+    aether_attunement              = { 102476,  453600, 1 }, -- Every $s1 times you consume Clearcasting, gain Aether Attunement. Aether Attunement: Your next Arcane Missiles deals $s4% increased damage to your primary target and fires at up to $s5 nearby enemies dealing $s6% increased damage
+    aether_fragment                = { 102477, 1222947, 1 }, -- Intuition's damage bonus increased by $s1%
+    amplification                  = { 102448,  236628, 1 }, -- Arcane Missiles fires $s1 additional missiles
+    arcane_bombardment             = { 102465,  384581, 1 }, -- Arcane Barrage deals an additional $s1% damage against targets below $s2% health
+    arcane_debilitation            = { 102463,  453598, 2 }, -- Damaging a target with Arcane Missiles increases the damage they take from Arcane Missiles, Arcane Barrage, and Arcane Blast by $s1% for $s2 sec. Multiple instances may overlap
+    arcane_echo                    = { 102457,  342231, 1 }, -- Direct damage you deal to enemies affected by Touch of the Magi, causes an explosion that deals $s$s2 Arcane damage to all nearby enemies. Deals reduced damage beyond $s3 targets
+    arcane_familiar                = { 102439,  205022, 1 }, -- Casting Arcane Intellect summons a Familiar that attacks your enemies and increases your maximum mana by $s1% for $s2 |$s3hour:hrs;
+    arcane_harmony                 = { 102447,  384452, 1 }, -- Each time Arcane Missiles hits an enemy, the damage of your next Arcane Barrage is increased by $s1%. This effect stacks up to $s2 times
+    arcane_missiles                = { 102467,    5143, 1 }, -- Only castable when you have Clearcasting. Launches five waves of Arcane Missiles at the enemy over $s2 sec, causing a total of $s$s3 Arcane damage
+    arcane_rebound                 = { 102441, 1223800, 1 }, -- When Arcane Barrage hits more than $s1 targets, it explodes for $s2 additional Arcane damage to all enemies within $s3 yds of the primary target
+    arcane_surge                   = { 102449,  365350, 1 }, -- Expend all of your current mana to annihilate your enemy target and nearby enemies for up to $s$s2 Arcane damage based on Mana spent. Deals reduced damage beyond $s3 targets. Generates Clearcasting. For the next $s4 sec, your Mana regeneration is increased by $s5% and spell damage is increased by $s6%
+    arcane_tempo                   = { 102446,  383980, 1 }, -- Consuming Arcane Charges increases your Haste by $s1% for $s2 sec, stacks up to $s3 times
+    arcing_cleave                  = { 102458,  231564, 1 }, -- For each Arcane Charge, Arcane Barrage hits $s1 additional nearby target for $s2% damage
+    big_brained                    = { 102446,  461261, 1 }, -- Gaining Clearcasting increases your Intellect by $s1% for $s2 sec. Multiple instances may overlap
+    charged_orb                    = { 102475,  384651, 1 }, -- Arcane Orb gains $s1 additional charge. Arcane Orb damage increased by $s2%
+    concentrated_power             = { 104113,  414379, 1 }, -- Arcane Missiles channels $s1% faster. Clearcasting makes Arcane Explosion echo for $s2% damage
+    consortiums_bauble             = { 102453,  461260, 1 }, -- Reduces Arcane Blast's mana cost by $s1% and increases its damage by $s2%
+    dematerialize                  = { 102456,  461456, 1 }, -- Spells empowered by Nether Precision cause their target to suffer an additional $s1% of the damage dealt over $s2 sec
+    energized_familiar             = { 102462,  452997, 1 }, -- During Arcane Surge, your Familiar fires $s1 bolts instead of $s2. Damage from your Arcane Familiar has a small chance to grant you up to $s3% of your maximum mana
+    energy_reconstitution          = { 102454,  461457, 1 }, -- Damage from Dematerialize has a small chance to summon an Arcane Explosion at its target's location at $s1% effectiveness. Arcane Explosions summoned from Energy Reconstitution do not generate Arcane Charges
+    enlightened                    = { 102470,  321387, 1 }, -- Arcane damage dealt is increased based on your current mana, up to $s1% at full mana. Mana Regen is increased based on your current mana, up to $s2% when out of mana
+    eureka                         = { 102455,  452198, 1 }, -- When a spell consumes Clearcasting, its damage is increased by $s1%
+    evocation                      = { 102459,   12051, 1 }, -- Increases your mana regeneration by $s1% for $s2 sec and grants Clearcasting. While channeling Evocation, your Intellect is increased by $s3% every $s4 sec. Lasts $s5 sec
+    high_voltage                   = { 102472,  461248, 1 }, -- Damage from Arcane Missiles has a $s1% chance to grant you $s2 Arcane Charge. Chance is increased by $s3% every time your Arcane Missiles fails to grant you an Arcane Charge
+    illuminated_thoughts           = { 102444,  384060, 1 }, -- Clearcasting has a $s1% increased chance to proc
+    impetus                        = { 102480,  383676, 1 }, -- Arcane Blast has a $s1% chance to generate an additional Arcane Charge. If you were to gain an Arcane Charge while at maximum charges instead gain $s2% Arcane damage for $s3 sec
+    improved_clearcasting          = { 102445,  321420, 1 }, -- Clearcasting can stack up to $s1 additional times
+    improved_touch_of_the_magi     = { 102452,  453002, 1 }, -- Your Touch of the Magi now accumulates $s1% of the damage you deal
+    intuition                      = { 102471, 1223798, 1 }, -- Casting a damaging spell has a $s1% chance to make your next Arcane Barrage deal $s2% increased damage and generate $s3 Arcane Charges
+    leydrinker                     = { 102474,  452196, 1 }, -- Consuming Clearcasting has a $s1% chance to make your next Arcane Blast echo, repeating its damage at $s2% effectiveness to the primary target and up to $s3 nearby enemies. Casting Touch of the Magi grants Leydrinker
+    leysight                       = { 102477,  452187, 1 }, -- Nether Precision damage bonus increased by $s1%
+    magis_spark                    = { 102435,  454016, 1 }, -- Your Touch of the Magi now also conjures a spark of potential for $s2 sec, causing the damage from your next Arcane Barrage, Arcane Blast, and Arcane Missiles to echo for $s3% of their damage. Upon receiving damage from all three spells, the spark explodes, dealing $s$s4 Arcane damage to all nearby enemies
+    nether_munitions               = { 102435,  450206, 1 }, -- When your Touch of the Magi detonates, it increases the damage all affected targets take from you by $s1% for $s2 sec
+    nether_precision               = { 102473,  383782, 1 }, -- Consuming Clearcasting increases the damage of your next $s1 Arcane Blasts or Arcane Barrages by $s2%
+    orb_barrage                    = { 102443,  384858, 1 }, -- Arcane Barrage has a $s1% chance per Arcane Charge consumed to launch an Arcane Orb in front of you at $s2% effectiveness
+    presence_of_mind               = { 102460,  205025, 1 }, -- Causes your next $s1 Arcane Blasts to be instant cast
+    prodigious_savant              = { 102450,  384612, 2 }, -- Arcane Charges now increase the damage of Arcane Blast and Arcane Barrage by an additional $s1%
+    resonance                      = { 102437,  205028, 1 }, -- Arcane Barrage deals $s1% increased damage per target it hits beyond the first
+    reverberate                    = { 102448,  281482, 1 }, -- If Arcane Explosion hits at least $s1 targets, it has a $s2% chance to generate an extra Arcane Charge
+    slipstream                     = { 102469,  236457, 1 }, -- Arcane Missiles and Evocation can now be channeled while moving
+    static_cloud                   = { 102438,  461257, 1 }, -- Each time you cast Arcane Explosion, its damage increases by $s1%. Bonus resets after reaching $s2% damage
+    surging_urge                   = { 102440,  457521, 1 }, -- Arcane Surge damage increased by $s1% per Arcane Charge
+    time_loop                      = { 102451,  452924, 1 }, -- Arcane Debilitation's duration is increased by $s1 sec. When you apply a stack of Arcane Debilitation, you have a $s2% chance to apply another stack of Arcane Debilitation. This effect can trigger off of itself
+    touch_of_the_magi              = { 102468,  321507, 1 }, -- Applies Touch of the Magi to your current target, accumulating $s1% of the damage you deal to the target for $s2 sec, and then exploding for that amount of Arcane damage to the target and reduced damage to all nearby enemies. Generates $s3 Arcane Charges
 
     -- Spellslinger
-    augury_abounds             = {  94662, 443783, 1 }, -- Casting Arcane Surge conjures 8 Arcane Splinters. During Arcane Surge, whenever you conjure an Arcane Splinter, you have a 100% chance to conjure an additional Arcane Splinter.
-    controlled_instincts       = {  94663, 444483, 1 }, -- For 8 seconds after being struck by an Arcane Orb, 20% of the direct damage dealt by an Arcane Splinter is also dealt to nearby enemies. Damage reduced beyond 5 targets.
-    force_of_will              = {  94656, 444719, 1 }, -- Gain 2% increased critical strike chance. Gain 5% increased critical strike damage.
-    look_again                 = {  94659, 444756, 1 }, -- Displacement has a 50% longer duration and 25% longer range.
-    phantasmal_image           = {  94660, 444784, 1 }, -- Your Mirror Image summons one extra clone. Mirror Image now reduces all damage taken by an additional 5%.
-    reactive_barrier           = {  94660, 444827, 1 }, -- Your Prismatic Barrier can absorb up to 50% more damage based on your missing Health. Max effectiveness when under 50% health.
-    shifting_shards            = {  94657, 444675, 1 }, -- Shifting Power fires a barrage of 8 Arcane Splinters at random enemies within 40 yds over its duration.
-    signature_spell            = {  94657, 470021, 1 }, -- When your Magi's Spark explodes, you conjure 6 Arcane Splinters.
-    slippery_slinging          = {  94659, 444752, 1 }, -- You have 40% increased movement speed during Alter Time.
-    spellfrost_teachings       = {  94655, 444986, 1 }, -- Direct damage from Arcane Splinters has a 2.0% chance to launch an Arcane Orb at 50% effectiveness and increase all damage dealt by Arcane Orb by 10% for 10 sec.
-    splintering_orbs           = {  94661, 444256, 1 }, -- Enemies damaged by your Arcane Orb conjure 2 Arcane Splinters, up to 4. Arcane Orb damage is increased by 10%.
-    splintering_sorcery        = {  94664, 443739, 1, "spellslinger" }, -- When you consume Nether Precision, conjure 2 Arcane Splinters that fire at your target. Arcane Splinter:
-    splinterstorm              = {  94654, 443742, 1 }, -- Whenever you have 8 or more active Embedded Arcane Splinters, you automatically cast a Splinterstorm at your target. Splinterstorm: Shatter all Embedded Arcane Splinters, dealing their remaining periodic damage instantly. Conjure an Arcane Splinter for each Splinter shattered, then unleash them all in a devastating barrage, dealing 29,420 Arcane damage to your target for each Splinter in the Splinterstorm. Splinterstorm has a 5% chance to grant Clearcasting.
-    unerring_proficiency       = {  94658, 444974, 1 }, -- Each time you conjure an Arcane Splinter, increase the damage of your next Supernova by 20%. Stacks up to 30 times.
-    volatile_magic             = {  94658, 444968, 1 }, -- Whenever an Embedded Arcane Splinter is removed, it explodes, dealing 8,207 Arcane damage to nearby enemies. Deals reduced damage beyond 5 targets.
+    augury_abounds                 = {  94662,  443783, 1 }, -- Casting Arcane Surge conjures $s1 Arcane Splinters. During Arcane Surge, whenever you conjure an Arcane Splinter, you have a $s2% chance to conjure an additional Arcane Splinter
+    controlled_instincts           = {  94663,  444483, 1 }, -- For $s1 seconds after being struck by an Arcane Orb, $s2% of the direct damage dealt by an Arcane Splinter is also dealt to nearby enemies. Damage reduced beyond $s3 targets
+    force_of_will                  = {  94656,  444719, 1 }, -- Gain $s1% increased critical strike chance. Gain $s2% increased critical strike damage
+    look_again                     = {  94659,  444756, 1 }, -- Displacement has a $s1% longer duration and $s2% longer range
+    phantasmal_image               = {  94660,  444784, 1 }, -- Your Mirror Image summons one extra clone. Mirror Image now reduces all damage taken by an additional $s1%
+    reactive_barrier               = {  94660,  444827, 1 }, -- Your Prismatic Barrier can absorb up to $s1% more damage based on your missing Health. Max effectiveness when under $s2% health
+    shifting_shards                = {  94657,  444675, 1 }, -- Shifting Power fires a barrage of $s1 Arcane Splinters at random enemies within $s2 yds over its duration
+    signature_spell                = {  94657,  470021, 1 }, -- When your Magi's Spark explodes, you conjure $s1 Arcane Splinters
+    slippery_slinging              = {  94659,  444752, 1 }, -- You have $s1% increased movement speed during Alter Time
+    spellfrost_teachings           = {  94655,  444986, 1 }, -- Direct damage from Arcane Splinters reduces the cooldown of Arcane Orb by $s1 sec
+    splintering_orbs               = {  94661,  444256, 1 }, -- Enemies damaged by your Arcane Orb conjure $s1 Arcane Splinters, up to $s2. Arcane Orb damage is increased by $s3%
+    splintering_sorcery            = {  94664,  443739, 1 }, -- When you consume Nether Precision, conjure $s3 Arcane Splinters. Arcane Splinter: Conjure raw Arcane magic into a sharp projectile that deals $s$s6 Arcane damage. Arcane Splinters embed themselves into their target, dealing $s$s7 Arcane damage over $s8 sec. This effect stacks
+    splinterstorm                  = {  94654,  443742, 1 }, -- Whenever you have $s2 or more active Embedded Arcane Splinters, you automatically cast a Splinterstorm at your target. Splinterstorm: Shatter all Embedded Arcane Splinters, dealing their remaining periodic damage instantly. Conjure an Arcane Splinter for each Splinter shattered, then unleash them all in a devastating barrage, dealing $s$s5 Arcane damage to your target for each Splinter in the Splinterstorm. Splinterstorm has a $s6% chance to grant Clearcasting
+    unerring_proficiency           = {  94658,  444974, 1 }, -- Each time you conjure an Arcane Splinter, increase the damage of your next Supernova by $s1%. Stacks up to $s2 times
+    volatile_magic                 = {  94658,  444968, 1 }, -- Whenever an Embedded Arcane Splinter is removed, it explodes, dealing $s$s2 Arcane damage to nearby enemies. Deals reduced damage beyond $s3 targets
 
     -- Sunfury
-    burden_of_power            = {  94644, 451035, 1 }, -- Conjuring a Spellfire Sphere increases the damage of your next Arcane Blast by 20% or Arcane Barrage by 20%.
-    codex_of_the_sunstriders   = {  94643, 449382, 1 }, -- Over its duration, your Arcane Phoenix will consume each of your Spellfire Spheres to cast an exceptional spell. Upon consuming a Spellfire Sphere, your Arcane Phoenix will grant you Lingering Embers.  Lingering Embers Increases your spell damage by 1%.
-    glorious_incandescence     = {  94645, 449394, 1 }, -- Consuming Burden of Power causes your next Arcane Barrage to deal 20% increased damage, grant 4 Arcane Charges, and call down a storm of 4 Meteorites at your target.
-    gravity_lapse              = {  94651, 458513, 1 }, -- Your Supernova becomes Gravity Lapse. Gravity Lapse The snap of your fingers warps the gravity around your target and 4 other nearby enemies, suspending them in the air for 3 sec. Upon landing, nearby enemies take 51,077 Arcane damage.
-    ignite_the_future          = {  94648, 449558, 1 }, -- Generating a Spellfire Sphere while your Phoenix is active causes it to cast an exceptional spell. Mana Cascade can now stack up to 15 times.
-    invocation_arcane_phoenix  = {  94652, 448658, 1 }, -- When you cast Arcane Surge, summon an Arcane Phoenix to aid you in battle.  Arcane Phoenix Your Arcane Phoenix aids you for the duration of your Arcane Surge, casting random Arcane and Fire spells.
-    lessons_in_debilitation    = {  94651, 449627, 1 }, -- Your Arcane Phoenix will Spellsteal when it is summoned and when it expires.
-    mana_cascade               = {  94653, 449293, 1 }, -- Casting Arcane Blast or Arcane Barrage grants you 0.5% Haste for 10 sec. Stacks up to 10 times. Multiple instances may overlap.
-    memory_of_alar             = {  94646, 449619, 1 }, -- While under the effects of a casted Arcane Surge, you gain twice as many stacks of Mana Cascade. When your Arcane Phoenix expires, it empowers you, granting Arcane Soul for 2 sec, plus an additional 1.0 sec for each exceptional spell it had cast. Arcane Soul: Arcane Barrage grants Clearcasting and generates 4 Arcane Charges. Each cast of Arcane Barrage increases the damage of Arcane Barrage by 15%.
-    merely_a_setback           = {  94649, 449330, 1 }, -- Your Prismatic Barrier now grants 5% avoidance while active and 3% leech for 5 sec when it breaks or expires.
-    rondurmancy                = {  94648, 449596, 1 }, -- Spellfire Spheres can now stack up to 5 times.
-    savor_the_moment           = {  94650, 449412, 1 }, -- When you cast Arcane Surge, its duration is extended by 0.5 sec for each Spellfire Sphere you have, up to 2.5 sec.
-    spellfire_spheres          = {  94647, 448601, 1, "sunfury" }, -- Every 6 times you cast Arcane Blast or Arcane Barrage, conjure a Spellfire Sphere. While you're out of combat, you will slowly conjure Spellfire Spheres over time.  Spellfire Sphere Increases your spell damage by 1%. Stacks up to 5 times.
-    sunfury_execution          = {  94650, 449349, 1 }, -- Arcane Bombardment damage bonus increased to 130%.  Arcane Bombardment Arcane Barrage deals an additional 100% damage against targets below 35% health.
+    burden_of_power                = {  94644,  451035, 1 }, -- Conjuring a Spellfire Sphere increases the damage of your next Arcane Blast by $s1% or Arcane Barrage by $s2%
+    codex_of_the_sunstriders       = {  94643,  449382, 1 }, -- Over its duration, your Arcane Phoenix will consume each of your Spellfire Spheres to cast an exceptional spell. Upon consuming a Spellfire Sphere, your Arcane Phoenix will grant you Lingering Embers.  Lingering Embers Increases your spell damage by $s3%
+    glorious_incandescence         = {  94645,  449394, 1 }, -- Consuming Burden of Power causes your next Arcane Barrage to deal $s1% increased damage, grant $s2 Arcane Charges, and call down a storm of $s3 Meteorites at your target
+    gravity_lapse                  = {  94651,  458513, 1 }, -- Your Supernova becomes Gravity Lapse. Gravity Lapse The snap of your fingers warps the gravity around your target and $s4 other nearby enemies, suspending them in the air for $s5 sec. Upon landing, nearby enemies take $s$s6 Arcane damage
+    ignite_the_future              = {  94648,  449558, 1 }, -- Generating a Spellfire Sphere while your Phoenix is active causes it to cast an exceptional spell. Mana Cascade can now stack up to $s1 times
+    invocation_arcane_phoenix      = {  94652,  448658, 1 }, -- When you cast Arcane Surge, summon an Arcane Phoenix to aid you in battle.  Arcane Phoenix Your Arcane Phoenix aids you for the duration of your Arcane Surge, casting random Arcane and Fire spells
+    lessons_in_debilitation        = {  94651,  449627, 1 }, -- Your Arcane Phoenix will Spellsteal when it is summoned and when it expires
+    mana_cascade                   = {  94653,  449293, 1 }, -- Casting Arcane Blast or Arcane Barrage grants you $s1% Haste for $s2 sec. Stacks up to $s3 times. Multiple instances may overlap
+    memory_of_alar                 = {  94646,  449619, 1 }, -- While under the effects of a casted Arcane Surge, you gain twice as many stacks of Mana Cascade. When your Arcane Phoenix expires, it empowers you, granting Arcane Soul for $s1 sec, plus an additional $s2 sec for each exceptional spell it had cast. Arcane Soul: Arcane Barrage grants Clearcasting and generates $s5 Arcane Charges. Each cast of Arcane Barrage increases the damage of Arcane Barrage by $s6%, up to $s7%
+    merely_a_setback               = {  94649,  449330, 1 }, -- Your Prismatic Barrier now grants $s1% avoidance while active and $s2% leech for $s3 sec when it breaks or expires
+    rondurmancy                    = {  94648,  449596, 1 }, -- Spellfire Spheres can now stack up to $s1 times
+    savor_the_moment               = {  94650,  449412, 1 }, -- When you cast Arcane Surge, its duration is extended by $s1 sec for each Spellfire Sphere you have, up to $s2 sec
+    spellfire_spheres              = {  94647,  448601, 1 }, -- Every $s1 times you cast Arcane Blast or Arcane Barrage, conjure a Spellfire Sphere. While you're out of combat, you will slowly conjure Spellfire Spheres over time.  Spellfire Sphere Increases your spell damage by $s4%. Stacks up to $s5 times
+    sunfury_execution              = {  94650,  449349, 1 }, -- Arcane Bombardment damage bonus increased to $s1%.  Arcane Bombardment Arcane Barrage deals an additional $s4% damage against targets below $s5% health
 } )
 
 -- PvP Talents
 spec:RegisterPvpTalents( {
-    arcanosphere               = 5397, -- (353128) Builds a sphere of Arcane energy, gaining power over 4 sec. Upon release, the sphere passes through any barriers, knocking enemies back and dealing up to 1 million Arcane damage.
-    chrono_shift               = 5661, -- (235711)
-    ethereal_blink             = 5601, -- (410939)
-    ice_wall                   = 5488, -- (352278) Conjures an Ice Wall 30 yards long that obstructs line of sight. The wall has 40% of your maximum health and lasts up to 15 sec.
-    improved_mass_invisibility =  637, -- (415945)
-    kleptomania                = 3529, -- (198100) Unleash a flurry of disruptive magic onto your target, stealing a beneficial magic effect every 0.4 sec for 3.3 sec. Castable while moving, but movement speed is reduced by 40% while channeling.
-    master_of_escape           =  635, -- (210476)
-    master_shepherd            = 5589, -- (410248)
-    overpowered_barrier        = 5707, -- (1220739)
-    ring_of_fire               = 5491, -- (353082) Summons a Ring of Fire for 8 sec at the target location. Enemies entering the ring are disoriented and burn for 3% of their total health over 3 sec.
+    arcanosphere                   = 5397, -- (353128) Builds a sphere of Arcane energy, gaining power over $s1 sec. Upon release, the sphere passes through any barriers, knocking enemies back and dealing up to $s2 million Arcane damage
+    chrono_shift                   = 5661, -- (235711)
+    ethereal_blink                 = 5601, -- (410939) Blink and Shimmer apply Slow at $s1% effectiveness to all enemies you Blink through. For each enemy you Blink through, the cooldown of Blink and Shimmer are reduced by $s2 sec, up to $s3 sec
+    ice_wall                       = 5488, -- (352278) Conjures an Ice Wall $s1 yards long that obstructs line of sight. The wall has $s2% of your maximum health and lasts up to $s3 sec
+    improved_mass_invisibility     =  637, -- (415945) The cooldown of Mass Invisibility is reduced by $s1 min and can affect allies in combat
+    kleptomania                    = 3529, -- (198100)
+    master_of_escape               =  635, -- (210476)
+    master_shepherd                = 5589, -- (410248) While an enemy player is affected by your Polymorph or Mass Polymorph, your movement speed is increased by $s1% and your Versatility is increased by $s2%. Additionally, Polymorph and Mass Polymorph no longer heal enemies
+    nether_flux                    = 5714, -- (461264)
+    overpowered_barrier            = 5707, -- (1220739) Your barriers absorb $s2% more damage and have an additional effect, but last $s3 sec.  Prismatic Barrier If the barrier is fully absorbed, your next Blink or Shimmer within $s6 sec grants Invisibility and immunity to damage for $s7 sec$s$s8 The damage reduction is lost if Invisibility ends
+    ring_of_fire                   = 5491, -- (353082) Summons a Ring of Fire for $s1 sec at the target location. Enemies entering the ring are disoriented and burn for $s2% of their total health over $s3 sec
 } )
 
 -- Auras
@@ -262,7 +248,7 @@ spec:RegisterAuras( {
     arcane_harmony = {
         id = 384455,
         duration = 3600,
-        max_stack = 1,
+        max_stack = 20,
         copy = 332777
     },
     -- Intellect increased by $w1%.
@@ -496,7 +482,7 @@ spec:RegisterAuras( {
     },
     intuition = {
         id = 1223797,
-        duration = 3,
+        duration = 5,
         max_stack = 1
     },
     leydrinker = {
@@ -732,6 +718,23 @@ spec:RegisterAuras( {
 
 } )
 
+local TriggerArcaneOverloadT30 = setfenv( function()
+    applyBuff( "arcane_overload" )
+end, state )
+
+local TriggerArcaneSoul = setfenv( function()
+
+    local mod = 1.5
+
+    if set_bonus.tww3 >= 4 then
+        mod = 2
+        applyBuff( "lesser_time_warp" )
+        applyBuff( "flame_quills" )
+    end
+
+    applyBuff( "arcane_soul", 2 + ( buff.lingering_embers.stacks * mod ) )
+
+end, state )
 
 -- Variables from APL (2022-11-30)
 -- actions.precombat+=/variable,name=aoe_target_count,default=-1,op=set,if=variable.aoe_target_count=-1,value=3
@@ -915,6 +918,30 @@ end
 
 spec:RegisterGear({
     -- The War Within
+    tww3 = {
+        items = { 237721, 237719, 237718, 237716, 237717 },
+        auras = {
+            -- Sunfury
+            flame_quills = {
+                id = 1236145,
+                duration = 13,
+                max_stack = 1
+            },
+            lesser_time_warp= {
+                id = 1236231,
+                duration = 13,
+                max_stack = 1
+            },
+            -- Spellslinger
+            -- Spherical Sorcery Your spell damage is increased by $s1% $s2 seconds remaining
+            -- https://www.wowhead.com/spell=1247525
+            spherical_sorcery = {
+                id = 1247525,
+                duration = 10,
+                max_stack = 1
+            },
+        }
+    },
     tww2 = {
         items = { 229346, 229344, 229342, 229343, 229341 },
         auras = {
@@ -1398,6 +1425,11 @@ spec:RegisterAbilities( {
                 if talent.arcane_echo.enabled then echo_opened = true end
             end -- Use this to catch "5th" cast of Arcane Blast.
             gain( 1, "arcane_charges" )
+
+            if set_bonus.tww3 >= 2 and hero_tree.spellslinger then
+                addStack( "arcane_harmony" )
+                if buff.arcane_harmony.at_max_stacks then applyBuff( "intuition" ) end
+            end
         end,
     },
 
@@ -1581,7 +1613,10 @@ spec:RegisterAbilities( {
         end,
 
         tick = function ()
-            if talent.arcane_harmony.enabled or legendary.arcane_harmony.enabled then addStack( "arcane_harmony", nil, 1 ) end
+            if talent.arcane_harmony.enabled or legendary.arcane_harmony.enabled then
+                addStack( "arcane_harmony", nil, 1 )
+                if buff.arcane_harmony.at_max_stacks and set_bonus.tww3 >= 4 and hero_tree.spellslinger then applyBuff( "intuition" ) end
+            end
         end,
     },
 
@@ -1609,6 +1644,10 @@ spec:RegisterAbilities( {
 
         impact = function ()
             gain( true_active_enemies, "arcane_charges" )
+            if set_bonus.tww3 >= 4 and hero_tree.spellslinger then
+                addStack( "arcane_harmony", min( 8, true_active_enemies ) )
+                if buff.arcane_harmony.at_max_stacks then applyBuff( "intuition" ) end
+            end
         end
     },
 
