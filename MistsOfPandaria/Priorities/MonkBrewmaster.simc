@@ -1,41 +1,33 @@
 ## Monk: Brewmaster
 ##
-actions.precombat+=/stance_of_the_sturdy_ox
-actions.precombat+=/chi_burst,if=talent.chi_burst.enabled
-actions.precombat+=/legacy_of_the_white_tiger
-
-actions+=/spear_hand_strike,if=target.debuff.casting.react
-actions+=/use_items
-actions+=/blood_fury
-actions+=/berserking
-actions+=/arcane_torrent
-actions+=/nimble_brew,if=debuff.fear.up|debuff.polymorph.up|debuff.horror.up
-actions+=/dampen_harm,if=incoming_damage_1500ms>health.max*0.3&buff.fortifying_brew.down
-actions+=/diffuse_magic,if=incoming_damage_1500ms>health.max*0.3&buff.fortifying_brew.down&magic_damage=1
-actions+=/fortifying_brew,if=health.pct<35|incoming_damage_1500ms>health.max*0.5
-
-actions+=/purifying_brew,if=stagger.heavy
-actions+=/purifying_brew,if=stagger.moderate&buff.shuffle.remains>=6&chi>=1
-actions+=/keg_smash,if=chi<3
-actions+=/expel_harm,if=chi.max-chi>=1&health.pct<=85
-actions+=/guard,if=chi>=2
-actions+=/chi_brew,if=talent.chi_brew.enabled&chi<=1
-actions+=/zen_sphere,if=talent.zen_sphere.enabled&!ticking
-actions+=/chi_wave,if=talent.chi_wave.enabled
-actions+=/elusive_brew,if=buff.elusive_brew.stack>=10
-
-actions+=/blackout_kick,if=buff.shuffle.down
-actions+=/blackout_kick,if=chi>=2&buff.shuffle.remains<=6
-actions+=/shuffle,if=chi>=2&buff.shuffle.remains<=1
-
-actions+=/rushing_jade_wind,if=talent.rushing_jade_wind.enabled&active_enemies>=3
-actions+=/chi_burst,if=talent.chi_burst.enabled&active_enemies>=3
-actions+=/breath_of_fire,if=dot.breath_of_fire.remains<=1&active_enemies>=3
-actions+=/spinning_crane_kick,if=active_enemies>=3&chi>=2
-
-actions+=/dizzying_haze,if=active_enemies>=3&target.distance>=10
-
-actions+=/tiger_palm,if=buff.tiger_power.stack<3
-actions+=/tiger_palm,if=buff.tiger_power.remains<=3
-actions+=/jab,if=chi.max-chi>=1
-actions+=/tiger_palm
+# Pre-Combat Setup
+    actions.precombat+=/stance_of_the_sturdy_ox
+    actions.precombat+=/legacy_of_the_white_tiger
+    
+    # --- CORE ROTATION ---
+    
+    # Interrupts and Major Defensives
+    actions=spear_hand_strike,if=target.debuff.casting.react
+    actions+=/fortifying_brew,if=health.pct<35
+    actions+=/dampen_harm,if=talent.dampen_harm.enabled&health.pct<50
+    
+    # Mitigation and Resource Management
+    actions+=/purifying_brew,if=should_purify
+    actions+=/keg_smash,if=chi.max-chi>=2
+    actions+=/expel_harm,if=chi.max-chi>=1&health.pct<=85
+    actions+=/guard,if=chi>=2&cooldown.fortifying_brew.remains>10
+    actions+=/chi_brew,if=talent.chi_brew.enabled&chi<=1
+    actions+=/elusive_brew,if=buff.elusive_brew_stack.stack>=10
+    
+    # Shuffle Uptime
+    actions+=/blackout_kick,if=buff.shuffle.down
+    actions+=/blackout_kick,if=chi>=2&buff.shuffle.remains<=2
+    
+    # AoE Rotation (3+ enemies)
+    actions+=/rushing_jade_wind,if=talent.rushing_jade_wind.enabled&active_enemies>=3&buff.shuffle.remains>1
+    actions+=/breath_of_fire,if=dot.breath_of_fire.remains<2&active_enemies>=3
+    actions+=/spinning_crane_kick,if=active_enemies>=3&chi>=3
+    
+    # Single Target Filler
+    actions+=/jab,if=chi.max-chi>=1
+    actions+=/tiger_palm
