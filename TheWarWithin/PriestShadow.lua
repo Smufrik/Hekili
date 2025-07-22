@@ -924,13 +924,17 @@ spec:RegisterTotems( {
 
 local entropic_rift_expires = 0
 local er_extensions = 0
+local PowerSurgeDPs = 0
 
 spec:RegisterHook( "COMBAT_LOG_EVENT_UNFILTERED", function( _, subtype, _, sourceGUID, _, _, _, _, _, _, _, spellID )
     if sourceGUID ~= GUID then return end
 
-    if subtype == "SPELL_AURA_REMOVED" and spellID == 341207 then
-        Hekili:ForceUpdate( subtype )
-
+    if subtype == "SPELL_AURA_REMOVED" then
+        if spellID == 341207 then
+            Hekili:ForceUpdate( subtype )
+        elseif spellID == 453113 then
+            PowerSurgeDPs = 0
+        end
     elseif subtype == "SPELL_AURA_APPLIED" and spellID == 341207 then
         Hekili:ForceUpdate( subtype )
 
@@ -942,12 +946,22 @@ spec:RegisterHook( "COMBAT_LOG_EVENT_UNFILTERED", function( _, subtype, _, sourc
     elseif state.talent.darkening_horizon.enabled and subtype == "SPELL_CAST_SUCCESS" and er_extensions < 3 and spellID == 450405 and entropic_rift_expires > GetTime() then
         entropic_rift_expires = entropic_rift_expires + 1
         er_extensions = er_extensions + 1
+    elseif spellID == 335467 and subtype == "SPELL_CAST_SUCCESS" and state.set_bonus.tww3 >= 4 and state.buff.power_surge.up then
+        PowerSurgeDPs = PowerSurgeDPs + 1
     end
 
 end, false )
 
 spec:RegisterStateExpr( "rift_extensions", function()
     return er_extensions
+end )
+
+spec:RegisterStateExpr( "dp_will_extend_power_surge", function()
+    if PowerSurgeDPs % 2 == 1 then
+        return true
+    else
+        return false
+    end
 end )
 
 spec:RegisterStateTable( "priest", setmetatable( {},{
@@ -969,6 +983,17 @@ end, state )
 
 spec:RegisterGear( {
     -- The War Within
+    tww3 = {
+        items = { 237710, 237708, 237709, 237712, 237707 },
+        auras = {
+            -- Voidweaver
+            overflowing_void = {
+                id = 1237615,
+                duration = 3600,
+                max_stack = 1
+            },
+        }
+    },
     tww2 = {
         items = { 229334, 229332, 229337, 229335, 229333 }
     },
@@ -1225,6 +1250,16 @@ spec:RegisterAbilities( {
                 addStack( "mind_flay_insanity" )
             end
 
+            if set_bonus.tww3 >= 4 and buff.power_surge.up then
+                if dp_will_extend_power_surge then
+                    buff.power_surge.expires = buff.power_surge.expires + 5
+                    dp_will_extend_power_surge = false
+                else
+                    dp_will_extend_power_surge = true
+                end
+            end
+
+            -- Legacy
             if set_bonus.tier29_4pc > 0 then applyBuff( "dark_reveries" ) end
 
             if set_bonus.tier30_4pc > 0 then
@@ -1550,13 +1585,13 @@ spec:RegisterAbilities( {
         id = 450983,
         known = 8092,
         flash = 8092,
-        cast = function () return buff.shadowy_insight.up and 0 or ( 1.5 * haste ) end,
+        cast = function () return buff.shadowy_insight.up and 0 or ( 1.5 * haste * ( set_bonus.tww3 >= 2 and 0.8 or 1 ) ) end,
         charges = function()
             if talent.thought_harvester.enabled then return 2 end
         end,
-        cooldown = 9,
+        cooldown = function() return 9 * ( set_bonus.tww3 >= 2 and 0.5 or 1 ) end,
         recharge = function ()
-            if talent.thought_harvester.enabled then return 9 * haste end
+            if talent.thought_harvester.enabled then return 9 * ( set_bonus.tww3 >= 2 and 0.5 or 1 ) * haste end
         end,
         hasteCD = true,
         gcd = "spell",
@@ -2353,6 +2388,7 @@ spec:RegisterAbilities( {
             end
             if talent.idol_of_cthun.enabled then applyDebuff( "target", "void_tendril_mind_flay" ) end
             if talent.void_volley.enabled then applyBuff( "void_volley" ) end
+            if set_bonus.tww3 >= 4 and hero_tree.voidweaver then removeBuff( "overflowing_void" ) end
         end,
 
     },
