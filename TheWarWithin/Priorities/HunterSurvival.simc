@@ -1,4 +1,4 @@
-## https://github.com/simulationcraft/simc/blob/thewarwithin/ActionPriorityLists/hunter_survival.simc
+## https://github.com/simulationcraft/simc/blob/thewarwithin/ActionPriorityLists/default/hunter_survival.simc
 ## Up to date with SimC: April 26 2025 - 739316d
 
 actions.precombat+=/summon_pet
