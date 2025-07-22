@@ -1,6 +1,6 @@
 ## Monk: Brewmaster
 ##
-# Pre-Combat Setup
+    # Pre-Combat Setup
     actions.precombat+=/stance_of_the_sturdy_ox
     actions.precombat+=/legacy_of_the_white_tiger
     
