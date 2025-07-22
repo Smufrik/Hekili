@@ -1957,6 +1957,7 @@ spec:RegisterAbilities( {
 
     desecrate = {
         id = 1234698,
+        known = 1234559,
         cast = 0,
         cooldown = 0,
         gcd = "spell",
@@ -1972,8 +1973,10 @@ spec:RegisterAbilities( {
             removeBuff( "desecrate" )
             applyBuff( "death_and_decay", 7 ) -- gives you the fake DnD extension buff thing
 
-            if debuff.festering_wound.up then PopWounds( 1, active_enemies ) else addDebuffStack( "target", "festering_wound", 1 ) end
+            if debuff.festering_wound.up then PopWounds( 1, active_enemies ) else applyDebuff( "target", "festering_wound", debuff.festering_wound.stack + 1 ) end
         end,
+
+        bind = "death_and_decay"
 
     },
 

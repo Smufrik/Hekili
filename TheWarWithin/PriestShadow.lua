@@ -23,7 +23,7 @@ spec:RegisterResource( Enum.PowerType.Insanity, {
         end,
 
         interval = function () return class.auras.mind_flay.tick_time end,
-        value = 2
+        value = 3
     },
 
     mind_flay_insanity = {
@@ -38,7 +38,7 @@ spec:RegisterResource( Enum.PowerType.Insanity, {
         end,
 
         interval = function () return class.auras.mind_flay_insanity_dot.tick_time end,
-        value = 3
+        value = 2
     },
 
     void_lasher_mind_sear = {
@@ -89,7 +89,7 @@ spec:RegisterResource( Enum.PowerType.Insanity, {
         aura = "voidwraith",
 
         last = function ()
-            local app = state.buff.voidwraith.expires - 15
+            local app = state.buff.voidwraith.expires - ( 15 * state.talent.subservient_shadows.enabled and 1.2 or 1 )
             local t = state.query_time
 
             return app + floor( ( t - app ) / ( 1.5 * state.haste ) ) * ( 1.5 * state.haste )
@@ -103,7 +103,7 @@ spec:RegisterResource( Enum.PowerType.Insanity, {
         aura = "mindbender",
 
         last = function ()
-            local app = state.buff.mindbender.expires - 15
+            local app = state.buff.mindbender.expires - ( 15 * state.talent.subservient_shadows.enabled and 1.2 or 1 )
             local t = state.query_time
 
             return app + floor( ( t - app ) / ( 1.5 * state.haste ) ) * ( 1.5 * state.haste )
@@ -117,7 +117,7 @@ spec:RegisterResource( Enum.PowerType.Insanity, {
         aura = "shadowfiend",
 
         last = function ()
-            local app = state.buff.shadowfiend.expires - 15
+            local app = state.buff.shadowfiend.expires - ( 15 * state.talent.subservient_shadows.enabled and 1.2 or 1 )
             local t = state.query_time
 
             return app + floor( ( t - app ) / ( 1.5 * state.haste ) ) * ( 1.5 * state.haste )
@@ -131,161 +131,165 @@ spec:RegisterResource( Enum.PowerType.Mana )
 
 -- Talents
 spec:RegisterTalents( {
+
     -- Priest
-    angelic_bulwark            = {  82675, 108945, 1 }, -- When an attack brings you below 30% health, you gain an absorption shield equal to 15% of your maximum health for 20 sec. Cannot occur more than once every 90 sec.
-    angelic_feather            = {  82703, 121536, 1 }, -- Places a feather at the target location, granting the first ally to walk through it 40% increased movement speed for 5 sec. Only 3 feathers can be placed at one time.
-    angels_mercy               = {  82678, 238100, 1 }, -- Reduces the cooldown of Desperate Prayer by 20 sec.
-    apathy                     = {  82689, 390668, 1 }, -- Your Mind Blast critical strikes reduce your target's movement speed by 75% for 4 sec.
-    benevolence                = {  82676, 415416, 1 }, -- Increases the healing of your spells by 3%.
-    binding_heals              = {  82678, 368275, 1 }, -- 20% of Flash Heal healing on other targets also heals you.
-    blessed_recovery           = {  82720, 390767, 1 }, -- After being struck by a melee or ranged critical hit, heal 20% of the damage taken over 6 sec.
-    body_and_soul              = {  82706,  64129, 1 }, -- Power Word: Shield and Leap of Faith increase your target's movement speed by 40% for 3 sec.
-    cauterizing_shadows        = {  82687, 459990, 1 }, -- When your Shadow Word: Pain expires or is refreshed with less than 5 sec remaining, a nearby ally within 46 yards is healed for 4,427.
-    crystalline_reflection     = {  82681, 373457, 2 }, -- Power Word: Shield instantly heals the target for 5,165 and reflects 10% of damage absorbed.
-    death_and_madness          = {  82711, 321291, 1 }, -- If your Shadow Word: Death fails to kill a target at or below 20% health, its cooldown is reset. Cannot occur more than once every 10 sec. If a target dies within 7 sec after being struck by your Shadow Word: Death, you gain 8 Insanity.
-    dispel_magic               = {  82715,    528, 1 }, -- Dispels Magic on the enemy target, removing 1 beneficial Magic effect.
-    divine_star                = {  82680, 122121, 1 }, -- Throw a Divine Star forward 31 yds, healing allies in its path for 8,608 and dealing 9,083 Shadow damage to enemies. After reaching its destination, the Divine Star returns to you, healing allies and damaging enemies in its path again. Healing reduced beyond 6 targets. Generates 6 Insanity.
-    dominate_mind              = {  82710, 205364, 1 }, -- Controls a mind up to 1 level above yours for 30 sec while still controlling your own mind. Does not work versus Demonic, Mechanical, or Undead beings or players. This spell shares diminishing returns with other disorienting effects.
-    essence_devourer           = {  82674, 415479, 1 }, -- Attacks from your Shadowfiend siphon life from enemies, healing a nearby injured ally for 22,136. Attacks from your Mindbender siphon life from enemies, healing a nearby injured ally for 7,378.
-    focused_mending            = {  82719, 372354, 1 }, -- Prayer of Mending does 45% increased healing to the initial target.
-    from_darkness_comes_light  = {  82707, 390615, 1 }, -- Each time Shadow Word: Pain deals damage, the healing of your next Flash Heal is increased by 3%, up to a maximum of 60%.
-    halo                       = {  82680, 120644, 1 }, -- Creates a ring of Shadow energy around you that quickly expands to a 34 yd radius, healing allies for 19,799 and dealing 23,389 Shadow damage to enemies. Healing reduced beyond 6 targets. Generates 10 Insanity.
-    holy_nova                  = {  82701, 132157, 1 }, -- An explosion of holy light around you deals up to 6,094 Holy damage to enemies and up to 3,874 healing to allies within 13 yds, reduced if there are more than 5 targets.
-    improved_fade              = {  82686, 390670, 2 }, -- Reduces the cooldown of Fade by 5 sec.
-    improved_flash_heal        = {  82714, 393870, 1 }, -- Increases healing done by Flash Heal by 15%.
-    inspiration                = {  82696, 390676, 1 }, -- Reduces your target's physical damage taken by 5% for 15 sec after a critical heal with Flash Heal.
-    leap_of_faith              = {  82716,  73325, 1 }, -- Pulls the spirit of a party or raid member, instantly moving them directly in front of you.
-    lights_inspiration         = {  82679, 373450, 2 }, -- Increases the maximum health gained from Desperate Prayer by 8%.
-    manipulation               = {  82672, 459985, 1 }, -- You take 2% less damage from enemies affected by your Shadow Word: Pain.
-    mass_dispel                = {  82699,  32375, 1 }, -- Dispels magic in a 15 yard radius, removing all harmful Magic from 5 friendly targets and 1 beneficial Magic effect from 5 enemy targets. Potent enough to remove Magic that is normally undispellable.
-    mental_agility             = {  82698, 341167, 1 }, -- Reduces the mana cost of Purify Disease and Mass Dispel by 50% and Dispel Magic by 10%.
-    mind_control               = {  82710,    605, 1 }, -- Controls a mind up to 1 level above yours for 30 sec. Does not work versus Demonic, Undead, or Mechanical beings. Shares diminishing returns with other disorienting effects.
-    move_with_grace            = {  82702, 390620, 1 }, -- Reduces the cooldown of Leap of Faith by 30 sec.
-    petrifying_scream          = {  82695,  55676, 1 }, -- Psychic Scream causes enemies to tremble in place instead of fleeing in fear.
-    phantasm                   = {  82556, 108942, 1 }, -- Activating Fade removes all snare effects.
-    phantom_reach              = {  82673, 459559, 1 }, -- Increases the range of most spells by 15%.
-    power_infusion             = {  82694,  10060, 1 }, -- Infuses the target with power for 15 sec, increasing haste by 20%. Can only be cast on players.
-    power_word_life            = {  82676, 373481, 1 }, -- A word of holy power that heals the target for 127,284. Only usable if the target is below 35% health.
-    prayer_of_mending          = {  82718,  33076, 1 }, -- Places a ward on an ally that heals them for 9,377 the next time they take damage, and then jumps to another ally within 30 yds. Jumps up to 4 times and lasts 30 sec after each jump.
-    protective_light           = {  82707, 193063, 1 }, -- Casting Flash Heal on yourself reduces all damage you take by 10% for 10 sec.
-    psychic_voice              = {  82695, 196704, 1 }, -- Reduces the cooldown of Psychic Scream by 15 sec.
-    purify_disease             = {  82704, 213634, 1 }, -- Removes all Disease effects from a friendly target.
-    renew                      = {  82717,    139, 1 }, -- Fill the target with faith in the light, healing for 35,651 over 15 sec.
-    rhapsody                   = {  82700, 390622, 1 }, -- Every 1 sec, the damage of your next Holy Nova is increased by 20% and its healing is increased by 20%. Stacks up to 20 times.
-    sanguine_teachings         = {  82691, 373218, 1 }, -- Increases your Leech by 4%.
-    sanlayn                    = {  82690, 199855, 1 }, --  Sanguine Teachings Sanguine Teachings grants an additional 2% Leech.  Vampiric Embrace Reduces the cooldown of Vampiric Embrace by 30 sec, increases its healing done by 25%.
-    shackle_undead             = {  82693,   9484, 1 }, -- Shackles the target undead enemy for 50 sec, preventing all actions and movement. Damage will cancel the effect. Limit 1.
-    shadow_word_death          = {  82712,  32379, 1 }, -- A word of dark binding that inflicts 12,750 Shadow damage to your target. If your target is not killed by Shadow Word: Death, you take backlash damage equal to 5% of your maximum health. Damage increased by 250% to targets below 20% health. Generates 4 Insanity.
-    shadowfiend                = {  82713,  34433, 1 }, -- Summons a shadowy fiend to attack the target for 15 sec. Generates 2 Insanity each time the Shadowfiend attacks.
-    sheer_terror               = {  82708, 390919, 1 }, -- Increases the amount of damage required to break your Psychic Scream by 75%.
-    spell_warding              = {  82720, 390667, 1 }, -- Reduces all magic damage taken by 3%.
-    surge_of_light             = {  82677, 109186, 1 }, -- Your healing spells and Smite have a 8% chance to make your next Flash Heal instant and cost no mana. Stacks to 2.
-    throes_of_pain             = {  82709, 377422, 2 }, -- Shadow Word: Pain deals an additional 3% damage. When an enemy dies while afflicted by your Shadow Word: Pain, you gain 3 Insanity.
-    tithe_evasion              = {  82688, 373223, 1 }, -- Shadow Word: Death deals 50% less damage to you.
-    translucent_image          = {  82685, 373446, 1 }, -- Fade reduces damage you take by 10%.
-    twins_of_the_sun_priestess = {  82683, 373466, 1 }, -- Power Infusion also grants you 100% of its effects when used on an ally.
-    twist_of_fate              = {  82684, 390972, 2 }, -- After damaging or healing a target below 35% health, gain 5% increased damage and healing for 8 sec.
-    unwavering_will            = {  82697, 373456, 2 }, -- While above 75% health, the cast time of your Flash Heal is reduced by 5%.
-    vampiric_embrace           = {  82691,  15286, 1 }, -- Fills you with the embrace of Shadow energy for 12 sec, causing you to heal a nearby ally for 50% of any single-target Shadow spell damage you deal.
-    void_shield                = {  82692, 280749, 1 }, -- When cast on yourself, 30% of damage you deal refills your Power Word: Shield.
-    void_shift                 = {  82674, 108968, 1 }, -- Swap health percentages with your ally. Increases the lower health percentage of the two to 25% if below that amount.
-    void_tendrils              = {  82708, 108920, 1 }, -- Summons shadowy tendrils, rooting all enemies within 8 yards for 15 sec or until the tendril is killed.
-    words_of_the_pious         = {  82721, 377438, 1 }, -- For 12 sec after casting Power Word: Shield, you deal 10% additional damage and healing with Smite and Holy Nova.
+    angelic_bulwark                = {  82675,  108945, 1 }, -- When an attack brings you below $s1% health, you gain an absorption shield equal to $s2% of your maximum health for $s3 sec. Cannot occur more than once every $s4 sec
+    angelic_feather                = {  82703,  121536, 1 }, -- Places a feather at the target location, granting the first ally to walk through it $s1% increased movement speed for $s2 sec. Only $s3 feathers can be placed at one time
+    angels_mercy                   = {  82678,  238100, 1 }, -- Reduces the cooldown of Desperate Prayer by $s1 sec
+    apathy                         = {  82689,  390668, 1 }, -- Your Mind Blast critical strikes reduce your target's movement speed by $s1% for $s2 sec
+    benevolence                    = {  82676,  415416, 1 }, -- Increases the healing of your spells by $s1%
+    binding_heals                  = {  82678,  368275, 1 }, -- $s1% of Flash Heal healing on other targets also heals you
+    blessed_recovery               = {  82720,  390767, 1 }, -- After being struck by a melee or ranged critical hit, heal $s1% of the damage taken over $s2 sec
+    body_and_soul                  = {  82706,   64129, 1 }, -- Power Word: Shield and Leap of Faith increase your target's movement speed by $s1% for $s2 sec
+    cauterizing_shadows            = {  82687,  459990, 1 }, -- When your Shadow Word: Pain expires or is refreshed with less than $s1 sec remaining, a nearby ally within $s2 yards is healed for $s3
+    crystalline_reflection         = {  82681,  373457, 2 }, -- Power Word: Shield instantly heals the target for $s1 and reflects $s2% of damage absorbed
+    death_and_madness              = {  82711,  321291, 1 }, -- If your Shadow Word: Death fails to kill a target at or below $s1% health, its cooldown is reset. Cannot occur more than once every $s2 sec. If a target dies within $s3 sec after being struck by your Shadow Word: Death, you gain $s4 Insanity
+    dispel_magic                   = {  82715,     528, 1 }, -- Dispels Magic on the enemy target, removing $s1 beneficial Magic effect
+    divine_star                    = {  82680,  122121, 1 }, -- Throw a Divine Star forward $s2 yds, healing allies in its path for $s3 and dealing $s$s4 Shadow damage to enemies. After reaching its destination, the Divine Star returns to you, healing allies and damaging enemies in its path again. Healing reduced beyond $s5 targets. Generates $s6 Insanity
+    dominate_mind                  = {  82710,  205364, 1 }, -- Controls a mind up to $s1 level above yours for $s2 sec while still controlling your own mind. Does not work versus Demonic, Mechanical, or Undead beings or players. This spell shares diminishing returns with other disorienting effects
+    essence_devourer               = {  82674,  415479, 1 }, -- Attacks from your Shadowfiend siphon life from enemies, healing a nearby injured ally for $s1. Attacks from your Mindbender siphon life from enemies, healing a nearby injured ally for $s2
+    focused_mending                = {  82719,  372354, 1 }, -- Prayer of Mending does $s1% increased healing to the initial target
+    from_darkness_comes_light      = {  82707,  390615, 1 }, -- Each time Shadow Word: Pain deals damage, the healing of your next Flash Heal is increased by $s1%, up to a maximum of $s2%
+    halo                           = {  82680,  120644, 1 }, -- Creates a ring of Shadow energy around you that quickly expands to a $s2 yd radius, healing allies for $s3 and dealing $s$s4 Shadow damage to enemies. Healing reduced beyond $s5 targets. Generates $s6 Insanity
+    holy_nova                      = {  82701,  132157, 1 }, -- An explosion of holy light around you deals up to $s$s2 Holy damage to enemies and up to $s3 healing to allies within $s4 yds, reduced if there are more than $s5 targets
+    improved_fade                  = {  82686,  390670, 2 }, -- Reduces the cooldown of Fade by $s1 sec
+    improved_flash_heal            = {  82714,  393870, 1 }, -- Increases healing done by Flash Heal by $s1%
+    inspiration                    = {  82696,  390676, 1 }, -- Reduces your target's physical damage taken by $s1% for $s2 sec after a critical heal with Flash Heal
+    leap_of_faith                  = {  82716,   73325, 1 }, -- Pulls the spirit of a party or raid member, instantly moving them directly in front of you
+    lights_inspiration             = {  82679,  373450, 2 }, -- Increases the maximum health gained from Desperate Prayer by $s1%
+    manipulation                   = {  82672,  459985, 1 }, -- You take $s1% less damage from enemies affected by your Shadow Word: Pain
+    mass_dispel                    = {  82699,   32375, 1 }, -- Dispels magic in a $s1 yard radius, removing all harmful Magic from $s2 friendly targets and $s3 beneficial Magic effect from $s4 enemy targets. Potent enough to remove Magic that is normally undispellable
+    mental_agility                 = {  82698,  341167, 1 }, -- Reduces the mana cost of Purify Disease and Mass Dispel by $s1% and Dispel Magic by $s2%
+    mind_control                   = {  82710,     605, 1 }, -- Controls a mind up to $s1 level above yours for $s2 sec. Does not work versus Demonic, Undead, or Mechanical beings. Shares diminishing returns with other disorienting effects
+    move_with_grace                = {  82702,  390620, 1 }, -- Reduces the cooldown of Leap of Faith by $s1 sec
+    petrifying_scream              = {  82695,   55676, 1 }, -- Psychic Scream causes enemies to tremble in place instead of fleeing in fear
+    phantasm                       = {  82556,  108942, 1 }, -- Activating Fade removes all snare effects
+    phantom_reach                  = {  82673,  459559, 1 }, -- Increases the range of most spells by $s1%
+    power_infusion                 = {  82694,   10060, 1 }, -- Infuses the target with power for $s1 sec, increasing haste by $s2%. Can only be cast on players
+    power_word_life                = {  82676,  373481, 1 }, -- A word of holy power that heals the target for $s1 million. Only usable if the target is below $s2% health
+    prayer_of_mending              = {  82718,   33076, 1 }, -- Places a ward on an ally that heals them for $s1 the next time they take damage, and then jumps to another ally within $s2 yds. Jumps up to $s3 times and lasts $s4 sec after each jump
+    protective_light               = {  82707,  193063, 1 }, -- Casting Flash Heal on yourself reduces all damage you take by $s1% for $s2 sec
+    psychic_voice                  = {  82695,  196704, 1 }, -- Reduces the cooldown of Psychic Scream by $s1 sec
+    purify_disease                 = {  82704,  213634, 1 }, -- Removes all Disease effects from a friendly target
+    renew                          = {  82717,     139, 1 }, -- Fill the target with faith in the light, healing for $s1 over $s2 sec
+    rhapsody                       = {  82700,  390622, 1 }, -- Every $s1 sec, the damage of your next Holy Nova is increased by $s2% and its healing is increased by $s3%. Stacks up to $s4 times
+    sanguine_teachings             = {  82691,  373218, 1 }, -- Increases your Leech by $s1%
+    sanlayn                        = {  82690,  199855, 1 }, --  Sanguine Teachings Sanguine Teachings grants an additional $s3% Leech.  Vampiric Embrace Reduces the cooldown of Vampiric Embrace by $s6 sec, increases its healing done by $s7%
+    shackle_undead                 = {  82693,    9484, 1 }, -- Shackles the target undead enemy for $s1 sec, preventing all actions and movement. Damage will cancel the effect. Limit $s2
+    shadow_word_death              = {  82712,   32379, 1 }, -- A word of dark binding that inflicts $s$s2 Shadow damage to your target. If your target is not killed by Shadow Word: Death, you take backlash damage equal to $s3% of your maximum health. Damage increased by $s4% to targets below $s5% health. Generates $s6 Insanity
+    shadowfiend                    = {  82713,   34433, 1 }, -- Summons a shadowy fiend to attack the target for $s1 sec. Generates $s2 Insanity each time the Shadowfiend attacks
+    sheer_terror                   = {  82708,  390919, 1 }, -- Increases the amount of damage required to break your Psychic Scream by $s1%
+    spell_warding                  = {  82720,  390667, 1 }, -- Reduces all magic damage taken by $s1%
+    surge_of_light                 = {  82677,  109186, 1 }, -- Your healing spells and Smite have a $s1% chance to make your next Flash Heal instant and cost $s2% less mana. Stacks to $s3
+    throes_of_pain                 = {  82709,  377422, 2 }, -- Shadow Word: Pain deals an additional $s1% damage. When an enemy dies while afflicted by your Shadow Word: Pain, you gain $s2 Insanity
+    tithe_evasion                  = {  82688,  373223, 1 }, -- Shadow Word: Death deals $s1% less damage to you
+    translucent_image              = {  82685,  373446, 1 }, -- Fade reduces damage you take by $s1%
+    twins_of_the_sun_priestess     = {  82683,  373466, 1 }, -- Power Infusion also grants you its effect at $s1% value when used on an ally. If no ally is targeted, it will grant its effect at $s2% value to a nearby ally, preferring damage dealers
+    twist_of_fate                  = {  82684,  390972, 2 }, -- After damaging or healing a target below $s1% health, gain $s2% increased damage and healing for $s3 sec
+    unwavering_will                = {  82697,  373456, 2 }, -- While above $s1% health, the cast time of your Flash Heal is reduced by $s2%
+    vampiric_embrace               = {  82691,   15286, 1 }, -- Fills you with the embrace of Shadow energy for $s1 sec, causing you to heal a nearby ally for $s2% of any single-target Shadow spell damage you deal
+    void_shield                    = {  82692,  280749, 1 }, -- When cast on yourself, $s1% of damage you deal refills your Power Word: Shield
+    void_shift                     = {  82674,  108968, 1 }, -- Swap health percentages with your ally. Increases the lower health percentage of the two to $s1% if below that amount
+    void_tendrils                  = {  82708,  108920, 1 }, -- Summons shadowy tendrils, rooting all enemies within $s1 yards for $s2 sec or until the tendril is killed
+    words_of_the_pious             = {  82721,  377438, 1 }, -- For $s1 sec after casting Power Word: Shield, you deal $s2% additional damage and healing with Smite and Holy Nova
 
     -- Shadow
-    ancient_madness            = {  82656, 341240, 1 }, -- Voidform and Dark Ascension increase the critical strike chance of your spells by 10% for 20 sec, reducing by 0.5% every sec.
-    auspicious_spirits         = {  82667, 155271, 1 }, -- Your Shadowy Apparitions deal 15% increased damage and have a chance to generate 1 Insanity.
-    dark_ascension             = {  82657, 391109, 1 }, -- Increases your non-periodic Shadow damage by 20% for 20 sec. Generates 30 Insanity.
-    dark_evangelism            = {  82660, 391095, 2 }, -- Your Mind Flay, Mind Spike, and Void Torrent damage increase the damage of your periodic Shadow effects by 1%, stacking up to 5 times.
-    deathspeaker               = {  82558, 392507, 1 }, -- Your Shadow Word: Pain damage has a chance to reset the cooldown of Shadow Word: Death, increase its damage by 25%, and deal damage as if striking a target below 20% health.
-    devouring_plague           = {  82665, 335467, 1 }, -- Afflicts the target with a disease that instantly causes 32,881 Shadow damage plus an additional 39,025 Shadow damage over 6 sec. Heals you for 30% of damage dealt. If this effect is reapplied, any remaining damage will be added to the new Devouring Plague.
-    dispersion                 = {  82663,  47585, 1 }, -- Disperse into pure shadow energy, reducing all damage taken by 75% for 6 sec and healing you for 25% of your maximum health over its duration, but you are unable to attack or cast spells. Increases movement speed by 50% and makes you immune to all movement impairing effects. Castable while stunned, feared, or silenced.
-    distorted_reality          = {  82647, 409044, 1 }, -- Increases the damage of Devouring Plague by 20% and causes it to deal its damage over 12 sec, but increases its Insanity cost by 5.
-    idol_of_cthun              = {  82643, 377349, 1 }, -- Mind Flay, Mind Spike, and Void Torrent have a chance to spawn a Void Tendril that channels Mind Flay or Void Lasher that channels Mind Sear at your target.  Mind Flay Assaults the target's mind with Shadow energy, causing 47,900 Shadow damage over 15 sec and slowing their movement speed by 30%. Generates 10 Insanity over the duration. Mind Sear Corrosive shadow energy radiates from the target, dealing 25,546 Shadow damage over 15 sec to all enemies within 10 yards of the target. Damage reduced beyond 5 targets. Generates 10 Insanity over the duration.
-    idol_of_nzoth              = {  82552, 373280, 1 }, -- Your periodic Shadow Word: Pain and Vampiric Touch damage has a 30% chance to apply Echoing Void, max 4 targets. Each time Echoing Void is applied, it has a chance to collapse, consuming a stack every 1 sec to deal 1,784 Shadow damage to all nearby enemies. Damage reduced beyond 5 targets. If an enemy dies with Echoing Void, all stacks collapse immediately.
-    idol_of_yoggsaron          = {  82555, 373273, 1 }, -- After conjuring Shadowy Apparitions, gain a stack of Idol of Yogg-Saron. At 25 stacks, you summon a Thing from Beyond that casts Void Spike at nearby enemies for 20 sec.  Void Spike
-    idol_of_yshaarj            = {  82553, 373310, 1 }, -- Summoning Mindbender causes you to gain a benefit based on your target's current state or increases its duration by 5 sec if no state matches. Healthy: You and your Mindbender deal 5% additional damage. Enraged: Devours the Enraged effect, increasing your Haste by 5%. Stunned: Generates 5 Insanity every 1 sec. Feared: You and your Mindbender deal 5% increased damage and do not break Fear effects.
-    inescapable_torment        = {  82644, 373427, 1 }, -- Mind Blast and Shadow Word: Death cause your Mindbender or Shadowfiend to teleport behind your target, slashing up to 5 nearby enemies for 8,935 Shadow damage and extending its duration by 0.7 sec.
-    insidious_ire              = {  82560, 373212, 2 }, -- While you have Shadow Word: Pain, Devouring Plague, and Vampiric Touch active on the same target, your Mind Blast and Void Torrent deal 20% more damage.
-    intangibility              = {  82659, 288733, 1 }, -- Dispersion heals you for an additional 25% of your maximum health over its duration and its cooldown is reduced by 30 sec.
-    last_word                  = {  82652, 263716, 1 }, -- Reduces the cooldown of Silence by 15 sec.
-    maddening_touch            = {  82645, 391228, 2 }, -- Vampiric Touch deals 10% additional damage and has a chance to generate 1 Insanity each time it deals damage.
-    malediction                = {  82655, 373221, 1 }, -- Reduces the cooldown of Void Torrent by 15 sec.
-    mastermind                 = {  82671, 391151, 2 }, -- Increases the critical strike chance of Mind Blast, Mind Spike, Mind Flay, and Shadow Word: Death by 4% and increases their critical strike damage by 20%.
-    mental_decay               = {  82658, 375994, 1 }, -- Increases the damage of Mind Flay and Mind Spike by 10%. The duration of your Shadow Word: Pain and Vampiric Touch is increased by 1 sec when enemies suffer damage from Mind Flay and 2 sec when enemies suffer damage from Mind Spike.
-    mental_fortitude           = {  82659, 377065, 1 }, -- Healing from Vampiric Touch and Devouring Plague when you are at maximum health will shield you for the same amount. The shield cannot exceed 10% of your maximum health.
-    mind_devourer              = {  82561, 373202, 2 }, -- Mind Blast has a 4% chance to make your next Devouring Plague cost no Insanity and deal 20% additional damage.
-    mind_melt                  = {  93172, 391090, 1 }, -- Mind Spike increases the critical strike chance of Mind Blast by 30%, stacking up to 3 times. Lasts 10 sec.
-    mind_spike                 = {  82557,  73510, 1 }, -- Blasts the target for 21,642 Shadowfrost damage. Generates 4 Insanity.
-    mindbender                 = {  82648, 200174, 1 }, -- Summons a Mindbender to attack the target for 15 sec. Generates 2 Insanity each time the Mindbender attacks.
-    minds_eye                  = {  82647, 407470, 1 }, -- Reduces the Insanity cost of Devouring Plague by 5.
-    misery                     = {  93171, 238558, 1 }, -- Vampiric Touch also applies Shadow Word: Pain to the target. Shadow Word: Pain lasts an additional 5 sec.
-    phantasmal_pathogen        = {  82563, 407469, 2 }, -- Shadow Apparitions deal 0% increased damage to targets affected by your Devouring Plague.
-    psychic_horror             = {  82652,  64044, 1 }, -- Terrifies the target in place, stunning them for 4 sec.
-    psychic_link               = {  82670, 199484, 1 }, -- Your direct damage spells inflict 25% of their damage on all other targets afflicted by your Vampiric Touch within 46 yards. Does not apply to damage from Shadowy Apparitions, Shadow Word: Pain, and Vampiric Touch.
-    screams_of_the_void        = {  82649, 375767, 2 }, -- Devouring Plague causes your Shadow Word: Pain and Vampiric Touch to deal damage 40% faster on all targets for 3 sec.
-    shadow_crash_ground        = {  82669, 205385, 1 }, -- Aim a bolt of slow-moving Shadow energy at the destination, dealing 10,237 Shadow damage to all enemies within 8 yds. Generates 6 Insanity. This spell is cast at a selected location.
-    shadow_crash_targeted      = {  82669, 457042, 1 }, -- Hurl a bolt of slow-moving Shadow energy at your target, dealing 10,237 Shadow damage to all enemies within 8 yds. Generates 6 Insanity. This spell is cast at your target.
-    shadowy_apparitions        = {  82666, 341491, 1 }, -- Mind Blast, Devouring Plague, and Void Bolt conjure Shadowy Apparitions that float towards all targets afflicted by your Vampiric Touch for 4,604 Shadow damage. Critical strikes increase the damage by 100%.
-    shadowy_insight            = {  82662, 375888, 1 }, -- Shadow Word: Pain periodic damage has a chance to reset the remaining cooldown on Mind Blast and cause your next Mind Blast to be instant.
-    silence                    = {  82651,  15487, 1 }, -- Silences the target, preventing them from casting spells for 4 sec. Against non-players, also interrupts spellcasting and prevents any spell in that school from being cast for 4 sec.
-    surge_of_insanity          = {  82668, 391399, 1 }, -- Every 2 casts of Devouring Plague transforms your next Mind Flay or Mind Spike into a more powerful spell. Can accumulate up to 4 charges.  Mind Flay: Insanity Assaults the target's mind with Shadow energy, causing 81,690 Shadow damage over 1.2 sec and slowing their movement speed by 70%. Generates 12 Insanity over the duration. Mind Spike: Insanity Blasts the target for 56,746 Shadowfrost damage. Generates 12 Insanity.
-    thought_harvester          = {  82653, 406788, 1 }, -- Mind Blast gains an additional charge.
-    tormented_spirits          = {  93170, 391284, 2 }, -- Your Shadow Word: Pain damage has a 5% chance to create Shadowy Apparitions that float towards all targets afflicted by your Vampiric Touch. Critical strikes increase the chance to 10%.
-    unfurling_darkness         = {  82661, 341273, 1 }, -- After casting Vampiric Touch on a target, your next Vampiric Touch within 8 sec is instant cast and deals 89,672 Shadow damage immediately. This effect cannot occur more than once every 15 sec.
-    void_eruption              = {  82657, 228260, 1 }, -- Releases an explosive blast of pure void energy, activating Voidform and causing 23,052 Shadow damage to all enemies within 10 yds of your target. During Voidform, this ability is replaced by Void Bolt. Casting Devouring Plague increases the duration of Voidform by 2.5 sec.
-    void_torrent               = {  82654, 263165, 1 }, -- Channel a torrent of void energy into the target, dealing 161,545 Shadow damage over 3 sec. Generates 24 Insanity over the duration.
-    voidtouched                = {  82646, 407430, 1 }, -- Increases your Devouring Plague damage by 6% and increases your maximum Insanity by 50.
-    whispering_shadows         = {  82559, 406777, 1 }, -- Shadow Crash applies Vampiric Touch to up to 8 targets it damages.
+    ancient_madness                = {  82656,  341240, 1 }, -- Voidform and Dark Ascension increase the critical strike chance of your spells by $s1% for $s2 sec, reducing by $s3% every sec
+    auspicious_spirits             = {  82667,  155271, 1 }, -- Your Shadowy Apparitions deal $s1% increased damage and have a chance to generate $s2 Insanity
+    dark_ascension                 = {  82657,  391109, 1 }, -- Increases your non-periodic Shadow damage by $s1% for $s2 sec. Generates $s3 Insanity
+    dark_evangelism                = { 108031,  391099, 1 }, -- Increases your periodic spell damage by $s1%
+    dark_thoughts                  = {  82660, 1240388, 1 }, -- Increases the chance for Shadowy Insight to occur by $s1%. When consuming Shadowy Insight, Mind Blast generates $s2 additional Insanity
+    deaths_torment                 = { 108006, 1240364, 1 }, -- Shadow Word: Death deals damage $s1 additional times at $s2% effectiveness
+    deathspeaker                   = {  82558,  392507, 1 }, -- Shadow Word: Death damage increased by $s1%. Shadow Word: Death gains its damage and talent bonuses against targets below $s2% health instead of $s3%
+    descending_darkness            = { 108029, 1242666, 1 }, -- Increases Shadow Crash damage by $s1%
+    devouring_plague               = {  82665,  335467, 1 }, -- Afflicts the target with a disease that instantly causes $s$s3 Shadow damage plus an additional $s$s4 Shadow damage over $s5 sec. Heals you for $s6% of damage dealt. If this effect is reapplied, any remaining damage will be added to the new Devouring Plague
+    dispersion                     = {  82663,   47585, 1 }, -- Disperse into pure shadow energy, reducing all damage taken by $s1% for $s2 sec and healing you for $s3% of your maximum health over its duration, but you are unable to attack or cast spells. Increases movement speed by $s4% and makes you immune to all movement impairing effects. Castable while stunned, feared, or silenced
+    distorted_reality              = {  82647,  409044, 1 }, -- Increases the damage of Devouring Plague by $s1% and causes it to deal its damage over $s2 sec, but increases its Insanity cost by $s3
+    idol_of_cthun                  = {  82643,  377349, 1 }, -- Mind Flay has a chance to spawn a Void Tendril that channels Mind Flay or Void Lasher that channels Mind Sear at your target. Casting Void Torrent or Void Volley always spawns one.  Mind Flay Assaults the target's mind with Shadow energy, causing $s$s5 Shadow damage over $s6 sec and slowing their movement speed by $s7%. Generates $s8 Insanity over the duration.  Mind Sear Corrosive shadow energy radiates from the target, dealing $s$s11 Shadow damage over $s12 sec to all enemies within $s13 yards of the target. Damage reduced beyond $s14 targets. Generates $s15 Insanity over the duration
+    idol_of_nzoth                  = {  82552,  373280, 1 }, -- You create Horrific Visions when casting harmful spells on enemies. At $s3 stacks of Horrific Visions, your target sees a nightmare, dealing $s$s4 Shadow damage and granting you $s5 Insanity over $s6 sec. At $s7 stacks, your target witnesses a vision of N'Zoth, dealing $s$s8 Shadow damage and granting you $s9 Insanity over $s10 sec
+    idol_of_yoggsaron              = {  82555,  373273, 1 }, -- After conjuring Shadowy Apparitions, gain a stack of Idol of Yogg-Saron. At $s1 stacks, you summon a Thing from Beyond that casts Void Spike at nearby enemies for $s2 sec.  Void Spike
+    idol_of_yshaarj                = {  82553,  373310, 1 }, -- Your damaging spells have a chance to grant Call of the Void, increasing your haste by $s1% for $s2 sec. When Call of the Void ends you are afflicted with Overburdened Mind, reducing your haste by $s3% for $s4 sec
+    inescapable_torment            = {  82644,  373427, 1 }, -- Mind Blast and Shadow Word: Death cause your Mindbender or Shadowfiend to teleport behind your target, slashing up to $s2 nearby enemies for $s$s3 Shadow damage and extending its duration by $s4 sec
+    insidious_ire                  = {  82560,  373212, 2 }, -- While you have Shadow Word: Pain, Devouring Plague, and Vampiric Touch active on the same target, your Mind Blast, Void Torrent, and Void Volley deal $s1% more damage
+    instilled_doubt                = { 108152, 1242862, 2 }, -- Increases the critical strike chance of Vampiric Touch and Shadow Word: Pain by $s1% and their critical strike damage by $s2%
+    intangibility                  = {  82659,  288733, 1 }, -- Dispersion heals you for an additional $s1% of your maximum health over its duration and its cooldown is reduced by $s2 sec
+    last_word                      = {  82652,  263716, 1 }, -- Reduces the cooldown of Silence by $s1 sec
+    maddening_touch                = {  82662,  391228, 2 }, -- Vampiric Touch deals $s1% additional damage and has a chance to generate $s2 Insanity each time it deals damage
+    madness_weaving                = {  82671, 1240394, 2 }, -- The damage bonus from your Mastery: Shadow Weaving gains $s1% additional benefit from Devouring Plague
+    mastermind                     = {  82645,  391151, 2 }, -- Increases the critical strike chance of Mind Blast, Mind Flay, and Shadow Word: Death by $s1% and increases their critical strike damage by $s2%
+    mental_decay                   = {  82658,  375994, 1 }, -- Increases the damage of Mind Flay by $s1%. The duration of your Shadow Word: Pain and Vampiric Touch is increased by $s2 sec when enemies suffer damage from Mind Flay
+    mental_fortitude               = {  82659,  377065, 1 }, -- Healing from Vampiric Touch and Devouring Plague when you are at maximum health will shield you for the same amount. The shield cannot exceed $s1% of your maximum health
+    mind_devourer                  = { 108153,  373202, 1 }, -- Mind Blast has a $s1% chance to make your next Devouring Plague cost no Insanity and deal $s2% additional damage
+    mindbender                     = {  82648,  200174, 1 }, -- Summons a Mindbender to attack the target for $s1 sec. Generates $s2 Insanity each time the Mindbender attacks
+    minds_eye                      = {  82647,  407470, 1 }, -- Reduces the Insanity cost of Devouring Plague by $s1
+    misery                         = {  93171,  238558, 1 }, -- Vampiric Touch also applies Shadow Word: Pain to the target. Shadow Word: Pain lasts an additional $s1 sec
+    phantasmal_pathogen            = {  82563,  407469, 2 }, -- Shadow Apparitions deal $s1% increased damage to targets affected by your Devouring Plague
+    phantom_menace                 = {  82646, 1242779, 1 }, -- Increases the critical strike chance of Shadowy Apparitions by $s1% and their critical strike damage by $s2%
+    psychic_horror                 = {  82652,   64044, 1 }, -- Terrifies the target in place, stunning them for $s1 sec
+    psychic_link                   = {  82670,  199484, 1 }, -- Your direct damage spells inflict $s1% of their damage on all other targets afflicted by your Vampiric Touch within $s2 yards. Does not apply to damage from Shadowy Apparitions, Shadow Word: Pain, and Vampiric Touch
+    screams_of_the_void            = {  82649,  375767, 2 }, -- Devouring Plague causes your Shadow Word: Pain and Vampiric Touch to deal damage $s1% faster on all targets for $s2 sec
+    shadow_crash_ground            = {  82669,  205385, 1 }, -- Aim a bolt of slow-moving Shadow energy at the destination, dealing 10,237 Shadow damage to all enemies within 8 yds. Generates 6 Insanity. This spell is cast at a selected location.
+    shadow_crash_targeted          = {  82669,  457042, 1 }, -- Hurl a bolt of slow-moving Shadow energy at your target, dealing 10,237 Shadow damage to all enemies within 8 yds. Generates 6 Insanity. This spell is cast at your target.
+    shadowy_apparitions            = {  82666,  341491, 1 }, -- Mind Blast, Devouring Plague, and Void Bolt conjure Shadowy Apparitions that float towards all targets afflicted by your Vampiric Touch for $s$s2 Shadow damage
+    shadowy_insight                = {  82669,  375888, 1 }, -- Shadow Word: Pain periodic damage has a chance to reset the remaining cooldown on Mind Blast and cause your next Mind Blast to be instant
+    shattered_psyche               = {  82658,  391090, 1 }, -- Mind Flay damage increases the critical strike chance of Mind Blast by $s1%, stacking up to $s2 times. Lasts $s3 sec
+    silence                        = {  82651,   15487, 1 }, -- Silences the target, preventing them from casting spells for $s1 sec. Against non-players, also interrupts spellcasting and prevents any spell in that school from being cast for $s2 sec
+    subservient_shadows            = {  82559, 1228516, 1 }, -- Summoned minions last $s1% longer and deal an additional $s2% damage
+    surge_of_insanity              = {  82668,  391399, 1 }, -- Every $s2 casts of Devouring Plague transforms your next Mind Flay into a more powerful spell. Can accumulate up to $s3 charges.  Mind Flay: Insanity Assaults the target's mind with Shadow energy, causing $s$s6 Shadow damage over $s7 sec and slowing their movement speed by $s8%. Generates $s9 Insanity over the duration
+    thought_harvester              = {  82653,  406788, 1 }, -- Mind Blast gains an additional charge
+    tormented_spirits              = {  93170,  391284, 1 }, -- Your Shadow Word: Pain damage has a chance to create Shadowy Apparitions that float towards all targets afflicted by your Vampiric Touch. Critical strikes increase the chance by $s1%
+    void_eruption                  = {  82657,  228260, 1 }, -- Releases an explosive blast of pure void energy, activating Voidform and causing $s$s2 Shadow damage to all enemies within $s3 yds of your target. During Voidform, this ability is replaced by Void Bolt. Casting Devouring Plague increases the duration of Voidform by $s4 sec
+    void_torrent                   = {  82654,  263165, 1 }, -- Channel a torrent of void energy into the target, dealing $s1 million Shadow damage over $s2 sec. Generates $s3 Insanity over the duration
+    void_volley                    = {  82655, 1240401, 1 }, -- Void Torrent is replaced with Void Volley for $s1 sec after it is cast.  Void Volley
+    voidtouched                    = { 108147,  407430, 1 }, -- Increases your Devouring Plague damage by $s1% and increases your maximum Insanity by $s2
 
     -- Archon
-    concentrated_infusion      = {  94676, 453844, 1 }, -- Your Power Infusion effect grants you an additional 10% haste.
-    divine_halo                = {  94702, 449806, 1 }, -- Halo now centers around you and returns to you after it reaches its maximum distance, healing allies and damaging enemies each time it passes through them.
-    empowered_surges           = {  94688, 453799, 1 }, -- Increases the damage done by Mind Flay: Insanity and Mind Spike: Insanity by 60%. Increases the healing done by Flash Heals affected by Surge of Light by 30%.
-    energy_compression         = {  94678, 449874, 1 }, -- Halo damage and healing is increased by 30%.
-    energy_cycle               = {  94685, 453828, 1 }, -- Consuming Surge of Insanity has a 100% chance to conjure Shadowy Apparitions.
-    heightened_alteration      = {  94680, 453729, 1 }, -- Increases the duration of Dispersion by 2 sec.
-    incessant_screams          = {  94686, 453918, 1 }, -- Psychic Scream creates an image of you at your location. After 4 sec, the image will let out a Psychic Scream.
-    manifested_power           = {  94699, 453783, 1 }, -- Creating a Halo grants Surge of Insanity.
-    perfected_form             = {  94677, 453917, 1 }, -- Your damage dealt is increased by 12% while Dark Ascension is active and by 20% while Voidform is active.
-    power_surge                = {  94697, 453109, 1, "archon" }, -- Casting Halo also causes you to create a Halo around you at 100% effectiveness every 5 sec for 10 sec. Additionally, the radius of Halo is increased by 10 yards.
-    resonant_energy            = {  94681, 453845, 1 }, -- Enemies damaged by your Halo take 2% increased damage from you for 8 sec, stacking up to 5 times.
-    shock_pulse                = {  94686, 453852, 1 }, -- Halo damage reduces enemy movement speed by 5% for 5 sec, stacking up to 5 times.
-    sustained_potency          = {  94678, 454001, 1 }, -- Creating a Halo extends the duration of Voidform by 1 sec. If Voidform is not active, up to 6 seconds is stored. While out of combat or affected by a loss of control effect, the duration of Voidform is paused for up to 20 sec.
-    word_of_supremacy          = {  94680, 453726, 1 }, -- Power Word: Fortitude grants you an additional 5% stamina.
+    concentrated_infusion          = {  94676,  453844, 1 }, -- Your Power Infusion effect grants you an additional $s1% haste
+    divine_halo                    = {  94702,  449806, 1 }, -- Halo now centers around you and returns to you after it reaches its maximum distance, healing allies and damaging enemies each time it passes through them
+    empowered_surges               = {  94688,  453799, 1 }, -- Increases the damage done by Mind Flay: Insanity by $s1%. Increases the healing done by Flash Heals affected by Surge of Light by $s2%
+    energy_compression             = {  94678,  449874, 1 }, -- Halo damage and healing is increased by $s1%
+    energy_cycle                   = {  94685,  453828, 1 }, -- Consuming Surge of Insanity has a $s1% chance to conjure Shadowy Apparitions
+    heightened_alteration          = {  94680,  453729, 1 }, -- Increases the duration of Dispersion by $s1 sec
+    incessant_screams              = {  94686,  453918, 1 }, -- Psychic Scream creates an image of you at your location. After $s1 sec, the image will let out a Psychic Scream
+    manifested_power               = {  94699,  453783, 1 }, -- Creating a Halo grants Surge of Insanity
+    perfected_form                 = {  94677,  453917, 1 }, -- Your damage dealt is increased by $s1% while Dark Ascension is active and by $s2% while Voidform is active
+    power_surge                    = {  94697,  453109, 1 }, -- Casting Halo also causes you to create a Halo around you at $s1% effectiveness every $s2 sec for $s3 sec. Additionally, the radius of Halo is increased by $s4 yards
+    resonant_energy                = {  94681,  453845, 1 }, -- Enemies damaged by your Halo take $s1% increased damage from you for $s2 sec, stacking up to $s3 times
+    shock_pulse                    = {  94686,  453852, 1 }, -- Halo damage reduces enemy movement speed by $s1% for $s2 sec, stacking up to $s3 times
+    sustained_potency              = {  94678,  454001, 1 }, -- Creating a Halo extends the duration of Voidform by $s1 sec. If Voidform is not active, up to $s2 seconds is stored. While out of combat or affected by a loss of control effect, the duration of Voidform is paused for up to $s3 sec
+    word_of_supremacy              = {  94680,  453726, 1 }, -- Power Word: Fortitude grants you an additional $s1% stamina
 
     -- Voidweaver
-    collapsing_void            = {  94694, 448403, 1 }, -- Each time you cast Devouring Plague, Entropic Rift is empowered, increasing its damage and size by 20%. After Entropic Rift ends it collapses, dealing 71,369 Shadow damage split amongst enemy targets within 15 yds.
-    dark_energy                = {  94693, 451018, 1 }, -- Void Torrent can be used while moving. While Entropic Rift is active, you move 20% faster.
-    darkening_horizon          = {  94668, 449912, 1 }, -- Void Blast increases the duration of Entropic Rift by 1.0 sec, up to a maximum of 3 sec.
-    depth_of_shadows           = { 100212, 451308, 1 }, -- Shadow Word: Death has a high chance to summon a Shadowfiend for 5 sec when damaging targets below 20% health.
-    devour_matter              = {  94668, 451840, 1 }, -- Shadow Word: Death consumes absorb shields from your target, dealing 38,250 extra damage to them and granting you 5 Insanity if a shield was present.
-    embrace_the_shadow         = {  94696, 451569, 1 }, -- You absorb 3% of all magic damage taken. Absorbing Shadow damage heals you for 100% of the amount absorbed.
-    entropic_rift              = {  94684, 447444, 1, "voidweaver" }, -- Void Torrent tears open an Entropic Rift that follows the enemy for 8 sec. Enemies caught in its path suffer 9,732 Shadow damage every 0.8 sec while within its reach.
-    inner_quietus              = {  94670, 448278, 1 }, -- Vampiric Touch and Shadow Word: Pain deal 20% additional damage.
-    no_escape                  = {  94693, 451204, 1 }, -- Entropic Rift slows enemies by up to 70%, increased the closer they are to its center.
-    void_blast                 = {  94703, 450405, 1 }, -- Entropic Rift upgrades Mind Blast into Void Blast while it is active. Void Blast: Sends a blast of cosmic void energy at the enemy, causing 55,503 Shadow damage. Generates 6 Insanity.
-    void_empowerment           = {  94695, 450138, 1 }, -- Summoning an Entropic Rift grants you Mind Devourer.
-    void_infusion              = {  94669, 450612, 1 }, -- Void Blast generates 100% additional Insanity.
-    void_leech                 = {  94696, 451311, 1 }, -- Every 2 sec siphon an amount equal to 3% of your health from an ally within 40 yds if they are higher health than you.
-    voidheart                  = {  94692, 449880, 1 }, -- While Entropic Rift is active, your Shadow damage is increased by 10%.
-    voidwraith                 = { 100212, 451234, 1 }, -- Transform your Shadowfiend or Mindbender into a Voidwraith. Voidwraith
+    collapsing_void                = {  94694,  448403, 1 }, -- Each time you cast Devouring Plague, Entropic Rift is empowered, increasing its damage and size by $s2%. After Entropic Rift ends it collapses, dealing $s$s3 Shadow damage split amongst enemy targets within $s4 yds
+    dark_energy                    = {  94693,  451018, 1 }, -- Void Torrent can be used while moving. While Entropic Rift is active, you move $s1% faster
+    darkening_horizon              = {  94695,  449912, 1 }, -- Void Blast increases the duration of Entropic Rift by $s1 sec, up to a maximum of $s2 sec
+    depth_of_shadows               = { 100212,  451308, 1 }, -- Shadow Word: Death has a high chance to summon a Shadowfiend for $s1 sec when damaging targets below $s2% health
+    devour_matter                  = {  94668,  451840, 1 }, -- Shadow Word: Death consumes absorb shields from your target, dealing $s$s2 extra damage to them and granting you $s3 Insanity if a shield was present
+    embrace_the_shadow             = {  94696,  451569, 1 }, -- You absorb $s1% of all magic damage taken. Absorbing Shadow damage heals you for $s2% of the amount absorbed
+    entropic_rift                  = {  94684,  447444, 1 }, -- Void Torrent tears open an Entropic Rift that follows the enemy for $s2 sec. Enemies caught in its path suffer $s$s3 Shadow damage every $s4 sec while within its reach
+    inner_quietus                  = {  94670,  448278, 1 }, -- Vampiric Touch and Shadow Word: Pain deal $s1% additional damage
+    no_escape                      = {  94693,  451204, 1 }, -- Entropic Rift slows enemies by up to $s1%, increased the closer they are to its center
+    void_blast                     = {  94703,  450405, 1 }, -- Entropic Rift upgrades Mind Blast into Void Blast while it is active. Void Blast: Sends a blast of cosmic void energy at the enemy, causing $s$s2 Shadow damage. Generates $s3 Insanity
+    void_empowerment               = {  94695,  450138, 1 }, -- Summoning an Entropic Rift grants you Mind Devourer
+    void_infusion                  = {  94669,  450612, 1 }, -- Void Blast generates $s1% additional Insanity
+    void_leech                     = {  94696,  451311, 1 }, -- Every $s1 sec siphon an amount equal to $s2% of your health from an ally within $s3 yds if they are higher health than you
+    voidheart                      = {  94692,  449880, 1 }, -- While Entropic Rift is active, your Shadow damage is increased by $s1%
+    voidwraith                     = { 100212,  451234, 1 }, -- Transform your Shadowfiend or Mindbender into a Voidwraith. Voidwraith Summon a Voidwraith for $s3 sec that casts Void Flay from afar. Void Flay deals bonus damage to high health enemies, up to a maximum of $s4% if they are full health. Generates $s5 Insanity each time the Voidwraith attacks
 } )
 
 -- PvP Talents
 spec:RegisterPvpTalents( {
-    absolute_faith       = 5481, -- (408853)
-    catharsis            = 5486, -- (391297)
-    driven_to_madness    =  106, -- (199259)
-    improved_mass_dispel = 5636, -- (426438)
-    mind_trauma          =  113, -- (199445)
-    mindgames            = 5638, -- (375901) Assault an enemy's mind, dealing 44,642 Shadow damage and briefly reversing their perception of reality. For 7 sec, the next 92,237 damage they deal will heal their target, and the next 92,237 healing they deal will damage their target. Generates 10 Insanity.
-    phase_shift          = 5568, -- (408557)
-    psyfiend             =  763, -- (211522) Summons a Psyfiend with 27,350 health for 12 sec beside you to attack the target at range with Psyflay.  Psyflay Deals up to 1% of the target's total health in Shadow damage every 0.8 sec. Also slows their movement speed by 50% and reduces healing received by 50%.
-    thoughtsteal         = 5381, -- (316262) Peer into the mind of the enemy, attempting to steal a known spell. If stolen, the victim cannot cast that spell for 20 sec. Can only be used on Humanoids with mana. If you're unable to find a spell to steal, the cooldown of Thoughtsteal is reset.
-    void_volley          = 5447, -- (357711)
+    absolute_faith                 = 5481, -- (408853) Leap of Faith also pulls the spirit of the $s1 furthest allies within $s2 yards and shields you and the affected allies for $s3
+    cascading_horrors              = 5447, -- (357711) After casting Void Eruption or Dark Ascension, send a slow-moving bolt of Shadow energy at a random location every $s2 sec for $s3 sec, dealing $s$s4 Shadow damage to all targets within $s5 yds, and causing them to flee in Horror for $s6 sec
+    catharsis                      = 5486, -- (391297) $s1% of all damage you take is stored. The stored amount cannot exceed $s2% of your maximum health. The initial damage of your next Shadow Word: Pain deals this stored damage to your target
+    driven_to_madness              =  106, -- (199259) While Voidform or Dark Ascension is not active, being attacked will reduce the cooldown of Void Eruption and Dark Ascension by $s1 sec
+    improved_mass_dispel           = 5636, -- (426438) Reduces the cooldown of Mass Dispel by $s1 sec
+    mind_trauma                    =  113, -- (199445) Siphon haste from enemies, stealing $s1% haste per stack of Mind Trauma, stacking up to $s2 times. Fully channeled Mind Flays grant $s3 stack of Mind Trauma and fully channeled Void Torrents grant $s4 stacks of Mind Trauma. Lasts $s5 sec. You can only gain $s6 stacks of Mind Trauma from a single enemy
+    mindgames                      = 5638, -- (375901) Assault an enemy's mind, dealing $s$s3 Shadow damage and briefly reversing their perception of reality. For $s4 sec, the next $s$s5 million damage they deal will heal their target, and the next $s6 million healing they deal will damage their target. Generates $s7 Insanity
+    phase_shift                    = 5568, -- (408557) Step into the shadows when you cast Fade, avoiding all attacks and spells for $s1 sec. Interrupt effects are not affected by Phase Shift
+    psyfiend                       =  763, -- (211522) Summons a Psyfiend with $s1 health for $s2 sec beside you to attack the target at range with Psyflay.  Psyflay Deals up to $s5% of the target's total health in Shadow damage every $s6 sec. Also slows their movement speed by $s7% and reduces healing received by $s8%
+    thoughtsteal                   = 5381, -- (316262) Peer into the mind of the enemy, attempting to steal a known spell. If stolen, the victim cannot cast that spell for $s1 sec. Can only be used on Humanoids with mana. If you're unable to find a spell to steal, the cooldown of Thoughtsteal is reset
 } )
-
 
 -- Auras
 spec:RegisterAuras( {
@@ -321,19 +325,22 @@ spec:RegisterAuras( {
         type = "Magic",
         max_stack = 1
     },
+    -- Call of the Void Haste increased by $s1%. $s2 seconds remaining
+    -- https://www.wowhead.com/spell=373316
+    call_of_the_void = {
+        id = 373316,
+        duration = 12,
+        max_stack = 1,
+        onRemove = function()
+            applyBuff( "overburdened_mind" )
+        end,
+    },
     -- Talent: Your non-periodic Shadow damage is increased by $w1%. $?s341240[Critical strike chance increased by ${$W4}.1%.][]
     -- https://wowhead.com/beta/spell=391109
     dark_ascension = {
         id = 391109,
         duration = 20,
         max_stack = 1
-    },
-    -- Talent: Periodic Shadow damage increased by $w1%.
-    -- https://wowhead.com/beta/spell=391099
-    dark_evangelism = {
-        id = 391099,
-        duration = 25,
-        max_stack = 5
     },
     dark_thought = {
         id = 341207,
@@ -437,6 +444,13 @@ spec:RegisterAuras( {
         duration = 30,
         max_stack = 1
     },
+    -- https://www.wowhead.com/spell=1243069
+    horrific_visions = {
+        id = 1243069,
+        duration = 30,
+        max_stack = 99,
+        type = "magic"
+    },
     -- Talent: Conjuring $373273s1 Shadowy Apparitions will summon a Thing from Beyond.
     -- https://wowhead.com/beta/spell=373276
     idol_of_yoggsaron = {
@@ -517,10 +531,10 @@ spec:RegisterAuras( {
     },
     -- Talent: The cast time of your next Mind Blast is reduced by $w1% and its critical strike chance is increased by $s2%.
     -- https://wowhead.com/beta/spell=391092
-    mind_melt = {
+    shattered_psyche = {
         id = 391092,
         duration = 10,
-        max_stack = 3
+        max_stack = 12
     },
     -- Reduced distance at which target will attack.
     -- https://wowhead.com/beta/spell=453
@@ -529,11 +543,6 @@ spec:RegisterAuras( {
         duration = 20,
         type = "Magic",
         max_stack = 1
-    },
-    mind_spike_insanity = {
-        id = 407468,
-        duration = 30,
-        max_stack = 4
     },
     -- Sight granted through target's eyes.
     -- https://wowhead.com/beta/spell=2096
@@ -555,6 +564,13 @@ spec:RegisterAuras( {
     mind_trauma = {
         id = 247776,
         duration = 15,
+        max_stack = 1
+    },
+    -- Overburdened Mind Haste reduced by $s1%. $s2 seconds remaining
+    -- https://www.wowhead.com/spell=373317
+    overburdened_mind = {
+        id = 373317,
+        duration = 8,
         max_stack = 1
     },
     -- Talent: Haste increased by $w1%.
@@ -721,17 +737,6 @@ spec:RegisterAuras( {
         duration = 6.0,
         max_stack = 1
     },
-    unfurling_darkness = {
-        id = 341282,
-        duration = 8,
-        max_stack = 1
-    },
-    unfurling_darkness_cd = {
-        id = 341291,
-        duration = 15.2,
-        max_stack = 1,
-        copy = "unfurling_darkness_icd"
-    },
     -- Suffering $w1 damage every $t1 sec. When damaged, the attacker is healed for $325118m1.
     -- https://wowhead.com/beta/spell=325203
     unholy_transfusion = {
@@ -808,6 +813,12 @@ spec:RegisterAuras( {
         duration = 15,
         tick_time = 1,
         max_stack = 1
+    },
+    -- Void Volley Void Volley is available. $s1 seconds remaining
+    -- https://www.wowhead.com/spell=1242171
+    void_volley = {
+        id = 1242171,
+        duration = 20
     },
     weakened_soul = {
         id = 6788,
@@ -1015,18 +1026,10 @@ spec:RegisterStateExpr( "pmultiplier", function ()
     return mult
 end )
 
-local unfurlingDarknessInitialized = false
 
 spec:RegisterHook( "reset_precast", function ()
     if buff.voidform.up or time > 0 then
         applyBuff( "shadowform" )
-    end
-
-    if not unfurlingDarknessInitialized then
-        -- Copy actual scraped debuff to buff table.
-        auras.player.buff.unfurling_darkness_cd = auras.player.debuff.unfurling_darkness_cd
-        -- Make debuff.unfurling_darkness_cd reference buff.unfurling_darkness_cd (incl. buff metatable).
-        rawset( debuff, "unfurling_darkness_cd", buff.unfurling_darkness_cd )
     end
 
     if buff.voidform.up then
@@ -1219,7 +1222,7 @@ spec:RegisterAbilities( {
             removeBuff( "gathering_shadows" )
 
             if talent.surge_of_insanity.enabled then
-                addStack( talent.mind_spike.enabled and "mind_spike_insanity" or "mind_flay_insanity" )
+                addStack( "mind_flay_insanity" )
             end
 
             if set_bonus.tier29_4pc > 0 then applyBuff( "dark_reveries" ) end
@@ -1507,7 +1510,7 @@ spec:RegisterAbilities( {
         gcd = "spell",
         school = "shadow",
 
-        spend = function () return set_bonus.tier30_2pc > 0 and buff.shadowy_insight.up and -10 or -6 end,
+        spend = function () return talent.dark_thoughts.enabled and buff.shadowy_insight.up and -7 or -6 end,
         spendType = "insanity",
 
         cycle = function()
@@ -1523,7 +1526,7 @@ spec:RegisterAbilities( {
         handler = function()
             removeBuff( "empty_mind" )
             removeBuff( "harvested_thoughts" )
-            removeBuff( "mind_melt" )
+            removeBuff( "shattered_psyche" )
             removeBuff( "shadowy_insight" )
 
             if talent.inescapable_torment.enabled then InescapableTorment() end
@@ -1571,7 +1574,7 @@ spec:RegisterAbilities( {
         handler = function()
             removeBuff( "empty_mind" )
             removeBuff( "harvested_thoughts" )
-            removeBuff( "mind_melt" )
+            removeBuff( "shattered_psyche" )
             removeBuff( "shadowy_insight" )
 
             if talent.darkening_horizon.enabled and rift_extensions < 3 then
@@ -1635,7 +1638,6 @@ spec:RegisterAbilities( {
             if buff.mind_flay_insanity.up then return 425954 end
             return 136208
         end,
-        notalent = "mind_spike",
         nobuff = "boon_of_the_ascended",
         bind = "ascended_blast",
         cycle = function()
@@ -1653,19 +1655,19 @@ spec:RegisterAbilities( {
             else
                 applyDebuff( "target", "mind_flay" )
             end
-            if talent.dark_evangelism.enabled then addStack( "dark_evangelism" ) end
             if talent.mental_decay.enabled then
                 if debuff.shadow_word_pain.up then debuff.shadow_word_pain.expires = debuff.shadow_word_pain.expires + 1 end
                 if debuff.vampiric_touch.up then debuff.vampiric_touch.expires = debuff.vampiric_touch.expires + 1 end
             end
+            if talent.shattered_psyche.enabled then addStack( "shattered_psyche" ) end
         end,
 
         tick = function ()
-            if talent.dark_evangelism.enabled then addStack( "dark_evangelism" ) end
             if talent.mental_decay.enabled then
                 if debuff.shadow_word_pain.up then debuff.shadow_word_pain.expires = debuff.shadow_word_pain.expires + 1 end
                 if debuff.vampiric_touch.up then debuff.vampiric_touch.expires = debuff.vampiric_touch.expires + 1 end
             end
+            if talent.shattered_psyche.enabled then addStack( "shattered_psyche" ) end
         end,
 
         breakchannel = function ()
@@ -1692,72 +1694,6 @@ spec:RegisterAbilities( {
         handler = function ()
             applyDebuff( "target", "mind_soothe" )
         end,
-    },
-
-    -- Talent: Blasts the target for $s1 Shadowfrost damage.$?s391090[    Mind Spike reduces the cast time of your next Mind Blast by $391092s1% and increases its critical strike chance by $391092s2%, stacking up to $391092U times.][]    |cFFFFFFFFGenerates ${$s2/100} Insanity|r$?s391137[ |cFFFFFFFFand an additional ${$s3/100} Insanity from a critical strike.|r][.]
-    mind_spike = {
-        id = 73510,
-        cast = 1.5,
-        cooldown = 0,
-        gcd = "spell",
-        school = "shadowfrost",
-
-        spend = -4,
-        spendType = "insanity",
-
-        talent = "mind_spike",
-        startsCombat = true,
-        nobuff = "mind_flay_insanity",
-
-        cycle = function()
-            if buff.voidform.down then return "devouring_plague" end
-            end,
-        cycle_to = true,
-
-        handler = function ()
-            if talent.mental_decay.enabled then
-                if debuff.shadow_word_pain.up then debuff.shadow_word_pain.expires = debuff.shadow_word_pain.expires + 2 end
-                if debuff.vampiric_touch.up then debuff.vampiric_touch.expires = debuff.vampiric_touch.expires + 2 end
-            end
-
-            if talent.mind_melt.enabled then addStack( "mind_melt" ) end
-
-            if talent.dark_evangelism.enabled then addStack( "dark_evangelism" ) end
-        end,
-
-        bind = "mind_spike_insanity"
-    },
-
-    -- Implemented separately, unlike mind_flay_insanity, based on how it is used in the SimC APL.
-    mind_spike_insanity = {
-        id = 407466,
-        known = 73510,
-        cast = 1.5,
-        cooldown = 0,
-        gcd = "spell",
-        school = "shadowfrost",
-
-        spend = -12,
-        spendType = "insanity",
-
-        talent = "mind_spike",
-        startsCombat = true,
-        buff = "mind_spike_insanity",
-
-        handler = function ()
-            removeStack( "mind_spike_insanity" )
-
-            if talent.mental_decay.enabled then
-                if debuff.shadow_word_pain.up then debuff.shadow_word_pain.expires = debuff.shadow_word_pain.expires + 2 end
-                if debuff.vampiric_touch.up then debuff.vampiric_touch.expires = debuff.vampiric_touch.expires + 2 end
-            end
-
-            if talent.mind_melt.enabled then addStack( "mind_melt" ) end
-
-            if talent.dark_evangelism.enabled then addStack( "dark_evangelism" ) end
-        end,
-
-        bind = "mind_spike"
     },
 
     -- Allows the caster to see through the target's eyes for $d. Will not work if the target is in another instance or on another continent.
@@ -2078,7 +2014,9 @@ spec:RegisterAbilities( {
     shadow_crash = {
         id = function() return talent.shadow_crash_targeted.enabled and 457042 or 205385 end,
         cast = 0,
-        cooldown = 20,
+        cooldown = 15,
+        charges = 2,
+        recharge = 15,
         gcd = "spell",
         school = "shadow",
 
@@ -2090,19 +2028,14 @@ spec:RegisterAbilities( {
 
         velocity = 2,
 
-        cycle = function()
-            if talent.whispering_shadows.enabled then return "vampiric_touch" end
-        end,
+        cycle = "vampiric_touch",
 
         impact = function ()
-            removeBuff( "deaths_torment" )
-            if talent.whispering_shadows.enabled then
-                applyDebuff( "target", "vampiric_touch" )
-                active_dot.vampiric_touch = min( active_enemies, active_dot.vampiric_touch + 7 )
-                if talent.misery.enabled then
-                    applyDebuff( "target", "shadow_word_pain" )
-                    active_dot.shadow_word_pain = min( active_enemies, active_dot.shadow_word_pain + 7 )
-                end
+            applyDebuff( "target", "vampiric_touch" )
+            active_dot.vampiric_touch = min( active_enemies, active_dot.vampiric_touch + 5 )
+            if talent.misery.enabled then
+                applyDebuff( "target", "shadow_word_pain" )
+                active_dot.shadow_word_pain = min( active_enemies, active_dot.shadow_word_pain + 5 )
             end
         end,
 
@@ -2113,13 +2046,7 @@ spec:RegisterAbilities( {
     shadow_word_death = {
         id = 32379,
         cast = 0,
-        charges = function()
-            if buff.deathspeaker.up then return 2 end
-        end,
         cooldown = 10,
-        recharge = function()
-            if buff.deathspeaker.up then return 20 end
-        end,
         gcd = "spell",
         school = "shadow",
         damage = 1,
@@ -2131,7 +2058,7 @@ spec:RegisterAbilities( {
         startsCombat = true,
 
         cycle = function()
-            if talent.matter_devourer.enabled then return "all_absorbs" end
+            if talent.devour_matter.enabled then return "all_absorbs" end
             end,
         cycle_to = true,
 
@@ -2141,13 +2068,9 @@ spec:RegisterAbilities( {
         end,
 
         handler = function ()
-            gain( 4, "insanity" )
+            gain( 4 + 2 * talent.deaths_torment.rank, "insanity" )
+            if talent.devour_matter.enabled and debuff.all_absorbs.up then gain( 5 + 2 * talent.deaths_torment.rank, "insanity" ) end
 
-            if set_bonus.tier31_4pc > 0 then
-                addStack( "deaths_torment", nil, ( buff.deathspeaker.up or target.health.pct < 20 ) and 3 or 2 )
-            end
-
-            removeBuff( "deathspeaker" )
             removeBuff( "zeks_exterminatus" )
 
             if talent.death_and_madness.enabled then
@@ -2158,6 +2081,12 @@ spec:RegisterAbilities( {
 
             local swp_reduction = 3 * talent.expiation.rank
             if swp_reduction > 0 then debuff.shadow_word_pain.expires = max( 0, debuff.shadow_word_pain.expires - swp_reduction ) end
+
+            -- Legacy
+
+            if set_bonus.tier31_4pc > 0 then
+                addStack( "deaths_torment", nil, ( buff.deathspeaker.up or target.health.pct < 20 ) and 3 or 2 )
+            end
 
             if legendary.painbreaker_psalm.enabled then
                 local power = 0
@@ -2262,7 +2191,7 @@ spec:RegisterAbilities( {
     -- A touch of darkness that causes $34914o2 Shadow damage over $34914d, and heals you for ${$e2*100}% of damage dealt. If Vampiric Touch is dispelled, the dispeller flees in Horror for $87204d.    |cFFFFFFFFGenerates ${$m3/100} Insanity.|r
     vampiric_touch = {
         id = 34914,
-        cast = function () return buff.unfurling_darkness.up and 0 or 1.5 * haste end,
+        cast = 1.5,
         cooldown = 0,
         gcd = "spell",
         school = "shadow",
@@ -2284,14 +2213,6 @@ spec:RegisterAbilities( {
                 applyDebuff( "target", "shadow_word_pain" )
             end
 
-            if talent.unfurling_darkness.enabled then
-                if buff.unfurling_darkness.up then removeBuff( "unfurling_darkness" ) end
-                if Hekili.ActiveDebug then Hekili:Debug( "In VT handler, Unfurling Darkness CD buff: %s %.2f, debuff: %s %.2f...", tostring( buff.unfurling_darkness_cd ), buff.unfurling_darkness_cd.remains, tostring( debuff.unfurling_darkness_cd ), debuff.unfurling_darkness_cd.remains ) end
-                if buff.unfurling_darkness_cd.down then
-                    applyBuff( "unfurling_darkness" )
-                    applyBuff( "unfurling_darkness_cd" )
-                end
-            end
         end,
     },
 
@@ -2403,11 +2324,11 @@ spec:RegisterAbilities( {
         cast = 3,
         channeled = true,
         fixedCast = true,
-        cooldown = function() return 45 - 15 * talent.malediction.rank end,
+        cooldown = 30,
         gcd = "spell",
         school = "shadow",
 
-        spend = -15,
+        spend = -24,
         spendType = "insanity",
 
         talent = "void_torrent",
@@ -2426,18 +2347,41 @@ spec:RegisterAbilities( {
 
         start = function ()
             applyDebuff( "target", "void_torrent" )
-            if talent.dark_evangelism.enabled then addStack( "dark_evangelism" ) end
             if talent.entropic_rift.enabled then
                 if talent.voidheart.enabled then applyBuff( "voidheart", 11 ) end
                 applyBuff( "entropic_rift", class.auras.entropic_rift.duration + ( 3 * talent.voidheart.rank ) )
             end
             if talent.idol_of_cthun.enabled then applyDebuff( "target", "void_tendril_mind_flay" ) end
+            if talent.void_volley.enabled then applyBuff( "void_volley" ) end
         end,
 
-        tick = function ()
-            if talent.dark_evangelism.enabled then addStack( "dark_evangelism" ) end
-        end,
     },
+
+    -- Releases a volley of pure void energy, firing $s2 bolts at your target and $s3 bolt at all enemies within $s4 yards of your target for $s$s5 Shadow damage. Generates $s6 Insanity
+    -- https://www.wowhead.com/spell=1242173
+    void_volley = {
+        id = 1242173,
+        known = 1240401,
+        cast = 0,
+        gcd = "spell",
+        school = "shadow",
+        cooldown = 0,
+
+        spend = -10,
+        spendType = "insanity",
+
+        texture = 425955,
+        talent = "void_volley",
+        startsCombat = true,
+        buff = "void_volley",
+
+        handler = function ()
+            removeBuff( "void_volley" )
+        end,
+
+        bind = "void_torrent"
+    },
+
 } )
 
 spec:RegisterRanges( "mind_blast", "dispel_magic" )
