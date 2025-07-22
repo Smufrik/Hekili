@@ -1,5 +1,6 @@
 -- MoP Brewmaster Monk (5.5.0)
 -- Hekili Specialization File
+-- Last Updated: July 22, 2025
 
 -- Boilerplate and Class Check
 local _, playerClass = UnitClass('player')
@@ -17,10 +18,23 @@ if not spec then
     return
 end
 
--- Module-level variables for advanced tracking
+-- Initialize state variables to prevent nil errors and keep them organized.
 ns.last_defensive_ability = "none"
 ns.last_defensive_time = 0
 ns.purify_count = 0
+ns.stagger_tick_amount = 0
+ns.last_stagger_tick_time = 0
+ns.last_purify_time = 0
+ns.stagger_purified_total = 0
+
+-- Helper function to get the current stagger level as a string.
+-- This is useful and more readable for action lists (e.g., 'stagger_level == "heavy"').
+function spec:GetStaggerLevel()
+    if state.buff.heavy_stagger.up then return "heavy" end
+    if state.buff.moderate_stagger.up then return "moderate" end
+    if state.buff.light_stagger.up then return "light" end
+    return "none"
+end
 
 --[[
     Resource registration for Energy (3) and Chi (12).
@@ -34,10 +48,6 @@ spec:RegisterResource(12, { -- Chi
 })
 
 
---[[
-    Comprehensive Gear Registration
-    Includes all raid tier sets and notable trinkets from MoP.
---]]
 -- Tier 14: Vestments of the Red Crane
 spec:RegisterGear( "tier14_lfr", 86326, 86329, 86332, 86335, 86338 )
 spec:RegisterGear( "tier14", 85468, 85471, 85474, 85477, 85480 )
@@ -133,16 +143,19 @@ spec:RegisterGlyphs( {
     [125682] = "zen_meditation",            -- You can now move while channeling Zen Meditation.
 
     -- Minor Glyphs (Cosmetic / Utility)
-    [125703] = "blackout_kick_visual", [125705] = "breath_of_fire_visual", [146955] = "crackling_tiger_lightning",
-    [125698] = "honor", [146953] = "jab_visual", [146954] = "rising_sun_kick_visual",
-    [125699] = "spirit_roll", [125694] = "spinning_fire_blossom", [125701] = "water_roll", [125700] = "zen_flight",
+    [125703] = "blackout_kick_visual", 
+    [125705] = "breath_of_fire_visual", 
+    [146955] = "crackling_tiger_lightning",
+    [125698] = "honor", 
+    [146953] = "jab_visual", 
+    [146954] = "rising_sun_kick_visual",
+    [125699] = "spirit_roll", 
+    [125694] = "spinning_fire_blossom", 
+    [125701] = "water_roll", 
+    [125700] = "zen_flight",
 } )
 
 
---[[
-    Robust Aura Definitions with Verbose Generate Functions
-    Includes all buffs, debuffs, procs, and cooldowns.
---]]
 spec:RegisterAuras({
     -- Core Brewmaster Buffs
     shuffle = { 
@@ -197,11 +210,26 @@ spec:RegisterHook( "runHandler", function( key )
     end
 end )
 
-spec:RegisterCombatLogEvent( function( _, subtype, _, sourceGUID, _, _, _, _, _, _, _, spellID )
-    -- This uses Hekili's safe, built-in combat log event system.
-    if sourceGUID == state.GUID and subtype == "SPELL_CAST_SUCCESS" then
-        if spellID == 119582 then -- Purifying Brew
-            ns.purify_count = (ns.purify_count or 0) + 1
+spec:RegisterCombatLogEvent( function(timestamp, event, _, sourceGUID, _, _, _, destGUID, _, _, _, spellID, ...)
+    -- Only process events where the player is the source or destination.
+    if sourceGUID ~= state.GUID and destGUID ~= state.GUID then return end
+
+    -- Track when Purifying Brew is used successfully.
+    if event == "SPELL_CAST_SUCCESS" and sourceGUID == state.GUID and spellID == 119582 then -- Purifying Brew
+        ns.purify_count = ns.purify_count + 1
+        ns.last_purify_time = timestamp
+        
+        -- Estimate the damage cleared by this Purify.
+        -- We capture the stagger tick amount right before this event for a rough estimate.
+        ns.stagger_purified_total = (ns.stagger_purified_total or 0) + (ns.stagger_tick_amount * 10) -- Stagger lasts 10s
+    end
+
+    -- Track Stagger damage ticks to calculate Stagger's damage per second (DTPS).
+    if event == "SPELL_PERIODIC_DAMAGE" and destGUID == state.GUID then
+        if spellID == 124273 or spellID == 124274 or spellID == 124275 then -- Heavy, Moderate, or Light Stagger
+            local amount = select(1, ...)
+            ns.stagger_tick_amount = amount
+            ns.last_stagger_tick_time = timestamp
         end
     end
 end )
@@ -293,6 +321,44 @@ spec:RegisterAbilities({
     },
 })
 
+-- Exposes the current stagger level ("none", "light", "moderate", "heavy").
+spec:RegisterStateExpr("stagger_level", function()
+    return spec:GetStaggerLevel()
+end)
+
+-- Calculates the current damage per second (DTPS) from Stagger.
+-- This is critical for deciding when to Purify.
+spec:RegisterStateExpr("stagger_dtps", function()
+    if state.query_time - (ns.last_stagger_tick_time or 0) > 1.5 then
+        -- If it's been more than 1.5 seconds since the last tick, assume it's gone.
+        return 0
+    end
+    -- Stagger ticks every second, so the last tick amount is our DTPS.
+    return ns.stagger_tick_amount or 0
+end)
+
+-- A direct check to see if you should purify based on your settings.
+spec:RegisterStateExpr("should_purify", function()
+    local threshold = state.settings.purify_threshold
+    local level = spec:GetStaggerLevel()
+    
+    if threshold == "heavy" and level == "heavy" then return true end
+    if threshold == "moderate" and (level == "heavy" or level == "moderate") then return true end
+    if threshold == "aggressive" and level ~= "none" then return true end
+    
+    return false
+end)
+
+-- Provides the current number of Elusive Brew stacks for easier use in the APL.
+spec:RegisterStateExpr("elusive_brew_stacks", function()
+    return state.buff.elusive_brew_stack.stack or 0
+end)
+
+-- Provides the remaining duration on Shuffle.
+spec:RegisterStateExpr("shuffle_remains", function()
+    return state.buff.shuffle.remains or 0
+end)
+
 spec:RegisterSetting( "purify_threshold", "heavy", {
     name = "Purify Stagger Threshold",
     desc = "Determines when to recommend Purifying Brew.\n\n|cFFFFD100Heavy|r: Only purify at heavy (red) stagger.\n|cFFFFD100Moderate|r: Purify at moderate (yellow) or heavy stagger.\n|cFFFFD100Aggressive|r: Purify frequently, even at light stagger.",
@@ -327,6 +393,8 @@ spec:RegisterSetting( "fortify_health_pct", 35, {
 } )
 
 -- Register default pack
-spec:RegisterPack("Brewmaster", 20250721, [[Hekili:T3vBVTTnu4FldiHr5osojoRZh7KvA3KRJvA2jDLA2jz1yvfbpquu6iqjvswkspfePtl6VGQIQUnbJeHAVQDcOWrbE86CaE4GUwDBB4CvC5m98jdNZzDX6w)v)V(i)h(jDV7GFWEh)9T6rhFQVnSVzsmypSlD2OXqskYJCKfpPWXt87zPkZGZVRSLAXYUYORTmYLwaXlyc8LkGusGO7469JwjTfTH0PwPbJaeivvLsvrfoeQtcGbWlG0A)Ff9)8jPyqXgkz5Qkz5kLRyR12Uco1veB5MUOfIMXnV2Nw8UqEkeUOLXMFtKUOMcEvjzmqssgiE37NuLYlP5NnNgEE5(vJDjgvCeXmQVShsbh(AfIigS2JOmiUeXm(KJ0JkOtQu0Ky)iYcJvqQrthQ(5Fcu5ILidEZjQ0CoYXj)USIip9kem)i81l2cOFLlk9cKGk5nuuDXZes)SEHXiZdLP1gpb968CvpxbSVDaPzgwP6ahsQWnRs)uOKnc0)]])
+spec:RegisterPack("Brewmaster", 20250722, [[Hekili:T3vBVTTnu4FldiHr5osojoRZh7KvA3KRJvA2jDLA2jz1yvfbpquu6iqjvswkspfePtl6VGQIQUnbJeHAVQDcOWrbE86CaE4GUwDBB4CvC5m98jdNZzDX6w)v)V(i)h(jDV7GFWEh)9T6rhFQVnSVzsmypSlD2OXqskYJCKfpPWXt87zPkZGZVRSLAXYUYORTmYLwaXlyc8LkGusGO7469JwjTfTH0PwPbJaeivvLsvrfoeQtcGbWlG0A)Ff9)8jPyqXgkz5Qkz5kLRyR12Uco1veB5MUOfIMXnV2Nw8UqEkeUOLXMFtKUOMcEvjzmqssgiE37NuLYlP5NnNgEE5(vJDjgvCeXmQVShsbh(AfIigS2JOmiUeXm(KJ0JkOtQu0Ky)iYcJvqQrthQ(5Fcu5ILidEZjQ0CoYXj)USIip9kem)i81l2cOFLlk9cKGk5nuuDXZes)SEHXiZdLP1gpb968CvpxbSVDaPzgwP6ahsQWnRs)uOKnc0)]])
 
-print("Brewmaster: Script loaded successfully.")
+print("Brewmaster: Script loaded successfully with advanced trackers.")
+
+```
