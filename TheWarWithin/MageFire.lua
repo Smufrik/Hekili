@@ -23,170 +23,153 @@ spec:RegisterResource( Enum.PowerType.Mana )
 
 -- Talents
 spec:RegisterTalents( {
+
     -- Mage
-    accumulative_shielding    = {  62093, 382800, 1 }, -- Your barrier's cooldown recharges 30% faster while the shield persists.
-    alter_time                = {  62115, 342245, 1 }, -- Alters the fabric of time, returning you to your current location and health when cast a second time, or after 10 sec. Effect negated by long distance or death.
-    arcane_warding            = {  62114, 383092, 2 }, -- Reduces magic damage taken by 3%.
-    augury_abounds            = {  94662, 443783, 1 }, -- Casting Icy Veins conjures 8 Frost Splinters. During Icy Veins, whenever you conjure a Frost Splinter, you have a 100% chance to conjure an additional Frost Splinter.
-    barrier_diffusion         = {  62091, 455428, 1 }, -- Whenever one of your Barriers is removed, reduce its cooldown by 4 sec.
-    blast_wave                = {  62103, 157981, 1 }, -- Causes an explosion around yourself, dealing 45,935 Fire damage to all enemies within 8 yds, knocking them back, and reducing movement speed by 80% for 6 sec.
-    blazing_barrier           = {  62119, 235313, 1 }, -- Shields you in flame, absorbing 1.5 million damage for 1 min. Melee attacks against you cause the attacker to take 12,152 Fire damage.
-    controlled_instincts      = {  94663, 444483, 1 }, -- While a target is under the effects of Blizzard, 30% of the direct damage dealt by a Frost Splinter is also dealt to nearby enemies. Damage reduced beyond 5 targets.
-    cryofreeze                = {  62107, 382292, 2 }, -- While inside Ice Block, you heal for 40% of your maximum health over the duration.
-    displacement              = {  62095, 389713, 1 }, -- Teleports you back to where you last Blinked and heals you for 1.4 million health. Only usable within 8 sec of Blinking.
-    diverted_energy           = {  62101, 382270, 2 }, -- Your Barriers heal you for 10% of the damage absorbed.
-    dragons_breath            = { 101883,  31661, 1 }, -- Enemies in a cone in front of you take 56,631 Fire damage and are disoriented for 4 sec. Damage will cancel the effect.
-    energized_barriers        = {  62100, 386828, 1 }, -- When your barrier receives melee attacks, you have a 10% chance to be granted 1 Fire Blast charge. Casting your barrier removes all snare effects.
-    flow_of_time              = {  62096, 382268, 2 }, -- The cooldowns of Blink and Shimmer are reduced by 2 sec.
-    force_of_will             = {  94656, 444719, 1 }, -- Gain 2% increased critical strike chance. Gain 5% increased critical strike damage.
-    freezing_cold             = {  62087, 386763, 1 }, -- Enemies hit by Cone of Cold are frozen in place for 5 sec instead of snared. When your roots expire or are dispelled, your target is snared by 90%, decaying over 3 sec.
-    frigid_winds              = {  62128, 235224, 2 }, -- All of your snare effects reduce the target's movement speed by an additional 10%.
-    greater_invisibility      = {  93524, 110959, 1 }, -- Makes you invisible and untargetable for 20 sec, removing all threat. Any action taken cancels this effect. You take 60% reduced damage while invisible and for 3 sec after reappearing.
-    ice_block                 = {  62122,  45438, 1 }, -- Encases you in a block of ice, protecting you from all attacks and damage for 10 sec, but during that time you cannot attack, move, or cast spells. While inside Ice Block, you heal for 40% of your maximum health over the duration. Causes Hypothermia, preventing you from recasting Ice Block for 30 sec.
-    ice_cold                  = {  62085, 414659, 1 }, -- Ice Block now reduces all damage taken by 70% for 6 sec but no longer grants Immunity, prevents movement, attacks, or casting spells. Does not incur the Global Cooldown.
-    ice_floes                 = {  62105, 108839, 1 }, -- Makes your next Mage spell with a cast time shorter than 10 sec castable while moving. Unaffected by the global cooldown and castable while casting.
-    ice_nova                  = {  62088, 157997, 1 }, -- Causes a whirl of icy wind around the enemy, dealing 116,662 Frost damage to the target and all other enemies within 8 yds, freezing them in place for 2 sec. Damage reduced beyond 8 targets.
-    ice_ward                  = {  62086, 205036, 1 }, -- Frost Nova now has 2 charges.
-    improved_frost_nova       = {  62108, 343183, 1 }, -- Frost Nova duration is increased by 2 sec.
-    incantation_of_swiftness  = {  62112, 382293, 2 }, -- Greater Invisibility increases your movement speed by 40% for 6 sec.
-    incanters_flow            = {  62118,   1463, 1 }, -- Magical energy flows through you while in combat, building up to 10% increased damage and then diminishing down to 2% increased damage, cycling every 10 sec.
-    inspired_intellect        = {  62094, 458437, 1 }, -- Arcane Intellect grants you an additional 3% Intellect.
-    look_again                = {  94659, 444756, 1 }, -- Displacement has a 50% longer duration and 25% longer range.
-    mass_barrier              = {  62092, 414660, 1 }, -- Cast Blazing Barrier on yourself and 4 allies within 40 yds.
-    mass_invisibility         = {  62092, 414664, 1 }, -- You and your allies within 40 yards instantly become invisible for 12 sec. Taking any action will cancel the effect. Does not affect allies in combat.
-    mass_polymorph            = {  62106, 383121, 1 }, -- Transforms all enemies within 10 yards into sheep, wandering around incapacitated for 15 sec. While affected, the victims cannot take actions but will regenerate health very quickly. Damage will cancel the effect. Only works on Beasts, Humanoids and Critters.
-    master_of_time            = {  62102, 342249, 1 }, -- Reduces the cooldown of Alter Time by 10 sec. Alter Time resets the cooldown of Blink and Shimmer when you return to your original location.
-    mirror_image              = {  62124,  55342, 1 }, -- Creates 3 copies of you nearby for 40 sec, which cast spells and attack your enemies. While your images are active damage taken is reduced by 20%. Taking direct damage will cause one of your images to dissipate.
-    overflowing_energy        = {  62120, 390218, 1 }, -- Your spell critical strike damage is increased by 10%. When your direct damage spells fail to critically strike a target, your spell critical strike chance is increased by 2%, up to 10% for 8 sec. When your spells critically strike Overflowing Energy is reset.
-    phantasmal_image          = {  94660, 444784, 1 }, -- Your Mirror Image summons one extra clone. Mirror Image now reduces all damage taken by an additional 5%.
-    quick_witted              = {  62104, 382297, 1 }, -- Successfully interrupting an enemy with Counterspell reduces its cooldown by 4 sec.
-    reabsorption              = {  62125, 382820, 1 }, -- You are healed for 3% of your maximum health whenever a Mirror Image dissipates due to direct damage.
-    reactive_barrier          = {  94660, 444827, 1 }, -- Your Ice Barrier can absorb up to 50% more damage based on your missing Health. Max effectiveness when under 50% health.
-    reduplication             = {  62125, 382569, 1 }, -- Mirror Image's cooldown is reduced by 10 sec whenever a Mirror Image dissipates due to direct damage.
-    remove_curse              = {  62116,    475, 1 }, -- Removes all Curses from a friendly target.
-    rigid_ice                 = {  62110, 382481, 1 }, -- Frost Nova can withstand 80% more damage before breaking.
-    ring_of_frost             = {  62088, 113724, 1 }, -- Summons a Ring of Frost for 10 sec at the target location. Enemies entering the ring are incapacitated for 10 sec. Limit 10 targets. When the incapacitate expires, enemies are slowed by 75% for 4 sec.
-    shifting_power            = {  62113, 382440, 1 }, -- Draw power from within, dealing 206,132 Arcane damage over 3.3 sec to enemies within 18 yds. While channeling, your Mage ability cooldowns are reduced by 12 sec over 3.3 sec.
-    shifting_shards           = {  94657, 444675, 1 }, -- Shifting Power fires a barrage of 8 Frost Splinters at random enemies within 40 yds over its duration.
-    shimmer                   = {  62105, 212653, 1 }, -- Teleports you 20 yds forward, unless something is in the way. Unaffected by the global cooldown and castable while casting.
-    signature_spell           = {  94657, 470021, 1 }, -- Consuming Winter's Chill with Glacial Spike conjures 2 additional Frost Splinters.
-    slippery_slinging         = {  94659, 444752, 1 }, -- You have 40% increased movement speed during Alter Time.
-    slow                      = {  62097,  31589, 1 }, -- Reduces the target's movement speed by 60% for 15 sec.
-    spellfrost_teachings      = {  94655, 444986, 1 }, -- Direct damage from Frost Splinters has a 2.5% chance to reset the cooldown of Frozen Orb and increase all damage dealt by Frozen Orb by 30% for 10 sec.
-    spellsteal                = {  62084,  30449, 1 }, -- Steals a beneficial magic effect from the target. This effect lasts a maximum of 2 min.
-    splintering_orbs          = {  94661, 444256, 1 }, -- Enemies damaged by your Frozen Orb conjure 1 Frost Splinter, up to 5. Frozen Orb damage is increased by 10%.
-    splintering_sorcery       = {  94664, 443739, 1 }, -- When you consume Winter's Chill or Fingers of Frost, conjure a Frost Splinter that fires at your target. Frost Splinter: Conjure raw Frost magic into a sharp projectile that deals 21,979 Frost damage. Frost Splinters embed themselves into their target, dealing 21,912 Frost damage over 18 sec. This effect stacks.
-    splinterstorm             = {  94654, 443742, 1 }, -- Whenever you have 8 or more active Embedded Frost Splinters, you automatically cast a Splinterstorm at your target. Splinterstorm: Shatter all Embedded Frost Splinters, dealing their remaining periodic damage instantly. Conjure a Frost Splinter for each Splinter shattered, then unleash them all in a devastating barrage, dealing 21,979 Frost damage to your target for each Splinter in the Splinterstorm. Splinterstorm has a 5% chance to grant Brain Freeze.
-    supernova                 = { 101883, 157980, 1 }, -- Pulses arcane energy around the target enemy or ally, dealing 29,165 Arcane damage to all enemies within 8 yds, and knocking them upward. A primary enemy target will take 100% increased damage.
-    tempest_barrier           = {  62111, 382289, 2 }, -- Gain a shield that absorbs 3% of your maximum health for 15 sec after you Blink.
-    temporal_velocity         = {  62099, 382826, 2 }, -- Increases your movement speed by 5% for 3 sec after casting Blink and 20% for 6 sec after returning from Alter Time.
-    time_anomaly              = {  62094, 383243, 1 }, -- At any moment, you have a chance to gain Combustion for 5 sec, 1 Fire Blast charge, or Time Warp for 6 sec.
-    time_manipulation         = {  62129, 387807, 1 }, -- Casting Fire Blast reduces the cooldown of your loss of control abilities by 2 sec.
-    tome_of_antonidas         = {  62098, 382490, 1 }, -- Increases Haste by 2%.
-    tome_of_rhonin            = {  62127, 382493, 1 }, -- Increases Critical Strike chance by 2%.
-    unerring_proficiency      = {  94658, 444974, 1 }, -- Each time you conjure a Frost Splinter, increase the damage of your next Ice Nova by 5%. Stacks up to 60 times.
-    volatile_detonation       = {  62089, 389627, 1 }, -- Greatly increases the effect of Blast Wave's knockback. Blast Wave's cooldown is reduced by 5 sec
-    volatile_magic            = {  94658, 444968, 1 }, -- Whenever an Embedded Frost Splinter is removed, it explodes, dealing 8,454 Frost damage to nearby enemies. Deals reduced damage beyond 5 targets.
-    winters_protection        = {  62123, 382424, 2 }, -- The cooldown of Ice Block is reduced by 30 sec.
+    accumulative_shielding         = {  62093,  382800, 1 }, -- Your barrier's cooldown recharges $s1% faster while the shield persists
+    alter_time                     = {  62115,  342245, 1 }, -- Alters the fabric of time, returning you to your current location and health when cast a second time, or after $s1 sec. Effect negated by long distance or death
+    arcane_warding                 = {  62114,  383092, 2 }, -- Reduces magic damage taken by $s1%
+    barrier_diffusion              = {  62091,  455428, 1 }, -- Whenever one of your Barriers is removed, reduce its cooldown by $s1 sec
+    blast_wave                     = {  62103,  157981, 1 }, -- Causes an explosion around yourself, dealing $s$s2 Fire damage to all enemies within $s3 yds, knocking them back, and reducing movement speed by $s4% for $s5 sec
+    cryofreeze                     = {  62107,  382292, 2 }, -- While inside Ice Block, you heal for $s1% of your maximum health over the duration
+    displacement                   = {  62095,  389713, 1 }, -- Teleports you back to where you last Blinked and heals you for $s1 million health. Only usable within $s2 sec of Blinking
+    diverted_energy                = {  62101,  382270, 2 }, -- Your Barriers heal you for $s1% of the damage absorbed
+    dragons_breath                 = { 101883,   31661, 1 }, -- Enemies in a cone in front of you take $s$s2 Fire damage and are disoriented for $s3 sec. Damage will cancel the effect
+    energized_barriers             = {  62100,  386828, 1 }, -- When your barrier receives melee attacks, you have a $s1% chance to be granted $s2 Fire Blast charge. Casting your barrier removes all snare effects
+    flow_of_time                   = {  62096,  382268, 2 }, -- The cooldowns of Blink and Shimmer are reduced by $s1 sec
+    freezing_cold                  = {  62087,  386763, 1 }, -- Enemies hit by Cone of Cold are frozen in place for $s1 sec instead of snared. When your roots expire or are dispelled, your target is snared by $s2%, decaying over $s3 sec
+    frigid_winds                   = {  62128,  235224, 2 }, -- All of your snare effects reduce the target's movement speed by an additional $s1%
+    greater_invisibility           = {  93524,  110959, 1 }, -- Makes you invisible and untargetable for $s1 sec, removing all threat. Any action taken cancels this effect. You take $s2% reduced damage while invisible and for $s3 sec after reappearing
+    ice_block                      = {  62122,   45438, 1 }, -- Encases you in a block of ice, protecting you from all attacks and damage for $s1 sec, but during that time you cannot attack, move, or cast spells. While inside Ice Block, you heal for $s2% of your maximum health over the duration. Causes Hypothermia, preventing you from recasting Ice Block for $s3 sec
+    ice_cold                       = {  62085,  414659, 1 }, -- Ice Block now reduces all damage taken by $s1% for $s2 sec but no longer grants Immunity, prevents movement, attacks, or casting spells. Does not incur the Global Cooldown
+    ice_floes                      = {  62105,  108839, 1 }, -- Makes your next Mage spell with a cast time shorter than $s1 sec castable while moving. Unaffected by the global cooldown and castable while casting
+    ice_nova                       = {  62088,  157997, 1 }, -- Causes a whirl of icy wind around the enemy, dealing $s$s2 Frost damage to the target and all other enemies within $s3 yds, freezing them in place for $s4 sec. Damage reduced beyond $s5 targets
+    ice_ward                       = {  62086,  205036, 1 }, -- Frost Nova now has $s1 charges
+    improved_frost_nova            = {  62108,  343183, 1 }, -- Frost Nova duration is increased by $s1 sec
+    incantation_of_swiftness       = {  62112,  382293, 2 }, -- Greater Invisibility increases your movement speed by $s1% for $s2 sec
+    incanters_flow                 = {  62118,    1463, 1 }, -- Magical energy flows through you while in combat, building up to $s1% increased damage and then diminishing down to $s2% increased damage, cycling every $s3 sec
+    inspired_intellect             = {  62094,  458437, 1 }, -- Arcane Intellect grants you an additional $s1% Intellect
+    mass_barrier                   = {  62092,  414660, 1 }, -- Cast Blazing Barrier on yourself and $s1 allies within $s2 yds
+    mass_invisibility              = {  62092,  414664, 1 }, -- You and your allies within $s1 yards instantly become invisible for $s2 sec. Taking any action will cancel the effect. Does not affect allies in combat
+    mass_polymorph                 = {  62106,  383121, 1 }, -- Transforms all enemies within $s1 yards into sheep, wandering around incapacitated for $s2 sec. While affected, the victims cannot take actions but will regenerate health very quickly. Damage will cancel the effect. Only works on Beasts, Humanoids and Critters
+    master_of_time                 = {  62102,  342249, 1 }, -- Reduces the cooldown of Alter Time by $s1 sec. Alter Time resets the cooldown of Blink and Shimmer when you return to your original location
+    mirror_image                   = {  62124,   55342, 1 }, -- Creates $s1 copies of you nearby for $s2 sec, which cast spells and attack your enemies. While your images are active damage taken is reduced by $s3%. Taking direct damage will cause one of your images to dissipate
+    overflowing_energy             = {  62120,  390218, 1 }, -- Your spell critical strike damage is increased by $s1%. When your direct damage spells fail to critically strike a target, your spell critical strike chance is increased by $s2%, up to $s3% for $s4 sec. When your spells critically strike Overflowing Energy is reset
+    quick_witted                   = {  62104,  382297, 1 }, -- Successfully interrupting an enemy with Counterspell reduces its cooldown by $s1 sec
+    reabsorption                   = {  62125,  382820, 1 }, -- You are healed for $s1% of your maximum health whenever a Mirror Image dissipates due to direct damage
+    reduplication                  = {  62125,  382569, 1 }, -- Mirror Image's cooldown is reduced by $s1 sec whenever a Mirror Image dissipates due to direct damage
+    remove_curse                   = {  62116,     475, 1 }, -- Removes all Curses from a friendly target
+    rigid_ice                      = {  62110,  382481, 1 }, -- Frost Nova can withstand $s1% more damage before breaking
+    ring_of_frost                  = {  62088,  113724, 1 }, -- Summons a Ring of Frost for $s1 sec at the target location. Enemies entering the ring are incapacitated for $s2 sec. Limit $s3 targets. When the incapacitate expires, enemies are slowed by $s4% for $s5 sec
+    shifting_power                 = {  62113,  382440, 1 }, -- Draw power from within, dealing $s$s2 Arcane damage over $s3 sec to enemies within $s4 yds. While channeling, your Mage ability cooldowns are reduced by $s5 sec over $s6 sec
+    shimmer                        = {  62105,  212653, 1 }, -- Teleports you $s1 yds forward, unless something is in the way. Unaffected by the global cooldown and castable while casting
+    slow                           = {  62097,   31589, 1 }, -- Reduces the target's movement speed by $s1% for $s2 sec
+    spellsteal                     = {  62084,   30449, 1 }, -- Steals a beneficial magic effect from the target. This effect lasts a maximum of $s1 min
+    supernova                      = { 101883,  157980, 1 }, -- Pulses arcane energy around the target enemy or ally, dealing $s$s2 Arcane damage to all enemies within $s3 yds, and knocking them upward. A primary enemy target will take $s4% increased damage
+    tempest_barrier                = {  62111,  382289, 2 }, -- Gain a shield that absorbs $s1% of your maximum health for $s2 sec after you Blink
+    temporal_velocity              = {  62099,  382826, 2 }, -- Increases your movement speed by $s1% for $s2 sec after casting Blink and $s3% for $s4 sec after returning from Alter Time
+    time_manipulation              = {  62129,  387807, 1 }, -- Casting Fire Blast reduces the cooldown of your loss of control abilities by $s1 sec
+    tome_of_antonidas              = {  62098,  382490, 1 }, -- Increases Haste by $s1%
+    tome_of_rhonin                 = {  62127,  382493, 1 }, -- Increases Critical Strike chance by $s1%
+    volatile_detonation            = {  62089,  389627, 1 }, -- Greatly increases the effect of Blast Wave's knockback. Blast Wave's cooldown is reduced by $s1 sec
+    winters_protection             = {  62123,  382424, 2 }, -- The cooldown of Ice Block is reduced by $s1 sec
 
     -- Fire
-    alexstraszas_fury         = { 101945, 235870, 1 }, -- Dragon's Breath always critically strikes, deals 50% increased critical strike damage, and contributes to Hot Streak.
-    ashen_feather             = { 101945, 450813, 1 }, -- If Phoenix Flames only hits 1 target, it deals 50% increased damage and applies Ignite at 150% effectiveness.
-    blast_zone                = { 101022, 451755, 1 }, -- Lit Fuse now turns up to 3 targets into Living Bombs. Living Bombs can now spread to 5 enemies.
-    call_of_the_sun_king      = { 100991, 343222, 1 }, -- Phoenix Flames deals 15% increased damage and always critically strikes.
-    combustion                = { 100995, 190319, 1 }, -- Engulfs you in flames for 12 sec, increasing your spells' critical strike chance by 100% and granting you Mastery equal to 75% of your Critical Strike stat. Castable while casting other spells. When you activate Combustion, you gain 2% Critical Strike damage, and up to 4 nearby allies gain 1% Critical Strike for 10 sec.
-    controlled_destruction    = { 101002, 383669, 1 }, -- Damaging a target with Pyroblast or Fireball increases the damage it receives from Ignite by 0.5%. Stacks up to 50 times.
-    convection                = { 100992, 416715, 1 }, -- When a Living Bomb expires, if it did not spread to another target, it reapplies itself at 100% effectiveness. A Living Bomb can only benefit from this effect once.
-    cratermaker               = { 100993, 451757, 1 }, -- Casting Combustion grants Lit Fuse and Living Bomb's damage is increased by 30% while under the effects of Combustion.
-    critical_mass             = { 101029, 117216, 1 }, -- Your spells have a 5% increased chance to deal a critical strike. You gain 10% more of the Critical Strike stat from all sources.
-    deep_impact               = { 101000, 416719, 1 }, -- Meteor now turns 1 target hit into a Living Bomb. Additionally, its cooldown is reduced by 10 sec.
-    explosive_ingenuity       = { 101013, 451760, 1 }, -- Your chance of gaining Lit Fuse when consuming Hot Streak is increased by 4%. Living Bomb damage increased by 50%.
-    feel_the_burn             = { 101014, 383391, 1 }, -- Fire Blast and Phoenix Flames increase your mastery by 2% for 5 sec. This effect stacks up to 3 times.
-    fervent_flickering        = { 101027, 387044, 1 }, -- Fire Blast's cooldown is reduced by 2 sec.
-    fevered_incantation       = { 101019, 383810, 2 }, -- Each consecutive critical strike you deal increases critical strike damage you deal by 1%, up to 4% for 6 sec.
-    fiery_rush                = { 101003, 383634, 1 }, -- While Combustion is active, your Fire Blast and Phoenix Flames recharge 50% faster.
-    fire_blast                = { 100989, 108853, 1 }, -- Blasts the enemy for 111,198 Fire damage. Fire: Castable while casting other spells. Always deals a critical strike.
-    firefall                  = { 100996, 384033, 1 }, -- Damaging an enemy with 15 Fireballs or Pyroblasts causes your next Fireball or Pyroblast to call down a Meteor on your target.
-    fires_ire                 = { 101004, 450831, 2 }, -- When you're not under the effect of Combustion, your critical strike chance is increased by 2.5%. While you're under the effect of Combustion, your critical strike damage is increased by 2.5%.
-    firestarter               = { 102014, 205026, 1 }, -- Your Fireball and Pyroblast spells always deal a critical strike when the target is above 90% health.
-    flame_accelerant          = { 102012, 453282, 1 }, -- Every 12 seconds, your next non-instant Fireball, Flamestrike, or Pyroblast has a 40% reduced cast time.
-    flame_on                  = { 101009, 205029, 1 }, -- Increases the maximum number of Fire Blast charges by 2.
-    flame_patch               = { 101021, 205037, 1 }, -- Flamestrike leaves behind a patch of flames that burns enemies within it for 31,650 Fire damage over 8 sec. Deals reduced damage beyond 8 targets.
-    from_the_ashes            = { 100999, 342344, 1 }, -- Phoenix Flames damage increased by 15% and your direct-damage spells reduce the cooldown of Phoenix Flames by 1 sec.
-    heat_shimmer              = { 102010, 457735, 1 }, -- Scorch damage increased by 10%. Damage from Ignite has a 5% chance to make your next Scorch deal damage as though your target was below 30% health.
-    hyperthermia              = { 101942, 383860, 1 }, -- While Combustion is not active, consuming Hot Streak has a low chance to cause all Pyroblasts and Flamestrikes to have no cast time and be guaranteed critical strikes for 5 sec.
-    improved_combustion       = { 101007, 383967, 1 }, -- Combustion grants mastery equal to 75% of your Critical Strike stat and lasts 2 sec longer.
-    improved_scorch           = { 101011, 383604, 1 }, -- Casting Scorch on targets below 30% health increase the target's damage taken from you by 7% for 12 sec. This effect stacks up to 2 times.
-    inflame                   = { 102013, 417467, 1 }, -- Hot Streak increases the amount of Ignite damage from Pyroblast or Flamestrike by an additional 10%.
-    intensifying_flame        = { 101017, 416714, 1 }, -- While Ignite is on 3 or fewer enemies it flares up dealing an additional 20% of its damage to affected targets.
-    kindling                  = { 101024, 155148, 1 }, -- Your Fireball, Pyroblast, Fire Blast, Scorch and Phoenix Flames critical strikes reduce the remaining cooldown on Combustion by 1.0 sec. Flamestrike critical strikes reduce the remaining cooldown of Combustion by 0.2 sec for each critical strike, up to 1 sec.
-    lit_fuse                  = { 100994, 450716, 1 }, -- Consuming Hot Streak has a 6% chance to grant you Lit Fuse.  Lit Fuse: Your next Fire Blast turns up to 1 nearby target into a Living Bomb that explodes after 1.6 sec, dealing 22,656 Fire damage to the target and reduced damage to all other enemies within 10 yds. Up to 3 enemies hit by this explosion also become a Living Bomb, but this effect cannot spread further.
-    majesty_of_the_phoenix    = { 101008, 451440, 1 }, -- Casting Phoenix Flames causes your next Flamestrike to have its critical strike chance increased by 20% and critical strike damage increased by 20%. Stacks up to 3 times.
-    mark_of_the_firelord      = { 100988, 450325, 1 }, -- Flamestrike and Living Bomb apply Mastery: Ignite at 100% increased effectiveness.
-    master_of_flame           = { 101006, 384174, 1 }, -- Ignite deals 15% more damage and Fireball deals 15% more damage while Combustion is not active. Fire Blast spreads Ignite to 2 additional nearby targets during Combustion.
-    meteor                    = { 101016, 153561, 1 }, -- Calls down a meteor which lands at the target location after 3 sec, dealing 312,788 Fire damage to all enemies hit reduced beyond 8 targets, and burns the ground, dealing 57,747 Fire damage over 8.5 sec to all enemies in the area.
-    molten_fury               = { 101015, 457803, 1 }, -- Damage dealt to targets below 35% health is increased by 7%.
-    phoenix_flames            = { 101012, 257541, 1 }, -- Hurls a Phoenix that deals 86,086 Fire damage to the target and reduced damage to other nearby enemies. Always deals a critical strike.
-    phoenix_reborn            = { 101943, 453123, 1 }, -- When your direct damage spells hit an enemy 25 times, gain 1 stack of Born of Flame.  Born of Flame Phoenix Flames refunds a charge on use and its damage is increased by 200%.
-    pyroblast                 = { 100998,  11366, 1 }, -- Hurls an immense fiery boulder that causes 209,244 Fire damage.
-    pyromaniac                = { 101020, 451466, 1 }, -- Casting Pyroblast or Flamestrike while Hot Streak is active has an 6% chance to repeat the spell cast at 50% effectiveness. This effect counts as consuming Hot Streak.
-    pyrotechnics              = { 100997, 157642, 1 }, -- Each time your Fireball fails to critically strike a target, it gains a stacking 20% increased critical strike chance. Effect ends when Fireball critically strikes.
-    quickflame                = { 101021, 450807, 1 }, -- Flamestrike damage increased by 25%.
-    scald                     = { 101011, 450746, 1 }, -- Scorch deals 300% increased damage to targets below 30% health.
-    scorch                    = { 100987,   2948, 1 }, -- Scorches an enemy for 27,897 Fire damage. When cast on a target below 30% health, Scorch is a guaranteed critical strike and increases your movement speed by 30% for 3 sec. Castable while moving.
-    sparking_cinders          = { 102011, 457728, 1 }, -- Living Bomb explosions have a small chance to increase the damage of your next Pyroblast by 15% or Flamestrike by 15%.
-    spontaneous_combustion    = { 101007, 451875, 1 }, -- Casting Combustion refreshes up to 3 charges of Fire Blast and up to 3 charges of Phoenix Flames.
-    sun_kings_blessing        = { 101025, 383886, 1 }, -- After consuming 10 Hot Streaks, your next non-instant Pyroblast or Flamestrike cast within 30 sec grants you Combustion for 6 sec and deals 280% additional damage.
-    surging_blaze             = { 101023, 343230, 1 }, -- Pyroblast and Flamestrike's cast time is reduced by 0.5 sec and their damage dealt is increased by 5%.
-    unleashed_inferno         = { 101025, 416506, 1 }, -- While Combustion is active your Fireball, Pyroblast, Fire Blast, Scorch, and Phoenix Flames deal 60% increased damage and reduce the cooldown of Combustion by 1.25 sec. While Combustion is active, Flamestrike deals 35% increased damage and reduces the cooldown of Combustion by 0.25 sec for each critical strike, up to 1.25 sec.
-    wildfire                  = { 101001, 383489, 1 }, -- Your critical strike damage is increased by 3%. When you activate Combustion, you gain 2% additional critical strike damage, and up to 4 nearby allies gain 1% critical strike for 10 sec.
-
-    -- Sunfury
-    burden_of_power           = {  94644, 451035, 1 }, -- Conjuring a Spellfire Sphere increases the damage of your next Pyroblast by 20% or your next Flamestrike by 30%.
-    codex_of_the_sunstriders  = {  94643, 449382, 1 }, -- Over its duration, your Arcane Phoenix will consume each of your Spellfire Spheres to cast an exceptional spell. Upon consuming a Spellfire Sphere, your Arcane Phoenix will grant you Lingering Embers.  Lingering Embers Increases your spell damage by 1%.
-    glorious_incandescence    = {  94645, 449394, 1 }, -- Consuming Burden of Power causes your next cast of Fire Blast to strike up to 2 additional targets and call down a storm of 4 Meteorites on its target. Each Meteorite's impact reduces the cooldown of Fire Blast by 2.0 sec.
-    gravity_lapse             = {  94651, 458513, 1 }, -- Your Supernova becomes Gravity Lapse. Gravity Lapse The snap of your fingers warps the gravity around your target and 4 other nearby enemies, suspending them in the air for 3 sec. Upon landing, nearby enemies take 41,037 Arcane damage.
-    ignite_the_future         = {  94648, 449558, 1 }, -- Generating a Spellfire Sphere while your Phoenix is active causes it to cast an exceptional spell. Mana Cascade can now stack up to 15 times.
-    invocation_arcane_phoenix = {  94652, 448658, 1 }, -- When you cast Combustion, summon an Arcane Phoenix to aid you in battle.  Arcane Phoenix Your Arcane Phoenix aids you for the duration of your Combustion, casting random Arcane and Fire spells.
-    lessons_in_debilitation   = {  94651, 449627, 1 }, -- Your Arcane Phoenix will Spellsteal when it is summoned and when it expires.
-    mana_cascade              = {  94653, 449293, 1 }, -- Consuming Hot Streak grants you 0.5% Haste for 10 sec. Stacks up to 10 times. Multiple instances may overlap.
-    memory_of_alar            = {  94646, 449619, 1 }, -- While under the effects of a casted Combustion, you gain twice as many stacks of Mana Cascade. When your Arcane Phoenix expires, it empowers you, granting Hyperthermia for 2 sec, plus an additional 1.0 sec for each exceptional spell it had cast.  Hyperthermia: Pyroblast and Flamestrike have no cast time and are guaranteed to critically strike.
-    merely_a_setback          = {  94649, 449330, 1 }, -- Your Blazing Barrier now grants 5% avoidance while active and 3% leech for 5 sec when it breaks or expires.
-    rondurmancy               = {  94648, 449596, 1 }, -- Spellfire Spheres can now stack up to 5 times.
-    savor_the_moment          = {  94650, 449412, 1 }, -- When you cast Combustion, its duration is extended by 0.5 sec for each Spellfire Sphere you have, up to 2.5 sec.
-    spellfire_spheres         = {  94647, 448601, 1, "sunfury" }, -- Every 6 times you consume Hot Streak, conjure a Spellfire Sphere. While you're out of combat, you will slowly conjure Spellfire Spheres over time.  Spellfire Sphere Increases your spell damage by 1%. Stacks up to 3 times.
-    sunfury_execution         = {  94650, 449349, 1 }, -- Scorch's critical strike threshold is increased to 35%.  Scorch Scorches an enemy for 27,897 Fire damage. When cast on a target below 30% health, Scorch is a guaranteed critical strike and increases your movement speed by 30% for 3 sec. Castable while moving.
+    alexstraszas_fury              = { 101945,  235870, 1 }, -- Dragon's Breath always critically strikes, deals $s1% increased critical strike damage, and contributes to Hot Streak
+    ashen_feather                  = { 101945,  450813, 1 }, -- If Phoenix Flames only hits $s1 target, it deals $s2% increased damage and applies Ignite at $s3% effectiveness
+    blast_zone                     = { 101022,  451755, 1 }, -- Lit Fuse now turns up to $s1 targets into Living Bombs. Living Bombs can now spread to $s2 enemies
+    call_of_the_sun_king           = { 100991,  343222, 1 }, -- Phoenix Flames deals $s1% increased damage and always critically strikes
+    combustion                     = { 100995,  190319, 1 }, -- Engulfs you in flames for $s1 sec, increasing your spells' critical strike chance by $s2% and granting you Mastery equal to $s3% of your Critical Strike stat. Castable while casting other spells. When you activate Combustion, you gain $s4% Critical Strike damage, and up to $s5 nearby allies gain $s6% Critical Strike for $s7 sec
+    controlled_destruction         = { 101002,  383669, 1 }, -- Damaging a target with Pyroblast or Fireball increases the damage it receives from Ignite by $s1%. Stacks up to $s2 times
+    convection                     = { 100992,  416715, 1 }, -- When a Living Bomb expires, if it did not spread to another target, it reapplies itself at $s1% effectiveness. A Living Bomb can only benefit from this effect once
+    cratermaker                    = { 100993,  451757, 1 }, -- Casting Combustion grants Lit Fuse and Living Bomb's damage is increased by $s1% while under the effects of Combustion
+    critical_mass                  = { 101029,  117216, 1 }, -- Your spells have a $s1% increased chance to deal a critical strike. You gain $s2% more of the Critical Strike stat from all sources
+    deep_impact                    = { 101000,  416719, 1 }, -- Meteor now turns $s1 target hit into a Living Bomb. Additionally, its cooldown is reduced by $s2 sec
+    explosive_ingenuity            = { 101013,  451760, 1 }, -- Your chance of gaining Lit Fuse when consuming Hot Streak is increased by $s1%. Living Bomb damage increased by $s2%
+    feel_the_burn                  = { 101014,  383391, 1 }, -- Fire Blast and Phoenix Flames increase your mastery by $s1% for $s2 sec. This effect stacks up to $s3 times
+    fervent_flickering             = { 101027,  387044, 1 }, -- Fire Blast's cooldown is reduced by $s1 sec
+    fevered_incantation            = { 101019,  383810, 2 }, -- Each consecutive critical strike you deal increases critical strike damage you deal by $s1%, up to $s2% for $s3 sec
+    fiery_rush                     = { 101003,  383634, 1 }, -- While Combustion is active, your Fire Blast and Phoenix Flames recharge $s1% faster
+    fire_blast                     = { 100989,  108853, 1 }, -- Blasts the enemy for $s$s2 Fire damage. Fire: Castable while casting other spells. Always deals a critical strike
+    firefall                       = { 100996,  384033, 1 }, -- Damaging an enemy with $s1 Fireballs or Pyroblasts causes your next Fireball or Pyroblast to call down a Meteor on your target
+    fires_ire                      = { 101004,  450831, 2 }, -- When you're not under the effect of Combustion, your critical strike chance is increased by $s1%. While you're under the effect of Combustion, your critical strike damage is increased by $s2%
+    firestarter                    = { 102014,  205026, 1 }, -- Your Fireball and Pyroblast spells always deal a critical strike when the target is above $s1% health
+    flame_accelerant               = { 102012,  453282, 1 }, -- Every $s1 seconds, your next non-instant Fireball, Flamestrike, or Pyroblast has a $s2% reduced cast time
+    flame_on                       = { 101009,  205029, 1 }, -- Increases the maximum number of Fire Blast charges by $s1
+    flame_patch                    = { 101021,  205037, 1 }, -- Flamestrike leaves behind a patch of flames that burns enemies within it for $s$s2 Fire damage over $s3 sec. Deals reduced damage beyond $s4 targets
+    from_the_ashes                 = { 100999,  342344, 1 }, -- Phoenix Flames damage increased by $s1% and your direct-damage spells reduce the cooldown of Phoenix Flames by $s2 sec
+    heat_shimmer                   = { 102010,  457735, 1 }, -- Scorch damage increased by $s1%. Damage from Ignite has a $s2% chance to make your next Scorch deal damage as though your target was below $s3% health
+    hyperthermia                   = { 101942,  383860, 1 }, -- While Combustion is not active, consuming Hot Streak has a low chance to cause all Pyroblasts and Flamestrikes to have no cast time and be guaranteed critical strikes for $s1 sec. Each cast of Pyroblast or Flamestrike during Hyperthermia increases the damage of Pyroblast and Flamestrike by $s2%, up to $s3%
+    improved_combustion            = { 101007,  383967, 1 }, -- Combustion grants mastery equal to $s1% of your Critical Strike stat and lasts $s2 sec longer
+    improved_scorch                = { 101011,  383604, 1 }, -- Casting Scorch on targets below $s1% health increase the target's damage taken from you by $s2% for $s3 sec. This effect stacks up to $s4 times
+    inflame                        = { 102013,  417467, 1 }, -- Hot Streak increases the amount of Ignite damage from Pyroblast or Flamestrike by an additional $s1%
+    intensifying_flame             = { 101017,  416714, 1 }, -- While Ignite is on $s1 or fewer enemies it flares up dealing an additional $s2% of its damage to affected targets
+    kindling                       = { 101024,  155148, 1 }, -- Your Fireball, Pyroblast, Fire Blast, Scorch and Phoenix Flames critical strikes reduce the remaining cooldown on Combustion by $s1 sec. Flamestrike critical strikes reduce the remaining cooldown of Combustion by $s2 sec for each critical strike, up to $s3 sec
+    lit_fuse                       = { 100994,  450716, 1 }, -- Consuming Hot Streak has a $s2% chance to grant you Lit Fuse.  Lit Fuse: Your next Fire Blast turns up to $s5 nearby target into a Living Bomb that explodes after $s6 sec, dealing $s$s7 Fire damage to the target and reduced damage to all other enemies within $s8 yds. Up to $s9 enemies hit by this explosion also become a Living Bomb, but this effect cannot spread further
+    majesty_of_the_phoenix         = { 101008,  451440, 1 }, -- Casting Phoenix Flames causes your next Flamestrike to have its critical strike chance increased by $s1% and critical strike damage increased by $s2%. Stacks up to $s3 times
+    mark_of_the_firelord           = { 100988,  450325, 1 }, -- Flamestrike and Living Bomb apply Mastery: Ignite at $s1% increased effectiveness
+    master_of_flame                = { 101006,  384174, 1 }, -- Ignite deals $s1% more damage and Fireball deals $s2% more damage while Combustion is not active. Fire Blast spreads Ignite to $s3 additional nearby targets during Combustion
+    meteor                         = { 101016,  153561, 1 }, -- Calls down a meteor which lands at the target location after $s3 sec, dealing $s$s4 Fire damage to all enemies, and burns the ground, dealing $s$s5 Fire damage over $s6 sec to all enemies in the area. The enemy closest to the center of the Meteor's impact takes $s7% increased damage. Damage reduced beyond $s8 targets
+    molten_fury                    = { 101015,  457803, 1 }, -- Damage dealt to targets below $s1% health is increased by $s2%
+    phoenix_flames                 = { 101012,  257541, 1 }, -- Hurls a Phoenix that deals $s$s2 Fire damage to the target and reduced damage to other nearby enemies. Always deals a critical strike
+    phoenix_reborn                 = { 101943,  453123, 1 }, -- When your direct damage spells hit an enemy $s1 times, gain $s2 stack of Born of Flame.  Born of Flame Phoenix Flames refunds a charge on use and its damage is increased by $s5%
+    pyroblast                      = { 100998,   11366, 1 }, -- Hurls an immense fiery boulder that causes $s$s2 Fire damage
+    pyromaniac                     = { 101020,  451466, 1 }, -- Casting Pyroblast or Flamestrike while Hot Streak is active has a $s1% chance to repeat the spell cast at $s2% effectiveness. This effect counts as consuming Hot Streak
+    pyrotechnics                   = { 100997,  157642, 1 }, -- Each time your Fireball fails to critically strike a target, it gains a stacking $s1% increased critical strike chance. Effect ends when Fireball critically strikes
+    quickflame                     = { 101021,  450807, 1 }, -- Flamestrike damage increased by $s1%
+    scald                          = { 101011,  450746, 1 }, -- Scorch deals $s1% increased damage to targets below $s2% health
+    scorch                         = { 100987,    2948, 1 }, -- Scorches an enemy for $s$s2 Fire damage. When cast on a target below $s3% health, Scorch is a guaranteed critical strike and increases your movement speed by $s4% for $s5 sec. Castable while moving
+    sparking_cinders               = { 102011,  457728, 1 }, -- Living Bomb explosions have a small chance to increase the damage of your next Pyroblast by $s1% or Flamestrike by $s2%
+    spontaneous_combustion         = { 101007,  451875, 1 }, -- Casting Combustion refreshes up to $s1 charges of Fire Blast and up to $s2 charges of Phoenix Flames
+    sun_kings_blessing             = { 101025,  383886, 1 }, -- After consuming $s1 Hot Streaks, your next non-instant Pyroblast or Flamestrike cast within $s2 sec grants you Combustion for $s3 sec and deals $s4% additional damage
+    surging_blaze                  = { 101023,  343230, 1 }, -- Pyroblast and Flamestrike's cast time is reduced by $s1 sec and their damage dealt is increased by $s2%
+    unleashed_inferno              = { 101025,  416506, 1 }, -- While Combustion is active your Fireball, Pyroblast, Fire Blast, Scorch, and Phoenix Flames deal $s1% increased damage and reduce the cooldown of Combustion by $s2 sec. While Combustion is active, Flamestrike deals $s3% increased damage and reduces the cooldown of Combustion by $s4 sec for each critical strike, up to $s5 sec
+    wildfire                       = { 101001,  383489, 1 }, -- Your critical strike damage is increased by $s1%. When you activate Combustion, you gain $s2% additional critical strike damage, and up to $s3 nearby allies gain $s4% critical strike for $s5 sec
 
     -- Frostfire
-    elemental_affinity        = {  94633, 431067, 1 }, -- The cooldown of Frost spells with a base cooldown shorter than 4 minutes is reduced by 30%.
-    excess_fire               = {  94637, 438595, 1 }, -- Casting Meteor causes your next Fire Blast to explode in a Frostfire Burst, dealing 224,531 Frostfire damage to nearby enemies. Damage reduced beyond 8 targets. Frostfire Burst, reduces the cooldown of Phoenix Flames by 10 sec.
-    excess_frost              = {  94639, 438600, 1 }, -- Consuming Excess Fire causes your next Phoenix Flames to also cast Ice Nova at 200% effectiveness. Ice Novas cast this way do not freeze enemies in place. When you consume Excess Frost, the cooldown of Meteor is reduced by 5 sec.
-    flame_and_frost           = {  94633, 431112, 1 }, -- Cauterize resets the cooldown of your Frost spells with a base cooldown shorter than 4 minutes when it activates.
-    flash_freezeburn          = {  94635, 431178, 1 }, -- Frostfire Empowerment grants you maximum benefit of Frostfire Mastery, refreshes its duration, and grants you Excess Frost and Excess Fire. Activating Combustion or Icy Veins grants you Frostfire Empowerment.
-    frostfire_bolt            = {  94641, 431044, 1 }, -- Launches a bolt of frostfire at the enemy, causing 176,785 Frostfire damage, slowing movement speed by 60%, and causing an additional 47,365 Frostfire damage over 8 sec. Frostfire Bolt generates stacks for both Fire Mastery and Frost Mastery.
-    frostfire_empowerment     = {  94632, 431176, 1 }, -- Your Frost and Fire spells have a chance to activate Frostfire Empowerment, causing your next Frostfire Bolt to be instant cast, deal 60% increased damage, explode for 80% of its damage to nearby enemies.
-    frostfire_infusion        = {  94634, 431166, 1 }, -- Your Frost and Fire spells have a chance to trigger an additional bolt of Frostfire, dealing 57,062 damage. This effect generates Frostfire Mastery when activated.
-    frostfire_mastery         = {  94636, 431038, 1, "frostfire" }, -- Your damaging Fire spells generate 1 stack of Fire Mastery and Frost spells generate 1 stack of Frost Mastery. Fire Mastery increases your haste by 1%, and Frost Mastery increases your Mastery by 2% for 14 sec, stacking up to 6 times each. Adding stacks does not refresh duration.
-    imbued_warding            = {  94642, 431066, 1 }, -- Blazing Barrier also casts an Ice Barrier at 25% effectiveness.
-    isothermic_core           = {  94638, 431095, 1 }, -- Comet Storm now also calls down a Meteor at 150% effectiveness onto your target's location. Meteor now also calls down a Comet Storm at 200% effectiveness onto your target location.
-    meltdown                  = {  94642, 431131, 1 }, -- You melt slightly out of your Ice Block and Ice Cold, allowing you to move slowly during Ice Block and increasing your movement speed over time. Ice Block and Ice Cold trigger a Blazing Barrier when they end.
-    severe_temperatures       = {  94640, 431189, 1 }, -- Casting damaging Frost or Fire spells has a high chance to increase the damage of your next Frostfire Bolt by 10%, stacking up to 5 times.
-    thermal_conditioning      = {  94640, 431117, 1 }, -- Frostfire Bolt's cast time is reduced by 10%.
+    elemental_affinity             = {  94633,  431067, 1 }, -- The cooldown of Frost spells with a base cooldown shorter than $s1 minutes is reduced by $s2%
+    excess_fire                    = {  94637,  438595, 1 }, -- Casting Meteor causes your next Fire Blast to explode in a Frostfire Burst, dealing $s$s2 Frostfire damage to nearby enemies. Damage reduced beyond $s3 targets. Frostfire Burst reduces the cooldown of Phoenix Flames by $s4 sec
+    excess_frost                   = {  94639,  438600, 1 }, -- Consuming Excess Fire causes your next Phoenix Flames to also cast Ice Nova at $s1% effectiveness. Ice Novas cast this way do not freeze enemies in place. When you consume Excess Frost, the cooldown of Meteor is reduced by $s2 sec
+    flame_and_frost                = {  94633,  431112, 1 }, -- Cauterize resets the cooldown of your Frost spells with a base cooldown shorter than $s1 minutes when it activates
+    flash_freezeburn               = {  94635,  431178, 1 }, -- Frostfire Empowerment grants you maximum benefit of Frostfire Mastery, refreshes its duration, and grants you Excess Frost and Excess Fire. Casting Combustion or Icy Veins grants you Frostfire Empowerment
+    frostfire_bolt                 = {  94641,  431044, 1 }, -- Launches a bolt of frostfire at the enemy, causing $s$s3 Frostfire damage, slowing movement speed by $s4%, and causing an additional $s$s5 Frostfire damage over $s6 sec. Frostfire Bolt generates stacks for both Fire Mastery and Frost Mastery
+    frostfire_empowerment          = {  94632,  431176, 1 }, -- Your Frost and Fire spells have a chance to activate Frostfire Empowerment, causing your next Frostfire Bolt to be instant cast, deal $s1% increased damage, explode for $s2% of its damage to nearby enemies
+    frostfire_infusion             = {  94634,  431166, 1 }, -- Your Frost and Fire spells have a chance to trigger an additional bolt of Frostfire, dealing $s1 damage. This effect generates Frostfire Mastery when activated
+    frostfire_mastery              = {  94636,  431038, 1 }, -- Your damaging Fire spells generate $s1 stack of Fire Mastery and Frost spells generate $s2 stack of Frost Mastery. Fire Mastery increases your haste by $s3%, and Frost Mastery increases your Mastery by $s4% for $s5 sec, stacking up to $s6 times each. Adding stacks does not refresh duration
+    imbued_warding                 = {  94642,  431066, 1 }, -- Blazing Barrier also casts an Ice Barrier at $s1% effectiveness
+    isothermic_core                = {  94638,  431095, 1 }, -- Comet Storm now also calls down a Meteor at $s1% effectiveness onto your target's location. Meteor now also calls down a Comet Storm at $s2% effectiveness onto your target location
+    meltdown                       = {  94642,  431131, 1 }, -- You melt slightly out of your Ice Block and Ice Cold, allowing you to move slowly during Ice Block and increasing your movement speed over time. Ice Block and Ice Cold trigger a Blazing Barrier when they end
+    severe_temperatures            = {  94640,  431189, 1 }, -- Casting damaging Frost or Fire spells has a high chance to increase the damage of your next Frostfire Bolt by $s1%, stacking up to $s2 times
+    thermal_conditioning           = {  94640,  431117, 1 }, -- Frostfire Bolt's cast time is reduced by $s1%
+
+    -- Sunfury
+    burden_of_power                = {  94644,  451035, 1 }, -- Conjuring a Spellfire Sphere increases the damage of your next Pyroblast by $s1% or your next Flamestrike by $s2%
+    codex_of_the_sunstriders       = {  94643,  449382, 1 }, -- Over its duration, your Arcane Phoenix will consume each of your Spellfire Spheres to cast an exceptional spell. Upon consuming a Spellfire Sphere, your Arcane Phoenix will grant you Lingering Embers.  Lingering Embers Increases your spell damage by $s3%
+    glorious_incandescence         = {  94645,  449394, 1 }, -- Consuming Burden of Power causes your next cast of Fire Blast to strike up to $s1 additional targets and call down a storm of $s2 Meteorites on its target. Each Meteorite's impact reduces the cooldown of Fire Blast by $s3 sec
+    gravity_lapse                  = {  94651,  458513, 1 }, -- Your Supernova becomes Gravity Lapse. Gravity Lapse
+    ignite_the_future              = {  94648,  449558, 1 }, -- Generating a Spellfire Sphere while your Phoenix is active causes it to cast an exceptional spell. Mana Cascade can now stack up to $s1 times
+    invocation_arcane_phoenix      = {  94652,  448658, 1 }, -- When you cast Combustion, summon an Arcane Phoenix to aid you in battle.  Arcane Phoenix Your Arcane Phoenix aids you for the duration of your Combustion, casting random Arcane and Fire spells
+    lessons_in_debilitation        = {  94651,  449627, 1 }, -- Your Arcane Phoenix will Spellsteal when it is summoned and when it expires
+    mana_cascade                   = {  94653,  449293, 1 }, -- Consuming Hot Streak grants you $s1% Haste for $s2 sec. Stacks up to $s3 times. Multiple instances may overlap
+    memory_of_alar                 = {  94646,  449619, 1 }, -- While under the effects of a casted Combustion, you gain twice as many stacks of Mana Cascade. When your Arcane Phoenix expires, it empowers you, granting Hyperthermia for $s1 sec, plus an additional $s2 sec for each exceptional spell it had cast.  Hyperthermia: Pyroblast and Flamestrike have no cast time, are guaranteed to critically strike, and increase the damage of Pyroblast and Flamestrike by $s5%
+    merely_a_setback               = {  94649,  449330, 1 }, -- Your Blazing Barrier now grants $s1% avoidance while active and $s2% leech for $s3 sec when it breaks or expires
+    rondurmancy                    = {  94648,  449596, 1 }, -- Spellfire Spheres can now stack up to $s1 times
+    savor_the_moment               = {  94650,  449412, 1 }, -- When you cast Combustion, its duration is extended by $s1 sec for each Spellfire Sphere you have, up to $s2 sec
+    spellfire_spheres              = {  94647,  448601, 1 }, -- Every $s1 times you consume Hot Streak, conjure a Spellfire Sphere. While you're out of combat, you will slowly conjure Spellfire Spheres over time.  Spellfire Sphere Increases your spell damage by $s4%. Stacks up to $s5 times
+    sunfury_execution              = {  94650,  449349, 1 }, -- Scorch's critical strike threshold is increased to $s2%.  Scorch Scorches an enemy for $s$s5 Fire damage. When cast on a target below $s6% health, Scorch is a guaranteed critical strike and increases your movement speed by $s7% for $s8 sec. Castable while moving
 } )
 
 -- PvP Talents
 spec:RegisterPvpTalents( {
-    ethereal_blink             = 5602, -- (410939) Blink and Shimmer apply Slow at 100% effectiveness to all enemies you Blink through. For each enemy you Blink through, the cooldown of Blink and Shimmer are reduced by 1 sec, up to 5 sec.
-    fireheart                  = 5656, -- (460942) Blazing Barrier's damage is increased by 800%.
-    glass_cannon               = 5495, -- (390428) Increases damage of Fireball, Scorch, and Ignite by 20% but decreases your maximum health by 30%.
-    greater_pyroblast          =  648, -- (203286) Hurls an immense fiery boulder that deals up to 30% of the target's total health in Fire damage.
-    ice_wall                   = 5489, -- (352278) Conjures an Ice Wall 30 yards long that obstructs line of sight. The wall has 40% of your maximum health and lasts up to 15 sec.
-    ignition_burst             = 5685, -- (1217359) Heat Shimmer now additionally causes your next Scorch to become instant cast and cast at 100% effectiveness.
-    improved_mass_invisibility = 5621, -- (415945) The cooldown of Mass Invisibility is reduced by 4 min and can affect allies in combat.
-    master_shepherd            = 5588, -- (410248) While an enemy player is affected by your Polymorph or Mass Polymorph, your movement speed is increased by 25% and your Versatility is increased by 12%. Additionally, Polymorph and Mass Polymorph no longer heal enemies.
-    overpowered_barrier        = 5706, -- (1220739) Your barriers absorb 100% more damage and have an additional effect, but last 5 sec.  Blazing Barrier Reflects 100% of damage absorbed.
-    ring_of_fire               = 5389, -- (353082) Summons a Ring of Fire for 8 sec at the target location. Enemies entering the ring are disoriented and burn for 3% of their total health over 3 sec.
-    world_in_flames            =  644, -- (203280) Empower Flamestrike, dealing up to 50% more damage based on enemies' distance to the center of Flamestrike.
+    ethereal_blink                 = 5602, -- (410939) Blink and Shimmer apply Slow at $s1% effectiveness to all enemies you Blink through. For each enemy you Blink through, the cooldown of Blink and Shimmer are reduced by $s2 sec, up to $s3 sec
+    glass_cannon                   = 5495, -- (390428) Increases damage of Fireball, Scorch, and Ignite by $s1% but decreases your maximum health by $s2%
+    greater_pyroblast              =  648, -- (203286) Hurls an immense fiery boulder that deals up to $s1% of the target's total health in Fire damage
+    ice_wall                       = 5489, -- (352278) Conjures an Ice Wall $s1 yards long that obstructs line of sight. The wall has $s2% of your maximum health and lasts up to $s3 sec
+    ignition_burst                 = 5685, -- (1217359) Heat Shimmer now additionally causes your next Scorch to become instant cast and cast at $s1% effectiveness
+    improved_mass_invisibility     = 5621, -- (415945) The cooldown of Mass Invisibility is reduced by $s1 min and can affect allies in combat
+    master_shepherd                = 5588, -- (410248) While an enemy player is affected by your Polymorph or Mass Polymorph, your movement speed is increased by $s1% and your Versatility is increased by $s2%. Additionally, Polymorph and Mass Polymorph no longer heal enemies
+    overpowered_barrier            = 5706, -- (1220739) Your barriers absorb $s1% more damage and have an additional effect, but last $s2 sec.  Blazing Barrier Reflects $s5% of damage absorbed
+    ring_of_fire                   = 5389, -- (353082) Summons a Ring of Fire for $s1 sec at the target location. Enemies entering the ring are disoriented and burn for $s2% of their total health over $s3 sec
+    world_in_flames                =  644, -- (203280) Empower Flamestrike, dealing up to $s1% more damage based on enemies' distance to the center of Flamestrike
 } )
 
 -- Auras
@@ -490,6 +473,13 @@ spec:RegisterAuras( {
         id = 383874,
         duration = 5,
         max_stack = 1
+    },
+    -- Hyperthermia Pyroblast and Flamestrike damage increased by $s1%. $s2 seconds remaining
+    -- https://www.wowhead.com/spell=1242220
+    hyperthermia_damage = {
+        id = 1242220,
+        duration = 5,
+        max_stack = 10
     },
     -- Cannot be made invulnerable by Ice Block.
     -- https://wowhead.com/beta/spell=41425
@@ -894,8 +884,25 @@ spec:RegisterStateTable( "improved_scorch", setmetatable( {}, {
     end, state )
 } ) )
 
+
 spec:RegisterGear({
     -- The War Within
+    tww3 = {
+        items = { 237721, 237719, 237718, 237716, 237717 },
+        auras = {
+            -- Sunfury
+            flame_quills = {
+                id = 1236145,
+                duration = 13,
+                max_stack = 1
+            },
+            lesser_time_warp = {
+                id = 1236231,
+                duration = 13,
+                max_stack = 1
+            },
+        }
+    },
     tww2 = {
         items = { 229346, 229344, 229342, 229343, 229341 },
         auras = {
@@ -945,10 +952,18 @@ spec:RegisterGear({
 
 local TriggerHyperthermia = setfenv( function()
 
+    local mod = 1
+
+    if set_bonus.tww3 >= 4 then
+        mod = 1.3
+        applyBuff( "lesser_time_warp" )
+        applyBuff( "flame_quills" )
+    end
+
     if buff.hyperthermia.up then
-        buff.hyperthermia.expires = buff.hyperthermia.expires + ( 2 + ( buff.lingering_embers.stacks ) )
+        buff.hyperthermia.expires = buff.hyperthermia.expires + 2 + ( buff.lingering_embers.stacks * mod )
     else
-        applyBuff( "hyperthermia", 2 + ( buff.lingering_embers.stacks ) )
+        applyBuff( "hyperthermia", 2 + ( buff.lingering_embers.stacks * mod ) )
     end
 end, state )
 
@@ -1378,7 +1393,7 @@ spec:RegisterAbilities( {
             if talent.wildfire.enabled or azerite.wildfire.enabled then applyBuff( "wildfire" ) end
             if talent.flash_freezeburn.enabled then applyBuff( "frostfire_empowerment" ) end
             if set_bonus.tww2 >= 2 then
-                reduceCooldown( "combustion", 4 )
+                reduceCooldown( "combustion", 2 )
                 if set_bonus.tww2 >= 4 then
                     applyBuff( "rolling_hot", 15 )
                 end
