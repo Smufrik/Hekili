@@ -572,6 +572,17 @@ spec:RegisterAuras( {
 
 spec:RegisterGear({
     -- The War Within
+    tww3 = {
+        items = { 237610, 237608, 237613, 237611, 237609 },
+        auras = {
+            -- Colossus
+            critical_conclusion = {
+                id = 1239144,
+                duration = 12, -- 8 for arms?
+                max_stack = 1
+            },
+        }
+    },
     tww2 = {
         items = { 229235, 229233, 229238, 229236, 229234 },
         auras = {

@@ -906,6 +906,34 @@ spec:RegisterAuras( {
 
 spec:RegisterGear({
     -- The War Within
+    tww3 = {
+        items = { 237685, 237680, 237683, 237681, 237682 },
+        auras = {
+            -- Elunes Chosen
+            gathering_moonlight = {
+                id = 1236989,
+                duration = 20,
+                max_stack = 15
+            },
+            moonlight_suffusion = {
+                id = 1236990,
+                duration = 12,
+                max_stack = 15
+            },
+            -- Druid of the Claw
+            -- Guardian
+            ravage_rampage = {
+                id = 1236671,
+                duration = 4,
+                max_stack = 1
+            },
+            preparing_to_strike = {
+                id = 1236342,
+                duration = 4,
+                max_stack = 1
+            },
+        }
+    },
     tww2 = {
         items = { 229310, 229308, 229306, 229307, 229305 },
         auras = {

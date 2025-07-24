@@ -915,6 +915,18 @@ spec:RegisterAuras( {
 
 spec:RegisterGear({
     -- The War Within
+    tww3 = {
+        items = { 237691, 237689, 237694, 237692, 237690 },
+        auras = {
+            -- Fel-Scarred
+            -- Havoc
+            demon_soul = {
+                id = 1238676,
+                duration = 10,
+                max_stack = 1
+            },
+        }
+    },
     tww2 = {
         items = { 229316, 229314, 229319, 229317, 229315 },
         auras = {

@@ -817,6 +817,23 @@ spec:RegisterAuras( {
 
 spec:RegisterGear({
     -- The War Within
+    tww3 = {
+        items = { 237619, 237617, 237622, 237620, 237618 },
+        auras = {
+            -- Templar
+            hammer_of_light = {
+                id = 427441,
+                duration = 20,
+                max_stack = 2
+            },
+            -- Lightsmith
+            masterwork = {
+                id = 1238903,
+                duration = 30,
+                max_stack = 5
+            },
+        }
+    },
     tww2 = {
         items = { 229244, 229242, 229243, 229245, 229247 },
         auras = {

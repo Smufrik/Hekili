@@ -303,12 +303,32 @@ spec:RegisterAuras( {
 
 spec:RegisterGear({
     -- The War Within
+    tww3 = {
+        items = { 237640, 237536, 237637, 237636, 237638 },
+        auras = {
+            -- Totemic both specs
+            elemental_overflow = {
+                id = 1239170,
+                duration = 20,
+                max_stack = 1
+            },
+            -- Farseer both specs
+            ancestral_wisdom = {
+                id = 1238279,
+                duration = 8,
+                max_stack = 1
+            },
+        }
+    },
     tww2 = {
         items = { 229260, 229261, 229262, 229263, 229265 }
     },
+    tww1 = {
+        items = { 212014, 212012, 212011, 212010, 212009 },
+    },
     -- Dragonflight
-    tier29 = {
-        items = { 200399, 200401, 200396, 200398, 200400, 217238, 217240, 217236, 217237, 217239 }
+    tier31 = {
+        items = { 207207, 207208, 207209, 207210, 207212 }
     },
     tier30 = {
         items = { 202473, 202471, 202470, 202469, 202468 },
@@ -325,9 +345,9 @@ spec:RegisterGear({
             }
         }
     },
-    tier31 = {
-        items = { 207207, 207208, 207209, 207210, 207212 }
-    }
+    tier29 = {
+        items = { 200399, 200401, 200396, 200398, 200400, 217238, 217240, 217236, 217237, 217239 }
+    },
 } )
 
 local recall_totems = {

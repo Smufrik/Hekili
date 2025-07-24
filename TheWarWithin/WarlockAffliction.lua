@@ -898,6 +898,9 @@ end )
 
 spec:RegisterGear({
     -- The War Within
+    tww3 = {
+        items = { 237700, 237698, 237703, 237701, 237699 },
+    },
     tww2 = {
         items = { 229325, 229323, 229328, 229326, 229324 },
         auras = {

@@ -945,6 +945,22 @@ spec:RegisterStateTable( "imps_spawned_during", setmetatable( {}, {
 
 spec:RegisterGear({
     -- The War Within
+    tww3 = {
+        items = { 237700, 237698, 237703, 237701, 237699 },
+        auras = {
+            -- Diabolist
+            demonic_oculus = {
+                id = 1238810,
+                duration = 60,
+                max_stack = 3
+            },
+            demonic_intelligence= {
+                id = 1239569,
+                duration = 10,
+                max_stack = 3
+            },
+        }
+    },
     tww2 = {
         items = { 229325, 229323, 229328, 229326, 229324 }
     },
