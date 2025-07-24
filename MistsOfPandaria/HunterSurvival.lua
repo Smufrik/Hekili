@@ -223,8 +223,8 @@ spec:RegisterAuras( {
             type = "Magic"
         },
 
-    serpent_sting = {
-        id = 118253,    
+    serpent_sting = { 
+        id = 118253,    --- DEBUFF ((Correct ID for MoP Debuff))
         duration = 15,
         tick_time = 3,
         type = "Ranged",
@@ -632,7 +632,7 @@ spec:RegisterAuras( {
         },
 
         serpent_sting = {
-            id = 118253,
+            id = 1978, --- Corrected ID for MoP Serpent Sting (This is the CAST not the debuff)
             cast = 0,
             cooldown = 0,
             gcd = "spell",
