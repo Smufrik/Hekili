@@ -1040,11 +1040,55 @@ spec:RegisterAuras( {
 
 spec:RegisterGear({
     -- The War Within
-    tww1 = {
-        items = { 212059, 212057, 212056, 212055, 212054 }
+    tww3 = {
+        items = { 237685, 237680, 237683, 237681, 237682 },
+        auras = {
+            -- Elunes Chosen
+            gathering_moonlight = {
+                id = 1236989,
+                duration = 20,
+                max_stack = 15
+            },
+            moonlight_suffusion = {
+                id = 1236990,
+                duration = 12,
+                max_stack = 15
+            },
+            -- Keeper of the Grove
+            -- Dryad A dryad is assisting you! $s1 seconds remaining
+            -- https://www.wowhead.com/spell=1236556
+            dryad = {
+                id = 1236556,
+                duration = 5, -- 10 for balance
+                max_stack = 1
+            },
+            -- Dryad's Favor The healing of your next Swiftmend is increased by $s1 and it splashes $s2% of its healing done to nearby allies, reduced beyond $s3 targets. $s4 seconds remaining
+            -- https://www.wowhead.com/spell=1236807
+            dryads_favor = {
+                id = 1236807,
+                duration = 45,
+                max_stack = 2
+            },
+            -- New tier set hot version
+            -- https://www.wowhead.com/spell=1236573
+            tranquility = {
+                id = 1236573,
+                duration = 8,
+                max_stack = 5
+            },
+            -- New tier set version on dryad
+            starfall = {
+                id = 1236607,
+                duration = 10,
+                max_stack = 1
+            },
+        }
     },
     tww2 = {
         items = { 229310, 229308, 229306, 229307, 229305 }
+    },
+    tww1 = {
+        items = { 212059, 212057, 212056, 212055, 212054 }
     },
     -- Dragonflight
     tier31 = {

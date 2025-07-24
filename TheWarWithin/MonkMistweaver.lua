@@ -650,6 +650,24 @@ spec:RegisterAuras( {
 
 spec:RegisterGear({
     -- The War Within
+    tww3 = {
+        items = { 237673, 237671, 237676, 237674, 237672 },
+        auras = {
+            -- Master of Harmony
+            -- Mistweaver
+            potential_energy = {
+                id = 1239483,
+                duration = 30,
+                max_stack = 2
+            },
+            -- Conduit of the Celestials
+            jade_serpents_blessing = {
+                id = 1238901,
+                duration = 4,
+                max_stack = 1
+            },
+        }
+    },
     tww2 = {
         items = { 229301, 229299, 229298, 229297, 229296 }
     },

@@ -1307,7 +1307,25 @@ spec:RegisterStateTable( "elemental_equilibrium", setmetatable( {
 } ) )
 
 spec:RegisterGear({
-        -- The War Within
+    -- The War Within
+    tww3 = {
+        items = { 237640, 237536, 237637, 237636, 237638 },
+        auras = {
+            -- Stormbringer
+            -- Elemental
+            storms_eye = {
+                id = 1239315,
+                duration = 30,
+                max_stack = 2
+            },
+            -- Farseer both specs
+            ancestral_wisdom = {
+                id = 1238279,
+                duration = 8,
+                max_stack = 1
+            },
+        }
+    },
     tww2 = {
         items = { 229260, 229261, 229262, 229263, 229265 },
         auras = {

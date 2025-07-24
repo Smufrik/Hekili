@@ -1362,6 +1362,31 @@ end )
 
 
 spec:RegisterGear({
+    -- The War Within
+    tww3 = {
+        items = { 237640, 237536, 237637, 237636, 237638 },
+        auras = {
+            -- Totemic both specs
+            elemental_overflow = {
+                id = 1239170,
+                duration = 20,
+                max_stack = 1
+            },
+            -- Stormbringer
+            -- Enhance
+            storms_eye = {
+                id = 466469,
+                duration = 30,
+                max_stack = 2
+            },
+            -- Farseer both specs
+            ancestral_wisdom = {
+                id = 1238279,
+                duration = 8,
+                max_stack = 1
+            },
+        }
+    },
     tww2 = {
         items = { 229260, 229261, 229262, 229263, 229265 },
         auras = {
@@ -1381,20 +1406,12 @@ spec:RegisterGear({
             },
         }
     },
-    tier29 = {
-        items = { 200396, 200398, 200400, 200401, 200399 },
-        auras = {
-            maelstrom_of_elements = {
-                id = 394677,
-                duration = 15,
-                max_stack = 1
-            },
-            fury_of_the_storm = {
-                id = 396006,
-                duration = 3,
-                max_stack = 10
-            }
-        }
+    tww1 = {
+        items = { 212014, 212012, 212011, 212010, 212009 },
+    },
+    -- Dragonflight
+    tier31 = {
+        items = { 207207, 207208, 207209, 207210, 207212, 217238, 217240, 217236, 217237, 217239 },
     },
     tier30 = {
         items = { 202473, 202471, 202470, 202469, 202468 },
@@ -1419,9 +1436,22 @@ spec:RegisterGear({
             }
         }
     },
-    tier31 = {
-        items = { 207207, 207208, 207209, 207210, 207212, 217238, 217240, 217236, 217237, 217239 },
+    tier29 = {
+        items = { 200396, 200398, 200400, 200401, 200399 },
+        auras = {
+            maelstrom_of_elements = {
+                id = 394677,
+                duration = 15,
+                max_stack = 1
+            },
+            fury_of_the_storm = {
+                id = 396006,
+                duration = 3,
+                max_stack = 10
+            }
+        }
     },
+    -- Legacy
     waycrest_legacy = {
         items = { 158362, 159631 },
     },
