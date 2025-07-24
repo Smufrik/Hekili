@@ -205,8 +205,8 @@ spec:RegisterAuras( {
 
         thrill_of_the_hunt = {
             id = 34720,
-            duration = 8,
-            max_stack = 1
+            duration = 15, -- Duration is 15 seconds not 8
+            max_stack = 3 -- Stacks are 3 not 1   (( Also really important, it always removes 1 stack on use, it cannot use all 3 stacks at once ever ))
         },
 
         hunters_mark = {
@@ -462,7 +462,7 @@ spec:RegisterAuras( {
             cooldown = 0,
             gcd = "spell",
             
-            spend = function () return buff.thrill_of_the_hunt.up and 0 or 30 end,
+            spend = function () return buff.thrill_of_the_hunt.up and 0 or 30 end, -- Does it make arcane shot cost 10 focus instead of 30 ? 
             spendType = "focus",
             
             startsCombat = true,
@@ -507,7 +507,7 @@ spec:RegisterAuras( {
             cooldown = 0,
             gcd = "spell",
             school = "nature",
-            spend = function () return buff.thrill_of_the_hunt.up and 0 or -14 end,
+            spend = function () return buff.thrill_of_the_hunt.up and 0 or -14 end, -- Needs to be removed, Thrill is not interacting with cobra shot, it just generates 14 focus
             spendType = "focus",
             startsCombat = true,
             
