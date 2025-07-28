@@ -28,26 +28,6 @@ local function RegisterBrewmasterSpec()
         state = Hekili.State 
     end
 
-    -- Force Chi initialization with fallback
-    local function UpdateChi()
-        local chi = UnitPower("player", 12) or 0
-        local maxChi = UnitPowerMax("player", 12) or (state.talent.ascension.enabled and 5 or 4)
-        if not state.chi then
-            state.chi = {
-                actual = chi,
-                max = maxChi,
-                regen = 0
-            }
-        else
-            state.chi.actual = chi
-            state.chi.max = maxChi
-        end
-        print("UpdateChi: Actual =", state.chi.actual, "Max =", state.chi.max) -- Debug
-        return state.chi.actual, state.chi.max
-    end
-
-    UpdateChi() -- Initial Chi sync
-
     -- Register Chi resource (ID 12 in MoP)
     spec:RegisterResource(12, {}, {
         max = function() return state.talent.ascension.enabled and 5 or 4 end
@@ -185,7 +165,6 @@ local function RegisterBrewmasterSpec()
                     print("Power Strikes: Gaining 1 extra Chi") -- Debug
                     state.gain(1, "chi")
                 end
-                UpdateChi() -- Sync with UnitPower
             end
         },
         keg_smash = {
@@ -200,7 +179,6 @@ local function RegisterBrewmasterSpec()
                 print("Keg Smash: Gaining 2 Chi, Current:", state.chi.actual) -- Debug
                 state.gain(2, "chi")
                 state.applyDebuff("target", "breath_of_fire_dot", 8)
-                UpdateChi() -- Sync with UnitPower
             end
         },
         tiger_palm = {
@@ -227,7 +205,6 @@ local function RegisterBrewmasterSpec()
                 print("Blackout Kick: Spending 2 Chi, Current:", state.chi.actual) -- Debug
                 state.spend(2, "chi")
                 state.applyBuff("player", "shuffle", 6)
-                UpdateChi() -- Sync with UnitPower
             end
         },
         purifying_brew = {
@@ -244,7 +221,6 @@ local function RegisterBrewmasterSpec()
                 state.removeDebuff("player", "heavy_stagger")
                 state.removeDebuff("player", "moderate_stagger")
                 state.removeDebuff("player", "light_stagger")
-                UpdateChi() -- Sync with UnitPower
             end
         },
         guard = {
@@ -259,7 +235,6 @@ local function RegisterBrewmasterSpec()
                 print("Guard: Spending 2 Chi, Current:", state.chi.actual) -- Debug
                 state.spend(2, "chi")
                 state.applyBuff("player", "guard", 30)
-                UpdateChi() -- Sync with UnitPower
             end
         },
         breath_of_fire = {
@@ -274,7 +249,6 @@ local function RegisterBrewmasterSpec()
                 print("Breath of Fire: Spending 2 Chi, Current:", state.chi.actual) -- Debug
                 state.spend(2, "chi")
                 state.applyDebuff("target", "breath_of_fire_dot", 8)
-                UpdateChi() -- Sync with UnitPower
             end
         },
         rushing_jade_wind = {
@@ -290,7 +264,6 @@ local function RegisterBrewmasterSpec()
                 print("Rushing Jade Wind: Spending 1 Chi, Current:", state.chi.actual) -- Debug
                 state.spend(1, "chi")
                 state.applyBuff("player", "rushing_jade_wind", 6)
-                UpdateChi() -- Sync with UnitPower
             end
         },
         fortifying_brew = {
@@ -314,7 +287,6 @@ local function RegisterBrewmasterSpec()
             handler = function()
                 print("Chi Brew: Gaining 2 Chi, Current:", state.chi.actual) -- Debug
                 state.gain(2, "chi")
-                UpdateChi() -- Sync with UnitPower
             end
         },
         spinning_crane_kick = {
@@ -328,7 +300,6 @@ local function RegisterBrewmasterSpec()
             handler = function()
                 print("Spinning Crane Kick: Spending 1 Chi, Current:", state.chi.actual) -- Debug
                 state.spend(1, "chi")
-                UpdateChi() -- Sync with UnitPower
             end
         },
         expel_harm = {
@@ -342,7 +313,6 @@ local function RegisterBrewmasterSpec()
             handler = function()
                 print("Expel Harm: Gaining 1 Chi, Current:", state.chi.actual) -- Debug
                 state.gain(1, "chi")
-                UpdateChi() -- Sync with UnitPower
             end
         },
         energizing_brew = {
@@ -365,21 +335,9 @@ local function RegisterBrewmasterSpec()
             print("Elusive Brew: Adding stack, Chi:", state.chi.actual) -- Debug
             state.addStack(128938, nil, 1)
         elseif subevent == "UNIT_POWER_UPDATE" and sourceGUID == state.GUID and select(13, ...) == "CHI" then
-            UpdateChi() -- Sync Chi on power update
         end
     end)
 
-    -- Periodic Chi sync (every 1 second in combat)
-    local lastChiUpdate = 0
-    bmCombatLogFrame:SetScript("OnUpdate", function(self, elapsed)
-        if InCombatLockdown() then
-            lastChiUpdate = lastChiUpdate + elapsed
-            if lastChiUpdate >= 1 then
-                UpdateChi()
-                lastChiUpdate = 0
-            end
-        end
-    end)
 
     -- Options
     spec:RegisterOptions({
