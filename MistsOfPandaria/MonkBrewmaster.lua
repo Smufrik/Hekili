@@ -48,6 +48,24 @@ local function RegisterBrewmasterSpec()
 
     UpdateChi() -- Initial Chi sync
 
+    -- Force energy initialization
+local function UpdateEnergy()
+    local energy = UnitPower("player", 3) or 0
+    local maxEnergy = UnitPowerMax("player", 3) or 100
+
+    state.energy = state.energy or {}
+    state.energy.current = energy
+    state.energy.max = maxEnergy
+
+    return energy, maxEnergy
+end
+
+    -- Ensure Chi stays in sync throughout the state evaluation cycle
+    for _, fn in pairs({ "resetState", "tick", "refreshResources" }) do
+     spec:RegisterStateFunction(fn, UpdateChi)
+     spec:RegisterStateFunction(fn, UpdateEnergy)
+end
+
     -- Register Chi resource (ID 12 in MoP)
     spec:RegisterResource(12, {}, {
         max = function() return state.talent.ascension.enabled and 5 or 4 end
@@ -95,7 +113,7 @@ local function RegisterBrewmasterSpec()
             emulated = true
         },
         elusive_brew = {
-            id = 115308,
+            id = 128939,
             duration = 30,
             max_stack = 15,
             emulated = true
@@ -170,6 +188,36 @@ local function RegisterBrewmasterSpec()
 
     -- Abilities for Brewmaster Monk
     spec:RegisterAbilities({
+        chi_wave = {
+            id = 115098,
+            cast = 0,
+            cooldown = 15,
+            gcd = "spell",
+            spend = 0,
+            spendType = nil,
+            talent = "chi_wave",
+            startsCombat = true,
+            handler = function()
+                print("Chi Wave: Casted") -- Optional debug
+            end
+        },
+
+
+
+        elusive_brew = {
+            id = 115308,
+            cast = 0,
+            cooldown = 0,
+            gcd = "off",
+            spend = 0,
+            spendType = nil,
+            startsCombat = false,
+            handler = function()
+                print("Elusive Brew: Consuming stacks") -- Debug
+                state.removeStack("elusive_brew", nil, 15) -- Or however many stacks are used
+                state.applyBuff("player", "elusive_brew", 6)
+            end
+        },
         jab = {
             id = 100780,
             cast = 0,
@@ -361,11 +409,16 @@ local function RegisterBrewmasterSpec()
     bmCombatLogFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
     bmCombatLogFrame:SetScript("OnEvent", function(self, event, ...)
         local timestamp, subevent, _, sourceGUID, _, _, _, destGUID, _, _, _, spellID, _, _, amount, critical = ...
+        
+        -- Build stacks on crits
         if subevent == "SPELL_DAMAGE" and sourceGUID == state.GUID and critical and (spellID == 100780 or spellID == 115072 or spellID == 121253) then
-            print("Elusive Brew: Adding stack, Chi:", state.chi.actual) -- Debug
-            state.addStack(128938, nil, 1)
-        elseif subevent == "UNIT_POWER_UPDATE" and sourceGUID == state.GUID and select(13, ...) == "CHI" then
-            UpdateChi() -- Sync Chi on power update
+            state.elusive_brew_manual_stacks = math.min((state.elusive_brew_manual_stacks or 0) + 1, 15)
+            print("Elusive Brew stacks:", state.elusive_brew_manual_stacks)
+        
+        -- Reset stacks on Elusive Brew cast (optional)
+        elseif subevent == "SPELL_CAST_SUCCESS" and sourceGUID == state.GUID and spellID == 115308 then
+            state.elusive_brew_manual_stacks = 0
+            print("Elusive Brew used – stacks reset.")
         end
     end)
 
@@ -375,6 +428,7 @@ local function RegisterBrewmasterSpec()
         if InCombatLockdown() then
             lastChiUpdate = lastChiUpdate + elapsed
             if lastChiUpdate >= 1 then
+                UpdateEnergy()    
                 UpdateChi()
                 lastChiUpdate = 0
             end
@@ -412,15 +466,6 @@ spec:RegisterPack("Brewmaster", 20250724, [[Hekili:fJvZYTTnq43LCqojnrrswY2j10hAV
 
 end
 
--- Register combat log event for Elusive Brew stacks on the frame
-bmCombatLogFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-bmCombatLogFrame:SetScript("OnEvent", function(self, event, ...)
-    local timestamp, subevent, _, sourceGUID, _, _, _, destGUID, _, _, _, spellID, _, _, amount, critical = ...
-    if subevent == "SPELL_DAMAGE" and sourceGUID == state.GUID and critical and (spellID == 100780 or spellID == 115072 or spellID == 121253) then
-        print("Elusive Brew: Adding stack, Chi:", state.chi.actual) -- Debug
-        state.addStack(128938, nil, 1)
-    end
-end)
 
 -- Deferred loading mechanism
 local function TryRegister()
