@@ -32,23 +32,14 @@ local function RegisterBrewmasterSpec()
     local function UpdateChi()
         local chi = UnitPower("player", 12) or 0
         local maxChi = UnitPowerMax("player", 12) or (state.talent.ascension.enabled and 5 or 4)
-        if not state.chi then
-            state.chi = {
-                actual = chi,
-                max = maxChi,
-                regen = 0
-            }
-        else
-            state.chi.actual = chi
-            state.chi.max = maxChi
-        end
-        print("UpdateChi: Actual =", state.chi.actual, "Max =", state.chi.max) -- Debug
-        return state.chi.actual, state.chi.max
-    end
+    
+	state.chi = state.chi or {}
+    	state.chi.current = chi
+    	state.chi.max = maxChi
 
-    UpdateChi() -- Initial Chi sync
-
-    -- Force energy initialization
+    	return chi, maxChi
+end
+        
 local function UpdateEnergy()
     local energy = UnitPower("player", 3) or 0
     local maxEnergy = UnitPowerMax("player", 3) or 100
@@ -60,11 +51,16 @@ local function UpdateEnergy()
     return energy, maxEnergy
 end
 
+
+
+    UpdateChi() -- Initial Chi sync
+
     -- Ensure Chi stays in sync throughout the state evaluation cycle
     for _, fn in pairs({ "resetState", "tick", "refreshResources" }) do
      spec:RegisterStateFunction(fn, UpdateChi)
      spec:RegisterStateFunction(fn, UpdateEnergy)
 end
+
 
     -- Register Chi resource (ID 12 in MoP)
     spec:RegisterResource(12, {}, {
@@ -173,6 +169,10 @@ end
     })
 
     -- State Expressions
+-- Use a separate internal variable to avoid conflicts with the actual dodge buff
+
+
+
     spec:RegisterStateExpr("stagger_level", function()
         local level = "none"
         if state.buff.heavy_stagger and state.buff.heavy_stagger.up then
@@ -182,42 +182,47 @@ end
         elseif state.buff.light_stagger and state.buff.light_stagger.up then
             level = "light"
         end
-        print("Stagger Level Evaluated:", level, "Chi:", state.chi and state.chi.actual or "nil") -- Debug
+        print("Stagger Level Evaluated:", level, "Chi:", state.chi and state.chi.current or "nil") -- Debug
         return level
     end)
 
+
+
+
     -- Abilities for Brewmaster Monk
     spec:RegisterAbilities({
-        chi_wave = {
-            id = 115098,
-            cast = 0,
-            cooldown = 15,
-            gcd = "spell",
-            spend = 0,
-            spendType = nil,
-            talent = "chi_wave",
-            startsCombat = true,
-            handler = function()
-                print("Chi Wave: Casted") -- Optional debug
-            end
-        },
+
+chi_wave = {
+    id = 115098,
+    cast = 0,
+    cooldown = 15,
+    gcd = "spell",
+    spend = 0,
+    spendType = nil,
+    talent = "chi_wave",
+    startsCombat = true,
+    handler = function()
+        print("Chi Wave: Casted") -- Optional debug
+    end
+},
 
 
 
-        elusive_brew = {
-            id = 115308,
-            cast = 0,
-            cooldown = 0,
-            gcd = "off",
-            spend = 0,
-            spendType = nil,
-            startsCombat = false,
-            handler = function()
-                print("Elusive Brew: Consuming stacks") -- Debug
-                state.removeStack("elusive_brew", nil, 15) -- Or however many stacks are used
-                state.applyBuff("player", "elusive_brew", 6)
-            end
-        },
+elusive_brew = {
+    id = 115308,
+    cast = 0,
+    cooldown = 0,
+    gcd = "off",
+    spend = 0,
+    spendType = nil,
+    startsCombat = false,
+    handler = function()
+        print("Elusive Brew: Consuming stacks") -- Debug
+        state.removeStack("elusive_brew", nil, 15) -- Or however many stacks are used
+        state.applyBuff("player", "elusive_brew", 6)
+    end
+},
+
         jab = {
             id = 100780,
             cast = 0,
@@ -227,7 +232,7 @@ end
             spendType = "energy",
             startsCombat = true,
             handler = function()
-                print("Jab: Gaining 1 Chi, Current:", state.chi.actual) -- Debug
+                print("Jab: Gaining 1 Chi, Current:", state.chi.current) -- Debug
                 state.gain(1, "chi")
                 if state.talent.power_strikes.enabled and math.random() <= 0.2 then
                     print("Power Strikes: Gaining 1 extra Chi") -- Debug
@@ -245,7 +250,7 @@ end
             spendType = "energy",
             startsCombat = true,
             handler = function()
-                print("Keg Smash: Gaining 2 Chi, Current:", state.chi.actual) -- Debug
+                print("Keg Smash: Gaining 2 Chi, Current:", state.chi.current) -- Debug
                 state.gain(2, "chi")
                 state.applyDebuff("target", "breath_of_fire_dot", 8)
                 UpdateChi() -- Sync with UnitPower
@@ -272,7 +277,7 @@ end
             spendType = "chi",
             startsCombat = true,
             handler = function()
-                print("Blackout Kick: Spending 2 Chi, Current:", state.chi.actual) -- Debug
+                print("Blackout Kick: Spending 2 Chi, Current:", state.chi.current) -- Debug
                 state.spend(2, "chi")
                 state.applyBuff("player", "shuffle", 6)
                 UpdateChi() -- Sync with UnitPower
@@ -287,7 +292,7 @@ end
             spendType = "chi",
             startsCombat = false,
             handler = function()
-                print("Purifying Brew: Spending 1 Chi, Current:", state.chi.actual) -- Debug
+                print("Purifying Brew: Spending 1 Chi, Current:", state.chi.current) -- Debug
                 state.spend(1, "chi")
                 state.removeDebuff("player", "heavy_stagger")
                 state.removeDebuff("player", "moderate_stagger")
@@ -304,7 +309,7 @@ end
             spendType = "chi",
             startsCombat = false,
             handler = function()
-                print("Guard: Spending 2 Chi, Current:", state.chi.actual) -- Debug
+                print("Guard: Spending 2 Chi, Current:", state.chi.current) -- Debug
                 state.spend(2, "chi")
                 state.applyBuff("player", "guard", 30)
                 UpdateChi() -- Sync with UnitPower
@@ -319,7 +324,7 @@ end
             spendType = "chi",
             startsCombat = true,
             handler = function()
-                print("Breath of Fire: Spending 2 Chi, Current:", state.chi.actual) -- Debug
+                print("Breath of Fire: Spending 2 Chi, Current:", state.chi.current) -- Debug
                 state.spend(2, "chi")
                 state.applyDebuff("target", "breath_of_fire_dot", 8)
                 UpdateChi() -- Sync with UnitPower
@@ -335,7 +340,7 @@ end
             talent = "rushing_jade_wind",
             startsCombat = true,
             handler = function()
-                print("Rushing Jade Wind: Spending 1 Chi, Current:", state.chi.actual) -- Debug
+                print("Rushing Jade Wind: Spending 1 Chi, Current:", state.chi.current) -- Debug
                 state.spend(1, "chi")
                 state.applyBuff("player", "rushing_jade_wind", 6)
                 UpdateChi() -- Sync with UnitPower
@@ -360,7 +365,7 @@ end
             talent = "chi_brew",
             startsCombat = false,
             handler = function()
-                print("Chi Brew: Gaining 2 Chi, Current:", state.chi.actual) -- Debug
+                print("Chi Brew: Gaining 2 Chi, Current:", state.chi.current) -- Debug
                 state.gain(2, "chi")
                 UpdateChi() -- Sync with UnitPower
             end
@@ -374,7 +379,7 @@ end
             spendType = "chi",
             startsCombat = true,
             handler = function()
-                print("Spinning Crane Kick: Spending 1 Chi, Current:", state.chi.actual) -- Debug
+                print("Spinning Crane Kick: Spending 1 Chi, Current:", state.chi.current) -- Debug
                 state.spend(1, "chi")
                 UpdateChi() -- Sync with UnitPower
             end
@@ -388,7 +393,7 @@ end
             spendType = "energy",
             startsCombat = true,
             handler = function()
-                print("Expel Harm: Gaining 1 Chi, Current:", state.chi.actual) -- Debug
+                print("Expel Harm: Gaining 1 Chi, Current:", state.chi.current) -- Debug
                 state.gain(1, "chi")
                 UpdateChi() -- Sync with UnitPower
             end
@@ -407,20 +412,22 @@ end
 
     -- Register combat log event for Elusive Brew stacks and Chi updates
     bmCombatLogFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-    bmCombatLogFrame:SetScript("OnEvent", function(self, event, ...)
-        local timestamp, subevent, _, sourceGUID, _, _, _, destGUID, _, _, _, spellID, _, _, amount, critical = ...
-        
-        -- Build stacks on crits
-        if subevent == "SPELL_DAMAGE" and sourceGUID == state.GUID and critical and (spellID == 100780 or spellID == 115072 or spellID == 121253) then
-            state.elusive_brew_manual_stacks = math.min((state.elusive_brew_manual_stacks or 0) + 1, 15)
-            print("Elusive Brew stacks:", state.elusive_brew_manual_stacks)
-        
-        -- Reset stacks on Elusive Brew cast (optional)
-        elseif subevent == "SPELL_CAST_SUCCESS" and sourceGUID == state.GUID and spellID == 115308 then
-            state.elusive_brew_manual_stacks = 0
-            print("Elusive Brew used – stacks reset.")
-        end
-    end)
+bmCombatLogFrame:SetScript("OnEvent", function(self, event, ...)
+    local timestamp, subevent, _, sourceGUID, _, _, _, destGUID, _, _, _, spellID, _, _, amount, critical = ...
+    
+    -- Build stacks on crits
+    if subevent == "SPELL_DAMAGE" and sourceGUID == state.GUID and critical and (spellID == 100780 or spellID == 115072 or spellID == 121253) then
+        state.elusive_brew_manual_stacks = math.min((state.elusive_brew_manual_stacks or 0) + 1, 15)
+        print("Elusive Brew stacks:", state.elusive_brew_manual_stacks)
+    
+    -- Reset stacks on Elusive Brew cast (optional)
+    elseif subevent == "SPELL_CAST_SUCCESS" and sourceGUID == state.GUID and spellID == 115308 then
+        state.elusive_brew_manual_stacks = 0
+        print("Elusive Brew used – stacks reset.")
+    end
+end)
+
+
 
     -- Periodic Chi sync (every 1 second in combat)
     local lastChiUpdate = 0
@@ -428,8 +435,8 @@ end
         if InCombatLockdown() then
             lastChiUpdate = lastChiUpdate + elapsed
             if lastChiUpdate >= 1 then
-                UpdateEnergy()    
                 UpdateChi()
+		UpdateEnergy()
                 lastChiUpdate = 0
             end
         end
@@ -465,6 +472,7 @@ end
 spec:RegisterPack("Brewmaster", 20250724, [[Hekili:fJvZYTTnq43LCqojnrrswY2j10hAV0KPtUOKtDcjHiHeHniHkiOTvhp8zV7c(hifGKSBMPhIDm4I97d7FyX6p1)B(lJjkQ)xNnz2IjxoBX4PNp)JNFH)s1UTu)LBjr3r2a)Nmsk8tcbxAhxqIXTMlkKrWY(lxvW4QpN5VYU(MdYULgblFXv(ltyXX0kzP5r(l)wclVme)hPmSgXYqXA4VJumrwziNLRGpVwild)d6DmoBS)s9IinIecES4Hm8p(Q(mrZiR40y)Fd(OKPOsgqCfHtZuJzz3lUJg8ybnBCJClRaYFPXh9vaDDQmAgvUz34OcPeuAz41ELHZNugoQmmkH1F9PD6xVn2)WY2eSssFaX48JryqFAHByRDqM1bsZgaTRqB8Asbx1ABAKIuOebeLcS3M4B5u3QxcNhu9hbOXVYfeufA05eo4zQpVRohPKhldFFp70D0nb5PK8euBZpK2kdVbp9AJYRldxvSE948e4NC6yjnLWYYRmqxug(0tLH5uLcm)5J3kfiA3tdQfVm8nDeyfhSlIcvWDmW(aKyXXjXunjYvKnBOYao9EkVmewpvetLqwH(ZjucxLmElfYCQTbxwf30YSICAW2cjB9U24KwEnyDGyxCCIvzD0MMnfez8y0rzNnG0xnPdoT4ikxEQOet14aSJOsceRdwZK0GyHQd0AZoKlKYO51B2W03BRi4xDSuezrEcAtULetdEGLfpmxX0bP53(7aPxhj277ip(OtEy7iDUgnNmmMLBJIDuiFllld3tKKKrBdeNoXjlS6nxyPErBENrLPh3s5bjezQge3LrpXm4BjR0kYDjuJYBpqUNUFX4MVO1J7skdlfJMXlmIHvmmDClHN2wqKMLdURJCFX(jYG99(D2cPEHPUUTnp)IilM8tKyUn22cXUCa0wl3yPMI76669s5fOxstQGC8EQX6FwF(m8WMsE4A12OF912SSirkAeIjPqdiblQtJhUL3wgoz8IoWHMsuNCj56yEaIT0mD2wVkv2O3Ixa9M3rpdOoCD8gQXwVgdwaqyr9ixld0F6K4X5g8WuVvjIBLuqJRi73Bc4NZIO4vaQe4(zvHmExG4X(9PO1XdejwJmh7IeYnyPBb3rDNIN12tYzLHs6FxaxNahLCrkij2(tkKpfJbUKSn08XLF5pzzWNM(PYWVNLxSf1fkqtBONz0E4zTIpZP4d62d3s5xSWZUkspFI(7IS7Pv4k2IviaOXUPr87vfXZtx(AeKMEJ30rhOYaqcLyVTFY7UNH5zqVMkCJ6hkD9IjNcQw58)nv2EqM72dBu5Pt(lCkVr2yN4x6wCZKgCd6GN1coxa9qSbdoKeWC(avcRdsgxzAvOynAbBshlhRAKltOJ8kY6jDCmkm86nYkso9tqOkEJ((fHDhdJpZ45haB)KB86Kod1IJeq14tpT4QlNCkbuw15luLThKp68CBPPVUTnDI7aX223me3DLPMwR(FjMAVEHDes1E)WpRGkhxR0uxgNab8QW1m8TG4FKYYZ1MKALvtSnyDDweCiLSS7Oka6WYWpRQ2KM0P0SyeAvcbwgIzK7qDZeW1T70xLYlIXhkqzavKnwM)675uut008F8oW0MWIsmLMKTRd1AJo455SiMI3PxtFqdO)kKViBG5BvQaSv)avAS5sZmq(bgNBCIQvPQruT1qVuwr6kAL7Hdp1R8lFoTX6pFWyCGpQh(qIqcxAtIevnJwB49x(EGG6GHE()(bEYcmNxaotiiKc0a(DLO63Fl1OuTf8H(1QXZH)h9(DO27Y4(WYAMbfzfJZu6x6v5HZtef8yKmnPmWJy1VjKVZGkD62RFPH3Xw7nOS1R0x4(Qt4IkB6)x8(WXrOPm2REr3p6awD79iAd0P3L1kD2OHtIWUImV6b13bFuaW1jo0ZGg0TrT5tgTF)13mqS3cT97acJR1r17Ul)HgAVfNiYZDHSzhcMyBRn(rUAH3cGN3pRWSvAhjfPKBXFjwxtVpuOWSKDyQz9MnsfAxZZOPAJdGLX0AzZyys)MSrv0FIaA3RXulU2BQDn1m3udwmC2R91ZS9QCu3c0(wODIcTjcRllfkDBleEx55olJNrRpTlISBW0xFho3vVw(BkA70tXtIjJRNvZ7NAkDVrDwVdml912ML61Ex80tUNH6Bmv8(fGS3GM76qhUFktSAR6yVeZE5DxnPNjO3ihnuZHNM5O6dF9y)Ubdi6u6ET5yex5CGLn1DpWqknXWs7Iikd515Jo6yiRb2u5D9uARM5vlgzj0YC)3swDsbGnnJoiVZCOGMI3npV9Z1VX7Ij6bd4)Vd]])
 
 end
+
 
 
 -- Deferred loading mechanism
