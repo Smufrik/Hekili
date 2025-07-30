@@ -261,109 +261,26 @@ local function RegisterWindwalkerSpec()
     -- MoP Aura Registration
     spec:RegisterAuras({
         -- Core Buffs & Procs
-        legacy_of_the_emperor = {
-            id = 115921,
-            duration = 3600,
-            name = "Legacy of the Emperor"
-        },
-    
-        legacy_of_the_white_tiger = {
-            id = 116781,
-            duration = 3600,
-            name = "Legacy of the White Tiger"
-        },
-    
-        stance_of_the_fierce_tiger = {
-            id = 103985,
-            duration = 10,
-            name = "Stance of the Fierce Tiger"
-        },
-    
-        tigereye_brew_stack = {
-            id = 116740,
-            duration = 60,
-            max_stack = 20,
-            name = "Tigereye Brew"
-        },
-    
-        tiger_power = {
-            id = 125359,
-            duration = 15,
-            name = "Tigereye Brew"
-        },
-    
-        combo_breaker_bok = {
-            id = 116768,
-            duration = 15,
-            name = "Combo Breaker: Blackout Kick"
-        },
-    
-        combo_breaker_tp = {
-            id = 116768, -- Using same ID as BOK variant for MoP
-            duration = 15,
-            name = "Combo Breaker: Tiger Palm"
-        },
-    
-        storm_earth_and_fire = {
-            id = 137639,
-            duration = 15,
-            name = "Storm, Earth, and Fire"
-        },
-    
-        healing_sphere = {
-            id = 124458,
-            duration = 15,
-            name = "Healing Sphere"
-        },
-    
+        tigereye_brew_stack = { id = 116740, duration = 60, max_stack = 20, name = "Tigereye Brew" },
+        tiger_power = { id = 125359, duration = 15, name = "Tigereye Brew" }, -- The buff from consuming stacks
+        combo_breaker_bok = { id = 116768, duration = 15, name = "Combo Breaker: Blackout Kick" },
+        combo_breaker_tp = { id = 118864, duration = 15, name = "Combo Breaker: Tiger Palm" },
+
         -- Cooldowns
-        energizing_brew = {
-            id = 115288,
-            duration = 20,
-            name = "Energizing Brew"
-        },
-    
-        fortifying_brew = {
-            id = 115203,
-            duration = 20,
-            dr = 0.2,
-            name = "Fortifying Brew"
-        },
-    
+        energizing_brew = { id = 115288, duration = 20 },
+        fortifying_brew = { id = 115203, duration = 20, dr = 0.2 },
+        storm_earth_and_fire = { id = 137639, duration = 15 },
+        invoke_xuen = { id = 123904, duration = 45 }, -- Xuen lasts 45s in MoP
+
         -- Target Debuffs
-        rising_sun_kick_debuff = {
-            id = 121411,
-            duration = 15,
-            debuff = true,
-            name = "Rising Sun Kick"
-        },
-    
-        mortal_wounds = {
-            id = 115804,
-            duration = 10,
-            debuff = true,
-            name = "Mortal Wounds"
-        },
-    
+        rising_sun_kick_debuff = { id = 121411, duration = 15, debuff = true, name = "Rising Sun Kick" },
+        mortal_wounds = { id = 115804, duration = 10, debuff = true },
+        disable = { id = 116095, duration = 15, debuff = true, mechanic = "snare" },
+
         -- Talent Auras
-        tigers_lust = {
-            id = 116841,
-            duration = 6,
-            name = "Tigers Lust"
-        },
-    
-        chi_torpedo = {
-            id = 119085,
-            duration = 10,
-            name = "Chi Torpedo"
-        },
-    
-        rushing_jade_wind = {
-            id = 116847,
-            duration = 6,
-            dot = true,
-            name = "Rushing Jade Wind"
-        },
+        tigers_lust = { id = 116841, duration = 6 },
+        chi_torpedo = { id = 119085, duration = 10 },
+        rushing_jade_wind = { id = 116847, duration = 6, dot = true },
     })
 
     -- Pet Registration
@@ -372,288 +289,62 @@ local function RegisterWindwalkerSpec()
     -- Ability Registration (MoP 5.4.8 accurate)
     spec:RegisterAbilities({
         -- Core Abilities
-        stance_of_the_fierce_tiger = {
-            id = 103985,
-            cast = 0,
-            cooldown = 0,
-    
-            gcd = "off",
-    
-            handler = function()
-                applyBuff("stance_of_the_fierce_tiger", 10)
-            end
-        },
-    
-        jab = {
-            id = 100780,
-            cast = 0,
-            cooldown = 0,
-            gcd = "spell",
-            school = "physical",
-    
-            spend = 40,
-            spendType = "energy",
-    
-            handler = function()
-                gain(2, "chi")
-            end
-        },
-    
-        tiger_palm = {
-            id = 100787,
-    
-            spend = 1,
-            spendType = "chi",
-    
-            handler = function()
-                if buff.combo_breaker_tp.up then
-                    removeBuff("combo_breaker_tp")
-                end
-            end
-        },
-    
-        blackout_kick = {
-            id = 100784,
-    
-            spend = 2,
-            spendType = "chi",
-    
-            handler = function()
-                if buff.combo_breaker_bok.up then
-                    removeBuff("combo_breaker_bok")
-                end
-            end
-        },
-    
-        rising_sun_kick = {
-            id = 107428,
-    
-            cooldown = 8,
-            spend = 2,
-            spendType = "chi",
-    
-            handler = function()
-                if buff.combo_breaker_bok.up then
-                    removeBuff("combo_breaker_bok")
-                end
-            end
-        },
-    
-        spinning_crane_kick = {
-            id = 101546,
-            channeled = true,
-    
-            spend = 40,
-            spendType = "energy",
-    
-            usable = function()
-                return enemies >= 3
-            end,
-    
-            handler = function() end
-        },
-    
-        fists_of_fury = {
-            id = 113656,
-            cooldown = 25,
-            channeled = true,
-    
-            spend = 3,
-            spendType = "chi",
-    
-            handler = function() end
-        },
-    
-        expel_harm = {
-            id = 115072,
-            cooldown = 15,
-    
-            spend = 40,
-            spendType = "energy",
-    
-            handler = function()
-                gain(1, "chi")
-            end
-        },
-    
+        jab = { id = 100780, spend = 40, spendType = "energy", handler = function() gain(2, "chi") end },
+        tiger_palm = { id = 100787, spend = 1, spendType = "chi",
+            handler = function() if buff.combo_breaker_tp.up then removeBuff("combo_breaker_tp") end end },
+        blackout_kick = { id = 100784, spend = 2, spendType = "chi",
+            handler = function() if buff.combo_breaker_bok.up then removeBuff("combo_breaker_bok") end end },
+        rising_sun_kick = { id = 107428, cooldown = 8, spend = 2, spendType = "chi",
+            handler = function() applyDebuff("target", "rising_sun_kick_debuff", 15) end },
+        spinning_crane_kick = { id = 101546, spend = 40, spendType = "energy", channeled = true,
+            usable = function() return enemies >= 3 end },
+        fists_of_fury = { id = 113656, cooldown = 25, spend = 3, spendType = "chi", channeled = true },
+        expel_harm = { id = 115072, cooldown = 15, spend = 40, spendType = "energy",
+            handler = function() gain(1, "chi") end },
+
         -- Cooldowns
-        tigereye_brew = {
-            id = 116740,
-            gcd = "off",
-    
-            usable = function()
-                return buff.tigereye_brew_stack.stack >= (state.settings.tigereye_min_stacks or 10)
-            end,
-    
+        tigereye_brew = { id = 116740, gcd = "off",
+            usable = function() return buff.tigereye_brew_stack.stack >= state.settings.tigereye_min_stacks end,
             handler = function()
-                local stacks_consumed = buff.tigereye_brew_stack.stack or 0
-                if stacks_consumed > 0 then
-                    removeBuff("tigereye_brew_stack")
-                    applyBuff("tiger_power", 15, stacks_consumed)
-                end
-            end
-        },
-    
-        energizing_brew = {
-            id = 115288,
-            cooldown = 60,
-    
-            toggle = "cooldowns",
-    
-            handler = function()
-                applyBuff("energizing_brew", 20)
-                gain(state.chi.max, "chi")
-            end
-        },
-    
-        fortifying_brew = {
-            id = 115203,
-            cooldown = 180,
-    
-            toggle = "defensives",
-    
-            handler = function()
-                applyBuff("fortifying_brew", 20)
-            end
-        },
-    
-        storm_earth_and_fire = {
-            id = 137639,
-            cooldown = 90,
-            charges = 2,
-    
-            toggle = "cooldowns",
-    
-            handler = function()
-                applyBuff("storm_earth_and_fire", 15)
-            end
-        },
-    
-        touch_of_death = {
-            id = 115080,
-            cooldown = 90,
-    
-            toggle = "defensives",
-    
-            handler = function() end
-        },
-    
-        touch_of_karma = {
-            id = 122470,
-            cooldown = 90,
-    
-            toggle = "defensives",
-    
-            handler = function() end
-        },
-    
+                local stacks_consumed = buff.tigereye_brew_stack.stack
+                applyBuff("tiger_power", 15, stacks_consumed)
+                removeBuff("tigereye_brew_stack")
+            end },
+        energizing_brew = { id = 115288, cooldown = 60, toggle = "cooldowns",
+            handler = function() applyBuff("energizing_brew", 20); gain(state.chi.max, "chi") end },
+        fortifying_brew = { id = 115203, cooldown = 180, toggle = "defensives",
+            handler = function() applyBuff("fortifying_brew", 20) end },
+        storm_earth_and_fire = { id = 137639, cooldown = 90, charges = 2, toggle = "cooldowns",
+            handler = function() applyBuff("storm_earth_and_fire", 15) end },
+        touch_of_death = { id = 115080, cooldown = 90,
+            usable = function() return target.health_pct < 10 or target.health.current < health.current end },
+        touch_of_karma = { id = 122470, cooldown = 90, toggle = "defensives" },
+
         -- Talent Abilities
-        chi_brew = {
-            id = 115399,
-            cooldown = 45,
-            charges = 2,
-    
-            talent = "chi_brew",
-    
-            handler = function()
-                gain(2, "chi")
-            end
-        },
-    
-        invoke_xuen = {
-            id = 123904,
-            cooldown = 180,
-    
-            toggle = "cooldowns",
-    
-            talent = "invoke_xuen",
-    
-            handler = function()
-                summonPet("xuen_the_white_tiger")
-            end
-        },
-    
-        rushing_jade_wind = {
-            id = 116847,
-            cooldown = 6,
-    
-            spend = 1,
-            spendType = "chi",
-    
-            talent = "rushing_jade_wind",
-    
-            handler = function() end
-        },
-    
-        leg_sweep = {
-            id = 119381,
-            cooldown = 45,
-    
-            aoe = true,
-            talent = "leg_sweep",
-    
-            handler = function() end
-        },
-    
+        chi_brew = { id = 115399, cooldown = 45, charges = 2, talent = "chi_brew",
+            handler = function() gain(2, "chi") end },
+        invoke_xuen = { id = 123904, cooldown = 180, toggle = "cooldowns", talent = "invoke_xuen",
+            handler = function() summonPet("xuen_the_white_tiger") end },
+        rushing_jade_wind = { id = 116847, cooldown = 6, spend = 1, spendType = "chi", talent = "rushing_jade_wind" },
+        leg_sweep = { id = 119381, cooldown = 45, aoe = true, talent = "leg_sweep" },
+
         -- Utility
-        spear_hand_strike = {
-            id = 116705,
-            cooldown = 15,
-    
-            gcd = "off",
-            interrupt = true,
-    
-            handler = function() end
-        },
-    
-        disable = {
-            id = 116095,
-    
-            spend = 15,
-            spendType = "energy",
-    
-            handler = function() end
-        },
-    
-        healing_sphere = {
-            id = 115460,
-    
-            spend = 40,
-            spendType = "energy",
-    
-            handler = function() end
-        },
-    
-        legacy_of_the_emperor = {
-            id = 115921,
-    
-            spend = 20,
-            spendType = "energy",
-    
-            handler = function() end
-        },
-    
-        legacy_of_the_white_tiger = {
-            id = 116781,
-    
-            spend = 20,
-            spendType = "energy",
-    
-            handler = function() end
-        },
+        spear_hand_strike = { id = 116705, cooldown = 15, gcd = "off", interrupt = true },
+        disable = { id = 116095, spend = 15, spendType = "energy" },
     })
 
     -- Combat Log Logic
     local chi_spent_for_brew = 0
     RegisterWWCombatLogEvent("SPELL_CAST_SUCCESS", function(timestamp, subevent, sourceGUID, destGUID, spellID)
         local ability = class.abilities[spellID]
-        if not ability or not ability.spendType == "chi" or not ability.spend > 0 then return end
+        if not ability or ability.spendType ~= "chi" or ability.spend <= 0 then return end
+
 
         chi_spent_for_brew = chi_spent_for_brew + ability.spend
         -- In MoP, 3 Chi spent = 1 stack of Tigereye Brew
         if chi_spent_for_brew >= 3 then
             local stacks_to_add = math.floor(chi_spent_for_brew / 3)
-            addStack("tigereye_brew_stack", stacks_to_add)
+            state.buff.tigereye_brew_stack.stack = (state.buff.tigereye_brew_stack.stack or 0) + stacks_to_add
             chi_spent_for_brew = chi_spent_for_brew % 3
         end
     end)
