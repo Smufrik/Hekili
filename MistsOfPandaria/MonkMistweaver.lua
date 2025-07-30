@@ -140,12 +140,13 @@ local function RegisterMistweaverSpec()
     local chi_spent_for_tea = 0
     RegisterMWCombatLogEvent("SPELL_CAST_SUCCESS", function(timestamp, subevent, sourceGUID, destGUID, spellID)
         local ability = class.abilities[spellID]
-        if not ability or not ability.spendType == "chi" or not ability.spend > 0 then return end
+        if not ability or ability.spendType ~= "chi" or ability.spend <= 0 then return end
+
 
         chi_spent_for_tea = chi_spent_for_tea + ability.spend
         if chi_spent_for_tea >= 4 then
             local stacks_to_add = math.floor(chi_spent_for_tea / 4)
-            addStack("mana_tea_stack", stacks_to_add)
+            state.buff.mana_tea_stack.stack = (state.buff.mana_tea_stack.stack or 0) + stacks_to_add
             chi_spent_for_tea = chi_spent_for_tea % 4
         end
     end)
