@@ -1576,8 +1576,14 @@ spec:RegisterAbilities( {
             spec.abilities.flame_shock.handler()
             spec.abilities.lava_burst.handler()
             active_dot.flame_shock = min( true_active_enemies, active_dot.flame_shock + 6 )
-
-            if set_bonus.tww2 >= 2 then summonPet( talent.primal_elementalist.enabled and "primal_storm_elemental" or "greater_storm_elemental", 6 ) end
+            if set_bonus.tww3 >= 2 and hero_tree.stormbringer then
+                addStack( "tempest" )
+                if set_bonus.tww3 >= 4 then
+                    applyBuff( "storms_eye", nil, 2 )
+                end
+            elseif set_bonus.tww2 >= 2 then
+                summonPet( talent.primal_elementalist.enabled and "primal_storm_elemental" or "greater_storm_elemental", 6 )
+            end
         end,
 
     },
@@ -2709,6 +2715,8 @@ spec:RegisterAbilities( {
             if set_bonus.tier29_2pc > 0 then
                 addStack( "seismic_accumulation" )
             end
+
+            if set_bonus.tww3 >= 4 then removeStack( "storms_eye" ) end
 
             if buff.vesper_totem.up and vesper_totem_dmg_charges > 0 then trigger_vesper_damage() end
         end,

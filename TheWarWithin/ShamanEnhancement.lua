@@ -1154,6 +1154,12 @@ local TriggerFeralMaelstrom = setfenv( function()
     gain_maelstrom( 1 )
 end, state )
 
+local TriggerTWW3Totemic2pc = setfenv( function()
+    if buff.whirling_air.down and buff.whirling_earth.down and buff.whirling_fire.down then
+        spec.abilities.primordial_storm.handler()
+    end
+end, state )
+
 local TriggerStaticAccumulation = setfenv( function()
     gain_maelstrom( 1 )
 end, state )
@@ -1180,6 +1186,11 @@ end )
 
 spec:RegisterStateExpr( "time_since_as", function ()
     return max( action.stormstrike.time_since, action.windstrike.time_since, action.lightning_bolt.time_since, action.tempest.time_since, action.chain_lightning.time_since )
+end )
+
+spec:RegisterStateExpr( "tww3_procs_to_asc", function()
+    return 8
+    -- I don't think this is trackable in-game, but I see it in SimulationCraft reeee
 end )
 
 
@@ -1370,7 +1381,7 @@ spec:RegisterGear({
             elemental_overflow = {
                 id = 1239170,
                 duration = 20,
-                max_stack = 1
+                max_stack = 2
             },
             -- Stormbringer
             -- Enhance
@@ -1509,23 +1520,6 @@ spec:RegisterTotems( {
 
 -- Abilities
 spec:RegisterAbilities( {
-    -- Talent: For the next $d, $s1% of your damage and healing is converted to healing on up to 3 nearby injured party or raid members.
-    --[[ancestral_guidance = {
-        id = 108281,
-        cast = 0,
-        cooldown = 120,
-        gcd = "off",
-        school = "nature",
-
-        talent = "ancestral_guidance",
-        startsCombat = false,
-
-        toggle = "defensives",
-
-        handler = function ()
-            applyBuff( "ancestral_guidance" )
-        end,
-    },--]]
 
     -- Talent: Transform into an Air Ascendant for $114051d, immediately dealing $344548s1 Nature damage to any enemy within $344548A1 yds, reducing the cooldown and cost of Stormstrike by $s4%, and transforming your auto attack and Stormstrike into Wind attacks which bypass armor and have a $114089r yd range.$?s384411[    While Ascendance is active, generate $s1 Maelstrom Weapon $lstack:stacks; every $384437t1 sec.][]
     ascendance = {
@@ -1541,7 +1535,12 @@ spec:RegisterAbilities( {
         toggle = "cooldowns",
 
         handler = function ()
-            -- trigger ascendance [344548], windstrike [115356]
+            if set_bonus.tww3 >= 2 and hero_tree.stormbringer then
+                addStack( "tempest" )
+                if set_bonus.tww3 >= 4 then
+                    applyBuff( "storms_eye", nil, 2 )
+                end
+            end
             applyBuff( "ascendance" )
             --[[ if talent.static_accumulation.enabled then
                 for i = 1, 15 do
@@ -1639,6 +1638,7 @@ spec:RegisterAbilities( {
             if talent.totemic_rebound.enabled and buff.whirling_air.up then
                 removeBuff( "whirling_air" )
                 addStack( "totemic_rebound", nil, 3 )
+                if set_bonus.tww3 >= 2 then TriggerTWW3Totemic2pc() end
             end
 
             removeStack( "arc_discharge" )
@@ -1891,6 +1891,7 @@ spec:RegisterAbilities( {
             if talent.totemic_rebound.enabled and buff.whirling_air.up then
                 removeBuff( "whirling_air" )
                 addStack( "totemic_rebound", nil, 3 )
+                if set_bonus.tww3 >= 2 then TriggerTWW3Totemic2pc() end
             end
 
             if buff.natures_swiftness.up then removeBuff( "natures_swiftness" ) end
@@ -2013,6 +2014,7 @@ spec:RegisterAbilities( {
             if buff.whirling_fire.up then
                 removeBuff( "whirling_fire" )
                 applyBuff( "hot_hand", 8 )
+                if set_bonus.tww3 >= 2 then TriggerTWW3Totemic2pc() end
             end
 
             if talent.swirling_maelstrom.enabled then
@@ -2044,6 +2046,7 @@ spec:RegisterAbilities( {
             if buff.whirling_earth.up then
                 removeBuff( "whirling_earth" )
                 active_dot.flame_shock = min( 6, true_active_enemies, active_dot.flame_shock + 5 )
+                if set_bonus.tww3 >= 2 then TriggerTWW3Totemic2pc() end
             end
 
             if talent.focused_insight.enabled then applyBuff( "focused_insight" ) end
@@ -2081,6 +2084,7 @@ spec:RegisterAbilities( {
             if buff.whirling_earth.up then
                 removeBuff( "whirling_earth" )
                 active_dot.flame_shock = min( true_active_enemies, active_dot.flame_shock + 5 )
+                if set_bonus.tww3 >= 2 then TriggerTWW3Totemic2pc() end
             end
 
             if talent.focused_insight.enabled then applyBuff( "focused_insight" ) end
@@ -2367,6 +2371,11 @@ spec:RegisterAbilities( {
             if buff.whirling_fire.up then
                 removeBuff( "whirling_fire" )
                 applyBuff( "hot_hand", 8 )
+                if set_bonus.tww3 >= 2 then TriggerTWW3Totemic2pc() end
+            end
+
+            if set_bonus.tww3 >= 2 and hero_tree.totemic then
+                removeStack( "elemental_overflow" )
             end
 
             if talent.lashing_flames.enabled then applyDebuff( "target", "lashing_flames" ) end
@@ -2382,6 +2391,7 @@ spec:RegisterAbilities( {
             if talent.molten_assault.enabled and debuff.flame_shock.up then
                 active_dot.flame_shock = min( active_enemies, active_dot.flame_shock + 5 )
                 removeBuff( "whirling_earth" )
+                if set_bonus.tww3 >= 2 and hero_tree.totemic then TriggerTWW3Totemic2pc() end
             end
             if buff.vesper_totem.up and vesper_totem_dmg_charges > 0 then trigger_vesper_damage() end
         end,
@@ -2412,6 +2422,7 @@ spec:RegisterAbilities( {
             if talent.totemic_rebound.enabled and buff.whirling_air.up then
                 removeBuff( "whirling_air" )
                 addStack( "totemic_rebound", nil, 3 )
+                if set_bonus.tww3 >= 2 then TriggerTWW3Totemic2pc() end
             end
 
             if buff.natures_swiftness.up then removeBuff( "natures_swiftness" ) end
@@ -2469,6 +2480,8 @@ spec:RegisterAbilities( {
             removeBuff( "primordial_wave" )
 
             if talent.lightning_rod.enabled then applyDebuff( "target", "lightning_rod" ) end
+
+            if set_bonus.tww3 >= 4 then removeStack( "storms_eye" ) end
 
             if azerite.natural_harmony.enabled then applyBuff( "natural_harmony_nature" ) end
             if buff.vesper_totem.up and vesper_totem_dmg_charges > 0 then trigger_vesper_damage() end
@@ -2606,6 +2619,7 @@ spec:RegisterAbilities( {
         handler = function ()
             removeBuff( "primordial_storm" )
             consume_maelstrom()
+            if set_bonus.tww3 >= 4 then addStack( "elemental_overflow" ) end
         end,
 
         bind = "primordial_wave"
@@ -3109,7 +3123,13 @@ spec:RegisterAbilities( {
             end
 
             if talent.thorims_invocation.enabled and buff.maelstrom_weapon.up then
-                consume_maelstrom( min( 5, buff.maelstrom_weapon.stack ) )
+                    if buff.tempest.up then
+                        spec.abilities.tempest.handler()
+                    elseif ti_chain_lightning then
+                        spec.abilities.chain_lightning.handler()
+                    else
+                        spec.abilities.lightning_bolt.handler()
+                    end
             end
 
             if azerite.natural_harmony.enabled then
