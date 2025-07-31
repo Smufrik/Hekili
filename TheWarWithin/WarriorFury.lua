@@ -106,155 +106,152 @@ spec:RegisterResource( Enum.PowerType.Rage, {
 
 -- Talents
 spec:RegisterTalents( {
+
     -- Warrior
-    armored_to_the_teeth         = {  90366, 384124, 2 }, -- Gain Strength equal to 5% of your Armor.
-    avatar                       = {  90365, 107574, 1 }, -- Transform into a colossus for 20 sec, causing you to deal 20% increased damage and removing all roots and snares. Generates 10 Rage.
-    barbaric_training            = {  90340, 383082, 1 }, -- Slam, Thunder Clap, and Whirlwind deal 20% more damage and 10% increased critical strike damage.
-    berserker_shout              = {  90348, 384100, 1 }, -- Go berserk, removing and granting immunity to Fear, Sap, and Incapacitate effects for 6 sec. Also remove fear effects from group members within 12 yds.
-    berserker_stance             = {  90325, 386196, 1 }, -- An aggressive combat state that increases the damage of your auto-attacks by 15% and reduces the duration of Fear, Sap and Incapacitate effects on you by 10%. Lasts until canceled.
-    berserkers_torment           = {  90362, 390123, 1 }, -- Activating Avatar or Recklessness grants 8 sec of the other.
-    bitter_immunity              = {  90356, 383762, 1 }, -- Restores 20% health instantly and removes all diseases, poisons and curses affecting you.
-    bounding_stride              = {  90355, 202163, 1 }, -- Reduces the cooldown of Heroic Leap by 15 sec, and Heroic Leap now also increases your movement speed by 70% for 3 sec.
-    cacophonous_roar             = {  90383, 382954, 1 }, -- Intimidating Shout can withstand 200% more damage before breaking.
-    champions_might              = {  90323, 386284, 1 }, -- The duration of Champion's Spear is increased by 2 sec. You deal 25% increased critical strike damage to targets chained to your Spear.
-    champions_spear              = {  90380, 376079, 1 }, -- Throw a spear at the target location, dealing 43,399 Physical damage instantly and an additional 48,350 damage over 4 sec. Deals reduced damage beyond 5 targets. Enemies hit are chained to the spear's location for the duration. Generates 10 Rage.
-    concussive_blows             = {  90354, 383115, 1 }, -- Cooldown of Pummel reduced by 1.0 sec. Successfully interrupting an enemy increases the damage you deal to them by 5% for 10 sec.
-    crackling_thunder            = {  95959, 203201, 1 }, -- Thunder Clap's radius is increased by 50%, and it reduces movement speed by an additional 20%.
-    cruel_strikes                = {  90381, 392777, 2 }, -- Critical strike chance increased by 1% and critical strike damage of Execute increased by 5%.
-    crushing_force               = {  90347, 382764, 2 }, -- Bloodthirst deals an additional 5% damage and deals 5% increased critical strike damage.
-    defensive_stance             = {  92538, 386208, 1 }, -- A defensive combat state that reduces all damage you take by 15%, and all damage you deal by 10%. Lasts until canceled.
-    double_time                  = {  90382, 103827, 1 }, -- Increases the maximum number of charges on Charge by 1, and reduces its cooldown by 3 sec.
-    dual_wield_specialization    = {  90373, 382900, 2 }, -- While dual wielding your damage is increased by 3% and movement speed is increased by 2%.
-    fast_footwork                = {  90344, 382260, 1 }, -- Movement speed increased by 5%.
-    frothing_berserker           = {  90352, 392792, 1 }, -- Rampage has a 20% chance to immediately refund 10% of the Rage spent.
-    heroic_leap                  = {  90346,   6544, 1 }, -- Leap through the air toward a target location, slamming down with destructive force to deal 4,263 Physical damage to all enemies within 8 yards.
-    honed_reflexes               = {  95956, 391271, 1 }, -- Cooldown of Enraged Regeneration, Pummel, Intervene, Spell Reflection, and Storm Bolt reduced by 5%.
-    impending_victory            = {  90326, 202168, 1 }, -- Instantly attack the target, causing 10,702 damage and healing you for 30% of your maximum health. Killing an enemy that yields experience or honor resets the cooldown of Impending Victory and makes it cost no Rage.
-    intervene                    = {  90329,   3411, 1 }, -- Run at high speed toward an ally, intercepting all melee and ranged attacks against them for 6 sec while they remain within 10 yds.
-    intimidating_shout           = {  90384,   5246, 1 }, -- Causes the targeted enemy to cower in fear, and up to 5 additional enemies within 8 yards to flee. Targets are disoriented for 8 sec.
-    leeching_strikes             = {  90371, 382258, 1 }, -- Leech increased by 3%.
-    menace                       = {  90383, 275338, 1 }, -- Intimidating Shout will knock back all nearby enemies except your primary target, and cause them all to cower in fear for 15 sec instead of fleeing.
-    overwhelming_rage            = {  90378, 382767, 1 }, -- Maximum Rage increased by 30.
-    pain_and_gain                = {  90353, 382549, 1 }, -- When you take any damage, heal for 2.00% of your maximum health. This can only occur once every 10 sec.
-    piercing_challenge           = {  90379, 382948, 1 }, -- Champion's Spear's damage increased by 50% and its Rage generation is increased by 100%.
-    piercing_howl                = {  90348,  12323, 1 }, -- Snares all enemies within 12 yards, reducing their movement speed by 70% for 8 sec.
-    rallying_cry                 = {  90331,  97462, 1 }, -- Lets loose a rallying cry, granting all party or raid members within 40 yards 10% temporary and maximum health for 10 sec.
-    reinforced_plates            = {  90368, 382939, 2 }, -- Stamina increased by 5% and Armor increased by 5%.
-    rumbling_earth               = {  90374, 275339, 1 }, -- Shockwave's range increased by 6 yards and when Shockwave strikes at least 3 targets, its cooldown is reduced by 15 sec.
-    second_wind                  = {  90332,  29838, 1 }, -- Restores 6% health every 1 sec when you have not taken damage for 5 sec. While you are below 35% health, restores 1.0% health every 1 sec. The amount restored increases the closer you are to death.
-    seismic_reverberation        = {  90354, 382956, 1 }, -- If Whirlwind or Thunder Clap hits 3 or more enemies, it hits them 1 additional time for 30% damage.
-    shattering_throw             = {  90351,  64382, 1 }, -- Hurl your weapon at the enemy, causing 19,717 Physical damage, ignoring armor, and removing any magical immunities. Deals up to 500% increased damage to absorb shields.
-    shockwave                    = {  90375,  46968, 1 }, -- Sends a wave of force in a frontal cone, causing 3,628 damage and stunning all enemies within 10 yards for 2 sec.
-    sidearm                      = {  90340, 384404, 1 }, -- Your auto-attacks have a 20% chance to hurl weapons at your target and 3 other enemies in front of you, dealing an additional 4,535 Physical damage.
-    spell_reflection             = {  90385,  23920, 1 }, -- Raise your weapon, reflecting the first spell cast on you, and reduce magic damage you take by 20% for 5 sec.
-    storm_bolt                   = {  90337, 107570, 1 }, -- Hurls your weapon at an enemy, causing 5,170 Physical damage and stunning for 4 sec.
-    thunder_clap                 = {  90343,   6343, 1 }, -- Blasts all enemies within 8 yards for 33,823 Physical damage and reduces their movement speed by 20% for 10 sec. Deals reduced damage beyond 5 targets. Generates 8 Rage.
-    thunderous_roar              = {  90359, 384318, 1 }, -- Roar explosively, dealing 45,451 Physical damage to enemies within 12 yds and cause them to bleed for 66,880 physical damage over 8 sec. Deals reduced damage beyond 5 targets.
-    thunderous_words             = {  90358, 384969, 1 }, -- Increases the duration of Thunderous Roar's Bleed effect by 2.0 sec and Thunderous Roar's Bleed effect causes enemies to take 20% increased damage from all your bleeds.
-    titans_torment               = {  90362, 390135, 1 }, -- While Avatar is active Rampage's Rage cost is reduced by 20 and Bloodthirst's cooldown is reduced by 1.5 sec.
-    uproar                       = {  90357, 391572, 1 }, -- Thunderous Roar's cooldown reduced by 45 sec.
-    war_machine                  = {  90328, 262231, 1 }, -- Your auto attacks generate 20% more Rage. Killing an enemy instantly generates 5 Rage, and increases your movement speed by 30% for 8 sec.
-    wild_strikes                 = {  90360, 382946, 2 }, -- Haste increased by 1% and your auto-attack critical strikes increase your auto-attack speed by 10% for 10 sec.
-    wrecking_throw               = {  90351, 384110, 1 }, -- Hurl your weapon at the enemy, causing 19,717 Physical damage, ignoring armor. Deals up to 500% increased damage to absorb shields.
+    armored_to_the_teeth           = {  90366,  384124, 2 }, -- Gain Strength equal to $s1% of your Armor
+    avatar                         = {  90365,  107574, 1 }, -- Transform into a colossus for $s1 sec, causing you to deal $s2% increased damage and removing all roots and snares. Generates $s3 Rage
+    barbaric_training              = {  90340,  383082, 1 }, -- Slam and Whirlwind deal $s1% more damage and $s2% increased critical strike damage
+    berserker_shout                = {  90348,  384100, 1 }, -- Go berserk, removing and granting immunity to Fear, Sap, and Incapacitate effects for $s1 sec. Also remove fear effects from group members within $s2 yds
+    berserker_stance               = {  90325,  386196, 1 }, -- An aggressive combat state that increases the damage of your auto-attacks by $s1% and reduces the duration of Fear, Sap and Incapacitate effects on you by $s2%. Lasts until canceled
+    berserkers_torment             = {  90362,  390123, 1 }, -- Activating Avatar or Recklessness grants $s1 sec of the other
+    bitter_immunity                = {  90356,  383762, 1 }, -- Restores $s1% health instantly and removes all diseases, poisons, and curses affecting you
+    bounding_stride                = {  90355,  202163, 1 }, -- Reduces the cooldown of Heroic Leap by $s1 sec and Heroic Leap also increases your movement speed by $s2% for $s3 sec
+    cacophonous_roar               = {  90383,  382954, 1 }, -- Intimidating Shout can withstand $s1% more damage before breaking
+    champions_might                = {  90323,  386284, 1 }, -- The duration of Champion's Spear is increased by $s1 sec. You deal $s2% increased critical strike damage to targets chained to your Spear
+    champions_spear                = {  90380,  376079, 1 }, -- Throw a spear at the target location, dealing $s$s2 Physical damage instantly and an additional $s3 damage over $s4 sec. Deals reduced damage beyond $s5 targets. Enemies hit are chained to the spear's location for the duration. Generates $s6 Rage
+    concussive_blows               = {  90354,  383115, 1 }, -- Cooldown of Pummel reduced by $s1 sec. Successfully interrupting an enemy increases the damage you deal to them by $s2% for $s3 sec
+    crackling_thunder              = {  95959,  203201, 1 }, -- Thunder Clap's radius is increased by $s1% and it reduces affected target's movement speed by an additional $s2%
+    cruel_strikes                  = {  90381,  392777, 2 }, -- Critical strike chance increased by $s1% and critical strike damage of Execute increased by $s2%
+    crushing_force                 = {  90347,  382764, 2 }, -- Bloodthirst deals an additional $s1% damage and deals $s2% increased critical strike damage
+    defensive_stance               = {  92538,  386208, 1 }, -- A defensive combat state that reduces all damage you take by $s1% and all damage you deal by $s2%. Lasts until canceled
+    double_time                    = {  90382,  103827, 1 }, -- Charge gains $s1 additional charge and its cooldown is reduced by $s2 sec
+    dual_wield_specialization      = {  90373,  382900, 2 }, -- While dual wielding your damage is increased by $s1% and movement speed is increased by $s2%
+    fast_footwork                  = {  90344,  382260, 1 }, -- Movement speed increased by $s1%
+    frothing_berserker             = {  90352,  392792, 1 }, -- Rampage has a $s1% chance to immediately refund $s2% of the Rage spent
+    heroic_leap                    = {  90346,    6544, 1 }, -- Leap through the air toward a target location, slamming down with destructive force to deal $s$s2 Physical damage to all enemies within $s3 yards
+    honed_reflexes                 = {  95956,  391271, 1 }, -- Cooldown of Enraged Regeneration, Pummel, Intervene, Spell Reflection, and Storm Bolt reduced by $s1%
+    impending_victory              = {  90326,  202168, 1 }, -- Instantly attack the target, causing $s1 damage and healing you for $s2% of your maximum health. Killing an enemy that yields experience or honor resets the cooldown of Impending Victory and makes it cost no Rage
+    intervene                      = {  90329,    3411, 1 }, -- Run at high speed toward an ally, intercepting all melee and ranged attacks against them for $s1 sec while they remain within $s2 yds
+    intimidating_shout             = {  90384,    5246, 1 }, -- Causes the targeted enemy to cower in fear and up to $s1 additional enemies within $s2 yards to flee. Targets are disoriented for $s3 sec
+    leeching_strikes               = {  90371,  382258, 1 }, -- Leech increased by $s1%
+    menace                         = {  90383,  275338, 1 }, -- Intimidating Shout will knock back all nearby enemies except your primary target and cause them all to cower in fear for $s1 sec instead of fleeing
+    overwhelming_rage              = {  90378,  382767, 1 }, -- Maximum Rage increased by $s1
+    pain_and_gain                  = {  90353,  382549, 1 }, -- When you take any damage, heal for $s1% of your maximum health. This can only occur once every $s2 sec
+    piercing_challenge             = {  90379,  382948, 1 }, -- Champion's Spear's damage increased by $s1% and its Rage generation is increased by $s2%
+    piercing_howl                  = {  90348,   12323, 1 }, -- Snares all enemies within $s1 yards, reducing their movement speed by $s2% for $s3 sec
+    rallying_cry                   = {  90331,   97462, 1 }, -- Lets loose a rallying cry, granting all party or raid members within $s1 yards $s2% temporary and maximum health for $s3 sec
+    reinforced_plates              = {  90368,  382939, 2 }, -- Stamina increased by $s1% and Armor increased by $s2%
+    rumbling_earth                 = {  90374,  275339, 1 }, -- Shockwave's range increased by $s1 yards and when it strikes at least $s2 targets its cooldown is reduced by $s3 sec
+    second_wind                    = {  90332,   29838, 1 }, -- Restores $s1% health every $s2 sec when you have not taken damage for $s3 sec. Restores $s4% health every $s5 sec while you are below $s6% health. The amount restored increases the closer you are to death
+    seismic_reverberation          = {  90354,  382956, 1 }, -- If Whirlwind hits $s1 or more enemies it hits them $s2 additional time for $s3% damage
+    shattering_throw               = {  90351,   64382, 1 }, -- Hurl your weapon at the enemy, removing any magical immunities and causing $s$s2 Physical damage, ignoring armor. Deals up to $s3% increased damage to absorb shields
+    shockwave                      = {  90375,   46968, 1 }, -- Sends a wave of force in a frontal cone, causing $s1 damage and stunning all enemies within $s2 yards for $s3 sec
+    sidearm                        = {  90340,  384404, 1 }, -- Your auto-attacks have a $s2% chance to hurl weapons at your target and $s3 other enemy in front of you, dealing $s$s4 Physical damage
+    spell_reflection               = {  90385,   23920, 1 }, -- Raise your weapon, reflecting the first spell cast on you and reducing magic damage you take by $s1% for $s2 sec
+    storm_bolt                     = {  90337,  107570, 1 }, -- Hurls your weapon at an enemy, causing $s$s2 Physical damage and stunning for $s3 sec
+    thunder_clap                   = {  90343,    6343, 1 }, -- Blasts all enemies within $s2 yards for $s$s3 Physical damage and reduces their movement speed by $s4% for $s5 sec. Deals reduced damage beyond $s6 targets
+    thunderous_roar                = {  90359,  384318, 1 }, -- Roar explosively, dealing $s$s3 Physical damage to enemies within $s4 yds and cause them to bleed for $s$s5 physical damage over $s6 sec. Deals reduced damage beyond $s7 targets
+    thunderous_words               = {  90358,  384969, 1 }, -- Increases the duration of Thunderous Roar's Bleed effect by $s1 sec and Thunderous Roar's Bleed effect causes enemies to take $s2% increased damage from all your bleeds
+    titans_torment                 = {  90362,  390135, 1 }, -- While Avatar is active Rampage's Rage cost is reduced by $s1 and Bloodthirst's cooldown is reduced by $s2 sec
+    uproar                         = {  90357,  391572, 1 }, -- Thunderous Roar's cooldown reduced by $s1 sec
+    war_machine                    = {  90328,  262231, 1 }, -- Your auto-attacks generate $s1% more Rage. Killing an enemy instantly generates $s2 Rage and increases your movement speed by $s3% for $s4 sec
+    wild_strikes                   = {  90360,  382946, 2 }, -- Haste increased by $s1% and your auto-attack critical strikes increase your auto-attack speed by $s2% for $s3 sec
+    wrecking_throw                 = {  90351,  384110, 1 }, -- Hurl your weapon at the enemy, causing $s$s2 Physical damage, ignoring armor. Deals up to $s3% increased damage to absorb shields
 
     -- Fury
-    anger_management             = {  90415, 152278, 1 }, -- Every 20 Rage you spend reduces the remaining cooldown on Recklessness, Bladestorm, and Ravager by 1 sec.
-    ashen_juggernaut             = {  90409, 392536, 1 }, -- Execute increases the critical strike chance of Execute by 10% for 15 sec, stacking up to 5 times.
-    bladestorm                   = {  90388, 227847, 1 }, -- Become an unstoppable storm of destructive force, striking all nearby enemies for 155,542 Physical damage over 3.3 sec. Deals reduced damage beyond 8 targets. You are immune to movement impairing and loss of control effects, but can use defensive abilities and can avoid attacks. Generates 10 Rage each time you deal damage.
-    bloodborne                   = {  90401, 385703, 1 }, -- Bleed damage of Odyn's Fury, Thunderous Roar, Bloodbath, and Gushing Wound increased by 20%.
-    bloodcraze                   = {  90405, 393950, 1 }, -- Raging Blow increases the critical strike chance of your next Bloodthirst by 15% until it critically strikes, stacking up to 5 times.
-    bloodthirst                  = {  90392,  23881, 1 }, -- Assault the target in a bloodthirsty craze, dealing 80,155 Physical damage and restoring 3% of your health. Generates 8 Rage.
-    cold_steel_hot_blood         = {  90402, 383959, 1 }, -- Bloodthirst critical strikes generate 4 additional Rage, and inflict a Gushing Wound that leeches 26,447 health over 6 sec.
-    critical_thinking            = {  90425, 383297, 2 }, -- Critical Strike chance increased by 1% and Raging Blow's critical strikes deal 5% increased damage.
-    cruelty                      = {  90428, 392931, 1 }, -- While Enraged, Raging Blow deals 15% increased damage.
-    dancing_blades               = {  90417, 391683, 1 }, -- Odyn's Fury increases your auto-attack damage and speed by 30% for 10 sec.
-    deft_experience              = {  90421, 383295, 2 }, -- Mastery increased by 1% and if you are Enraged, Bloodthirst extends your Enrage by 0.5 sec.
-    depths_of_insanity           = {  90413, 383922, 1 }, -- Recklessness lasts 4.0 sec longer.
-    enraged_regeneration         = {  90395, 184364, 1 }, -- Reduces damage taken by 30%, and Bloodthirst restores an additional 20% health. Usable while stunned or incapacitated. Lasts 8 sec.
-    focus_in_chaos               = {  90403, 383486, 1 }, -- While Enraged, your auto-attacks can no longer miss.
-    frenzied_enrage              = {  90398, 383848, 1 }, -- Enrage increases your Haste by 15% and increases your movement speed by 10%.
-    frenzy                       = {  90406, 335077, 1 }, -- Rampage increases your Haste by 2% for 12 sec, stacking up to 4 times. This effect is reset if you Rampage a different primary target.
-    fresh_meat                   = {  90399, 215568, 1 }, -- Bloodthirst always Enrages you the first time you strike a target, and it has a 15% increased chance to trigger Enrage.
-    hack_and_slash               = {  90407, 383877, 1 }, -- Each Rampage strike has a 25% chance to refund a charge of Raging Blow.
-    improved_bloodthirst         = {  90397, 383852, 1 }, -- Bloodthirst damage increased by 10%.
-    improved_execute             = {  90430, 316402, 1 }, -- Execute no longer costs Rage and now generates 20 Rage.
-    improved_raging_blow         = {  90390, 383854, 1 }, -- Raging Blow has 2 charges and has a 25% chance to instantly reset its own cooldown.
-    improved_whirlwind           = {  90427,  12950, 1 }, -- Whirlwind and Thunder Clap cause your next 4 single-target attacks to strike up to 4 additional targets for 55% damage. Whirlwind generates 3 Rage, plus an additional 1 per target hit. Maximum 8 Rage.
-    invigorating_fury            = {  90393, 383468, 1 }, -- Enraged Regeneration lasts 3 sec longer and instantly heals for 10% of your maximum health.
-    massacre                     = {  90410, 206315, 1 }, -- Execute is now usable on targets below 35% health, and its cooldown is reduced by 1.5 sec.
-    meat_cleaver                 = {  90391, 280392, 1 }, -- Whirlwind and Thunder Clap deal 25% more damage and now affect your next 4 single-target melee attacks, instead of the next 2 attacks.
-    odyns_fury                   = {  90418, 385059, 1 }, -- Unleashes your power, dealing 81,570 Physical damage and an additional 39,272 Physical damage over 4 sec to all enemies within 12 yards. Deals reduced damage beyond 5 targets. Generates 15 Rage.
-    onslaught                    = {  90424, 315720, 1 }, -- Brutally attack an enemy for 75,074 Physical damage. Generates 30 Rage.
-    powerful_enrage              = {  90398, 440277, 1 }, -- Enrage increases the damage your abilities deal by an additional 15% and Enrage's duration is increased by 1 sec.
-    raging_blow                  = {  90396,  85288, 1 }, -- A mighty blow with both weapons that deals a total of 56,918 Physical damage. Raging Blow has a 25% chance to instantly reset its own cooldown. Generates 12 Rage.
-    rampage                      = {  90408, 184367, 1 }, -- Enrages you and unleashes a series of 4 brutal strikes for a total of 128,125 Physical damage and empowering your next Bloodthirst and Raging Blow.
-    ravager                      = {  90388, 228920, 1 }, -- Throws a whirling weapon at the target location that chases nearby enemies, inflicting 130,080 Physical damage to all enemies over 9.8 sec. Deals reduced damage beyond 8 targets. Generates 10 Rage each time it deals damage.
-    reckless_abandon             = {  90415, 396749, 1 }, -- Activating Recklessness generates 50 Rage and while Recklessness is active, Raging Blow and Bloodthirst are replaced by Crushing Blow and Bloodbath.  Crushing Blow Strike a mighty blow with both weapons that deals a total of 68,301 Physical damage. Crushing Blow has a 25% chance to instantly reset its own cooldown and its critical strikes deal 20% additional damage. Generates 12 Rage.  Bloodbath Assault the target in a bloodthirsty craze, dealing 96,187 Physical damage and restoring 3% of your health. Bloodbath causes the target to bleed for 13,060 damage over 6 sec. Using Bloodbath on a target that is affected by Bloodbath extends the bleed by 6 sec. Generates 8 Rage.
-    recklessness                 = {  90412,   1719, 1 }, -- Go berserk, increasing all Rage generation by 100% and granting your abilities 20% increased critical strike chance for 12 sec. Generates 50 Rage.
-    singleminded_fury            = {  90400,  81099, 1 }, -- While dual-wielding a pair of one-handed weapons, your damage done is increased by 5%, your auto-attack damage with one-handed weapons is increased by 30%, your movement speed is increased by 5%, and your auto-attack critical strikes have a 50% chance to Enrage you.
-    slaughtering_strikes         = {  90411, 388004, 1 }, -- Raging Blow causes every strike of your next Rampage to deal an additional 20% damage, stacking up to 5 times.
-    storm_of_steel               = {  90389, 382953, 1 }, -- Bladestorm and Ravager's damage are reduced by 30% but they now have 2 charges and generate 10 additional Rage each time they deal damage.
-    sudden_death                 = {  90429, 280721, 1 }, -- Your attacks have a chance to reset the cooldown of Execute and make it usable on any target, regardless of their health.
-    swift_strikes                = {  90416, 383459, 2 }, -- Haste increased by 1% and Raging Blow and Bloodthirst generate an additional 1 Rage.
-    tenderize                    = {  90423, 388933, 1 }, -- Onslaught Enrages you, and if you have Slaughtering Strikes grants you 3 stacks of Slaughtering Strikes.
-    titanic_rage                 = {  90417, 394329, 1 }, -- Odyn's Fury's Enrages you, deals 10% increased damage and grants you 4 stacks of Whirlwind.
-    unbridled_ferocity           = {  90414, 389603, 1 }, -- Rampage has a 6% chance to grant Recklessness for 4 sec.
-    unhinged                     = {  90389, 386628, 1 }, -- Every other time Bladestorm or Ravager deal damage, you automatically cast a Bloodthirst at your target or random nearby enemy.
-    vicious_contempt             = {  90404, 383885, 2 }, -- Bloodthirst deals 25% increased damage to enemies who are below 35% health.
-    warpaint                     = {  90394, 208154, 1 }, -- You take 10% reduced damage while Enrage is active.
-    wrath_and_fury               = {  90387, 392936, 1 }, -- Raging Blow deals 15% increased damage and while Enraged, Raging Blow has a 10% increased chance to instantly reset its own cooldown.
+    anger_management               = {  90415,  152278, 1 }, -- Every $s1 Rage you spend reduces the remaining cooldown on Recklessness, Bladestorm, and Ravager by $s2 sec
+    ashen_juggernaut               = {  90409,  392536, 1 }, -- Execute increases the critical strike chance of Execute by $s1% for $s2 sec, stacking up to $s3 times
+    bladestorm                     = {  90388,  227847, 1 }, -- Become an unstoppable storm of destructive force, striking all nearby enemies for $s$s2 Physical damage over $s3 sec. Deals reduced damage beyond $s4 targets. You are immune to movement impairing and loss of control effects, but can use defensive abilities and can avoid attacks. Generates $s5 Rage each time you deal damage
+    bloodborne                     = {  90401,  385703, 1 }, -- Your Bleed effects deal $s1% additional damage
+    bloodcraze                     = {  90405,  393950, 1 }, -- Raging Blow increases the critical strike chance of your next Bloodthirst by $s1% until it critically strikes, stacking up to $s2 times
+    bloodthirst                    = {  90392,   23881, 1 }, -- Assault the target in a bloodthirsty craze, dealing $s$s2 Physical damage and restoring $s3% of your health. Generates $s4 Rage
+    cold_steel_hot_blood           = {  90402,  383959, 1 }, -- Bloodthirst critical strikes generate $s1 additional Rage and inflict a Gushing Wound that leeches $s2 health over $s3 sec
+    critical_thinking              = {  90425,  383297, 2 }, -- Critical Strike chance increased by $s1% and Raging Blow's critical strikes deal $s2% increased damage
+    cruelty                        = {  90428,  392931, 1 }, -- While Enraged, Raging Blow deals $s1% increased damage
+    dancing_blades                 = {  90417,  391683, 1 }, -- Odyn's Fury increases your auto-attack damage and speed by $s1% for $s2 sec
+    deft_experience                = {  90421,  383295, 2 }, -- Mastery increased by $s1% and if you are Enraged, Bloodthirst extends your Enrage by $s2 sec
+    depths_of_insanity             = {  90413,  383922, 1 }, -- Recklessness lasts $s1 sec longer
+    enraged_regeneration           = {  90395,  184364, 1 }, -- Reduces damage taken by $s1% and Bloodthirst restores an additional $s2% health for $s3 sec. Usable while stunned or incapacitated
+    focus_in_chaos                 = {  90403,  383486, 1 }, -- While Enraged, your auto-attacks can no longer miss
+    frenzied_enrage                = {  90398,  383848, 1 }, -- Enrage increases your Haste by $s1% and increases your movement speed by $s2%
+    frenzy                         = {  90406,  335077, 1 }, -- Rampage increases your Haste by $s1% for $s2 sec, stacking up to $s3 times. This effect is reset if you Rampage a different primary target
+    fresh_meat                     = {  90399,  215568, 1 }, -- Bloodthirst always Enrages you the first time you strike a target and it has a $s1% increased chance to trigger Enrage
+    hack_and_slash                 = {  90407,  383877, 1 }, -- Each Rampage strike has a $s1% chance to refund a charge of Raging Blow
+    improved_bloodthirst           = {  90397,  383852, 1 }, -- Bloodthirst damage increased by $s1%
+    improved_execute               = {  90430,  316402, 1 }, -- Execute no longer costs Rage and now generates $s1 Rage
+    improved_raging_blow           = {  90390,  383854, 1 }, -- Raging Blow has $s1 charges and has a $s2% chance to instantly reset its own cooldown
+    improved_whirlwind             = {  90427,   12950, 1 }, -- Whirlwind causes your next $s1 single-target attacks to strike up to $s2 additional targets for $s3% damage. Whirlwind generates $s4 Rage, plus an additional $s5 per target hit. Maximum $s6 Rage
+    invigorating_fury              = {  90393,  383468, 1 }, -- Enraged Regeneration lasts $s1 sec longer and instantly heals for $s2% of your maximum health
+    massacre                       = {  90410,  206315, 1 }, -- Execute is now usable on targets below $s1% health and its cooldown is reduced by $s2 sec
+    meat_cleaver                   = {  90391,  280392, 1 }, -- Whirlwind deals $s1% more damage and affects your next $s2 single-target attacks
+    odyns_fury                     = {  90418,  385059, 1 }, -- Unleashes your power, dealing $s$s3 Physical damage and an additional $s$s4 Physical damage over $s5 sec to all enemies within $s6 yards. Deals reduced damage beyond $s7 targets. Generates $s8 Rage
+    onslaught                      = {  90424,  315720, 1 }, -- Brutally attack an enemy for $s$s2 Physical damage. Generates $s3 Rage
+    powerful_enrage                = {  90398,  440277, 1 }, -- Enrage increases the damage your abilities deal by an additional $s1% and Enrage's duration is increased by $s2 sec
+    raging_blow                    = {  90396,   85288, 1 }, -- A mighty blow with both weapons that deals a total of $s$s2 Physical damage. Raging Blow has a $s3% chance to instantly reset its own cooldown. Generates $s4 Rage
+    rampage                        = {  90408,  184367, 1 }, -- Enrages you and unleashes a series of $s2 brutal strikes for a total of $s$s3 Physical damage and empowering your next Bloodthirst and Raging Blow
+    ravager                        = {  90388,  228920, 1 }, -- Throws a whirling weapon at the target location that chases nearby enemies, inflicting $s$s2 Physical damage to all enemies over $s3 sec. Deals reduced damage beyond $s4 targets. Generates $s5 Rage each time it deals damage
+    reckless_abandon               = {  90415,  396749, 1 }, -- Activating Recklessness generates $s3 Rage and while Recklessness is active, Raging Blow and Bloodthirst are replaced by Crushing Blow and Bloodbath.  Crushing Blow Strike a mighty blow with both weapons that deals a total of $s$s6 Physical damage. Crushing Blow has a $s7% chance to instantly reset its own cooldown and its critical strikes deal $s8% additional damage. Generates $s9 Rage.  Bloodbath Assault the target in a bloodthirsty craze, dealing $s$s12 Physical damage and restoring $s13% of your health. Bloodbath causes the target to bleed for $s14 damage over $s15 sec. Using Bloodbath on a target that is affected by Bloodbath extends the bleed by $s16 sec. Generates $s17 Rage
+    recklessness                   = {  90412,    1719, 1 }, -- Go berserk, increasing all Rage generation by $s1% and granting your abilities $s2% increased critical strike chance for $s3 sec. Generates $s4 Rage
+    singleminded_fury              = {  90400,   81099, 1 }, -- While dual-wielding a pair of one-handed weapons, your damage done is increased by $s1%, your auto-attack damage with one-handed weapons is increased by $s2%, your movement speed is increased by $s3%, and your auto-attack critical strikes have a $s4% chance to Enrage you
+    slaughtering_strikes           = {  90411,  388004, 1 }, -- Raging Blow causes every strike of your next Rampage to deal an additional $s1% damage, stacking up to $s2 times
+    storm_of_steel                 = {  90389,  382953, 1 }, -- Bladestorm and Ravager's damage are reduced by $s1% but they now have $s2 charges and generate $s3 additional Rage each time they deal damage
+    sudden_death                   = {  90429,  280721, 1 }, -- Your attacks have a chance to reset the cooldown of Execute and make it usable on any target, regardless of their health
+    swift_strikes                  = {  90416,  383459, 2 }, -- Haste increased by $s1% and Raging Blow and Bloodthirst generate an additional $s2 Rage
+    tenderize                      = {  90423,  388933, 1 }, -- Onslaught Enrages you. If you have Slaughtering Strikes, it also grants you $s1 stacks of Slaughtering Strikes
+    titanic_rage                   = {  90417,  394329, 1 }, -- Odyn's Fury's Enrages you, deals $s1% increased damage and grants you $s2 stacks of Whirlwind
+    unbridled_ferocity             = {  90414,  389603, 1 }, -- Rampage has a $s1% chance to grant Recklessness for $s2 sec
+    unhinged                       = {  90389,  386628, 1 }, -- Every other time Bladestorm or Ravager deal damage, you automatically cast a Bloodthirst at your target or random nearby enemy
+    vicious_contempt               = {  90404,  383885, 2 }, -- Bloodthirst deals $s1% increased damage to enemies who are below $s2% health
+    warpaint                       = {  90394,  208154, 1 }, -- You take $s1% reduced damage while Enrage is active
+    wrath_and_fury                 = {  90387,  392936, 1 }, -- Raging Blow deals $s1% increased damage and while Enraged, Raging Blow has a $s2% increased chance to instantly reset its own cooldown
 
     -- Mountain Thane
-    avatar_of_the_storm          = {  94805, 437134, 1 }, -- Casting Avatar grants you 2 charges of Thunder Blast and resets the cooldown of Thunder Clap. While Avatar is not active, Lightning Strikes have a 10% chance to grant you Avatar for 4 secs. Thunder Blast Your next Thunder Clap becomes a Thunder Blast that deals Stormstrike damage.
-    burst_of_power               = {  94807, 437118, 1 }, -- Lightning Strikes have a 15% chance to make your next 2 Bloodthirsts have no cooldown, deal 35% increased damage, and generate 2 additional Rage.
-    crashing_thunder             = {  94816, 436707, 1 }, -- Stormstrike or Nature damage your abilities deal is increased by 5%. Stormstrike damage ignores Armor. Thunder Clap damage increased by 40%, and it generates 8 Rage. Seismic Reverberations, Improved Whirlwind, Meat Cleaver, and Barbaric Training now affect Thunder Clap in addition to Whirlwind.
-    flashing_skies               = {  94797, 437079, 1 }, -- Thunder Blast calls down a Lightning Strike on an enemy it hits.
-    gathering_clouds             = {  94792, 436201, 1 }, -- Your attacks trigger Lightning Strikes 30% more often.
-    ground_current               = {  94800, 436148, 1 }, -- Lightning Strikes also deal 8,516 to enemies near their target. Damage reduced beyond 5 targets.
-    keep_your_feet_on_the_ground = {  94798, 438590, 1 }, -- Physical damage taken reduced by 2%. Thunder Blast reduces damage you take by 8% for 5 sec.
-    lightning_strikes            = {  94803, 434969, 1, "mountain_thane" }, -- Damaging enemies with Thunder Clap, Raging Blow, or Execute has a 25% chance to also strike one with a lightning bolt, dealing 38,403 Nature damage. Lightning Strikes occur 30% more often during Avatar.
-    snap_induction               = {  94797, 456270, 1 }, -- Activating Recklessness grants a charge of Thunder Blast.
-    steadfast_as_the_peaks       = {  94798, 434970, 1 }, -- Stamina increased by 5%. Victory Rush increases your maximum health by 10% for 5 sec. When this health increase expires, you heal for any amount of the original Victory Rush that healed you in excess of your full health.
-    storm_bolts                  = {  94817, 436162, 1 }, -- Storm Bolt also hits 2 additional nearby targets, stunning them for 2 sec, but its cooldown is increased by 10 sec.
-    storm_shield                 = {  94817, 438597, 1 }, -- Intervening a target grants them a shield for 5 sec that absorbs magic damage equal to 3 times your Armor.
-    strength_of_the_mountain     = {  94808, 437068, 1 }, -- Shield Slam damage increased by 10%. Bloodthirst and Rampage damage increased by 25%.
-    thorims_might                = {  94792, 436152, 1 }, -- Lightning Strikes generate 3 Rage. Raging Blow and Execute damage increased by 25%.
-    thunder_blast                = {  94785, 435607, 1 }, -- Shield Slam and Bloodthirst have a 35% chance to grant you Thunder Blast, stacking up to 2 charges. Thunder Blast Your next Thunder Clap becomes a Thunder Blast that deals Stormstrike damage and generates 10 Rage.
+    avatar_of_the_storm            = {  94805,  437134, 1 }, -- Casting Avatar grants you $s1 charges of Thunder Blast and resets the cooldown of Thunder Clap. While Avatar is not active, Lightning Strikes have a $s2% chance to grant you Avatar for $s3 secs. Thunder Blast Your next Thunder Clap becomes a Thunder Blast that deals Stormstrike damage
+    burst_of_power                 = {  94807,  437118, 1 }, -- Lightning Strikes have a $s1% chance to make your next $s2 Bloodthirsts have no cooldown, deal $s3% increased damage, and generate $s4 additional Rage
+    crashing_thunder               = {  94816,  436707, 1 }, -- Stormstrike or Nature damage your abilities deal is increased by $s2%$s$s3 Stormstrike damage ignores Armor. Thunder Clap damage increased by $s4%, and it generates $s5 Rage. Seismic Reverberations, Improved Whirlwind, Meat Cleaver, and Barbaric Training now affect Thunder Clap in addition to Whirlwind
+    flashing_skies                 = {  94797,  437079, 1 }, -- Thunder Blast calls down a Lightning Strike on an enemy it hits
+    gathering_clouds               = {  94792,  436201, 1 }, -- Your attacks trigger Lightning Strikes $s1% more often
+    ground_current                 = {  94800,  436148, 1 }, -- Lightning Strikes also deal $s$s2 Nature damage to enemies near their target. Damage reduced beyond $s3 targets
+    keep_your_feet_on_the_ground   = {  94798,  438590, 1 }, -- Physical damage taken reduced by $s1%. Thunder Blast reduces damage you take by $s2% for $s3 sec
+    lightning_strikes              = {  94803,  434969, 1 }, -- Damaging enemies with Thunder Clap, Raging Blow, or Execute has a $s2% chance to also strike one with a lightning bolt, dealing $s$s3 Nature damage. Lightning Strikes occur $s4% more often during Avatar
+    snap_induction                 = {  94797,  456270, 1 }, -- Activating Recklessness grants a charge of Thunder Blast
+    steadfast_as_the_peaks         = {  94798,  434970, 1 }, -- Stamina increased by $s1%. Impending Victory increases your maximum health by $s2% for $s3 sec. When this health increase expires, you heal for any amount of the original Impending Victory that healed you in excess of your full health
+    storm_bolts                    = {  94817,  436162, 1 }, -- Storm Bolt also hits $s1 additional nearby targets, stunning them for $s2 sec, but its cooldown is increased by $s3 sec
+    storm_shield                   = {  94817,  438597, 1 }, -- Intervening a target grants them a shield for $s1 sec that absorbs magic damage equal to $s2 times your Armor
+    strength_of_the_mountain       = {  94808,  437068, 1 }, -- Shield Slam damage increased by $s1%. Bloodthirst and Rampage damage increased by $s2%
+    thorims_might                  = {  94792,  436152, 1 }, -- Lightning Strikes generate $s1 Rage. Raging Blow and Execute damage increased by $s2%
+    thunder_blast                  = {  94785,  435607, 1 }, -- Shield Slam and Bloodthirst have a $s1% chance to grant you Thunder Blast, stacking up to $s2 charges. Thunder Blast Your next Thunder Clap becomes a Thunder Blast that deals Stormstrike damage and generates $s5 Rage
 
     -- Slayer
-    brutal_finish                = {  94786, 446085, 1 }, -- Your next Rampage after Bladestorm ends deals 50% additional damage.
-    culling_cyclone              = {  94786, 444778, 1 }, -- Each strike of Bladestorm deals an additional 10% damage evenly split across all targets.
-    death_drive                  = {  94813, 444770, 1 }, -- You heal for 15% of damage dealt by Sudden Death.
-    fierce_followthrough         = {  94787, 444773, 1 }, -- Bloodthirst critical strikes increase the damage of your next Bloodthirst by 20%.
-    imminent_demise              = {  94788, 444769, 1 }, -- Every 3 Slayer's Strikes you gain Sudden Death. Using Sudden Death accelerates your next Bladestorm, striking 1 additional time (max 3). Bladestorm's total duration is unchanged.
-    opportunist                  = {  94787, 444774, 1 }, -- When Raging Blow resets its own cooldown, your next Raging Blow deals 20% additional damage and 20% additional critical damage.
-    overwhelming_blades          = {  94810, 444772, 1 }, -- Each strike of Bladestorm applies Overwhelmed to all enemies affected, increasing damage you deal to them by 1% for 20 sec, max 10 stacks.
-    reap_the_storm               = {  94809, 444775, 1 }, -- Bloodthirst has a 20% chance to cause you to unleash a flurry of steel, striking all nearby enemies for 51,783 damage and applying Overwhelmed. Deals reduced damage beyond 8 targets.
-    relentless_pursuit           = {  94795, 444776, 1 }, -- Charge grants you 70% movement speed for 3 sec. Charge removes all movement impairing effects, this effect cannot occur more than once every 30 sec.
-    show_no_mercy                = {  94784, 444771, 1 }, -- Marked for Execution increases the critical strike chance and critical strike damage of your next Execute on the target by 15%.
-    slayers_dominance            = {  94814, 444767, 1, "slayer" }, -- Your attacks against your primary target have a high chance to overwhelm their defenses and trigger a Slayer's Strike, dealing 60,496 damage and applying Marked for Execution, increasing the damage they take from your next Execute by 15%. Stacks 3 times.
-    slayers_malice               = {  94801, 444779, 1 }, -- Raging Blow damage increased by 30%.
-    unrelenting_onslaught        = {  94820, 444780, 1 }, -- When you Execute a target that you've Marked for Execution, you both reduce the cooldown of Bladestorm by 5 sec and apply 2 stacks of Overwhelmed to the target per stack of Marked for Execution consumed. You can now use Pummel and Storm Bolt while Bladestorming.
-    vicious_agility              = {  94795, 444777, 1 }, -- Heroic Leap reduces the cooldown of Charge by 5 sec and Charge reduces the cooldown of Heroic Leap by 2 sec.
+    brutal_finish                  = {  94786,  446085, 1 }, -- Your next Rampage after Bladestorm ends deals $s1% additional damage
+    culling_cyclone                = {  94786,  444778, 1 }, -- Each strike of Bladestorm deals an additional $s1% damage evenly split across all targets
+    death_drive                    = {  94813,  444770, 1 }, -- You heal for $s1% of damage dealt by Sudden Death
+    fierce_followthrough           = {  94787,  444773, 1 }, -- Bloodthirst critical strikes increase the damage of your next Bloodthirst by $s1%
+    imminent_demise                = {  94788,  444769, 1 }, -- Every $s1 Slayer's Strikes you gain Sudden Death. Using Sudden Death accelerates your next Bladestorm, striking $s2 additional time (max $s3). Bladestorm's total duration is unchanged
+    opportunist                    = {  94787,  444774, 1 }, -- When Raging Blow resets its own cooldown, your next Raging Blow deals $s1% additional damage and $s2% additional critical damage
+    overwhelming_blades            = {  94810,  444772, 1 }, -- Each strike of Bladestorm applies Overwhelmed to all enemies affected, increasing damage you deal to them by $s1% for $s2 sec, max $s3 stacks
+    reap_the_storm                 = {  94809,  444775, 1 }, -- Bloodthirst has a $s2% chance to cause you to unleash a flurry of steel, striking all nearby enemies for $s$s3 Physical damage and applying Overwhelmed. Deals reduced damage beyond $s4 targets
+    relentless_pursuit             = {  94795,  444776, 1 }, -- Charge increases your movement speed by $s1% for $s2 sec. Charge removes all movement impairing effects, this effect cannot occur more than once every $s3 sec
+    show_no_mercy                  = {  94784,  444771, 1 }, -- Marked for Execution increases the critical strike chance and critical strike damage of your next Execute on the target by $s1%
+    slayers_dominance              = {  94814,  444767, 1 }, -- Your attacks against your primary target have a high chance to overwhelm their defenses and trigger a Slayer's Strike, dealing $s$s2 Physical damage and applying Marked for Execution, increasing the damage they take from your next Execute by $s3%. Stacks $s4 times
+    slayers_malice                 = {  94801,  444779, 1 }, -- Raging Blow damage increased by $s1%
+    unrelenting_onslaught          = {  94820,  444780, 1 }, -- When you Execute a target that you've Marked for Execution, you both reduce the cooldown of Bladestorm by $s1 sec and apply $s2 stacks of Overwhelmed to the target per stack of Marked for Execution consumed. You can use Pummel and Storm Bolt while Bladestorming
+    vicious_agility                = {  94795,  444777, 1 }, -- Heroic Leap reduces the cooldown of Charge by $s1 sec and Charge reduces the cooldown of Heroic Leap by $s2 sec
 } )
-
 
 -- PvP Talents
 spec:RegisterPvpTalents( {
-    battlefield_commander = 5629, -- (424742) Your Shout abilities have additional effects.  Battle Shout: Increases Stamina by 3%.  Piercing Howl: Radius increased by 50%  Berserker Shout: Range increased by 8 yds.  Intimidating Shout: Cooldown reduced by 15 sec.  Rallying Cry: Removes movement impairing effects and grants 30% movement speed to allies.  Thunderous Roar: Targets receive 5% more damage from all sources while bleeding.
-    bodyguard             =  168, -- (213871) Protect an ally, causing 40% of all Physical damage they take to be transfered to you. When the target takes Physical damage, your Shield Slam cooldown has a 30% chance to be reset. Bodyguard is cancelled if the target is further than 20 yards from you. Lasts 1 min. Only one target can be Bodyguarded at a time.
-    demolition            = 5374, -- (329033) Reduces the cooldown of your Shattering Throw or Wrecking Throw by 50% and increases its damage to absorb shields by an additional 250%.
-    disarm                =   24, -- (236077) Disarm the enemy's weapons and shield for 5 sec. Disarmed creatures deal significantly reduced damage.
-    dragon_charge         =  831, -- (206572) Run at high speed at a distance in front of you. All enemies in your path will take 7,883 Physical damage and be knocked back.
-    morale_killer         =  171, -- (199023) Reduces the cooldown of Demoralizing Shout by 15 sec, and Demoralizing Shout now reduces the damage enemies deal to all targets, not just you.
-    oppressor             =  845, -- (205800) You focus the assault on this target, increasing their damage taken by 3% for 6 sec. Each unique player that attacks the target increases the damage taken by an additional 3%, stacking up to 5 times. Your melee attacks refresh the duration of Focused Assault.
-    rebound               =  833, -- (213915) Spell Reflection reflects the next 2 incoming spells cast on you and reflected spells deal 50% extra damage to the attacker. Spell Reflection's cooldown is increased by 10 sec.
-    safeguard             = 5626, -- (424654) Intervene now has 2 charges and reduces the ally's damage taken by 20% for 5 sec. Intervene's cooldown is increased by 10 sec.
-    shield_bash           =  173, -- (198912) When Shield Slam is used on targets that are casting, it reduces their damage done by 15% for 8 sec and the cooldown is instantly reset.
-    storm_of_destruction  = 5627, -- (236308) Bladestorm and Ravager now snare all targets you hit by 60% for 6 sec and decrease their healing taken by 50% for 10 sec.
-    thunderstruck         =  175, -- (199045) Thunder Clap roots all targets it damages for 4 sec.
-    warbringer            = 5432, -- (356353) Charge roots enemies for 2 sec and emanates a shockwave past the target, rooting enemies and dealing 5,631 Physical damage in a 20 yd cone.
-    warpath               =  178, -- (199086) When landing with Heroic Leap, all targets are stunned for 3 sec.
+    battlefield_commander          = 5628, -- (424742) Your Shout abilities have additional effects.  Battle Shout: Increases Stamina by $s3%.  Piercing Howl: Radius increased by $s6%  Berserker Shout: Range increased by $s9 yds.  Intimidating Shout: Cooldown reduced by $s12 sec.  Rallying Cry: Removes movement impairing effects and grants $s15% movement speed to allies.  Thunderous Roar: Targets receive $s18% more damage from all sources while bleeding
+    berserker_roar                 = 5702, -- (1227751) Go berserk, removing and granting immunity to Fear, Sap, and Incapacitate effects for $s1 sec. Also reduces the duration of the next crowd control effect within $s2 sec by $s3% on group members within $s4 yds
+    death_wish                     =  179, -- (199261) Increases your damage taken and done by $s1% for $s2 sec at the cost of $s3% of your health. Stacks up to $s4 times
+    demolition                     = 5373, -- (329033) Reduces the cooldown of your Shattering Throw or Wrecking Throw by $s1% and increases its damage to absorb shields by an additional $s2%
+    disarm                         = 3533, -- (236077) Disarm the enemy's weapons and shield for $s1 sec. Disarmed creatures deal significantly reduced damage
+    dragon_charge                  = 5678, -- (206572) Run at high speed at a distance in front of you. All enemies in your path will take $s$s2 Physical damage and be knocked back
+    enduring_rage                  =  177, -- (411764) You have a chance to become Enraged while you are suffering movement impairing effects. Suffering loss of control effects have a chance to grant you Recklessness for $s1 sec
+    master_and_commander           = 3528, -- (235941) Cooldown of Rallying Cry reduced by $s1 sec
+    rebound                        = 5548, -- (213915) Spell Reflection reflects the next $s1 incoming spells cast on you and reflected spells deal $s2% extra damage to the attacker. Spell Reflection's cooldown is increased by $s3 sec
+    safeguard                      = 5624, -- (424654) Intervene now has $s1 charges and reduces the ally's damage taken by $s2% for $s3 sec. Intervene's cooldown is increased by $s4 sec
+    slaughterhouse                 = 3735, -- (352998) Rampage, Onslaught, and Odyn's Fury damage reduce healing the target receives by $s1% for $s2 sec, stacking up to $s3 times
 } )
 
 -- Auras
@@ -539,6 +536,14 @@ spec:RegisterGear({
     -- The War Within
     tww3 = {
         items = { 237610, 237608, 237613, 237611, 237609 },
+        auras = {
+            -- Mountain Thane
+            severe_thunder = {
+                id = 1252096,
+                duration = 12,
+                max_stack = 1
+            },
+        },
     },
     tww2 = {
         items = { 229235, 229233, 229238, 229236, 229234 },
@@ -1387,6 +1392,7 @@ spec:RegisterAbilities( {
 
         handler = function ()
             applyDebuff ( "target", "hamstring" )
+            setCooldown( "global_cooldown", 0.75 )
         end,
     },
 
@@ -1833,6 +1839,7 @@ spec:RegisterAbilities( {
             applyDebuff( "target", "thunder_clap" )
             active_dot.thunder_clap = max( active_dot.thunder_clap, active_enemies )
             removeStack( "thunder_blast" )
+            if set_bonus.tww3 >= 4 then removeBuff( "severe_thunder" ) end
         end,
 
         bind = "thunder_clap"
