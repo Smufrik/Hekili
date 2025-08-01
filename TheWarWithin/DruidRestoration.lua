@@ -1,14 +1,33 @@
 -- DruidRestoration.lua
--- January 2025
+-- August 2025
+-- Patch 11.2
 
 if UnitClassBase( "player" ) ~= "DRUID" then return end
 
 local addon, ns = ...
 local Hekili = _G[ addon ]
 local class, state = Hekili.Class, Hekili.State
-
 local spec = Hekili:NewSpecialization( 105 )
+
+---- Local function declarations for increased performance
+-- Strings
 local strformat = string.format
+-- Tables
+local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
+-- Math
+local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
+
+-- Common WoW APIs, comment out unneeded per-spec
+-- local GetSpellCastCount = C_Spell.GetSpellCastCount
+-- local GetSpellInfo = C_Spell.GetSpellInfo
+-- local GetSpellInfo = ns.GetUnpackedSpellInfo
+-- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+-- local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+-- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
+--local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
+-- local IsActiveSpell = ns.IsActiveSpell
+
+-- Specialization-specific local functions (if any)
 
 spec:RegisterResource( Enum.PowerType.Mana )
 spec:RegisterResource( Enum.PowerType.Energy )
@@ -198,7 +217,6 @@ local mod_liveliness_dot = setfenv( function( dur )
     if not talent.liveliness.enabled then return dur end
     return dur * 0.75
 end, state )
-
 
 -- Auras
 spec:RegisterAuras( {
@@ -554,7 +572,6 @@ spec:RegisterHook( "runHandler", function( ability )
     end
 end )
 
-
 local TranquilityTickHandler = setfenv( function()
 
     addStack( "tranquility_hot" )
@@ -575,7 +592,6 @@ local TreantSpawnPeriodic = setfenv( function()
     addStack( "grove_guardians" ) -- Just for tracking.
     if talent.harmony_of_the_grove.enabled then addStack( "harmony_of_the_grove" ) end
 end, state )
-
 
 spec:RegisterHook( "reset_precast", function ()
 
@@ -1240,8 +1256,6 @@ spec:RegisterAbilities( {
         copy = { "solar_wrath", 5176 }
     },
 } )
-
-
 
 spec:RegisterRanges( "rake", "shred", "skull_bash", "growl", "moonfire" )
 

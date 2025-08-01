@@ -1,22 +1,34 @@
-
 -- MageFire.lua
--- January 2025
-
---[[ 11.1 TODO List
-- Implement tier set effects
-    - Combustion guaranteed jackpot CDR
-
---]]
+-- August 2025
+-- Patch 11.2
 
 if UnitClassBase( "player" ) ~= "MAGE" then return end
 
 local addon, ns = ...
 local Hekili = _G[ addon ]
 local class, state = Hekili.Class, Hekili.State
-
-local strformat = string.format
-
 local spec = Hekili:NewSpecialization( 63 )
+
+---- Local function declarations for increased performance
+-- Strings
+local strformat = string.format
+-- Tables
+local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
+-- Math
+local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
+
+-- Common WoW APIs, comment out unneeded per-spec
+-- local GetSpellCastCount = C_Spell.GetSpellCastCount
+-- local GetSpellInfo = C_Spell.GetSpellInfo
+-- local GetSpellInfo = ns.GetUnpackedSpellInfo
+-- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+-- local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+-- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
+-- local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
+-- local IsActiveSpell = ns.IsActiveSpell
+
+-- Specialization-specific local functions (if any)
+
 
 spec:RegisterResource( Enum.PowerType.ArcaneCharges )
 spec:RegisterResource( Enum.PowerType.Mana )
@@ -845,13 +857,11 @@ spec:RegisterAuras( {
     },
 } )
 
-
 spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _, _, destGUID, destName, destFlags, _, spellID, spellName )
     if sourceGUID == state.GUID and subtype == "SPELL_AURA_APPLIED" and ( spellID == spec.auras.heating_up.id or spellID == spec.auras.hot_streak.id ) then
         Hekili:ForceUpdate( spellName, true )
     end
 end )
-
 
 spec:RegisterStateTable( "firestarter", setmetatable( {}, {
     __index = setfenv( function( t, k )
@@ -883,7 +893,6 @@ spec:RegisterStateTable( "improved_scorch", setmetatable( {}, {
         end
     end, state )
 } ) )
-
 
 spec:RegisterGear({
     -- The War Within
@@ -1000,7 +1009,6 @@ spec:RegisterHook( "advance", function ( time )
     if Hekili.ActiveDebug then Hekili:Debug( "\n*** Hot Streak (Advance) ***\n    Heating Up:  %.2f\n    Hot Streak:  %.2f\n", state.buff.heating_up.remains, state.buff.hot_streak.remains ) end
 end )
 
-
 local ConsumeHotStreak = setfenv( function()
 
     removeBuff( "hot_streak" )
@@ -1053,7 +1061,6 @@ spec:RegisterStateFunction( "hot_streak", function( willCrit, deferBy )
     if Hekili.ActiveDebug then Hekili:Debug( "*** HOT STREAK END ***\nHeating Up: %s, %.2f\nHot Streak: %s, %.2f\n***", buff.heating_up.up and "Yes" or "No", buff.heating_up.remains, buff.hot_streak.up and "Yes" or "No", buff.hot_streak.remains ) end
 end )
 
-
 local hot_streak_spells = {
     -- "dragons_breath",
     "fireball",
@@ -1077,14 +1084,11 @@ spec:RegisterStateExpr( "expected_kindling_reduction", function ()
     return 0.4
 end )
 
-
 Hekili:EmbedDisciplinaryCommand( spec )
-
 
 local ExpireSKB = setfenv( function()
     removeBuff( "sun_kings_blessing_ready" )
 end, state )
-
 
 spec:RegisterStateTable( "incanters_flow", {
     changed = 0,
@@ -1232,7 +1236,6 @@ spec:RegisterStateTable( "incanters_flow_time_to", setmetatable( {}, {
         return incanters_flow_time_obj
     end
 } ) )
-
 
 -- Abilities
 spec:RegisterAbilities( {

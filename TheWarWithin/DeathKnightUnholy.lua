@@ -1,16 +1,32 @@
 -- DeathKnightUnholy.lua
--- January 2025
+-- August 2025
+-- Patch 11.2
 
 if UnitClassBase( "player" ) ~= "DEATHKNIGHT" then return end
 
 local addon, ns = ...
 local Hekili = _G[ addon ]
 local class, state = Hekili.Class, Hekili.State
-
-local FindUnitBuffByID = ns.FindUnitBuffByID
-local strformat = string.format
-
 local spec = Hekili:NewSpecialization( 252 )
+
+---- Local function declarations for increased performance
+-- Strings
+local strformat = string.format
+-- Tables
+local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
+-- Math
+local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
+
+-- Common WoW APIs, comment out unneeded per-spec
+-- local GetSpellCastCount = C_Spell.GetSpellCastCount
+-- local GetSpellInfo = ns.GetUnpackedSpellInfo
+-- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+-- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
+local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
+local IsActiveSpell = ns.IsActiveSpell
+
+-- Specialization-specific local functions (if any)
 
 spec:RegisterResource( Enum.PowerType.Runes, {
     rune_regen = {
@@ -184,7 +200,6 @@ spec:RegisterResource( Enum.PowerType.RunicPower, {
     }
 } )
 
-
 local spendHook = function( amt, resource, noHook )
     if amt > 0 and resource == "runes" and active_dot.shackle_the_unworthy > 0 then
         reduceCooldown( "shackle_the_unworthy", 4 * amt )
@@ -192,7 +207,6 @@ local spendHook = function( amt, resource, noHook )
 end
 
 spec:RegisterHook( "spend", spendHook )
-
 
 -- Talents
 spec:RegisterTalents( {
@@ -1121,8 +1135,6 @@ spec:RegisterTotems( {
     }
 } )
 
-
-
 local dmg_events = {
     SPELL_DAMAGE = 1,
     SPELL_PERIODIC_DAMAGE = 1
@@ -1191,7 +1203,6 @@ spec:RegisterCombatLogEvent( function( _, subtype, _, sourceGUID, sourceName, so
     end
 end )
 
-
 local dnd_model = setmetatable( {}, {
     __index = function( t, k )
         if k == "ticking" then
@@ -1243,8 +1254,6 @@ end )
 spec:RegisterHook( "step", function ( time )
     if Hekili.ActiveDebug then Hekili:Debug( "Rune Regeneration Time: 1=%.2f, 2=%.2f, 3=%.2f, 4=%.2f, 5=%.2f, 6=%.2f\n", runes.time_to_1, runes.time_to_2, runes.time_to_3, runes.time_to_4, runes.time_to_5, runes.time_to_6 ) end
 end )
-
-local Glyphed = IsSpellKnownOrOverridesKnown
 
 spec:RegisterGear({
     -- The War Within
@@ -1355,7 +1364,6 @@ spec:RegisterHook( "TALENTS_UPDATED", function()
     else rawset( cooldown, "defile", cooldown.death_and_decay ) end
 end )
 
-
 local ghoul_applicators = {
     raise_abomination = {
         abomination = { 30 },
@@ -1377,7 +1385,6 @@ local ghoul_applicators = {
         gargoyle = { 25 }
     }
 }
-
 
 spec:RegisterHook( "reset_precast", function ()
     if totem.dark_arbiter.remains > 0 then
@@ -1443,7 +1450,7 @@ spec:RegisterHook( "reset_precast", function ()
         debuff.death_and_decay.applied = debuff.death_and_decay.expires - 10
     end
 
-    if IsActiveSpell( 433899 ) or IsActiveSpell( 433895 ) or IsSpellKnownOrOverridesKnown( 433895 ) then
+    if IsActiveSpell( 433895 ) then
         applyBuff( "vampiric_strike" )
         if buff.gift_of_the_sanlayn.up then buff.vampiric_strike.expires = buff.gift_of_the_sanlayn.expires end
     end

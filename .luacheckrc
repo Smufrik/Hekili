@@ -995,6 +995,7 @@ globals = {
 	"C_SpellActivationOverlay",
 	"C_SpellActivationOverlay.IsSpellOverlayed",
 	"C_SpellBook",
+	"C_SpellBook.FindSpellBookSlotForSpell",
 	"C_SpellBook.IsSpellInSpellBook",
 	"C_SpellBook.IsSpellKnown",
 	"C_Social",

@@ -1,16 +1,34 @@
 -- MonkMistweaver.lua
--- January 2025
+-- August 2025
+-- Patch 11.2
 
 if UnitClassBase( "player" ) ~= "MONK" then return end
 
 local addon, ns = ...
 local Hekili = _G[ addon ]
 local class, state = Hekili.Class, Hekili.State
-
-local strformat = string.format
-
 local spec = Hekili:NewSpecialization( 270 )
+
+---- Local function declarations for increased performance
+-- Strings
+local strformat = string.format
+-- Tables
+local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
+-- Math
+local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
+
+-- Common WoW APIs, comment out unneeded per-spec
 local GetSpellCount = C_Spell.GetSpellCastCount
+-- local GetSpellCastCount = C_Spell.GetSpellCastCount
+-- local GetSpellInfo = C_Spell.GetSpellInfo
+-- local GetSpellInfo = ns.GetUnpackedSpellInfo
+-- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+-- local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+-- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
+-- local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
+-- local IsActiveSpell = ns.IsActiveSpell
+
+-- Specialization-specific local functions (if any)
 
 spec:RegisterResource( Enum.PowerType.Mana )
 
@@ -1435,7 +1453,6 @@ spec:RegisterAbilities( {
     },
 } )
 
-
 spec:RegisterSetting( "experimental_msg", nil, {
     type = "description",
     name = "|cFFFF0000WARNING|r:  Healer support in this addon is focused on DPS output only.  This is more useful for solo content or downtime when your healing output "
@@ -1451,17 +1468,6 @@ spec:RegisterSetting( "save_faeline", false, {
         Hekili:GetSpellLinkWithTexture( spec.auras.awakened_jadefire.id ), Hekili:GetSpellLinkWithTexture( spec.auras.jadefire_teachings.id ) ),
     width = "full",
 } )
-
---[[ spec:RegisterSetting( "roll_movement", 5, {
-    type = "range",
-    name = strformat( "%s: Check Distance", Hekili:GetSpellLinkWithTexture( 109132 ), Hekili:GetSpellLinkWithTexture( 115008 ) ),
-    desc = strformat( "If set above zero, %s (and %s) may be recommended when your target is at least this far away.", Hekili:GetSpellLinkWithTexture( 109132 ),
-        Hekili:GetSpellLinkWithTexture( 115008 ) ),
-    min = 0,
-    max = 100,
-    step = 1,
-    width = "full"
-} ) ]]
 
     spec:RegisterStateExpr( "distance_check", function()
         return target.minR > 0
@@ -1511,7 +1517,5 @@ spec:RegisterOptions( {
 
     strict = false
 } )
-
-
 
 spec:RegisterPack( "Mistweaver", 20250329, [[Hekili:TR16VnoUr8)wcoaNK724ZpYZIKa0hFOxUUhkQ3I9BsMrI2MRLivjPC2uyO)27qkBjskszN2nO7hUVKKvCMHdhoZV5b3OXrFkAwksIJ(TjJMC1OPtUB44RgD7OjrZKVwGJMvGswJwc)bfLd)8JeH8fmAdMRw61mgkvjcbRKNalhn75ssM8xOrp7vUaLf4e4J3mkA2ksAkUMsSijA2FfJYW8Q5fCcJtKeSOAoIJRM)x(7ZUa(cMkXPvZz0SxREQ6jqWxEX4Xxm6U)q18pIwde(p(8VwnpHrfGwcud0nNJlYqjQ1M9RwCDnW1)SqPJvZFcLIxquB1mjlVqXvgsVzsqLOsrlNJUyYuGZXJhoA4vnFE0Dxm5wdbUGbNJpHrjRi0LWXGTae1kyHpYOiq34TNGr3CX0raRFsT8NraFFMib2IMLbNcH(ccVavMjH)830xyOejHr12sepEfIMglKCYA4catrpNHtJ(trsWkBsCPahtK4CHdrtnj65mglnErj)vhQU0IkmxG5RHJMdvxzsvgz5kPi(lLPlZbBOdPxBsQY2R3AhIUXKienbdhtuwCcklZHYBT0p0Yy2IyWKKS294ENjHfS6FBrX4rksA)0SeWzeZjiiKGKJJLS4C0xJtwH4lvUO3)q18LjPdHp2kzoMIFbmqX5WLOwQJdk1ni4xWNhkXO4YIwHOoNX1)JyLZqTlrCDK4cwsPigyrl9jbLEbwoeCd)czOs0k)KefdgQAjn4MKWruSEdMgCdoPAUalLkh9HcaziEbcNrOG382T7dGgIEbcqP404VSluB4ozvnFq18NlxSWdjPSxOwsz)kQJDDOvxX4HgLCApVneiuX66d3LbpCkMGJeOx5A8OhHl7PEnJ9EzHy1wXRo6n6()R2hTVg8PcooHL)mQlMHxxElGcWOf)Cjx4gX66bWuUtyzlJ79Jv)vwjwLlaUpuo1qWyH6c81yUyn4hwFP6zzCEVRUY7QaweMscZDZ68dS(gNLxvstX84MinDeeCk3zS3fUQn4QlyxtDh(9z196m04idhPc2lyUcavRC94LBHCWH02zk8hTu0qXufETN7rNT9FJPXfLzcSLa3q2qw8AtMaVS3Gcagd1fTbedrO0fbG0SgWKBsv8wftPqDuJbG10gbDDqbDwdUrcodsDquPoy00sI0c24Kg6(AjMkIxwssvjBAj68AVcFGbxAMoMqvg5ynQzJcEt40jhn2OnMLLNqJdGoL3kCC((smgkKGxGgk5sBV(dZGbGJKSeCIlqz5njAdzUBTKDUQSotjmwMcuEOJJXqoohrOktB18jvZ)XMmR16FlFDeFpCEUEpp7Op(GeMcCzwve8DwPS5k9UJbVSUoI(CoSOxUpB7EyKEDzOjQYH7lpyxsAmr37PGLUGv9Iq9UPhyHadXEGEqL9Jw9UPcDlqimMNw(e6g2ACCDvwTorgXqy6gCgRWSGqRALDbi7Pw5UGGEQzouaQvmAp4onGfoap1vKD(rH(4MQ94I62hR(DkuspGcHrg7K3qFu9Mrb8ACYjT35fYCLW4ojMgCu3NhmfLfEM9bRpmnJmdUqzIUvEEuLdDCbetFlbeHdEpKD77X8VHRB63dVFxdVdxNzB3VWpZWXnvq3Ahpur13CmfuC7rg71gG1BPeCej9qnlzeL5oqJ3A4A40NEAYZiZ5xlWzXRq88JirSVg68zUdhe9w6R0SN1(s1RVu2G5c16Q5HE54XJUlA2liUclwentp7pc0QhxUB2HNUBMFNQMf5)QecrH7kblhOdvcXQ1tNmzfIUelgw90FtpWLXQrt(NzGgW1RFAiOaqSswpRVpgeO7SXF98dUbDBh1zhcp5M2TO6jp2bOjW3Mn4A)AyNwaDuWGTi6AcciF7whDeU)(kDL8T(LChemhHhea9awwDjaVnB74aUxU1x76EfQeDxlWe1i0PIYcLEQ2H6GkqsMTfCQf9VN6tOWPVvY)M35W1aY)BGhvVESEkznGfYtrTh7E8)UnYBuH4nc5E17M61R8)gCfw90VKVpo762qn9Robldz0kLRy8Oz)rYAefTw9wcC2cIAaV1elg2mN5F6HFUEYYvp5BTMsA8V8(jh)b1GvFqQNR6h0dr(bpjCRNH82THYf7FLvDwXo)EG149S2gJL8mRyLjE3PfoJDESoZfBECoZp2(yCwFT5X3m)QZJTzUuZJRz(r7htZs(MpEM5co3VWxSQj8dKfp459XU)H9vxBWO7ByuFV3y7uIY5rXS2w7hSQMzD2Spu)EjpmwjbZh(YKD7EEuuEI33VA72qXQdQNQK33RQHRUv8mWULlP17tDyZdujK15trq7SdE8HPhweWVdlH7NQCyBdqBUo8DtRAEOViMaIXUnHQN(HFy375pVu1Ue05O6xqJIK6hmNaqYCWtxx39()7aaydvZtz0tbqBiQIMQaSrzkeCyRa(Wi)BFBVeQJqiqc)8w38GlF2pDK)n1UFGGsOhORCBWeOLAqUDqCCwVJT2Ev38dUsVP9sDC9bsAnW)qsgCuZg4(lBp19t4yhL0QhDLEE2zNesv3ThEg4X5hunnVx6vdFC65dAuHoM4bhAygpo5h3bwUD7HhGrl1N7yxA9vdoAIbDglHJm8KX2XXW0JeWM63LSMGqplztqH(Z2V5zquttvUw8oXO(pD1K6CdyzR29UJDyX9I4yyYZax1oQH66CWjEBz88TBDH7VSJ1)78q2ATSBm7)hIxgC2rP9q4Chp4UHfbVOTtNQ)UVGeZBl3gh3vPrO3V6E3ARA2fZ(LFx2GUvr9nFlcL5S7ZT944UChm)xdbHtbUNKFpbtNem7nnba2CqPM2b3ACdcNNzamiO19a3nEcZmF1ezu0)5d]] )

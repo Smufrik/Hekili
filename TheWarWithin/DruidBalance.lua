@@ -1,5 +1,6 @@
 -- DruidBalance.lua
--- January 2025
+-- August 2025
+-- Patch 11.2
 
 if UnitClassBase( "player" ) ~= "DRUID" then return end
 
@@ -7,17 +8,30 @@ local addon, ns = ...
 local Hekili = _G[ addon ]
 local class, state = Hekili.Class, Hekili.State
 local PTR = ns.PTR
-
-local GetSpellBookItemName = function(index, bookType)
-    local spellBank = (bookType == BOOKTYPE_SPELL) and Enum.SpellBookSpellBank.Player or Enum.SpellBookSpellBank.Pet;
-    return C_SpellBook.GetSpellBookItemName(index, spellBank);
-end
-
-local GetSpellCount = C_Spell.GetSpellCastCount
-
-local strformat = string.format
-
 local spec = Hekili:NewSpecialization( 102 )
+
+---- Local function declarations for increased performance
+-- Strings
+local strformat = string.format
+-- Tables
+local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
+-- Math
+local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
+
+-- Common WoW APIs, comment out unneeded per-spec
+local GetSpellCount = C_Spell.GetSpellCastCount
+local GetSpellInfo = ns.GetUnpackedSpellInfo
+-- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
+local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
+local IsActiveSpell = ns.IsActiveSpell
+
+-- Specialization-specific local functions (if any)
+local GetSpellBookItemName = function( index, bookType )
+    local spellBank = ( bookType == BOOKTYPE_SPELL ) and Enum.SpellBookSpellBank.Player or Enum.SpellBookSpellBank.Pet;
+    return C_SpellBook.GetSpellBookItemName( index, spellBank );
+end
 
 spec:RegisterResource( Enum.PowerType.Rage )
 spec:RegisterResource( Enum.PowerType.LunarPower, {
@@ -239,7 +253,6 @@ spec:RegisterPower( "lively_spirit", 279642, {
     max_stack = 1,
 } )
 
-
 local mod_circle_hot = setfenv( function( x )
     return x
 end, state )
@@ -247,7 +260,6 @@ end, state )
 local mod_circle_dot = setfenv( function( x )
     return x
 end, state )
-
 
 -- Auras
 spec:RegisterAuras( {
@@ -1576,16 +1588,6 @@ spec:RegisterStateExpr( "active_moon", function ()
     return "new_moon"
 end )
 
-local function IsActiveSpell( id )
-    local slot = FindSpellBookSlotBySpellID( id )
-    if not slot then return false end
-
-    local _, _, spellID = GetSpellBookItemName( slot, "spell" )
-    return id == spellID
-end
-
-state.IsActiveSpell = IsActiveSpell
-
 local ExitEclipse = setfenv( function()
     eclipse.state = "IN_NONE"
     eclipse.reset_stacks()
@@ -1845,8 +1847,6 @@ spec:RegisterHook( "spend", function( amt, resource )
         end
     end
 end )
-
-
 
 -- Abilities
 spec:RegisterAbilities( {
@@ -2120,8 +2120,10 @@ spec:RegisterAbilities( {
             spendCharges( "new_moon", 1 )
             spendCharges( "half_moon", 1 )
 
-            -- Radiant Moonlight, NYI.
-            active_moon = "new_moon"
+            if talent.radiant_moonlight.disabled or ( action.half_moon.lastCast < action.full_moon.lastCast ) then
+                active_moon = "new_moon"
+            end
+
         end,
     },
 
@@ -2157,7 +2159,6 @@ spec:RegisterAbilities( {
             applyBuff( "growl" )
         end,
     },
-
 
     half_moon = {
         id = 274282,

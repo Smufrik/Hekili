@@ -1,19 +1,36 @@
 -- MonkBrewmaster.lua
--- January 2025
+-- August 2025
+-- Patch 11.2
 
 if UnitClassBase( "player" ) ~= "MONK" then return end
 
 local addon, ns = ...
 local Hekili = _G[ addon ]
 local class, state = Hekili.Class, Hekili.State
-
-local strformat = string.format
-
 local spec = Hekili:NewSpecialization( 268 )
 
-local FindUnitBuffByID = ns.FindUnitBuffByID
+---- Local function declarations for increased performance
+-- Strings
+local strformat = string.format
+-- Tables
+local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
+-- Math
+local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
+
+-- Common WoW APIs, comment out unneeded per-spec
 local GetSpellCount = C_Spell.GetSpellCastCount
+-- local GetSpellCastCount = C_Spell.GetSpellCastCount
+-- local GetSpellInfo = C_Spell.GetSpellInfo
+-- local GetSpellInfo = ns.GetUnpackedSpellInfo
+-- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+-- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
+-- local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
+-- local IsActiveSpell = ns.IsActiveSpell
+
+-- Specialization-specific local functions (if any)
 local GetUnitBuffByAuraInstanceID = C_TooltipInfo.GetUnitBuffByAuraInstanceID
+
 
 rawset( state, "ColorMixin", ColorMixin )
 
@@ -962,9 +979,7 @@ local function avg_stagger_ps_in_last( t )
     return stagger_in_last( t ) / t
 end
 
-
 state.UnitStagger = UnitStagger
-
 
 spec:RegisterStateTable( "stagger", setmetatable( {}, {
     __index = function( t, k, v )
@@ -1061,17 +1076,6 @@ spec:RegisterStateTable( "stagger", setmetatable( {}, {
 
 spec:RegisterTotem( "black_ox_statue", 627607 )
 spec:RegisterPet( "niuzao_the_black_ox", 73967, "invoke_niuzao", 25, "niuzao" )
-
---[[ Dragonflight:
-New priority increments BOC variable when list requirements are met and the last ability used was Blackout Kick.
-
-rotation_blackout_combo:
-    talent.blackout_combo.enabled & talent.salsalabims_strength.enabled & talent.charred_passions.enabled & ! talent.fluidity_of_motion.enabled
-
-rotation_fom_boc:
-    talent.blackout_combo.enabled & talent.salsalabims_strength.enabled & talent.charred_passions.enabled & talent.fluidity_of_motion.enabled
-
-We will count actual Blackout Kicks in combat, and reset to zero when out of combat and Blackout Combo falls off. ]]
 
 local blackoutComboCount = 0
 
@@ -2194,7 +2198,6 @@ spec:RegisterAbilities( {
     },
 } )
 
-
 spec:RegisterRanges( "blackout_kick", "tiger_palm", "keg_smash", "paralysis", "provoke", "crackling_jade_lightning" )
 
 spec:RegisterOptions( {
@@ -2216,7 +2219,6 @@ spec:RegisterOptions( {
     package = "Brewmaster"
 } )
 
-
 spec:RegisterSetting( "purify_for_celestial", true, {
     name = strformat( "%s: Maximize Shield", Hekili:GetSpellLinkWithTexture( spec.abilities.celestial_brew.id ) ),
     desc = strformat( "If checked, %s may be recommended more frequently to build stacks of %s for your %s shield.\n\n" ..
@@ -2228,7 +2230,6 @@ spec:RegisterSetting( "purify_for_celestial", true, {
     width = "full",
 } )
 
-
 spec:RegisterSetting( "purify_for_niuzao", true, {
     name = strformat( "%s: Maximize %s", Hekili:GetSpellLinkWithTexture( spec.abilities.purifying_brew.id ),
         Hekili:GetSpellLinkWithTexture( spec.talents.improved_invoke_niuzao_the_black_ox[2] ) ),
@@ -2239,7 +2240,6 @@ spec:RegisterSetting( "purify_for_niuzao", true, {
     type = "toggle",
     width = "full"
 } )
-
 
 spec:RegisterSetting( "purify_stagger_currhp", 12, {
     name = strformat( "%s: %s Tick %% Current Health", Hekili:GetSpellLinkWithTexture( spec.abilities.purifying_brew.id ), Hekili:GetSpellLinkWithTexture( 115069 ) ),
@@ -2253,7 +2253,6 @@ spec:RegisterSetting( "purify_stagger_currhp", 12, {
     width = "full"
 } )
 
-
 spec:RegisterSetting( "purify_stagger_maxhp", 6, {
     name = strformat( "%s: %s Tick %% Maximum Health", Hekili:GetSpellLinkWithTexture( spec.abilities.purifying_brew.id ), Hekili:GetSpellLinkWithTexture( 115069 ) ),
     desc = strformat( "If set above zero, %s may be recommended when your current %s ticks for this percentage of your |cFFFFD100maximum|r health (or more).  "
@@ -2265,7 +2264,6 @@ spec:RegisterSetting( "purify_stagger_maxhp", 6, {
     step = 0.1,
     width = "full"
 } )
-
 
 spec:RegisterSetting( "bof_percent", 50, {
     name = strformat( "%s: Require %s %%", Hekili:GetSpellLinkWithTexture( spec.abilities.breath_of_fire.id ),
@@ -2280,7 +2278,6 @@ spec:RegisterSetting( "bof_percent", 50, {
     step = 0.1,
     width = "full"
 } )
-
 
 spec:RegisterSetting( "eh_percent", 65, {
     name = strformat( "%s: Health %%", Hekili:GetSpellLinkWithTexture( spec.abilities.expel_harm.id ) ),
@@ -2311,6 +2308,5 @@ spec:RegisterSetting( "max_damage", true, {
     type = "toggle",
     width = "full",
 } )
-
 
 spec:RegisterPack( "Brewmaster", 20241021, [[Hekili:nJvBVTnos4FlblGAC6gfjz7MKIydCTF52IdloaxG9BwMwI2MBKe1rrL0CWq)23HuVrklkB3KDBrbkCehoZZ8cho8zP7YVUCriIJx(7EoEtCD8CTDDhF30jlxWFjfVCrkk4r0w4hjOy4))ed)CmkJJzILEjIIcfQiJMZcGL3X5PzF8MB2s47YxBhqJVjJeNhH4eAsadTHl(7GBwUyDojI)Bjlx3V9hVCbkNVJcMzbj(ZGMjHH4sXXzblxie)AxNR9C)yXQpHw)skJs3a)mcamnNxS6Z0410IVu8LArDfI(VYsXbWQcz)3iwmn5LIvOGGCjkPm4psclwjmAXQ8ub2A0HZ9x759rHMtYYJXhASvpd(DXQVs2Ibf9FrrXQ71zQW(prjG(dP5RJWx)5p1kWDLkVsGeWg4Kmsakc0uoJS5fsYwWKqciRDt3ET3hGn91DaA(dey0)aqajz5IisgptMDXBq5rC4N)UmBJtqGLdx(PLlcyeirsqqUgX2I52H415B2yhajyWy2mmkGdjIar2dsYPyeZFheF8Z4mYJ4LCiTj0zTeHKnBYZW(XOTKavtbco2OX3Hrr8D2PI0YdZkwLH5cZNz)e5jWT9tXqTvcSOvXkj(GVJci08mFPeqmsyE780wKuUvHDNmGtN8OmMAPyZuzO2FdL5hGJWqGqKaajUSyfNeJ95uW9(MFWorildqCXQTbH2W3kwTFFfcLAHGdbXiaUAHU2cmCmIKuQdx7PfRUsrxJkvxaLgfsFoXUbn(RHsaT96PVtWwvOZFdRmGi8H5sJ0gIsRlQKkueQMEsHQYseD0iqyDu6ciqHIGeMnjgou(KWz1LUYedfVgPOTMCJiUhIGIlSYwxxDg0pqCeScjJADtDBlCZpy0n3YOvjRVFl3B5ughTf6j4hKZy7sL5cNsblxOS4F(SJTZHYE3A0TYOr0FM9kz5RZW1M3DAjTE9nRVFxduZ3NNj34qo09)WsxVoF6uswUoNw26VdVRUKAwJ7nS3mR)Wa0v1zqx08LP)DN)EZ8q3H9qVt7g7Iv3ovQEsc4dcnu6K(JZKwPsy5vtxjdko2WnwVV9NIlVkllgv77YydCjmxbuYGJYWgO4uCcmpclwc3tCaJIvtDEZH7LviwbthEtuh3rc6jQJpXP5b78PB8dXi(UoZp5A(2zPP3s2Wf7LVd7t)MnKRdEu6qtKiStmOPKbVRE(QwCG)wkoQnW(bvmMsRKrdB3QkY6ikn0Fto7LUIDNMyywgMjgRORy3RkgIfGseJDXysqQjQNJQOrKT74z()zE424EK1vv2negwc0UsPnqlkjagEGbdpaZHh1v0XAUdARm8ZibpM1vYUdH2KXzKKhXCxOPreLR83In1nH3ztED2KNCtMhUbNGzBFrM9N4OMTGcfOIPPM0Z8GeVYgAY1rYhGjcv7kF(LVYRVSFcfLJlVBYES8OM65XAD8mgLcVpsOekle6OvDLYfIhwX7XeLO0Md5gz9M5Hd9mpOXpbEF7S1hecAgQ(nkoyE(KxzCyJ4uQV27xC6BbXfut(EICEDICd5MJnpPYR0nptq3B6U5XFhKTvJsvHV3GK(yx9(4vo3JWo7(AET2KWR28xNZY62YDSwhYUorxHn)s92Y(nr5Kqc)fHsILxfvx43AhgjtChBwEsjYf6(ixE2jpQYKaxqMJFkksEz4yZ9xRqygCtryZilhaUhXaYIrz7KAZCR2kTjEipdExCkkld2FM2X8HSyBn4bQqLpIdwu9C5yPCIIkqZWejIGU4EtnHUxkKW9Ec7d3XetWLLLtAD6SussIaHbmXD5nzfZ9AFLPBZnVmDSDOjHNmytI(JJ9ZiIHuLOFs3iOyq16jmfR3QeZ1ec5U8OzSXNqXJYyR6Asgp0AtatlgrLQaQT7CMEIwBI2A)osP1MGLNTtOT)efI9FMK0DcTjAZmtsEI(i2pHK))ru5WV1d00DBMBbupzKOOf6LETsJ3gi3gbH20LBa(0wCIPofto(KyVs71)PkOhCkdlkSrTK(2uB3307MFNxtbxv79dp8125V8FlEcMQxSsfF(UU2WWTpJycGcJfljQMeNcpfcUWxq3(7QiO(DfRy4)xouIbLFzub96OCongXfFaQ5t2IZSl(Y)HKalnTKgEWAYLF3Wmoc6MtpQu1Ehi9LUFBKTGL9FtcvHj8kpIsHt1sU1HLLuIhig6(orqNUHeHRdnWJXRZcVF2nLX9IV03AnHWFLSzMPiUalvBg2YbmXxUvJC4RUxno6vxOKYCHMAFR4dZmqgV1WeXRQx9(PLivYMS1GKUBDzp0T)qfj3733hTXwgPy)bx7PxvT3r73Fes1FWRwwRdjsFUGPEf3txfQUNjIYTU8IHle737gb7RNPrReUNR0gv8LF5xQRA7jtebNK8dcNnvPWRbrM7R2BARuoRuOaSNTyxE52WvfsovoBF8a0OZs2ChlfwVMp7iCQniaf869JfFx5Ox7zmi2dgToFik5p8uryjzJ)dgapF0DYHV3kiwM1M5mSpmt3hGNZ9pyu87cIUAquH0Zo3EC7uRdzzDE7JCV6s416Vx8FxjJ8JgzzK4xvl2z9owDQZzB1l7L92rQ2uNCw1vAPlvaeJKXoFILci7HawT0U(adWxAzvv7RnKOQ(vDotvxPdfPAb1Agr10KgbOAwwLVt1fedxadqg)Rc2jNvZO5rLWt3zviLuevlNa(HjodF17zFS4uzPzUJ94RAlHSmrdP1fNchm)K4exCeUe)H4mASa(GNJ(hM7o5CCxpf39ngNNbk0c6hLtp4cGZpWRXvNMNw)sc1p210QR1HofrS5IJYgJwJYMNb30o8a61uLV5jVkJH2pRekBQN3(Q98P(ziXAi1BzITmdluxIo2YmFlpCVLaZT86mFYrI1NvO(WHdmvVQvRObvzXVzoSAFSsVbT9719VhMocEF1fhjpSF)LdeZgpyAAuNREB5EQ3IkTWDxMLuxu7bpMRNlViA(eNRnZzZvQ81CcvTNToLuTS8Vc]] )

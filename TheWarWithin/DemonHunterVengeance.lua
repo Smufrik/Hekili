@@ -1,5 +1,6 @@
 -- DemonHunterVengeance.lua
--- January 2025
+-- August 2025
+-- Patch 11.2
 
 -- TODO: Support soul_fragments.total, .inactive
 
@@ -8,12 +9,26 @@ if UnitClassBase( "player" ) ~= "DEMONHUNTER" then return end
 local addon, ns = ...
 local Hekili = _G[ addon ]
 local class, state = Hekili.Class, Hekili.State
-
-local floor = math.floor
-local strformat = string.format
-local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
-
 local spec = Hekili:NewSpecialization( 581 )
+
+---- Local function declarations for increased performance
+-- Strings
+local strformat = string.format
+-- Tables
+local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
+-- Math
+local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
+
+-- Common WoW APIs, comment out unneeded per-spec
+-- local GetSpellCastCount = C_Spell.GetSpellCastCount
+local GetSpellInfo = ns.GetUnpackedSpellInfo
+-- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
+local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
+-- local IsActiveSpell = ns.IsActiveSpell
+
+-- Specialization-specific local functions (if any)
 
 spec:RegisterResource( Enum.PowerType.Fury, {
     -- Immolation Aura now grants 8 up front, then 2 per second
@@ -715,7 +730,6 @@ spec:RegisterGear({
     convergence_of_fates = { items = { 140806 } }
 } )
 
-
 spec:RegisterStateExpr( "soul_fragments", function ()
     return buff.soul_fragments.stack
 end )
@@ -742,7 +756,6 @@ spec:RegisterStateFunction( "purge_fragments", function()
     fragments.real = 0
     fragments.realTime = 0
 end )
-
 
 -- Variable to track the total bonus timed earned on fiery brand from immolation aura.
 local bonus_time_from_immo_aura = 0
@@ -908,8 +921,6 @@ spec:RegisterVariable( "incoming_souls", function()
     return souls
 end )--]]
 
-
-
 local furySpent = 0
 
 local FURY = Enum.PowerType.Fury
@@ -931,7 +942,6 @@ spec:RegisterStateExpr( "fury_spent", function ()
     if set_bonus.tier31_4pc == 0 then return 0 end
     return furySpent
 end )
-
 
 local ConsumeSoulFragments = setfenv( function( amt )
     if talent.soul_furnace.enabled then

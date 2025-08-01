@@ -1,22 +1,31 @@
-
 -- HunterSurvival.lua
--- January 2025
+-- August 2025
+-- Patch 11.2
 
 if UnitClassBase( "player" ) ~= "HUNTER" then return end
 
 local addon, ns = ...
 local Hekili = _G[ addon ]
 local class, state = Hekili.Class, Hekili.State
-
-local floor = math.floor
-local strformat = string.format
-
 local spec = Hekili:NewSpecialization( 255 )
 
-local GetSpellBookItemName = function(index, bookType)
-    local spellBank = (bookType == BOOKTYPE_SPELL) and Enum.SpellBookSpellBank.Player or Enum.SpellBookSpellBank.Pet;
-    return C_SpellBook.GetSpellBookItemName(index, spellBank);
-end
+---- Local function declarations for increased performance
+-- Strings
+local strformat = string.format
+-- Tables
+local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
+-- Math
+local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
+
+-- Common WoW APIs, comment out unneeded per-spec
+-- local GetSpellCastCount = C_Spell.GetSpellCastCount
+-- local GetSpellInfo = C_Spell.GetSpellInfo
+-- local GetSpellInfo = ns.GetUnpackedSpellInfo
+-- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+-- local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+-- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
+-- local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
+-- local IsActiveSpell = ns.IsActiveSpell
 
 spec:RegisterResource( Enum.PowerType.Focus, {
     terms_of_engagement = {
@@ -814,16 +823,6 @@ spec:RegisterStateExpr( "check_focus_overcap", function ()
     return focus.current + cast_regen <= focus.max
 end )
 
-local function IsActiveSpell( id )
-    local slot = FindSpellBookSlotBySpellID( id )
-    if not slot then return false end
-
-    local _, _, spellID = GetSpellBookItemName( slot, "spell" )
-    return id == spellID
-end
-
-state.IsActiveSpell = IsActiveSpell
-
 local ExpireNesingwarysTrappingApparatus = setfenv( function()
     focus.regen = focus.regen * 0.5
     forecastResources( "focus" )
@@ -968,7 +967,6 @@ spec:RegisterStateTable( "boar_charge", setmetatable( {
         end
     end
 } ) )
-
 
 spec:RegisterHook( "reset_precast", function()
 

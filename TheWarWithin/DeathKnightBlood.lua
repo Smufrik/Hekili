@@ -1,21 +1,35 @@
 -- DeathKnightBlood.lua
--- January 2025
+-- August 2025
+-- Patch 11.2
 
 if UnitClassBase( "player" ) ~= "DEATHKNIGHT" then return end
 
 local addon, ns = ...
 local Hekili = _G[ addon ]
 local class, state = Hekili.Class, Hekili.State
-
 local PTR = ns.PTR
-local FindUnitDebuffByID = ns.FindUnitDebuffByID
+local spec = Hekili:NewSpecialization( 250 )
 
+---- Local function declarations for increased performance
+-- Strings
+local strformat = string.format
+-- Tables
+local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
+-- Math
+local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
+
+-- Common WoW APIs, comment out unneeded per-spec
+-- local GetSpellCastCount = C_Spell.GetSpellCastCount
+-- local GetSpellInfo = ns.GetUnpackedSpellInfo
+-- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+-- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
+-- local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
+local IsActiveSpell = ns.IsActiveSpell
+
+-- Specialization-specific local functions (if any)
 local ForEachAura = AuraUtil.ForEachAura
 local GetAuraDataByAuraInstanceID = C_UnitAuras.GetAuraDataByAuraInstanceID
-
-local strformat, insert, remove = string.format, table.insert, table.remove
-
-local spec = Hekili:NewSpecialization( 250 )
 
 spec:RegisterResource( Enum.PowerType.Runes, {
     rune_regen = {
@@ -199,7 +213,6 @@ local spendHook = function( amt, resource )
 
 end
 
-
 local bpUnits = {}
 
 local myName = UnitName( "player" )
@@ -208,7 +221,6 @@ local myRuneWeapon = 0x2111
 local matchThreshold = 0.02
 local MINE = 1
 local RUNE_WEAPON = 2
-
 
 local dnd_damage_ids = {
     [52212] = "death_and_decay",
@@ -221,7 +233,6 @@ local dmg_events = {
 }
 
 local last_dnd_tick, dnd_spell = 0, "death_and_decay"
-
 
 spec:RegisterCombatLogEvent( function( _, subtype, _, sourceGUID, sourceName, sourceFlags, _, destGUID, destName, destFlags, _, spellID, spellName )
     if spellID == 55078 and ( subtype == "SPELL_AURA_APPLIED" or subtype == "SPELL_AURA_REFRESH" ) then
@@ -265,7 +276,6 @@ spec:RegisterCombatLogEvent( function( _, subtype, _, sourceGUID, sourceName, so
     end
 end )
 
-
 local dnd_model = setmetatable( {}, {
     __index = function( t, k )
         if k == "ticking" then
@@ -292,7 +302,6 @@ end )
 spec:RegisterStateExpr( "dnd_remains", function ()
     return death_and_decay.remains
 end )
-
 
 spec:RegisterHook( "spend", spendHook )
 
@@ -1324,7 +1333,6 @@ spec:RegisterGear({
     uvanimor_the_unbeautiful = { items = { 137037 } }
 } )
 
-
 spec:RegisterTotem( "ghoul", 1100170 ) -- Texture ID
 
 spec:RegisterHook( "TALENTS_UPDATED", function()
@@ -1353,9 +1361,6 @@ local BonestormShield = setfenv( function()
     addStack( "bone_shield" )
     gain( min( 0.1, 0.02 * active_enemies ) * health.max, "health" )
 end, state )
-
-
-
 
 spec:RegisterHook( "reset_precast", function ()
     if UnitExists( "pet" ) then
@@ -1387,9 +1392,7 @@ spec:RegisterHook( "reset_precast", function ()
         state:QueueAuraExpiration( "gift_of_the_sanlayn", TriggerInflictionOfSorrow, buff.gift_of_the_sanlayn.expires )
     end
 
-    if IsActiveSpell( 433899 ) or IsActiveSpell( 433895 ) then
-        applyBuff( "vampiric_strike" )
-    end
+    if IsActiveSpell( 433895 ) then applyBuff( "vampiric_strike" ) end
 
     if buff.bonestorm.up then
         local tick_time = buff.bonestorm.expires
@@ -1458,7 +1461,6 @@ spec:RegisterStateExpr( "vb_damage", function ()
     return health.max * ( settings.vb_damage or 0 ) * 0.01
 end )
 
-
 spec:RegisterStateTable( "death_and_decay", setmetatable(
 { onReset = function( self ) end },
 { __index = function( t, k )
@@ -1472,7 +1474,6 @@ spec:RegisterStateTable( "death_and_decay", setmetatable(
 
     return false
 end } ) )
-
 
 spec:RegisterStateFunction( "applyRunePlagues", function()
     -- Should only reach here when DRW is active.
@@ -1500,8 +1501,6 @@ spec:RegisterStateTable( "drw", setmetatable(
 
     return false
 end } ) )
-
-
 
 -- Abilities
 spec:RegisterAbilities( {

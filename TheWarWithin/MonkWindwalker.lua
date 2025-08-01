@@ -1,16 +1,34 @@
 -- MonkWindwalker.lua
--- January 2025
+-- August 2025
+-- Patch 11.2
 
 if UnitClassBase( "player" ) ~= "MONK" then return end
 
 local addon, ns = ...
 local Hekili = _G[ addon ]
 local class, state = Hekili.Class, Hekili.State
-
-local strformat = string.format
-
 local spec = Hekili:NewSpecialization( 269 )
+
+---- Local function declarations for increased performance
+-- Strings
+local strformat = string.format
+-- Tables
+local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
+-- Math
+local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
+
+-- Common WoW APIs, comment out unneeded per-spec
 local GetSpellCount = C_Spell.GetSpellCastCount
+-- local GetSpellCastCount = C_Spell.GetSpellCastCount
+-- local GetSpellInfo = C_Spell.GetSpellInfo
+-- local GetSpellInfo = ns.GetUnpackedSpellInfo
+-- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+-- local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+-- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
+-- local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
+-- local IsActiveSpell = ns.IsActiveSpell
+
+-- Specialization-specific local functions (if any)
 
 spec:RegisterResource( Enum.PowerType.Energy, {
     crackling_jade_lightning = {
@@ -887,7 +905,6 @@ spec:RegisterStateExpr( "combo_strike", function ()
     return not combos[ this_action ] or this_action ~= last_combo
 end )
 
-
 -- If a Tiger Palm missed, pretend we never cast it.
 -- Use RegisterEvent since we're looking outside the state table.
 spec:RegisterCombatLogEvent( function( _, subtype, _, sourceGUID, sourceName, _, _, destGUID, destName, destFlags, _, spellID, spellName )
@@ -914,7 +931,6 @@ spec:RegisterCombatLogEvent( function( _, subtype, _, sourceGUID, sourceName, _,
         end
     end
 end )
-
 
 local chiSpent = 0
 local orderedElementsMod = 0
@@ -955,13 +971,9 @@ spec:RegisterHook( "spend", function( amt, resource )
     end
 end )
 
-
 local noop = function () end
 
 -- local reverse_harm_target
-
-
-
 
 spec:RegisterHook( "runHandler", function( key, noStart )
     if combos[ key ] then
@@ -975,7 +987,6 @@ spec:RegisterHook( "runHandler", function( key, noStart )
         last_combo = key
     end
 end )
-
 
 spec:RegisterStateTable( "healing_sphere", setmetatable( {}, {
     __index = function( t,  k)
@@ -1016,7 +1027,6 @@ spec:RegisterHook( "IsUsable", function( spell )
     end
 end )
 
-
 --[[spec:RegisterStateTable( "fight_style", setmetatable( { onReset = function( self ) self.count = nil end },
         { __index = function( t, k )
             if k == "patchwerk" then
@@ -1053,7 +1063,6 @@ spec:RegisterStateFunction( "weapons_of_order", function( c )
     end
     return c
 end )
-
 
 spec:RegisterPet( "xuen_the_white_tiger", 63508, "invoke_xuen", 24, "xuen" )
 

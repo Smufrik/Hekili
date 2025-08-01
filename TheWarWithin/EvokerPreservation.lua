@@ -1,17 +1,34 @@
 -- EvokerPreservation.lua
--- January 2025
+-- August 2025
+-- Patch 11.2
 
 if UnitClassBase( "player" ) ~= "EVOKER" then return end
 
 local addon, ns = ...
 local Hekili = _G[ addon ]
 local class, state = Hekili.Class, Hekili.State
-
-local strformat = string.format
-
-local GetSpellInfo = C_Spell.GetSpellInfo
-
 local spec = Hekili:NewSpecialization( 1468 )
+
+---- Local function declarations for increased performance
+-- Strings
+local strformat = string.format
+-- Tables
+local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
+-- Math
+local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
+
+-- Common WoW APIs, comment out unneeded per-spec
+-- local GetSpellCastCount = C_Spell.GetSpellCastCount
+local GetSpellInfo = C_Spell.GetSpellInfo
+-- local GetSpellInfo = ns.GetUnpackedSpellInfo
+-- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+-- local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+-- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
+-- local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
+-- local IsActiveSpell = ns.IsActiveSpell
+
+-- Specialization-specific local functions (if any)
+
 
 spec:RegisterResource( Enum.PowerType.Essence )
 spec:RegisterResource( Enum.PowerType.Mana--[[, {
@@ -474,7 +491,6 @@ spec:RegisterAuras( {
     } ]]
 } )
 
-
 spec:RegisterHook( "reset_precast", function()
     max_empower = talent.font_of_magic.enabled and 4 or 3
 
@@ -487,7 +503,6 @@ spec:RegisterHook( "reset_precast", function()
     empowered_spell_count = nil
 end )
 
-
 spec:RegisterStateTable( "evoker", setmetatable( {},{
     __index = function( t, k )
         local val = state.settings[ k ]
@@ -495,7 +510,6 @@ spec:RegisterStateTable( "evoker", setmetatable( {},{
         return false
     end
 } ) )
-
 
 local empowered_cast_time
 
@@ -983,8 +997,6 @@ spec:RegisterAbilities( {
         end,
     },
 } )
-
-
 
 spec:RegisterSetting( "experimental_msg", nil, {
     type = "description",

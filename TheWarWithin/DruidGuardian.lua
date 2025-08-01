@@ -1,14 +1,33 @@
 -- DruidGuardian.lua
--- January 2025
+-- August 2025
+-- Patch 11.2
+
 if UnitClassBase( "player" ) ~= "DRUID" then return end
 
 local addon, ns = ...
 local Hekili = _G[ addon ]
 local class, state = Hekili.Class, Hekili.State
-
-local strformat = string.format
-
 local spec = Hekili:NewSpecialization( 104 )
+
+---- Local function declarations for increased performance
+-- Strings
+local strformat = string.format
+-- Tables
+local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
+-- Math
+local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
+
+-- Common WoW APIs, comment out unneeded per-spec
+-- local GetSpellCastCount = C_Spell.GetSpellCastCount
+-- local GetSpellInfo = C_Spell.GetSpellInfo
+-- local GetSpellInfo = ns.GetUnpackedSpellInfo
+-- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+-- local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+-- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
+-- local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
+-- local IsActiveSpell = ns.IsActiveSpell
+
+-- Specialization-specific local functions (if any)
 
 spec:RegisterResource( Enum.PowerType.Rage, {
     oakhearts_puny_quods = {
@@ -228,7 +247,6 @@ end, state )
 local mod_circle_dot = setfenv( function( x )
     return x * ( legendary.circle_of_life_and_death.enabled and 0.75 or 1 ) * ( talent.circle_of_life_and_death.enabled and 0.75 or 1 )
 end, state )
-
 
 -- Auras
 spec:RegisterAuras( {
@@ -1011,7 +1029,6 @@ spec:RegisterGear({
     soul_of_the_archdruid = { items = { 151636 } }
 } )
 
-
 Hekili:EmbedAdaptiveSwarm( spec )
 
 -- Function to remove any form currently active.
@@ -1026,7 +1043,6 @@ spec:RegisterStateFunction( "unshift", function()
     removeBuff( "aquatic_form" )
     removeBuff( "stag_form" )
 end )
-
 
 -- Function to apply form that is passed into it via string.
 spec:RegisterStateFunction( "shift", function( form )
@@ -1139,7 +1155,6 @@ spec:RegisterHook( "spend", function( amt, resource )
     end
 end )
 
-
 spec:RegisterStateTable( "druid", setmetatable( {
 }, {
     __index = function( t, k )
@@ -1154,14 +1169,12 @@ spec:RegisterStateTable( "druid", setmetatable( {
     end
 } ) )
 
-
 -- Force reset when Combo Points change, even if recommendations are in progress.
 spec:RegisterUnitEvent( "UNIT_POWER_FREQUENT", "player", nil, function( _, _, powerType )
     if powerType == "COMBO_POINTS" then
         Hekili:ForceUpdate( powerType, true )
     end
 end )
-
 
 -- Abilities
 spec:RegisterAbilities( {
@@ -2340,7 +2353,6 @@ spec:RegisterAbilities( {
         end,
     },
 } )
-
 
 spec:RegisterRanges( "shred", "rake", "skull_bash", "wild_charge", "growl", "entangling_roots", "moonfire" )
 

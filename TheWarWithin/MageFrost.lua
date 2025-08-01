@@ -1,17 +1,33 @@
-
 -- MageFrost.lua
--- January 2025
+-- August 2025
+-- Patch 11.2
 
 if UnitClassBase( "player" ) ~= "MAGE" then return end
 
 local addon, ns = ...
 local Hekili = _G[ addon ]
 local class, state = Hekili.Class, Hekili.State
-
-local GetSpellInfo = C_Spell.GetSpellInfo
-local strformat = string.format
-
 local spec = Hekili:NewSpecialization( 64 )
+
+---- Local function declarations for increased performance
+-- Strings
+local strformat = string.format
+-- Tables
+local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
+-- Math
+local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
+
+-- Common WoW APIs, comment out unneeded per-spec
+-- local GetSpellCastCount = C_Spell.GetSpellCastCount
+-- local GetSpellInfo = C_Spell.GetSpellInfo
+-- local GetSpellInfo = ns.GetUnpackedSpellInfo
+-- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+-- local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+-- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
+-- local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
+-- local IsActiveSpell = ns.IsActiveSpell
+
+-- Specialization-specific local functions (if any)
 
 -- spec:RegisterResource( Enum.PowerType.ArcaneCharges )
 spec:RegisterResource( Enum.PowerType.Mana )
@@ -754,7 +770,6 @@ spec:RegisterStateExpr( "remaining_winters_chill", function ()
     return result
 end )
 
-
 spec:RegisterStateTable( "ground_aoe", {
     frozen_orb = setmetatable( {}, {
         __index = setfenv( function( t, k )
@@ -862,7 +877,6 @@ spec:RegisterStateExpr( "brain_freeze_active", function ()
     return buff.brain_freeze.up -- frost_info.virtual_brain_freeze
 end )
 
-
 spec:RegisterStateTable( "rotation", setmetatable( {},
 {
     __index = function( t, k )
@@ -870,7 +884,6 @@ spec:RegisterStateTable( "rotation", setmetatable( {},
         return false
     end,
 } ) )
-
 
 spec:RegisterStateTable( "incanters_flow", {
     changed = 0,
@@ -1082,7 +1095,6 @@ spec:RegisterHook( "runHandler", function( action )
     end
 
 end )
-
 
 Hekili:EmbedDisciplinaryCommand( spec )
 
