@@ -20,9 +20,10 @@ local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, m
 
 -- Common WoW APIs, comment out unneeded per-spec
 -- local GetSpellCastCount = C_Spell.GetSpellCastCount
+-- local GetSpellInfo = C_Spell.GetSpellInfo
 -- local GetSpellInfo = ns.GetUnpackedSpellInfo
 -- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
-local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+-- local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
 -- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
 -- local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
 local IsActiveSpell = ns.IsActiveSpell
@@ -2551,7 +2552,6 @@ spec:RegisterAbilities( {
         end,
     },
 } )
-
 
 spec:RegisterRanges( "death_strike", "mind_freeze", "death_coil" )
 

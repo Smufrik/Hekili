@@ -26,7 +26,7 @@ local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, m
 -- local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
 -- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
 local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
--- local IsActiveSpell = ns.IsActiveSpell
+local IsActiveSpell = ns.IsActiveSpell
 
 -- Specialization-specific local functions (if any)
 local SPEC_ACTIVE = _G.SPEC_ACTIVE

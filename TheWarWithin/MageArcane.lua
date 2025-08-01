@@ -788,7 +788,6 @@ spec:RegisterVariable( "conserve_mana", function ()
     return totm_casts % 2 > 0
 end )
 
-
 do
     -- Builds Disciplinary Command; written so that it can be ported to the other two Mage specs.
     function Hekili:EmbedDisciplinaryCommand( x )
@@ -2308,7 +2307,6 @@ spec:RegisterAbilities( {
     },
 } )
 
-
 spec:RegisterRanges( "arcane_blast", "polymorph", "fire_blast" )
 
 spec:RegisterOptions( {
@@ -2328,7 +2326,6 @@ spec:RegisterOptions( {
 
     package = "Arcane",
 } )
-
 
 spec:RegisterSetting( "check_explosion_range", true, {
     name = strformat( "%s: Range Check", Hekili:GetSpellLinkWithTexture( spec.abilities.arcane_explosion.id ) ),

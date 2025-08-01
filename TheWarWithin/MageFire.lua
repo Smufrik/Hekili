@@ -22,13 +22,12 @@ local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, m
 -- local GetSpellInfo = C_Spell.GetSpellInfo
 -- local GetSpellInfo = ns.GetUnpackedSpellInfo
 -- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
--- local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
 -- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
 -- local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
 -- local IsActiveSpell = ns.IsActiveSpell
 
 -- Specialization-specific local functions (if any)
-
 
 spec:RegisterResource( Enum.PowerType.ArcaneCharges )
 spec:RegisterResource( Enum.PowerType.Mana )

@@ -26,7 +26,7 @@ local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, m
 -- local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
 -- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
 local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
--- local IsActiveSpell = ns.IsActiveSpell
+local IsActiveSpell = ns.IsActiveSpell
 
 -- Specialization-specific local functions (if any)
 
@@ -1140,7 +1140,6 @@ spec:RegisterHook( "TALENTS_UPDATED", function()
     pet.fiend = pet[ sf ]
     buff.fiend = buff[ sf ]
 end )
-
 
 spec:RegisterHook( "pregain", function( amount, resource, overcap )
     if amount > 0 and resource == "insanity" and state.buff.memory_of_lucid_dreams.up then

@@ -2591,6 +2591,7 @@ globals = {
 	"GetSpellConfirmationPromptsInfo",
 	"GetSpellCooldown",
 	"GetSpellCount",
+	"GetSpellCastCount",
 	"GetSpellCritChance",
 	"GetSpellDescription",
 	"GetSpellHitModifier",

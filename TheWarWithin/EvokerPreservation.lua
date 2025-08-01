@@ -29,7 +29,6 @@ local GetSpellInfo = C_Spell.GetSpellInfo
 
 -- Specialization-specific local functions (if any)
 
-
 spec:RegisterResource( Enum.PowerType.Essence )
 spec:RegisterResource( Enum.PowerType.Mana--[[, {
     disintegrate = {
@@ -1028,7 +1027,6 @@ spec:RegisterSetting( "use_unravel", false, {
     width = "full",
 } )
 
-
 local devastation = class.specs[ 1467 ]
 
 spec:RegisterSetting( "fire_breath_fixed", 0, {
@@ -1052,9 +1050,7 @@ spec:RegisterSetting( "spend_essence", false, {
     width = "full"
 } )
 
-
 spec:RegisterRanges( "azure_strike", "living_flame" )
-
 
 spec:RegisterOptions( {
     enabled = true,
@@ -1074,6 +1070,5 @@ spec:RegisterOptions( {
 
     package = "Preservation",
 } )
-
 
 spec:RegisterPack( "Preservation", 20240730, [[Hekili:LAvuVTjpu0Fl9LOw1w(acTnFtR9HP9WwNu1Kys7nJDGlfRsWmBt6AvK)TVRnPjMqs166liZLJpN71(EUcse5hK0cMgi3fhgNeE10WGWzrjHZiP6NAbsAll)b294Ig2c853LGcKlzAUOX(XNQfScljkrNmhbqsN3XR1FTHmF)mFjITfYj3fLCjQsfVOa6bdQCs6xawnin0wjxi5AoOmuMem0p)90Zlf5DkOWqfn1pzU1CRL6ZdV68PHFWq)rfc7NmCZ)KRR428tkk51ywXYTjSkOvc5IfZz6tV()MxdkfV5(mrzMUcYMlfnpdwwxJgX8RoOU2pqoRtds(Z29vwJhj(FSRrYwcdWxaqlYmW0v(HBf2vd2RcY4AyHYpyjxcR39zWIwXJGmtlUo6mE51L87R0zsybJ3OUjk50CMsNP5dtPdWq8ygM9Miy6ycIFteKyjy974HzGhSvRgs8EPTsSeKwowiwI7FY8UYYaxWGcXJntuGwJXvb2dwx8bxlC8Mxd3lXguljUDJTdqtoMfDsLoORDYXh1t(QvESpkRoz1Q17mW(kwCzly)(JB((2ub77BkYwd2pDyp3HvVsl5p4sh7xwczqdSana3e7JTMVCtZNf7Fvo(AIT)dqskUszD5B8VK0hzYgBLqs)kEZj1wRym6pDCBO1CLwfyULK6w5MTaLSUAnU8o3SMEOKuNXIKcnm0gwq(erJ64dyKrBhWt9bV24TdKeFiEgXDGDHpSEJ5oiUCGwVyu3b0vwqBJSbVxJnwv4inSQy2WET4g6ngAuIHEQHU5odzBJDHKgz1y27vJzVMeXwj()3ReXVMetTsef(20y)tjm0vRm0X6FaLtCkhTJYBfP3fyOtm0DCcUyJhNSnT7F1sF8bPFVdyCmFSHEKH(I82AASrEyHzON0dCpJDm0poaPFQpy8JNZWBwORkMEWQy4CP(R7Te5pyXruYbj6nwXB1WF6NtJl(hUrpykRT)YW6)qy0iR9))cdNc4OaNCvjW(JVXQGh41CxuYFc]] )

@@ -1650,7 +1650,6 @@ spec:RegisterOptions( {
     package = "Marksmanship",
 } )
 
-
 local beastMastery = class.specs[ 253 ]
 
 spec:RegisterSetting( "pet_healing", 0, {

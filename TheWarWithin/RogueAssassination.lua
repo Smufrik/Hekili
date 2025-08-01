@@ -2944,21 +2944,6 @@ spec:RegisterSetting( "fok_critical_cp_prediction", "predict", {
     width = 1.5,
 } )
 
---[[
-spec:RegisterSetting( "envenom_pool_pct", 0, {
-    name = strformat( "Minimum Energy %% for %s", Hekili:GetSpellLinkWithTexture( 32645 ) ),
-    desc = strformat( "If set above 0, %s will ONLY be used when you have at least this percentage of your Energy.", Hekili:GetSpellLinkWithTexture( 32645 ) ),
-    type = "range",
-    min = 0,
-    max = 100,
-    step = 1,
-    width = 1.5
-} )
-
-spec:RegisterStateExpr( "envenom_pool_deficit", function ()
-    return energy.max * ( ( 100 - ( settings.envenom_pool_pct or 100 ) ) / 100 )
-end ) ]]
-
 spec:RegisterSetting( "vanish_charges_reserved", 0, {
     name = strformat( "Reserve %s Charges", Hekili:GetSpellLinkWithTexture( 1856 ) ),
     desc = strformat( "If set above zero, %s will not be recommended if it would leave you with fewer than this number of (fractional) charges.", Hekili:GetSpellLinkWithTexture( 1856 ) ),

@@ -29,7 +29,6 @@ local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, m
 
 -- Specialization-specific local functions (if any)
 
-
 spec:RegisterResource( Enum.PowerType.Essence )
 spec:RegisterResource( Enum.PowerType.Mana )
 

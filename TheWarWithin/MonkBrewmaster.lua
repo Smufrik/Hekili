@@ -18,11 +18,11 @@ local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table
 local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
 
 -- Common WoW APIs, comment out unneeded per-spec
-local GetSpellCount = C_Spell.GetSpellCastCount
+local GetSpellCastCount = C_Spell.GetSpellCastCount
 -- local GetSpellCastCount = C_Spell.GetSpellCastCount
 -- local GetSpellInfo = C_Spell.GetSpellInfo
 -- local GetSpellInfo = ns.GetUnpackedSpellInfo
--- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
 local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
 -- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
 -- local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
@@ -30,7 +30,6 @@ local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDeb
 
 -- Specialization-specific local functions (if any)
 local GetUnitBuffByAuraInstanceID = C_TooltipInfo.GetUnitBuffByAuraInstanceID
-
 
 rawset( state, "ColorMixin", ColorMixin )
 
@@ -889,7 +888,7 @@ end )
 spec:RegisterStateTable( "healing_sphere", setmetatable( {}, {
     __index = function( t,  k)
         if k == "count" then
-            t[ k ] = GetSpellCount( action.expel_harm.id )
+            t[ k ] = GetSpellCastCount( action.expel_harm.id )
             return t[ k ]
         end
     end

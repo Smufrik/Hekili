@@ -18,8 +18,7 @@ local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table
 local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
 
 -- Common WoW APIs, comment out unneeded per-spec
-local GetSpellCount = C_Spell.GetSpellCastCount
--- local GetSpellCastCount = C_Spell.GetSpellCastCount
+local GetSpellCastCount = C_Spell.GetSpellCastCount
 -- local GetSpellInfo = C_Spell.GetSpellInfo
 -- local GetSpellInfo = ns.GetUnpackedSpellInfo
 -- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
@@ -720,7 +719,7 @@ spec:RegisterTotems( {
 spec:RegisterStateTable( "gust_of_mist", setmetatable( {}, {
     __index = function( t,  k)
         if k == "count" then
-            t[ k ] = GetSpellCount( action.sheiluns_gift.id )
+            t[ k ] = GetSpellCastCount( action.sheiluns_gift.id )
             return t[ k ]
         end
     end

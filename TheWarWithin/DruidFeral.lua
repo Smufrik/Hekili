@@ -1090,7 +1090,6 @@ spec:RegisterGear({
     the_wildshapers_clutch = { items = { 137094 } }
 } )
 
-
 -- Snapshotting
 local tf_spells = { rake = true, rip = true, thrash_cat = true, lunar_inspiration = true, primal_wrath = true }
 local bt_spells = { rip = true, primal_wrath = true }
