@@ -1299,8 +1299,10 @@ end )
                     applyBuff( "thrill_of_the_hunt", 20 )
                 end
                 
-                -- Multi-Shot benefits from Beast Mastery's pet synergy
-                -- In MoP, Multi-Shot can trigger pet abilities and synergies
+                -- Apply Beast Cleave buff when Multi-Shot is used
+                if pet.alive then
+                    applyBuff( "beast_cleave", 4 )
+                end
             end,
         },
 

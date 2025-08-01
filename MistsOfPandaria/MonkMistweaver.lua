@@ -1,9 +1,9 @@
 -- MonkMistweaver.lua
--- A complete data-driven overhaul for Mists of Pandaria (MoP) Mistweaver.
 
 -- Boilerplate and Class Check
 if not Hekili or not Hekili.NewSpecialization then return end
 if select(2, UnitClass('player')) ~= 'MONK' then return end
+if GetSpecialization() ~= 270 then return end 
 
 local addon, ns = ...
 local Hekili = _G[ "Hekili" ]

@@ -1,31 +1,49 @@
--- MoP Brewmaster Monk APL
--- Version 1.0 - Hekili Data-Driven Rework V6.0
+# Monk: Brewmaster
+# Unified Priority by Smufrik, Tacodilla
 
--- The 'precombat' action list runs once before combat starts.
-actions.precombat=stance_of_the_sturdy_ox
+# PRECOMBAT
+actions.precombat+=/legacy_of_the_emperor,if=!buff.stats.up
+actions.precombat+=/potion,name=virmen_bite
 
--- The 'defensives' action list is for abilities that should be used reactively.
--- Hekili will check these in parallel with your main rotation.
-actions.defensives=purifying_brew,if=stagger_level>=settings.purify_level&chi>=1
-actions.defensives+=/guard,if=health.percent<=settings.guard_health_threshold&chi>=2
-actions.defensives+=/elusive_brew,if=buff.elusive_brew_stack.stack>=settings.elusive_brew_threshold
-actions.defensives+=/fortifying_brew,if=health.percent<=settings.fortify_health_pct&incoming_damage_5s>=health.percent*0.5
-actions.defensives+=/dampen_harm,if=talent.dampen_harm.enabled&health.percent<=50&incoming_damage_5s>=health.percent*0.4
-actions.defensives+=/diffuse_magic,if=talent.diffuse_magic.enabled&incoming_magic_damage_5s>=health.percent*0.3
+# --- DEFENSIVES ---
+# This list is used by the Defensives display and respects the toggle.
+actions.defensives+=/expel_harm,if=health.percent<=90&toggle.defensives
+actions.defensives+=/purifying_brew,if=stagger_level>=settings.purify_level&chi.current>=1&toggle.defensives
+actions.defensives+=/guard,if=health.percent<=settings.guard_health_threshold&chi.current>=2&toggle.defensives
+actions.defensives+=/elusive_brew,if=combat&elusive_brew_stacks>=settings.elusive_brew_threshold&toggle.defensives
+actions.defensives+=/fortifying_brew,if=health.percent<=settings.fortify_health_pct&toggle.defensives
+actions.defensives+=/dampen_harm,if=talent.dampen_harm.enabled&health.percent<=60&toggle.defensives
+actions.defensives+=/diffuse_magic,if=talent.diffuse_magic.enabled&toggle.defensives
+actions.defensives+=/zen_sphere,if=talent.zen_sphere.enabled&toggle.defensives
 
--- The 'cooldowns' action list is for your major offensive/utility cooldowns.
-actions.cooldowns=invoke_xuen,if=talent.invoke_xuen.enabled
-actions.cooldowns+=/energizing_brew,if=energy.current<=40&chi.current<=1
-actions.cooldowns+=/chi_brew,if=talent.chi_brew.enabled&chi.current<=chi.max-2
+# UNIFIED ROTATION
+# Interrupts -> Cooldowns -> AoE / ST Rotation
+actions+=/spear_hand_strike,if=target.casting&toggle.interrupts
 
--- The 'default' action list is your main rotational priority.
--- It will be executed from top to bottom on every check.
-actions=keg_smash
-actions+=/blackout_kick,if=chi>=2&(buff.shuffle.remains<=3|settings.proactive_shuffle&buff.shuffle.remains<=gcd*3)
-actions+=/expel_harm,if=health.percent<=85&chi<chi.max
-actions+=/breath_of_fire,if=chi>=2&debuff.breath_of_fire_dot.down&active_enemies>=2
-actions+=/rushing_jade_wind,if=talent.rushing_jade_wind.enabled&chi>=1&buff.rushing_jade_wind.down
-actions+=/spinning_crane_kick,if=active_enemies>=3&talent.rushing_jade_wind.disabled
-actions+=/jab,if=chi<=chi.max-1
+# --- Cooldowns ---
+actions+=/use_items,if=toggle.cooldowns
+actions+=/invoke_xuen,if=talent.invoke_xuen.enabled&toggle.cooldowns
+actions+=/chi_brew,if=talent.chi_brew.enabled&chi.current<=chi.max-2&toggle.cooldowns
+actions+=/blood_fury,if=toggle.cooldowns
+actions+=/berserking,if=toggle.cooldowns
+
+# --- CORE ROTATION ---
+# Core abilities used in both ST and AoE
+actions+=/keg_smash
+actions+=/blackout_kick,if=buff.shuffle.remains<3&chi.current>=2
+
+# AoE Abilities (2+ Targets)
+actions+=/rushing_jade_wind,if=talent.rushing_jade_wind.enabled&chi.current>=3&active_enemies>=2
+actions+=/breath_of_fire,if=chi.current>=2&active_enemies>=2
+actions+=/spinning_crane_kick,if=active_enemies>=4&chi.current>=2&buff.rushing_jade_wind.down
+
+# Single Target Abilities (1 Target) / Talent Spenders
+actions+=/blackout_kick,if=chi.current>=chi.max-1&active_enemies=1
 actions+=/chi_wave,if=talent.chi_wave.enabled
-actions+=/tiger_palm,if=energy.current>=80
+actions+=/chi_burst,if=talent.chi_burst.enabled&chi.current>=2
+
+# --- BUFF MAINTENANCE & FILLER ---
+actions+=/tiger_palm,if=buff.tiger_power.remains<6
+actions+=/expel_harm,if=energy.current>80&chi.current<chi.max-1
+actions+=/jab,if=chi.current<3
+actions+=/tiger_palm
