@@ -1366,6 +1366,8 @@ function Hekili:NewSpecialization( specID, isRanged, icon )
 
     if not specID or specID < 0 then return end
 
+    isRanged = isRanged or ns.Specializations[ specID ].ranged
+
     local id, name, _, texture, role, pClass
 
     if Hekili.IsRetail() and specID > 0 then id, name, _, texture, role, pClass = GetSpecializationInfoByID( specID )
