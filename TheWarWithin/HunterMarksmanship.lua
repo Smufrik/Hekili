@@ -1529,7 +1529,7 @@ spec:RegisterAbilities( {
     trueshot = {
         id = 288613,
         cast = 0,
-        cooldown = function() return 120 - ( talent.calling_the_shots.enabled and 30 or 0 ) - ( set_bonus.tww3 >=2 and hero_tree.dark_ranger and 30 or 0 ) end,
+        cooldown = function() return 120 - ( talent.calling_the_shots.enabled and 30 or 0 ) - ( set_bonus.tww3_dark_ranger >=2 and 30 or 0 ) end,
         gcd = "off",
         school = "physical",
 

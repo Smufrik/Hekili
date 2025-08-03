@@ -1338,7 +1338,7 @@ spec:RegisterAbilities( {
             removeBuff( "battlelord" )
             if talent.dominance_of_the_colossus.enabled and buff.colossal_might.stack == 10 then reduceCooldown( "demolish", 2 ) end
             if talent.colossal_might.enabled then addStack( "colossal_might" ) end
-            if set_bonus.tww3 >= 4 and hero_tree.colossus then removeStack( "critical_conclusion" ) end
+            if set_bonus.tww3_colossus >= 4 then removeStack( "critical_conclusion" ) end
             if talent.rend.enabled and target.health.pct < 35 and talent.bloodletting.enabled then
                 applyDebuff ( "target", "rend" )
             end

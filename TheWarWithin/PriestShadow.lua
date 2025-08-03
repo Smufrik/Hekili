@@ -2406,7 +2406,7 @@ spec:RegisterAbilities( {
             end
             if talent.idol_of_cthun.enabled then applyDebuff( "target", "void_tendril_mind_flay" ) end
             if talent.void_volley.enabled then applyBuff( "void_volley" ) end
-            if set_bonus.tww3 >= 4 and hero_tree.voidweaver then removeBuff( "overflowing_void" ) end
+            if set_bonus.tww3_voidweaver >= 4 then removeBuff( "overflowing_void" ) end
         end,
 
     },

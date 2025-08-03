@@ -1768,7 +1768,7 @@ spec:RegisterAbilities( {
         texture = 1029596,
 
         handler = function ()
-            if set_bonus.tww3 >= 2 and hero_tree.conduit_of_the_celestials then applyBuff( "heart_of_the_jade_serpent_cdr", 8 ) end
+            if set_bonus.tww3_conduit_of_the_celestials >= 2 then applyBuff( "heart_of_the_jade_serpent_cdr", 8 ) end
         end,
     },
 

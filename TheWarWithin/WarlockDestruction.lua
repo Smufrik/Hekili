@@ -1478,7 +1478,7 @@ spec:RegisterAbilities( {
                 if debuff.immolate.remains <= 5 then removeDebuff( "target", "immolate" )
                 else debuff.immolate.expires = debuff.immolate.expires - 5 end
             end
-            if set_bonus.tww3 >= 2 and hero_tree.diabolist then
+            if set_bonus.tww3_diabolist >= 2 then
                 addStack( "demonic_oculus" )
             end
         end,
@@ -1866,7 +1866,7 @@ spec:RegisterAbilities( {
             if talent.burn_to_ashes.enabled then
                 addStack( "burn_to_ashes", nil, 2 )
             end
-            if set_bonus.tww3 >= 2 and hero_tree.diabolist then
+            if set_bonus.tww3_diabolist >= 2 then
                 addStack( "demonic_oculus" )
             end
         end,
@@ -2008,7 +2008,7 @@ spec:RegisterAbilities( {
                 applyDebuff( "target", "eradication" )
                 active_dot.eradication = max( active_dot.eradication, active_dot.bane_of_havoc )
             end
-            if set_bonus.tww3 >= 2 and hero_tree.diabolist then
+            if set_bonus.tww3_diabolist >= 2 then
                 addStack( "demonic_oculus" )
             end
         end,

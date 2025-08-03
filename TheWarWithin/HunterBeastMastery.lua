@@ -1721,7 +1721,7 @@ spec:RegisterAbilities( {
     call_of_the_wild = {
         id = 359844,
         cast = 0,
-        cooldown = function() if set_bonus.tww3>=2 and hero_tree.dark_ranger then return 60 else return 120 end end,
+        cooldown = function() if set_bonus.tww3_dark_ranger >=2 then return 60 else return 120 end end,
         gcd = "spell",
         school = "nature",
 

@@ -1577,7 +1577,7 @@ spec:RegisterAbilities( {
             spec.abilities.flame_shock.handler()
             spec.abilities.lava_burst.handler()
             active_dot.flame_shock = min( true_active_enemies, active_dot.flame_shock + 6 )
-            if set_bonus.tww3 >= 2 and hero_tree.stormbringer then
+            if set_bonus.tww3_stormbringer >= 2 then
                 addStack( "tempest" )
                 if set_bonus.tww3 >= 4 then
                     applyBuff( "storms_eye", nil, 2 )
