@@ -1,16 +1,35 @@
 -- ShamanRestoration.lua
--- July 2024
+-- August 2025
+-- Patch 11.2
 
 if UnitClassBase( "player" ) ~= "SHAMAN" then return end
 
 local addon, ns = ...
 local Hekili = _G[ addon ]
 local class, state = Hekili.Class, Hekili.State
-
 local spec = Hekili:NewSpecialization( 264 )
 
-local GetSpecializationInfoByID, GetWeaponEnchantInfo = _G.GetSpecializationInfoByID, _G.GetWeaponEnchantInfo
+---- Local function declarations for increased performance
+-- Strings
 local strformat = string.format
+-- Tables
+local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
+-- Math
+local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
+
+-- Common WoW APIs, comment out unneeded per-spec
+-- local GetSpellCastCount = C_Spell.GetSpellCastCount
+-- local GetSpellInfo = C_Spell.GetSpellInfo
+-- local GetSpellInfo = ns.GetUnpackedSpellInfo
+-- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+-- local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+-- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
+-- local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
+-- local IsActiveSpell = ns.IsActiveSpell
+
+-- Specialization-specific local functions (if any)
+local GetSpecializationInfoByID = _G.GetSpecializationInfoByID
+local GetWeaponEnchantInfo = _G.GetWeaponEnchantInfo
 
 spec:RegisterResource( Enum.PowerType.Mana )
 
@@ -1119,7 +1138,6 @@ spec:RegisterAbilities( {
     },
 } )
 
-
 --[[spec:RegisterSetting( "experimental_msg", nil, {
     type = "description",
     name = "|cFFFF0000WARNING|r:  Healer support in this addon is focused on DPS output only.  This is more useful for solo content or downtime when your healing output is less critical in a group/encounter.  Use at your own risk.",
@@ -1176,6 +1194,5 @@ spec:RegisterOptions( {
 
     package = "Restoration Shaman",
 } )
-
 
 spec:RegisterPack( "Restoration Shaman", 20241020, [[Hekili:vJ1xVTTnq8plgdWnbjvZYojTDiopS9YAXqFyUa7njrlrBtejrpkQ4gad9zF3r9pskkn3HvmSxsKjpE)J397oEb(bFjytcrsd(8YflVZFXYfElxTWF1YGnYxpsd2CKe)mzp8rojd(7VtlKCbrY45vrBoqYi5inVMYjjiVk4LIyGUGnBlzPYpMhS1Paw(aq7rAmS8d3fS5aljHwtlTioyds7Bx8U3UAXpvf9Ld0QO)GiG)WKhyOaf8DSuqmKyutk8okOX8STe5nR)rkripKYEHLVp8eLCe00p5IojlHgtstPIIW9LerIBYobkViS4aJMMClB36TL725PVOx5XBulQeS9IPS9hK5OU0TXJ(3ijP0CPhnLMb)NKgYfBzspbj)5ZNVAMlzmVGkLaFk8oqjPidZ4j0RDR02sfv8R(ER5x3RIfGQKN0CW12CYToRRe)3QV6SFkDTJPUj6ixLM8PUDH1koYem5js6ZQWobjMEBghJvx7Jgn8TINEjScjjpM(0dvF6hQI(yo4geLhLvr8DvrXKczHNoJpXu6pOy6RIX3H1)mmf44Tyw86MaOBlKcwSSwWoJU0zvR10VszbnKjPzf6lUnLZtc3vkE1yvWAPINb(QV6oMGQOxFr0ObfdUPqL3GjK9H8DHOs)SHmlkf7rvwYbTbnMMlDsmljuqygADR9HRJ0oR29pFQZSlfCBG3Lh)8TXVgNsdLeXEQSO23He(cnKMtZy0Ihxnxq3jOfhiBtPQBpnVOGLXfjmW8orEXWbNsEHeUTua3sy0Vjtx7F(S1klNxh2Jhd9auiG)65jCPNM66jOzGXu8egXekzz05XCEAc)uEOGcCuxdglQ2aqzlpvPGa6neB14h8IpasjSJQhxE(8SgpQ1wgHNMB93Y2N8h7wPnhYyFbhSz797ZvBIeakr3XrOYvh(EzEkLuCaK8o0TE(SA1wYq0yZfA8YpU0f3HAKKqSAtFakUK3Xy5JV)ExNqrhlgUHWCa8aaUYlH7JtQH(O5q0d6Mq6CXGlJQAVl(7od)a4Qv6kyJopInGshgIczPXVnMF0fhnsEDrGEc7O2QwDJM0emrqFRPRfm3vDLlrAnfRTo5Luzz(iQdnhXnsUEkFb41PKmnap8dpdxjQfZQ)Y1PgX8eSJ4TpYZwCcVM1WKriRSy0ncZiF1fp1dc0qNvHsiE(bAynOpxu0A9Np3jLtaGqbGBMVVpndAsQBFtRULKvxAo7tRC6P7LQoKrJPObz4Ap9ZoC3gVwWMxGIIWE1DgV4d(qlXNiceNRiyJQPxw2rUak5VJdn)(Me6oszQ8nvrc6Fwc1otQIk4zaDKsjpdAucwaUlYH7cO3GFJLdB57dDq)l8CqyQ9FJDDoGDsUJ1BVjG9VY)Rx3ZWL)BZWhCZqlSFl2AT7qMx9PpQ8EilVRTeCvecAHENGnQVW3S01Zg8JpRErunXbBg(ucyTAbf8Zbs4MtN6bpOWI4viX9RSjg6eKkye8Tsd70Tk6MQiNOsDB4OJ3QOhbpQIKjq7QIoFgCuvrZA40azphcTC2ry019gS(Pqd8UrnWRgtoFpTXRnnddK4QO1ySGjV7TSb7aw39)pZ60fQviTMv9WG49(gaTIFFNoP1phWKcj8q(6yLUmPXd3TBnqfsAdzRSrNW2k30YE9PD)USsNsUTVl1PF)99h3QhTPtxNOzmn0aJE46spmC1wh1WBpE42Gg165AFhDD3Tx8nqWM6E5WBUEgA1VxnSzy9WGAyWGydJkYwM171juV1ol6(WO6(i93DP5nZDNtoEgI)IPs8Nnwk(LNCQOD6MbnGDhOGJNP5UVqLaNH1tNO7WH3s6eOK745zJ1IOY2NQ)XEP22MekOXtfVKEjRHwMOFYASKUIIt3zPI4vF7WvpPoL21OE6NYknWh61YbySn9b6cJT(ZW6x7Ab9zpzjLk9Gww7WrtPofYjqqoWvXz1QUMWJ7CcvA2t38PMgB1zxhF7qtT1HSHDDv2QgQT7APDQwwezuOSFkxtvJSFQxtbc2nfmxiGTezovmlkRrO6KQ(yYSPCcOIrAxFmy9Pbaa0L6qhDWTj4TrLaxP8DER(H(4OOqZSXAZrNJpvQBuCa96ZURjO23UR1wj1ppoRi9Ack8AYdhovpRse262AvDke)WXol7XqmMSxBdFJmFpvYC3m(uuAoNpLPE)L3SN)4npm5i60XsN1DZpYR10C2gZxuPaV7FQcaEcF7wI62wXAv(xp02qytNrBM(NpCX8OFmKdGYB7GY(HNDDZAk0LxsfIAWv7YOwsgKnPuEGds4xPpZszQ1c(R)]] )

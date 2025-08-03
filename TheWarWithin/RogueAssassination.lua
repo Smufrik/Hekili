@@ -1,5 +1,6 @@
 -- RogueAssassination.lua
--- January 2025
+-- August 2025
+-- Patch 11.2
 
 if UnitClassBase( "player" ) ~= "ROGUE" then return end
 
@@ -7,13 +8,28 @@ local addon, ns = ...
 local Hekili = _G[ addon ]
 local class, state = Hekili.Class, Hekili.State
 local PTR = ns.PTR
-local GetUnitChargedPowerPoints = GetUnitChargedPowerPoints
-local strformat, insert, sort, wipe, max = string.format, table.insert, table.sort, table.wipe, math.max
-local UA_GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
-
-local orderedPairs = ns.orderedPairs
-
 local spec = Hekili:NewSpecialization( 259 )
+
+---- Local function declarations for increased performance
+-- Strings
+local strformat = string.format
+-- Tables
+local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
+-- Math
+local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
+
+-- Common WoW APIs, comment out unneeded per-spec
+-- local GetSpellCastCount = C_Spell.GetSpellCastCount
+-- local GetSpellInfo = C_Spell.GetSpellInfo
+-- local GetSpellInfo = ns.GetUnpackedSpellInfo
+local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+-- local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+-- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
+-- local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
+-- local IsActiveSpell = ns.IsActiveSpell
+
+-- Specialization-specific local functions (if any)
+local GetUnitChargedPowerPoints = GetUnitChargedPowerPoints
 
 spec:RegisterResource( Enum.PowerType.ComboPoints )
 
@@ -342,13 +358,13 @@ spec:RegisterStateExpr( "indiscriminate_carnage_remains", function ()
 end )
 
 local function isStealthed()
-    return ( UA_GetPlayerAuraBySpellID( 1784 ) or UA_GetPlayerAuraBySpellID( 115191 ) or UA_GetPlayerAuraBySpellID( 115192 ) or UA_GetPlayerAuraBySpellID( 11327 ) or GetTime() - stealth_dropped < 0.2 )
+    return ( GetPlayerAuraBySpellID( 1784 ) or GetPlayerAuraBySpellID( 115191 ) or GetPlayerAuraBySpellID( 115192 ) or GetPlayerAuraBySpellID( 11327 ) or GetTime() - stealth_dropped < 0.2 )
 end
 
 local calculate_multiplier = setfenv( function( spellID )
     local mult = 1
 
-    if spellID == 703 and talent.improved_garrote.enabled and ( UA_GetPlayerAuraBySpellID( 375939 ) or UA_GetPlayerAuraBySpellID( 347037 ) or UA_GetPlayerAuraBySpellID( 392401 ) or UA_GetPlayerAuraBySpellID( 392403 ) ) then
+    if spellID == 703 and talent.improved_garrote.enabled and ( GetPlayerAuraBySpellID( 375939 ) or GetPlayerAuraBySpellID( 347037 ) or GetPlayerAuraBySpellID( 392401 ) or GetPlayerAuraBySpellID( 392403 ) ) then
         mult = mult * 1.5
     end
 
@@ -420,7 +436,7 @@ spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _
             end
 
             last = now
-            local buff = UA_GetPlayerAuraBySpellID( 32645 )
+            local buff = GetPlayerAuraBySpellID( 32645 )
 
             if not buff then
                 envenom1 = 0
@@ -2927,21 +2943,6 @@ spec:RegisterSetting( "fok_critical_cp_prediction", "predict", {
     },
     width = 1.5,
 } )
-
---[[
-spec:RegisterSetting( "envenom_pool_pct", 0, {
-    name = strformat( "Minimum Energy %% for %s", Hekili:GetSpellLinkWithTexture( 32645 ) ),
-    desc = strformat( "If set above 0, %s will ONLY be used when you have at least this percentage of your Energy.", Hekili:GetSpellLinkWithTexture( 32645 ) ),
-    type = "range",
-    min = 0,
-    max = 100,
-    step = 1,
-    width = 1.5
-} )
-
-spec:RegisterStateExpr( "envenom_pool_deficit", function ()
-    return energy.max * ( ( 100 - ( settings.envenom_pool_pct or 100 ) ) / 100 )
-end ) ]]
 
 spec:RegisterSetting( "vanish_charges_reserved", 0, {
     name = strformat( "Reserve %s Charges", Hekili:GetSpellLinkWithTexture( 1856 ) ),

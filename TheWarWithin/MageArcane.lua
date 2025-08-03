@@ -1,19 +1,34 @@
 -- MageArcane.lua
--- January 2025
+-- August 2025
+-- Patch 11.2
 
 if UnitClassBase( "player" ) ~= "MAGE" then return end
 
 local addon, ns = ...
 local Hekili = _G[ addon ]
 local class, state = Hekili.Class, Hekili.State
-
-local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
-
-local strformat = string.format
-local UnitTokenFromGUID = _G.UnitTokenFromGUID
-local RC = LibStub( "LibRangeCheck-3.0" )
-
 local spec = Hekili:NewSpecialization( 62 )
+
+---- Local function declarations for increased performance
+-- Strings
+local strformat = string.format
+-- Tables
+local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
+-- Math
+local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
+
+-- Common WoW APIs, comment out unneeded per-spec
+-- local GetSpellCastCount = C_Spell.GetSpellCastCount
+-- local GetSpellInfo = C_Spell.GetSpellInfo
+-- local GetSpellInfo = ns.GetUnpackedSpellInfo
+-- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+-- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
+-- local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
+-- local IsActiveSpell = ns.IsActiveSpell
+
+-- Specialization-specific local functions (if any)
+local RC = LibStub("LibRangeCheck-3.0")
 
 spec:RegisterResource( Enum.PowerType.ArcaneCharges, {
     arcane_orb = {
@@ -773,7 +788,6 @@ spec:RegisterVariable( "conserve_mana", function ()
     return totm_casts % 2 > 0
 end )
 
-
 do
     -- Builds Disciplinary Command; written so that it can be ported to the other two Mage specs.
     function Hekili:EmbedDisciplinaryCommand( x )
@@ -1030,26 +1044,6 @@ spec:RegisterHook( "runHandler", function( action )
     end
 end )
 
-
---[[ spec:RegisterStateTable( "burn_info", setmetatable( {
-    __start = 0,
-    start = 0,
-    __average = 20,
-    average = 20,
-    n = 1,
-    __n = 1,
-}, {
-    __index = function( t, k )
-        if k == "active" then
-            return t.start > 0
-        end
-    end,
-} ) ) ]]
-
-
--- spec:RegisterTotem( "rune_of_power", 609815 )
-
-
 spec:RegisterStateTable( "incanters_flow", {
     changed = 0,
     count = 0,
@@ -1205,15 +1199,10 @@ spec:RegisterStateExpr( "full_reduction", function ()
     return action.shifting_power.cdr
 end )
 
-
-local abs = math.abs
-
-
 local NetherMunitions = setfenv( function()
     applyDebuff( "target", "nether_munitions" )
     active_dot.nether_munitions = true_active_enemies
 end, state )
-
 
 spec:RegisterHook( "reset_precast", function ()
    --[[ if pet.rune_of_power.up then applyBuff( "rune_of_power", pet.rune_of_power.remains )
@@ -1245,7 +1234,6 @@ spec:RegisterHook( "reset_precast", function ()
         state:QueueAuraExpiration( "touch_of_the_magi", NetherMunitions, debuff.touch_of_the_magi.expires )
     end
 end )
-
 
 -- Abilities
 spec:RegisterAbilities( {
@@ -2319,7 +2307,6 @@ spec:RegisterAbilities( {
     },
 } )
 
-
 spec:RegisterRanges( "arcane_blast", "polymorph", "fire_blast" )
 
 spec:RegisterOptions( {
@@ -2339,7 +2326,6 @@ spec:RegisterOptions( {
 
     package = "Arcane",
 } )
-
 
 spec:RegisterSetting( "check_explosion_range", true, {
     name = strformat( "%s: Range Check", Hekili:GetSpellLinkWithTexture( spec.abilities.arcane_explosion.id ) ),

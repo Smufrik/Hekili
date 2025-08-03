@@ -1,17 +1,33 @@
 -- EvokerPreservation.lua
--- January 2025
+-- August 2025
+-- Patch 11.2
 
 if UnitClassBase( "player" ) ~= "EVOKER" then return end
 
 local addon, ns = ...
 local Hekili = _G[ addon ]
 local class, state = Hekili.Class, Hekili.State
-
-local strformat = string.format
-
-local GetSpellInfo = C_Spell.GetSpellInfo
-
 local spec = Hekili:NewSpecialization( 1468 )
+
+---- Local function declarations for increased performance
+-- Strings
+local strformat = string.format
+-- Tables
+local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
+-- Math
+local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
+
+-- Common WoW APIs, comment out unneeded per-spec
+-- local GetSpellCastCount = C_Spell.GetSpellCastCount
+local GetSpellInfo = C_Spell.GetSpellInfo
+-- local GetSpellInfo = ns.GetUnpackedSpellInfo
+-- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+-- local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+-- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
+-- local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
+-- local IsActiveSpell = ns.IsActiveSpell
+
+-- Specialization-specific local functions (if any)
 
 spec:RegisterResource( Enum.PowerType.Essence )
 spec:RegisterResource( Enum.PowerType.Mana--[[, {
@@ -474,7 +490,6 @@ spec:RegisterAuras( {
     } ]]
 } )
 
-
 spec:RegisterHook( "reset_precast", function()
     max_empower = talent.font_of_magic.enabled and 4 or 3
 
@@ -487,7 +502,6 @@ spec:RegisterHook( "reset_precast", function()
     empowered_spell_count = nil
 end )
 
-
 spec:RegisterStateTable( "evoker", setmetatable( {},{
     __index = function( t, k )
         local val = state.settings[ k ]
@@ -495,7 +509,6 @@ spec:RegisterStateTable( "evoker", setmetatable( {},{
         return false
     end
 } ) )
-
 
 local empowered_cast_time
 
@@ -984,8 +997,6 @@ spec:RegisterAbilities( {
     },
 } )
 
-
-
 spec:RegisterSetting( "experimental_msg", nil, {
     type = "description",
     name = "|cFFFF0000WARNING|r:  Healer support in this addon is focused on DPS output only.  This is more useful for solo content or downtime when your healing output is less critical in a group/encounter.  Use at your own risk.",
@@ -1016,7 +1027,6 @@ spec:RegisterSetting( "use_unravel", false, {
     width = "full",
 } )
 
-
 local devastation = class.specs[ 1467 ]
 
 spec:RegisterSetting( "fire_breath_fixed", 0, {
@@ -1040,9 +1050,7 @@ spec:RegisterSetting( "spend_essence", false, {
     width = "full"
 } )
 
-
 spec:RegisterRanges( "azure_strike", "living_flame" )
-
 
 spec:RegisterOptions( {
     enabled = true,
@@ -1062,6 +1070,5 @@ spec:RegisterOptions( {
 
     package = "Preservation",
 } )
-
 
 spec:RegisterPack( "Preservation", 20240730, [[Hekili:LAvuVTjpu0Fl9LOw1w(acTnFtR9HP9WwNu1Kys7nJDGlfRsWmBt6AvK)TVRnPjMqs166liZLJpN71(EUcse5hK0cMgi3fhgNeE10WGWzrjHZiP6NAbsAll)b294Ig2c853LGcKlzAUOX(XNQfScljkrNmhbqsN3XR1FTHmF)mFjITfYj3fLCjQsfVOa6bdQCs6xawnin0wjxi5AoOmuMem0p)90Zlf5DkOWqfn1pzU1CRL6ZdV68PHFWq)rfc7NmCZ)KRR428tkk51ywXYTjSkOvc5IfZz6tV()MxdkfV5(mrzMUcYMlfnpdwwxJgX8RoOU2pqoRtds(Z29vwJhj(FSRrYwcdWxaqlYmW0v(HBf2vd2RcY4AyHYpyjxcR39zWIwXJGmtlUo6mE51L87R0zsybJ3OUjk50CMsNP5dtPdWq8ygM9Miy6ycIFteKyjy974HzGhSvRgs8EPTsSeKwowiwI7FY8UYYaxWGcXJntuGwJXvb2dwx8bxlC8Mxd3lXguljUDJTdqtoMfDsLoORDYXh1t(QvESpkRoz1Q17mW(kwCzly)(JB((2ub77BkYwd2pDyp3HvVsl5p4sh7xwczqdSana3e7JTMVCtZNf7Fvo(AIT)dqskUszD5B8VK0hzYgBLqs)kEZj1wRym6pDCBO1CLwfyULK6w5MTaLSUAnU8o3SMEOKuNXIKcnm0gwq(erJ64dyKrBhWt9bV24TdKeFiEgXDGDHpSEJ5oiUCGwVyu3b0vwqBJSbVxJnwv4inSQy2WET4g6ngAuIHEQHU5odzBJDHKgz1y27vJzVMeXwj()3ReXVMetTsef(20y)tjm0vRm0X6FaLtCkhTJYBfP3fyOtm0DCcUyJhNSnT7F1sF8bPFVdyCmFSHEKH(I82AASrEyHzON0dCpJDm0poaPFQpy8JNZWBwORkMEWQy4CP(R7Te5pyXruYbj6nwXB1WF6NtJl(hUrpykRT)YW6)qy0iR9))cdNc4OaNCvjW(JVXQGh41CxuYFc]] )

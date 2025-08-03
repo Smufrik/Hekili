@@ -1,18 +1,34 @@
 -- PaladinProtection.lua
--- April 2025
+-- August 2025
+-- Patch 11.2
 
 if UnitClassBase( "player" ) ~= "PALADIN" then return end
 
 local addon, ns = ...
 local Hekili = _G[ addon ]
 local class, state = Hekili.Class, Hekili.State
-local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
-
 local spec = Hekili:NewSpecialization( 66 )
-local QueenGlyphed = IsSpellKnownOrOverridesKnown
-local strformat = string.format
 
-local GetSpellInfo = ns.GetUnpackedSpellInfo
+---- Local function declarations for increased performance
+-- Strings
+local strformat = string.format
+-- Tables
+local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
+-- Math
+local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
+
+-- Common WoW APIs, comment out unneeded per-spec
+-- local GetSpellCastCount = C_Spell.GetSpellCastCount
+-- local GetSpellInfo = C_Spell.GetSpellInfo
+-- local GetSpellInfo = ns.GetUnpackedSpellInfo
+local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+-- local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+-- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
+local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
+-- local IsActiveSpell = ns.IsActiveSpell
+
+-- Specialization-specific local functions (if any)
+local QueenGlyphed = IsSpellKnownOrOverridesKnown
 local spellwardingFilters = {}
 
 for zoneID, zoneData in pairs( class.spellFilters ) do
@@ -177,7 +193,6 @@ spec:RegisterTalents( {
     zealous_vindication             = {  95183, 431463, 1 }, -- Hammer of Light instantly calls down 2 Empyrean Hammers on your target when it is cast.
 } )
 
-
 -- PvP Talents
 spec:RegisterPvpTalents( {
     aura_of_reckoning               = 5554, -- (247675) When you or allies within your Aura are critically struck, gain Reckoning. Gain 1 additional stack if you are the victim. At 100 stacks of Reckoning, your next weapon swing deals 200% increased damage, will critically strike, and activates Avenging Wrath for 6 sec.
@@ -193,7 +208,6 @@ spec:RegisterPvpTalents( {
     warrior_of_light                = 860 , -- (210341) Increases the damage done by your Shield of the Righteous by 30%, but reduces armor granted by 30%.
     wrench_evil                     = 5652, -- (460720) Turn Evil's cast time is reduced by 100%.
 } )
-
 
 -- Auras
 spec:RegisterAuras( {
@@ -1010,7 +1024,6 @@ spec:RegisterHook( "reset_precast", function ()
     hpg_to_2dawn = nil
 end )
 
-
 spec:RegisterStateExpr( "next_armament", function()
     if buff.sacred_weapon_ready.up then return "sacred_weapon" end
     return "holy_bulwark"
@@ -1019,7 +1032,6 @@ end )
 spec:RegisterStateExpr( "judgment_holy_power", function()
     return 1 + ( buff.bastion_of_light.up and 2 or 0 ) + ( ( buff.avenging_wrath.up or buff.sentinel.up ) and talent.sanctified_wrath.enabled and 1 or 0 )
 end )
-
 
 spec:RegisterHook( "spend", function( amt, resource )
     if amt > 0 and resource == "holy_power" then
@@ -1054,7 +1066,6 @@ spec:RegisterHook( "spend", function( amt, resource )
     end
 end )
 
-
 -- TODO: Need to count HoPo generators and stack Blessing of Dawn on third cast.
 spec:RegisterHook( "gain", function( amt, resource, overcap )
     if amt > 0 and resource == "holy_power" then
@@ -1072,7 +1083,6 @@ spec:RegisterHook( "gain", function( amt, resource, overcap )
         end
     end
 end )
-
 
 -- Abilities
 spec:RegisterAbilities( {
@@ -2077,7 +2087,6 @@ spec:RegisterStateExpr( "defensive_sentinel", function()
     return false
 end )
 
-
 spec:RegisterRanges( "shield_of_the_righteous", "rebuke", "avengers_shield" )
 
 spec:RegisterOptions( {
@@ -2097,6 +2106,5 @@ spec:RegisterOptions( {
 
     package = "Protection Paladin",
 } )
-
 
 spec:RegisterPack( "Protection Paladin", 20250425, [[Hekili:nZvBVnUns4FlbfWRn6ghl5KSzxeBG2E4W1f9wS4sl2pCOwM2I2MnYs(eLs2ae4F73mK6fsjsjzhVPlqrtS1OHZB8HZmC2mZz2Vp7oFscD2NCh5E1OlDVAOJJ71UZUl5PD0z3TJS8EYA4xcjBH))NJJsOltyrH7N)zsaXNfI08uqeXhzfpknEjq3MKKD8pCXfRzjBsxmCz02l4STPbe8vxgtwLGFE5fZUBrkli5xdNTWOC48(z3rst2efp7U7yB)fGZmFFQKCkF5S7qYpF0LN7E1h2p)FY(6(5)C0DFE)8vaBPX7)4(pMtXiKcKjW))PWLLpYf(p4r)umW4K9Z)h0v0qF4DNNUdfj)mkV8CNrN74829ZHF6k(PZ5UUz)ez(FiOhw74OTzlv(Ro69Np6gGK)dLNefd0SLLWwtKwssMfnGXt0EdK54pVm7N3uObsrRK4BKsMRBlIX7o3DmqYVVbE(xiGo(fWdHorCT5IOb6ksAqc8RFseDifUz3ftxKEp4APHKfbu)z)8SeWzHuu(nfeVKee4j)GhYzj)9KbrLQoYIXhdlwgff4h9yih5WLhdhsIzH3ttem4QJHb8esOpj2hya8GDXuiiFbPUDZN(qKGdK0yIjZxoHbS1Bs4E)vQ)6TqGyfshRskjEjjK6brsX1P8svkxgfYPWgo5N0ORQwhTdukAs57(ajMHpf)TGu4hoa)IzW2kgPWaomXz4gc3l3JSFEV9ZR8mWuLmKe(KN)oU4593p)mfQCnq1ZpRXMC2p0pnoBxZ0jASWafdKSP(sLtRqh1di84a2GhpicDRF66d2g5A0g52GnYK2x3gzYsQzJmAbM2Mr0GjY5GmrjQBgZJ9vSyLgd(okSDkHeVg22nSs0U0D6winXeMVh9b4jdj((8H0VI4tYhx9zmPI(URm)40D23JvDpibET1SW1EpcgOnM2cAu1wKUA1q93vBz3fLJ2vfRQKhG)2eBIPBjSqqZVfoNjtdbstyBPcT2zKWjoOCX2gHQMx0kV1brXpzARUnNcFdJg4JVAYgQxmASOrPCPZzScMg7bMa)jiW0UK2mmsTOiA0QgJl6OYvDbHlasbXt4hXL(Dh0sxWAWWDtjJxXGd3cIIYWYloAWq4C(RKag5cbH7LdYxtayHH0yVykNfWOHlPIWISDtwyrdhRMjzovIBYbHgwBd6(5Gn0jhpPjVXkuk80S9xoQaFO9fX1mWEHtoMs8FQy7TnjzGkIutRieVJ)cxXM0qUez04Ey2n3xd7MJzW(xn7MRmMViBMgI5lZmP0kUCdcDW1GVxLcqkq(qIh5jrQq7Y6L(d3s(k8spTmGMd6GRNHq(k7J2q2Uf2iLVDXBvmLQHnMT2cI5Bi3tfqyBOOXIRJIQBnRtCnak6tInQjpfRZOHxzogaKMsRwfjV5dsG4Gn7wdaREU(emrbWSDv5r0Ka8unGv(P879apMhs1WmwjIb6vqwgUY6uMpbrEYxWcjRuTA9KPAcLJI5gEdohJhrbdLhiyA59cq2rVmzY(5w9vnifhu5TtwFAuCPnrZtAGspgeww47MOiZ5rivJ9eBj1oF3Y5MMoBSTxruwBmBx2bTPWU01qLHPObnAfOYyLB(XKh7)7F5lqq)LFEaFhbQZJhLaLZraDyB6YnYFBxe4yGvE)8hHY8IsbaGhXdrrwcQn8PnuSy0C6uTWTP9AGJO8LRlOWP8Cm6jk4jVDrpI1u)J7NNJJ4P(9tLr6L4MFBDVIuMmK)WH5EalkN5tLEgd(O3IM2OaPfa)DHQAZhLebwt4NKIpbAp(cg4m6rdbDMlDTadfDvqzDoyFjuxJ3IOWu(qyvEKe)OOZaECkHdjD56D5ULhQpTIlTtVJmoO3X5vrx6nwbno7GuYVTbGNk8L3Fahw31K9H0UfcOeDpnaStID3LA3Q04NkG5NKtVQF8wrbdMoP3zutoOwwZSy1mhJD6kCpyGDhvB9ACezzrJHAUfVGqYTxCB5bHuFpcNdfylZ2)qKGBZnKwZ0ZuAf1cjCAjxQxtXmFTKIRq6APm6tG052vPBzCkN4dMroKn89uH4zppib3Yk9TidMSnbiQLLUUHm1EImH0VM4rI3sKDbb4dNSmg0)hPKDrHkGrYSvvFyrMQ9n(u1esVUztIoGBZfKxTFdID95AGma8A1EQugPAQPkoVtLw1gluHo7W65O00vSquQXY5RNzPP9Zhc4zdgUmbitrX0YjHpWckLbJf8yhgSEmHWgNH2j9v51DnrVyJA(c3ounNjPZogsZfovAoQ)8U4tCBS4OtfcX4I0sSQkDcQ1T9(59AlT1rCDBSmQtLq6EicPbGxx7Dr8SUx)OPik79i8me0ReQwxeRGH7AhaQFH8Xc3gXtK5XPLdIXEwJ9kkR6(oANZY1Qi)rDZIpnG9anUlvw7wf6RROpnH1mEKkwELarD48XoMpIOs1w6VJwR6RgcvH2wYYaSWIZku6MuzjR5zxwBtrHhnVl8ngvQFOQuhxHxPOTIxk0ThJIfE)Ig4pw7s9QgKxr1TVD)LeXmULU8B0I2KkzFBzL6iusSQYfFIS5gTGcRx3zI29o34fvLqcVx0IKEfyzg3ooS4U80QTDOpKiYswsURTasml5MDPXqn)Y4nfFEd14z76awO04nbacSb1h(CLUu8F)x07zbS)eN(GLrquyOF(usWY7Pq24smNXXUoKf(IGuaFHkIJeSIpC)8FjLNGJvWUyweyXyyoiGpz)8uonNRYosefR02jOkBGWvusskKCMwrP0eSHu8HlI478KYHWXAp8GscGKV2TmreE8y0Ap5x9Y8fkhDzeBOP9N2tdiB)gKAkjWt0LDn4b1ynwi4DWf2NSLSM6DLSwCFE2xKd6xCJeIbwb2dlNxfDLyDkglqe3wgS9MHuEVWoRrwMDqg8P)i5Lwwv11Ebu1TJ20bDBDe5(VN0oR8f1u7aGcHKdiPEC4nGLmORo3V3ma5YpQV2bO7GIr8)EsTQSOO2zpDUk4lbrBYWxk5xa5jVOqi1MqF(SSXGaohLJpmBc2g9EaNGehkIEUtmWvST7IIbMUcHgFtXid9gi9q6)lfQA1hBJpEDzKuaKvm7zyLEWH9a07h)nqNHtd)aachfcRM4XVj)sd1hBJ3iBG8BSmvhWJ7781bDKPQtDIfgxHKoX86d(snMBKKoXCdt7Ibr3enFtzFRm2Wy8yWQC0Y9XY(oW4gd)Q9ynP96xFM(cd7SX8tYgg7s(X58(gZ(wz8XUzPJY9XY(oW4JcsD)hnG2N9w8ddS3TDxL42IAYpLtGMT80X4cwoUD3JzwAGanz90XyHZ5xf(fKtxRp61OzhNK3iOie6S7(HFaQKOJZX(IGOfxOEJIx8tcg)zzvsp9Bi7VyNCI5ZVBqmpf8T3)rCP(JDsXxo72YsOWz3gu()nu2l8jNXGFdYTy)8Zbb)g)XV7sXSPJVTup4dlsQ4hNCbMqJO0qitQeguhKCMpBLEI)FLpFOF0eDAt0SzsQoDNgjsVyEZ0OwqVzkYN2P3Itv3KmFF5ip9wXC5oX5TSvtmVVUNDS7E9pZ(Pgp)CdaqtN0aQ6GNF(mZhX9surxvv01SkwxluuX66FPkAqlM2G6RQHvMp8pwOJyiN4FubQFt1zUxQZk)RLOvAZxjE7KMdk3oL5ZhNI4xO186b8OROX5DE6exWezEkNF(56DlE67UQ(xdf5yuy0VLkZ0iRtcLtlxSLX3QYSfJVEFtVFw3nV1bK6(4eao1z0GbM5PYD(v3SzPRytNm2mZQoJW2vWNFUiQ1IWpz8iDWs1fIf(q09up6xHIgXw7GlImur04jpw4Qu(ryHlMfzBVyM0n9g1qXY9halSyZeWdYc371ABn71VEt0Mm65Nn38mWZcMPV)6ZOfdKT(Mkc)m0oslSrRlG47w24GBlBk5HzjZ(EJTGCGf5qRBisVSTEo2lpaOExBMw0NXEN13sNAYKUM6sJUIv0HMSVUO7m20fRSwn61GWR0hT)of)82NHsB9Mc2K1)7efOYA2IvVOjF)DkYQ9IRYUWYw3PcwMFwo8UfNxRndeYSfZgXcXj11hP9BNKno7g5BLr6RalVPXy)w3In)wgF9BDGCgSqI2bA1hy9BDgchfRnO636Au0lFxXP7Qt(9KRW06AEi0h0RLlf9qxtNmRYcJtz(0rh1c2WrK9pR9P(uXu3YeFobKVZm66lM9w8OZx558(qTjnRb9K79nmd496RC43pAyEFNo5kOuHtUjFGmHKVNhp7tSlOdZ1C7odHVOvhwVdXrCWQzNuKtD8sRBrpWJo6wnmJLPH3YawdL60R0(F7yJctLjcPmGPPjPUxxNI6EDtFMyw2SmCpfNjUWWSN1Tv82XzoUgQTsrqwOnqsV(RFLjw6uiaU2faSW1yQFkS64yCfa5w9HYsz7yG8ljhi1w3vORghF6jxzoWrBaZqwOnAAt0M2zauqMzuLbKgq0m895PaDTn7xVo0CalOBvM3zJ0O0ZJUUFUPPC(GbOSO0TmiZhLxsD4b7LfpnXCQN2K4UAISNBCV2Mj5df5Q)lDN74bwZ2VZWx)niegWWEXsH7blfM89hrvavrOoRYWa3LAvAyWF7zOnUtUeQHQtMf44uiVKwhxZx8EYoeRDiBo6suJrAQ1nTSqcdncRx)2MqxSRZngpuIVBEUCTM7ALqVoeICK(WdWEywq1UDnrJrkZI08bU6x2wjj5xtcqskN6XsOBZU)eZ)jSOqAn8x)Ig5k)TI)4eKFVmIJQ6B)pNbtC6z82hWt91B1XKlhH120aRC1URp97noVRl1wMb49CzNPdoeL1TnL190PSoA363jszf)7lD5SpD91I5HB2))d]] )

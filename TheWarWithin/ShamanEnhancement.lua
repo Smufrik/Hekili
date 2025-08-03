@@ -1,22 +1,35 @@
 -- ShamanEnhancement.lua
--- July 2024
+-- August 2025
+-- Patch 11.2
 
 if UnitClassBase( "player" ) ~= "SHAMAN" then return end
 
 local addon, ns = ...
 local Hekili = _G[ addon ]
 local class, state = Hekili.Class, Hekili.State
-
 local PTR = ns.PTR
-local FindPlayerAuraByID = ns.FindPlayerAuraByID
-
--- Globals
-local GetWeaponEnchantInfo = GetWeaponEnchantInfo
-local GetSpellCastCount = C_Spell.GetSpellCastCount
-local strformat = string.format
-local insert, wipe = table.insert, table.wipe
-
 local spec = Hekili:NewSpecialization( 263 )
+
+---- Local function declarations for increased performance
+-- Strings
+local strformat = string.format
+-- Tables
+local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
+-- Math
+local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
+
+-- Common WoW APIs, comment out unneeded per-spec
+local GetSpellCastCount = C_Spell.GetSpellCastCount
+-- local GetSpellInfo = C_Spell.GetSpellInfo
+-- local GetSpellInfo = ns.GetUnpackedSpellInfo
+-- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+-- local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+-- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
+-- local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
+-- local IsActiveSpell = ns.IsActiveSpell
+
+-- Specialization-specific local functions (if any)
+local GetWeaponEnchantInfo = GetWeaponEnchantInfo
 
 spec:RegisterResource( Enum.PowerType.Maelstrom )
 spec:RegisterResource( Enum.PowerType.Mana )
@@ -1177,7 +1190,6 @@ spec:RegisterStateExpr( "tww3_procs_to_asc", function()
     -- I don't think this is trackable in-game, but I see it in SimulationCraft reeee
 end )
 
-
 spec:RegisterHook( "reset_precast", function ()
     tempest_mael_count = nil
 
@@ -1319,7 +1331,6 @@ spec:RegisterHook( "reset_precast", function ()
     if totem.surging_totem.remains > cooldown.surging_totem.remains then setCooldown( "surging_totem", totem.surging_totem.remains ) end
 end )
 
-
 local ancestral_wolf_affinity_spells = {
     cleanse_spirit = 1,
     wind_shear = 1,
@@ -1354,7 +1365,6 @@ spec:RegisterHook( "runHandler", function( action )
         recall_totem_1 = action
     end
 end )
-
 
 spec:RegisterGear({
     -- The War Within
@@ -1454,7 +1464,6 @@ spec:RegisterGear({
         items = { 161031, 161034, 161032, 161033, 161035 },
     }
 } )
-
 
 spec:RegisterStateFunction( "consume_maelstrom", function( cap )
     local stacks = min( buff.maelstrom_weapon.stack, cap or ( talent.overflowing_maelstrom.enabled and 10 or 5 ) )

@@ -1,7 +1,6 @@
-
 -- DruidFeral.lua
--- January 2025
-
+-- August 2025
+-- Patch 11.2
 -- TODO: Recalculate all ability damage / tick damage based on new formulas.
 
 if UnitClassBase( "player" ) ~= "DRUID" then return end
@@ -9,13 +8,27 @@ if UnitClassBase( "player" ) ~= "DRUID" then return end
 local addon, ns = ...
 local Hekili = _G[ addon ]
 local class, state = Hekili.Class, Hekili.State
-
-local FindUnitBuffByID = ns.FindUnitBuffByID
-local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
-
-local strformat = string.format
-
 local spec = Hekili:NewSpecialization( 103 )
+
+---- Local function declarations for increased performance
+-- Strings
+local strformat = string.format
+-- Tables
+local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
+-- Math
+local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
+
+-- Common WoW APIs, comment out unneeded per-spec
+-- local GetSpellCastCount = C_Spell.GetSpellCastCount
+-- local GetSpellInfo = C_Spell.GetSpellInfo
+-- local GetSpellInfo = ns.GetUnpackedSpellInfo
+local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+-- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
+-- local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
+-- local IsActiveSpell = ns.IsActiveSpell
+
+-- Specialization-specific local functions (if any)
 
 spec:RegisterResource( Enum.PowerType.Energy )
 spec:RegisterResource( Enum.PowerType.ComboPoints, {
@@ -47,7 +60,6 @@ spec:RegisterResource( Enum.PowerType.ComboPoints, {
         value = 1
     }
 } )
-
 spec:RegisterResource( Enum.PowerType.Rage )
 spec:RegisterResource( Enum.PowerType.LunarPower )
 spec:RegisterResource( Enum.PowerType.Mana )
@@ -1077,7 +1089,6 @@ spec:RegisterGear({
     soul_of_the_archdruid = { items = { 151636 } },
     the_wildshapers_clutch = { items = { 137094 } }
 } )
-
 
 -- Snapshotting
 local tf_spells = { rake = true, rip = true, thrash_cat = true, lunar_inspiration = true, primal_wrath = true }

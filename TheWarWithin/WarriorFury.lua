@@ -1,21 +1,35 @@
 -- WarriorFury.lua
--- August 2024
--- 11.0.2
+-- August 2025
+-- Patch 11.2
 
 if UnitClassBase( "player" ) ~= "WARRIOR" then return end
 
 local addon, ns = ...
 local Hekili = _G[ addon ]
-local class = Hekili.Class
-local state = Hekili.State
-
-local strformat = string.format
-
-local FindPlayerAuraByID = ns.FindPlayerAuraByID
-local IsActiveSpell = ns.IsActiveSpell
-
+local class, state = Hekili.Class, Hekili.State
 local spec = Hekili:NewSpecialization( 72 )
 
+---- Local function declarations for increased performance
+-- Strings
+local strformat = string.format
+-- Tables
+local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
+-- Math
+local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
+
+-- Common WoW APIs, comment out unneeded per-spec
+-- local GetSpellCastCount = C_Spell.GetSpellCastCount
+-- local GetSpellInfo = C_Spell.GetSpellInfo
+-- local GetSpellInfo = ns.GetUnpackedSpellInfo
+-- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+-- local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+-- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
+-- local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
+-- local IsActiveSpell = ns.IsActiveSpell
+
+-- Specialization-specific local functions (if any)
+local FindPlayerAuraByID = ns.FindPlayerAuraByID
+local LSR = LibStub("SpellRange-1.0")
 local base_rage_gen, fury_rage_mult = 1.75, 1.00
 local offhand_mod = 0.50
 
@@ -669,8 +683,6 @@ spec:RegisterGear({
     soul_of_the_battlelord = { items = { 151650 } }
 } )
 
-state.IsActiveSpell = IsActiveSpell
-
 local whirlwind_consumers = {
     crushing_blow = 1,
     bloodbath = 1,
@@ -722,8 +734,6 @@ spec:RegisterCombatLogEvent( function(  _, subtype, _, sourceGUID, sourceName, s
         if state.talent.burst_of_power.enabled and spellID == 437121 then Hekili:ForceUpdate( "BURSTOFPOWER_CHANGED", true ) end
     end
 end )
-
-local wipe = table.wipe
 
 spec:RegisterEvent( "PLAYER_REGEN_ENABLED", function()
     wipe( fresh_meat_actual )
@@ -787,7 +797,6 @@ spec:RegisterHook( "spend", function( amt, resource )
     end
 end )
 
-
 local WillOfTheBerserker = setfenv( function()
     applyBuff( "will_of_the_berserker" )
 end, state )
@@ -817,14 +826,10 @@ spec:RegisterHook( "reset_precast", function ()
     end
 end )
 
-
-
-
 spec:RegisterStateExpr( "cycle_for_execute", function ()
     if active_enemies == 1 or target.health_pct < ( talent.massacre.enabled and 35 or 20 ) or not settings.cycle or buff.execute_ineligible.down or buff.sudden_death.up then return false end
     return Hekili:GetNumTargetsBelowHealthPct( talent.massacre.enabled and 35 or 20, false, max( settings.cycle_min, offset + delay ) ) > 0
 end )
-
 
 spec:RegisterStateExpr( "cycle_for_condemn", function ()
     if active_enemies == 1 or target.health_pct < ( talent.massacre.enabled and 35 or 20 ) or target.health_pct > 80 or not settings.cycle or not action.condemn.known or buff.condemn_ineligible.down or buff.sudden_death.up then return false end
@@ -2025,10 +2030,6 @@ spec:RegisterSetting( "heroic_charge", false, {
     type = "toggle",
     width = "full",
 } )
-
-
-
-local LSR = LibStub( "SpellRange-1.0" )
 
 spec:RegisterRanges( "hamstring", "bloodthirst", "execute", "storm_bolt", "charge", "heroic_throw", "taunt" )
 

@@ -1,18 +1,35 @@
 -- PaladinHoly.lua
--- January 2025
+-- August 2025
+-- Patch 11.2
 
 if UnitClassBase( "player" ) ~= "PALADIN" then return end
 
 local addon, ns = ...
 local Hekili = _G[ addon ]
 local class, state = Hekili.Class, Hekili.State
-
-local strformat = string.format
-local SPEC_ACTIVE = _G.SPEC_ACTIVE
-
 local PTR = ns.PTR
-
 local spec = Hekili:NewSpecialization( 65 )
+
+---- Local function declarations for increased performance
+-- Strings
+local strformat = string.format
+-- Tables
+local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
+-- Math
+local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
+
+-- Common WoW APIs, comment out unneeded per-spec
+-- local GetSpellCastCount = C_Spell.GetSpellCastCount
+-- local GetSpellInfo = C_Spell.GetSpellInfo
+-- local GetSpellInfo = ns.GetUnpackedSpellInfo
+-- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+-- local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+-- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
+local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
+local IsActiveSpell = ns.IsActiveSpell
+
+-- Specialization-specific local functions (if any)
+local SPEC_ACTIVE = _G.SPEC_ACTIVE
 
 spec:RegisterResource( Enum.PowerType.HolyPower )
 spec:RegisterResource( Enum.PowerType.Mana )
@@ -168,7 +185,6 @@ spec:RegisterTalents( {
     valiance                        = {  95229, 432919, 1 }, -- Consuming Infusion of Light reduces the cooldown of Holy Armaments by 3.0 sec.
 } )
 
-
 -- PvP Talents
 spec:RegisterPvpTalents( {
     blessed_hands           =   88, -- (199454)
@@ -185,7 +201,6 @@ spec:RegisterPvpTalents( {
     ultimate_sacrifice      =   85, -- (199452)
 } )
 
-
 -- PvP Talents
 spec:RegisterPvpTalents( {
     blessed_hands           =   88, -- (199454)
@@ -200,7 +215,6 @@ spec:RegisterPvpTalents( {
     ultimate_sacrifice      =   85, -- (199452)
     wrench_evil             = 5651, -- (460720)
 } )
-
 
 -- Auras
 spec:RegisterAuras( {
@@ -647,7 +661,6 @@ spec:RegisterGear({
     }
 })
 
-
 local HandleAwakening = setfenv( function()
         if buff.awakening.at_max_stacks then
             removeBuff( "awakening" )
@@ -657,13 +670,11 @@ local HandleAwakening = setfenv( function()
         end
 end, state )
 
-
 local InfusionOfLight = setfenv( function()
     removeStack( "infusion_of_light" )
     if talent.valiance.enabled then reduceCooldown( "holy_armaments", 3 ) end
     if talent.imbued_infusions.enabled then reduceCooldown( "holy_shock", 1 ) end
 end, state )
-
 
 spec:RegisterHook( "reset_precast", function()
     if buff.divine_resonance.up then
@@ -1862,13 +1873,11 @@ spec:RegisterAbilities( {
     },
 } )
 
-
 spec:RegisterSetting( "experimental_msg", nil, {
     type = "description",
     name = "|cFFFF0000WARNING|r:  Healer support in this addon is focused on DPS output only.  This is more useful for solo content or downtime when your healing output is less critical in a group/encounter.  Use at your own risk.",
     width = "full",
 } )
-
 
 spec:RegisterRanges( "judgment", "hammer_of_justice", "crusader_strike", "holy_shock" )
 
@@ -1890,6 +1899,5 @@ spec:RegisterOptions( {
 
     package = "Holy Paladin",
 } )
-
 
 spec:RegisterPack( "Holy Paladin", 20240908, [[Hekili:9E1xVnUnm8pl3lPTyTEojTnPdn9HT9WUUHIdihW9MTvSLT1ITKNKCYfGa9zFuYXoY)lTpSBOanjIuKuu)i5p5n17RERJqsS3BZCNDV7tUlDM(0dp(W9ERLhkWERlqHBrjWxOOC4))bl7Gk4lOmueHQLEiJHI0wrWk5HGgER3usYKFM6TzitpvBArbo07ThFWBDkjkcxPkwec2hJYWCvqbNW4ejblubiowf87Fz9DXSWsbosfWOqu8Q6vTHVZDXDZDVvf4(0DUl)fvWxtb1)gcmY3iYuDuMresHjglW0imx)93mhDmfTjdh59RERdb3H5eK(KKXubtubxRcsH4rM6uekvbpRcw4QcoEuf8jva(Fkjff4ihrkbNbb1nM9SPmowVeLqt85KKujMvkOyHWNJrrhCklQmHrrCEXbyzQFgobfQf6TgfkjmiQ3Z4r(Sy)Kmg)GNesJJgXjCM2SFm3F2dzA5AxeH2t1EyU2d1sRoxAXYu8zBzhcs4p4IlgvMjBYP17NJ3uUf3w9QZqTgODyAIoq3ZrY0oAoFqnd5LceCf2r57TvofWO(iEoayPYoX7BpyRjSSqOnlCifL559S7JJPnQuwMt7O9IX0EpHk7z7LJgja4NM0r7NS12CXj8)7YOe9zSJQtDT1TGv9zBvgh9BqqBYySOSsHSnCT9f2iYQVIAb1IjaCqBuJ3BHcGsAFW55DVPMoF0yek)KqFcQCaVEAdvrwiJLfX2thqpoohrOq7LxubjHro5OVxThd8PGTh0bG2Kqcu6VcAVavesojuhzNd(quwMF1p81TzQA24x1SSPDJEpTGOrKDek2xYYY6EQFOhugGdI8UQ94LBgyHSWOqi4aC1ocxwIn7EXO7(9ZRqxM4s4uZXHPiEcCki5yt3XtPrRSZPn7RZCBRC9Y)FCDtTH2NpDjKeKDe4qaqd7Z5uB0kR40j(DiuFoIQNg2CcT2SP)wRAVuKUNIPdWaD4M1QD5ifZZM1dpiszHB7Q24fln1aN38qG)lERnRf6fXdrg0lN3lGHFwaxpS8ni5LhZA6AuuXKa6NYro6O0QgbVZ06Yi7YZ)0Bzh2pIjDod3nnjRlD7xnye3mO5DgRoOdIra)IXDGrSjJa5KDqBaT8kUqlDbQp7rC9uAOTNHXcjVGXH4nMbmxU60q1RubCnrdUg9lyAWom5HLd0QGfGIaamkCuV(xq3evW05a9NFJrbNzKF1yvuGzLSliVUId076PF)MZoyXpAhS8hMduV(ztgwB251v4Qad3qqSg2YIjzn12cNgC8pT6NBbgVLeVAy0R61H2ChqNE7JJyx5(EgXaS0gXGpNmo2uBQgJbMOIrM9kThOpOK6mQTW2mSSLSPhJQXKwXGAmPvmMg1Yggs2s7WiYwufbi7vAiJ0CrAZ354XH560DDlEo2gVHoJ9IDPjCRMGWQA(b3wrSy1uD88PXG0hp((SzE5uZ8Jh7ZIXcyPb0NzG07M1q4OvUVdhIgWxRZy7XgADg7OmP)u8NR5GzzX6BZ)dmL9CAtwUZu)jvQo6e)w5O2t1hkI7LsnJDFNS1fgu)YahP2tHTQ0DQXvGsTEeP2j6h3o56ZpR95fUhp(PopM9MjFG3rEQEO)tyhmqA9wZZnV(a(zqZn6JtH2kPm4Pw)jGxyBH(ZuIzcS3)(d]] )

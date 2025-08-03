@@ -1,21 +1,38 @@
 -- RogueOutlaw.lua
--- January 2025
+-- August 2025
+-- Patch 11.2
 
 -- Contributed to JoeMama.
 if UnitClassBase( "player" ) ~= "ROGUE" then return end
 
 local addon, ns = ...
 local Hekili = _G[ addon ]
-
-local class = Hekili.Class
-local state = Hekili.State
-local GetUnitChargedPowerPoints = GetUnitChargedPowerPoints
+local class, state = Hekili.Class, Hekili.State
 local PTR = ns.PTR
-local FindPlayerAuraByID = ns.FindPlayerAuraByID
-local strformat, abs, max, min = string.format, math.abs, math.max, math.min
-local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
-
 local spec = Hekili:NewSpecialization( 260 )
+
+---- Local function declarations for increased performance
+-- Strings
+local strformat = string.format
+-- Tables
+local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
+-- Math
+local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
+
+-- Common WoW APIs, comment out unneeded per-spec
+-- local GetSpellCastCount = C_Spell.GetSpellCastCount
+-- local GetSpellInfo = C_Spell.GetSpellInfo
+-- local GetSpellInfo = ns.GetUnpackedSpellInfo
+-- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+-- local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
+-- local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
+-- local IsActiveSpell = ns.IsActiveSpell
+
+-- Specialization-specific local functions (if any)
+local GetUnitChargedPowerPoints = GetUnitChargedPowerPoints
+local FindPlayerAuraByID = ns.FindPlayerAuraByID
+local min = ns.safeMin
 
 spec:RegisterResource( Enum.PowerType.ComboPoints )
 spec:RegisterResource( Enum.PowerType.Energy, {
@@ -789,11 +806,6 @@ spec:RegisterStateExpr( "effective_combo_points", function ()
 
     return c
 end )
-
---[[ Coup De Grace double cast bug, currently a 5% dps gain according to sims
-spec:RegisterStateExpr( "coup_de_bug", function ()
-    return talent.coup_de_grace.enabled and ( IsSpellOverlayed( 2098 ) or buff.escalating_blade.at_max_stacks ) and ( haste * 1.2 ) < 1
-end )--]]
 
 -- We need to break stealth when we start combat from an ability.
 spec:RegisterHook( "runHandler", function( ability )

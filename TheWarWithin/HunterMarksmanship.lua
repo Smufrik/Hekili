@@ -1,15 +1,33 @@
 -- HunterMarksmanship.lua
--- January 2025
+-- August 2025
+-- Patch 11.2
 
 if UnitClassBase( "player" ) ~= "HUNTER" then return end
 
 local addon, ns = ...
 local Hekili = _G[ addon ]
 local class, state = Hekili.Class, Hekili.State
-
-local strformat = string.format
-
 local spec = Hekili:NewSpecialization( 254, true )
+
+---- Local function declarations for increased performance
+-- Strings
+local strformat = string.format
+-- Tables
+local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
+-- Math
+local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
+
+-- Common WoW APIs, comment out unneeded per-spec
+-- local GetSpellCastCount = C_Spell.GetSpellCastCount
+-- local GetSpellInfo = C_Spell.GetSpellInfo
+-- local GetSpellInfo = ns.GetUnpackedSpellInfo
+-- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+-- local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+-- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
+-- local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
+-- local IsActiveSpell = ns.IsActiveSpell
+
+-- Specialization-specific local functions (if any)
 
 spec:RegisterResource( Enum.PowerType.Focus, {
     chakram = {
@@ -757,7 +775,6 @@ spec:RegisterAuras( {
     }
 } )
 
-
 spec:RegisterStateExpr( "trick_shots", function ()
     -- Internal Expression to return target count for spells that interact with Trick Shots
     if buff.trick_shots.up or buff.volley.up then
@@ -768,35 +785,16 @@ spec:RegisterStateExpr( "trick_shots", function ()
 
 end )
 
-
---[[
-local lunar_storm_expires = 0
-
-spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _, _, destGUID, destName, destFlags, _, spellID, spellName )
-
-    if sourceGUID == state.GUID then
-        if ( subtype == "SPELL_AURA_APPLIED" or subtype == "SPELL_AURA_REFRESH" or subtype == "SPELL_AURA_APPLIED_DOSE" ) then
-                if spellID == 450978 then
-                lunar_storm_expires = GetTime() + 13.7
-            end
-        end
-    end
-end )--]]
-
-
 local ExpireNesingwarysTrappingApparatus = setfenv( function()
     focus.regen = focus.regen * 0.5
     forecastResources( "focus" )
 end, state )
-
 
 spec:RegisterStateTable( "tar_trap", setmetatable( {}, {
     __index = function( t, k )
         return state.debuff.tar_trap[ k ]
     end
 } ) )
-
-
 
 spec:RegisterGear( {
     -- The War Within
@@ -1651,7 +1649,6 @@ spec:RegisterOptions( {
 
     package = "Marksmanship",
 } )
-
 
 local beastMastery = class.specs[ 253 ]
 
