@@ -4847,43 +4847,67 @@ do
 end
 
 -- Table of set bonuses. Some string manipulation to honor the SimC syntax.
--- Currently returns 1 for true, 0 for false to be consistent with SimC conditionals.
--- Won't catch fake set names. Should revise.
 local mt_set_bonuses = {
-    __index = function(t, k)
-        if type(k) == "number" then return 0 end
+    __index = function( t, k )
+        if type( k ) == "number" then return 0 end
 
-        -- Aliases to account for syntax differences across specs in SimC
         local aliasMap = {
+            -- For specs with APLs that don't use the normal tier/season identifier that the majority uses
             thewarwithin_season_2 = "tww2",
             thewarwithin_season_3 = "tww3",
         }
 
-        -- Pattern for hero tree set bonus: e.g. tww3_trickster_4pc
-        local heroSet, heroTree, heroPieces = k:match("^([%w_]+)_([%w_]+)_([24])pc$")
-        if heroSet and heroTree and heroPieces then
-            heroSet = aliasMap[heroSet] or heroSet
-            heroPieces = tonumber(heroPieces)
+        -- Match hero tree set bonus: e.g. tww3_rider_of_the_apocalypse_2pc
+        local prefix, heroPieces = k:match( "^(.+)_([24])pc$" )
+        if prefix and heroPieces then
+            local heroSet, heroTree = prefix:match( "^([%w]+)_(.+)$" )
 
-            if not t[heroSet] then return 0 end
+            if heroSet and heroTree then
+                heroSet = aliasMap[ heroSet ] or heroSet
+                heroPieces = tonumber( heroPieces )
+
+                local count = rawget( t, heroSet )
+                if not count then return 0 end
+
+                if state.hero_tree and state.hero_tree.current == heroTree then
+                    return count >= heroPieces and 1 or 0
+                end
+                return 0
+            end
+        end
+
+        -- Match standard set bonus: e.g. tww2_2pc
+        local rawSet, pieces = k:match( "^([%w_]+)_([24])pc$" )
+        if rawSet and pieces then
+            rawSet = aliasMap[ rawSet ] or rawSet
+            pieces = tonumber( pieces )
+
+            local count = rawget( t, rawSet )
+            if not count then return 0 end
+            return count >= pieces and 1 or 0
+        end
+
+        -- Match hero tree set name only: e.g. tww3_rider_of_the_apocalypse
+        local heroSet, heroTree = k:match( "^([%w]+)_(.+)$" )
+        if heroSet and heroTree then
+            heroSet = aliasMap[ heroSet ] or heroSet
+
+            local count = rawget( t, heroSet )
+            if not count then return 0 end
 
             if state.hero_tree and state.hero_tree.current == heroTree then
-                return t[heroSet] >= heroPieces and 1 or 0
+                return count
             end
             return 0
         end
 
-        -- Pattern for normal set bonus: e.g. tww2_2pc
-        local rawSet, pieces = k:match("^([%w_]+)_([24])pc$")
-        if rawSet and pieces then
-            rawSet = aliasMap[rawSet] or rawSet
-            pieces = tonumber(pieces)
-
-            if not t[rawSet] then return 0 end
-            return t[rawSet] >= pieces and 1 or 0
+        -- Match basic set name: e.g. tww3
+        local set = aliasMap[ k ] or k
+        local count = rawget( t, set )
+        if count then
+            return count
         end
 
-        -- Non-matching or malformed key
         return 0
     end
 }
