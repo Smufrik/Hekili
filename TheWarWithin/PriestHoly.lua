@@ -526,7 +526,7 @@ spec:RegisterHook( "runHandler", function( a )
     if buff.premonition_of_insight.up then
         reduceCooldown( a, insight_value )
         removeStack( "premonition_of_insight" )
-        if set_bonus.tww3 >= 4 and hero_tree.oracle then addStack( "visionary_velocity" ) end
+        if set_bonus.tww3_oracle >= 4 then addStack( "visionary_velocity" ) end
     end
 end )
 

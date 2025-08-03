@@ -1414,7 +1414,7 @@ spec:RegisterAbilities( {
             end -- Use this to catch "5th" cast of Arcane Blast.
             gain( 1, "arcane_charges" )
 
-            if set_bonus.tww3 >= 2 and hero_tree.spellslinger then
+            if set_bonus.tww3_spellslinger >= 2 then
                 addStack( "arcane_harmony" )
                 if buff.arcane_harmony.at_max_stacks then applyBuff( "intuition" ) end
             end
@@ -1603,7 +1603,7 @@ spec:RegisterAbilities( {
         tick = function ()
             if talent.arcane_harmony.enabled or legendary.arcane_harmony.enabled then
                 addStack( "arcane_harmony", nil, 1 )
-                if buff.arcane_harmony.at_max_stacks and set_bonus.tww3 >= 4 and hero_tree.spellslinger then applyBuff( "intuition" ) end
+                if buff.arcane_harmony.at_max_stacks and set_bonus.tww3_spellslinger >= 4 then applyBuff( "intuition" ) end
             end
         end,
     },
@@ -1632,7 +1632,7 @@ spec:RegisterAbilities( {
 
         impact = function ()
             gain( true_active_enemies, "arcane_charges" )
-            if set_bonus.tww3 >= 4 and hero_tree.spellslinger then
+            if set_bonus.tww3_spellslinger >= 4 then
                 addStack( "arcane_harmony", min( 8, true_active_enemies ) )
                 if buff.arcane_harmony.at_max_stacks then applyBuff( "intuition" ) end
             end

@@ -2066,7 +2066,7 @@ spec:RegisterAbilities( {
             if extra_shards > 0 then insert( guldan_v, query_time + 0.8 ) end
             if extra_shards > 1 then
                 insert( guldan_v, query_time + 1 )
-                if set_bonus.tww3 >= 2 and hero_tree.diabolist then
+                if set_bonus.tww3_diabolist >= 2 then
                     addStack( "demonic_oculus" )
                 end
             end

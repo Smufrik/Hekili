@@ -700,7 +700,7 @@ spec:RegisterHook( "runHandler", function( a )
     if buff.premonition_of_insight.up then
         reduceCooldown( a, insight_value )
         removeStack( "premonition_of_insight" )
-        if set_bonus.tww3 >= 4 and hero_tree.oracle then addStack( "visionary_velocity" ) end
+        if set_bonus.tww3_oracle >= 4 then addStack( "visionary_velocity" ) end
     end
 end )
 
@@ -1361,7 +1361,7 @@ spec:RegisterAbilities( {
                 rift_extensions = rift_extensions + 1
             end
 
-            if set_bonus.tww3 >= 4 and hero_tree.voidweaver then removeBuff( "overflowing_void" ) end
+            if set_bonus.tww3_voidweaver >= 4 then removeBuff( "overflowing_void" ) end
         end,
 
         copy = { 585, "void_blast", 450215, 450405, 450983 }

@@ -1528,7 +1528,7 @@ spec:RegisterAbilities( {
         toggle = "cooldowns",
 
         handler = function ()
-            if set_bonus.tww3 >= 2 and hero_tree.stormbringer then
+            if set_bonus.tww3_stormbringer >= 2 then
                 addStack( "tempest" )
                 if set_bonus.tww3 >= 4 then
                     applyBuff( "storms_eye", nil, 2 )
@@ -2367,7 +2367,7 @@ spec:RegisterAbilities( {
                 if set_bonus.tww3 >= 2 then TriggerTWW3Totemic2pc() end
             end
 
-            if set_bonus.tww3 >= 2 and hero_tree.totemic then
+            if set_bonus.tww3_totemic >= 2 then
                 removeStack( "elemental_overflow" )
             end
 
@@ -2384,7 +2384,7 @@ spec:RegisterAbilities( {
             if talent.molten_assault.enabled and debuff.flame_shock.up then
                 active_dot.flame_shock = min( active_enemies, active_dot.flame_shock + 5 )
                 removeBuff( "whirling_earth" )
-                if set_bonus.tww3 >= 2 and hero_tree.totemic then TriggerTWW3Totemic2pc() end
+                if set_bonus.tww3_totemic >= 2 then TriggerTWW3Totemic2pc() end
             end
             if buff.vesper_totem.up and vesper_totem_dmg_charges > 0 then trigger_vesper_damage() end
         end,

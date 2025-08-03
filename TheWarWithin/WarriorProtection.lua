@@ -1612,7 +1612,7 @@ spec:RegisterAbilities( {
             -- Hero / TWW
             if talent.dominance_of_the_colossus.enabled and buff.colossal_might.stack == 10 then reduceCooldown( "demolish", 2 ) end
             if talent.colossal_might then addStack( "colossal_might" ) end
-            if set_bonus.tww3 >= 4 and hero_tree.colossus then removeStack( "critical_conclusion" ) end
+            if set_bonus.tww3_colossus >= 4 then removeStack( "critical_conclusion" ) end
 
             -- Legacy
 
