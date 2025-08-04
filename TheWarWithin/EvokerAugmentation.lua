@@ -2,6 +2,9 @@
 -- August 2025
 -- Patch 11.2
 
+--- TODO
+-- Hover while moving recommendation spec option
+
 if UnitClassBase( "player" ) ~= "EVOKER" then return end
 
 local addon, ns = ...
@@ -35,154 +38,155 @@ spec:RegisterResource( Enum.PowerType.Essence )
 
 -- Talents
 spec:RegisterTalents( {
+
     -- Evoker
-    aerial_mastery                  = {  93352, 365933, 1 }, -- Hover gains 1 additional charge.
-    ancient_flame                   = {  93271, 369990, 1 }, -- Casting Emerald Blossom or Verdant Embrace reduces the cast time of your next Living Flame by 40%.
-    attuned_to_the_dream            = {  93292, 376930, 2 }, -- Your healing done and healing received are increased by 2%.
-    blast_furnace                   = {  93309, 375510, 1 }, -- Fire Breath's damage over time lasts 4 sec longer.
-    bountiful_bloom                 = {  93291, 370886, 1 }, -- Emerald Blossom heals 2 additional allies.
-    cauterizing_flame               = {  93294, 374251, 1 }, -- Cauterize an ally's wounds, removing all Bleed, Poison, Curse, and Disease effects. Heals for 65,292 upon removing any effect.
-    clobbering_sweep                = { 103844, 375443, 1 }, -- Tail Swipe's cooldown is reduced by 2 min.
-    draconic_legacy                 = {  93300, 376166, 1 }, -- Your Stamina is increased by 6%.
-    enkindled                       = {  93295, 375554, 2 }, -- Living Flame deals 3% more damage and healing.
-    expunge                         = {  93306, 365585, 1 }, -- Expunge toxins affecting an ally, removing all Poison effects.
-    extended_flight                 = {  93349, 375517, 2 }, -- Hover lasts 4 sec longer.
-    exuberance                      = {  93299, 375542, 1 }, -- While above 75% health, your movement speed is increased by 10%.
-    fire_within                     = {  93345, 375577, 1 }, -- Renewing Blaze's cooldown is reduced by 30 sec.
-    foci_of_life                    = {  93345, 375574, 1 }, -- Renewing Blaze restores you more quickly, causing damage you take to be healed back over 4 sec.
-    forger_of_mountains             = {  93270, 375528, 1 }, -- Landslide's cooldown is reduced by 30 sec, and it can withstand 200% more damage before breaking.
-    heavy_wingbeats                 = { 103843, 368838, 1 }, -- Wing Buffet's cooldown is reduced by 2 min.
-    inherent_resistance             = {  93355, 375544, 2 }, -- Magic damage taken reduced by 2%.
-    innate_magic                    = {  93302, 375520, 2 }, -- Essence regenerates 5% faster.
-    instinctive_arcana              = {  93310, 376164, 2 }, -- Your Magic damage done is increased by 2%.
-    landslide                       = {  93305, 358385, 1 }, -- Conjure a path of shifting stone towards the target location, rooting enemies for 15 sec. Damage may cancel the effect.
-    leaping_flames                  = {  93343, 369939, 1 }, -- Fire Breath causes your next Living Flame to strike 1 additional target per empower level.
-    lush_growth                     = {  93347, 375561, 2 }, -- Green spells restore 5% more health.
-    natural_convergence             = {  93312, 369913, 1 }, -- Disintegrate channels 20% faster and Eruption's cast time is reduced by 20%.
-    obsidian_bulwark                = {  93289, 375406, 1 }, -- Obsidian Scales has an additional charge.
-    obsidian_scales                 = {  93304, 363916, 1 }, -- Reinforce your scales, reducing damage taken by 30%. Lasts 13.5 sec.
-    oppressing_roar                 = {  93298, 372048, 1 }, -- Let out a bone-shaking roar at enemies in a cone in front of you, increasing the duration of crowd controls that affect them by 50% in the next 10 sec.
-    overawe                         = {  93297, 374346, 1 }, -- Oppressing Roar removes 1 Enrage effect from each enemy, and its cooldown is reduced by 30 sec.
-    panacea                         = {  93348, 387761, 1 }, -- Emerald Blossom and Verdant Embrace instantly heal you for 29,148 when cast.
-    potent_mana                     = {  93715, 418101, 1 }, -- Source of Magic increases the target's healing and damage done by 3%.
-    protracted_talons               = {  93307, 369909, 1 }, -- Azure Strike damages 1 additional enemy.
-    quell                           = {  93311, 351338, 1 }, -- Interrupt an enemy's spellcasting and prevent any spell from that school of magic from being cast for 4 sec.
-    recall                          = {  93301, 371806, 1 }, -- You may reactivate Breath of Eons within 3 sec after landing to travel back in time to your takeoff location.
-    regenerative_magic              = {  93353, 387787, 1 }, -- Your Leech is increased by 2%.
-    renewing_blaze                  = {  93354, 374348, 1 }, -- The flames of life surround you for 9.0 sec. While this effect is active, 100% of damage you take is healed back over 8 sec.
-    rescue                          = {  93288, 370665, 1 }, -- Swoop to an ally and fly with them to the target location. Clears movement impairing effects from you and your ally.
-    scarlet_adaptation              = {  93340, 372469, 1 }, -- Store 20% of your effective healing, up to 40,315. Your next damaging Living Flame consumes all stored healing to increase its damage dealt.
-    sleep_walk                      = {  93293, 360806, 1 }, -- Disorient an enemy for 20 sec, causing them to sleep walk towards you. Damage has a chance to awaken them.
-    source_of_magic                 = {  93344, 369459, 1 }, -- Redirect your excess magic to a friendly healer for 1.1 |4hour:hrs;. When you cast an empowered spell, you restore 0.25% of their maximum mana per empower level. Limit 1.
-    spatial_paradox                 = {  93351, 406732, 1 }, -- Evoke a paradox for you and a friendly healer, allowing casting while moving and increasing the range of most spells by 100% for 11.2 sec. Affects the nearest healer within 60 yds, if you do not have a healer targeted.
-    tailwind                        = {  93290, 375556, 1 }, -- Hover increases your movement speed by 70% for the first 4 sec.
-    terror_of_the_skies             = {  93342, 371032, 1 }, -- Breath of Eons stuns enemies for 3 sec.
-    time_spiral                     = {  93351, 374968, 1 }, -- Bend time, allowing you and your allies within 40 yds to cast their major movement ability once in the next 11.2 sec, even if it is on cooldown.
-    tip_the_scales                  = {  93350, 370553, 1 }, -- Compress time to make your next empowered spell cast instantly at its maximum empower level.
-    twin_guardian                   = {  93287, 370888, 1 }, -- Rescue protects you and your ally from harm, absorbing damage equal to 30% of your maximum health for 5.6 sec.
-    unravel                         = {  93308, 368432, 1 }, -- Sunder an enemy's protective magic, dealing 174,613 Spellfrost damage to absorb shields.
-    verdant_embrace                 = {  93341, 360995, 1 }, -- Fly to an ally and heal them for 116,966, or heal yourself for the same amount.
-    walloping_blow                  = {  93286, 387341, 1 }, -- Wing Buffet and Tail Swipe knock enemies further and daze them, reducing movement speed by 70% for 4 sec.
-    zephyr                          = {  93346, 374227, 1 }, -- Conjure an updraft to lift you and your 4 nearest allies within 20 yds into the air, reducing damage taken from area-of-effect attacks by 20% and increasing movement speed by 30% for 9.0 sec.
+    aerial_mastery                 = {  93352,  365933, 1 }, -- Hover gains $s1 additional charge
+    ancient_flame                  = {  93271,  369990, 1 }, -- Casting Emerald Blossom or Verdant Embrace reduces the cast time of your next Living Flame by $s1%
+    attuned_to_the_dream           = {  93292,  376930, 2 }, -- Your healing done and healing received are increased by $s1%
+    blast_furnace                  = {  93309,  375510, 1 }, -- Fire Breath's damage over time lasts $s1 sec longer
+    bountiful_bloom                = {  93291,  370886, 1 }, -- Emerald Blossom heals $s1 additional allies
+    cauterizing_flame              = {  93294,  374251, 1 }, -- Cauterize an ally's wounds, removing all Bleed, Poison, Curse, and Disease effects. Heals for $s1 upon removing any effect
+    clobbering_sweep               = { 103844,  375443, 1 }, -- Tail Swipe's cooldown is reduced by $s1 min
+    draconic_legacy                = {  93300,  376166, 1 }, -- Your Stamina is increased by $s1%
+    enkindled                      = {  93295,  375554, 2 }, -- Living Flame deals $s1% more damage and healing
+    expunge                        = {  93306,  365585, 1 }, -- Expunge toxins affecting an ally, removing all Poison effects
+    extended_flight                = {  93349,  375517, 2 }, -- Hover lasts $s1 sec longer
+    exuberance                     = {  93299,  375542, 1 }, -- While above $s1% health, your movement speed is increased by $s2%
+    fire_within                    = {  93345,  375577, 1 }, -- Renewing Blaze's cooldown is reduced by $s1 sec
+    foci_of_life                   = {  93345,  375574, 1 }, -- Renewing Blaze restores you more quickly, causing damage you take to be healed back over $s1 sec
+    forger_of_mountains            = {  93270,  375528, 1 }, -- Landslide's cooldown is reduced by $s1 sec, and it can withstand $s2% more damage before breaking
+    heavy_wingbeats                = { 103843,  368838, 1 }, -- Wing Buffet's cooldown is reduced by $s1 min
+    inherent_resistance            = {  93355,  375544, 2 }, -- Magic damage taken reduced by $s1%
+    innate_magic                   = {  93302,  375520, 2 }, -- Essence regenerates $s1% faster
+    instinctive_arcana             = {  93310,  376164, 2 }, -- Your Magic damage done is increased by $s1%
+    landslide                      = {  93305,  358385, 1 }, -- Conjure a path of shifting stone towards the target location, rooting enemies for $s1 sec. Damage may cancel the effect
+    leaping_flames                 = {  93343,  369939, 1 }, -- Fire Breath causes your next Living Flame to strike $s1 additional target per empower level
+    lush_growth                    = {  93347,  375561, 2 }, -- Green spells restore $s1% more health
+    natural_convergence            = {  93312,  369913, 1 }, -- Disintegrate channels $s1% faster and Eruption's cast time is reduced by $s2%
+    obsidian_bulwark               = {  93289,  375406, 1 }, -- Obsidian Scales has an additional charge
+    obsidian_scales                = {  93304,  363916, 1 }, -- Reinforce your scales, reducing damage taken by $s1%. Lasts $s2 sec
+    oppressing_roar                = {  93298,  372048, 1 }, -- Let out a bone-shaking roar at enemies in a cone in front of you, increasing the duration of crowd controls that affect them by $s1% in the next $s2 sec
+    overawe                        = {  93297,  374346, 1 }, -- Oppressing Roar removes $s1 Enrage effect from each enemy, and its cooldown is reduced by $s2 sec
+    panacea                        = {  93348,  387761, 1 }, -- Emerald Blossom and Verdant Embrace instantly heal you for $s1 when cast
+    potent_mana                    = {  93715,  418101, 1 }, -- Source of Magic increases the target's healing and damage done by $s1%
+    protracted_talons              = {  93307,  369909, 1 }, -- Azure Strike damages $s1 additional enemy
+    quell                          = {  93311,  351338, 1 }, -- Interrupt an enemy's spellcasting and prevent any spell from that school of magic from being cast for $s1 sec
+    recall                         = {  93301,  371806, 1 }, -- You may reactivate Breath of Eons within $s1 sec after landing to travel back in time to your takeoff location
+    regenerative_magic             = {  93353,  387787, 1 }, -- Your Leech is increased by $s1%
+    renewing_blaze                 = {  93354,  374348, 1 }, -- The flames of life surround you for $s1 sec. While this effect is active, $s2% of damage you take is healed back over $s3 sec
+    rescue                         = {  93288,  370665, 1 }, -- Swoop to an ally and fly with them to the target location. Clears movement impairing effects from you and your ally
+    scarlet_adaptation             = {  93340,  372469, 1 }, -- Store $s1% of your effective healing, up to $s2. Your next damaging Living Flame consumes all stored healing to increase its damage dealt
+    sleep_walk                     = {  93293,  360806, 1 }, -- Disorient an enemy for $s1 sec, causing them to sleep walk towards you. Damage has a chance to awaken them
+    source_of_magic                = {  93344,  369459, 1 }, -- Redirect your excess magic to a friendly healer for $s1 |$s2hour:hrs;. When you cast an empowered spell, you restore $s3% of their maximum mana per empower level. Limit $s4
+    spatial_paradox                = {  93351,  406732, 1 }, -- Evoke a paradox for you and a friendly healer, allowing casting while moving and increasing the range of most spells by $s1% for $s2 sec. Affects the nearest healer within $s3 yds, if you do not have a healer targeted
+    tailwind                       = {  93290,  375556, 1 }, -- Hover increases your movement speed by $s1% for the first $s2 sec
+    terror_of_the_skies            = {  93342,  371032, 1 }, -- Breath of Eons stuns enemies for $s1 sec
+    time_spiral                    = {  93351,  374968, 1 }, -- Bend time, allowing you and your allies within $s1 yds to cast their major movement ability once in the next $s2 sec, even if it is on cooldown
+    tip_the_scales                 = {  93350,  370553, 1 }, -- Compress time to make your next empowered spell cast instantly at its maximum empower level
+    twin_guardian                  = {  93287,  370888, 1 }, -- Rescue protects you and your ally from harm, absorbing damage equal to $s1% of your maximum health for $s2 sec
+    unravel                        = {  93308,  368432, 1 }, -- Sunder an enemy's protective magic, dealing $s$s2 Spellfrost damage to absorb shields
+    verdant_embrace                = {  93341,  360995, 1 }, -- Fly to an ally and heal them for $s1, or heal yourself for the same amount
+    walloping_blow                 = {  93286,  387341, 1 }, -- Wing Buffet and Tail Swipe knock enemies further and daze them, reducing movement speed by $s1% for $s2 sec
+    zephyr                         = {  93346,  374227, 1 }, -- Conjure an updraft to lift you and your $s1 nearest allies within $s2 yds into the air, reducing damage taken from area-of-effect attacks by $s3% and increasing movement speed by $s4% for $s5 sec
 
     -- Augmentation
-    accretion                       = {  93229, 407876, 1 }, -- Eruption reduces the remaining cooldown of Upheaval by 1.0 sec.
-    anachronism                     = {  93223, 407869, 1 }, -- Prescience has a 35% chance to grant Essence Burst.
-    arcane_reach                    = {  93225, 454983, 1 }, -- The range of your helpful magics is increased by 5 yards.
-    aspects_favor                   = {  93217, 407243, 2 }, -- Obsidian Scales activates Black Attunement, and amplifies it to increase maximum health by 4.0% for 13.5 sec. Hover activates Bronze Attunement, and amplifies it to increase movement speed by 25% for 4.5 sec.
-    bestow_weyrnstone               = {  93195, 408233, 1 }, -- Conjure a pair of Weyrnstones, one for your target ally and one for yourself. Only one ally may bear your Weyrnstone at a time. A Weyrnstone can be activated by the bearer to transport them to the other Weyrnstone's location, if they are within 100 yds.
-    blistering_scales               = {  93209, 360827, 1 }, -- Protect an ally with 20 explosive dragonscales, increasing their Armor by 20% of your own. Melee attacks against the target cause 1 scale to explode, dealing 5,820 Volcanic damage to enemies near them. This damage can only occur every few sec. Blistering Scales can only be placed on one target at a time. Casts on your enemy's target if they have one.
-    breath_of_eons                  = {  93234, 403631, 1 }, -- Fly to the targeted location, exposing Temporal Wounds on enemies in your path for 11.2 sec. Temporal Wounds accumulate 12% of damage dealt by your allies affected by Ebon Might, then critically strike for that amount as Arcane damage. Applies Ebon Might for 5 sec. Removes all root effects. You are immune to movement impairing and loss of control effects while flying.
-    chrono_ward                     = {  93235, 409676, 1 }, -- When allies deal damage with Temporal Wounds, they gain a shield for 100% of the damage dealt. Absorption cannot exceed 30% of your maximum health.
-    defy_fate                       = {  93222, 404195, 1 }, -- Fatal attacks are diverted into a nearby timeline, preventing the damage, and your death, in this one. The release of temporal energy restores 241,416 health to you, and 80,472 to 4 nearby allies, over 9 sec. Healing starts high and declines over the duration. May only occur once every 6 min.
-    draconic_attunements            = {  93218, 403208, 1 }, -- Learn to attune yourself to the essence of the Black or Bronze Dragonflights: Black Attunement: You and your 4 nearest allies have 2% increased maximum health. Bronze Attunement:You and your 4 nearest allies have 10% increased movement speed.
-    dream_of_spring                 = {  93359, 414969, 1 }, -- Emerald Blossom no longer has a cooldown, deals 35% increased healing, and increases the duration of your active Ebon Might effects by 1 sec, but costs 3 Essence.
-    ebon_might                      = {  93198, 395152, 1 }, -- Increase your 4 nearest allies' primary stat by 5.0% of your own, and cause you to deal 25% more damage, for 11.2 sec. May only affect 4 allies at once, and does not affect tanks and healers. Eruption, Breath of Eons, and your empower spells extend the duration of these effects.
-    echoing_strike                  = {  93221, 410784, 1 }, -- Azure Strike deals 15% increased damage and has a 10% chance per target hit to echo, casting again.
-    eruption                        = {  93200, 395160, 1 }, -- Cause a violent eruption beneath an enemy's feet, dealing 54,324 Volcanic damage split between them and nearby enemies. Increases the duration of your active Ebon Might effects by 1 sec.
-    essence_attunement              = {  93219, 375722, 1 }, -- Essence Burst stacks 2 times.
-    essence_burst                   = {  93220, 396187, 1 }, -- Your Living Flame has a 20% chance, and your Azure Strike has a 15% chance, to make your next Eruption cost no Essence. Stacks 2 times.
-    fate_mirror                     = {  93367, 412774, 1 }, -- Prescience grants the ally a chance for their spells and abilities to echo their damage or healing, dealing 15% of the amount again.
-    font_of_magic                   = {  93231, 408083, 1 }, -- Your empower spells' maximum level is increased by 1, and they reach maximum empower level 20% faster.
-    hoarded_power                   = {  93212, 375796, 1 }, -- Essence Burst has a 20% chance to not be consumed.
-    ignition_rush                   = {  93230, 408775, 1 }, -- Essence Burst reduces the cast time of Eruption by 40%.
-    imminent_destruction            = { 102248, 459537, 1 }, -- Breath of Eons reduces the Essence cost of Eruption by 1 and increases its damage by 10% for 15 sec after you land.
-    imposing_presence               = {  93199, 371016, 1 }, -- Quell's cooldown is reduced by 20 sec.
-    infernos_blessing               = {  93197, 410261, 1 }, -- Fire Breath grants the inferno's blessing for 9.0 sec to you and your allies affected by Ebon Might, giving their damaging attacks and spells a high chance to deal an additional 17,073 Fire damage.
-    inner_radiance                  = {  93199, 386405, 1 }, -- Your Living Flame and Emerald Blossom are 30% more effective on yourself.
-    interwoven_threads              = {  93369, 412713, 1 }, -- The cooldowns of your spells are reduced by 10%.
-    molten_blood                    = {  93211, 410643, 1 }, -- When cast, Blistering Scales grants the target a shield that absorbs up to 167,897 damage for 33.7 sec based on their missing health. Lower health targets gain a larger shield.
-    molten_embers                   = { 102249, 459725, 1 }, -- Fire Breath causes enemies to take up to 40% increased damage from your Black spells, increased based on its empower level.
-    momentum_shift                  = {  93207, 408004, 1 }, -- Consuming Essence Burst grants you 5% Intellect for 6.7 sec. Stacks up to 2 times.
-    motes_of_possibility            = {  93227, 409267, 1 }, -- Eruption has a 25% chance to form a mote of diverted essence near you. Allies who comes in contact with the mote gain a random buff from your arsenal.
-    overlord                        = {  93213, 410260, 1 }, -- Breath of Eons casts an Eruption at the first 3 enemies struck. These Eruptions have a 100% chance to create a Mote of Possibility.
-    perilous_fate                   = {  93235, 410253, 1 }, -- Breath of Eons reduces enemies' movement speed by 70%, and reduces their attack speed by 50%, for 11.2 sec.
-    plot_the_future                 = {  93226, 407866, 1 }, -- Breath of Eons grants you Fury of the Aspects for 15 sec after you land, without causing Exhaustion.
-    power_nexus                     = {  93201, 369908, 1 }, -- Increases your maximum Essence to 6.
-    prescience                      = {  93358, 409311, 1 }, -- Grant an ally the gift of foresight, increasing their critical strike chance by 3% and occasionally copying their damage and healing spells at 15% power for 20.2 sec. Affects the nearest ally within 25 yds, preferring damage dealers, if you do not have an ally targeted.
-    prolong_life                    = {  93359, 410687, 1 }, -- Your effects that extend Ebon Might also extend Symbiotic Bloom.
-    pupil_of_alexstrasza            = {  93221, 407814, 1 }, -- When cast at an enemy, Living Flame strikes 1 additional enemy for 100% damage.
-    reactive_hide                   = {  93210, 409329, 1 }, -- Each time Blistering Scales explodes it deals 15% more damage for 13.5 sec, stacking 10 times.
-    regenerative_chitin             = {  93211, 406907, 1 }, -- Blistering Scales has 5 more scales, and casting Eruption restores 1 scale.
-    ricocheting_pyroclast           = {  93208, 406659, 1 }, -- Eruption deals 30% more damage per enemy struck, up to 150%.
-    rockfall                        = {  93368, 1219236, 1 }, -- Upheaval reaches maximum empower level 20% faster and has a 60% chance to grant Essence Burst.
-    rumbling_earth                  = {  93205, 459120, 1 }, -- Upheaval causes an aftershock at its location, dealing 50% of its damage 2 additional times.
-    stretch_time                    = {  93382, 410352, 1 }, -- While flying during Breath of Eons, 50% of damage you would take is instead dealt over 10 sec.
-    symbiotic_bloom                 = {  93215, 410685, 2 }, -- Emerald Blossom increases targets' healing received by 3% for 11.2 sec.
-    tectonic_locus                  = {  93202, 408002, 1 }, -- Upheaval deals 50% increased damage to the primary target, and launches them higher.
-    time_skip                       = {  93232, 404977, 1 }, -- Surge forward in time, causing your cooldowns to recover 1,000% faster for 2 sec.
-    timelessness                    = {  93360, 412710, 1 }, -- Enchant an ally to appear out of sync with the normal flow of time, reducing threat they generate by 30% for 33.7 min. Less effective on tank-specialized allies. May only be placed on one target at a time.
-    tomorrow_today                  = {  93369, 412723, 1 }, -- Time Skip channels for 1 sec longer.
-    unyielding_domain               = {  93202, 412733, 1 }, -- Upheaval cannot be interrupted, and has an additional 10% chance to critically strike.
-    upheaval                        = {  93203, 396286, 1 }, -- Gather earthen power beneath your enemy's feet and send them hurtling upwards, dealing 83,426 Volcanic damage to the target and nearby enemies. Increases the duration of your active Ebon Might effects by 2 sec. Empowering expands the area of effect. I: 3 yd radius. II: 6 yd radius. III: 9 yd radius.
-    volcanism                       = {  93206, 406904, 1 }, -- Eruption's Essence cost is reduced by 1.
+    accretion                      = {  93229,  407876, 1 }, -- Eruption reduces the remaining cooldown of Upheaval by $s1 sec
+    anachronism                    = {  93223,  407869, 1 }, -- Prescience has a $s1% chance to grant Essence Burst
+    arcane_reach                   = {  93225,  454983, 1 }, -- The range of your helpful magics is increased by $s1 yards
+    aspects_favor                  = {  93217,  407243, 2 }, -- Obsidian Scales activates Black Attunement, and amplifies it to increase maximum health by $s1% for $s2 sec. Hover activates Bronze Attunement, and amplifies it to increase movement speed by $s3% for $s4 sec
+    bestow_weyrnstone              = {  93195,  408233, 1 }, -- Conjure a pair of Weyrnstones, one for your target ally and one for yourself. Only one ally may bear your Weyrnstone at a time. A Weyrnstone can be activated by the bearer to transport them to the other Weyrnstone's location, if they are within $s1 yds
+    blistering_scales              = {  93209,  360827, 1 }, -- Protect an ally with $s3 explosive dragonscales, increasing their Armor by $s4% of your own. Melee attacks against the target cause $s5 scale to explode, dealing $s$s6 Volcanic damage to enemies near them$s$s7 This damage can only occur every few sec. Blistering Scales can only be placed on one target at a time. Casts on your enemy's target if they have one
+    breath_of_eons                 = {  93234,  403631, 1 }, -- Fly to the targeted location, exposing a Temporal Wound on enemies in your path for $s1 sec and granting Ebon Might for $s2 sec. Removes roots and grants immunity to movement impairing and loss of control effects while flying.  Temporal Wound $s5% of damage dealt by allies affected by Ebon Might is copied as additional Arcane damage to enemies after $s6 sec
+    chrono_ward                    = {  93235,  409676, 1 }, -- When allies deal damage with Temporal Wounds, they gain a shield for $s1% of the damage dealt. Absorption cannot exceed $s2% of your maximum health
+    defy_fate                      = {  93222,  404195, 1 }, -- Fatal attacks are diverted into a nearby timeline, preventing the damage, and your death, in this one. The release of temporal energy restores $s1 health to you, and $s2 to $s3 nearby allies, over $s4 sec. Healing starts high and declines over the duration. May only occur once every $s5 min
+    draconic_attunements           = {  93218,  403208, 1 }, -- Learn to attune yourself to the essence of the Black or Bronze Dragonflights: Black Attunement: You and your $s3 nearest allies have $s4% increased maximum health. Bronze Attunement:You and your $s7 nearest allies have $s8% increased movement speed
+    dream_of_spring                = {  93359,  414969, 1 }, -- Emerald Blossom no longer has a cooldown, deals $s1% increased healing, and increases the duration of your active Ebon Might effects by $s2 sec, but costs $s3 Essence
+    ebon_might                     = {  93198,  395152, 1 }, -- Increase your $s1 nearest allies' primary stat by $s2% of your own, and cause you to deal $s3% more damage, for $s4 sec. May only affect $s5 allies at once, and does not affect tanks and healers. Eruption, Breath of Eons, and your empower spells extend the duration of these effects
+    echoing_strike                 = {  93221,  410784, 1 }, -- Azure Strike deals $s1% increased damage and has a $s2% chance per target hit to echo, casting again
+    eruption                       = {  93200,  395160, 1 }, -- Cause a violent eruption beneath an enemy's feet, dealing $s$s2 Volcanic damage split between them and nearby enemies. Increases the duration of your active Ebon Might effects by $s3 sec
+    essence_attunement             = {  93219,  375722, 1 }, -- Essence Burst stacks $s1 times
+    essence_burst                  = {  93220,  396187, 1 }, -- Your Living Flame has a $s1% chance, and your Azure Strike has a $s2% chance, to make your next Eruption cost no Essence. Stacks $s3 times
+    fate_mirror                    = {  93367,  412774, 1 }, -- Prescience grants the ally a chance for their spells and abilities to echo their damage or healing, dealing $s1% of the amount again
+    font_of_magic                  = {  93231,  408083, 1 }, -- Your empower spells' maximum level is increased by $s1, and they reach maximum empower level $s2% faster
+    hoarded_power                  = {  93212,  375796, 1 }, -- Essence Burst has a $s1% chance to not be consumed
+    ignition_rush                  = {  93230,  408775, 1 }, -- Essence Burst reduces the cast time of Eruption by $s1%
+    imminent_destruction           = { 102248,  459537, 1 }, -- Breath of Eons reduces the Essence cost of Eruption by $s1 and increases its damage by $s2% for $s3 sec after you land
+    imposing_presence              = {  93199,  371016, 1 }, -- Quell's cooldown is reduced by $s1 sec
+    infernos_blessing              = {  93197,  410261, 1 }, -- Fire Breath grants the inferno's blessing for $s2 sec to you and your allies affected by Ebon Might, giving their damaging attacks and spells a high chance to deal an additional $s$s3 Fire damage
+    inner_radiance                 = {  93199,  386405, 1 }, -- Your Living Flame and Emerald Blossom are $s1% more effective on yourself
+    interwoven_threads             = {  93369,  412713, 1 }, -- The cooldowns of your spells are reduced by $s1%
+    molten_blood                   = {  93211,  410643, 1 }, -- When cast, Blistering Scales grants the target a shield that absorbs up to $s1 damage for $s2 sec based on their missing health. Lower health targets gain a larger shield
+    molten_embers                  = { 102249,  459725, 1 }, -- Fire Breath causes enemies to take up to $s1% increased damage from your Black spells, increased based on its empower level
+    momentum_shift                 = {  93207,  408004, 1 }, -- Consuming Essence Burst grants you $s1% Intellect for $s2 sec. Stacks up to $s3 times
+    motes_of_possibility           = {  93227,  409267, 1 }, -- Eruption has a $s1% chance to form a mote of diverted essence near you. Allies who comes in contact with the mote gain a random buff from your arsenal
+    overlord                       = {  93213,  410260, 1 }, -- Breath of Eons casts an Eruption at the first $s1 enemies struck. These Eruptions have a $s2% chance to create a Mote of Possibility
+    perilous_fate                  = {  93235,  410253, 1 }, -- Breath of Eons reduces enemies' movement speed by $s1%, and reduces their attack speed by $s2%, for $s3 sec
+    plot_the_future                = {  93226,  407866, 1 }, -- Breath of Eons grants you Fury of the Aspects for $s1 sec after you land, without causing Exhaustion
+    power_nexus                    = {  93201,  369908, 1 }, -- Increases your maximum Essence to $s1
+    prescience                     = {  93358,  409311, 1 }, -- Grant an ally the gift of foresight, increasing their critical strike chance by $s1% and occasionally copying their damage and healing spells at $s2% power for $s3 sec. Affects the nearest ally within $s4 yds, preferring damage dealers, if you do not have an ally targeted
+    prolong_life                   = {  93359,  410687, 1 }, -- Your effects that extend Ebon Might also extend Symbiotic Bloom
+    pupil_of_alexstrasza           = {  93221,  407814, 1 }, -- When cast at an enemy, Living Flame strikes $s1 additional enemy for $s2% damage
+    reactive_hide                  = {  93210,  409329, 1 }, -- Each time Blistering Scales explodes it deals $s1% more damage for $s2 sec, stacking $s3 times
+    regenerative_chitin            = {  93211,  406907, 1 }, -- Blistering Scales has $s1 more scales, and casting Eruption restores $s2 scale
+    ricocheting_pyroclast          = {  93208,  406659, 1 }, -- Eruption deals $s1% more damage per enemy struck, up to $s2%
+    rockfall                       = {  93368, 1219236, 1 }, -- Upheaval reaches maximum empower level $s1% faster and has a $s2% chance to grant Essence Burst
+    rumbling_earth                 = {  93205,  459120, 1 }, -- Upheaval causes an aftershock at its location, dealing $s1% of its damage $s2 additional times
+    stretch_time                   = {  93382,  410352, 1 }, -- While flying during Breath of Eons, $s1% of damage you would take is instead dealt over $s2 sec
+    symbiotic_bloom                = {  93215,  410685, 2 }, -- Emerald Blossom increases targets' healing received by $s1% for $s2 sec
+    tectonic_locus                 = {  93202,  408002, 1 }, -- Upheaval deals $s1% increased damage to the primary target, and launches them higher
+    time_skip                      = {  93232,  404977, 1 }, -- Surge forward in time, causing your cooldowns to recover $s1% faster for $s2 sec
+    timelessness                   = {  93360,  412710, 1 }, -- Enchant an ally to appear out of sync with the normal flow of time, reducing threat they generate by $s1% for $s2 min. Less effective on tank-specialized allies. May only be placed on one target at a time
+    tomorrow_today                 = {  93369,  412723, 1 }, -- Time Skip channels for $s1 sec longer
+    unyielding_domain              = {  93202,  412733, 1 }, -- Upheaval cannot be interrupted, and has an additional $s1% chance to critically strike
+    upheaval                       = {  93203,  396286, 1 }, -- Gather earthen power beneath your enemy's feet and send them hurtling upwards, dealing $s$s2 Volcanic damage to the target and nearby enemies. Increases the duration of your active Ebon Might effects by $s3 sec. Empowering expands the area of effect. I: $s4 yd radius. II: $s5 yd radius. III: $s6 yd radius
+    volcanism                      = {  93206,  406904, 1 }, -- Eruption's Essence cost is reduced by $s1
 
     -- Chronowarden
-    afterimage                      = {  94929, 431875, 1 }, -- Empower spells send up to 3 Chrono Flames to your targets.
-    chrono_flame                    = {  94954, 431442, 1, "chronowarden" }, -- Living Flame is enhanced with Bronze magic, repeating 25% of the damage or healing you dealt to the target in the last 5 sec as Arcane, up to 29,455.
-    doubletime                      = {  94932, 431874, 1 }, -- Ebon Might and Prescience gain a chance equal to your critical strike chance to grant 50% additional stats.
-    golden_opportunity              = {  94942, 432004, 1 }, -- Prescience has a 20% chance to cause your next Prescience to last 100% longer.
-    instability_matrix              = {  94930, 431484, 1 }, -- Each time you cast an empower spell, unstable time magic reduces its cooldown by up to 6 sec.
-    master_of_destiny               = {  94930, 431840, 1 }, -- Casting Essence spells extends all your active Threads of Fate by 1 sec.
-    motes_of_acceleration           = {  94935, 432008, 1 }, -- Warp leaves a trail of Motes of Acceleration. Allies who come in contact with a mote gain 20% increased movement speed for 30 sec.
-    primacy                         = {  94951, 431657, 1 }, -- For each damage over time effect from Upheaval, gain 3% haste, up to 9%.
-    reverberations                  = {  94925, 431615, 1 }, -- Upheaval deals 50% additional damage over 8 sec.
-    temporal_burst                  = {  94955, 431695, 1 }, -- Tip the Scales overloads you with temporal energy, increasing your haste, movement speed, and cooldown recovery rate by 30%, decreasing over 30 sec.
-    temporality                     = {  94935, 431873, 1 }, -- Warp reduces damage taken by 20%, starting high and reducing over 3 sec.
-    threads_of_fate                 = {  94947, 431715, 1 }, -- Casting an empower spell during Temporal Burst causes a nearby ally to gain a Thread of Fate for 10 sec, granting them a chance to echo their damage or healing spells, dealing 15% of the amount again.
-    time_convergence                = {  94932, 431984, 1 }, -- Non-defensive abilities with a 45 second or longer cooldown grant 5% Intellect for 15 sec. Essence spells extend the duration by 1 sec.
-    warp                            = {  94948, 429483, 1 }, -- Hover now causes you to briefly warp out of existence and appear at your destination. Hover's cooldown is also reduced by 5 sec. Hover continues to allow Evoker spells to be cast while moving.
+    afterimage                     = {  94929,  431875, 1 }, -- Empower spells send up to $s1 Chrono Flames to your targets
+    chrono_flame                   = {  94954,  431442, 1 }, -- Living Flame is enhanced with Bronze magic, repeating $s1% of the damage or healing you dealt to the target in the last $s2 sec as Arcane, up to $s3
+    doubletime                     = {  94932,  431874, 1 }, -- Ebon Might and Prescience gain a chance equal to your critical strike chance to grant $s1% additional stats
+    golden_opportunity             = {  94942,  432004, 1 }, -- Prescience has a $s1% chance to cause your next Prescience to last $s2% longer
+    instability_matrix             = {  94930,  431484, 1 }, -- Each time you cast an empower spell, unstable time magic reduces its cooldown by up to $s1 sec
+    master_of_destiny              = {  94930,  431840, 1 }, -- Casting Essence spells extends all your active Threads of Fate by $s1 sec
+    motes_of_acceleration          = {  94935,  432008, 1 }, -- Warp leaves a trail of Motes of Acceleration. Allies who come in contact with a mote gain $s1% increased movement speed for $s2 sec
+    primacy                        = {  94951,  431657, 1 }, -- For each damage over time effect from Upheaval, gain $s1% haste, up to $s2%
+    reverberations                 = {  94925,  431615, 1 }, -- Upheaval deals $s1% additional damage over $s2 sec
+    temporal_burst                 = {  94955,  431695, 1 }, -- Tip the Scales overloads you with temporal energy, increasing your haste, movement speed, and cooldown recovery rate by $s1%, decreasing over $s2 sec
+    temporality                    = {  94935,  431873, 1 }, -- Warp reduces damage taken by $s1%, starting high and reducing over $s2 sec
+    threads_of_fate                = {  94947,  431715, 1 }, -- Casting an empower spell during Temporal Burst causes a nearby ally to gain a Thread of Fate for $s1 sec, granting them a chance to echo their damage or healing spells, dealing $s2% of the amount again
+    time_convergence               = {  94932,  431984, 1 }, -- Non-defensive abilities with a $s1 second or longer cooldown grant $s2% Intellect for $s3 sec. Essence spells extend the duration by $s4 sec
+    warp                           = {  94948,  429483, 1 }, -- Hover now causes you to briefly warp out of existence and appear at your destination. Hover's cooldown is also reduced by $s1 sec. Hover continues to allow Evoker spells to be cast while moving
 
     -- Scalecommander
-    bombardments                    = {  94936, 434300, 1 }, -- Mass Eruption marks your primary target for destruction for the next 6 sec. You and your allies have a chance to trigger a Bombardment when attacking marked targets, dealing 73,725 Volcanic damage split amongst all nearby enemies.
-    diverted_power                  = {  94928, 441219, 1 }, -- Bombardments have a chance to generate Essence Burst.
-    extended_battle                 = {  94928, 441212, 1 }, -- Essence abilities extend Bombardments by 1 sec.
-    hardened_scales                 = {  94933, 441180, 1 }, -- Obsidian Scales reduces damage taken by an additional 10%.
-    maneuverability                 = {  94941, 433871, 1 }, -- Breath of Eons can now be steered in your desired direction. In addition, Breath of Eons burns targets for 109,334 Volcanic damage over 12 sec.
-    mass_eruption                   = {  98931, 438587, 1, "scalecommander" }, -- Empower spells cause your next Eruption to strike up to 3 targets. When striking less than 3 targets, Eruption damage is increased by 15% for each missing target.
-    melt_armor                      = {  94921, 441176, 1 }, -- Breath of Eons causes enemies to take 20% increased damage from Bombardments and Essence abilities for 12 sec.
-    menacing_presence               = {  94933, 441181, 1 }, -- Knocking enemies up or backwards reduces their damage done to you by 15% for 8 sec.
-    might_of_the_black_dragonflight = {  94952, 441705, 1 }, -- Black spells deal 20% increased damage.
-    nimble_flyer                    = {  94943, 441253, 1 }, -- While Hovering, damage taken from area of effect attacks is reduced by 10%.
-    onslaught                       = {  94944, 441245, 1 }, -- Entering combat grants a charge of Burnout, causing your next Living Flame to cast instantly.
-    slipstream                      = {  94943, 441257, 1 }, -- Deep Breath resets the cooldown of Hover.
-    unrelenting_siege               = {  94934, 441246, 1 }, -- For each second you are in combat, Azure Strike, Living Flame, and Eruption deal 1% increased damage, up to 15%.
-    wingleader                      = {  94953, 441206, 1 }, -- Bombardments reduce the cooldown of Breath of Eons by 1 sec for each target struck, up to 3 sec.
+    bombardments                   = {  94936,  434300, 1 }, -- Mass Eruption marks your primary target for destruction for the next $s2 sec. You and your allies have a chance to trigger a Bombardment when attacking marked targets, dealing $s$s3 Volcanic damage split amongst all nearby enemies
+    diverted_power                 = {  94928,  441219, 1 }, -- Bombardments have a chance to generate Essence Burst
+    extended_battle                = {  94928,  441212, 1 }, -- Essence abilities extend Bombardments by $s1 sec
+    hardened_scales                = {  94933,  441180, 1 }, -- Obsidian Scales reduces damage taken by an additional $s1%
+    maneuverability                = {  94941,  433871, 1 }, -- Breath of Eons can now be steered in your desired direction. In addition, Breath of Eons burns targets for $s$s2 Volcanic damage over $s3 sec
+    mass_eruption                  = {  98931,  438587, 1 }, -- Empower spells cause your next Eruption to strike up to $s1 targets. When striking less than $s2 targets, Eruption damage is increased by $s3% for each missing target
+    melt_armor                     = {  94921,  441176, 1 }, -- Breath of Eons causes enemies to take $s1% increased damage from Bombardments and Essence abilities for $s2 sec
+    menacing_presence              = {  94933,  441181, 1 }, -- Knocking enemies up or backwards reduces their damage done to you by $s1% for $s2 sec
+    might_of_the_black_dragonflight = {  94952,  441705, 1 }, -- Black spells deal $s1% increased damage
+    nimble_flyer                   = {  94943,  441253, 1 }, -- While Hovering, damage taken from area of effect attacks is reduced by $s1%
+    onslaught                      = {  94944,  441245, 1 }, -- Entering combat grants a charge of Burnout, causing your next Living Flame to cast instantly
+    slipstream                     = {  94943,  441257, 1 }, -- Deep Breath resets the cooldown of Hover
+    unrelenting_siege              = {  94934,  441246, 1 }, -- For each second you are in combat, Azure Strike, Living Flame, and Eruption deal $s1% increased damage, up to $s2%
+    wingleader                     = {  94953,  441206, 1 }, -- Bombardments reduce the cooldown of Breath of Eons by $s1 sec for each target struck, up to $s2 sec
 } )
 
 -- PvP Talents
 spec:RegisterPvpTalents( {
-    born_in_flame        = 5612, -- (414937)
-    chrono_loop          = 5564, -- (383005) Trap the enemy in a time loop for 5 sec. Afterwards, they are returned to their previous location and health. Cannot reduce an enemy's health below 20%.
-    divide_and_conquer   = 5557, -- (384689) Breath of Eons forms curtains of fire, preventing line of sight to enemies outside its walls and burning enemies who walk through them for 139,690 Fire damage. Lasts 6 sec.
-    dreamwalkers_embrace = 5615, -- (415651) Verdant Embrace tethers you to an ally, increasing movement speed by 40% and slowing and siphoning 24,251 life from enemies who come in contact with the tether. The tether lasts up to 10 sec or until you move more than 30 yards away from your ally.
-    nullifying_shroud    = 5558, -- (378464) Wreathe yourself in arcane energy, preventing the next 3 full loss of control effects against you. Lasts 30 sec.
-    obsidian_mettle      = 5563, -- (378444) While Obsidian Scales is active you gain immunity to interrupt, silence, and pushback effects.
-    scouring_flame       = 5561, -- (378438) Fire Breath burns away 1 beneficial Magic effect per empower level from all targets.
-    seismic_slam         = 5454, -- (408543)
-    swoop_up             = 5562, -- (370388) Grab an enemy and fly with them to the target location.
-    time_stop            = 5619, -- (378441) Freeze an ally's timestream for 5 sec. While frozen in time they are invulnerable, cannot act, and auras do not progress. You may reactivate Time Stop to end this effect early.
-    unburdened_flight    = 5560, -- (378437) Hover makes you immune to movement speed reduction effects.
+    born_in_flame                  = 5612, -- (414937)
+    chrono_loop                    = 5564, -- (383005) Trap the enemy in a time loop for $s1 sec. Afterwards, they are returned to their previous location and health. Cannot reduce an enemy's health below $s2%
+    divide_and_conquer             = 5557, -- (384689)
+    dreamwalkers_embrace           = 5615, -- (415651)
+    nullifying_shroud              = 5558, -- (1241352)
+    obsidian_mettle                = 5563, -- (378444)
+    scouring_flame                 = 5561, -- (378438)
+    seismic_slam                   = 5454, -- (408543)
+    swoop_up                       = 5562, -- (370388) Grab an enemy and fly with them to the target location
+    time_stop                      = 5619, -- (378441) Freeze an ally's timestream for $s1 sec. While frozen in time they are invulnerable, cannot act, and auras do not progress. You may reactivate Time Stop to end this effect early
+    unburdened_flight              = 5560, -- (378437) Hover makes you immune to movement speed reduction effects
 } )
 
 -- Auras
@@ -415,7 +419,7 @@ spec:RegisterAuras( {
     momentum_shift = {
         id = 408005,
         duration = function() return 6.0 * ( 1 + 1.25 * stat.mastery_value ) end,
-        max_stack = 1,
+        max_stack = 2,
         dot = "buff",
         friendly = true,
         no_ticks = true
@@ -568,6 +572,11 @@ spec:RegisterAuras( {
         no_ticks = true,
         friendly = true
     },
+    temporal_burst = {
+        id = 431698,
+        duration = 30,
+        max_stack = 30
+    },
     -- Accumulating damage from $@auracaster's allies who are affected by Ebon Might.
     temporal_wound = {
         id = 409560,
@@ -644,6 +653,17 @@ spec:RegisterAuras( {
 
 spec:RegisterGear({
     -- The War Within
+    tww3 = {
+        items = { 237658, 237656, 237655, 237654, 237653 },
+        auras = {
+            -- Scalecommander
+            draconic_inspiration = {
+                id = 1237241,
+                duration = 30,
+                max_stack = 1
+            },
+        }
+    },
     tww2 = {
         items = { 229283, 229281, 229279, 229280, 229278 }
     },
@@ -673,6 +693,15 @@ spec:RegisterGear({
         items = { 200381, 200383, 200378, 200380, 200382 }
     }
 } )
+
+-- Pets
+spec:RegisterPets({
+    dracthyr_commando = {
+        id = 219827,
+        spell = "breath_of_eons",
+        duration = 30,
+    },
+})
 
 local lastEssenceTick = 0
 
@@ -708,17 +737,28 @@ spec:RegisterHook( "runHandler", function( action )
     local ability = class.abilities[ action ]
     local color = ability.color
 
-    if color then
-        if color == "red" and buff.iridescence_red.up then removeStack( "iridescence_red" )
-        elseif color == "blue" and buff.iridescence_blue.up then removeStack( "iridescence_blue" ) end
+    if ability.empowered then
+        if buff.tip_the_scales.up then
+            removeBuff( "tip_the_scales" )
+            setCooldown( "tip_the_scales", action.tip_the_scales.cooldown )
+        end
+        if talent.mass_disintegrate.enabled then
+            if talent.eruption.enabled then
+                addStack( "mass_eruption_stacks" )
+            else
+                addStack( "mass_disintegrate_stacks" )
+            end
+        end
     end
 
-    if talent.power_swell.enabled and ability.empowered then
-        applyBuff( "power_swell" ) -- TODO: Modify Essence regen rate.
-    end
-
-    if talent.extended_battle.enabled and ability.spendType == "essence" and debuff.bombardments.up then
-        debuff.bombardments.expires = debuff.bombardments.expires + 1
+    if ability.spendType == "essence" then
+        if buff.essence_burst.up then
+            removeStack( "essence_burst" )
+            if talent.momentum_shift.enabled then addStack( "momentum_shift" ) end
+        end
+        if talent.extended_battle.enabled and debuff.bombardments.up then
+            debuff.bombardments.expires = debuff.bombardments.expires + 1
+        end
     end
 end )
 
@@ -780,8 +820,46 @@ do
     end, state )
 end
 
+local GenerateEssenceBurst = setfenv( function ( baseChance, targets )
+
+    local burstChance = baseChance or 0
+    if not targets then targets = 1 end
+
+    if burstChance >= 1 then
+        addStack( "essence_burst" )
+    end
+
+end, state )
+
+
+
 -- Abilities
 spec:RegisterAbilities( {
+    -- Project intense energy onto 3 enemies, dealing 1,161 Spellfrost damage to them.
+    azure_strike = {
+        id = 362969,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        school = "spellfrost",
+        color = "blue",
+
+        startsCombat = true,
+
+        minRange = 0,
+        maxRange = 25,
+
+        damage = function () return stat.spell_power * 0.755 * ( debuff.shattering_star.up and 1.2 or 1 ) end, -- PvP multiplier = 1.
+        critical = function() return stat.crit + conduit.spark_of_savagery.mod end,
+        critical_damage = function () return talent.tyranny.enabled and 2.2 or 2 end,
+        spell_targets = function() return talent.protracted_talons.enabled and 3 or 2 end,
+
+        handler = function ()
+            --[[ Disabled for now because Aug has no scalers/bonuses for essence burst chance
+            if talent.essence_burst.enabled then GenerateEssenceBurst( 0.15, 1 ) end
+            ]]--
+        end
+    },
     -- Conjure a pair of Weyrnstones, one for your target ally and one for yourself. Only one ally may bear your Weyrnstone at a time.; A Weyrnstone can be activated by the bearer to transport them to the other Weyrnstone's location, if they are within 100 yds.
     bestow_weyrnstone = {
         id = 408233,
@@ -868,11 +946,13 @@ spec:RegisterAbilities( {
             if talent.slipstream.enabled then gainCharges( "hover", 1 ) end
 
             if set_bonus.tww2 >= 2 then
-                local ebon = buff.ebon_might.remains
+                local ebon = buff.ebon_might.expires
                 spec.abilities.upheaval.handler()
                 -- Except ebon might extensions. Why blizz.
-                buff.ebon_might.remains = ebon
+                buff.ebon_might.expires = ebon
             end
+
+            if set_bonus.tww3_scalecommander >= 4 then applyBuff( "draconic_inspiration" ) end
         end,
 
         finish = function()
@@ -944,7 +1024,7 @@ spec:RegisterAbilities( {
     eruption = {
         id = 395160,
         color = "black",
-        cast = function() return 2.5 * ( talent.ignition_rush.enabled and buff.essence_burst.up and 0.6 or 1 ) * ( talent.natural_convergence.enabled and 0.8 or 1 ) end,
+        cast = function() return 2.5 * ( talent.ignition_rush.enabled and buff.essence_burst.up and 0.6 or 1 ) * ( talent.natural_convergence.enabled and 0.8 or 1 ) * haste end,
         cooldown = 0.0,
         gcd = "spell",
 
@@ -959,7 +1039,6 @@ spec:RegisterAbilities( {
         startsCombat = true,
 
         handler = function()
-            removeStack( "essence_burst" )
 
             if buff.mass_disintegrate_stacks.up then
                 if talent.bombardments.enabled then applyDebuff( "target", "bombardments" ) end
@@ -1015,7 +1094,6 @@ spec:RegisterAbilities( {
         handler = function()
             -- Many Color, Essence and Empower interactions have been moved to the runHandler hook
             if talent.leaping_flames.enabled then applyBuff( "leaping_flames", nil, empowerment_level ) end
-            if talent.mass_eruption.enabled then addStack( "mass_eruption_stacks" ) end -- ???
 
             applyDebuff( "target", "fire_breath" )
             applyDebuff( "target", "fire_breath_damage" )
@@ -1083,6 +1161,9 @@ spec:RegisterAbilities( {
 
             removeBuff( "leaping_flames" )
             removeBuff( "scarlet_adaptation" )
+            --[[ Disabled for now because Aug has no scalers/bonuses for essence burst chance
+            if talent.essence_burst.enabled then GenerateEssenceBurst( 0.2, max( 2, ( group or health.percent < 100 and 2 or 1 ), action.living_flame.spell_targets ) ) end
+            ]]--
         end,
 
         copy = { 361469, "chrono_flame", 431443 }
@@ -1125,6 +1206,9 @@ spec:RegisterAbilities( {
             active_dot.prescience = min( group_members, active_dot.prescience + 1 )
 
             if set_bonus.tier31_4pc > 0 then addStack( "trembling_earth" ) end
+            --[[ Disabled for now because Aug has no scalers/bonuses for essence burst chance
+            if talent.essence_burst.enabled and talent.anachronism.enabled then GenerateEssenceBurst( 0.35, 1 ) end
+            ]]--
         end,
     },
 
@@ -1202,6 +1286,27 @@ spec:RegisterAbilities( {
             active_dot.timelessness = 1
         end,
     },
+    tip_the_scales = {
+        id = 370553,
+        cast = 0,
+        cooldown = function()
+            if set_bonus.tww3_chronowarden >= 2 then return 60 end
+            return 120
+        end,
+        gcd = "off",
+        school = "arcane",
+        color = "bronze",
+
+        talent = "tip_the_scales",
+        startsCombat = false,
+
+        toggle = "cooldowns",
+        nobuff = "tip_the_scales",
+
+        handler = function ()
+            applyBuff( "tip_the_scales" )
+        end
+    },
 
     -- Gather earthen power beneath your enemy's feet and send them hurtling upwards, dealing $396288s2 Volcanic damage to the target and nearby enemies.$?s395153[; Increases the duration of your active Ebon Might effects by ${$395153s2/1000} sec.][]; Empowering expands the area of effect.; I:   $<radiusI> yd radius.; II:  $<radiusII> yd radius.; III: $<radiusIII> yd radius.
     upheaval = {
@@ -1218,10 +1323,11 @@ spec:RegisterAbilities( {
 
         handler = function()
             if buff.ebon_might.up then buff.ebon_might.expires = buff.ebon_might.expires + 2 end
-            if talent.mass_disintegrate.enabled then addStack( "mass_disintegrate_stacks" ) end
-            if talent.mass_eruption.enabled then applyBuff( "mass_eruption_stacks" ) end
             -- This was reduced to 50% chance, can't gaurantee it atm
             -- if set_bonus.tww2 >= 4 then addStack( "essence_burst" ) end
+            --[[ Disabled for now because Aug has no scalers/bonuses for essence burst chance
+            if talent.essence_burst.enabled and talent.rockfall.enabled then GenerateEssenceBurst( 0.6, 1 ) end
+            ]]--
         end,
 
         copy = { 396286, 408092 }
