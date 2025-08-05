@@ -1,4 +1,4 @@
-## https://github.com/simulationcraft/simc/blob/thewarwithin/ActionPriorityLists/shaman_enhancement.simc
+## https://github.com/simulationcraft/simc/blob/thewarwithin/ActionPriorityLists/default/shaman_enhancement.simc
 ## Up to date with SimC: May 4 2025 - d7ce1aa
 
 actions.precombat+=/windfury_weapon

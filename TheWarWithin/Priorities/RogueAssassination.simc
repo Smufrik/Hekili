@@ -1,5 +1,6 @@
-## https://github.com/simulationcraft/simc/blob/thewarwithin/ActionPriorityLists/rogue_assassination.simc
-## Up to date with SimC: April 7 2025 - 0307d7f
+## https://github.com/simulationcraft/simc/blob/thewarwithin/ActionPriorityLists/default/rogue_assassination.simc
+## SimulationCraft Commit Sync: d1a271e
+## Date: 2025-08-05
 
 actions.precombat+=/apply_poison
 # Check which trinket slots have Stat Values
@@ -15,21 +16,22 @@ actions.precombat+=/stealth
 actions+=/stealth
 # Interrupt on cooldown to allow simming interactions with that
 actions+=/kick
+# Conditional to check if there is only one enemy
+actions+=/variable,name=single_target,value=active_enemies=1
 # Combined Energy Regen needed to saturate
 actions+=/variable,name=regen_saturated,value=energy.regen_combined>30
 # Pooling Setup, check for cooldowns
-actions+=/variable,name=single_target,value=active_enemies=1
 actions+=/variable,name=in_cooldowns,value=dot.kingsbane.ticking|debuff.shiv.up
 ## [Syrif] - This variable is flattened into variable.not_pooling to ensure timeliness
 ## actions+=/variable,name=upper_limit_energy,value=energy.pct>=(80-10*talent.vicious_venoms.rank-30*talent.amplifying_poison)
 # Checking for cooldowns soon
 actions+=/variable,name=cd_soon,value=talent.kingsbane&cooldown.kingsbane.remains<3&!cooldown.kingsbane.ready
 # Pooling Condition all together - [Syrif] - This is where upper_limit_energy is written out
-actions+=/variable,name=not_pooling,value=variable.in_cooldowns|buff.darkest_night.up|(energy.pct>=(80-10*talent.vicious_venoms.rank-30*talent.amplifying_poison))|(charges_fractional>1.8|boss)&fight_remains<=20
+actions+=/variable,name=not_pooling,value=variable.in_cooldowns|buff.darkest_night.up|(energy.pct>=(80-10*talent.vicious_venoms.rank-30*talent.amplifying_poison))|raid&boss&fight_remains<=20
 ## Check what the maximum Scent of Blood stacks is currently
 ## actions+=/variable,name=scent_effective_max_stacks,value=(spell_targets.fan_of_knives*talent.scent_of_blood.rank*2)>?20
 # We are Scent Saturated when our stack count is hitting the maximum
-actions+=/variable,name=scent_saturation,value=buff.scent_of_blood.stack>=((spell_targets.fan_of_knives*talent.scent_of_blood.rank*2)>?20)
+actions+=/variable,name=scent_saturation,value=buff.scent_of_blood.stack>=((active_enemies*talent.scent_of_blood.rank*2)>?20)
 # Call Stealthed Actions
 actions+=/call_action_list,name=stealthed,strict=1,if=stealthed.rogue|stealthed.improved_garrote|master_assassin_remains>0
 # Call Cooldowns
@@ -48,7 +50,7 @@ actions+=/bag_of_tricks
 # AoE Damage over time abilities   Helper Variable to check basic finisher conditions
 actions.aoe_dot+=/variable,name=dot_finisher_condition,value=combo_points>=variable.effective_spend_cp
 # Crimson Tempest on 2+ Targets
-actions.aoe_dot+=/crimson_tempest,if=spell_targets>=2&variable.dot_finisher_condition&refreshable&target.time_to_die-remains>6
+actions.aoe_dot+=/crimson_tempest,if=active_enemies>=2&variable.dot_finisher_condition&refreshable&target.time_to_die-remains>6
 # Garrote upkeep in AoE to reach energy saturation
 actions.aoe_dot+=/garrote,cycle_targets=1,if=combo_points.deficit>=1&pmultiplier<=1&refreshable&!variable.regen_saturated&target.time_to_die-remains>12
 # Rupture upkeep in AoE to reach energy/scent saturation or to spread for damage
@@ -67,10 +69,10 @@ actions.cds+=/call_action_list,name=items
 ## Invoke Externals to Deathmark
 ## actions.cds+=/invoke_external_buff,name=power_infusion,if=dot.deathmark.ticking
 # Cast Deathmark if the target will survive long enough
-actions.cds+=/deathmark,if=(variable.deathmark_condition&target.time_to_die>=10)|boss&fight_remains<=20
+actions.cds+=/deathmark,if=(variable.deathmark_condition&target.time_to_die>=10)|raid&boss&fight_remains<=20
 # Check for Applicable Shiv usage
 actions.cds+=/call_action_list,name=shiv
-actions.cds+=/kingsbane,if=(debuff.shiv.up|cooldown.shiv.remains<6)&(buff.envenom.up|spell_targets.fan_of_knives>1)&(cooldown.deathmark.remains>=50|dot.deathmark.ticking)|boss&fight_remains<=15
+actions.cds+=/kingsbane,if=(debuff.shiv.up|cooldown.shiv.remains<6)&(buff.envenom.up|spell_targets.fan_of_knives>1)&(cooldown.deathmark.remains>=50|dot.deathmark.ticking)|raid&boss&fight_remains<=15
 # Use with shiv or in niche cases at the end of Kingsbane if not already up
 actions.cds+=/thistle_tea,if=!buff.thistle_tea.up&debuff.shiv.remains>=6|!buff.thistle_tea.up&dot.kingsbane.ticking&dot.kingsbane.remains<=6|!buff.thistle_tea.up&fight_remains<=cooldown.thistle_tea.charges*6
 # Potion/Racials/Other misc cooldowns
@@ -86,26 +88,27 @@ actions.core_dot+=/rupture,if=combo_points>=variable.effective_spend_cp&(pmultip
 # Maintain Crimson Tempest unless it would remove a stronger cast
 actions.core_dot+=/crimson_tempest,if=combo_points>=variable.effective_spend_cp&refreshable&pmultiplier<=persistent_multiplier&!buff.darkest_night.up&!talent.amplifying_poison
 
-actions.direct+=/pool_resource,for_next=1,extra_amount=energy.max*(0.5+0.3*talent.hand_of_fate.rank-0.15*talent.vicious_venoms.rank)-action.envenom.cost,if=active_dot.envenom=0
-# Direct Damage Abilities   Envenom at applicable cp if not pooling, capped on amplifying poison stacks, on an animacharged CP, or in aoe.
+# Direct Damage Abilities
+actions.direct+=/pool_resource,for_next=1,extra_amount=energy.max*(0.5+0.3*talent.hand_of_fate.rank-0.15*talent.vicious_venoms.rank)-action.envenom.cost,if=active_dot.envenom=0   
+# Envenom at applicable cp if not pooling, capped on amplifying poison stacks, on an animacharged CP, or in aoe.
 actions.direct+=/envenom,if=!buff.darkest_night.up&combo_points>=variable.effective_spend_cp&(variable.not_pooling|debuff.amplifying_poison.stack>=20|active_enemies>1)
 # Special Envenom handling for Darkest Night
 actions.direct+=/envenom,if=buff.darkest_night.up&effective_combo_points>=cp_max_spend
 # Check if we should be using a filler
-actions.direct+=/variable,name=fok_target_count,value=(buff.clear_the_witnesses.up&(spell_targets.fan_of_knives>=2-(buff.lingering_darkness.up|!talent.vicious_venoms)))|(spell_targets.fan_of_knives>=3-(talent.momentum_of_despair&talent.thrown_precision)+talent.vicious_venoms+talent.blindside)
 actions.direct+=/variable,name=use_filler,value=combo_points<=variable.effective_spend_cp&!variable.cd_soon|variable.not_pooling|active_enemies>1
+actions.direct+=/variable,name=fok_target_count,value=(buff.clear_the_witnesses.up&(spell_targets.fan_of_knives>=2-(buff.lingering_darkness.up|!talent.vicious_venoms)))|(spell_targets.fan_of_knives>=3-(talent.momentum_of_despair&talent.thrown_precision)+talent.vicious_venoms+talent.blindside)
 # Maintain Caustic Spatter
 actions.direct+=/variable,name=use_caustic_filler,value=talent.caustic_spatter&dot.rupture.ticking&(!debuff.caustic_spatter.up|debuff.caustic_spatter.remains<=2)&combo_points.deficit>=1&active_enemies>1
 actions.direct+=/mutilate,if=variable.use_caustic_filler
 actions.direct+=/ambush,if=variable.use_caustic_filler
 # Fan of Knives at 6cp for Darkest Night
-actions.direct+=/fan_of_knives,if=buff.darkest_night.up&combo_points=6&(!talent.vicious_venoms|spell_targets.fan_of_knives>=2)
+actions.direct+=/fan_of_knives,if=buff.darkest_night.up&combo_points=6&(!talent.vicious_venoms|active_enemies>=2)
 # Fan of Knives at 3+ targets, accounting for various edge cases
 actions.direct+=/fan_of_knives,if=variable.use_filler&!toggle.funnel&variable.fok_target_count
 # Ambush on Blindside/Subterfuge. Do not use Ambush from stealth during Kingsbane & Deathmark.
 actions.direct+=/ambush,if=variable.use_filler&(buff.blindside.up|stealthed.rogue)&(!dot.kingsbane.ticking|debuff.deathmark.down|buff.blindside.up)
 # Tab-Mutilate to apply Deadly Poison at 2 targets if not using Fan of Knives
-actions.direct+=/mutilate,cycle_targets=1,if=variable.use_filler&spell_targets.fan_of_knives=2
+actions.direct+=/mutilate,cycle_targets=1,if=variable.use_filler&active_enemies=2
 # Fallback Mutilate
 actions.direct+=/mutilate,if=variable.use_filler
 
@@ -130,10 +133,10 @@ actions.misc_cds+=/fireblood,if=debuff.deathmark.up
 actions.misc_cds+=/ancestral_call,if=debuff.deathmark.up
 
 # Shiv conditions
-actions.shiv+=/variable,name=shiv_condition,value=!debuff.shiv.up&dot.garrote.ticking&dot.rupture.ticking&spell_targets.fan_of_knives<=5
+actions.shiv+=/variable,name=shiv_condition,value=!debuff.shiv.up&dot.garrote.ticking&dot.rupture.ticking&active_enemies<=5
 actions.shiv+=/variable,name=shiv_kingsbane_condition,value=talent.kingsbane&buff.envenom.up&variable.shiv_condition
 # Shiv for aoe with Arterial Precision
-actions.shiv+=/shiv,if=talent.arterial_precision&!debuff.shiv.up&dot.garrote.ticking&dot.rupture.ticking&spell_targets.fan_of_knives>=4&dot.crimson_tempest.ticking&(target.health.pct<=35&talent.zoldyck_recipe|cooldown.shiv.charges_fractional>=1.9)
+actions.shiv+=/shiv,if=talent.arterial_precision&!debuff.shiv.up&dot.garrote.ticking&dot.rupture.ticking&active_enemies>=4&dot.crimson_tempest.ticking&(target.health.pct<=35&talent.zoldyck_recipe|cooldown.shiv.charges_fractional>=1.9)
 # Shiv cases for Kingsbane
 actions.shiv+=/shiv,if=!talent.lightweight_shiv.enabled&variable.shiv_kingsbane_condition&(dot.kingsbane.ticking&dot.kingsbane.remains<8|!dot.kingsbane.ticking&cooldown.kingsbane.remains>=20)&(!talent.crimson_tempest.enabled|active_enemies=1|dot.crimson_tempest.ticking)
 # Shiv for big Darkest Night Envenom during Lingering Darkness

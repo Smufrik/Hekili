@@ -1,3 +1,5 @@
+## https://github.com/simulationcraft/simc/blob/thewarwithin/ActionPriorityLists/default/warrior_fury.simc
+
 actions.precombat+=/battle_shout
 actions.precombat+=/berserker_stance,toggle=on
 actions.precombat+=/variable,name=treacherous_transmitter_precombat_cast,value=2

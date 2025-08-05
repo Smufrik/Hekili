@@ -1,21 +1,37 @@
 -- WarriorArms.lua
--- August 2024
--- 11.0.2
-
+-- August 2025
+-- Patch 11.2
 
 if UnitClassBase( "player" ) ~= "WARRIOR" then return end
 
 local addon, ns = ...
 local Hekili = _G[ addon ]
 local class, state = Hekili.Class, Hekili.State
-
-local FindPlayerAuraByID = ns.FindPlayerAuraByID
-
-local strformat = string.format
-
 local spec = Hekili:NewSpecialization( 71 )
 
+---- Local function declarations for increased performance
+-- Strings
+local strformat = string.format
+-- Tables
+local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
+-- Math
+local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
+
+-- Common WoW APIs, comment out unneeded per-spec
+-- local GetSpellCastCount = C_Spell.GetSpellCastCount
+-- local GetSpellInfo = C_Spell.GetSpellInfo
+-- local GetSpellInfo = ns.GetUnpackedSpellInfo
+-- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+-- local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+-- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
+-- local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
+-- local IsActiveSpell = ns.IsActiveSpell
+
+-- Specialization-specific local functions (if any)
+local FindPlayerAuraByID = ns.FindPlayerAuraByID
+local LSR = LibStub("SpellRange-1.0")
 local base_rage_gen, arms_rage_mult = 1.59, 4.000
+
 
 spec:RegisterResource( Enum.PowerType.Rage, {
     mainhand = {
@@ -70,155 +86,154 @@ spec:RegisterResource( Enum.PowerType.Rage, {
 
 -- Talents
 spec:RegisterTalents( {
+
     -- Warrior
-    armored_to_the_teeth            = {  90366, 384124, 2 }, -- Gain Strength equal to 5% of your Armor.
-    avatar                          = {  90365, 107574, 1 }, -- Transform into a colossus for 20 sec, causing you to deal 20% increased damage and removing all roots and snares. Generates 10 Rage.
-    barbaric_training               = {  90340, 383082, 1 }, -- Slam, Cleave, and Whirlwind deal 10% more damage and 10% increased critical strike damage.
-    battle_stance                   = {  90327, 386164, 1 }, -- A balanced combat state that increases the critical strike chance of your abilities by 3% and reduces the duration of movement impairing effects by 10%. Lasts until canceled.
-    berserker_shout                 = {  90348, 384100, 1 }, -- Go berserk, removing and granting immunity to Fear, Sap, and Incapacitate effects for 6 sec. Also remove fear effects from group members within 12 yds.
-    bitter_immunity                 = {  90356, 383762, 1 }, -- Restores 20% health instantly and removes all diseases, poisons and curses affecting you.
-    blademasters_torment            = {  90363, 390138, 1 }, -- Activating Avatar grants 8 sec of Sweeping Strikes and while Avatar is active the cooldown of Cleave is reduced by 1.5 sec.
-    bounding_stride                 = {  90355, 202163, 1 }, -- Reduces the cooldown of Heroic Leap by 15 sec, and Heroic Leap now also increases your movement speed by 70% for 3 sec.
-    cacophonous_roar                = {  90383, 382954, 1 }, -- Intimidating Shout can withstand 200% more damage before breaking.
-    champions_might                 = {  90323, 386284, 1 }, -- The duration of Champion's Spear is increased by 2 sec. You deal 25% increased critical strike damage to targets chained to your Spear.
-    champions_spear                 = {  90380, 376079, 1 }, -- Throw a spear at the target location, dealing 16,818 Physical damage instantly and an additional 17,819 damage over 4 sec. Deals reduced damage beyond 5 targets. Enemies hit are chained to the spear's location for the duration. Generates 10 Rage.
-    concussive_blows                = {  90354, 383115, 1 }, -- Cooldown of Pummel reduced by 1.0 sec. Successfully interrupting an enemy increases the damage you deal to them by 5% for 10 sec.
-    crackling_thunder               = {  95959, 203201, 1 }, -- Thunder Clap's radius is increased by 50%, and it reduces movement speed by an additional 20%.
-    cruel_strikes                   = {  90381, 392777, 2 }, -- Critical strike chance increased by 1% and critical strike damage of Execute increased by 5%.
-    crushing_force                  = {  90347, 382764, 2 }, -- Mortal Strike deals an additional 5% damage and deals 5% increased critical strike damage.
-    defensive_stance                = {  92537, 386208, 1 }, -- A defensive combat state that reduces all damage you take by 15%, and all damage you deal by 10%. Lasts until canceled.
-    double_time                     = {  90382, 103827, 1 }, -- Increases the maximum number of charges on Charge by 1, and reduces its cooldown by 3 sec.
-    fast_footwork                   = {  90344, 382260, 1 }, -- Movement speed increased by 5%.
-    frothing_berserker              = {  90352, 392792, 1 }, -- Mortal Strike and Cleave have a 20% chance to immediately refund 10% of the Rage spent.
-    heroic_leap                     = {  90346,   6544, 1 }, -- Leap through the air toward a target location, slamming down with destructive force to deal 1,652 Physical damage to all enemies within 8 yards.
-    honed_reflexes                  = {  95956, 391271, 1 }, -- Cooldown of Die By the Sword, Pummel, Intervene, Spell Reflection, and Storm Bolt reduced by 5%.
-    impending_victory               = {  90326, 202168, 1 }, -- Instantly attack the target, causing 4,147 damage and healing you for 30% of your maximum health. Killing an enemy that yields experience or honor resets the cooldown of Impending Victory and makes it cost no Rage.
-    intervene                       = {  90329,   3411, 1 }, -- Run at high speed toward an ally, intercepting all melee and ranged attacks against them for 6 sec while they remain within 10 yds.
-    intimidating_shout              = {  90384,   5246, 1 }, -- Causes the targeted enemy to cower in fear, and up to 5 additional enemies within 8 yards to flee. Targets are disoriented for 8 sec.
-    leeching_strikes                = {  90371, 382258, 1 }, -- Leech increased by 3%.
-    menace                          = {  90383, 275338, 1 }, -- Intimidating Shout will knock back all nearby enemies except your primary target, and cause them all to cower in fear for 15 sec instead of fleeing.
-    overwhelming_rage               = {  90378, 382767, 1 }, -- Maximum Rage increased by 30.
-    pain_and_gain                   = {  90353, 382549, 1 }, -- When you take any damage, heal for 2.00% of your maximum health. This can only occur once every 10 sec.
-    piercing_challenge              = {  90379, 382948, 1 }, -- Champion's Spear's damage increased by 50% and its Rage generation is increased by 100%.
-    piercing_howl                   = {  90348,  12323, 1 }, -- Snares all enemies within 12 yards, reducing their movement speed by 70% for 8 sec.
-    rallying_cry                    = {  90331,  97462, 1 }, -- Lets loose a rallying cry, granting all party or raid members within 40 yards 10% temporary and maximum health for 10 sec.
-    reinforced_plates               = {  90368, 382939, 2 }, -- Stamina increased by 5% and Armor increased by 5%.
-    rumbling_earth                  = {  90374, 275339, 1 }, -- Shockwave's range increased by 6 yards and when Shockwave strikes at least 3 targets, its cooldown is reduced by 15 sec.
-    second_wind                     = {  90332,  29838, 1 }, -- Restores 6% health every 1 sec when you have not taken damage for 5 sec. While you are below 35% health, restores 1.0% health every 1 sec. The amount restored increases the closer you are to death.
-    seismic_reverberation           = {  90354, 382956, 1 }, -- If Whirlwind or Cleave hits 3 or more enemies, it hits them 1 additional time for 30% damage.
-    shattering_throw                = {  90351,  64382, 1 }, -- Hurl your weapon at the enemy, causing 7,399 Physical damage, ignoring armor, and removing any magical immunities. Deals up to 500% increased damage to absorb shields.
-    shockwave                       = {  90375,  46968, 1 }, -- Sends a wave of force in a frontal cone, causing 1,406 damage and stunning all enemies within 16 yards for 2 sec.
-    sidearm                         = {  90340, 384404, 1 }, -- Your auto-attacks have a 20% chance to hurl weapons at your target and 3 other enemies in front of you, dealing an additional 1,757 Physical damage.
-    spell_reflection                = {  90385,  23920, 1 }, -- Raise your weapon, reflecting the first spell cast on you, and reduce magic damage you take by 20% for 5 sec.
-    storm_bolt                      = {  90337, 107570, 1 }, -- Hurls your weapon at an enemy, causing 2,003 Physical damage and stunning for 4 sec.
-    thunder_clap                    = {  90343,   6343, 1 }, -- Blasts all enemies within 8 yards for 4,832 Physical damage and reduces their movement speed by 20% for 10 sec. Deals reduced damage beyond 5 targets. If you have Rend, Thunder Clap affects 5 nearby targets with Rend.
-    thunderous_roar                 = {  90359, 384318, 1 }, -- Roar explosively, dealing 17,613 Physical damage to enemies within 12 yds and cause them to bleed for 39,516 physical damage over 14 sec. Deals reduced damage beyond 5 targets.
-    thunderous_words                = {  90358, 384969, 1 }, -- Increases the duration of Thunderous Roar's Bleed effect by 2.0 sec and Thunderous Roar's Bleed effect causes enemies to take 20% increased damage from all your bleeds.
-    twohanded_weapon_specialization = {  90322, 382896, 2 }, -- While wielding two-handed weapons your damage is increased by 3% and damage taken from area of effect attacks is reduced by 2%.
-    uproar                          = {  90357, 391572, 1 }, -- Thunderous Roar's cooldown reduced by 45 sec.
-    war_machine                     = {  90328, 262231, 1 }, -- Your auto attacks generate 10% more Rage. Killing an enemy instantly generates 5 Rage, and increases your movement speed by 30% for 8 sec.
-    warlords_torment                = {  90363, 390140, 1 }, -- Activating Avatar grants 6 sec of Recklessness. The additional Rage generation of this Recklessness is reduced to 25%.
-    wild_strikes                    = {  90360, 382946, 2 }, -- Haste increased by 1% and your auto-attack critical strikes increase your auto-attack speed by 10% for 10 sec.
-    wrecking_throw                  = {  90351, 384110, 1 }, -- Hurl your weapon at the enemy, causing 7,399 Physical damage, ignoring armor. Deals up to 500% increased damage to absorb shields.
+    armored_to_the_teeth           = {  90366,  384124, 2 }, -- Gain Strength equal to $s1% of your Armor
+    avatar                         = {  90365,  107574, 1 }, -- Transform into a colossus for $s1 sec, causing you to deal $s2% increased damage and removing all roots and snares. Generates $s3 Rage
+    barbaric_training              = {  90340,  383082, 1 }, -- Slam, Cleave, and Whirlwind deal $s1% more damage and $s2% increased critical strike damage
+    battle_stance                  = {  90327,  386164, 1 }, -- A balanced combat state that increases the critical strike chance of your abilities by $s1% and reduces the duration of movement impairing effects by $s2%. Lasts until canceled
+    berserker_shout                = {  90348,  384100, 1 }, -- Go berserk, removing and granting immunity to Fear, Sap, and Incapacitate effects for $s1 sec. Also remove fear effects from group members within $s2 yds
+    bitter_immunity                = {  90356,  383762, 1 }, -- Restores $s1% health instantly and removes all diseases, poisons, and curses affecting you
+    blademasters_torment           = {  90363,  390138, 1 }, -- Activating Avatar grants $s1 sec of Sweeping Strikes and while Avatar is active the cooldown of Cleave is reduced by $s2 sec
+    bounding_stride                = {  90355,  202163, 1 }, -- Reduces the cooldown of Heroic Leap by $s1 sec and Heroic Leap also increases your movement speed by $s2% for $s3 sec
+    cacophonous_roar               = {  90383,  382954, 1 }, -- Intimidating Shout can withstand $s1% more damage before breaking
+    champions_might                = {  90323,  386284, 1 }, -- The duration of Champion's Spear is increased by $s1 sec. You deal $s2% increased critical strike damage to targets chained to your Spear
+    champions_spear                = {  90380,  376079, 1 }, -- Throw a spear at the target location, dealing $s$s2 Physical damage instantly and an additional $s3 damage over $s4 sec. Deals reduced damage beyond $s5 targets. Enemies hit are chained to the spear's location for the duration. Generates $s6 Rage
+    concussive_blows               = {  90354,  383115, 1 }, -- Cooldown of Pummel reduced by $s1 sec. Successfully interrupting an enemy increases the damage you deal to them by $s2% for $s3 sec
+    crackling_thunder              = {  95959,  203201, 1 }, -- Thunder Clap's radius is increased by $s1% and it reduces affected target's movement speed by an additional $s2%
+    cruel_strikes                  = {  90381,  392777, 2 }, -- Critical strike chance increased by $s1% and critical strike damage of Execute increased by $s2%
+    crushing_force                 = {  90347,  382764, 2 }, -- Mortal Strike deals an additional $s1% damage and deals $s2% increased critical strike damage
+    defensive_stance               = {  92537,  386208, 1 }, -- A defensive combat state that reduces all damage you take by $s1% and all damage you deal by $s2%. Lasts until canceled
+    double_time                    = {  90382,  103827, 1 }, -- Charge gains $s1 additional charge and its cooldown is reduced by $s2 sec
+    fast_footwork                  = {  90344,  382260, 1 }, -- Movement speed increased by $s1%
+    frothing_berserker             = {  90352,  392792, 1 }, -- Mortal Strike and Cleave have a $s1% chance to immediately refund $s2% of the Rage spent
+    heroic_leap                    = {  90346,    6544, 1 }, -- Leap through the air toward a target location, slamming down with destructive force to deal $s$s2 Physical damage to all enemies within $s3 yards
+    honed_reflexes                 = {  95956,  391271, 1 }, -- Cooldown of Die By the Sword, Pummel, Intervene, Spell Reflection, and Storm Bolt reduced by $s1%
+    impending_victory              = {  90326,  202168, 1 }, -- Instantly attack the target, causing $s1 damage and healing you for $s2% of your maximum health. Killing an enemy that yields experience or honor resets the cooldown of Impending Victory and makes it cost no Rage
+    intervene                      = {  90329,    3411, 1 }, -- Run at high speed toward an ally, intercepting all melee and ranged attacks against them for $s1 sec while they remain within $s2 yds
+    intimidating_shout             = {  90384,    5246, 1 }, -- Causes the targeted enemy to cower in fear and up to $s1 additional enemies within $s2 yards to flee. Targets are disoriented for $s3 sec
+    leeching_strikes               = {  90371,  382258, 1 }, -- Leech increased by $s1%
+    menace                         = {  90383,  275338, 1 }, -- Intimidating Shout will knock back all nearby enemies except your primary target and cause them all to cower in fear for $s1 sec instead of fleeing
+    overwhelming_rage              = {  90378,  382767, 1 }, -- Maximum Rage increased by $s1
+    pain_and_gain                  = {  90353,  382549, 1 }, -- When you take any damage, heal for $s1% of your maximum health. This can only occur once every $s2 sec
+    piercing_challenge             = {  90379,  382948, 1 }, -- Champion's Spear's damage increased by $s1% and its Rage generation is increased by $s2%
+    piercing_howl                  = {  90348,   12323, 1 }, -- Snares all enemies within $s1 yards, reducing their movement speed by $s2% for $s3 sec
+    rallying_cry                   = {  90331,   97462, 1 }, -- Lets loose a rallying cry, granting all party or raid members within $s1 yards $s2% temporary and maximum health for $s3 sec
+    reinforced_plates              = {  90368,  382939, 2 }, -- Stamina increased by $s1% and Armor increased by $s2%
+    rumbling_earth                 = {  90374,  275339, 1 }, -- Shockwave's range increased by $s1 yards and when it strikes at least $s2 targets its cooldown is reduced by $s3 sec
+    second_wind                    = {  90332,   29838, 1 }, -- Restores $s1% health every $s2 sec when you have not taken damage for $s3 sec. Restores $s4% health every $s5 sec while you are below $s6% health. The amount restored increases the closer you are to death
+    seismic_reverberation          = {  90354,  382956, 1 }, -- If Whirlwind or Cleave hits $s1 or more enemies it hits them $s2 additional time for $s3% damage
+    shattering_throw               = {  90351,   64382, 1 }, -- Hurl your weapon at the enemy, removing any magical immunities and causing $s$s2 Physical damage, ignoring armor. Deals up to $s3% increased damage to absorb shields
+    shockwave                      = {  90375,   46968, 1 }, -- Sends a wave of force in a frontal cone, causing $s1 damage and stunning all enemies within $s2 yards for $s3 sec
+    sidearm                        = {  90340,  384404, 1 }, -- Your auto-attacks have a $s2% chance to hurl weapons at your target and $s3 other enemy in front of you, dealing $s$s4 Physical damage
+    spell_reflection               = {  90385,   23920, 1 }, -- Raise your weapon, reflecting the first spell cast on you and reducing magic damage you take by $s1% for $s2 sec
+    storm_bolt                     = {  90337,  107570, 1 }, -- Hurls your weapon at an enemy, causing $s$s2 Physical damage and stunning for $s3 sec
+    thunder_clap                   = {  90343,    6343, 1 }, -- Blasts all enemies within $s2 yards for $s$s3 Physical damage and reduces their movement speed by $s4% for $s5 sec. Deals reduced damage beyond $s6 targets. If you have Rend, Thunder Clap affects $s7 nearby targets with Rend
+    thunderous_roar                = {  90359,  384318, 1 }, -- Roar explosively, dealing $s$s3 Physical damage to enemies within $s4 yds and cause them to bleed for $s$s5 physical damage over $s6 sec. Deals reduced damage beyond $s7 targets
+    thunderous_words               = {  90358,  384969, 1 }, -- Increases the duration of Thunderous Roar's Bleed effect by $s1 sec and Thunderous Roar's Bleed effect causes enemies to take $s2% increased damage from all your bleeds
+    twohanded_weapon_specialization = {  90322,  382896, 2 }, -- While wielding two-handed weapons your damage is increased by $s1% and damage taken from area of effect attacks is reduced by $s2%
+    uproar                         = {  90357,  391572, 1 }, -- Thunderous Roar's cooldown reduced by $s1 sec
+    war_machine                    = {  90328,  262231, 1 }, -- Your auto-attacks generate $s1% more Rage. Killing an enemy instantly generates $s2 Rage and increases your movement speed by $s3% for $s4 sec
+    warlords_torment               = {  90363,  390140, 1 }, -- Activating Avatar grants $s1 sec of Recklessness. The additional Rage generation of this Recklessness is reduced to $s2%
+    wild_strikes                   = {  90360,  382946, 2 }, -- Haste increased by $s1% and your auto-attack critical strikes increase your auto-attack speed by $s2% for $s3 sec
+    wrecking_throw                 = {  90351,  384110, 1 }, -- Hurl your weapon at the enemy, causing $s$s2 Physical damage, ignoring armor. Deals up to $s3% increased damage to absorb shields
 
     -- Arms
-    anger_management                = {  90289, 152278, 1 }, -- Every 20 Rage you spend on attacks reduces the remaining cooldown on Colossus Smash, Bladestorm, and Ravager by 1 sec.
-    battlelord                      = {  92615, 386630, 1 }, -- Overpower has a 35% chance to reset the cooldown of Mortal Strike and generate 10 Rage.
-    bladestorm                      = {  90441, 227847, 1 }, -- Become an unstoppable storm of destructive force, striking all nearby enemies for 68,785 Physical damage over 5.1 sec. Deals reduced damage beyond 8 targets. You are immune to movement impairing and loss of control effects, but can use defensive abilities and can avoid attacks.
-    bloodborne                      = {  90283, 383287, 2 }, -- Deep Wounds, Rend, and Thunderous Roar's Bleed effects deal 5% increased damage.
-    bloodletting                    = {  90438, 383154, 1 }, -- Deep Wounds, Rend and Thunderous Roar's Bleed effects last 6.0 sec longer and have a 5% increased critical strike chance. If you have Rend, Mortal Strike inflicts Rend on targets below 35% health.
-    bloodsurge                      = {  90277, 384361, 1 }, -- Damage from Deep Wounds has a chance to generate 5 Rage.
-    blunt_instruments               = {  90287, 383442, 1 }, -- Colossus Smash damage increased by 30% and its effect duration is increased by 3.0 sec.
-    cleave                          = {  90293,    845, 1 }, -- Strikes all enemies in front of you for 16,837 Physical damage, inflicting Deep Wounds. Cleave will consume your Overpower effect to deal increased damage. Deals reduced damage beyond 5 targets.
-    collateral_damage               = {  92536, 334779, 1 }, -- When Sweeping Strikes ends, your next Cleave or Whirlwind deals 25% increased damage for each ability used during Sweeping Strikes that damaged a second target.
-    colossus_smash                  = {  90290, 167105, 1 }, -- Smashes the enemy's armor, dealing 27,987 Physical damage, and increasing damage you deal to them by 30% for 13 sec.
-    critical_thinking               = {  90444, 389306, 2 }, -- Critical Strike chance increased by 1% and Execute immediately refunds 10% of the Rage spent.
-    dance_of_death                  = {  92535, 390713, 1 }, -- When an enemy dies while affected by your Bladestorm, all damage you deal is increased by 5% for the remainder of the Bladestorm and for 2 sec afterwards. When an enemy dies while affected by your Ravager, its duration is extended by 2 sec. These effects can trigger a maximum of 3 times per use of Bladestorm or Ravager.
-    deft_experience                 = {  90437, 389308, 2 }, -- Mastery increased by 1% and Tactician's chance to trigger is increased by an additional 0.5%.
-    die_by_the_sword                = {  90276, 118038, 1 }, -- Increases your parry chance by 100% and reduces all damage you take by 30% for 8 sec.
-    dreadnaught                     = {  90285, 262150, 1 }, -- Overpower causes a seismic wave, dealing 4,043 damage to all enemies in a 10 yd line. Deals reduced damage beyond 5 targets.
-    executioners_precision          = {  90445, 386634, 1 }, -- Execute causes the target to take 35% more damage from your next Mortal Strike, stacking up to 2 times.
-    exhilarating_blows              = {  90286, 383219, 1 }, -- Mortal Strike and Cleave have a 20% chance to instantly reset their own cooldowns.
-    fatality                        = {  90439, 383703, 1 }, -- Your Mortal Strikes and Cleaves against enemies above 30% health have a high chance to apply Fatal Mark. When an enemy falls below 30% health, your next Execute inflicts an additional 19,401 Physical damage per stack.
-    fervor_of_battle                = {  90272, 202316, 1 }, -- If Cleave or Whirlwind hit 2 or more targets you also Slam your primary target.
-    finishing_blows                 = {  92614, 400205, 1 }, -- Overpower generates 8 Rage when used on enemies below 35% health.
-    fueled_by_violence              = {  90275, 383103, 1 }, -- You are healed for 85% of the damage dealt by Deep Wounds.
-    ignore_pain                     = {  90269, 190456, 1 }, -- Fight through the pain, ignoring 50% of damage taken until 42,084 damage has been prevented. Repeated uses of Ignore Pain accumulate, up to 146,016 total damage prevented.
-    impale                          = {  90292, 383430, 1 }, -- Critical strike damage of your abilities is increased by 10%.
-    improved_execute                = {  90273, 316405, 1 }, -- Execute no longer has a cooldown and if your foe survives, 10% of the Rage spent is refunded.
-    improved_overpower              = {  90279, 385571, 1 }, -- Overpower has 2 charges and deals 15% more damage.
-    improved_sweeping_strikes       = {  92536, 383155, 1 }, -- Sweeping Strikes lasts 6 sec longer.
-    in_for_the_kill                 = {  90288, 248621, 1 }, -- Colossus Smash increases your Haste by 10%, or by 20% if the target is below 35% health. Lasts for the duration of Colossus Smash.
-    juggernaut                      = {  90446, 383292, 1 }, -- Execute increases Execute's damage dealt by 3% for 12 sec, stacking up to 15 times.
-    martial_prowess                 = {  90278, 316440, 1 }, -- Overpower increases the damage of your next Mortal Strike or Cleave by 15%, stacking up to 2 times.
-    massacre                        = {  90291, 281001, 1 }, -- Execute is now usable on targets below 35% health.
-    merciless_bonegrinder           = {  90266, 383317, 1 }, -- Whirlwind and Cleave deal 50% increased damage during Ravager or for 9 sec after Bladestorm ends.
-    mortal_strike                   = {  90270,  12294, 1 }, -- A vicious strike that deals 44,886 Physical damage and reduces the effectiveness of healing on the target by 50% for 10 sec.
-    overpower                       = {  90271,   7384, 1 }, -- Overpower the enemy, dealing 23,616 Physical damage. Cannot be blocked, dodged, or parried. Increases the damage of your next Mortal Strike or Cleave by 15%, stacking up to 2 times
-    ravager                         = {  90441, 228920, 1 }, -- Throws a whirling weapon at the target location that chases nearby enemies, inflicting 50,408 Physical damage to all enemies over 10.3 sec. Deals reduced damage beyond 8 targets. Generates 10 Rage each time it deals damage.
-    rend                            = {  90284,    772, 1 }, -- Wounds the target, causing 8,757 Physical damage instantly and an additional 24,031 Bleed damage over 21 sec. Thunder Clap affects 5 nearby targets with Rend.
-    sharpened_blades                = {  90447, 383341, 1 }, -- Your Mortal Strike, Cleave and Execute critical strike damage is increased by 10% and your Execute has a 5% increased critical hit chance.
-    skullsplitter                   = {  90281, 260643, 1 }, -- Bash an enemy's skull, dealing 14,234 Physical damage. Skullsplitter causes your Rend and Deep Wounds on the target to bleed out 100% faster for 10 sec. Generates 15 Rage.
-    spiteful_serenity               = {  90289, 400314, 1 }, -- Colossus Smash and Avatar's base durations are increased by 100% but their damage bonuses are reduced by 40%.
-    storm_of_swords                 = {  90267, 385512, 1 }, -- Cleave and Whirlwind have a 30% chance to make your next Cleave or Whirlwind cost 100% less Rage.
-    storm_wall                      = {  90269, 388807, 1 }, -- Whenever you Parry, you heal for 5.00% of your maximum health. Can only occur once per second.
-    strength_of_arms                = {  90285, 400803, 1 }, -- Overpower deals 15% additional damage, has 10% increased critical strike chance, and deals 10% increased critical strike damage.
-    sudden_death                    = {  90274,  29725, 1 }, -- Your attacks have a chance to make your next Execute cost no Rage, be usable on any target regardless of their health, and deal damage as if you spent 40 Rage.
-    tactician                       = {  90282, 184783, 1 }, -- You have a 2.00% chance per Rage spent on attacks to reset the remaining cooldown on Overpower.
-    test_of_might                   = {  90288, 385008, 1 }, -- When Colossus Smash expires, your Strength is increased by 1% for every 10 Rage you spent on attacks during Colossus Smash. Lasts 12 sec.
-    unhinged                        = {  90440, 386628, 1 }, -- Every other time Bladestorm or Ravager deal damage, you automatically cast a Mortal Strike at your target or random nearby enemy.
-    valor_in_victory                = {  90442, 383338, 1 }, -- Increases Versatility by 2% and reduces the cooldown of Die by the Sword by 30.0 sec.
-    warbreaker                      = {  90287, 262161, 1 }, -- Smash the ground and shatter the armor of all enemies within 10 yds, dealing 27,987 Physical damage and increasing damage you deal to them by 30% for 13 sec.
+    anger_management               = {  90289,  152278, 1 }, -- Every $s1 Rage you spend on attacks reduces the remaining cooldown on Warbreaker, Bladestorm, and Ravager by $s2 sec
+    battlelord                     = {  92615,  386630, 1 }, -- Overpower has a $s1% chance to reset the cooldown of Mortal Strike and generate $s2 Rage
+    bladestorm                     = {  90441,  227847, 1 }, -- Become an unstoppable storm of destructive force, striking all nearby enemies for $s$s2 Physical damage over $s3 sec. Deals reduced damage beyond $s4 targets. You are immune to movement impairing and loss of control effects, but can use defensive abilities and can avoid attacks
+    bloodborne                     = {  90283,  383287, 2 }, -- Your Bleed effects deal $s1% increased damage
+    bloodletting                   = {  90438,  383154, 1 }, -- Deep Wounds, Rend and Thunderous Roar's Bleed effects last $s1 sec longer and have a $s2% increased critical strike chance. If you have Rend, Mortal Strike inflicts Rend on targets below $s3% health
+    bloodsurge                     = {  90277,  384361, 1 }, -- Damage from Deep Wounds has a chance to generate $s1 Rage
+    blunt_instruments              = {  90287,  383442, 1 }, -- Colossus Smash damage increased by $s1% and its effect duration is increased by $s2 sec
+    cleave                         = {  90293,     845, 1 }, -- Strikes all enemies in front of you for $s$s2 Physical damage, inflicting Deep Wounds. Cleave will consume your Overpower effect to deal increased damage. Deals reduced damage beyond $s3 targets
+    collateral_damage              = {  92536,  334779, 1 }, -- When Sweeping Strikes ends, your next Cleave or Whirlwind deals $s1% increased damage for each ability used during Sweeping Strikes that damaged a second target
+    colossus_smash                 = {  90290,  167105, 1 }, -- Smashes the enemy's armor, dealing $s$s2 Physical damage and increasing damage you deal to them by $s3% for $s4 sec
+    critical_thinking              = {  90444,  389306, 2 }, -- Critical Strike chance increased by $s1% and Execute immediately refunds $s2% of the Rage spent
+    dance_of_death                 = {  92535,  390713, 1 }, -- When an enemy dies while affected by your Bladestorm, all damage you deal is increased by $s1% for the remainder of the Bladestorm and for $s2 sec afterwards. When an enemy dies while affected by your Ravager, its duration is extended by $s3 sec. These effects can trigger a maximum of $s4 times per use of Bladestorm or Ravager
+    deft_experience                = {  90437,  389308, 2 }, -- Mastery increased by $s1% and Tactician's chance to trigger is increased by an additional $s2%
+    die_by_the_sword               = {  90276,  118038, 1 }, -- Increases your parry chance by $s1% and reduces all damage you take by $s2% for $s3 sec
+    dreadnaught                    = {  90285,  262150, 1 }, -- Overpower causes a seismic wave, dealing $s1 damage to all enemies in a $s2 yd line. Deals reduced damage beyond $s3 targets
+    executioners_precision         = {  90445,  386634, 1 }, -- Execute causes the target to take $s1% more damage from your next Mortal Strike, stacking up to $s2 times
+    exhilarating_blows             = {  90286,  383219, 1 }, -- Mortal Strike and Cleave have a $s1% chance to instantly reset their own cooldowns
+    fatality                       = {  90439,  383703, 1 }, -- Mortal Strike and Cleave have a high chance to apply Fatal Mark to enemies above $s2% health. When an enemy with Fatal Mark is below $s3% health, your next Execute causes the Fatal Mark to deal $s$s4 Physical damage per stack
+    fervor_of_battle               = {  90272,  202316, 1 }, -- If Cleave or Whirlwind hits $s1 or more targets you also Slam your primary target
+    finishing_blows                = {  92614,  400205, 1 }, -- Overpower generates $s1 Rage when used on enemies below $s2% health
+    fueled_by_violence             = {  90275,  383103, 1 }, -- You are healed for $s1% of the damage dealt by Deep Wounds
+    ignore_pain                    = {  90269,  190456, 1 }, -- Fight through the pain, ignoring $s2% of damage taken until $s3 damage has been prevented. Repeated uses of Ignore Pain accumulate, up to $s$s4 total damage prevented
+    impale                         = {  90292,  383430, 1 }, -- Critical strike damage of your abilities is increased by $s1%
+    improved_execute               = {  90273,  316405, 1 }, -- Execute no longer has a cooldown and if your foe survives, $s1% of the Rage spent is refunded
+    improved_overpower             = {  90279,  385571, 1 }, -- Overpower has $s1 charges and deals $s2% more damage
+    improved_sweeping_strikes      = {  92536,  383155, 1 }, -- Sweeping Strikes lasts $s1 sec longer
+    in_for_the_kill                = {  90288,  248621, 1 }, -- Warbreaker increases your Haste by $s1%, or by $s2% if any target is below $s3% health. Lasts for the duration of Warbreaker
+    juggernaut                     = {  90446,  383292, 1 }, -- Execute increases Execute's damage dealt by $s1% for $s2 sec, stacking up to $s3 times
+    martial_prowess                = {  90278,  316440, 1 }, -- Overpower increases the damage of your next Mortal Strike or Cleave by $s1%, stacking up to $s2 times
+    massacre                       = {  90291,  281001, 1 }, -- Execute is usable on targets below $s1% health
+    merciless_bonegrinder          = {  90266,  383317, 1 }, -- Whirlwind and Cleave deal $s1% increased damage during Ravager or for $s2 sec after Bladestorm ends
+    mortal_strike                  = {  90270,   12294, 1 }, -- A vicious strike that deals $s$s2 Physical damage and reduces the effectiveness of healing on the target by $s3% for $s4 sec
+    overpower                      = {  90271,    7384, 1 }, -- Overpower the enemy, dealing $s$s2 Physical damage. Cannot be blocked, dodged, or parried. Increases the damage of your next Mortal Strike by $s3%, stacking up to $s4 times
+    ravager                        = {  90441,  228920, 1 }, -- Throws a whirling weapon at the target location that chases nearby enemies, inflicting $s$s2 Physical damage to all enemies over $s3 sec. Deals reduced damage beyond $s4 targets. Generates $s5 Rage each time it deals damage
+    rend                           = {  90284,     772, 1 }, -- Wounds the target, causing $s$s3 Physical damage instantly and an additional $s$s4 Bleed damage over $s5 sec. Thunder Clap affects $s6 nearby targets with Rend
+    sharpened_blades               = {  90447,  383341, 1 }, -- Your Mortal Strike, Cleave and Execute critical strike damage is increased by $s1% and your Execute has a $s2% increased critical hit chance
+    skullsplitter                  = {  90281,  260643, 1 }, -- Bash an enemy's skull, dealing $s$s2 Physical damage. Skullsplitter causes your Rend and Deep Wounds on the target to bleed out $s3% faster for $s4 sec. Generates $s5 Rage
+    spiteful_serenity              = {  90289,  400314, 1 }, -- Colossus Smash and Avatar's base durations are increased by $s1% but their damage bonuses are reduced by $s2%
+    storm_of_swords                = {  90267,  385512, 1 }, -- Cleave and Whirlwind have a $s1% chance to make your next Cleave or Whirlwind cost $s2% less Rage
+    storm_wall                     = {  90269,  388807, 1 }, -- Whenever you Parry, you heal for $s1% of your maximum health. This effect cannot occur more than once every $s2 sec
+    strength_of_arms               = {  90285,  400803, 1 }, -- Overpower deals $s1% additional damage, has $s2% increased critical strike chance, and deals $s3% increased critical strike damage
+    sudden_death                   = {  90274,   29725, 1 }, -- Your attacks have a chance to make your next Execute cost no Rage, be usable on any target regardless of their health, and deal damage as if you spent $s1 Rage
+    tactician                      = {  90282,  184783, 1 }, -- You have a $s1% chance per Rage spent on attacks to reset the remaining cooldown on Overpower
+    test_of_might                  = {  90288,  385008, 1 }, -- When Warbreaker expires, your Strength is increased by $s1% for every $s2 Rage you spent on attacks during Warbreaker. Lasts $s3 sec
+    unhinged                       = {  90440,  386628, 1 }, -- Every other time Bladestorm or Ravager deal damage, you automatically cast a Mortal Strike at your target or random nearby enemy
+    valor_in_victory               = {  90442,  383338, 1 }, -- Increases Versatility by $s1% and reduces the cooldown of Die by the Sword by $s2 sec
+    warbreaker                     = {  90287,  262161, 1 }, -- Smash the ground and shatter the armor of all enemies within $s2 yds, dealing $s$s3 Physical damage and increasing damage you deal to them by $s4% for $s5 sec
 
     -- Colossus
-    arterial_bleed                  = {  94799, 440995, 1 }, -- Colossal Might increases the damage of your Rend and Deep Wounds by 5% per stack.
-    boneshaker                      = {  94789, 429639, 1 }, -- Shockwave's stun duration is increased by 1 sec and reduces the movement speed of affected enemies by 40% for 3 sec after the stun ends.
-    colossal_might                  = {  94819, 429634, 1 }, -- Colossal Might increases damage dealt by your next Demolish by 10%, stacking up to 5 times. Mortal Strike grants a stack of Colossal Might and Cleave grants a stack of Colossal Might when it strikes 3 or more targets.
-    demolish                        = {  94818, 436358, 1, "colossus" }, -- Unleash a series of precise and powerful strikes against your target, dealing 114,663 damage to it, and 67,848 damage to enemies within 8 yds of it. Deals reduced damage beyond 8 targets. While channeling Demolish, you take 10% less damage and are immune to stuns, knockbacks, and forced movement effects. You can block, parry, dodge, and use certain defensive abilities while channeling Demolish.
-    dominance_of_the_colossus       = {  94793, 429636, 1 }, -- Colossal Might now stacks up to 10 times. If you would gain a stack of Colossal Might and are at max stacks, the cooldown of Demolish is reduced by 2 sec. Enemies affected by Demolish take up to 10% more damage from you and deal up to 10% less damage to you for 10 sec based on the number of stacks of Colossal Might consumed by Demolish.
-    earthquaker                     = {  94789, 440992, 1 }, -- Shockwave also knocks enemies into the air, and its cooldown is reduced by 5 sec.
-    martial_expert                  = {  94812, 429638, 1 }, -- Critical strike damage of your abilities is increased by 10% and the amount of damage blocked by your critical blocks is increased by 20%.
-    mountain_of_muscle_and_scars    = {  94806, 429642, 1 }, -- You deal 5% more damage and take 5.0% less damage. Size increased by 5%.
-    no_stranger_to_pain             = {  94815, 429644, 1 }, -- Damage prevented by each use of Ignore Pain is increased by 20%.
-    one_against_many                = {  94799, 429637, 1 }, -- Shockwave, Cleave, and Whirlwind deal 5% more damage per target affected up to 5.
-    practiced_strikes               = {  94796, 429647, 1 }, -- Mortal Strike and Cleave damage increased by 20%.
-    precise_might                   = {  94794, 431548, 1 }, -- Mortal Strike critical strikes grant an additional stack of Colossal Might.
-    tide_of_battle                  = {  94811, 429641, 1 }, -- Colossal Might increases the damage of your Overpower by 5% per stack.
-    veteran_vitality                = {  94815, 440993, 1 }, -- When your health is brought below 35%, you gain a Second Wind, healing you for 12% of your max health over 2 sec. This effect cannot occur more than once every 60 sec.
+    arterial_bleed                 = {  94799,  440995, 1 }, -- Colossal Might increases the damage of your Rend and Deep Wounds by $s1% per stack
+    boneshaker                     = {  94789,  429639, 1 }, -- Shockwave's stun duration is increased by $s1 sec and reduces the movement speed of affected enemies by $s2% for $s3 sec after the stun ends
+    colossal_might                 = {  94819,  429634, 1 }, -- Colossal Might increases damage dealt by your next Demolish by $s1%, stacking up to $s2 times. Mortal Strike grants a stack of Colossal Might and Cleave grants a stack of Colossal Might when it strikes $s3 or more targets
+    demolish                       = {  94818,  436358, 1 }, -- Unleash a series of precise and powerful strikes against your target, dealing $s1 damage to it, and $s2 damage to enemies within $s3 yds of it. Deals reduced damage beyond $s4 targets. While channeling Demolish, you take $s5% less damage and are immune to stuns, knockbacks, and forced movement effects. You can block, parry, dodge, and use certain defensive abilities while channeling Demolish
+    dominance_of_the_colossus      = {  94793,  429636, 1 }, -- Colossal Might now stacks up to $s1 times. If you would gain a stack of Colossal Might and are at max stacks, the cooldown of Demolish is reduced by $s2 sec. Enemies affected by Demolish take up to $s3% more damage from you and deal up to $s4% less damage to you for $s5 sec based on the number of stacks of Colossal Might consumed by Demolish
+    earthquaker                    = {  94789,  440992, 1 }, -- Shockwave also knocks enemies into the air and its cooldown is reduced by $s1 sec
+    martial_expert                 = {  94812,  429638, 1 }, -- Critical strike damage of your abilities is increased by $s1% and the amount of damage blocked by your critical blocks is increased by $s2%
+    mountain_of_muscle_and_scars   = {  94806,  429642, 1 }, -- You deal $s1% more damage and take $s2% less damage. Size increased by $s3%
+    no_stranger_to_pain            = {  94815,  429644, 1 }, -- Damage prevented by each use of Ignore Pain is increased by $s1%
+    one_against_many               = {  94799,  429637, 1 }, -- Shockwave, Cleave, and Whirlwind deal $s1% more damage per target affected up to $s2
+    practiced_strikes              = {  94796,  429647, 1 }, -- Mortal Strike and Cleave damage increased by $s1%
+    precise_might                  = {  94794,  431548, 1 }, -- Mortal Strike critical strikes grant an additional stack of Colossal Might
+    tide_of_battle                 = {  94811,  429641, 1 }, -- Colossal Might increases the damage of your Overpower by $s1% per stack
+    veteran_vitality               = {  94815,  440993, 1 }, -- When your health is brought below $s1%, you gain a Second Wind, healing you for $s2% of your max health over $s3 sec. This effect cannot occur more than once every $s4 sec
 
     -- Slayer
-    brutal_finish                   = {  94786, 446085, 1 }, -- Your next Mortal Strike after Bladestorm ends deals 50% additional damage.
-    culling_cyclone                 = {  94786, 444778, 1 }, -- Each strike of Bladestorm deals an additional 10% damage evenly split across all targets.
-    death_drive                     = {  94813, 444770, 1 }, -- You heal for 15% of damage dealt by Sudden Death.
-    fierce_followthrough            = {  94787, 444773, 1 }, -- Mortal Strike critical strikes increase the damage of your next Mortal Strike by 20%.
-    imminent_demise                 = {  94788, 444769, 1 }, -- Every 3 Slayer's Strikes you gain Sudden Death. Using Sudden Death accelerates your next Bladestorm, striking 1 additional time (max 3). Bladestorm's total duration is unchanged.
-    opportunist                     = {  94787, 444774, 1 }, -- When Overpower has its cooldown reset by Tactician, your next Overpower deals 25% additional damage and 25% additional critical damage.
-    overwhelming_blades             = {  94810, 444772, 1 }, -- Each strike of Bladestorm applies Overwhelmed to all enemies affected, increasing damage you deal to them by 1% for 20 sec, max 10 stacks.
-    reap_the_storm                  = {  94809, 444775, 1 }, -- Mortal Strike and Cleave when it hits 3 or more targets have a 20% chance to cause you to unleash a flurry of steel, striking all nearby enemies for 20,067 damage and applying Overwhelmed. Deals reduced damage beyond 8 targets.
-    relentless_pursuit              = {  94795, 444776, 1 }, -- Charge grants you 70% movement speed for 3 sec. Charge removes all movement impairing effects, this effect cannot occur more than once every 30 sec.
-    show_no_mercy                   = {  94784, 444771, 1 }, -- Marked for Execution increases the critical strike chance and critical strike damage of your next Execute on the target by 15%.
-    slayers_dominance               = {  94814, 444767, 1, "slayer" }, -- Your attacks against your primary target have a high chance to overwhelm their defenses and trigger a Slayer's Strike, dealing 23,443 damage and applying Marked for Execution, increasing the damage they take from your next Execute by 15%. Stacks 3 times.
-    slayers_malice                  = {  94801, 444779, 1 }, -- Overpower damage increased by 30%.
-    unrelenting_onslaught           = {  94820, 444780, 1 }, -- When you Execute a target that you've Marked for Execution, you both reduce the cooldown of Bladestorm by 5 sec and apply 2 stacks of Overwhelmed to the target per stack of Marked for Execution consumed. You can now use Pummel and Storm Bolt while Bladestorming.
-    vicious_agility                 = {  94795, 444777, 1 }, -- Heroic Leap reduces the cooldown of Charge by 5 sec and Charge reduces the cooldown of Heroic Leap by 2 sec.
+    brutal_finish                  = {  94786,  446085, 1 }, -- Your next Mortal Strike after Bladestorm ends deals $s1% additional damage
+    culling_cyclone                = {  94786,  444778, 1 }, -- Each strike of Bladestorm deals an additional $s1% damage evenly split across all targets
+    death_drive                    = {  94813,  444770, 1 }, -- You heal for $s1% of damage dealt by Sudden Death
+    fierce_followthrough           = {  94787,  444773, 1 }, -- Mortal Strike critical strikes increase the damage of your next Mortal Strike by $s1%
+    imminent_demise                = {  94788,  444769, 1 }, -- Every $s1 Slayer's Strikes you gain Sudden Death. Using Sudden Death accelerates your next Bladestorm, striking $s2 additional time (max $s3). Bladestorm's total duration is unchanged
+    opportunist                    = {  94787,  444774, 1 }, -- When Overpower has its cooldown reset by Tactician, your next Overpower deals $s1% additional damage and $s2% additional critical damage
+    overwhelming_blades            = {  94810,  444772, 1 }, -- Each strike of Bladestorm applies Overwhelmed to all enemies affected, increasing damage you deal to them by $s1% for $s2 sec, max $s3 stacks
+    reap_the_storm                 = {  94809,  444775, 1 }, -- Mortal Strike and Cleave when it hits $s2 or more targets have a $s3% chance to cause you to unleash a flurry of steel, striking all nearby enemies for $s$s4 Physical damage and applying Overwhelmed. Deals reduced damage beyond $s5 targets
+    relentless_pursuit             = {  94795,  444776, 1 }, -- Charge increases your movement speed by $s1% for $s2 sec. Charge removes all movement impairing effects, this effect cannot occur more than once every $s3 sec
+    show_no_mercy                  = {  94784,  444771, 1 }, -- Marked for Execution increases the critical strike chance and critical strike damage of your next Execute on the target by $s1%
+    slayers_dominance              = {  94814,  444767, 1 }, -- Your attacks against your primary target have a high chance to overwhelm their defenses and trigger a Slayer's Strike, dealing $s$s2 Physical damage and applying Marked for Execution, increasing the damage they take from your next Execute by $s3%. Stacks $s4 times
+    slayers_malice                 = {  94801,  444779, 1 }, -- Overpower damage increased by $s1%
+    unrelenting_onslaught          = {  94820,  444780, 1 }, -- When you Execute a target that you've Marked for Execution, you both reduce the cooldown of Bladestorm by $s1 sec and apply $s2 stacks of Overwhelmed to the target per stack of Marked for Execution consumed. You can use Pummel and Storm Bolt while Bladestorming
+    vicious_agility                = {  94795,  444777, 1 }, -- Heroic Leap reduces the cooldown of Charge by $s1 sec and Charge reduces the cooldown of Heroic Leap by $s2 sec
 } )
-
 
 -- PvP Talents
 spec:RegisterPvpTalents( {
-    battlefield_commander = 5630, -- (424742) Your Shout abilities have additional effects.  Battle Shout: Increases Stamina by 3%.  Piercing Howl: Radius increased by 50%  Berserker Shout: Range increased by 8 yds.  Intimidating Shout: Cooldown reduced by 15 sec.  Rallying Cry: Removes movement impairing effects and grants 30% movement speed to allies.  Thunderous Roar: Targets receive 5% more damage from all sources while bleeding.
-    berserker_roar        = 5701, -- (1219201) Go berserk, removing and granting immunity to Fear, Sap, and Incapacitate effects for 6 sec. Also reduces the duration of the next crowd control effect within 10 sec by 50% on group members within 40 yds.
-    demolition            = 5372, -- (329033) Reduces the cooldown of your Shattering Throw or Wrecking Throw by 50% and increases its damage to absorb shields by an additional 250%.
-    disarm                = 3534, -- (236077) Disarm the enemy's weapons and shield for 5 sec. Disarmed creatures deal significantly reduced damage.
-    dragon_charge         = 5679, -- (206572) Run at high speed at a distance in front of you. All enemies in your path will take 4,920 Physical damage and be knocked back.
-    duel                  =   34, -- (236273) You challenge the target to a duel. While challenged, all damage you and the target deal to all targets other than each other is reduced by 50%. Lasts 12 sec.
-    master_and_commander  =   28, -- (235941) Cooldown of Rallying Cry reduced by 120 sec.
-    rebound               = 5547, -- (213915) Spell Reflection reflects the next 2 incoming spells cast on you and reflected spells deal 100% extra damage to the attacker. Spell Reflection's cooldown is increased by 10 sec.
-    safeguard             = 5625, -- (424654) Intervene now has 2 charges and reduces the ally's damage taken by 20% for 5 sec. Intervene's cooldown is increased by 10 sec.
-    sharpen_blade         =   33, -- (1219165) Colossus Smash causes your next Mortal Strike to deal 15% increased damage and reduce healing taken by 50% for 4 sec.
-    storm_of_destruction  =   31, -- (236308) Bladestorm, Ravager, and Demolish now snare all targets you hit by 60% for 6 sec and decrease their healing taken by 50% for 10 sec.
+    battlefield_commander          = 5630, -- (424742) Your Shout abilities have additional effects.  Battle Shout: Increases Stamina by $s3%.  Piercing Howl: Radius increased by $s6%  Berserker Shout: Range increased by $s9 yds.  Intimidating Shout: Cooldown reduced by $s12 sec.  Rallying Cry: Removes movement impairing effects and grants $s15% movement speed to allies.  Thunderous Roar: Targets receive $s18% more damage from all sources while bleeding
+    berserker_roar                 = 5701, -- (1227751) Go berserk, removing and granting immunity to Fear, Sap, and Incapacitate effects for $s1 sec. Also reduces the duration of the next crowd control effect within $s2 sec by $s3% on group members within $s4 yds
+    demolition                     = 5372, -- (329033) Reduces the cooldown of your Shattering Throw or Wrecking Throw by $s1% and increases its damage to absorb shields by an additional $s2%
+    disarm                         = 3534, -- (236077) Disarm the enemy's weapons and shield for $s1 sec. Disarmed creatures deal significantly reduced damage
+    dragon_charge                  = 5679, -- (206572) Run at high speed at a distance in front of you. All enemies in your path will take $s$s2 Physical damage and be knocked back
+    duel                           =   34, -- (236273) You challenge the target to a duel. While challenged, all damage you and the target deal to all targets other than each other is reduced by $s1%. Lasts $s2 sec
+    master_and_commander           =   28, -- (235941) Cooldown of Rallying Cry reduced by $s1 sec
+    rebound                        = 5547, -- (213915) Spell Reflection reflects the next $s1 incoming spells cast on you and reflected spells deal $s2% extra damage to the attacker. Spell Reflection's cooldown is increased by $s3 sec
+    safeguard                      = 5625, -- (424654) Intervene now has $s1 charges and reduces the ally's damage taken by $s2% for $s3 sec. Intervene's cooldown is increased by $s4 sec
+    sharpen_blade                  =   33, -- (1219165) Colossus Smash causes your next Mortal Strike to deal $s1% increased damage and reduce healing taken by $s2% for $s3 sec
+    storm_of_destruction           =   31, -- (236308) Bladestorm, Ravager, and Demolish now snare all targets you hit by $s1% for $s2 sec and decrease their healing taken by $s3% for $s4 sec
 } )
-
 
 -- Auras
 spec:RegisterAuras( {
@@ -556,6 +571,22 @@ spec:RegisterAuras( {
 
 spec:RegisterGear({
     -- The War Within
+    tww3 = {
+        items = { 237610, 237608, 237613, 237611, 237609 },
+        auras = {
+            -- Colossus
+            critical_conclusion = {
+                id = 1239144,
+                duration = 12, -- 8 for arms?
+                max_stack = 1
+            },
+            deeper_wounds = {
+                id = 1239153,
+                duration = 8,
+                max_stack = 1
+            },
+        }
+    },
     tww2 = {
         items = { 229235, 229233, 229238, 229236, 229234 },
         auras = {
@@ -756,8 +787,6 @@ spec:RegisterStateExpr( "cycle_for_execute", function ()
     if active_enemies == 1 or target.health_pct < ( talent.massacre.enabled and 35 or 20 ) or not settings.cycle or buff.execute_ineligible.down or buff.sudden_death.up then return false end
     return Hekili:GetNumTargetsBelowHealthPct( talent.massacre.enabled and 35 or 20, false, max( settings.cycle_min, offset + delay ) ) > 0
 end )
-
-
 
 -- Abilities
 spec:RegisterAbilities( {
@@ -1166,6 +1195,7 @@ spec:RegisterAbilities( {
 
         handler = function ()
             applyDebuff ( "target", "hamstring" )
+            setCooldown( "global_cooldown", 0.75 )
         end,
     },
 
@@ -1306,13 +1336,15 @@ spec:RegisterAbilities( {
             removeBuff( "overpower" )
             removeBuff( "executioners_precision" )
             removeBuff( "battlelord" )
-            if set_bonus.tier30_4pc > 0 then removeBuff( "crushing_advance" ) end
-            -- Patch 10.1 adds auto Rend to target using MS with talent under 35% HP
+            if talent.dominance_of_the_colossus.enabled and buff.colossal_might.stack == 10 then reduceCooldown( "demolish", 2 ) end
+            if talent.colossal_might.enabled then addStack( "colossal_might" ) end
+            if set_bonus.tww3_colossus >= 4 then removeStack( "critical_conclusion" ) end
             if talent.rend.enabled and target.health.pct < 35 and talent.bloodletting.enabled then
                 applyDebuff ( "target", "rend" )
             end
-            if talent.dominance_of_the_colossus.enabled and buff.colossal_might.stack == 10 then reduceCooldown( "demolish", 2 ) end
-            if talent.colossal_might.enabled then addStack( "colossal_might" ) end
+
+            if set_bonus.tier30_4pc > 0 then removeBuff( "crushing_advance" ) end
+
         end,
     },
 
@@ -1812,9 +1844,6 @@ spec:RegisterSetting( "heroic_charge", false, {
     width = "full",
 } )
 
-
-local LSR = LibStub( "SpellRange-1.0" )
-
 spec:RegisterRanges( "hamstring", "mortal_strike", "execute", "storm_bolt", "charge", "heroic_throw", "taunt" )
 
 spec:RegisterRangeFilter( strformat( "Can %s but cannot %s (8 yards)", Hekili:GetSpellLinkWithTexture( spec.abilities.taunt.id ), Hekili:GetSpellLinkWithTexture( spec.abilities.charge.id ) ), function()
@@ -1838,6 +1867,5 @@ spec:RegisterOptions( {
 
     package = "Arms",
 } )
-
 
 spec:RegisterPack( "Arms", 20250308, [[Hekili:L3vBZTnos6FlPsnkst8OisBL4SLLQAVPUpmPUAUp4P29BsIwI2IRPi1rsLeVLk9B)aaFdV0Ddqk5SZTxnv5XXeOrJgD)0VaaYfEl(Jf3VjOiCXV7pXF6KRNC74jE3mzYTlUV4L9HlUFFW6NdEI9ljb7y)8VMTlN)hFjonydVZ5PhYwZEW2II95)Lp8HNIk2E4HXRt39H8ODhIdkIstwNf8yb)FV(dlU)HdrXf)wYIhag5R)8u2ihCOyBA2I7VVHa)kNaSbjAZMWYEgMVEX98E(ltU(xMC7F50Q)4V)3pT6(WG80KtR8pT6WEo5p9LtFPSz()I)hzn7(xswFA13ySj73J29RlUpokVixmxIdEjmBzEb7F87crtysWdXHBw8FS4(1zrfHzrbSXoTyCwyYg2p2feLKFA1DZoT6P1BgVl47mUFnNJxCpVjlkytpoHQ)JmHtYMWS0d5lZsdYKhbwtVgDmxNMgVj9BjmbBCAEoR757cY3QYctpT64XtR2e(WHhFuVLh23YfbFnOGn4Sr8g8zjcvkhdXZkjJcLxVny3E2VXA)(WYHy65nPmLRSH9PqbP)OSOvLiAs2pj3YVfK9qwyWZH6Y)BrzvX89FC4j2aNWupbzXtR(zHI3GtRkcIdtkK7qfvLKE5h4kZl3eguSDCEbZo70Qzcca3e0H8ALL9DbzphUz5JPzld)E46d8PSe5VUvmu(4q(e)Z0t8097tZkoKWmuuwTt)Ay2(0VvUy4nrwgVJ1HGyMTuw0ZHAIzpCBRHNwzvRyU28)MY5Ft)AxEj7ZikRf8o2ofFioGbdvKMTtmPuSZZF(qCC((4OIcdTmVRLBzRmuRveMMGaq3Ac94HB79gcLuqvepvJT4WGVASUQyLXqt3P3algyTsuf1mXFz5dPXfl4)NKL()xfPMcu7gf5SgEQkxGV8MfeTzz4x5RVbB2KpoI5tC(PvmfcaNaVkWOUae8z5gUjCxkZvS(qQcRqAx5j3YAvxT247KTh(YlPkLaHykGD4n0ggY60bPH0k1mlxotSjmC)YVLYusZR5fdZZADAk6ipzm0(xUooyFJ(UBMgkZ1kLma12gPX3ytKOKNQ0qY1ARIUzTvYzRusBw9zNThuvoHbfXxjRaGpKSLn)d3OgJq1d3fMTokompNH)Le(uwexYBcud5lYv9xfvw9fEctbj)Mmd8DrpTTqkqdVjIiHg6KhwFnx4uT9tmx3aOg0UmRKMByQgByU64SQHmunAMPUcIP6yefs5tawqLsziFKoH39z74D(kkOsAjAntb68BBJYI)gttZaLQkdjxXOCdBPRUDjXwUiEpTQhAZh(hDcs6toJZCRvyglrWRKjbpjUbvPyeTBxucZ0G9ODr5H1gW31KwbEMpIMqLSJPYPbKjQgjbSz5esZTr9KAyfhRMYIcKkaiGORuHeRG5OcuGJ1IXOy4koa3InTRWyBY4lmlF5(SW1r5rTP)DNw6PiTwXnevwLYZe5vyCyy7sevaVcYCy6Xcn2I4hDgT)toH2FRRO9DgdhbCwdcNYVHVAMQMPP5BrjSRPPvpTiDzWPYxdxgMWWHcZllfIeT1JsSGk0wlbPRyR)qCA6M4WIcg1n1sQJGVVX)(NdpqGEk7P3huVzw8azT4z90tc4iMXedc8UBMqbTqu5aR1qvjWtcvrxaMNvdmxh3u56yRGIdQ9MoHBxRDhuuehgNMTrXvNtC18tRM0pxvnI)ppbdWf3hrzN5r6FZe39wbRHm1jW6p6wejFYkuDBeY))qiV(JJ1J9Tah58ITVfF88MuuGZ9PIfua0Nl0R99TORaWdDeJPb5ZH6eywPFIM6nvuH)rDd7eegG2trfw3mB(ASKMala7Iig(6(mgcvEUri7GX62UIj)ezG(Hsg9nbTb5OO2LJCNBGXVDkr(pDQwPnL6PBAhW(fPCozZ)YDT(xCs(xjMEmkmBDilpO440VvSLbi(0wB5wm1QFJovdjCDihJlFt4JbhITS1jfr7QKstgxHpVJXx7e5vX0Ycswhkm0Uvben7jlvDMJ50OoWPUC8ie2Z3wHFZEUOhpYl34sfflPQyUpv8)lO2OMcoZYRJE5qhKlChYqIxxirOd72fgd5JRzshehVS8FSKFsckppbllpUeFnGnuSEKd5ZYjkW0OtEoSi3rpskgcQaI8LrzJ6PsWvbzRdscxYuuy2RfnUO6Gdw(OlOpnR0oKX8fW8L)JdBEAx1yIV7GxOX8HGNwM(4s2tx)CoTJtn9lUa8wj4IMqi0ulRuQ4wpmP5YnrLY66(wRpuH7fUC)2G8q7KfqBxA17bg4zy2Zm1xlELThHLi0WLpEi7flU9StQhJYcfKZI7p7uIJ1WwszlSCtfloDQR9tv6zko0c0c4EUiGBU2YAorLIv7qcQfPYo1b5QbLiRFzDmtTqOIKlgpPH2TzaScem)zKi0zlVK9hJXj9vAks3P1xyx41ZyqlS4xTnWrNeq9sHsAtv4Dshf8CvNSmfCqJslNw(aGdC2rj2RGkv9X4RwHYhhqeNz79OwfKfpw20Dpe0gMvRtiEjzwMVn9qHwaEcqYI0NEkMrqbYNwFeHDP1jDOWugYzEOumm1Iv(VfFOnMIXfEJJYhxWd5zBzU9mq2K8DvfnM1p1Gqw6X0bwhFytiuarDyC97446lpU6qzvJB0JkifTtrMo0Yd5Hl5EzAYjQ9XnXoS5qM4SMEA1pjfrrLh52hwgZ6OYJGAw0(Y56)jFkguW1OdAiFElDUIfJB0xJ2WTcE4fwJkj7Pv)gJNIkExox7NjKoTIXUNwLKYcut4TFtyg)xloKXgBpgzcJ5bmu)xybNpgELk)LK1ORfl5uzX9SE3S44bfHPKSfIsMRtLJkW6Gp96GF)xhiNq6i7DqjvxZHhqMQQd)5mtYIXbjVSCZ(CdCmd7Mkg2C1Ipe5qXa3bgwxeRZW(UZW(wyy)wgw3tqhvz2NfLY0wErdvgqekgrvxwASt5ug)PL6Cwv7(Gsd49Dz7dhjQw2WQ8PEVH4Tv830sagkxCi0lRp1CdUceu6dknWzUsxlgNR8K4kvRkVgDnFWem6GoQWJtqmlILTmvH9h(N)tMBThs)oSvXUGKdbXGzI0HX0VdJPF7ywiN(oqTsSZbaX64P534V1mcsmdlMI9Xbjjvj0PN6u3h45IbUDa4hj0QSj7xeeTLvKLSwEW6SqLG8QYcEByqCX2X7xxuEArM2upw4gWZPTLjvdcuEZvkJSRRhaPAWor2MKNbHl1buYYrBSRhWB0ZTSsbgP3X5)0TTWD8WGGhkFx2PdBhSfPRlXRYf2ODgkNt1)(ERiWxWC7MLOyvrE6Cuo8fO1rNy3dHVAfTvOZqFLlCXHoikMb8qbD6XXlpr9UseM9vMcC6Jlltuu)yTvRPRSdhkB)zZ5fN4kAyzWKWcAoIsfowQah3Wr1tcf0jxYYPg0XDiPkAaq3(kUV)J6gEFDyei50Qyl3e6LKFyTyxLcbqytoWmvi5QblHOGXcabs02fXSGxaP40c5)DlBtgqoCa7Lrsvh29BmlX9a1yEdyt6YTDAUi3U6nULOjJalD(aSWUBsQrN0LXUxlHRIrbijbLdKJXauNltzKETb7Gg2ohgvR0(dkR6pIE2Pv)X2WgkwFnwl4)TTm6WuTpTI9JODbfCRFr0AxXBwmBD4bwRyjcSHpMz8wgKW(99brz8)wjP(RLsrOOc10w8j1o8TOD43nTdF7AhanPtAhE4AhEuAhE9s7W3u7WivtkTdfdvFOOj7IXTTeUhsBfoaC9ZzZxhrpCMdXSxH1dROXiOc8CrNPkrJPIHZu92hUwyYY3bbG6lYltyAs8l8FgY)HWuwcjG5vNxEXY6pYzWRQBbhCiL9ZSYU1WcNw9FZ(trmcNegv(C7u7HuokHcDwautwkScYLbZLY(TeGIg4iyKZCiM5pPclGY2fEM2vLnt8e9axBc)MrJLBd4N)CL10W)Ndr73hUz8JVKfeZY)zjtNAj)i4VJhilx9QCc10Wh4EQs4JCUtM5wHDh50cOvF7nIJ2PkqLKBY3PDwilrqJwRsMxT(d7CIY5Za6ixkRExz0OYSM2fN(FfvqPdzbjFUvTpA99eR6yDA6A5vaNN45VhS5fPPcYHefSunD8aIATunxK3Gd2pohMNCERjSRSYICe6SE5p7AIRwpZe2jOuE1DTqaNrnhio7woxZHBPZ0US84Hz8tRz1BWhF)pk0T45SYmHejQeTJxEhwySPm4)31Sf5VJVbMm3aIepYt5EUyP(NwL1cZel5j2S80x(VI4b7WF5(8RPjSrt843zuZag5ksHEq9ccRbd9((Ogk6n9csYtFbyQkFiH62S1ZdM3QVL4ACM(Lh3yQIqoW7vUgTjV75gd0nWdK0LWtJ8axppls12tkt3KPF(cUCtlw75SLMONdFEnmjHp31AKN(SY7Qrvpfj0Mvv(a6MAGpmdkFDy04qOBkJ(8(vq5cHrFnw0WKjn3BmDjIXfkZvGGlk3tbp8V36gt(biDP1nK2Zgn6dCluCLOTvM3qmRFVvCLKvXsRrpTl6IRAVqx8dnktD3qSO5wDLm6Mklg2ED816OTANWrxN59LCyUd6j5(4LLCF6YsoKyu7l5qWn6j58rWm6m5a1DBoPRDt71q5TQIguNj1ggTT4iKnwrkyOExreQdJQXaAPXkdOHbqZmu(izbmN0ESJe14mJbqzO28QsEmcNUpSSfSuq5B(j20FWqkY)t)e25dD2KrweSwOmfHBMugysnQuKRWgpwzjaNO2xcGBZRk5Xim(kSp26aa572kCNOStRWgUjUe2W0ev(a6IqyTMOqCdprxcDsAIsYXGnHoi5ZuJ8vM8oq49zPRRNTuehRDoY)Uomk7RS7KNVUvw)rMdVKNk2IS2Q3Mlm5X0jXOCFDv9ktEhiSBRN4TZr(31HPxQnEoSUc3Mlm5DuTXWn1BW2aYbyBP4XJypzWqAxqy2OJ(5HEJN(Eedb2tbgq(H3F0O5dPdRbB5vFe9SoIEvJyT4)hOC7d)WLBF4vqU1MTNr6znk7WxCbanE0gQMxPrbMROa2vKaas22irvzoXgz9UoLMiwI667927uZHfBR5mKiijUFPi)LSaGGs2QvM8UjvnQywJgxZHjbYPM0ZulWWpgYPEwhqcxq6Xos0gR9QnffGWan5vK4wjR7(WDkuHZFyidvaRsp(eAh(4Ah)GiNhTYMXJDKOw1haBYRiXTsw3ZZWjLTZFyiv2WQYxpHI(brU(Ht8QsCRK9clc6j5Wkyzprd(brU(zQ(QsCRK9clc6j5WkFz)M0VQe3kz7NHPJ8C)iEdzPRrzpDlIr0Egyh9rePpjBGT5VxOSbq2s0ZM8N(YVjKbCI65x(s2HFg95VEA4Zo(RJM0hJIdRpsF5JB21U3p7dYVrAo9fQwiE)ZCv5BOMzSraSX1P8Ef)uipRAvS9(1CL4wjnRvHcFh16c99rOp1o2D6lV90Q)v(QBPltWYchCv6(zIxVgvttVRAFtnmJrYRwNMSjItZzQMSM7ksx3qTUWS(9LzX2cNUU3qDHzRkuLHIPmNC84q1hiVJgdGk(vL6yN4eFqoXhJtm3BfaoXVxCs9TvtFj0xEj0tAb8vQ(FuLnfjLbTAYbStdowjqQcOIKBS2yduUAQAc2LfO6BiheCkqb66cP9HjnwT)4(FQioJKLVeyVk6Xz8W3UJBMF8OXRo253k3NYxxR8(i96HD2KbKVfcMF7XJ8ld5aL7i5D(tvOS493QGBWFDVQW(AVmwlLm1YPC7nTXbIulvF9QY5MgflW3yPZz6qd4VOwVB6ez6O9otLti83mQdOhdz6Q8Er9Yr1MxlPCsQSkn372jdedrZDFQAXSW4fO6D822yYO8wHbMeA6dksW23VP4tZd7L7rZRXux7G6BRu6E923whSgVNrjFn9zg063l4LaowGBuQujUumlJsE8qELHcgnvN9ZN5D9ujCwAPNQGBMQLK27(Ws(s(AoCv5lmrMtbH1MYrjBaVNTVrIM77oLRy5RuEBxYgeQrdE(6(yksDOdZNz(s(D77ywqnGwPt7vJqHmV5Sxiupu1KldgdwpLjY7wuxMnNXYqZvtIC8K80nww1N7mqCtVeDc5RZjAxLV)wneq5wAzPN13Xr02vAJJ(y97xgAdRo70OpV9MfIlNuV)K4TtbyZIyh9XThECjBQ6Rm1XJv)bW75KnHEZYL(Q1Dtr7ATEeVBsW3QF9mN5nzWq6iFM5F8yJFyS28PrO8rZ9SugPP9Y4G2pfx(2PUtIqCTs5x(xOTQYm3bnaCT26B9jO5D1aayMWfE6aqKeGRLaQXWd7DqnyJ89kHKC2T(BBRDZoj2S0kxjmvyLmbJtsluKhjwZMLEBtjXxABwTVQARmZ3kCLsCJ9CNE5xwFKtBra63mHStYw8wdEeIakMCsub5Q8uIGW8dc85s54XAvm4o3Gh2EhVg4WOnNwcOG1iezFMUdsRE8MpF2ntgqY3Un8KTIeLWG1aXjYlSzHJ1j72XL0(SnlfKXosGOzLgULlc6Fk5N7b5IRK62mMfTI0ow0cBEAenYi4yTNBZdIOr4oqepMs)X(s(pJkO4xPEy9iUxM37quHdEtzDLa(IWItvAxq9GGoO8w1shIYSUPoOJwpFCXOiyZleKa1fvd3yvNUQH0Q1vnYQMDv76PNJ6UtQ3w1gcv)6zuDOrsbkQVDuusUMKI6EFTgM9SBr0x5kb9Yea0yTw7vZETnFBxSvP7NPXJsR0vqvEiQPIsRCYmbY3HcvG0Vvzgelf1gPLYMYd1dDt77wE5ko43S87U(4rSO9UMkupLXhkqaLgOeodgE5GHINO(YTTj8kPmTAc6VLXgHmWgbcAhSMwYcW2oeT3D(0bJD8i1lwzuUZi46oo7mxwSl8DrqBB4CaqGE9aZuRnNu7YlS2iGSGFuZl82g5LYRgxaKU(MhSr3pNSGniMneu9mrDcbCAJsmHhxJbqdjMYVDfsv779ncP1zICtN8S5KGgbVZ5y)Z(oa9cLhgNWdDapILRRLILDJ9AL5nD0iBzhtzqawzGzYLgWOpMawGFbszWTaOz1YuP)6GHngo1IWgmVkDOYDu82PMEyAzlZYnOBL63yCyzzbQeeUkqQfGdiLm1bvc8E3WUMRlSc1AE3rqTNUiCxSHXPLVUvyIUaVbvYGZcz78kLHcxrdvHwOb5NFgOyvZuZpke8IZB(ifYDnDusLK5Ayw2wKoW9IoOgrt0WETHzkMiYyRMFGjQAZim9n1MbZv0b6GvIg3S4U1QsHz45i6IW50ivPhWN0dmKlz1HGPjooJ1c5O1WoI1zR4pATdjTyBvTrRzuie1Z3ENBIwHwSdZ4eUWzH8GYJ)5Z8xVswod4rxPnmYBZU4SReLZwhtXvQTvqTkZEZV1l4gaDQeF4k2UavQulnSh6aO4BpTQ5lIH8zOQ(avYpMhBsxICQVxweK)C74l1h(rSnQiCx9j5dS7cZJMJzI0NWfPZzvE7NVLrd0pLYnvLsDI8d6t7b9eN)YcV(imkocmONQxOZ7B5XgDWW3Oge4GI2duB996z(eEcxq)9rANlTbqNv3QJ0SenuVKiSCFmpaXvcEGZDC9PDEM3O2EICeFNREughi(iT7Sq1huO6Jku9Tku9reQ(DuO6biu9qeQM32jkHQ)i5LJoiuFB5LS4pPF4lCFrV8WKHAkne0oyG2coU9cPPO9rfYcbsru0TrkxeI(WUsXmea)HPyUV893WMW1hw46dmnDIB9TjC9jeUgJkKLc6AYiL72rFy3lMWL3jX3(cH016h3JbVb6Z6bH6hfwYicjlfWUL5LWPUe3Pu(bvPftiXwk0HmrGfhG4dIFFoeyy)nJBpW4MluW71VegsHouD)l49rQ26EUqfPWsaPYCNOsv4DLNH2k6uxNXDAF4xRp5(TFtxV76PCGFJ)m)Z8kl1U1l(9p5j(qcS4)n]] )
