@@ -982,7 +982,7 @@ end )
 
 
 
-spec:RegisterStateExpr( "tww3_archon_4pc_stacks", function()
+spec:RegisterStateExpr( "tww3_archon_4pc_helper_stacks", function()
     return PowerSurgeDPs
 end )
 
@@ -1015,20 +1015,20 @@ spec:RegisterGear( {
                 max_stack = 1
             },
             -- Archon
-            tww3_archon_4pc = {
+            tww3_archon_4pc_helper = {
                 -- id = 999999, -- dummy ID
                 duration = spec.auras.power_surge.duration,
                 max_stack = 6, -- 3 extensions max * 2 casts per extension
                 generate = function( t )
-                    if tww3_archon_4pc_stacks > 0 and state.buff.power_surge.up then
-                        t.name = "tww3_archon_4pc"
-                        t.count = tww3_archon_4pc_stacks
+                    if tww3_archon_4pc_helper_stacks > 0 and state.buff.power_surge.up then
+                        t.name = "tww3_archon_4pc_helper"
+                        t.count = tww3_archon_4pc_helper_stacks
                         t.expires = power_surge_expiry
                         t.duration = power_surge_expiry - ( power_surge_expiry - spec.auras.power_surge.duration )
                         t.applied = t.expires - t.duration
                         t.caster = "player"
                     else
-                        t.name = "tww3_archon_4pc"
+                        t.name = "tww3_archon_4pc_helper"
                         t.count = 0
                         t.expires = 0
                         t.duration = 0
@@ -1137,14 +1137,14 @@ spec:RegisterHook( "reset_precast", function ()
     rift_extensions = nil
 
     if talent.power_surge.enabled and query_time - action.halo.lastCast < 10 then
-        applyBuff( "power_surge", ( 10 + 5 * floor( tww3_archon_4pc_stacks / 2 ) ) - ( query_time - action.halo.lastCast ) )
+        applyBuff( "power_surge", ( 10 + 5 * floor( tww3_archon_4pc_helper_stacks / 2 ) ) - ( query_time - action.halo.lastCast ) )
         if buff.power_surge.remains > 5 then
             state:QueueAuraEvent( "power_surge", PowerSurge, buff.power_surge.expires - 5, "TICK" )
         end
         state:QueueAuraExpiration( "power_surge", PowerSurge, buff.power_surge.expires )
     end
 
-    tww3_archon_4pc_stacks = nil
+    tww3_archon_4pc_helper_stacks = nil
 end )
 
 spec:RegisterHook( "TALENTS_UPDATED", function()
@@ -1185,11 +1185,11 @@ local InescapableTorment = setfenv( function ()
 end, state )
 
 local TWW3ArchonTrigger = setfenv( function()
-    if tww3_archon_4pc_stacks >= 6 then
+    if tww3_archon_4pc_helper_stacks >= 6 then
         return
     else
-        tww3_archon_4pc_stacks = min( 6, tww3_archon_4pc_stacks + 1 )
-        if tww3_archon_4pc_stacks % 2 == 0 then
+        tww3_archon_4pc_helper_stacks = min( 6, tww3_archon_4pc_helper_stacks + 1 )
+        if tww3_archon_4pc_helper_stacks % 2 == 0 then
             buff.power_surge.expires = buff.power_surge.expires + 5
         end
     end
