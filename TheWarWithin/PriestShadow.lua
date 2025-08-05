@@ -29,6 +29,7 @@ local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
 local IsActiveSpell = ns.IsActiveSpell
 
 -- Specialization-specific local functions (if any)
+local min = ns.safeMin
 
 spec:RegisterResource( Enum.PowerType.Insanity, {
     mind_flay = {
@@ -967,7 +968,7 @@ spec:RegisterHook( "COMBAT_LOG_EVENT_UNFILTERED", function( _, subtype, _, sourc
         entropic_rift_expires = entropic_rift_expires + 1
         er_extensions = er_extensions + 1
     elseif spellID == 335467 and subtype == "SPELL_CAST_SUCCESS" and state.set_bonus.tww3 >= 4 and state.buff.power_surge.up then
-        PowerSurgeDPs = PowerSurgeDPs + 1
+        PowerSurgeDPs = min( 6, PowerSurgeDPs + 1 )
     end
 
 end, false )
@@ -976,12 +977,10 @@ spec:RegisterStateExpr( "rift_extensions", function()
     return er_extensions
 end )
 
-spec:RegisterStateExpr( "dp_will_extend_power_surge", function()
-    if PowerSurgeDPs % 2 == 1 then
-        return true
-    else
-        return false
-    end
+
+
+spec:RegisterStateExpr( "tww3_archon_4pc_stacks", function()
+    return PowerSurgeDPs
 end )
 
 spec:RegisterStateTable( "priest", setmetatable( {},{
@@ -1012,6 +1011,30 @@ spec:RegisterGear( {
                 duration = 3600,
                 max_stack = 1
             },
+            -- Archon
+            tww3_archon_4pc = {
+                -- id = 999999, -- dummy ID
+                duration = spec.auras.power_surge.duration,
+                max_stack = 6, -- 3 extensions max * 2 casts per extension
+                generate = function( t )
+                    if tww3_archon_4pc_stacks > 0 and state.buff.power_surge.up then
+                        t.name = "tww3_archon_4pc"
+                        t.count = tww3_archon_4pc_stacks
+                        t.expires = power_surge_expiry
+                        t.duration = power_surge_expiry - ( power_surge_expiry - spec.auras.power_surge.duration )
+                        t.applied = t.expires - t.duration
+                        t.caster = "player"
+                    else
+                        t.name = "tww3_archon_4pc"
+                        t.count = 0
+                        t.expires = 0
+                        t.duration = 0
+                        t.applied = 0
+                        t.caster = "nobody"
+                    end
+                end
+            }
+
         }
     },
     tww2 = {
@@ -1111,12 +1134,14 @@ spec:RegisterHook( "reset_precast", function ()
     rift_extensions = nil
 
     if talent.power_surge.enabled and query_time - action.halo.lastCast < 10 then
-        applyBuff( "power_surge", 10 - ( query_time - action.halo.lastCast ) )
+        applyBuff( "power_surge", ( 10 + 5 * floor( tww3_archon_4pc_stacks / 2 ) ) - ( query_time - action.halo.lastCast ) )
         if buff.power_surge.remains > 5 then
             state:QueueAuraEvent( "power_surge", PowerSurge, buff.power_surge.expires - 5, "TICK" )
         end
         state:QueueAuraExpiration( "power_surge", PowerSurge, buff.power_surge.expires )
     end
+
+    tww3_archon_4pc_stacks = nil
 end )
 
 spec:RegisterHook( "TALENTS_UPDATED", function()
@@ -1153,6 +1178,17 @@ local InescapableTorment = setfenv( function ()
     if buff.mindbender.up then buff.mindbender.expires = buff.mindbender.expires + 0.7
     elseif buff.shadowfiend.up then buff.shadowfiend.expires = buff.shadowfiend.expires + 0.7
     elseif buff.voidwraith.up then buff.voidwraith.expires = buff.voidwraith.expires + 0.7
+    end
+end, state )
+
+local TWW3ArchonTrigger = setfenv( function()
+    if tww3_archon_4pc_stacks >= 6 then
+        return
+    else
+        tww3_archon_4pc_stacks = min( 6, tww3_archon_4pc_stacks + 1 )
+        if tww3_archon_4pc_stacks % 2 == 0 then
+            buff.power_surge.expires = buff.power_surge.expires + 5
+        end
     end
 end, state )
 
@@ -1268,14 +1304,8 @@ spec:RegisterAbilities( {
                 addStack( "mind_flay_insanity" )
             end
 
-            if set_bonus.tww3 >= 4 and buff.power_surge.up then
-                if dp_will_extend_power_surge then
-                    buff.power_surge.expires = buff.power_surge.expires + 5
-                    dp_will_extend_power_surge = false
-                else
-                    dp_will_extend_power_surge = true
-                end
-            end
+            -- Manage fake aura, I hope
+            if set_bonus.tww3 >= 4 and buff.power_surge.up then TWW3ArchonTrigger() end
 
             -- Legacy
             if set_bonus.tier29_4pc > 0 then applyBuff( "dark_reveries" ) end
