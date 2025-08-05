@@ -249,7 +249,7 @@ spec:RegisterTalents( {
     psychic_horror                 = {  82652,   64044, 1 }, -- Terrifies the target in place, stunning them for $s1 sec
     psychic_link                   = {  82670,  199484, 1 }, -- Your direct damage spells inflict $s1% of their damage on all other targets afflicted by your Vampiric Touch within $s2 yards. Does not apply to damage from Shadowy Apparitions, Shadow Word: Pain, and Vampiric Touch
     screams_of_the_void            = {  82649,  375767, 2 }, -- Devouring Plague causes your Shadow Word: Pain and Vampiric Touch to deal damage $s1% faster on all targets for $s2 sec
-    shadow_crash_ground            = {  82669,  205385, 1 }, -- Aim a bolt of slow-moving Shadow energy at the destination, dealing 10,237 Shadow damage to all enemies within 8 yds. Generates 6 Insanity. This spell is cast at a selected location.
+    shadow_crash_ground            = {  108007, 205385, 1 }, -- Aim a bolt of slow-moving Shadow energy at the destination, dealing 10,237 Shadow damage to all enemies within 8 yds. Generates 6 Insanity. This spell is cast at a selected location.
     shadow_crash_targeted          = {  82669,  457042, 1 }, -- Hurl a bolt of slow-moving Shadow energy at your target, dealing 10,237 Shadow damage to all enemies within 8 yds. Generates 6 Insanity. This spell is cast at your target.
     shadowy_apparitions            = {  82666,  341491, 1 }, -- Mind Blast, Devouring Plague, and Void Bolt conjure Shadowy Apparitions that float towards all targets afflicted by your Vampiric Touch for $s$s2 Shadow damage
     shadowy_insight                = {  82669,  375888, 1 }, -- Shadow Word: Pain periodic damage has a chance to reset the remaining cooldown on Mind Blast and cause your next Mind Blast to be instant
