@@ -83,7 +83,7 @@ actions.finish+=/rupture,cycle_targets=1,if=!variable.skip_rupture&!variable.pri
 actions.finish+=/rupture,if=talent.unseen_blade&variable.cooldowns_soon&active_enemies>=3&dot.rupture.remains<fight_remains
 # Direct Damage Finisher
 actions.finish+=/coup_de_grace,if=debuff.fazed.up&cooldown.flagellation.remains>=20|fight_remains<=10
-actions.finish+=/black_powder,if=!variable.priority_rotation&variable.maintenance&(((active_enemies>=2&talent.deathstalkers_mark&(!buff.darkest_night.up|buff.shadow_dance.up&active_enemies>=5))|talent.unseen_blade&fw_targets>=5)|action.coup_de_grace.ready&active_enemies>=3)
+actions.finish+=/black_powder,if=!variable.priority_rotation&variable.maintenance&(((active_enemies>=2&talent.deathstalkers_mark&(!buff.darkest_night.up|buff.shadow_dance.up&active_enemies>=5))|talent.unseen_blade&active_enemies>=5)|action.coup_de_grace.ready&active_enemies>=3)
 actions.finish+=/eviscerate,if=cooldown.flagellation.remains>=10|active_enemies>=3
 
 # Shadow Dance, Vanish, Shadowmeld
