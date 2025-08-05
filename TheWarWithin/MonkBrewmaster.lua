@@ -894,10 +894,6 @@ spec:RegisterStateTable( "healing_sphere", setmetatable( {}, {
     end
 } ) )
 
-spec:RegisterStateExpr( celestial_brew_choice, function ()
-    return talent.celestial_infusion.enabled and "celestial_infusion" or "celestial_brew"
-end )
-
 local staggered_damage = {}
 local staggered_damage_pool = {}
 local total_staggered = 0
@@ -1232,9 +1228,11 @@ spec:RegisterAbilities( {
         handler = function ()
             gain( energy.max, "energy" )
             if talent.endless_draught.enabled then
-                gainCharges( celestial_brew_choice, class.abilities.celestial_brew.charges )
+                if talent.celestial_brew.enabled then gainCharges( "celestial_brew", class.abilities.celestial_brew.charges ) end
+                if talent.celestial_infusion.enabled then gainCharges( "celestial_infusion", class.abilities.celestial_infusion.charges ) end
             else
-                setCooldown( celestial_brew_choice, 0 )
+                if talent.celestial_brew.enabled then setCooldown( "celestial_brew", 0 ) end
+                if talent.celestial_infusion.enabled then setCooldown( "celestial_infusion", 0 ) end
             end
             gainCharges( "purifying_brew", class.abilities.purifying_brew.charges )
         end,
