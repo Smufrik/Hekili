@@ -22,7 +22,7 @@ local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, m
 -- local GetSpellCastCount = C_Spell.GetSpellCastCount
 -- local GetSpellInfo = C_Spell.GetSpellInfo
 -- local GetSpellInfo = ns.GetUnpackedSpellInfo
--- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
 -- local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
 -- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
 local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
@@ -967,8 +967,11 @@ spec:RegisterHook( "COMBAT_LOG_EVENT_UNFILTERED", function( _, subtype, _, sourc
     elseif state.talent.darkening_horizon.enabled and subtype == "SPELL_CAST_SUCCESS" and er_extensions < 3 and spellID == 450405 and entropic_rift_expires > GetTime() then
         entropic_rift_expires = entropic_rift_expires + 1
         er_extensions = er_extensions + 1
-    elseif spellID == 335467 and subtype == "SPELL_CAST_SUCCESS" and state.set_bonus.tww3 >= 4 and state.buff.power_surge.up then
-        PowerSurgeDPs = min( 6, PowerSurgeDPs + 1 )
+    elseif spellID == 335467 and subtype == "SPELL_CAST_SUCCESS" and state.set_bonus.tww3 >= 4 then
+        local PowerSurgeBuff = GetPlayerAuraBySpellID( 453113 )
+        if PowerSurgeBuff then
+            PowerSurgeDPs = min( 6, PowerSurgeDPs + 1 )
+        end
     end
 
 end, false )
