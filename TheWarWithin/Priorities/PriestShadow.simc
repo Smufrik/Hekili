@@ -100,7 +100,7 @@ actions.main+=/halo,if=spell_targets>1
 # Healing spell action list for proccing Twist of Fate. Set priest.twist_of_fate_heal_rppm=<rppm> to make this be used.
 # actions.main+=/call_action_list,name=heal_for_tof,if=!buff.twist_of_fate.up&buff.twist_of_fate_can_trigger_on_ally_heal.up&(talent.rhapsody|talent.divine_star|talent.halo)
 actions.main+=/shadow_crash,if=!variable.holding_crash&raid_event.adds.in>=30&talent.descending_darkness&raid_event.movement.in>=30
-actions.main+=/shadow_word_death,cycle_targets=1,if=target.health.pct<(20+15*talent.deathspeaker.rank)
+actions.main+=/shadow_word_death,cycle_targets=1,if=target.health.pct<20|talent.deathspeaker&target.health.pct<35
 actions.main+=/shadow_word_death,cycle_targets=1,if=talent.inescapable_torment&pet.fiend.active
 actions.main+=/mind_flay,cycle_targets=1,chain=1,interrupt_immediate=1,interrupt_if=ticks>=2,interrupt_global=1
 actions.main+=/divine_star
