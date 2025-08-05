@@ -986,6 +986,30 @@ spec:RegisterGear( {
     -- The War Within
     tww3 = {
         items = { 237667, 237665, 237663, 237664, 237662 },
+        auras = {
+            tww3_trickster_4pc = {
+                -- id = 999998,
+                duration = 5,
+                max_stack = 1,
+                generate = function( t )
+                    local cdg = buff.coup_de_grace
+                    if set_bonus.tww3 >= 4 and cdg.up and cdg.remains <= 10 then
+                        -- Only treat this as the "trickster window" version if it's the 5s duration .. use 10s just as a safety net. The other version of the aura is 3600
+                        t.name = "tww3_trickster_4pc"
+                        t.count = 1
+                        t.expires = cdg.expires
+                        t.applied = cdg.expires - 5
+                        t.caster = "player"
+                    else
+                        t.name = "tww3_trickster_4pc"
+                        t.count = 0
+                        t.expires = 0
+                        t.applied = 0
+                        t.caster = "nobody"
+                    end
+                end
+            }
+        },
     },
     tww2 = {
         items = { 229290, 229288, 229289, 229287, 229292 },
@@ -1275,12 +1299,14 @@ spec:RegisterAbilities( {
 
             if debuff.fazed.up then addStack( "flawless_form", nil, 5 ) end
 
-            if set_bonus.tww3 >= 4 and buff.escalating_blade.remains > 1000  then
+            if set_bonus.tww3 >= 4 and buff.tww3_trickster_4pc.down  then
                 applyBuff( "coup_de_grace", 5 ) -- recast within 5 seconds
-                removeBuff( "escalating_blade", 5, 4 )
+                applyBuff( "tww3_trickster_4pc" )
+                applyBuff( "escalating_blade", 5, 4 )
             else
                 removeBuff( "coup_de_grace" )
                 removeBuff( "escalating_blade" )
+                removeBuff( "tww3_trickster_4pc" )
             end
 
             setCooldown( "global_cooldown", 1.2 * ( buff.adrenaline_rush.up and haste or 1) )
