@@ -1,6 +1,6 @@
 ## https://github.com/simulationcraft/simc/blob/thewarwithin/ActionPriorityLists/default/rogue_assassination.simc
-## SimulationCraft Commit Sync: d1a271e
-## Date: 2025-08-05
+## SimulationCraft Commit Sync: 00d87f8
+## Date: 2025-08-06
 
 actions.precombat+=/apply_poison
 # Check which trinket slots have Stat Values
@@ -67,6 +67,8 @@ actions.cds+=/variable,name=deathmark_condition,value=dot.rupture.ticking&(varia
 actions.cds+=/call_action_list,name=items
 ## Invoke Externals to Deathmark
 ## actions.cds+=/invoke_external_buff,name=power_infusion,if=dot.deathmark.ticking
+# Check for Applicable Shiv usage
+actions.cds+=/call_action_list,name=shiv,if=!buff.darkest_night.up
 # Cast Deathmark if the target will survive long enough
 actions.cds+=/deathmark,if=(variable.deathmark_condition&target.time_to_die>=10)|raid&boss&fight_remains<=20
 actions.cds+=/kingsbane,if=(debuff.shiv.up|cooldown.shiv.remains<6)&(buff.envenom.up|active_enemies>1)&(cooldown.deathmark.remains>=50-15*set_bonus.tww3_fatebound_4pc|dot.deathmark.ticking)|raid&boss&fight_remains<=15
