@@ -1,5 +1,5 @@
 ## https://github.com/simulationcraft/simc/blob/thewarwithin/ActionPriorityLists/default/mage_frost.simc
-## SimulationCraft Commit Sync: 06cfdce
+## SimulationCraft Commit Sync: 441ff8d
 ## Date: 2025-08-05
 
 actions.precombat+=/arcane_intellect
@@ -20,16 +20,13 @@ actions+=/run_action_list,name=ff_st_boltspam,if=talent.frostfire_bolt&(talent.g
 actions+=/run_action_list,name=ff_st,strict=1,if=talent.frostfire_bolt
 actions+=/run_action_list,name=ss_st,strict=1,if=!talent.frostfire_bolt
 
-# Icy Veins and Opener
-actions.cds=icy_veins,if=talent.frostfire_bolt|active_enemies>=3
-actions.cds+=/flurry,if=time<0.2&active_enemies<=2
-actions.cds+=/frozen_orb,if=time<0.2&active_enemies>=3
-# In the Opener Spellslinger uses Icy Veins one global cooldown later to guarantee being in combat for Augury Abounds.
-actions.cds+=/icy_veins,if=talent.splinterstorm
-# Potion and Trinkets
+# Spellslinger uses Icy Veins after the initial Flurry in the ST/Cleave opener to guarantee being in combat for Augury Abounds.
+actions.cds+=/flurry,if=time<0.2&active_enemies<=2&talent.splinterstorm
+actions.cds+=/icy_veins
+# Potion
 actions.cds+=/potion,if=buff.icy_veins.remains>15|raid&boss&fight_remains<35
 actions.cds+=/use_item,name=treacherous_transmitter,if=fight_remains<32+20*equipped.spymasters_web|prev_off_gcd.icy_veins|(cooldown.icy_veins.remains<12|cooldown.icy_veins.remains<22&cooldown.shifting_power.remains<10)
-actions.cds+=/do_treacherous_transmitter_task,if=fight_remains<18|(buff.cryptic_instructions.remains<?buff.realigning_nexus_convergence_divergence.remains<?buff.errant_manaforge_emission.remains)<(action.shifting_power.execute_time+1*talent.ray_of_frost)
+# actions.cds+=/do_treacherous_transmitter_task,if=fight_remains<18|(buff.cryptic_instructions.remains<?buff.realigning_nexus_convergence_divergence.remains<?buff.errant_manaforge_emission.remains)<(action.shifting_power.execute_time+talent.ray_of_frost.rank)
 actions.cds+=/use_item,name=spymasters_web,if=fight_remains<20|buff.icy_veins.remains<19&(fight_remains<105|buff.spymasters_report.stack>=32)&(buff.icy_veins.remains>15|trinket.treacherous_transmitter.cooldown.remains>50)
 actions.cds+=/use_item,name=arazs_ritual_forge
 actions.cds+=/use_item,name=signet_of_the_priory
@@ -46,6 +43,9 @@ actions.cds+=/use_item,name=burst_of_knowledge,if=buff.icy_veins.remains>10|raid
 actions.cds+=/use_item,name=ratfang_toxin,if=time>10
 actions.cds+=/use_item,name=neural_synapse_enhancer,if=active_enemies<=2|prev_gcd.1.comet_storm|fight_remains<20
 actions.cds+=/use_items
+# Opener for AoE and Frostfire ST/Cleave
+actions.cds+=/flurry,if=time<0.2&active_enemies<=2
+actions.cds+=/frozen_orb,if=time<0.2&active_enemies>=3
 # Racials
 actions.cds+=/blood_fury
 actions.cds+=/berserking,if=buff.icy_veins.remains>10|fight_remains<15
