@@ -963,7 +963,7 @@ spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _
             if subtype == "SPELL_AURA_REMOVED" then
                 -- All stacks were consumed
                 -- Hekili:Print( "stacks spent: " .. MSW_CLEU .. " | TempestMaelstromSpent: " .. TempestMaelstromSpent )
-                TempestMaelstromSpent = ( TempestMaelstromSpent + MSW_CLEU ) % 40
+                if InCombatLockdown() then TempestMaelstromSpent = ( TempestMaelstromSpent + MSW_CLEU ) % 40 end
                 MSW_CLEU = 0
             elseif subtype == "SPELL_AURA_APPLIED" or subtype == "SPELL_AURA_APPLIED_DOSE" or subtype == "SPELL_AURA_REFRESH" then
                 local NewCount = msw_aura.applications
