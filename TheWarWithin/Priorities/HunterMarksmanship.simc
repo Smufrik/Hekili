@@ -75,7 +75,7 @@ actions.trickshots+=/volley,if=buff.double_tap.down&(!talent.shrapnel_shot|buff.
 # Sentinel
 actions.trickshots+=/rapid_fire,if=hero_tree.sentinel&buff.lunar_storm_cooldown.down&buff.trick_shots.remains>execute_time
 # Dark Ranger
-actions.trickshots+=/black_arrow,if=talent.black_arrow&(!talent.headshot|buff.precise_shots.up&(debuff.spotters_mark.down|buff.moving_target.down)|buff.trick_shots.down)
+actions.trickshots+=/kill_shot,if=talent.black_arrow&(!talent.headshot|buff.precise_shots.up&(debuff.spotters_mark.down|buff.moving_target.down)|buff.trick_shots.down)
 actions.trickshots+=/multishot,cycle_targets=1,if=buff.precise_shots.up&(debuff.spotters_mark.down|buff.moving_target.down)|buff.trick_shots.down
 actions.trickshots+=/trueshot,if=variable.trueshot_ready&buff.double_tap.down
 actions.trickshots+=/volley,if=buff.double_tap.down&(!talent.salvo|!talent.precision_detonation|(buff.precise_shots.down|debuff.spotters_mark.up&buff.moving_target.up))
