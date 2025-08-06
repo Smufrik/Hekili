@@ -15,8 +15,8 @@ actions.precombat+=/variable,name=pooling_mindblasts,default=0,op=reset
 actions.precombat+=/arcane_torrent
 ## actions.precombat+=/use_item,name=aberrant_spellforge
 actions.precombat+=/halo,if=boss&active_enemies<=4&(fight_remains>=120|active_enemies<=2)&!talent.power_surge
-actions.precombat+=/shadow_crash,if=spell_targets.shadow_crash<=12
-actions.precombat+=/vampiric_touch,if=(!talent.whispering_shadows|!action.shadow_crash.in_flight)&(!talent.shadow_crash.enabled|spell_targets.shadow_crash>12|!boss)
+actions.precombat+=/shadow_crash,if=active_enemies<=12
+actions.precombat+=/vampiric_touch,if=(!talent.whispering_shadows|!action.shadow_crash.in_flight)&(!talent.shadow_crash.enabled|active_enemies>12|!boss)
 
 actions+=/silence
 actions+=/variable,name=holding_crash,op=set,value=false
@@ -30,7 +30,7 @@ actions.aoe+=/vampiric_touch,cycle_targets=1,if=(variable.max_vts>0&!variable.ma
 # Use Shadow Crash to apply Vampiric Touch to as many adds as possible while being efficient with Vampiric Touch refresh windows
 actions.aoe+=/shadow_crash,if=!variable.holding_crash
 
-actions.aoe_variables+=/variable,name=max_vts,op=set,default=12,value=spell_targets.vampiric_touch>?12
+actions.aoe_variables+=/variable,name=max_vts,op=set,default=12,value=active_enemies>?12
 actions.aoe_variables+=/variable,name=is_vt_possible,op=set,value=0,default=1
 actions.aoe_variables+=/variable,name=is_vt_possible,op=set,value=1,if=target.time_to_die>=18
 # TODO: Revamp to fix undesired behavior with unstacked fights
@@ -87,7 +87,7 @@ actions.main+=/void_torrent,cycle_targets=1,if=!variable.holding_crash&(dot.devo
 # Use Void Volley if it would expire soon
 actions.main+=/void_volley,if=buff.void_volley.remains<=5|buff.entropic_rift.up&action.void_blast.usable_in>buff.entropic_rift.remains|target.time_to_die<=5
 # MFI is a good button
-actions.main+=/mind_flay_insanity,cycle_targets=1
+actions.main+=/mind_flay,cycle_targets=1,if=buff.mind_flay_insanity.up
 # Use Shadow Crash as long as you are not holding for adds and Vampiric Touch is within pandemic range
 actions.main+=/shadow_crash,cycle_targets=1,if=!variable.holding_crash&!action.shadow_crash.in_flight
 # Put out Vampiric Touch on enemies that will live at least 12s and Shadow Crash is not available soon
