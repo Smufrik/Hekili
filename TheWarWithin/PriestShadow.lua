@@ -110,7 +110,7 @@ spec:RegisterResource( Enum.PowerType.Insanity, {
         aura = "voidwraith",
 
         last = function ()
-            local app = state.buff.voidwraith.expires - ( 15 * state.talent.subservient_shadows.enabled and 1.2 or 1 )
+            local app = state.buff.voidwraith.expires - ( 15 * ( state.talent.subservient_shadows.enabled and 1.2 or 1 ) )
             local t = state.query_time
 
             return app + floor( ( t - app ) / ( 1.5 * state.haste ) ) * ( 1.5 * state.haste )
