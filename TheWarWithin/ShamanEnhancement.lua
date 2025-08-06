@@ -2535,7 +2535,7 @@ spec:RegisterAbilities( {
             if buff.natures_swiftness.up then return 0 end
             return maelstrom_mod( 2 ) * haste
         end,
-        known = 454009,
+        known = 188196,
         cooldown = 0,
         gcd = "spell",
         school = "nature",
