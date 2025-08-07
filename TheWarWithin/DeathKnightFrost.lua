@@ -1399,12 +1399,11 @@ spec:RegisterAbilities( {
 
     -- Talent: Chill your $?$owb==0[weapon with icy power and quickly strike the enemy, dealing $<2hDamage> Frost damage.][weapons with icy power and quickly strike the enemy with both, dealing a total of $<dualWieldDamage> Frost damage.]
     frost_strike = {
-        id = function() return buff.frostbane.up and 1228436 or 49143 end,
+        id = function() return buff.frostbane.up and 1228433 or 49143 end,
         texture = function() return buff.frostbane.up and 1273742 or 237520 end,
         cast = 0,
         cooldown = 0,
         gcd = "spell",
-        known = function() if talent.frost_strike.enabled then return true end end,
 
         spend = 35,
         spendType = "runic_power",
@@ -1444,7 +1443,7 @@ spec:RegisterAbilities( {
             }
         },
 
-        copy = { 1228436, 49143 },
+        copy = { 1228433, 49143 },
         bind = "frost_strike",
     },
 
