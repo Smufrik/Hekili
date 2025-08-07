@@ -591,7 +591,8 @@ spec:RegisterAuras( {
     festering_scythe_stack = {
         id = 459238,
         duration = 3600,
-        max_stack = 20
+        max_stack = 20,
+        copy = "festering_scythe_stacks"
     },
     -- Suffering from a wound that will deal [(20.7% of Attack power) / 1] Shadow damage when damaged by Scourge Strike.
     festering_wound = {
@@ -1000,13 +1001,13 @@ spec:RegisterAuras( {
     },
     -- Visceral Strength Your Strength is increased by $s1%. $s2 seconds remaining
     -- https://www.wowhead.com/spell=434159
-    visceral_strength = {
+    visceral_strength_buff = {
         id = 434159,
         duration = 5,
         max_stack = 1
     },
     -- https://www.wowhead.com/spell=1234532
-    visceral_strength_discount = {
+    visceral_strength_unholy = {
         id = 1234532,
         duration = 30,
         max_stack = 1
@@ -2318,7 +2319,7 @@ spec:RegisterAbilities( {
         cooldown = 0,
         gcd = "spell",
 
-        spend = function() return buff.visceral_strength_discount.up and 0 or 1 end,
+        spend = function() return buff.visceral_strength_unholy.up and 0 or 1 end,
         spendType = "runes",
 
         startsCombat = true,
@@ -2334,13 +2335,13 @@ spec:RegisterAbilities( {
                 applyDebuff( "target", "blood_plague" )
                 active_dot.blood_plague = active_enemies
             end
-            if buff.visceral_strength_discount.up then
+            if buff.visceral_strength_unholy.up then
                 if action.death_coil.last_cast >= action.epidemic.last_Cast then
                     spec.abilities.death_coil.handler()
                 else
                     spec.abilities.epidemic.handler()
                 end
-                removeBuff( "visceral_strength_discount" )
+                removeBuff( "visceral_strength_unholy" )
             end
         end
     },
@@ -2506,7 +2507,7 @@ spec:RegisterAbilities( {
             if buff.infliction_of_sorrow.up then
                 removeDebuff( "target", "virulent_plague" )
                 removeBuff( "infliction_of_sorrow" )
-                applyBuff( "visceral_strength_discount" )
+                applyBuff( "visceral_strength_unholy" )
             end
 
             if conduit.lingering_plague.enabled and debuff.virulent_plague.up then
