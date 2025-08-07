@@ -1405,6 +1405,8 @@ spec:RegisterAbilities( {
         cooldown = 0,
         gcd = "spell",
 
+        known = function() if talent.frost_strike.enabled then return true end end,
+
         spend = 35,
         spendType = "runic_power",
         school = function() if talent.dark_talons.enabled and buff.icy_talons.up then return "shadowfrost" end return "frost" end,
