@@ -365,10 +365,10 @@ spec:RegisterAuras( {
         max_stack = 1
     },
     -- Draining $w1 health from the target every $t1 sec.
-    -- https://wowhead.com/beta/spell=1235372
+    -- https://wowhead.com/beta/spell=55078
     blood_plague = {
-        id = 1235372,
-        duration = function() return 30 * ( talent.wither_away.enabled and 0.5 or 1 ) end,
+        id = 55078,
+        duration = function() return 24 * ( talent.wither_away.enabled and 0.5 or 1 ) end,
         tick_time = function() return 3 * ( talent.wither_away.enabled and 0.5 or 1 ) end,
         max_stack = 1
     },
@@ -527,10 +527,10 @@ spec:RegisterAuras( {
         duration = 8
     },
     -- Suffering $w1 Frost damage every $t1 sec.
-    -- https://wowhead.com/spell=1235371
+    -- https://wowhead.com/beta/spell=55095
     frost_fever = {
-        id = 1235371,
-        duration = function() return 30 * ( talent.wither_away.enabled and 0.5 or 1 ) end,
+        id = 55095,
+        duration = function() return 24 * ( talent.wither_away.enabled and 0.5 or 1 ) end,
         tick_time = function() return 3 * ( talent.wither_away.enabled and 0.5 or 1 ) end,
         max_stack = 1
     },
@@ -1405,8 +1405,6 @@ spec:RegisterAbilities( {
         cooldown = 0,
         gcd = "spell",
 
-        known = function() if talent.frost_strike.enabled then return true end end,
-
         spend = 35,
         spendType = "runic_power",
         school = function() if talent.dark_talons.enabled and buff.icy_talons.up then return "shadowfrost" end return "frost" end,
@@ -1445,7 +1443,8 @@ spec:RegisterAbilities( {
             }
         },
 
-        copy = { 1228436, 49143 }
+        copy = { 1228436, 49143 },
+        bind = "frost_strike",
     },
 
     -- A sweeping attack that strikes all enemies in front of you for $s2 Frost damage. This attack always critically strikes and critical strikes with Frostscythe deal $s3 times normal damage. Deals reduced damage beyond $s5 targets. ; Consuming Killing Machine reduces the cooldown of Frostscythe by ${$s1/1000}.1 sec.
