@@ -365,10 +365,10 @@ spec:RegisterAuras( {
         max_stack = 1
     },
     -- Draining $w1 health from the target every $t1 sec.
-    -- https://wowhead.com/beta/spell=55078
+    -- https://wowhead.com/beta/spell=1235372
     blood_plague = {
-        id = 55078,
-        duration = function() return 24 * ( talent.wither_away.enabled and 0.5 or 1 ) end,
+        id = 1235372,
+        duration = function() return 30 * ( talent.wither_away.enabled and 0.5 or 1 ) end,
         tick_time = function() return 3 * ( talent.wither_away.enabled and 0.5 or 1 ) end,
         max_stack = 1
     },
@@ -527,10 +527,10 @@ spec:RegisterAuras( {
         duration = 8
     },
     -- Suffering $w1 Frost damage every $t1 sec.
-    -- https://wowhead.com/beta/spell=55095
+    -- https://wowhead.com/spell=1235371
     frost_fever = {
-        id = 55095,
-        duration = function() return 24 * ( talent.wither_away.enabled and 0.5 or 1 ) end,
+        id = 1235371,
+        duration = function() return 30 * ( talent.wither_away.enabled and 0.5 or 1 ) end,
         tick_time = function() return 3 * ( talent.wither_away.enabled and 0.5 or 1 ) end,
         max_stack = 1
     },
