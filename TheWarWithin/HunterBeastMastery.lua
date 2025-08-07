@@ -2191,13 +2191,7 @@ spec:RegisterAbilities( {
 
         handler = function ()
             removeBuff( "deathblow" )
-            if talent.black_arrow.enabled then
-                applyDebuff( "target", "black_arrow" )
-                if talent.umbral_reach.active and active_enemies > 1 then
-                    active_dot.black_arrow = min( active_dot.black_arrow, true_active_enemies )
-                    if talent.beast_cleave.enabled then applyBuff( "beast_cleave" ) end
-                end
-            end
+            if talent.black_arrow.enabled then applyDebuff( "target", "black_arrow" ) end
 
             --- Legacy / PvP Stuff
             if covenant.venthyr then
