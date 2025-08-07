@@ -24,8 +24,8 @@ actions+=/ancestral_call,if=!talent.ascendance.enabled|buff.ascendance.up|cooldo
 # Neural Synapse Enhancer
 actions+=/use_item,name=neural_synapse_enhancer,use_off_gcd=1,if=buff.ascendance.remains>12|cooldown.ascendance.remains>10
 # Normal trinkets
-actions+=/use_item,slot=trinket1,use_off_gcd=1,if=((buff.fury_of_storms.up|!talent.fury_of_the_storms|cooldown.stormkeeper.remains>10)&(cooldown.primordial_wave.remains>25|!talent.primordial_wave|active_enemies>=2)&cooldown.ascendance.remains>15|raid&boss&fight_remains<21|buff.ascendance.remains>12)
-actions+=/use_item,slot=trinket2,use_off_gcd=1,if=((buff.fury_of_storms.up|!talent.fury_of_the_storms|cooldown.stormkeeper.remains>10)&(cooldown.primordial_wave.remains>25|!talent.primordial_wave|active_enemies>=2)&cooldown.ascendance.remains>15|raid&boss&fight_remains<21|buff.ascendance.remains>12)
+actions+=/use_item,slot=trinket1,use_off_gcd=1,if=((buff.fury_of_storms.up|!talent.fury_of_the_storms|cooldown.stormkeeper.remains>10)&(cooldown.primordial_wave.remains>25|!talent.primordial_wave|active_enemies>=2)&cooldown.ascendance.remains>15|boss&fight_remains<21|buff.ascendance.remains>12)
+actions+=/use_item,slot=trinket2,use_off_gcd=1,if=((buff.fury_of_storms.up|!talent.fury_of_the_storms|cooldown.stormkeeper.remains>10)&(cooldown.primordial_wave.remains>25|!talent.primordial_wave|active_enemies>=2)&cooldown.ascendance.remains>15|boss&fight_remains<21|buff.ascendance.remains>12)
 # Normal weapons
 actions+=/use_item,slot=main_hand,use_off_gcd=1,if=(buff.fury_of_storms.up|!talent.fury_of_the_storms|cooldown.stormkeeper.remains>10)&(cooldown.primordial_wave.remains>25|!talent.primordial_wave)&cooldown.ascendance.remains>15|buff.ascendance.remains>12
 actions+=/use_item,slot=trinket1,use_off_gcd=1,if=!(trinket.1.has_use_buff)&(!(trinket.2.has_use_buffequipped.neural_synapse_enhancer|equipped.best_in_slots)|cooldown.ascendance.remains>20|(trinket.2.cooldown.remains>20&cooldown.neural_synapse_enhancer.remains>20&cooldown.best_in_slots.remains>20))
@@ -34,7 +34,7 @@ actions+=/lightning_shield,if=buff.lightning_shield.down
 actions+=/natures_swiftness
 ### Use Power Infusion on Cooldown.
 ## actions+=/invoke_external_buff,name=power_infusion,if=buff.ascendance.up|cooldown.ascendance.remains>30
-actions+=/potion,if=buff.bloodlust.up|buff.ascendance.remains>12|raid&boss&fight_remains<31
+actions+=/potion,if=buff.bloodlust.up|buff.ascendance.remains>12|boss&fight_remains<31
 # [Hekili] Ascendance/trinket sync logic; revised to recover when a trinket is used *before* Ascendance.
 actions+=/variable,name=ascendance_trinket,value=(trinket.1.has_use_buff&trinket.1.ready_cooldown|trinket.1.cooldown.remains>20)|(trinket.2.has_use_buff&trinket.2.ready_cooldown|trinket.2.cooldown.remains>20)|equipped.neural_synapse_enhancer&(cooldown.neural_synapse_enhancer.remains=0|cooldown.neural_synapse_enhancer.remains>20)|equipped.best_in_slots&(cooldown.best_in_slots.remains=0|cooldown.best_in_slots.remains>20)|!trinket.1.has_use_buff&!trinket.2.has_use_buff
 actions+=/run_action_list,name=aoe,strict=1,if=active_enemies>1
@@ -64,8 +64,8 @@ actions.aoe+=/elemental_blast,cycle_targets=1,if=(maelstrom>variable.mael_cap-10
 actions.aoe+=/earth_shock,cycle_targets=1,if=(maelstrom>variable.mael_cap-10*(active_enemies+1)|buff.master_of_the_elements.up|buff.ascendance.up&buff.ascendance.remains<3|boss&fight_remains<5)&(cooldown.primordial_wave.remains>8|!(set_bonus.tww3_4pc&talent.ancestral_swiftness)|maelstrom>variable.mael_cap-20)
 # Spend to spread Lightning Rod if Tempest or Stormkeeper is up.
 actions.aoe+=/earthquake,if=talent.lightning_rod&lightning_rod<active_enemies&(buff.stormkeeper.up|buff.tempest.up|!talent.surge_of_power)&(buff.echoes_of_great_sundering_es.up|buff.echoes_of_great_sundering_eb.up|!talent.echoes_of_great_sundering&(!talent.elemental_blast|active_enemies>1+3*talent.tempest))
-actions.aoe+=/elemental_blast,cycle_targetse=1,if=talent.lightning_rod&lightning_rod<active_enemies&(buff.stormkeeper.up|buff.tempest.up|!talent.surge_of_power)
-actions.aoe+=/earth_shock,cycle_Targets=1,if=talent.lightning_rod&lightning_rod<active_enemies&(buff.stormkeeper.up|buff.tempest.up|!talent.surge_of_power)
+actions.aoe+=/elemental_blast,cycle_targets=1,if=talent.lightning_rod&lightning_rod<active_enemies&(buff.stormkeeper.up|buff.tempest.up|!talent.surge_of_power)
+actions.aoe+=/earth_shock,cycle_targets=1,if=talent.lightning_rod&lightning_rod<active_enemies&(buff.stormkeeper.up|buff.tempest.up|!talent.surge_of_power)
 # Use Icefury to proc Fusion of Elements.
 actions.aoe+=/icefury,if=talent.fusion_of_elements&!(buff.fusion_of_elements_nature.up|buff.fusion_of_elements_fire.up)&(active_enemies<=4|!talent.elemental_blast|!talent.echoes_of_great_sundering)
 # [2-3t] Use Lava Surge procs to buff <anything> with MotE on 2-3 targets.
