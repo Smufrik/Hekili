@@ -950,6 +950,7 @@ spec:RegisterHook( "reset_precast", function ()
 
     if covenant.kyrian then if now - action.resonating_arrow.lastCast < 6 then applyBuff( "resonating_arrow", 10 - ( now - action.resonating_arrow.lastCast ) ) end end
 
+    -- BANDAID
     -- Ensure that multishot recommendation doesn't flicker while black arrow is in flight, which was happening when only using the impact() function of the spell
     if action.kill_shot.in_flight and talent.umbral_reach.enabled and active_enemies > 1 and talent.trick_shots.enabled then
         applyBuff( "trick_shots" )
