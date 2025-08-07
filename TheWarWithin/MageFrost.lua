@@ -722,7 +722,7 @@ spec:RegisterStateExpr( "remaining_winters_chill", function ()
     end
 
     if this_action == "ice_lance" and action.ice_lance.time_since > 0.3 and
-            ( action.frostbolt.in_flight or action.glacial_spike.in_flight or action.frostfire_bolt.in_flight ) then
+            ( action.frostbolt.in_flight or action.frostfire_bolt.in_flight ) then
         -- Credit back the stack of Winter's Chill that these will consume so you can double-dip with Ice Lance.
         stacks = stacks + 1
     end
