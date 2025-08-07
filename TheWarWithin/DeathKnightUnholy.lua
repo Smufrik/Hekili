@@ -410,9 +410,9 @@ spec:RegisterAuras( {
         max_stack = 1
     },
     -- Draining $w1 health from the target every $t1 sec.
-    -- https://wowhead.com/spell=55078
+    -- https://wowhead.com/spell=1235372
     blood_plague = {
-        id = 55078,
+        id = 1235372,
         duration = function() return 24 * ( talent.ebon_fever.enabled and 0.5 or 1 ) end,
         tick_time = function() return 3 * ( talent.ebon_fever.enabled and 0.5 or 1 ) * ( buff.plaguebringer.up and 0.5 or 1 ) end,
         type = "Disease",
@@ -615,9 +615,9 @@ spec:RegisterAuras( {
         max_stack = 20
     },
     -- Suffering $w1 Frost damage every $t1 sec.
-    -- https://wowhead.com/spell=55095
+    -- https://wowhead.com/spell=1235371
     frost_fever = {
-        id = 55095,
+        id = 1235371,
         duration = function() return 24 * ( talent.ebon_fever.enabled and 0.5 or 1 ) end,
         tick_time = function() return 3 * ( talent.ebon_fever.enabled and 0.5 or 1 ) * ( buff.plaguebringer.up and 0.5 or 1 ) end,
         max_stack = 1,
