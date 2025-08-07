@@ -1404,6 +1404,7 @@ spec:RegisterAbilities( {
         cast = 0,
         cooldown = 0,
         gcd = "spell",
+        known = function() if talent.frost_strike.enabled then return true end end,
 
         spend = 35,
         spendType = "runic_power",
