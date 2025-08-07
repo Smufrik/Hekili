@@ -24,7 +24,7 @@ actions+=/variable,name=fwf_buffs,value=(buff.pillar_of_frost.remains<gcd.max|(b
 actions+=/variable,name=rune_pooling,value=hero_tree.deathbringer&cooldown.reapers_mark.remains<6&rune<3
 actions+=/variable,name=rp_pooling,value=talent.breath_of_sindragosa&cooldown.breath_of_sindragosa.remains<4*gcd.max&runic_power<60+(35+5*buff.icy_onslaught.up)-(10*rune)
 # Frostscythe is equal at 3 targets, except with Rider 4pc which brings Obliterate higher at 3, unless cleaving strikes is up
-actions+=/variable,name=frostscythe_prio,value=4,value_else=3,condition=set_bonus.tww3_rider_of_the_apocalypse_4pc&!(talent.cleaving_strikes&buff.remorseless_winter.up)
+actions+=/variable,name=frostscythe_prio,value=4,value_else=3,condition=set_bonus.tww3_rider_of_the_apocalypse_4pc>0&!(talent.cleaving_strikes&buff.remorseless_winter.up)
 actions+=/mind_freeze
 # Trinkets  
 # The trinket with the highest estimated value, will be used first and paired with Pillar of Frost.
