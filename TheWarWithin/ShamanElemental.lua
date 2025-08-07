@@ -21,7 +21,7 @@ local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, m
 -- local GetSpellCastCount = C_Spell.GetSpellCastCount
 -- local GetSpellInfo = C_Spell.GetSpellInfo
 -- local GetSpellInfo = ns.GetUnpackedSpellInfo
--- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
 local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
 -- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
 -- local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
@@ -29,7 +29,7 @@ local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDeb
 
 -- Specialization-specific local functions (if any)
 local GetWeaponEnchantInfo = GetWeaponEnchantInfo
-
+local GetSpellPowerCost = C_Spell.GetSpellPowerCost
 spec:RegisterResource( Enum.PowerType.Maelstrom )
 spec:RegisterResource( Enum.PowerType.Mana )
 
@@ -105,7 +105,8 @@ spec:RegisterTalents( {
     deeply_rooted_elements         = {  80992,  378270, 1 }, -- Each Maelstrom spent has a $s1% chance to activate Ascendance for $s2 sec.  Ascendance Transform into a Flame Ascendant for $s5 sec, instantly casting a Flame Shock and a $s6% effectiveness Lava Burst at up to $s7 nearby enemies. While ascended, Elemental Overload damage is increased by $s8% and spells affected by your Mastery: Elemental Overload cause $s9 additional Elemental Overload
     earth_shock                    = {  80984,    8042, 1 }, -- Instantly shocks the target with concussive force, causing $s$s2 Nature damage
     earthen_rage                   = { 103634,  170374, 1 }, -- Your damaging spells incite the earth around you to come to your aid for $s2 sec, repeatedly dealing $s$s3 Nature damage to your most recently attacked target
-    earthquake                     = {  80985,   61882, 1 }, -- Causes the earth within $s2 yards of the target location to tremble and break, dealing $s$s3 Physical damage over $s4 sec and has a $s5% chance to knock the enemy down. Multiple uses of Earthquake may overlap. This spell is cast at a selected location
+    earthquake_ground              = {  80985,   61882, 1 }, -- Causes the earth within $s2 yards of the target location to tremble and break, dealing $s$s3 Physical damage over $s4 sec and has a $s5% chance to knock the enemy down. Multiple uses of Earthquake may overlap. This spell is cast at a selected location
+    earthquake_targeted            = {  80985,  462620, 1 }, -- Causes the earth within $s2 yards of the target location to tremble and break, dealing $s$s3 Physical damage over $s4 sec and has a $s5% chance to knock the enemy down. Multiple uses of Earthquake may overlap. This spell is cast at a selected location
     earthshatter                   = {  80995,  468626, 1 }, -- Increases Earth Shock and Earthquake damage by $s1% and the stat bonuses granted by Elemental Blast by $s2%
     echo_chamber                   = {  81013,  382032, 1 }, -- Increases the damage dealt by your Elemental Overloads by $s1%
     echo_of_the_elementals         = {  81008,  462864, 1 }, -- When your Storm Elemental or Fire Elemental expires, it leaves behind a lesser Elemental to continue attacking your enemies for $s1 sec
@@ -803,7 +804,8 @@ spec:RegisterAuras( {
     tempest = {
         id = 454015,
         duration = 30,
-        max_stack = 1
+        max_stack = 2,
+        copy = { 454009, 452201 }
     },
     -- Talent: Movement speed increased by $378075s1%.
     -- https://wowhead.com/beta/spell=378076
@@ -1009,6 +1011,7 @@ end )
 spec:RegisterStateExpr( "lightning_rod", function()
 end )
 
+
 spec:RegisterHook( "runHandler", function( action )
     if buff.ghost_wolf.up then
         if talent.ancestral_wolf_affinity.enabled then
@@ -1046,6 +1049,18 @@ end )
 
 local filter_lvb = 0
 local resetFilter = function() filter_lvb = 0 end
+
+
+-- Tempest spend 300 tracking
+local TempestMaelstromSpent, TempestProcs, TempestOneBuffRemoved, LastAscExpirationTime, NextTempestTime, ArcBugTime = 0, 0, 0, 0, 0, 0
+
+local ElementalSpenders = {
+  [117014] = true, -- Elemental Blast
+  [8042]   = true, -- Earth Shock
+  [61882]  = true, -- Earthquake
+  [462620] = true  -- Earthquake (@target)
+}
+
 
 spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _, _, destGUID, destName, destFlags, _, spellID, spellName, school )
     -- Deaths/despawns.
@@ -1109,8 +1124,61 @@ spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _
                 vesper_used = vesper_used + 1
                 vesper_damage = vesper_damage - 1
             end
-
         end
+
+        if subtype == "SPELL_CAST_SUCCESS" and state.talent.tempest.enabled and ElementalSpenders[ spellID ] then
+            local costs = GetSpellPowerCost( spellID )
+            local spent = 0
+            for i = 1, #costs do
+                if costs[ i ].type == 11 then -- Maelstrom
+                    spent = costs[ i ].cost
+                    break
+                end
+            end
+            if InCombatLockdown() then
+                TempestMaelstromSpent = ( TempestMaelstromSpent + spent ) % 300
+            end
+
+        -- Tempest actual proc - model after Enhance
+        elseif spellID == 454015 and subtype == "SPELL_CAST_SUCCESS" and state.talent.tempest.enabled then
+            local now = GetTime()
+
+            -- Ascendance snapshot tier protection (Ele = 1219480)
+            if state.set_bonus.tww3 >= 2 then
+                local _, _, _, _, duration, expirationTime = GetPlayerAuraBySpellID( 1219480 )
+                if duration and LastAscExpirationTime ~= expirationTime and ( duration - ( expirationTime - now ) <= 0.15 ) then
+                    LastAscExpirationTime = expirationTime
+                    return
+                end
+            end
+
+            -- Arc bug suppression
+            if ArcBugTime ~= 0 and ( now - ArcBugTime ) <= 1 then
+                ArcBugTime = 0
+                return
+            end
+
+            -- Prevent duplicate Tempest procs
+            if TempestProcs == 0 and NextTempestTime ~= 0 and ( now - NextTempestTime ) <= 1 then
+                NextTempestTime = 0
+                return
+            end
+
+            -- Prevent overlapping refresh proc
+            if subtype == "SPELL_AURA_REFRESH" and TempestOneBuffRemoved ~= 0 and ( now - TempestOneBuffRemoved ) <= 0.2 then
+                TempestOneBuffRemoved = 0
+                return
+            end
+
+            -- Safe to reset
+            TempestMaelstromSpent = 0
+        end
+
+        -- Track removed dose event
+        if subtype == "SPELL_AURA_REMOVED_DOSE" and spellID == 454015 and state.talent.tempest.enabled then
+            TempestOneBuffRemoved = GetTime()
+        end
+
 
         if spellID == spec.auras.ascendance.id and ( subtype == "SPELL_AURA_APPLIED" or subtype == "SPELL_AURA_REFRESH" ) then
             filter_lvb = GetTime()
@@ -1166,6 +1234,11 @@ spec:RegisterStateTable( "rolling_thunder", setmetatable( {}, {
         end
     end, state )
 } ) )
+
+spec:RegisterStateExpr( "tempest_mael_count", function ()
+    return TempestMaelstromSpent
+end )
+
 
 spec:RegisterStateExpr( "t30_2pc_timer", function()
     return rolling_thunder
@@ -1398,16 +1471,14 @@ local TriggerHeatWave = setfenv( function()
     applyBuff( "lava_surge" )
 end, state )
 
-local TriggerStaticAccumulation = setfenv( function()
-    addStack( "maelstrom_weapon", nil, talent.static_accumulation.rank )
-end, state )
-
 local TriggerStormkeeperRT = setfenv( function()
     addStack( "stormkeeper" )
     rolling_thunder.last_tick = query_time
 end, state )
 
 spec:RegisterHook( "reset_precast", function ()
+    tempest_mael_count = nil
+
     local mh, _, _, mh_enchant, oh, _, _, oh_enchant = GetWeaponEnchantInfo()
 
     if mh and mh_enchant == 5400 then applyBuff( "flametongue_weapon" ) end
@@ -1478,18 +1549,16 @@ spec:RegisterHook( "reset_precast", function ()
         elemental_equilibrium.refresh_timers()
     end
 
-    --[[ TODO: Not really needed; shift to Enhancement module.
-    if talent.static_accumulation.enabled and buff.ascendance.up then
-        local expires = buff.ascendance.expires
-        while expires > query_time do
-            state:QueueAuraEvent( "ascendance", TriggerStaticAccumulation, query_time + expires )
-            expires = expires - 1
-        end
-    end ]]
 end )
 
 spec:RegisterHook( "spend", function( amt, resource )
-    if amt > 0 and resource == "maelstrom" and set_bonus.tww1_4pc > 0 then applyBuff( "maelstrom_surge" ) end
+    if amt > 0 and resource == "maelstrom" then
+        if set_bonus.tww1_4pc > 0 then applyBuff( "maelstrom_surge" ) end
+        if talent.tempest.enabled and tempest_mael_count + amt >= 300 then
+            addStack( "tempest" )
+            tempest_mael_count = 0
+        end
+    end
 end )
 
 spec:RegisterHook( "filter_target", function( id, time, mine, spellID )
@@ -2661,6 +2730,8 @@ spec:RegisterAbilities( {
         cooldown = 0,
         gcd = "spell",
         school = "nature",
+        known = function() if talent.tempest.enabled then return true end end,
+
 
         spend = function() return ( buff.ancestral_swiftness.up or buff.natures_swiftness.up ) and 0 or 0.01 end,
         spendType = "mana",
@@ -2668,11 +2739,12 @@ spec:RegisterAbilities( {
         startsCombat = true,
         texture = 5927653,
         buff = "tempest",
+        talent = "tempest",
 
         cycle = function() if talent.conductive_energy.enabled then return "lightning_rod" end end,
 
         handler = function ()
-            removeBuff( "tempest" )
+            removeStack( "tempest" )
 
             local ms = 6 + ( 2 * talent.flow_of_power.rank )
             local overload = 2

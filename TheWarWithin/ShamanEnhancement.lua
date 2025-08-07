@@ -2535,16 +2535,18 @@ spec:RegisterAbilities( {
             if buff.natures_swiftness.up then return 0 end
             return maelstrom_mod( 2 ) * haste
         end,
-        known = 188196,
         cooldown = 0,
         gcd = "spell",
         school = "nature",
+        known = function() if talent.tempest.enabled then return true end end,
+
 
         spend = function () return buff.natures_swiftness.up and 0 or 0.01 end,
         spendType = "mana",
 
         startsCombat = true,
         buff = "tempest",
+        talent = "tempest",
 
         cycle = function() if talent.conductive_energy.enabled then return "lightning_rod" end end,
 
