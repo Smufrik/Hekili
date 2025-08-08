@@ -108,7 +108,7 @@ spec:RegisterTalents( {
     rejuvenation                   = {  82217,     774, 1 }, -- Heals the target for $s1 over $s2 sec
     remove_corruption              = {  82241,    2782, 1 }, -- Nullifies corrupting effects on the friendly target, removing all Curse and Poison effects
     renewal                        = {  82232,  108238, 1 }, -- Instantly heals you for $s1% of maximum health. Usable in all shapeshift forms
-    rip                            = {  82222,    1079, 1 }, -- Finishing move that causes Bleed damage over time. Lasts longer per combo point. $s1 point : $s2 over $s3 sec $s4 points: $s5 million over $s6 sec $s7 points: $s8 million over $s9 sec $s10 points: $s11 million over $s12 sec $s13 points: $s14 million over $s15 sec
+    rip                            = {  82222,    1079, 1 }, -- Finishing move that causes Bleed damage over time. Lasts longer per combo point. $s1 point : $s2 over $s3 sec $s4 points: $s5 over $s6 sec $s7 points: $s8 million over $s9 sec $s10 points: $s11 million over $s12 sec $s13 points: $s14 million over $s15 sec
     skull_bash                     = {  82242,  106839, 1 }, -- You charge and bash the target's skull, interrupting spellcasting and preventing any spell in that school from being cast for $s1 sec
     soothe                         = {  82229,    2908, 1 }, -- Soothes the target, dispelling all enrage effects
     stampeding_roar                = {  82234,  106898, 1 }, -- Shift into Bear Form and let loose a wild roar, increasing the movement speed of all friendly players within $s1 yards by $s2% for $s3 sec
@@ -144,8 +144,9 @@ spec:RegisterTalents( {
     convoke_the_spirits            = {  82114,  391528, 1 }, -- Call upon the spirits for an eruption of energy, channeling a rapid flurry of $s1 Druid spells and abilities over $s2 sec. You will cast Wild Growth, Swiftmend, Moonfire, Wrath, Regrowth, Rejuvenation, Rake, and Thrash on appropriate nearby targets, favoring your current shapeshift form
     doubleclawed_rake              = {  82086,  391700, 1 }, -- Rake also applies Rake to $s1 additional nearby target
     dreadful_bleeding              = {  82117,  391045, 1 }, -- Rip damage increased by $s1%
-    feral_frenzy                   = {  82108,  274837, 1 }, -- Unleash a furious frenzy, clawing your target $s2 times for $s$s3 Physical damage and an additional $s4 million Bleed damage over $s5 sec. Awards $s6 combo points
+    feral_frenzy                   = {  82108,  274837, 1 }, -- Unleash a furious frenzy, clawing your target $s3 times for $s$s4 Physical damage and an additional $s$s5 Bleed damage over $s6 sec. Awards $s7 combo points
     frantic_momentum               = {  82115,  391875, 2 }, -- Finishing moves have a $s1% chance per combo point spent to grant $s2% Haste for $s3 sec
+    incarnation                    = {  82114,  102543, 1 }, -- An improved Cat Form that grants all of your known Berserk effects and lasts $s1 sec. You may shapeshift in and out of this improved Cat Form for its duration. During Incarnation: Energy cost of all Cat Form abilities is reduced by $s2%, and Prowl can be used once while in combat. Generate $s3 combo point every $s4 sec. Combo point generating abilities generate $s5 additional combo point. Finishing moves restore up to $s6 combo points generated over the cap. All attack and ability damage is increased by $s7%
     incarnation_avatar_of_ashamane = {  82114,  102543, 1 }, -- An improved Cat Form that grants all of your known Berserk effects and lasts $s1 sec. You may shapeshift in and out of this improved Cat Form for its duration. During Incarnation: Energy cost of all Cat Form abilities is reduced by $s2%, and Prowl can be used once while in combat. Generate $s3 combo point every $s4 sec. Combo point generating abilities generate $s5 additional combo point. Finishing moves restore up to $s6 combo points generated over the cap. All attack and ability damage is increased by $s7%
     infected_wounds                = {  82118,   48484, 1 }, -- Rake damage increased by $s1%, and Rake causes an Infected Wound in the target, reducing the target's movement speed by $s2% for $s3 sec
     lions_strength                 = {  82109,  391972, 1 }, -- Ferocious Bite and Rip deal $s1% increased damage
@@ -207,6 +208,21 @@ spec:RegisterTalents( {
     twin_sprouts                   = {  94628,  440117, 1 }, -- When Bloodseeker Vines or Symbiotic Blooms grow, they have a $s1% chance to cause another growth of the same type to immediately grow on a valid nearby target
     vigorous_creepers              = {  94627,  440119, 1 }, -- Bloodseeker Vines increase the damage your abilities deal to affected enemies by $s1%. Symbiotic Blooms increase the healing your spells do to affected targets by $s2%
     wildstalkers_power             = {  94621,  439926, 1 }, -- Rip and Ferocious Bite damage increased by $s1%. Rejuvenation healing increased by $s2%
+} )
+
+-- PvP Talents
+spec:RegisterPvpTalents( {
+    ferocious_wound                =  611, -- (236020) Attacking with a $s1 combo point Ferocious Bite reduces the target's maximum health by up to $s2% for $s3 sec, stacking up to $s4 times. Ferocious Wound can only be active on one target at once
+    freedom_of_the_herd            =  203, -- (213200) Your Stampeding Roar clears all roots and snares from yourself and allies
+    fresh_wound                    =  612, -- (203224) Rake has a $s1% increased critical strike chance if used on a target that doesn’t already have Rake active
+    high_winds                     = 5384, -- (200931) Increases the range of Cyclone, Typhoon, and Entangling Roots by $s1 yds
+    leader_of_the_pack             = 3751, -- (202626) While in Cat Form, you increase the movement speed of raid members within $s1 yards by $s2%. Leader of the Pack also causes allies to heal themselves for $s3% of their maximum health when they critically hit with a direct attack. The healing effect cannot occur more than once every $s4 sec
+    malornes_swiftness             =  601, -- (236012) Your Travel Form movement speed while within a Battleground or Arena is increased by $s1% and you always move at $s2% movement speed while in Travel Form
+    savage_momentum                =  820, -- (205673) Interrupting a spell with Skull Bash reduces the remaining cooldown of Tiger's Fury, Survival Instincts, and Dash by $s1 sec
+    strength_of_the_wild           = 3053, -- (236019) You become further adept in Caster Form and Bear Form. Caster Form When using Regrowth on an ally the initial heal will have a $s1% increased critical chance and the cast time of Regrowth will be reduced by $s2% for $s3 sec. Bear Form Maximum health while in Bear Form increased by $s4% and you gain $s5 Rage when attacked in Bear Form. You also learn:  Strength of the Wild Maul the target for $s8% of the target's maximum health in Physical damage
+    thorns                         =  201, -- (1217017) Casting Barkskin sprouts thorns on you for $s2 sec. When victim to melee attacks, thorns deals $s$s3 Nature damage back to the attacker. Attackers also have their movement speed reduced by $s4% for $s5 sec
+    tireless_pursuit               = 5647, -- (377801) For $s1 sec after leaving Cat Form or Travel Form, you retain up to $s2% movement speed
+    wicked_claws                   =  620, -- (203242) Infected Wounds can now stack up to $s1 times, and reduces $s2% of all healing received by the target per stack. Infected Wounds can now also be applied from Rip
 } )
 
 local mod_circle_hot = setfenv( function( x )
