@@ -400,6 +400,12 @@ spec:RegisterAuras( {
         tick_time = 1,
         max_stack = 1
     },
+    -- Internal tracking: Biting Cold has already triggered during this Remorseless Winter cast
+    biting_cold_triggered = {
+        id = 999996, -- Custom tracking buff
+        duration = 20, -- Longer than RW duration to ensure cleanup
+        max_stack = 1
+    },
     -- Talent: Movement slowed $w1% $?$w5!=0[and Haste reduced $w5% ][]by frozen chains.
     -- https://wowhead.com/beta/spell=45524
     chains_of_ice = {
@@ -1161,6 +1167,12 @@ spec:RegisterAbilities( {
             gainCharges( "empower_rune_weapon", 1 )
             applyBuff( "breath_of_sindragosa", 8 )
         end,
+
+        finish = function()
+            -- Talent description: "Grants a charge of Empower Rune Weapon at the start and $s6 Runes at the end"
+            -- Based on research: $s6 = 2 runes
+            gain( 2, "runes" )
+        end,
     },
 
     -- Talent: Shackles the target $?a373930[and $373930s1 nearby enemy ][]with frozen chains, reducing movement speed by $s1% for $d.
@@ -1424,7 +1436,7 @@ spec:RegisterAbilities( {
             -- if debuff.razorice.stack > 5 then applyDebuff( "target", "razorice", nil, debuff.razorice.stack - 5 ) end
             if talent.icy_onslaught.enabled then addStack( "icy_onslaught" ) end
             removeBuff( "frostbane" )
-            if death_knight.runeforge.razorice then applyDebuff( "target", "razorice", nil, min( 5, buff.razorice.stack + 1 ) ) end
+            if death_knight.runeforge.razorice then applyDebuff( "target", "razorice", nil, min( 5, debuff.razorice.stack + 1 ) ) end
             if talent.frostreaper.enabled then removeBuff( "frost_reaper" ) end
             -- Legacy / PvP
             if pvptalent.bitter_chill.enabled and debuff.chains_of_ice.up then
@@ -1518,7 +1530,7 @@ spec:RegisterAbilities( {
         startsCombat = true,
 
         handler = function ()
-            applyDebuff( "target", "razorice", nil, min( 5, buff.razorice.stack + 1 ) )
+            applyDebuff( "target", "razorice", nil, min( 5, debuff.razorice.stack + 1 ) )
             if active_enemies > 1 then active_dot.razorice = active_enemies end
             if talent.obliteration.enabled and buff.pillar_of_frost.up then addStack( "killing_machine" ) end
             if talent.unleashed_frenzy.enabled then addStack( "unleashed_frenzy", nil, 3 ) end
@@ -1550,7 +1562,7 @@ spec:RegisterAbilities( {
             if buff.rime.up then
                 removeBuff( "rime" )
                 if talent.rage_of_the_frozen_champion.enabled then gain( 8, "runic_power") end
-                if talent.avalanche.enabled then applyDebuff( "target", "razorice", nil, min( 5, buff.razorice.stack + 1 ) ) end
+                if talent.avalanche.enabled then applyDebuff( "target", "razorice", nil, min( 5, debuff.razorice.stack + 1 ) ) end
                 if legendary.rage_of_the_frozen_champion.enabled then gain( 8, "runic_power" ) end
                 if set_bonus.tier30_2pc > 0 then addStack( "wrath_of_the_frostwyrm" ) end
                 if talent.frostbound_will.enabled then reduceCooldown( "empower_rune_weapon", 6 ) end
@@ -1791,13 +1803,22 @@ spec:RegisterAbilities( {
         handler = function ()
             applyBuff( "remorseless_winter" )
             removeBuff( "cryogenic_chamber" )
-
-            if active_enemies > 2 and legendary.biting_cold.enabled then
-                applyBuff( "rime" )
-            end
+            removeBuff( "biting_cold_triggered" ) -- Reset tracking for this cast
 
             if conduit.biting_cold.enabled then applyDebuff( "target", "biting_cold" ) end
             -- if pvptalent.deathchill.enabled then applyDebuff( "target", "deathchill" ) end
+        end,
+
+        tick = function ()
+            -- Biting Cold: First time Remorseless Winter deals damage to 3+ enemies, gain Rime (once per cast)
+            if active_enemies >= 3 and (legendary.biting_cold.enabled or talent.biting_cold.enabled) and not buff.biting_cold_triggered.up then
+                applyBuff( "rime" )
+                applyBuff( "biting_cold_triggered" ) -- Track that we've triggered this for this cast
+            end
+        end,
+
+        finish = function ()
+            removeBuff( "biting_cold_triggered" ) -- Clean up tracking when RW ends
         end,
 
         auras = {
