@@ -1010,6 +1010,10 @@ spec:RegisterCombatLogEvent( function( _, subtype, _, sourceGUID, sourceName, so
 
 end )
 
+local BreathOfSindragosaExpire = setfenv( function()
+    gain( 2, "runes" )
+end, state )
+
 spec:RegisterHook( "reset_precast", function ()
     local control_expires = action.control_undead.lastCast + 300
     if talent.control_undead.enabled and control_expires > now and pet.up then
@@ -1031,9 +1035,7 @@ spec:RegisterHook( "reset_precast", function ()
 
 end )
 
-local BreathOfSindragosaExpire = setfenv( function()
-    gain( 2, "runes" )
-end, state )
+
 
 local KillingMachineConsumer = setfenv( function ()
 
