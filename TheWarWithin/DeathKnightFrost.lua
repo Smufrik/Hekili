@@ -400,12 +400,6 @@ spec:RegisterAuras( {
         tick_time = 1,
         max_stack = 1
     },
-    -- Internal tracking: Biting Cold has already triggered during this Remorseless Winter cast
-    biting_cold_triggered = {
-        id = 999996, -- Custom tracking buff
-        duration = 20, -- Longer than RW duration to ensure cleanup
-        max_stack = 1
-    },
     -- Talent: Movement slowed $w1% $?$w5!=0[and Haste reduced $w5% ][]by frozen chains.
     -- https://wowhead.com/beta/spell=45524
     chains_of_ice = {
@@ -1030,7 +1024,16 @@ spec:RegisterHook( "reset_precast", function ()
         end
     end
 
+    -- Queue aura event for Breath of Sindragosa rune generation
+    if buff.breath_of_sindragosa.up then
+        state:QueueAuraEvent( "breath_of_sindragosa", BreathOfSindragosaExpire, buff.breath_of_sindragosa.expires, "AURA_EXPIRATION" )
+    end
+
 end )
+
+local BreathOfSindragosaExpire = setfenv( function()
+    gain( 2, "runes" )
+end, state )
 
 local KillingMachineConsumer = setfenv( function ()
 
@@ -1166,12 +1169,6 @@ spec:RegisterAbilities( {
         handler = function ()
             gainCharges( "empower_rune_weapon", 1 )
             applyBuff( "breath_of_sindragosa", 8 )
-        end,
-
-        finish = function()
-            -- Talent description: "Grants a charge of Empower Rune Weapon at the start and $s6 Runes at the end"
-            -- Based on research: $s6 = 2 runes
-            gain( 2, "runes" )
         end,
     },
 
@@ -1803,22 +1800,16 @@ spec:RegisterAbilities( {
         handler = function ()
             applyBuff( "remorseless_winter" )
             removeBuff( "cryogenic_chamber" )
-            removeBuff( "biting_cold_triggered" ) -- Reset tracking for this cast
+
+            if active_enemies > 2 and legendary.biting_cold.enabled then
+                applyBuff( "rime" )
+            end
+            if active_enemies > 2 and talent.biting_cold.enabled then
+                applyBuff( "rime" )
+            end
 
             if conduit.biting_cold.enabled then applyDebuff( "target", "biting_cold" ) end
             -- if pvptalent.deathchill.enabled then applyDebuff( "target", "deathchill" ) end
-        end,
-
-        tick = function ()
-            -- Biting Cold: First time Remorseless Winter deals damage to 3+ enemies, gain Rime (once per cast)
-            if active_enemies >= 3 and (legendary.biting_cold.enabled or talent.biting_cold.enabled) and not buff.biting_cold_triggered.up then
-                applyBuff( "rime" )
-                applyBuff( "biting_cold_triggered" ) -- Track that we've triggered this for this cast
-            end
-        end,
-
-        finish = function ()
-            removeBuff( "biting_cold_triggered" ) -- Clean up tracking when RW ends
         end,
 
         auras = {
