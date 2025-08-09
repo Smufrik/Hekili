@@ -62,7 +62,7 @@ actions.cds+=/call_action_list,name=trinkets
 actions.cds+=/desperate_prayer,if=health.pct<=75
 
 # Use Halo to acquire Twist of Fate if an ally can be healed for it and it is not currently up.
-actions.heal_for_tof=halo
+actions.heal_for_tof+=/halo
 # Use Divine Star to acquire Twist of Fate if an ally can be healed for it and it is not currently up.
 actions.heal_for_tof+=/divine_star
 # Use Holy Nova when Rhapsody is fully stacked to acquire Twist of Fate if an ally can be healed for it and it is not currently up.
@@ -83,7 +83,7 @@ actions.main+=/void_bolt,cycle_targets=1,if=insanity.deficit>16&cooldown.void_bo
 # Do not overcap on insanity
 actions.main+=/devouring_plague,cycle_targets=1,if=active_dot.devouring_plague<=1&dot.devouring_plague.remains<=gcd.max&(!talent.void_eruption|cooldown.void_eruption.remains>=gcd.max*3)|insanity.deficit<=35|buff.mind_devourer.up|buff.entropic_rift.up|buff.power_surge.up&buff.tww3_archon_4pc_helper.stack<4&buff.ascension.up
 # Use Void Torrent if it will get near full Mastery Value
-actions.main+=/void_torrent,cycle_targets=1,if=!variable.holding_crash&(dot.devouring_plague.remains>=2.5&(cooldown.dark_ascension.remains>=12|!talent.dark_ascension|!talent.void_blast)|cooldown.void_eruption.remains<=3&talent.void_eruption),interrupt_if=!talent.entropic_rift,interrupt_immediate=1
+actions.main+=/void_torrent,cycle_targets=1,if=!variable.holding_crash&(dot.devouring_plague.remains>=2.5&(cooldown.dark_ascension.remains>=12|!talent.dark_ascension|!talent.void_blast)|cooldown.void_eruption.remains<=3&talent.void_eruption),interrupt_if=talent.entropic_rift.disabled,interrupt_immediate=1
 # Use Void Volley if it would expire soon
 actions.main+=/void_volley,if=buff.void_volley.remains<=5|buff.entropic_rift.up&action.void_blast.usable_in>buff.entropic_rift.remains|target.time_to_die<=5
 # MFI is a good button
