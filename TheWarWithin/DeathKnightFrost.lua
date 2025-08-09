@@ -267,7 +267,7 @@ spec:RegisterTalents( {
     dark_talons                    = {  95057,  436687, 1 }, -- Consuming Killing Machine or Rime has a $s1% chance to grant $s2 stacks of Icy Talons and increase its maximum stacks by the same amount for $s3 sec. Runic Power spending abilities count as Shadowfrost while Icy Talons is active
     deaths_messenger               = {  95049,  437122, 1 }, -- Reduces the cooldowns of Lichborne and Raise Dead by $s1 sec
     expelling_shield               = {  95049,  439948, 1 }, -- When an enemy deals direct damage to your Anti-Magic Shell, their cast speed is reduced by $s1% for $s2 sec
-    exterminate                    = {  95068,  441378, 1 }, -- After Reaper's Mark explodes, your next $s3 Obliterates or Frostscythes cost $s4 Rune and summon $s5 scythes to strike your enemies. The first scythe strikes your target for $s$s6 Shadowfrost damage and has a $s7% chance to grant Killing Machine, the second scythe strikes all enemies around your target for $s$s8 Shadowfrost damage and applies Frost Fever. Deals reduced damage beyond $s9 targets
+    exterminate                    = {  95068,  441378, 1 }, -- After Reaper's Mark explodes, your next $s3 Obliterate or Frostscythe cost $s4 Rune and summon $s5 scythes to strike your enemies. The first scythe strikes your target for $s$s6 Shadowfrost damage and has a $s7% chance to grant Killing Machine, the second scythe strikes all enemies around your target for $s$s8 Shadowfrost damage and applies Frost Fever. Deals reduced damage beyond $s9 targets
     grim_reaper                    = {  95034,  434905, 1 }, -- Reaper's Mark initial strike grants Killing Machine. Reaper's Mark explosion deals up to $s1% increased damage based on your target's missing health
     pact_of_the_deathbringer       = {  95035,  440476, 1 }, -- When you suffer a damaging effect equal to $s1% of your maximum health, you instantly cast Death Pact at $s2% effectiveness. May only occur every $s3 min. When a Reaper's Mark explodes, the cooldowns of this effect and Death Pact are reduced by $s4 sec
     reaper_of_souls                = {  95034,  440002, 1 }, -- When you apply Reaper's Mark, the cooldown of Soul Reaper is reset, your next Soul Reaper costs no runes, and it explodes on the target regardless of their health. Soul Reaper damage is increased by $s1%
@@ -298,14 +298,14 @@ spec:RegisterTalents( {
 
 -- PvP Talents
 spec:RegisterPvpTalents( {
-    bitter_chill                   = 5435, -- (356470)
+    bitter_chill                   = 5435, -- (356470) Chains of Ice reduces the target's Haste by $s1%. Frost Strike refreshes the duration of Chains of Ice
     bloodforged_armor              = 5586, -- (410301) Death Strike reduces all Physical damage taken by $s1% for $s2 sec
     dark_simulacrum                = 3512, -- (77606) Places a dark ward on an enemy player that persists for $s1 sec, triggering when the enemy next spends mana on a spell, and allowing the Death Knight to unleash an exact duplicate of that spell
-    deathchill                     =  701, -- (204080)
-    deaths_cold_embrace            = 5693, -- (1218603)
-    delirium                       =  702, -- (233396)
+    deathchill                     =  701, -- (204080) Your Remorseless Winter and Chains of Ice apply Deathchill, rooting the target in place for $s1 sec. Remorseless Winter All targets within $s2 yards are afflicted with Deathchill when Remorseless Winter is cast. Chains of Ice When you Chains of Ice a target already afflicted by your Chains of Ice they will be afflicted by Deathchill
+    deaths_cold_embrace            = 5693, -- (1218603) Pillar of Frost grants you Remorseless Winter and increases its damage by $s1% and its radius by $s2%, but your movement speed is heavily reduced for its duration. Pillar of Frost's cooldown is increased by $s3 sec
+    delirium                       =  702, -- (233396) Howling Blast applies Delirium, reducing the cooldown recovery rate of movement enhancing abilities by $s1% for $s2 sec
     rot_and_wither                 = 5510, -- (202727) Your Death and Decay rots enemies each time it deals damage, absorbing healing equal to $s1% of damage dealt
-    shroud_of_winter               = 3439, -- (199719)
+    shroud_of_winter               = 3439, -- (199719) Enemies within $s1 yards of you become shrouded in winter, reducing the range of their spells and abilities by $s2%
     spellwarden                    = 5591, -- (410320) Anti-Magic Shell is now usable on allies and its cooldown is reduced by $s1 sec
     strangulate                    = 5429, -- (47476) Shadowy tendrils constrict an enemy's throat, silencing them for $s1 sec
 } )

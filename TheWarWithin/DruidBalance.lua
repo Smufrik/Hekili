@@ -154,7 +154,7 @@ spec:RegisterTalents( {
     astronomical_impact            = {  88232,  468960, 1 }, -- The critical strike damage of your Astral spells is increased by $s1%
     balance_of_all_things          = {  88214,  394048, 2 }, -- Entering Eclipse increases your critical strike chance with Arcane or Nature spells by $s1%, decreasing by $s2% every $s3 sec
     celestial_alignment            = {  88215,  194223, 1 }, -- Celestial bodies align, maintaining both Eclipses and granting $s1% haste for $s2 sec
-    convoke_the_spirits            = {  88206,  391528, 1 }, -- Call upon the spirits for an eruption of energy, channeling a rapid flurry of $s1 Druid spells and abilities over $s2 sec. You will cast Starsurge, Starfall, Moonfire, Wrath, Regrowth, Rejuvenation, Rake, and Thrash on appropriate nearby targets, favoring your current shapeshift form
+    convoke_the_spirits            = {  88206,  391528, 1 }, -- Call upon the spirits for an eruption of energy, channeling a rapid flurry of $s1 Druid spells and abilities over $s2 sec. You will cast Wild Growth, Swiftmend, Moonfire, Wrath, Regrowth, Rejuvenation, Rake, and Thrash on appropriate nearby targets, favoring your current shapeshift form
     cosmic_rapidity                = {  88227,  400059, 2 }, -- Your Moonfire, Sunfire, and Stellar Flare deal damage $s1% more frequently
     crashing_star                  = { 103847,  468978, 1 }, -- Shooting Stars has a $s2% chance to instead call down a Crashing Star, dealing $s$s3 Astral damage to the target and generating $s4 Astral Power
     denizen_of_the_dream           = {  88234,  394065, 1 }, -- Your Moonfire and Sunfire have a chance to summon a Faerie Dragon to assist you in battle for $s1 sec
@@ -164,6 +164,7 @@ spec:RegisterTalents( {
     fury_of_elune                  = {  88224,  202770, 1 }, -- Calls down a beam of pure celestial energy that follows the enemy, dealing up to $s$s2 Astral damage over $s3 sec within its area. Damage reduced on secondary targets. Generates $s4 Astral Power over its duration
     hail_of_stars                  = { 103846,  469004, 1 }, -- Casting a free Starsurge or Starfall grants Solstice for $s1 sec
     harmony_of_the_heavens         = {  88218,  450558, 1 }, -- Starsurge or Starfall increase your current Eclipse's Arcane or Nature damage bonus by an additional $s1%, up to $s2%
+    incarnation                    = {  88206,  102560, 1 }, -- An improved Moonkin Form that grants both Eclipses, any learned Celestial Alignment bonuses, and $s1% critical strike chance. Lasts $s2 sec. You may shapeshift in and out of this improved Moonkin Form for its duration
     incarnation_chosen_of_elune    = {  88206,  102560, 1 }, -- An improved Moonkin Form that grants both Eclipses, any learned Celestial Alignment bonuses, and $s1% critical strike chance. Lasts $s2 sec. You may shapeshift in and out of this improved Moonkin Form for its duration
     natures_balance                = {  88226,  202430, 1 }, -- While in combat you generate $s1 Astral Power every $s2 sec. While out of combat your Astral Power rebalances to $s3 instead of depleting to empty
     natures_grace                  = {  88208,  450347, 1 }, -- When Eclipse ends or when you enter combat, enter a Dreamstate, reducing the cast time of your next $s1 Starfires or Wraths by $s2%
@@ -231,19 +232,19 @@ spec:RegisterTalents( {
 
 -- PvP Talents
 spec:RegisterPvpTalents( {
-    celestial_guardian             =  180, -- (233754)
-    crescent_burn                  =  182, -- (200567)
-    deep_roots                     =  834, -- (233755)
-    dying_stars                    =  822, -- (410544)
+    celestial_guardian             =  180, -- (233754) Bear Form reduces magic damage taken from spells by $s1% and you may now cast Moonfire while in Bear Form
+    crescent_burn                  =  182, -- (200567) Using Moonfire on a target already afflicted by Moonfire's damage over time effect deals $s1% additional direct damage
+    deep_roots                     =  834, -- (233755) Increases the amount of damage required to cancel your Entangling Roots by $s1%
+    dying_stars                    =  822, -- (410544) Enemies that dispel your Moonfire or Sunfire suffer $s1% additional damage from their effects for $s2 sec. If already vulnerable, $s3% of the remaining duration is applied to the dispeller
     faerie_swarm                   =  836, -- (209749) Swarms the target with Faeries, disarming the enemy, preventing the use of any weapons or shield and reducing movement speed by $s1% for $s2 sec
     high_winds                     = 5383, -- (200931) Increases the range of Cyclone, Typhoon, and Entangling Roots by $s1 yds
     malornes_swiftness             = 5515, -- (236147) Your Travel Form movement speed while within a Battleground or Arena is increased by $s1% and you always move at $s2% movement speed while in Travel Form
-    master_shapeshifter            = 5604, -- (411266)
-    moon_and_stars                 =  184, -- (233750)
-    moonkin_aura                   =  185, -- (209740)
-    owlkin_adept                   = 5407, -- (354541)
-    protector_of_the_grove         = 3728, -- (209730)
-    star_burst                     = 3058, -- (356517)
+    master_shapeshifter            = 5604, -- (411266) Your abilities are amplified based on your current shapeshift form, granting an additional effect.  Caster Form Rejuvenation heals for $s3% more and generates $s4 Astral Power.  Bear Form Ironfur grants $s7% additional armor and generates $s8 Astral Power.  Cat Form Rip, Ferocious Bite, and Maim deal $s11% additional damage and generate $s12 Astral Power when cast with $s13 combo points
+    moon_and_stars                 =  184, -- (233750) Entering an Eclipse summons a beam of light at your location granting you $s1% reduction in silence and interrupts for $s2 sec
+    moonkin_aura                   =  185, -- (209740) Starsurge grants $s1% spell critical strike chance to $s2 allies within $s3 yards for $s4 sec, stacking up to $s5 times
+    owlkin_adept                   = 5407, -- (354541) Owlkin Frenzy can stack up to $s1 times and reduces the cast time of your next Cyclone or Entangling Roots by $s2%
+    protector_of_the_grove         = 3728, -- (209730) When using Regrowth on an ally the initial heal will always have a critical effect and the cast time of Regrowth will be reduced by $s1% for $s2 sec
+    star_burst                     = 3058, -- (356517) Starfall calls down collapsing stars that last $s2 sec. Enemies that come into contact with a star cause it to burst, knocking nearby enemies upwards and dealing $s$s3 Astral damage. Generates $s4 Astral Power. The Druid and their allies may pick up stars, causing them to orbit around you
     thorns                         = 3731, -- (1217017) Casting Barkskin sprouts thorns on you for $s2 sec. When victim to melee attacks, thorns deals $s$s3 Nature damage back to the attacker. Attackers also have their movement speed reduced by $s4% for $s5 sec
     tireless_pursuit               = 5646, -- (377801) For $s1 sec after leaving Cat Form or Travel Form, you retain up to $s2% movement speed
 } )
