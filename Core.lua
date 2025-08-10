@@ -553,6 +553,8 @@ function Hekili:CheckChannel( ability, prio )
 
         -- We are concerned with chain and early_chain_if.
 
+        -- FIXME
+        -- Why are some conditions not correctly making it to/through here? Example: "!talent.entropic_rift" on shadowpriest void_torrent cancel
         if modifiers.interrupt_if and modifiers.interrupt_if() then
             local timing = last_tick or ( state.query_time - state.buff.casting.applied ) % tick_time < 0.25
             local imm = modifiers.interrupt_immediate and modifiers.interrupt_immediate()

@@ -1513,7 +1513,8 @@ spec:RegisterHook( "reset_precast", function()
     if covenant.kyrian and now - action.resonating_arrow.lastCast < 6 then applyBuff( "resonating_arrow", 10 - ( now - action.resonating_arrow.lastCast ) ) end
     if barbed_shot_grace_period > 0 and cooldown.barbed_shot.remains > 0 then reduceCooldown( "barbed_shot", barbed_shot_grace_period ) end
 
-    -- BANDAID
+    -- FIXME
+    -- This is still happening, but works better at further distances. It might be good practice to slow the projectile in general.
     -- Ensure that multishot recommendation doesn't flicker while black arrow is in flight, which was happening when only using the impact() function of the spell
     if action.kill_shot.in_flight and talent.umbral_reach.enabled and active_enemies > 1 and talent.beast_cleave.enabled then
         applyBuff( "beast_cleave" )
