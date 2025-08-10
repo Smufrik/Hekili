@@ -1183,14 +1183,14 @@ spec:RegisterHook( "TALENTS_UPDATED", function()
     talent.shadow_crash = talent.shadow_crash_targeted.enabled and talent.shadow_crash_targeted or talent.shadow_crash_ground
 
     -- For ability/cooldown, Mindbender takes precedent.
-    local sf = talent.mindbender.enabled and "mindbender_actual" or talent.voidwraith.enabled and "voidwraith" or "shadowfiend"
+    local sf = talent.mindbender.enabled and "mindbender_actual" or talent.voidwraith.enabled and "voidwraith" or "shadowfiend_actual"
 
-    class.abilities.shadowfiend = class.abilities.shadowfiend_actual
+    class.abilities.shadowfiend = class.abilities[ sf ]
     class.abilities.mindbender = class.abilities[ sf ]
 
-    rawset( cooldown, "shadowfiend", cooldown.shadowfiend_actual )
+    rawset( cooldown, "shadowfiend", cooldown[ sf ] )
     rawset( cooldown, "mindbender", cooldown[ sf ] )
-    rawset( cooldown, "fiend", cooldown.mindbender )
+    rawset( cooldown, "fiend", cooldown[ sf ] )
 
     -- For totem/pet/buff, Voidwraith takes precedent.
     sf = talent.voidwraith.enabled and "voidwraith" or talent.mindbender.enabled and "mindbender" or "shadowfiend"
