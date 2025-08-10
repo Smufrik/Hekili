@@ -1,6 +1,6 @@
 ## https://github.com/simulationcraft/simc/blob/thewarwithin/ActionPriorityLists/default/druid_feral.simc
 ## SimulationCraft Commit Sync: 5340e2f
-## Date: 2025-08-08
+## Date: 2025-08-10
 
 ## [Syrif] - This APL is VERY edited with CelestialRepose's rubber stamp. The true feral APL has 29 variables in it to essentially min-max trinkets, and CD sync on long fights.
 actions.precombat+=/mark_of_the_wild
@@ -26,7 +26,7 @@ actions+=/call_action_list,name=cooldown,strict=1,if=dot.rip.ticking
 # with rip and tear, as wildstalker, we do 3cp rips
 actions+=/rip,if=talent.rip_and_tear&spell_targets=1&hero_tree.wildstalker&buff.tigers_fury.up&!buff.bs_inc.up&(buff.bloodtalons.up|!talent.bloodtalons)&(combo_points>=3&refreshable&cooldown.tigers_fury.remains>25|buff.tigers_fury.remains<5&variable.rip_duration>cooldown.tigers_fury.remains&cooldown.tigers_fury.remains>=dot.rip.remains)
 actions+=/call_action_list,name=builder,if=(buff.bs_inc.up&!buff.ravage.up&!buff.coiled_to_spring.up&hero_tree.druid_of_the_claw&talent.coiled_to_spring&spell_targets<=2)|buff.bloodtalons.stack=0&active_bt_triggers=2
-actions+=/wait,sec=action.tigers_fury.ready,if=combo_points=5&cooldown.tigers_fury.remains<3&spell_targets=1
+actions+=/wait,sec=cooldown.tigers_fury.remains,if=combo_points=5&cooldown.tigers_fury.remains>0&cooldown.tigers_fury.remains<3&spell_targets=1
 actions+=/call_action_list,name=finisher,if=combo_points=5
 ## [Syrif] - combo_points<5 added to stop from sending generators inappropriately
 actions+=/call_action_list,name=builder,if=spell_targets.swipe_cat=1&combo_points<5
@@ -53,12 +53,12 @@ actions.aoe_builder+=/rake,cycle_targets=1,if=!dot.rake.ticking&hero_tree.wildst
 # li moonfire is better than non-dcr rake in aoe if we already have 1 rake
 actions.aoe_builder+=/moonfire_cat,cycle_targets=1,if=refreshable&!(variable.need_bt&buff.bt_moonfire.up)&!buff.clearcasting.at_max_stacks
 actions.aoe_builder+=/rake,cycle_targets=1,if=refreshable&!(variable.need_bt&buff.bt_rake.up)&!buff.clearcasting.at_max_stacks
-# fillers
+## fillers
 actions.aoe_builder+=/brutal_slash,if=!(variable.need_bt&buff.bt_swipe.up)
 actions.aoe_builder+=/swipe_cat,if=!(variable.need_bt&buff.bt_swipe.up)
 actions.aoe_builder+=/shred,if=!buff.sudden_ambush.up&!variable.easy_swipe&!(variable.need_bt&buff.bt_shred.up)
 actions.aoe_builder+=/thrash_cat,if=!talent.thrashing_claws&!(variable.need_bt&buff.bt_thrash.up)
-# fallback bt actions
+## fallback bt actions
 actions.aoe_builder+=/rake,cycle_targets=1,if=talent.doubleclawed_rake&buff.sudden_ambush.up&variable.need_bt&buff.bt_rake.down
 actions.aoe_builder+=/moonfire_cat,cycle_targets=1,if=variable.need_bt&buff.bt_moonfire.down
 actions.aoe_builder+=/rake,cycle_targets=1,if=buff.sudden_ambush.up&variable.need_bt&buff.bt_rake.down
@@ -107,8 +107,8 @@ actions.finisher+=/primal_wrath,if=spell_targets.primal_wrath>1&((dot.primal_wra
 actions.finisher+=/rip,cycle_targets=1,if=(!talent.primal_wrath|spell_targets=1)&(buff.bloodtalons.up|!talent.bloodtalons)&(buff.tigers_fury.up|dot.rip.remains<cooldown.tigers_fury.remains)&(remains<fight_remains|remains<4&buff.ravage.up)
 # only bite with ravage in aoe with berserk
 actions.finisher+=/call_action_list,name=aoe_builder,if=hero_tree.druid_of_the_claw&buff.bs_inc.up&!buff.ravage.up&spell_targets>=2
-# actions.finisher+=/call_action_list,name=builder,if=buff.ravage.up&buff.preparing_to_strike.remains<2&buff.preparing_to_strike.up&buff.bs_inc.up
-actions.finisher+=/wait,sec=!buff.sabertooth.up,if=buff.sabertooth.up&energy.deficit>40
+## actions.finisher+=/call_action_list,name=builder,if=buff.ravage.up&buff.preparing_to_strike.remains<2&buff.preparing_to_strike.up&buff.bs_inc.up
+actions.finisher+=/wait,sec=debuff.sabertooth.remains,if=debuff.sabertooth.up&energy.deficit>40
 actions.finisher+=/pool_resource,for_next=1
 actions.finisher+=/ferocious_bite,max_energy=1,cycle_targets=1,if=!buff.bs_inc.up
 actions.finisher+=/pool_resource,for_next=1
