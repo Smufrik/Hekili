@@ -230,6 +230,7 @@ spec:RegisterTalents( {
     fateful_ending                 = {  95127,  454428, 1 }, -- When your Fatebound Coin flips the same face for the seventh time in a row, keep the lucky coin to gain $s2% Agility until you leave combat for $s3 seconds. If you already have a lucky coin, it instead deals $s$s4 Cosmic damage to your target
     hand_of_fate                   = {  95125,  452536, 1 }, -- Flip a Fatebound Coin each time a finishing move consumes $s2 or more combo points. Heads increases the damage of your attacks by $s3%, lasting $s4 sec or until you flip Tails. Tails deals $s$s5 Cosmic damage to your target. For each time the same face is flipped in a row, Heads increases damage by an additional $s6% and Tails increases its damage by $s7%
     inevitabile_end                = {  95114,  454434, 1 }, --
+    inevitable_end                 = {  95114,  454434, 1 }, -- Blizzard typo
     inexorable_march               = {  95130,  454432, 1 }, --
     mean_streak                    = {  95122,  453428, 1 }, -- Fatebound Coins flipped by Envenom are $s1% more likely to match the same face as the last flip
     tempted_fate                   = {  95138,  454286, 1 }, -- You have a chance equal to your critical strike chance to absorb $s1% of any damage taken, up to a maximum chance of $s2%
@@ -810,11 +811,8 @@ spec:RegisterAuras( {
     -- https://wowhead.com/beta/spell=382245
     cold_blood = {
         id = function() return talent.inevitable_end.enabled and not state.spec.subtlety and 456330 or 382245 end,
-        duration = 3600,
+        duration = 15,
         max_stack = function() return talent.inevitable_end.enabled and not state.spec.subtlety and 2 or 1 end,
-        onRemove = function()
-            setCooldown( "cold_blood", action.cold_blood.cooldown )
-        end,
         copy = { 382245, 456330 }
     },
     crimson_tempest = {
@@ -1639,8 +1637,6 @@ spec:RegisterHook( "reset_precast", function ()
     end
 
     class.abilities.apply_poison = class.abilities[ action.apply_poison_actual.next_poison ]
-
-    if buff.cold_blood.up then setCooldown( "cold_blood", action.cold_blood.cooldown ) end
 
     if buff.vanish.up then applyBuff( "stealth" ) end
     -- Pad Improved Garrote's expiry in order to avoid ruining your snapshot.
