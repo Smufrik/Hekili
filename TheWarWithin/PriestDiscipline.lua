@@ -914,7 +914,7 @@ spec:RegisterAbilities( {
         known = 34433,
         flash = { 34433, 123040, 200174, 451235 },
         cast = 0,
-        cooldown = 30,
+        cooldown = function() return talent.void_summoner.enabled and 30 or 60 end,
         gcd = "spell",
         school = "shadow",
 

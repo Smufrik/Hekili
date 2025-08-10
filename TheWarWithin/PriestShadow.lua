@@ -30,6 +30,7 @@ local IsActiveSpell = ns.IsActiveSpell
 
 -- Specialization-specific local functions (if any)
 local min = ns.safeMin
+local GetSpellCooldown = C_Spell.GetSpellCooldown
 
 spec:RegisterResource( Enum.PowerType.Insanity, {
     mind_flay = {
@@ -1098,6 +1099,34 @@ end )
 spec:RegisterHook( "reset_precast", function ()
     tww3_archon_4pc_helper_stacks = nil
 
+    -- Debug: Track fiend cooldown states for desync troubleshooting
+    if Hekili.ActiveDebug then
+        local shadowfiendCd = GetSpellCooldown( 34433 )  -- Shadowfiend
+        local mindbenderCd = GetSpellCooldown( 200174 )  -- Mindbender
+        local voidwraithCd = GetSpellCooldown( 451234 )  -- Voidwraith
+
+        Hekili:Debug( "Shadowfiend Cooldown - (34433): start=%.2f, duration=%.2f, remains=%.2f",
+            shadowfiendCd.startTime or 0, shadowfiendCd.duration or 0,
+            shadowfiendCd.startTime > 0 and (shadowfiendCd.startTime + shadowfiendCd.duration - GetTime()) or 0 )
+        Hekili:Debug( "Mindbender Cooldown - (200174): start=%.2f, duration=%.2f, remains=%.2f",
+            mindbenderCd.startTime or 0, mindbenderCd.duration or 0,
+            mindbenderCd.startTime > 0 and (mindbenderCd.startTime + mindbenderCd.duration - GetTime()) or 0 )
+        Hekili:Debug( "Voidwraith Cooldown - (451234): start=%.2f, duration=%.2f, remains=%.2f",
+            voidwraithCd.startTime or 0, voidwraithCd.duration or 0,
+            voidwraithCd.startTime > 0 and (voidwraithCd.startTime + voidwraithCd.duration - GetTime()) or 0 )
+
+        Hekili:Debug( "Addon sees: Remaining cooldowns -  shadowfiend=%.2f, mindbender=%.2f, fiend=%.2f",
+            cooldown.shadowfiend.remains, cooldown.mindbender.remains, cooldown.fiend.remains )
+
+        Hekili:Debug( "Fiend Debug - Active talents: mindbender=%s, voidwraith=%s",
+            talent.mindbender.enabled and "true" or "false", talent.voidwraith.enabled and "true" or "false" )
+
+        Hekili:Debug( "Fiend Debug - Ability data: spec.abilities.mindbender.id=%s, class.abilities.mindbender.id=%s, class.abilities.mindbender.cooldown=%s",
+            spec.abilities.mindbender and spec.abilities.mindbender.id or "nil",
+            class.abilities.mindbender and class.abilities.mindbender.id or "nil",
+            class.abilities.mindbender and class.abilities.mindbender.cooldown or "nil" )
+    end
+
     if buff.voidform.up or time > 0 then
         applyBuff( "shadowform" )
     end
@@ -1159,6 +1188,16 @@ spec:RegisterHook( "TALENTS_UPDATED", function()
     rawset( cooldown, "shadowfiend", cooldown.shadowfiend_actual )
     rawset( cooldown, "mindbender", cooldown[ sf ] )
     rawset( cooldown, "fiend", cooldown.mindbender )
+
+    if talent.voidwraith.enabled then
+        -- override to the voidwraith CD, which appears to be a blizzard bug, confirmed multiple times in-game with API calls.
+        -- Mindbender is not castable even though the action shows it is, if voidwraith is on CD in the background.
+        local cd = GetSpellCooldown( 451234 )
+        if cd and cd.startTime > 0 then
+            local newExpires = query_time + cd.startTime + cd.duration - GetTime()
+            cooldown.mindbender.expires = max( cooldown.mindbender.expires, newExpires )
+        end
+    end
 
     -- For totem/pet/buff, Voidwraith takes precedent.
     sf = talent.voidwraith.enabled and "voidwraith" or talent.mindbender.enabled and "mindbender" or "shadowfiend"
