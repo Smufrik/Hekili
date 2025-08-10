@@ -631,12 +631,17 @@ spec:RegisterHook( "reset_precast", function ()
         applyBuff( "entropic_rift", entropic_rift_expires - query_time )
     end
 
+    local vwRemains = cooldown.voidwraith.true_remains
+    if vwRemains > cooldown.shadowfiend.remains then
+        setCooldown( "shadowfiend", vwRemains )
+    end
+
     rift_extensions = nil
 end )
 
 spec:RegisterHook( "TALENTS_UPDATED", function()
     -- For ability/cooldown, Mindbender takes precedent.
-    local sf = talent.mindbender.enabled and "mindbender_actual" or talent.voidwraith.enabled and "voidwraith" or "shadowfiend"
+    local sf = talent.mindbender.enabled and "mindbender_actual" or talent.voidwraith.enabled and "voidwraith" or "shadowfiend_actual"
 
     class.abilities.shadowfiend = class.abilities[ sf ]
     class.abilities.mindbender = class.abilities.mindbender_actual
@@ -985,7 +990,7 @@ spec:RegisterAbilities( {
             if talent.shadow_covenant.enabled then applyBuff( "shadow_covenant" ) end
         end,
 
-        bind = { "shadowfiend", "mindbender" }
+        bind = { "shadowfiend", "mindbender" },
     },
 
     mind_blast = {
