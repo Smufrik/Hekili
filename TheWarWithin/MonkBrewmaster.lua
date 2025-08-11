@@ -127,7 +127,9 @@ spec:RegisterTalents( {
     heightened_guard               = { 101711,  455081, 1 }, -- Ox Stance will now trigger when an attack is larger than $s1% of your current health
     high_tolerance                 = { 101189,  196737, 2 }, -- Stagger is $s1% more effective at delaying damage. You gain up to $s2% Haste based on your current level of Stagger
     hit_scheme                     = { 101071,  383695, 1 }, -- Dealing damage with Blackout Kick increases the damage of your next Keg Smash by $s1%, stacking up to $s2 times
+    improved_invoke_niuzao         = { 101073,  322740, 1 }, -- While active, Invoke Niuzao, the Black Ox can be recast once to cause Niuzao to stomp mightily and knock nearby enemies into the air
     improved_invoke_niuzao_the_black_ox = { 101073,  322740, 1 }, -- While active, Invoke Niuzao, the Black Ox can be recast once to cause Niuzao to stomp mightily and knock nearby enemies into the air
+    invoke_niuzao                  = { 101075,  132578, 1 }, -- Summons an effigy of Niuzao, the Black Ox for $s1 sec that attacks your primary target and Stomps when you cast Purify, damaging all nearby enemies. While active, $s2% of damage delayed by Stagger is instead Staggered by Niuzao, and Niuzao is healed for $s3% of your purified Stagger
     invoke_niuzao_the_black_ox     = { 101075,  132578, 1 }, -- Summons an effigy of Niuzao, the Black Ox for $s1 sec that attacks your primary target and Stomps when you cast Purify, damaging all nearby enemies. While active, $s2% of damage delayed by Stagger is instead Staggered by Niuzao, and Niuzao is healed for $s3% of your purified Stagger
     keg_smash                      = { 101088,  121253, 1 }, -- Smash a keg of brew on the target, dealing $s$s2 Physical damage to all enemies within $s3 yds and reducing their movement speed by $s4% for $s5 sec. Deals reduced damage beyond $s6 targets. Grants Shuffle for $s7 sec and reduces the remaining cooldown on your Brews by $s8 sec
     light_brewing                  = { 101082,  325093, 1 }, -- Reduces the cooldown of Purifying Brew and Celestial Brew by $s1%
@@ -1229,10 +1231,8 @@ spec:RegisterAbilities( {
             gain( energy.max, "energy" )
             if talent.endless_draught.enabled then
                 if talent.celestial_brew.enabled then gainCharges( "celestial_brew", class.abilities.celestial_brew.charges ) end
-                if talent.celestial_infusion.enabled then gainCharges( "celestial_infusion", class.abilities.celestial_infusion.charges ) end
             else
                 if talent.celestial_brew.enabled then setCooldown( "celestial_brew", 0 ) end
-                if talent.celestial_infusion.enabled then setCooldown( "celestial_infusion", 0 ) end
             end
             gainCharges( "purifying_brew", class.abilities.purifying_brew.charges )
         end,
@@ -1306,7 +1306,7 @@ spec:RegisterAbilities( {
 
     -- Talent: A swig of strong brew that coalesces purified chi escaping your body into a celestial guard, absorbing 13,480 damage.
     celestial_brew = {
-        id = 322507,
+        id = function() return talent.celestial_infusion.enabled and 1241059 or 322507 end,
         cast = 0,
         charges = function() return talent.endless_draught.enabled and 2 or nil end,
         cooldown = function() return talent.light_brewing.enabled and 36 or 45 end,
@@ -1317,14 +1317,21 @@ spec:RegisterAbilities( {
         end,
         gcd = "totem",
         school = "physical",
+        texture = function() return talent.celestial_infusion.enabled and 613399 or 1360979 end,
 
-        talent = "celestial_brew",
+        talent = function() return talent.celestial_infusion.enabled and "celestial_infusion" or "celestial_brew" end,
         startsCombat = false,
         toggle = "defensives",
 
         handler = function ()
             removeBuff( "purified_chi" )
-            applyBuff( "celestial_brew" )
+
+            if talent.celestial_infusion.enabled then
+                applyBuff( "celestial_infusion" )
+            else
+                applyBuff( "celestial_brew" )
+            end
+
 
             if hero_tree.master_of_harmony then
                 if buff.aspect_of_harmony_accumulator.up then
@@ -1338,40 +1345,9 @@ spec:RegisterAbilities( {
 
             if talent.pretense_of_instability.enabled then applyBuff( "pretense_of_instability" ) end
         end,
-    },
 
-    -- A strong herbal brew that coalesces purified chi escaping your body into a celestial guard, absorbing $s1% of incoming damage, up to $s2 total. Purifying Stagger damage increases absorption by up to $s3%
-    -- https://www.wowhead.com/spell=1241059
-    celestial_infusion = {
-        id = 1241059,
-        charges = function() return talent.endless_draught.enabled and 2 or nil end,
-        cooldown = function() return talent.light_brewing.enabled and 36 or 45 end,
-        recharge = function()
-            if talent.endless_draught.enabled then
-                return talent.light_brewing.enabled and 36 or 45
-            end
-        end,
-        gcd = "totem",
-
-        talent = "celestial_infusion",
-        startsCombat = false,
-        toggle = "defensives",
-
-        texture = 613399,
-
-        handler = function ()
-            applyBuff( "celestial_infusion" )
-            if talent.pretense_of_instability.enabled then applyBuff( "pretense_of_instability" ) end
-            if hero_tree.master_of_harmony then
-                if buff.aspect_of_harmony_accumulator.up then
-                    removeBuff( "aspect_of_harmony_accumulator" )
-                    applyBuff( "aspect_of_harmony" )
-                end
-                if set_bonus.tww3 >= 4 then
-                    addStack( "potential_energy", 2 )
-                end
-            end
-        end
+        bind = "celestial_brew",
+        copy = { "celestial_infusion", 1241059, "celestial_brew", 322507 }
     },
 
     -- Talent: Hurls a torrent of Chi energy up to 40 yds forward, dealing 967 Nature damage to all enemies, and 1,775 healing to the Monk and all allies in its path. Healing reduced beyond 6 targets. Casting Chi Burst does not prevent avoiding attacks.
