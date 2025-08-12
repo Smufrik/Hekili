@@ -1224,13 +1224,6 @@ function Hekili:GetPredictionFromAPL( dispName, packName, listName, slot, action
                                                         if sec <= 0 then
                                                             if debug then self:Debug( "Invalid wait value ( %.2f ); skipping...", sec ) end
                                                         else
-                                                            if debug then
-                                                                self:Debug( "Action chosen:  %s at %.2f!", rAction, state.delay )
-                                                                self:Debug( "Texture shown:  %s", slot.texture )
-                                                            end
-                                                        end
-                                                        
-                                                        --[[ else
                                                             slot.scriptType = "simc"
                                                             slot.script = scriptID
                                                             slot.hook = caller
@@ -1270,7 +1263,7 @@ function Hekili:GetPredictionFromAPL( dispName, packName, listName, slot, action
                                                                 self:Debug( "Action chosen:  %s at %.2f!", rAction, state.delay )
                                                                 self:Debug( "Texture shown:  %s", slot.texture )
                                                             end
-                                                        end ]]
+                                                        end
 
                                                     elseif action == "cancel_action" then
                                                         if state.args.action_name and state:IsChanneling( state.args.action_name ) then state.channel_breakable = true end
