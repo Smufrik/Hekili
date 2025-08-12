@@ -142,7 +142,7 @@ actions.ar_meta+=/eye_beam,if=debuff.essence_break.down&buff.inner_demon.down
 actions.ar_meta+=/glaive_tempest,if=debuff.essence_break.down&(cooldown.blade_dance.remains>gcd.max*2|fury>60)&active_enemies>=2
 actions.ar_meta+=/sigil_of_flame,if=active_enemies>2&debuff.essence_break.down
 actions.ar_meta+=/throw_glaive,if=talent.soulscar&talent.furious_throws&active_enemies>2&debuff.essence_break.down&(charges=2|full_recharge_time<cooldown.blade_dance.remains)
-actions.ar_meta+=/annihilation,if=cooldown.blade_dance.remains|fury>60|soul_fragments>0|buff.metamorphosis.remains<5&cooldown.felblade.up|debuff.essence_break.up
+actions.ar_meta+=/annihilation,if=cooldown.blade_dance.remains|fury>60|soul_fragments.active>0|buff.metamorphosis.remains<5&cooldown.felblade.up|debuff.essence_break.up
 actions.ar_meta+=/sigil_of_flame,if=buff.metamorphosis.remains>5&buff.out_of_range.down&fury.deficit>=30+variable.fury_gen*gcd.max+active_enemies*talent.flames_of_fury.rank
 actions.ar_meta+=/felblade,if=fury.deficit>=40+variable.fury_gen*0.5&!buff.inertia_trigger.up
 actions.ar_meta+=/sigil_of_flame,if=debuff.essence_break.down&buff.out_of_range.down&fury.deficit>=30+variable.fury_gen*gcd.max+active_enemies*talent.flames_of_fury.rank
