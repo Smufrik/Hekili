@@ -2144,7 +2144,7 @@ spec:RegisterAbilities( {
         talent = "shadow_crash",
         startsCombat = true,
 
-        velocity = 2,
+        flightTime = 1.5,
 
         cycle = "vampiric_touch",
 
