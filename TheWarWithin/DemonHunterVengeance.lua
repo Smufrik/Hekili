@@ -3,6 +3,7 @@
 -- Patch 11.2
 
 -- TODO: Support other sources of queued fragments, like sigils.
+-- TODO: Improve timeliness of soul fragments
 
 if UnitClassBase( "player" ) ~= "DEMONHUNTER" then return end
 
