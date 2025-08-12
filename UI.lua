@@ -1115,6 +1115,10 @@ do
 
                         local ability = class.abilities[ action ]
 
+                        if ability and ability.id < 0 and ability.id > -100 then
+                            ability = nil
+                        end
+
                         if ability then
                             if ( conf.flash.enabled and conf.flash.suppress ) then b:Hide()
                             else b:Show() end
