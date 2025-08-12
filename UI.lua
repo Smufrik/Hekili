@@ -1088,11 +1088,11 @@ do
             local madeUpdate = false
 
             self.timer = pulseDisplay
-            self.NewRecommendations = nil
 
             local now = GetTime()
 
-            if fullUpdate then
+            if self.NewRecommendations then
+                self.NewRecommendations = nil
                 madeUpdate = true
 
                 local alpha = self.alpha
@@ -1220,16 +1220,16 @@ do
                                 if b.glowStop then b:glowStop() end
                                 b.glowing = false
                             end
+
+                            b.Action = action
+                            b.Text = caption
+                            b.Indicator = indicator
+                            b.Keybind = keybind
+                            b.Ability = ability
+                            b.ExactTime = exact_time
                         else
                             b:Hide()
                         end
-
-                        b.Action = action
-                        b.Text = caption
-                        b.Indicator = indicator
-                        b.Keybind = keybind
-                        b.Ability = ability
-                        b.ExactTime = exact_time
                     end
 
                     self:RefreshCooldowns( "RECS_UPDATED" )
@@ -1652,7 +1652,7 @@ do
             for i, rec in ipairs( self.Recommendations ) do
                 local button = self.Buttons[ i ]
 
-                if button.Action then
+                if button.Action and button.Action == rec.actionName then
                     local cd = button.Cooldown
                     local ability = button.Ability
 
@@ -2360,7 +2360,7 @@ do
                     local spf = 1000 / ( rate > 0 and rate or 100 )
 
                     if HekiliEngine.threadUpdates then
-                        local dyn = 1.1 * HekiliEngine.threadUpdates.meanWorkTime / floor( HekiliEngine.threadUpdates.meanFrames )
+                        local dyn = HekiliEngine.threadUpdates.meanWorkTime / floor( HekiliEngine.threadUpdates.meanFrames )
                         Hekili.maxFrameTime = 0.8 * max( ceiling, min( 16.667, spf, dyn ) )
                     else
                         Hekili.maxFrameTime = 0.8 * max( ceiling, min( 16.667, spf ) )
