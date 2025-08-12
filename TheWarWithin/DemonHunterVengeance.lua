@@ -2,7 +2,7 @@
 -- August 2025
 -- Patch 11.2
 
--- Soul fragments supported: soul_fragments.total, .inactive
+-- TODO: Support other sources of queued fragments, like sigils.
 
 if UnitClassBase( "player" ) ~= "DEMONHUNTER" then return end
 
@@ -737,8 +737,8 @@ local true_inactive_fragments = {}
 -- To support SimC soul_fragments expressions
 spec:RegisterStateTable( "soul_fragments", setmetatable( {
 
-    activation_delay = 1.25, -- Default delay before fragments become active
-    virtual_fragments = {}, -- Virtual table: copy for simulation, subject to prediction
+    activation_delay = 1.25, -- Maxiumum delay before fragments become active
+    virtual_fragments = {}, -- Virtual table
 
     reset = setfenv( function()
         soul_fragments.active = buff.soul_fragments.stack or 0
@@ -759,8 +759,6 @@ spec:RegisterStateTable( "soul_fragments", setmetatable( {
 
     activateFragment = setfenv( function()
         -- Activate a fragment from REAL storage (convert inactive to active)
-        -- Since combat log activation is real data, remove the soonest fragment regardless of expected timing
-
         if #true_inactive_fragments > 0 then
             local earliest_index = 1
             local earliest_time = true_inactive_fragments[1]
@@ -782,7 +780,6 @@ spec:RegisterStateTable( "soul_fragments", setmetatable( {
         soul_fragments.virtual_fragments = {}
     end, state ),
 
-    -- Consume soul fragments with effects
     consumeFragments = setfenv( function( amt )
         if talent.soul_furnace.enabled then
             local overflow = buff.soul_furnace_stack.stack + amt
@@ -821,8 +818,21 @@ spec:RegisterStateTable( "soul_fragments", setmetatable( {
         elseif k == "inactive" then
             return rawget( t, "inactive" ) or 0
         elseif k == "time_to_next" then
-            -- Simplified version to avoid potential Metamorphosis issues
-            return 0
+            -- Find the earliest activation time from real fragments
+            local earliest_time = nil
+            local current_time = query_time
+
+            for i, activation_time in ipairs( true_inactive_fragments ) do
+                -- Convert real time to simulation time
+                local sim_activation_time = activation_time - GetTime() + current_time
+                if sim_activation_time > current_time then
+                    if not earliest_time or sim_activation_time < earliest_time then
+                        earliest_time = sim_activation_time
+                    end
+                end
+            end
+
+            return earliest_time and ( earliest_time - current_time ) or 0
         end
 
         return 0
@@ -931,7 +941,7 @@ spec:RegisterHook( "reset_precast", function ()
 
         for _, name in ipairs( demonsurge.demonic ) do
             local ability_name = name
-            -- Map old demonsurge names to current ability names
+            -- Map old demonsurge names to current ability names due to SimC APL
             if name == "soul_sunder" then ability_name = "soul_cleave" end
             if name == "spirit_burst" then ability_name = "spirit_bomb" end
 
@@ -940,18 +950,14 @@ spec:RegisterHook( "reset_precast", function ()
             end
         end
         if talent.demonic_intensity.enabled then
-            local metaApplied = ( buff.metamorphosis.applied - 0.2 ) -- fudge-factor because GetTime has ms precision
+            local metaApplied = ( buff.metamorphosis.applied - 0.05 ) -- fudge-factor because GetTime has ms precision
             if action.metamorphosis.lastCast >= metaApplied or action.fel_devastation.lastCast >= metaApplied then
                 applyBuff( "demonsurge_hardcast", metaRemains )
-                if buff.metamorphosis.up then
-                    buff.demonsurge_hardcast.expires = buff.metamorphosis.expires
-                end
             end
             for _, name in ipairs( demonsurge.hardcast ) do
                 local ability_name = name
-                -- Map old demonsurge names to current ability names
+                -- Map old demonsurge names to current ability names due to SimC APL
                 if name == "fel_desolation" then ability_name = "fel_devastation" end
-
                 if class.abilities[ ability_name ] and IsSpellOverlayed( class.abilities[ ability_name ].id ) then
                     applyBuff( "demonsurge_" .. name, metaRemains )
                 end
