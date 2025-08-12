@@ -788,7 +788,6 @@ spec:RegisterStateTable( "evoker", setmetatable( {}, {
     __index = setfenv( function( t, k )
         if k == "prescience_buffs" then return active_dot.prescience end
         if k == "allied_cds_up" then
-            if not settings.use_sense_power then return 1 end
             if buff.sense_power.up then return group and active_dot.sense_power_active or 1 end
             return 1 -- If Sense Power isn't used, always assume there's a CD active.
         end
@@ -1341,19 +1340,6 @@ spec:RegisterAbilities( {
         copy = { 396286, 408092 }
     },
 } )
-
-spec:RegisterSetting( "use_sense_power", false, {
-    name = strformat( "Use %s", Hekili:GetSpellLinkWithTexture( 361021 ) ),
-    type = "toggle",
-    desc = strformat(
-        "If checked, the Priority may use the %s auras (only when you have it active) to check whether allied cooldowns are active for some entries.\n\n"
-        .. "This can increase damage with a coordinated group; however, it may also result in empowered spells not being "
-        .. "recommended for long periods if party members are holding cooldowns.",
-        Hekili:GetSpellLinkWithTexture( 361021 )
-    ),
-    width = "full",
-} )
-
 
 spec:RegisterSetting( "use_unravel", false, {
     name = strformat( "Use %s", Hekili:GetSpellLinkWithTexture( 368432 ) ),
