@@ -85,11 +85,7 @@ spec:RegisterResource( Enum.PowerType.Runes, {
             table.insert( t.expiry, nextReady )
         end
 
-        if state.this_action == "obliterate" and state.buff.exterminate.up then
-            state.gain( 20, "runic_power" )
-        else
-            state.gain( amount * 10, "runic_power" )
-        end
+        state.gain( amount * 10, "runic_power" )
 
         if state.talent.gathering_storm.enabled and state.buff.remorseless_winter.up then
             state.buff.remorseless_winter.expires = state.buff.remorseless_winter.expires + ( 0.5 * amount )
@@ -508,6 +504,16 @@ spec:RegisterAuras( {
         duration = 6.0,
         max_stack = 1
     },
+    -- Your next 2 Obliterate or Frostscythe cost 1 Rune and summon 2 scythes to strike your enemies.
+    exterminate = {
+        id = 441416,
+        duration = 30,
+        max_stack = function() 
+            local base = talent.reapers_onslaught.enabled and 1 or 2
+            local tier_bonus = set_bonus.tww3 >= 2 and 1 or 0
+            return base + tier_bonus
+        end
+    },
     -- Reduces damage dealt to $@auracaster by $m1%.
     -- https://wowhead.com/beta/spell=327092
     famine = {
@@ -717,6 +723,10 @@ spec:RegisterAuras( {
         onRemove = function()
             if set_bonus.tww3 >= 4 then
                 applyBuff( "empowered_soul" )
+            end
+            if talent.exterminate.enabled then
+                local stacks = talent.reapers_onslaught.enabled and 1 or 2
+                applyBuff( "exterminate", nil, stacks )
             end
         end,
     },
@@ -1485,12 +1495,13 @@ spec:RegisterAbilities( {
             if buff.killing_machine.up then KillingMachineConsumer( ) end
 
             if buff.exterminate.up then
-                removeStack( "exterminate" )
-                if talent.wither_away.enabled then
-                    applyDebuff( "target", "frost_fever" )
-                    active_dot.frost_fever = max ( active_dot.frost_fever, active_enemies ) -- it applies in AoE around your target
-                end
+                -- Each empowered cast summons both scythes
+                -- First scythe: grants Killing Machine with 100% chance
                 addStack( "killing_machine" )
+                -- Second scythe: applies Frost Fever to all enemies around target
+                applyDebuff( "target", "frost_fever" )
+                active_dot.frost_fever = max ( active_dot.frost_fever, active_enemies )
+                removeStack( "exterminate" )
             end
 
         end,
@@ -1655,12 +1666,13 @@ spec:RegisterAbilities( {
             if talent.inexorable_assault.enabled then removeStack( "inexorable_assault", 3 ) end
             if talent.obliteration.enabled then erw_discount = 0 end
             if buff.exterminate.up then
-                removeStack( "exterminate" )
-                if talent.wither_away.enabled then
-                    applyDebuff( "target", "frost_fever" )
-                    active_dot.frost_fever = max ( active_dot.frost_fever, active_enemies ) -- it applies in AoE around your target
-                end
+                -- Each empowered cast summons both scythes
+                -- First scythe: grants Killing Machine with 100% chance
                 addStack( "killing_machine" )
+                -- Second scythe: applies Frost Fever to all enemies around target
+                applyDebuff( "target", "frost_fever" )
+                active_dot.frost_fever = max ( active_dot.frost_fever, active_enemies )
+                removeStack( "exterminate" )
             end
 
             if buff.killing_machine.up then KillingMachineConsumer( ) end
@@ -1781,6 +1793,11 @@ spec:RegisterAbilities( {
             if talent.reaper_of_souls.enabled then
                 setCooldown( "soul_reaper", 0 )
                 applyBuff( "reaper_of_souls" )
+            end
+            
+            -- 2-Set bonus: Casting Reaper's Mark grants 1 stack of Exterminate
+            if talent.exterminate.enabled and set_bonus.tww3 >= 2 then
+                applyBuff( "exterminate", nil, 1 )
             end
         end,
 
