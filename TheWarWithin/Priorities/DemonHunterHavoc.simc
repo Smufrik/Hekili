@@ -25,7 +25,7 @@ actions+=/variable,name=tier33_4piece_magnet,value=(buff.initiative.up|!talent.i
 # Double on use trinket holding for using a stat cooldown trinket and an on use damage trinket
 actions+=/variable,name=double_on_use,value=!equipped.signet_of_the_priory&!equipped.house_of_cards|(trinket.1.is.house_of_cards|trinket.1.is.signet_of_the_priory)&trinket.1.cooldown.remains>20|(trinket.2.is.house_of_cards|trinket.2.is.signet_of_the_priory)&trinket.2.cooldown.remains>20
 # Use to determine if we traversed either of the opener lists.
-actions.ar+=/variable,name=opened,value=false
+actions+=/variable,name=opened,value=false
 # Separate actionlists for each hero tree
 actions+=/run_action_list,name=ar,strict=1,if=hero_tree.aldrachi_reaver
 ## [Syrif] - Fallback for people levelling
@@ -48,7 +48,7 @@ actions.ar+=/run_action_list,name=ar_fel_barrage,if=variable.fel_barrage&active_
 actions.ar+=/immolation_aura,if=active_enemies>2&talent.ragefire&(!talent.fel_barrage|cooldown.fel_barrage.remains>recharge_time)&debuff.essence_break.down&(buff.metamorphosis.down|buff.metamorphosis.remains>5)
 actions.ar+=/immolation_aura,if=active_enemies>2&talent.ragefire&debuff.essence_break.down
 actions.ar+=/vengeful_retreat,if=talent.initiative&talent.tactical_retreat&time>20&(cooldown.eye_beam.up&(talent.restless_hunter|cooldown.metamorphosis.remains>10))&(!talent.inertia&buff.unbound_chaos.down|buff.inertia_trigger.down&buff.metamorphosis.down)
-actions.ar+=/vengeful_retreat,use_off_gcd=1,if=talent.initiative&!talent.tactical_retreat&(cooldown.eye_beam.remains>15&gcd.remains<0.3|gcd.remains<0.2&cooldown.eye_beam.remains<=gcd.remains&cooldown.metamorphosis.remains>10)&(!variable.trinket1_steroids&!variable.trinket2_steroids|variable.trinket1_steroids&(trinket.1.cooldown_remains<gcd.max*3|trinket.1.cooldown_remains>30)|variable.trinket2_steroids&(trinket.2.cooldown_remains<gcd.max*3|trinket.2.cooldown_remains>30))&time>20&(!talent.inertia&buff.unbound_chaos.down|buff.inertia_trigger.down&buff.metamorphosis.down)
+actions.ar+=/vengeful_retreat,use_off_gcd=1,if=talent.initiative&!talent.tactical_retreat&(cooldown.eye_beam.remains>15&gcd.remains<0.3|gcd.remains<0.2&cooldown.eye_beam.remains<=gcd.remains&cooldown.metamorphosis.remains>10)&(!variable.trinket1_steroids&!variable.trinket2_steroids|variable.trinket1_steroids&(trinket.1.stat.any.cooldown_remains<gcd.max*3|trinket.1.stat.any.cooldown_remains>30)|variable.trinket2_steroids&(trinket.2.stat.any.cooldown_remains<gcd.max*3|trinket.2.stat.any.cooldown_remains>30))&time>20&(!talent.inertia&buff.unbound_chaos.down|buff.inertia_trigger.down&buff.metamorphosis.down)
 actions.ar+=/run_action_list,name=ar_fel_barrage,if=variable.fel_barrage|!talent.demon_blades&talent.fel_barrage&(buff.fel_barrage.up|cooldown.fel_barrage.up)&buff.metamorphosis.down
 actions.ar+=/felblade,if=!talent.inertia&active_enemies=1&buff.unbound_chaos.up&buff.initiative.up&debuff.essence_break.down&buff.metamorphosis.down
 actions.ar+=/felblade,if=buff.inertia_trigger.up&talent.inertia&cooldown.eye_beam.remains<=0.5&(cooldown.metamorphosis.remains&talent.looks_can_kill|active_enemies>1)
@@ -59,8 +59,8 @@ actions.ar+=/felblade,if=buff.inertia_trigger.up&talent.inertia&buff.inertia.dow
 actions.ar+=/immolation_aura,if=talent.a_fire_inside&talent.burning_wound&full_recharge_time<gcd.max*2&active_enemies>1
 actions.ar+=/immolation_aura,if=active_enemies>=2
 actions.ar+=/immolation_aura,if=fight_remains<15&cooldown.blade_dance.remains&talent.ragefire
-actions.ar+=/eye_beam,if=(cooldown.blade_dance.remains<7|active_enemies>=2)&(active_enemies>2&(buff.thrill_of_the_fight_damage.up|buff.rending_strike.down&buff.glaive_flurry.down))&(!variable.trinket1_steroids&!variable.trinket2_steroids|variable.trinket1_steroids&(trinket.1.cooldown_remains<gcd.max*3|trinket.1.cooldown_remains>30-buff.cycle_of_hatred.stack*5)|variable.trinket2_steroids&(trinket.2.cooldown_remains<gcd.max*3|trinket.2.cooldown_remains>30-buff.cycle_of_hatred.stack*5))|boss&fight_remains<10
-actions.ar+=/blade_dance,if=(cooldown.eye_beam.remains>=gcd.max*2|active_enemies>=2&buff.glaive_flurry.up&fight_remains>15)&buff.rending_strike.down
+actions.ar+=/eye_beam,if=(cooldown.blade_dance.remains<7|active_enemies>=2)&(buff.thrill_of_the_fight_damage.up|buff.rending_strike.down&buff.glaive_flurry.down)&(!variable.trinket1_steroids&!variable.trinket2_steroids|variable.trinket1_steroids&(trinket.1.stat.any.cooldown_remains<gcd.max*3|trinket.1.stat.any.cooldown_remains>30-buff.cycle_of_hatred.stack*5)|variable.trinket2_steroids&(trinket.2.stat.any.cooldown_remains<gcd.max*3|trinket.2.stat.any.cooldown_remains>30-buff.cycle_of_hatred.stack*5))|boss&fight_remains<10
+actions.ar+=/blade_dance,if=(cooldown.eye_beam.remains>=gcd.max*2|buff.glaive_flurry.up)&buff.rending_strike.down
 actions.ar+=/chaos_strike,if=buff.rending_strike.up
 actions.ar+=/sigil_of_flame,if=active_enemies>3|debuff.essence_break.down
 actions.ar+=/felblade,if=fury.deficit>=40+variable.fury_gen*0.5&!buff.inertia_trigger.up&(!talent.blind_fury|cooldown.eye_beam.remains>5)
@@ -177,7 +177,7 @@ actions.ar_opener+=/essence_break,if=cooldown.blade_dance.remains<gcd.max&!hero_
 actions.ar_opener+=/death_sweep
 actions.ar_opener+=/annihilation
 actions.ar_opener+=/demons_bite
-actions.ar_opener+=/variable,name=opened,value=true
+actions.ar_opener+=/variable,name=opened,value=true,if=cooldown.metamorphosis.remains,value_else=false
 
 # Fel-Scarred
 actions.fs+=/variable,name=fel_barrage,op=set,value=talent.fel_barrage&(cooldown.fel_barrage.remains<gcd.max*7&active_enemies>=2&(cooldown.metamorphosis.remains|active_enemies>2)|buff.fel_barrage.up)
@@ -196,7 +196,7 @@ actions.fs+=/immolation_aura,if=talent.a_fire_inside&talent.burning_wound&full_r
 actions.fs+=/immolation_aura,if=active_enemies>1&active_enemies>=2
 actions.fs+=/immolation_aura,if=fight_remains<15&cooldown.blade_dance.remains&talent.ragefire
 actions.fs+=/sigil_of_flame,if=talent.student_of_suffering&(cooldown.eye_beam.remains<=gcd.max|!talent.initiative)&(cooldown.essence_break.remains<gcd.max*3|!talent.essence_break)&(cooldown.metamorphosis.remains>10|cooldown.blade_dance.remains<gcd.max*2)
-actions.fs+=/eye_beam,if=(!talent.initiative|buff.initiative.up|cooldown.vengeful_retreat.remains>=10|cooldown.metamorphosis.up|talent.initiative&!talent.tactical_retreat)&(cooldown.blade_dance.remains<7|active_enemies>=2)&active_enemies>2&(!variable.trinket1_steroids&!variable.trinket2_steroids|variable.trinket1_steroids&(trinket.1.cooldown_remains<gcd.max*3|trinket.1.cooldown_remains>30-buff.cycle_of_hatred.stack*5)|variable.trinket2_steroids&(trinket.2.cooldown_remains<gcd.max*3|trinket.2.cooldown_remains>30-buff.cycle_of_hatred.stack*5))|boss&fight_remains<10
+actions.fs+=/eye_beam,if=(!talent.initiative|buff.initiative.up|cooldown.vengeful_retreat.remains>=10|cooldown.metamorphosis.up|talent.initiative&!talent.tactical_retreat)&(cooldown.blade_dance.remains<7|active_enemies>=2)&active_enemies>2&(!variable.trinket1_steroids&!variable.trinket2_steroids|variable.trinket1_steroids&(trinket.1.stat.any.cooldown_remains<gcd.max*3|trinket.1.stat.any.cooldown_remains>30-buff.cycle_of_hatred.stack*5)|variable.trinket2_steroids&(trinket.2.stat.any.cooldown_remains<gcd.max*3|trinket.2.stat.any.cooldown_remains>30-buff.cycle_of_hatred.stack*5))|boss&fight_remains<10
 actions.fs+=/felblade,if=variable.fs_tier34_2piece&talent.inertia&buff.inertia_trigger.up&(buff.immolation_aura.up|buff.inertia_trigger.remains<=0.5|cooldown.the_hunt.remains<=0.5)&active_enemies<=2
 actions.fs+=/fel_rush,if=variable.fs_tier34_2piece&talent.inertia&buff.inertia_trigger.up&(buff.immolation_aura.up|buff.inertia_trigger.remains<=gcd.max|cooldown.the_hunt.remains<=gcd.max)&(active_enemies>2|cooldown.felblade.remains>buff.inertia_trigger.remains)
 actions.fs+=/essence_break,if=!talent.initiative&cooldown.eye_beam.remains>5
