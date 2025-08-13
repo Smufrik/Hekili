@@ -5245,6 +5245,16 @@ do
             if k == "tick_time_remains" then return max( 0, next_tick - moment ) end
             if k == "ticks_remain" then return expires > moment and max( 0, 1 + floor( ( expires - next_tick ) / tick_time ) ) or 0 end
 
+            if k == "cast_time" then
+                local ability = class.abilities[ t.key ]
+                return ability and state.action[ t.key ].cast_time or 0
+            end
+
+            if k == "execute_time" then
+                local ability = class.abilities[ t.key ]
+                return ability and state.action[ t.key ].execute_time or gcd.max
+            end
+
             local attr = aura[ k ]
             if attr ~= nil then return attr end
 
