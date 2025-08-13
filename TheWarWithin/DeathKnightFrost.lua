@@ -1011,11 +1011,37 @@ spec:RegisterStateExpr( "erw_discount", function()
     return ERWDiscount
 end )
 
+-- Track Exterminate stacks that should proc Killing Machine
+local ExterminatesReady = 0
+
 spec:RegisterCombatLogEvent( function( _, subtype, _, sourceGUID, sourceName, sourceFlags, _, destGUID, destName, destFlags, _, spellID, spellName )
     if spellID == 47568 and ( subtype == "SPELL_CAST_SUCCESS" ) and state.talent.obliteration.enabled and state.buff.pillar_of_frost.up then
         ERWDiscount = 1
     elseif spellID == 49020 or spellID == 207230 then
         ERWDiscount = 0
+    end
+
+    -- Track Exterminate buff for fake Killing Machine procs
+    if sourceGUID == state.GUID then
+        -- Exterminate buff ID: 441416
+        if spellID == 441416 then
+            if subtype == "SPELL_AURA_APPLIED" or subtype == "SPELL_AURA_APPLIED_DOSE" or subtype == "SPELL_AURA_REFRESH" then
+                -- Get current Exterminate stacks from the actual buff
+                local aura = C_UnitAuras.GetPlayerAuraBySpellID( 441416 )
+                ExterminatesReady = aura and aura.applications or 0
+            elseif subtype == "SPELL_AURA_REMOVED" then
+                -- Buff removed entirely
+                ExterminatesReady = 0
+            elseif subtype == "SPELL_AURA_REMOVED_DOSE" then
+                -- Stack removed, get current count
+                local aura = C_UnitAuras.GetPlayerAuraBySpellID( 441416 )
+                ExterminatesReady = aura and aura.applications or 0
+            end
+        -- Scythe cast spell ID: 441426 (this is when the scythe actually fires)
+        elseif spellID == 441426 and subtype == "SPELL_CAST_SUCCESS" then
+            -- Decrement when a scythe is actually cast
+            ExterminatesReady = max( 0, ExterminatesReady - 1 )
+        end
     end
 
 end )
@@ -1041,6 +1067,20 @@ spec:RegisterHook( "reset_precast", function ()
     -- Queue aura event for Breath of Sindragosa rune generation
     if buff.breath_of_sindragosa.up then
         state:QueueAuraEvent( "breath_of_sindragosa", BreathOfSindragosaExpire, buff.breath_of_sindragosa.expires, "AURA_EXPIRATION" )
+    end
+
+    -- Add fake Killing Machine proc for Exterminate
+    -- This bridges the gap between using Obliterate/Frostscythe and when the actual KM proc arrives
+    if talent.exterminate.enabled and ExterminatesReady > 0 then
+        -- Check if we just used Obliterate or Frostscythe
+        if prev_gcd[1].obliterate or prev_gcd[1].frostscythe then
+            -- Add a fake KM stack (but don't exceed max stacks)
+            -- The real proc will arrive shortly and update the state
+            -- Important: We add even if we have KM already, as 2 stacks vs 1 can change recommendations
+            if buff.killing_machine.stack < buff.killing_machine.max_stack then
+                addStack( "killing_machine" )
+            end
+        end
     end
 
 end )
@@ -1496,8 +1536,7 @@ spec:RegisterAbilities( {
 
             if buff.exterminate.up then
                 -- Each empowered cast summons both scythes
-                -- First scythe: grants Killing Machine with 100% chance
-                addStack( "killing_machine" )
+                -- First scythe: grants Killing Machine (handled in reset_precast to avoid flickering)
                 -- Second scythe: applies Frost Fever to all enemies around target
                 applyDebuff( "target", "frost_fever" )
                 active_dot.frost_fever = max ( active_dot.frost_fever, active_enemies )
@@ -1667,8 +1706,7 @@ spec:RegisterAbilities( {
             if talent.obliteration.enabled then erw_discount = 0 end
             if buff.exterminate.up then
                 -- Each empowered cast summons both scythes
-                -- First scythe: grants Killing Machine with 100% chance
-                addStack( "killing_machine" )
+                -- First scythe: grants Killing Machine (handled in reset_precast to avoid flickering)
                 -- Second scythe: applies Frost Fever to all enemies around target
                 applyDebuff( "target", "frost_fever" )
                 active_dot.frost_fever = max ( active_dot.frost_fever, active_enemies )
