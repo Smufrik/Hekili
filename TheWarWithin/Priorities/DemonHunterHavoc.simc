@@ -25,7 +25,7 @@ actions+=/variable,name=tier33_4piece_magnet,value=(buff.initiative.up|!talent.i
 # Double on use trinket holding for using a stat cooldown trinket and an on use damage trinket
 actions+=/variable,name=double_on_use,value=!equipped.signet_of_the_priory&!equipped.house_of_cards|(trinket.1.is.house_of_cards|trinket.1.is.signet_of_the_priory)&trinket.1.cooldown.remains>20|(trinket.2.is.house_of_cards|trinket.2.is.signet_of_the_priory)&trinket.2.cooldown.remains>20
 # Use to determine if we traversed either of the opener lists.
-actions.ar+=/variable,name=opened,value=false
+actions+=/variable,name=opened,value=false
 # Separate actionlists for each hero tree
 actions+=/run_action_list,name=ar,strict=1,if=hero_tree.aldrachi_reaver
 ## [Syrif] - Fallback for people levelling
