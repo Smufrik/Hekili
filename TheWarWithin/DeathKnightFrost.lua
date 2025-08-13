@@ -725,7 +725,8 @@ spec:RegisterAuras( {
                 applyBuff( "empowered_soul" )
             end
             if talent.exterminate.enabled then
-                applyBuff( "exterminate" )
+                local stacks = talent.reapers_onslaught.enabled and 1 or 2
+                applyBuff( "exterminate", nil, stacks )
             end
         end,
     },
@@ -1796,7 +1797,7 @@ spec:RegisterAbilities( {
             
             -- 2-Set bonus: Casting Reaper's Mark grants 1 stack of Exterminate
             if talent.exterminate.enabled and set_bonus.tww3 >= 2 then
-                applyBuff( "exterminate" )
+                applyBuff( "exterminate", nil, 1 )
             end
         end,
 
