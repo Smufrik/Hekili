@@ -2,6 +2,8 @@
 -- August 2025
 -- Patch 11.2
 
+-- TODO: Queue fragments with sigils in combatlog like Vengeance
+
 if UnitClassBase( "player" ) ~= "DEMONHUNTER" then return end
 
 local addon, ns = ...
@@ -1148,6 +1150,13 @@ local demonsurge = {
     hardcast = { "abyssal_gaze", "consuming_fire", "sigil_of_doom" },
 }
 
+-- Map old demonsurge names to current ability names due to SimC APL
+local demonsurge_spell_map = {
+    abyssal_gaze = "eye_beam",
+    sigil_of_doom = "sigil_of_flame",
+    consuming_fire = "immolation_aura"
+}
+
 local demonsurgeLastSeen = setmetatable( {}, {
     __index = function( t, k ) return rawget( t, k ) or 0 end,
 })
@@ -1194,15 +1203,15 @@ spec:RegisterHook( "reset_precast", function ()
                 demonsurgeLastSeen[ name ] = query_time
             end
         end
-        if talent.demonic_intensity.enabled then
+        if talent.demonic_intensity.enabled and cooldown.metamorphosis.remains then
             local metaApplied = buff.metamorphosis.applied - 0.2
-            if action.metamorphosis.lastCast >= metaApplied or action.abyssal_gaze.lastCast >= metaApplied then
+            if action.metamorphosis.lastCast >= metaApplied or action.eye_beam.lastCast >= metaApplied then
                 applyBuff( "demonsurge_hardcast", metaRemains )
             end
             for _, name in ipairs( demonsurge.hardcast ) do
-                if IsSpellOverlayed( class.abilities[ name ].id ) then
+                local ability_name = demonsurge_spell_map[name] or name
+                if class.abilities[ ability_name ] and IsSpellOverlayed( class.abilities[ ability_name ].id ) then
                     applyBuff( "demonsurge_" .. name, metaRemains )
-                    demonsurgeLastSeen[ name ] = query_time
                 end
             end
 
@@ -1214,14 +1223,15 @@ spec:RegisterHook( "reset_precast", function ()
 
             for _, list in pairs( demonsurge ) do
                 for _, name in ipairs( list ) do
-                    local hasPending = buff[ "demonsurge_" .. name ].down and abs( action[ name ].lastCast - demonsurgeLastSeen[ name ] ) < 0.7 and action[ name ].lastCast > buff.demonsurge.applied
+                    local ability_name = demonsurge_spell_map[name] or name
+                    local hasPending = buff[ "demonsurge_" .. name ].down and abs( action[ ability_name ].lastCast - demonsurgeLastSeen[ name ] ) < 0.7 and action[ ability_name ].lastCast > buff.demonsurge.applied
                     if hasPending then pending = pending + 1 end
                     --[[
                     if Hekili.ActiveDebug then
                         Hekili:Debug( " - " .. ( hasPending and "PASS: " or "FAIL: " ) ..
                             "buff.demonsurge_" .. name .. ".down[" .. ( buff[ "demonsurge_" .. name ].down and "true" or "false" ) .. "] & " ..
-                            "@( action." .. name .. ".lastCast[" .. action[ name ].lastCast .. "] - lastSeen." .. name .. "[" .. demonsurgeLastSeen[ name ] .. "] ) < 0.7 & " ..
-                            "action." .. name .. ".lastCast[" .. action[ name ].lastCast .. "] > buff.demonsurge.applied[" .. buff.demonsurge.applied .. "]" )
+                            "@( action." .. ability_name .. ".lastCast[" .. action[ ability_name ].lastCast .. "] - lastSeen." .. name .. "[" .. demonsurgeLastSeen[ name ] .. "] ) < 0.7 & " ..
+                            "action." .. ability_name .. ".lastCast[" .. action[ ability_name ].lastCast .. "] > buff.demonsurge.applied[" .. buff.demonsurge.applied .. "]" )
                     end
                     --]]
                 end
@@ -1232,6 +1242,7 @@ spec:RegisterHook( "reset_precast", function ()
             if Hekili.ActiveDebug then
                 Hekili:Debug( " - buff.demonsurge.stack[" .. buff.demonsurge.stack - pending .. " + " .. pending .. "]" )
             end
+
         end
 
         if Hekili.ActiveDebug then
@@ -1612,7 +1623,7 @@ spec:RegisterAbilities( {
 
     -- Blasts all enemies in front of you,$?s320415[ dealing guaranteed critical strikes][] for up to $<dmg> Chaos damage over $d. Deals reduced damage beyond $s5 targets.$?s343311[; When Eye Beam finishes fully channeling, your Haste is increased by an additional $343312s1% for $343312d.][]
     eye_beam = {
-        id = 198013,
+        id = function() return buff.demonsurge_hardcast.up and 452497 or 198013 end,
         cast = function () return ( talent.blind_fury.enabled and 3 or 2 ) * haste end,
         channeled = true,
         cooldown = 40,
@@ -1624,9 +1635,14 @@ spec:RegisterAbilities( {
 
         talent = "eye_beam",
         startsCombat = true,
-        nobuff = function () return talent.demonic_intensity.enabled and "metamorphosis" or nil end,
+        -- nobuff = function () return talent.demonic_intensity.enabled and "metamorphosis" or nil end,
+        texture = function() return buff.demonsurge_hardcast.up and 136149 or 1305156 end,
 
         start = function()
+            if buff.demonsurge_abyssal_gaze.up then
+                removeBuff( "demonsurge_abyssal_gaze" )
+                if talent.demonic_intensity.enabled then addStack( "demonsurge" ) end
+            end
             applyBuff( "eye_beam" )
             if talent.demonic.enabled then TriggerDemonic() end
             if talent.cycle_of_hatred.enabled then
@@ -1634,51 +1650,16 @@ spec:RegisterAbilities( {
                 addStack( "cycle_of_hatred" )
             end
             removeBuff( "seething_potential" )
-            setCooldown( "abyssal_gaze", action.eye_beam.cooldown )
         end,
 
         finish = function()
             if talent.furious_gaze.enabled then applyBuff( "furious_gaze" ) end
         end,
 
-        bind = "abyssal_gaze"
+        bind = "abyssal_gaze",
+        copy = { 452497, 198013, "abyssal_gaze" }
     },
 
-    abyssal_gaze = {
-        id = 452497,
-        known = 198013,
-        cast = function () return ( talent.blind_fury.enabled and 3 or 2 ) * haste end,
-        channeled = true,
-        cooldown = 40,
-        gcd = "spell",
-        school = "chromatic",
-
-        spend = 30,
-        spendType = "fury",
-
-        talent = "demonic_intensity",
-        buff = "demonsurge_hardcast",
-        startsCombat = true,
-
-        start = function()
-            applyBuff( "eye_beam" )
-            if talent.demonic.enabled then TriggerDemonic() end
-            if talent.cycle_of_hatred.enabled then
-                reduceCooldown( "abyssal_gaze", 5 * talent.cycle_of_hatred.rank * buff.cycle_of_hatred.stack )
-                addStack( "cycle_of_hatred" )
-            end
-            if buff.demonsurge_abyssal_gaze.up then
-                removeBuff( "demonsurge_abyssal_gaze" )
-                if talent.demonic_intensity.enabled then addStack( "demonsurge" ) end
-            end
-            removeBuff( "seething_potential" )
-            setCooldown( "eye_beam", action.abyssal_gaze.cooldown )
-        end,
-
-        finish = function() spec.abilities.eye_beam.finish() end,
-
-        bind = "eye_beam"
-    },
 
     -- Talent: Unleash a torrent of Fel energy over $d, inflicting ${(($d/$t1)+1)*$258926s1} Chaos damage to all enemies within $258926A1 yds. Deals reduced damage beyond $258926s2 targets.
     fel_barrage = {
@@ -1888,7 +1869,6 @@ spec:RegisterAbilities( {
 
             if talent.chaotic_transformation.enabled then
                 setCooldown( "eye_beam", 0 )
-                setCooldown( "abyssal_gaze", 0 )
                 setCooldown( "blade_dance", 0 )
                 setCooldown( "death_sweep", 0 )
             end
@@ -1897,7 +1877,7 @@ spec:RegisterAbilities( {
                 local metaRemains = buff.metamorphosis.remains
 
                 for _, name in ipairs( demonsurge.demonic ) do
-                    applyBuff( "demonsurge_ " .. name, metaRemains )
+                    applyBuff( "demonsurge_" .. name, metaRemains )
                 end
 
                 if talent.violent_transformation.enabled then
@@ -1905,7 +1885,6 @@ spec:RegisterAbilities( {
                     gainCharges( "immolation_aura", 1 )
                     if talent.demonic_intensity.enabled then
                         gainCharges( "consuming_fire", 1 )
-                        setCooldown( "sigil_of_doom", 0 )
                     end
                 end
 
@@ -1914,7 +1893,7 @@ spec:RegisterAbilities( {
                     applyBuff( "demonsurge_hardcast", metaRemains )
 
                     for _, name in ipairs( demonsurge.hardcast ) do
-                        applyBuff( "demonsurge_ " .. name, metaRemains )
+                        applyBuff( "demonsurge_" .. name, metaRemains )
                     end
                 end
             end
@@ -1949,7 +1928,6 @@ spec:RegisterAbilities( {
         end,
     },
 
-
     rain_from_above = {
         id = 206803,
         cast = 0,
@@ -1965,7 +1943,6 @@ spec:RegisterAbilities( {
             applyBuff( "rain_from_above" )
         end,
     },
-
 
     reverse_magic = {
         id = 205604,
@@ -1986,80 +1963,54 @@ spec:RegisterAbilities( {
         end,
     },
 
-
     -- Talent: Place a Sigil of Flame at your location that activates after $d.    Deals $204598s1 Fire damage, and an additional $204598o3 Fire damage over $204598d, to all enemies affected by the sigil.    |CFFffffffGenerates $389787s1 Fury.|R
     sigil_of_flame = {
-        id = function() return talent.precise_sigils.enabled and 389810 or 204596 end,
+        id = function()
+            if buff.demonsurge_hardcast.up then
+                return talent.precise_sigils.enabled and 469991 or 452490
+            else
+                return talent.precise_sigils.enabled and 389810 or 204596
+            end
+        end,
         known = 204596,
         cast = 0,
         cooldown = function() return ( pvptalent.sigil_of_mastery.enabled and 0.75 or 1 ) * 30 end,
         gcd = "spell",
-        school = "fire",
+        school = function() return buff.demonsurge_hardcast.up and "chaos" or "fire" end,
 
         spend = -30,
         spendType = "fury",
 
         startsCombat = false,
-        texture = 1344652,
-        nobuff = "demonsurge_hardcast",
+        texture = function() return buff.demonsurge_hardcast.up and 1121022 or 1344652 end,
 
         flightTime = function() return activation_time end,
         delay = function() return activation_time end,
         placed = function() return query_time < action.sigil_of_flame.lastCast + activation_time end,
-
-        impact = function()
-            applyDebuff( "target", "sigil_of_flame" )
-            active_dot.sigil_of_flame = active_enemies
-            if talent.soul_sigils.enabled then soul_fragments.queueFragments( 1 ) end
-            if talent.student_of_suffering.enabled then applyBuff( "student_of_suffering" ) end
-            if talent.flames_of_fury.enabled then gain( talent.flames_of_fury.rank * active_enemies, "fury" ) end
-            if talent.initiative.enabled and debuff.initiative_tracker.down then applyBuff( "initiative" ) end
-        end,
-
-        copy = { 204596, 389810 },
-        bind = "sigil_of_doom"
-    },
-
-    sigil_of_doom = {
-        id = function () return talent.precise_sigils.enabled and 469991 or 452490 end,
-        known = 204596,
-        cast = 0,
-        cooldown = function() return ( pvptalent.sigil_of_mastery.enabled and 0.75 or 1 ) * 30 end,
-        gcd = "spell",
-        school = "chaos",
-
-        spend = -30,
-        spendType = "fury",
-
-        talent = "demonic_intensity",
-        buff = "demonsurge_hardcast",
-
-        startsCombat = false,
-        texture = 1121022,
-
-        flightTime = function() return activation_time end,
-        delay = function() return activation_time end,
-        placed = function() return query_time < action.sigil_of_doom.lastCast + activation_time end,
 
         handler = function ()
             if buff.demonsurge_sigil_of_doom.up then
                 removeBuff( "demonsurge_sigil_of_doom" )
                 if talent.demonic_intensity.enabled then addStack( "demonsurge" ) end
             end
-            -- Sigil of Doom and Sigil of Flame share a cooldown.
-            setCooldown( "sigil_of_flame", action.sigil_of_doom.cooldown )
         end,
 
         impact = function()
-            applyDebuff( "target", "sigil_of_doom" )
-            active_dot.sigil_of_doom = active_enemies
+            if buff.demonsurge_hardcast.up then
+                applyDebuff( "target", "sigil_of_doom" )
+                active_dot.sigil_of_doom = active_enemies
+            else
+                applyDebuff( "target", "sigil_of_flame" )
+                active_dot.sigil_of_flame = active_enemies
+            end
             if talent.soul_sigils.enabled then soul_fragments.queueFragments( 1 ) end
             if talent.student_of_suffering.enabled then applyBuff( "student_of_suffering" ) end
             if talent.flames_of_fury.enabled then gain( talent.flames_of_fury.rank * active_enemies, "fury" ) end
+            if talent.initiative.enabled and debuff.initiative_tracker.down then applyBuff( "initiative" ) end
         end,
 
-        copy = { 452490, 469991 },
-        bind = "sigil_of_flame"
+        copy = { 204596, 389810, 452490, 469991, "sigil_of_doom" },
+        bind = "sigil_of_doom"
     },
 
     -- Talent: Place a Sigil of Misery at your location that activates after $d.    Causes all enemies affected by the sigil to cower in fear. Targets are disoriented for $207685d.
