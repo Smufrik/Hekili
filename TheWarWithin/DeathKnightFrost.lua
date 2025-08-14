@@ -1094,12 +1094,6 @@ spec:RegisterHook( "reset_precast", function ()
             -- Case 1: We have active Exterminate stacks
             if exterminates_ready > 0 then
                 addStack( "killing_machine" )
-            else
-                -- Case 2: We just consumed our last Exterminate (within 1 GCD) and are owed a proc
-                local gcd_max = gcd.max
-                if action.frostscythe.time_since <= gcd_max or action.obliterate.time_since <= gcd_max then
-                    addStack( "killing_machine" )
-                end
             end
         end
     end
