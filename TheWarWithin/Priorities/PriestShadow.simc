@@ -29,7 +29,7 @@ actions.aoe+=/call_action_list,name=aoe_variables
 # High Priority action to put out Vampiric Touch on enemies that will live at least 18 seconds, up to 12 targets manually while prepping AoE
 actions.aoe+=/vampiric_touch,cycle_targets=1,if=(variable.max_vts>0&!variable.manual_vts_applied&!action.shadow_crash.in_flight)&!buff.entropic_rift.up
 # Use Shadow Crash to apply Vampiric Touch to as many adds as possible while being efficient with Vampiric Touch refresh windows
-actions.aoe+=/shadow_crash,if=!variable.holding_crash&(!action.shadow_crash.in_flight|active_enemies>=12)
+actions.aoe+=/shadow_crash,if=!variable.holding_crash
 
 actions.aoe_variables+=/variable,name=max_vts,op=set,default=12,value=active_enemies>?12
 actions.aoe_variables+=/variable,name=is_vt_possible,op=set,value=0,default=1

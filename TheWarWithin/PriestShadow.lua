@@ -2160,7 +2160,7 @@ spec:RegisterAbilities( {
 
         usable = function ()
             local isToggleActive = settings.hold_sc_toggle ~= "none" and toggle[settings.hold_sc_toggle]
-            return not settings.hold_sc or not isToggleActive or (cooldown.shadow_crash.charges > 1 or cooldow.shadow_crash.true_time_to_max_charges < gcd.max), "requires Hold Shadow Crash setting to be inactive or 2+ charges available"
+            return not settings.hold_sc or not isToggleActive or (cooldown.shadow_crash.charges > 1 or cooldown.shadow_crash.time_to_max_charges < gcd.max), "requires Hold Shadow Crash setting to be inactive or 2+ charges available"
         end,
 
         copy = { 205385, 457042 }
