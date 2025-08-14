@@ -19,6 +19,15 @@ local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table
 -- Math
 local abs, ceil, floor, max, min, sqrt = math.abs, math.ceil, math.floor, math.max, math.min, math.sqrt
 
+-- Common WoW APIs, comment out unneeded per-spec
+-- local GetSpellCastCount = C_Spell.GetSpellCastCount
+-- local GetSpellInfo = C_Spell.GetSpellInfo
+-- local GetSpellInfo = ns.GetUnpackedSpellInfo
+local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+-- local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+-- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
+-- local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
+-- local IsActiveSpell = ns.IsActiveSpell
 
 -- Specialization-specific local functions (if any)
 
@@ -1004,7 +1013,7 @@ spec:RegisterStateExpr( "erw_discount", function()
     return ERWDiscount
 end )
 
---[[ 
+--[[
 Exterminate Killing Machine Prediction System
 
 Problem: When using Obliterate/Frostscythe with Exterminate, there's a ~0.5 GCD delay
@@ -1015,7 +1024,7 @@ Solution: Track Exterminate consumption via combat logs and provide immediate KM
 in the simulation to bridge the timing gap until the real proc arrives.
 
 Components:
-1. Combat log tracking of Exterminate buff state (ExterminatesReady variable)
+1. Combat log tracking of Exterminate buff state (ExterminatesReady -> exterminates_ready)
 2. Immediate KM grants in ability handlers for instant feedback
 3. Backup KM grants in reset_precast for cases where immediate grants aren't sufficient
 --]]
@@ -1024,7 +1033,7 @@ Components:
 local ExterminatesReady = 0
 
 -- Register state expression so the simulation engine can access this variable
-spec:RegisterStateExpr( "ExterminatesReady", function()
+spec:RegisterStateExpr( "exterminates_ready", function()
     return ExterminatesReady
 end )
 
@@ -1037,16 +1046,13 @@ spec:RegisterCombatLogEvent( function( _, subtype, _, sourceGUID, sourceName, so
 
     -- Track Exterminate buff changes to maintain accurate stack count
     -- Spell ID 441416 is the Exterminate buff that grants empowered Obliterate/Frostscythe
-    if sourceGUID == state.GUID and ( subtype == "SPELL_AURA_APPLIED" or subtype == "SPELL_AURA_REMOVED" or subtype == "SPELL_AURA_APPLIED_DOSE" or subtype == "SPELL_AURA_REMOVED_DOSE" ) and spellID == 441416 then
-        -- Sync with actual buff state using API call (more reliable than simulation state)
-        local aura = C_UnitAuras.GetPlayerAuraBySpellID( 441416 )
-        ExterminatesReady = aura and aura.applications or 0
-    end
-
-    -- Track when Exterminate scythes are actually cast (spell ID 441426)
-    -- This decrements our counter when the empowered ability is consumed
-    if sourceGUID == state.GUID and subtype == "SPELL_CAST_SUCCESS" and spellID == 441426 then
-        ExterminatesReady = max( 0, ExterminatesReady - 1 )
+    if sourceGUID == state.GUID and spellID == 441416 and state.talent.exterminate.enabled then
+        if subtype == "SPELL_AURA_APPLIED" or subtype == "SPELL_AURA_REMOVED" or
+           subtype == "SPELL_AURA_APPLIED_DOSE" or subtype == "SPELL_AURA_REMOVED_DOSE" then
+            -- Sync with actual buff state using API call (more reliable than simulation state)
+            local aura = GetPlayerAuraBySpellID( 441416 )
+            ExterminatesReady = aura and aura.applications or 0
+        end
     end
 
 end )
@@ -1074,16 +1080,27 @@ spec:RegisterHook( "reset_precast", function ()
         state:QueueAuraEvent( "breath_of_sindragosa", BreathOfSindragosaExpire, buff.breath_of_sindragosa.expires, "AURA_EXPIRATION" )
     end
 
+    -- Force refresh of exterminates_ready by setting to nil
+    -- This ensures state expression retrieves fresh data from local variable
+    exterminates_ready = nil
+
     -- Add predictive Killing Machine proc for recent Exterminate consumption
     -- This bridges the ~0.5 GCD delay between ability use and actual KM proc arrival
-    if talent.exterminate.enabled and buff.killing_machine.stack < buff.killing_machine.max_stack then
-        -- Case 1: We have Exterminate stacks and just used an empowered ability
-        if ExterminatesReady > 0 and ( prev_gcd[1].frostscythe or prev_gcd[1].obliterate ) then
-            addStack( "killing_machine" )
-        -- Case 2: We just consumed our last Exterminate (within 1 GCD) and are owed a proc
-        elseif ( prev_gcd[1].frostscythe or prev_gcd[1].obliterate ) and 
-                ( action.frostscythe.time_since <= gcd.max or action.obliterate.time_since <= gcd.max ) then
-            addStack( "killing_machine" )
+    if talent.exterminate.enabled then
+        -- Avoid multiple lookups
+        local prev_gcd1 = prev_gcd[1]
+        local recently_used_empowered = prev_gcd1.frostscythe or prev_gcd1.obliterate
+        if recently_used_empowered then
+            -- Case 1: We have active Exterminate stacks
+            if exterminates_ready > 0 then
+                addStack( "killing_machine" )
+            else
+                -- Case 2: We just consumed our last Exterminate (within 1 GCD) and are owed a proc
+                local gcd_max = gcd.max
+                if action.frostscythe.time_since <= gcd_max or action.obliterate.time_since <= gcd_max then
+                    addStack( "killing_machine" )
+                end
+            end
         end
     end
 
@@ -1541,9 +1558,7 @@ spec:RegisterAbilities( {
             if buff.exterminate.up then
                 -- Exterminate empowers this cast to summon two scythes
                 -- First scythe: Grants Killing Machine proc (immediate for prediction accuracy)
-                if buff.killing_machine.stack < buff.killing_machine.max_stack then
-                    addStack( "killing_machine" )
-                end
+                addStack( "killing_machine" )
                 -- Second scythe: Applies Frost Fever to all enemies around target
                 applyDebuff( "target", "frost_fever" )
                 active_dot.frost_fever = max ( active_dot.frost_fever, active_enemies )
@@ -1714,9 +1729,7 @@ spec:RegisterAbilities( {
             if buff.exterminate.up then
                 -- Exterminate empowers this cast to summon two scythes
                 -- First scythe: Grants Killing Machine proc (immediate for prediction accuracy)
-                if buff.killing_machine.stack < buff.killing_machine.max_stack then
-                    addStack( "killing_machine" )
-                end
+                addStack( "killing_machine" )
                 -- Second scythe: Applies Frost Fever to all enemies around target
                 applyDebuff( "target", "frost_fever" )
                 active_dot.frost_fever = max ( active_dot.frost_fever, active_enemies )
