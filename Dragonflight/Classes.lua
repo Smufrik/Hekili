@@ -36,22 +36,15 @@ do
             local node = C_Traits.GetNodeInfo( configID, data[1] )
             local talent = rawget( state.talent, token ) or {}
 
-            if not node or not node.activeEntry or ( node.subTreeID and not node.subTreeActive ) then
+            if not node or not node.activeEntry then
                 talent.rank = 0
                 talent.max = data[3] or 1
             else
                 local entryID = node.activeEntry.entryID
                 local entry   = entryID and C_Traits.GetEntryInfo( configID, entryID )
                 local defn    = entry and C_Traits.GetDefinitionInfo( entry.definitionID )
-                local rank    = node.activeEntry.rank
 
-                if node.currentRank ~= rank then
-                    -- FIXME: Cataclysm node.activeEntry.rank will return 0; node.currentRank is 1.
-                    print( token, data[1], entryID, node.currentRank, rank )
-                    rank = max( rank, node.currentRank )
-                end
-
-                talent.rank = rank
+                talent.rank = defn and defn.spellID == data[2] and ( not node.subTreeID or node.subTreeActive ) and node.activeEntry.rank or 0
                 talent.max = node.maxRanks
             end
 
