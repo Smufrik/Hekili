@@ -1020,6 +1020,7 @@ spec:RegisterGear( {
                 max_stack = 6, -- 3 extensions max * 2 casts per extension
                 generate = function( t )
                     if tww3_archon_4pc_helper_stacks > 0 and state.buff.power_surge.up then
+                        local power_surge_expiry = state.buff.power_surge.expires
                         t.name = "tww3_archon_4pc_helper"
                         t.count = tww3_archon_4pc_helper_stacks
                         t.expires = power_surge_expiry
