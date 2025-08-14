@@ -1031,10 +1031,17 @@ Components:
 
 -- Track current Exterminate stack count for Killing Machine proc prediction
 local ExterminatesReady = 0
+-- Track if the last frostscythe/obliterate consumed exterminate for better KM prediction
+local LastCastHadExterminate = false
 
 -- Register state expression so the simulation engine can access this variable
 spec:RegisterStateExpr( "exterminates_ready", function()
     return ExterminatesReady
+end )
+
+-- Register state expression for tracking last cast exterminate status
+spec:RegisterStateExpr( "last_cast_had_exterminate", function()
+    return LastCastHadExterminate
 end )
 
 spec:RegisterCombatLogEvent( function( _, subtype, _, sourceGUID, sourceName, sourceFlags, _, destGUID, destName, destFlags, _, spellID, spellName )
@@ -1042,6 +1049,11 @@ spec:RegisterCombatLogEvent( function( _, subtype, _, sourceGUID, sourceName, so
         ERWDiscount = 1
     elseif spellID == 49020 or spellID == 207230 then
         ERWDiscount = 0
+        -- Track if this Obliterate (49020) or Frostscythe (207230) was cast with Exterminate
+        if subtype == "SPELL_CAST_SUCCESS" and sourceGUID == state.GUID and state.talent.exterminate.enabled then
+            -- Check if we had exterminate when we cast
+            LastCastHadExterminate = ExterminatesReady > 0
+        end
     end
 
     -- Track Exterminate buff changes to maintain accurate stack count
@@ -1080,19 +1092,30 @@ spec:RegisterHook( "reset_precast", function ()
         state:QueueAuraEvent( "breath_of_sindragosa", BreathOfSindragosaExpire, buff.breath_of_sindragosa.expires, "AURA_EXPIRATION" )
     end
 
-    -- Force refresh of exterminates_ready by setting to nil
-    -- This ensures state expression retrieves fresh data from local variable
+    -- Force refresh of exterminates_ready and last_cast_had_exterminate by setting to nil
+    -- This ensures state expressions retrieve fresh data from local variables
     exterminates_ready = nil
+    last_cast_had_exterminate = nil
 
-    -- Add predictive Killing Machine proc for recent Exterminate consumption
-    -- This bridges the ~0.5 GCD delay between ability use and actual KM proc arrival
+    -- Predictive KM logic for Exterminate consumption
+    -- The handler adds KM immediately, but the simulation might need reinforcement
+    -- during the GCD to ensure recommendations don't flicker
     if talent.exterminate.enabled then
-        -- Avoid multiple lookups
         local prev_gcd1 = prev_gcd[1]
         local recently_used_empowered = prev_gcd1.frostscythe or prev_gcd1.obliterate
+        
         if recently_used_empowered then
-            -- Case 1: We have active Exterminate stacks
-            if exterminates_ready > 0 then
+            -- Only add predictive KM if we don't already have it
+            -- This prevents double-adding while ensuring KM is present for recommendations
+            
+            -- Case 1: We still have exterminate stacks and no KM
+            -- (KM was consumed but exterminate should grant another)
+            if exterminates_ready > 0 and not buff.killing_machine.up then
+                addStack( "killing_machine" )
+            
+            -- Case 2: We just consumed the last exterminate stack
+            -- The handler should have added KM, but reinforce if missing
+            elseif last_cast_had_exterminate and exterminates_ready == 0 and not buff.killing_machine.up then
                 addStack( "killing_machine" )
             end
         end
@@ -1547,9 +1570,13 @@ spec:RegisterAbilities( {
 
             if talent.obliteration.enabled then erw_discount = 0 end
 
-            if buff.killing_machine.up then KillingMachineConsumer( ) end
-
+            -- Handle KM and Exterminate atomically to prevent flickering
             if buff.exterminate.up then
+                -- Process KM consumption and exterminate proc together
+                if buff.killing_machine.up then
+                    -- Consume KM but we'll immediately replace it from exterminate
+                    KillingMachineConsumer( )
+                end
                 -- Exterminate empowers this cast to summon two scythes
                 -- First scythe: Grants Killing Machine proc (immediate for prediction accuracy)
                 addStack( "killing_machine" )
@@ -1557,6 +1584,9 @@ spec:RegisterAbilities( {
                 applyDebuff( "target", "frost_fever" )
                 active_dot.frost_fever = max ( active_dot.frost_fever, active_enemies )
                 removeStack( "exterminate" )
+            else
+                -- No exterminate, just consume KM normally
+                if buff.killing_machine.up then KillingMachineConsumer( ) end
             end
 
         end,
@@ -1720,7 +1750,14 @@ spec:RegisterAbilities( {
         handler = function ()
             if talent.inexorable_assault.enabled then removeStack( "inexorable_assault", 3 ) end
             if talent.obliteration.enabled then erw_discount = 0 end
+            
+            -- Handle KM and Exterminate atomically to prevent flickering
             if buff.exterminate.up then
+                -- Process KM consumption and exterminate proc together
+                if buff.killing_machine.up then
+                    -- Consume KM but we'll immediately replace it from exterminate
+                    KillingMachineConsumer( )
+                end
                 -- Exterminate empowers this cast to summon two scythes
                 -- First scythe: Grants Killing Machine proc (immediate for prediction accuracy)
                 addStack( "killing_machine" )
@@ -1728,9 +1765,10 @@ spec:RegisterAbilities( {
                 applyDebuff( "target", "frost_fever" )
                 active_dot.frost_fever = max ( active_dot.frost_fever, active_enemies )
                 removeStack( "exterminate" )
+            else
+                -- No exterminate, just consume KM normally
+                if buff.killing_machine.up then KillingMachineConsumer( ) end
             end
-
-            if buff.killing_machine.up then KillingMachineConsumer( ) end
 
             -- Koltira's Favor is not predictable.
             if conduit.eradicating_blow.enabled then addStack( "eradicating_blow", nil, 1 ) end
