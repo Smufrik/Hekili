@@ -21,6 +21,41 @@ local function RegisterFrostSpec()
 
     local spec = Hekili:NewSpecialization( 64, true )
 
+local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+local function UA_GetPlayerAuraBySpellID(spellID)
+    for i = 1, 40 do
+        local name, _, count, _, duration, expires, caster, _, _, id = UnitBuff("player", i)
+        if not name then break end
+        if id == spellID then return name, _, count, _, duration, expires, caster end
+    end
+    for i = 1, 40 do
+        local name, _, count, _, duration, expires, caster, _, _, id = UnitDebuff("player", i)
+        if not name then break end
+        if id == spellID then return name, _, count, _, duration, expires, caster end
+    end
+    return nil
+end
+
+local function GetPlayerAuraBySpellID(spellID)
+    if UA_GetPlayerAuraBySpellID then
+        return UA_GetPlayerAuraBySpellID(spellID)
+    end
+    return FindUnitBuffByID("player", spellID)
+end
+
+    -- Build a local spellID -> ability map for reliable COMBAT_LOG lookups.
+    local abilityByID = setmetatable({}, {
+        __index = function(t, k)
+            for key, ab in pairs(class.abilities or {}) do
+                if type(ab) == "table" and ab.id == k then
+                    rawset(t, k, ab)
+                    return ab
+                end
+            end
+            return nil
+        end
+    })
+
     -- Register resources
     spec:RegisterResource( 0 ) -- Mana = 0 in MoP
 
@@ -84,7 +119,7 @@ RegisterFrostCombatLogEvent("COMBAT_LOG_EVENT_UNFILTERED", function(event, ...)
 
     -- 2. PLAYER ACTIONS - Events caused BY the player.
     if sourceGUID == playerGUID then
-        local ability = class.abilities[spellId]
+        local ability = abilityByID[ spellId ] or (class.abilities and class.abilities[ spellId ])
         if not ability then return end -- Only track abilities Hekili knows.
 
         event_processed = true -- Any known player action should trigger an update.
@@ -322,6 +357,22 @@ end)
             id = 1459,
             duration = 3600,
             max_stack = 1
+        ,
+            generate = function( t )
+                local name, icon, count, dtype, duration, expires, caster = FindUnitBuffByID( "player", 1459 )
+                if name then
+                    t.name = name
+                    t.count = count > 0 and count or 1
+                    t.expires = expires or (GetTime() + 3600)
+                    t.applied = (expires and duration) and (expires - duration) or (GetTime())
+                    t.caster = caster or "player"
+                    return
+                end
+                t.count = 0
+                t.expires = 0
+                t.applied = 0
+                t.caster = "nobody"
+            end
         },
         
         alter_time = {
@@ -386,7 +437,23 @@ end)
         icy_veins = {
             id = 12472,
             duration = 20,
-            max_stack = 1
+            max_stack = 1,
+        
+            generate = function( t )
+                local name, _, count, _, duration, expires, caster = GetPlayerAuraBySpellID(12472)
+                if name then
+                    t.name = name
+                    t.count = count and count > 0 and count or 1
+                    t.expires = expires or (GetTime() + (duration or 0))
+                    t.applied = (expires and duration) and (expires - duration) or GetTime()
+                    t.caster = caster or "player"
+                    return
+                end
+                t.count = 0
+                t.expires = 0
+                t.applied = 0
+                t.caster = "nobody"
+            end
         },
         
         incanter_s_ward = {
@@ -411,6 +478,30 @@ end)
             id = 80353,
             duration = 40,
             max_stack = 1
+        },
+
+        
+        -- Bloodlust/Sated family lockout for Mages (applied by Time Warp).
+        temporal_displacement = {
+            id = 80354,
+            duration = 600,
+            max_stack = 1,
+        
+            generate = function( t )
+                local name, _, count, _, duration, expires, caster = GetPlayerAuraBySpellID(80354)
+                if name then
+                    t.name = name
+                    t.count = count and count > 0 and count or 1
+                    t.expires = expires or (GetTime() + (duration or 0))
+                    t.applied = (expires and duration) and (expires - duration) or GetTime()
+                    t.caster = caster or "player"
+                    return
+                end
+                t.count = 0
+                t.expires = 0
+                t.applied = 0
+                t.caster = "nobody"
+            end
         },
         
         presence_of_mind = {
@@ -844,18 +935,17 @@ end)
         -- Enhanced Pet Tracking
         water_elemental = {
             id = 31687,
-            duration = 45,
+            duration = 0,
             max_stack = 1,
             generate = function( t )
-                if UnitExists("pet") and UnitCreatureType("pet") == "Elemental" then
+                if state.pet and state.pet.alive then
                     t.name = "Water Elemental"
                     t.count = 1
-                    t.expires = GetTime() + 45 -- Approximate remaining duration
-                    t.applied = GetTime() - 1
+                    t.expires = 0
+                    t.applied = 0
                     t.caster = "player"
                     return
                 end
-                
                 t.count = 0
                 t.expires = 0
                 t.applied = 0
@@ -1011,19 +1101,6 @@ end)
             toggle = "cooldowns",
             startsCombat = true,
             texture = 135994,
-        },
-        
-        freeze = {
-            id = 33395, -- Spell ID for Water Elemental's Freeze
-            cast = 0,
-            cooldown = 25,
-            gcd = "off",
-            startsCombat = true,
-            texture = 135848, -- Icon: Spell_Frost_FrostNova
-            usable = function()
-                -- Ensures the pet is active and able to cast.
-                return state.pet.water_elemental.up
-            end,
         },
         frostbolt = {
             id = 116,
@@ -1965,7 +2042,7 @@ end)
     } )
 
     -- Register default pack for MoP Frost Mage
-    spec:RegisterPack( "Frost", 20250727, [[Hekili:1IvBVTTnq4FlbfWjbRq1s2ojDijaBDBynylyyk7RsIsIkMiuKAuujnbg63(os9gfTK9AXgkAH9DhFUx4X75CdCdEiWpfjXb37T0BZYRCx54Uz9M1Ub(YxlWb(fOKNqpcFGHYH)9xe8sPs6RuokvD6sELib0e4hxrOYpZcINcY1RUcSTaNeC)fRd83sstXnMIltc8FylPSos9xuDuRpRJ4zW3tKeoRoIskLG6mUOo6xXprOehioe8mcf8(7QJ(D4iFFDKocRV7DGK)qGt45Xi4RnOu6u0j67U5dircIHdJfekLGyj43tYU5K4QSmN9u5uvmniLv55Cw4lqclcXuCoMjr0PTvubyYZcl4VGfkNbwcM7msUdMHIP4067AsIFcNHQOdPaGtcVIbUdQMuQPCjjhdrIOObBXJyPZwmIk36uKiV2BZUDktUDJ5HYjcbxesYvvCd5KKxdFgtyLMcZe83WSqUi2ukKJLyOiPYHCcl1i1SvnKDdhpgsfS4jc7r1b11)ENd19D70IIficlmtGXVHDey44JWGY5PHzvIx)2XOQehsK483xs5YBKcc7jS0Dg8s4CAk)fMHybohGV8wVLhfvVVnuB6iEGGH3aB(WfWh1vz7ROszym0ZzCnmiS7cyXjssIQMBE2VQg0EewOtKX2OsIrDtm4bL6jsPQb1SdXsZa6nLhlTQNHnvHpXfWeI)Klr65dg(cA4HdO607RYdI0r2IZMPDOTpjdYkOPuLo6kNtPegjDR75JFfstdlzi9RnJNzRwUOn16TyQUEc8OigjeKMkDB6oies1oCmLobs6qmJiaJ4uzFoF4MDfM0UHEtN07DMcSQtsH38hsxPU2BHYwRHIo9D39bLU1(6ht6N29d8FE6l1yk5T3A7CusFghIz4CcU82BwT4KC(Zw9Yj8M(r1LW0hQ7mnE2h(mfREsPMBUx9vvANT(1GuG)ZqPa03Y8DP3Lb(qxld0vQO4a0j5fCHSLg700Mz7NwhjW)DfCdMwhvYZb7qvsEou(abjBrqnU0P(UFJWavUFey5(lwzvHckLfOwkYthUGoDS5FIZGytB8PFf3mqGj5WrMx9zUF5Chvj8Z5DrJNfNnOoWhYNTCrGVFEvMG8uGVwLE7JMAa8X71BJ0C2aFtsUa)22(GFmqcvxLDds8teWawbbb7Syt6vhDnerBQJ2TdYfIQ0Elm7CWn9CMkGxzgaMeJwbWAt76hvBz0gtJgioTS6IdKlhKbDaBBluWE5SWUhRttTzMrgdEzGLwH)v)3JFpdUc)pAHF)1vlR8)cpopxQUhWBjSpkqjBGj4x3Lh2XE)p4ypTJDpwJW(C41rlQJor1xR5Hh1T1AQg6d9E5alGogD9xNHPFWZJ0PD(QJ58zwaOZ9ZSgGX7VX60oD9HBpTwhq7QZMTh1ObEA6o91QBD05db1Gh0XZMzJhRrvRwQdM5wGWC8yRkn(ZpfPVcoAZctNmX2fMd36vQD0rMRCOh4JxtrJ2rMIm9gjJdonhSgm7rghdS2RUR1mwlmE2oMKtBbSHIto6lgZC7zA1es2tng8941oGoLBGl5UE7U9ggMb2SKJgZ5himpM2aAUeKguplsPMfBS5xN)nRTdmVcKAQOMFTBpD(eJs37hx38FcGGu0O38hYpvR8u)48(1c6CY0)UCRe9OZMMCW48t76(tW)m]])
+    spec:RegisterPack( "Frost", 20250727, [[Hekili:Hekili:1EvBprUnq4FlOtAbupLB3alCxfGu71w1d1IQAOFnjozDyTiXo1XboqRYV9oJZBoExVB5u7haTR94Nz8mpZ4NnCr49HbRikA4D(Z9xo)Jlo3BXLZxo)8Wa1lL0WGss6JKhGpWjfW))fPOsHR(sUGScpDLOwMc7egKuZYvFHhMSliNFoazvjnn8UlGpTMTAfT1uAvAyW9RzvnX4FKM4oF2elYGVNQycEtCoRsbBNjKnX)k9rwoZlmqVO(oqZi15k4J3PVtTNkmivuZvuj4488WakNKKtxf(JHki6q7gxjivYalze4MtKpqvERPKC1AVYuvt8vnX(lBI3SPjwXkGq7MM4LJUbxl6zISeb(mZaOGjLczeRqNeNeaNBAhl9LONOmELLrlnnktkELYJeYelRUyp3LCkx5vkPvuEknsKfvW4R86nEaBBlqyV0jSj1zzEdXSxDzBUrVCIKW4rzsk9vQNKcoy0ljqTGkFKXFaX)J)3JFUqSkkRw(cI)NSWFOCjz8hPQf)l8yQqKVs8m3yljTacGknhWFoWQZfkdmb)Uy((DS))do2x74fhIiKHnWrjIIKEkqt8SM4JqEDQUUyY26mvd9(6x0qlR5A2tP4zQ0b66VQVXtTgVPJEEYEANF2HCoJNsWo9OkSpCLT7BtYw2uxA0)nDpTtpF)0ty6ayp26RdFTRoXjh1GaNbjcOpaVH6CSxLcM4PlRlAIpDmOg9GoEw6mESgvD2CDW0LAsbIuufNuUDt)WwA8DpfzidcZhsisjdkzirD0jM7SLBm2u7OdmxzFn46ewgtcakG59iAhykYwzBleXGlNat(0GzpY4qG1v6W3h0PJH22HWVRNfS4H0vEfKVAmZLQ6St)GK9uJrFJh4jAeLtlyuCaW1qrUNBxiEAsFBso71x74W(Uhi4gtBatfTTJiBrdQV1JsvkDXW69v39S2oWSeO0pfLctDiJpNVJrPej0WcSajlpNPpRwkHKv2U)Vdp4(9nXDcw2MkV15XXb9Yc6DYZeSbKMtlaooXwbXbhkTZjIUhZPV8pb0lC3w1tx6FjgfsoKVQqzsG0dwrPqQ6KcDCNYNJBIL0)UgAmGzEvcuIcPwjkGlaSq6AcWBR8AU93yCyRfFcsn)fVQUeHcTG0jZ64ro5Xtn)ZcoeBAJ1gzLB8CW8HatjGJ4E7tw81tbx1C7oUDduH329Z351ZkQpw74Vu0BNVLGtyBOEvRwlKHbbf1zs2JibvKXYbg37AIn5zn3(oyL)OpMBUTfRkVHRX3D9h2I49Ew21h5KtUBqSUg72Oj8l0l79H6BBJ(FQLpnGiGJPiAZ1hu92ITLO5R8xUzdAYnlnpKPGyZ1hK5yU4OGxZvTLQAC1CPZ184JAqXdUL8RnBC9cUjgd6m)2XOUIgbdmkEpQJ76E9JoWZTCWB8NFqu9)2qTLrCp8Sn8RD(WfWh1zz7suNkrJYW2QmNDuVcqJZ(MiOdimZH(XjSPPY5mW2HqXzh5qIyFw4Zcjmy5pfkIE8GHVgvPnKLTKgo7eh0HoEYUvvCZItN2f2Pvd9IrB2zZN5sO30(RbnyJdCMQNBMBTCBvXhKGnCN3pzF4j(b73TUSj95dpf5(q6m1v(ZEdViDfOdRVQ(dIFE3f1EruONXvhvkDZ1Nn7OwfmtlpJIK29H6ptRNHFXXd5uSLcNBUv(ftToZFD6Nq9cH)Zd]])
 end
 
 -- Immediately register the spec.
