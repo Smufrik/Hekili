@@ -47,11 +47,11 @@ do
 
                 if node.currentRank ~= rank then
                     -- FIXME: Cataclysm node.activeEntry.rank will return 0; node.currentRank is 1.
-                    -- print( token, data[1], entryID, node.currentRank, rank )
+                    print( token, data[1], entryID, node.currentRank, rank )
                     rank = max( rank, node.currentRank )
                 end
 
-                talent.rank = defn and defn.spellID == data[2] and ( not node.subTreeID or node.subTreeActive ) and node.activeEntry.rank or 0
+                talent.rank = rank
                 talent.max = node.maxRanks
             end
 
