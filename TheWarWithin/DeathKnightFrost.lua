@@ -1076,8 +1076,15 @@ spec:RegisterHook( "reset_precast", function ()
 
     -- Add predictive Killing Machine proc for recent Exterminate consumption
     -- This bridges the ~0.5 GCD delay between ability use and actual KM proc arrival
-    if talent.exterminate.enabled and ExterminatesReady > 0 and ( prev_gcd[1].frostscythe or prev_gcd[1].obliterate ) and buff.killing_machine.stack < buff.killing_machine.max_stack then
-        addStack( "killing_machine" )
+    if talent.exterminate.enabled and buff.killing_machine.stack < buff.killing_machine.max_stack then
+        -- Case 1: We have Exterminate stacks and just used an empowered ability
+        if ExterminatesReady > 0 and ( prev_gcd[1].frostscythe or prev_gcd[1].obliterate ) then
+            addStack( "killing_machine" )
+        -- Case 2: We just consumed our last Exterminate (within 1 GCD) and are owed a proc
+        elseif ( prev_gcd[1].frostscythe or prev_gcd[1].obliterate ) and 
+                ( action.frostscythe.time_since <= gcd.max or action.obliterate.time_since <= gcd.max ) then
+            addStack( "killing_machine" )
+        end
     end
 
 end )
