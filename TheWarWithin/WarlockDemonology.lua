@@ -1745,9 +1745,10 @@ spec:RegisterPet( "sayaad",
 
 -- Wrathguard       58965
 spec:RegisterPet( "felguard",
-    function() return Glyphed( 112870 ) and 58965 or 237562 end,
+    function() return Glyphed( 112870 ) and 58965 or 17252 end,
     "summon_felguard",
-    3600, 58965, 17252 )
+    3600,
+    17252, 58965, 30146 )
 
 spec:RegisterPet( "doomguard",
     11859,
@@ -1795,7 +1796,7 @@ end )
 spec:RegisterStateExpr( "two_cast_imps", function ()
     local count = 0
 
-    for i, imp in ipairs( wild_imps_v ) do
+    for _, imp in ipairs( wild_imps_v ) do
         if imp - query_time <= 6 * haste and imp - query_time > 4 * haste then count = count + 1 end
     end
 
