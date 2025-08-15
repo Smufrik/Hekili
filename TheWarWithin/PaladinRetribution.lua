@@ -2,6 +2,9 @@
 -- August 2025
 -- Patch 11.2
 
+-- TODO: If blessing of dawn is ever added to the APL, use combatlogs to build a tracker for the hidden counter
+-- TODO: There are probably more edge cases you can add for Hammer of Light free predictions
+
 if UnitClassBase( "player" ) ~= "PALADIN" then return end
 
 local addon, ns = ...
@@ -21,13 +24,14 @@ local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, m
 -- local GetSpellCastCount = C_Spell.GetSpellCastCount
 -- local GetSpellInfo = C_Spell.GetSpellInfo
 -- local GetSpellInfo = ns.GetUnpackedSpellInfo
--- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
 -- local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
 -- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
 local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
 -- local IsActiveSpell = ns.IsActiveSpell
 
 -- Specialization-specific local functions (if any)
+local GetSpellCooldown = C_Spell.GetSpellCooldown
 
 spec:RegisterResource( Enum.PowerType.HolyPower )
 spec:RegisterResource( Enum.PowerType.Mana )
@@ -615,8 +619,8 @@ spec:RegisterAuras( {
         max_stack = 1
     },
     hammer_of_light_ready = {
-        id = 427453,
-        duration = 12,
+        id = 427441,
+        duration = 20,
         max_stack = function() return 1 + set_bonus.tww3 >=4 and 1 or 0 end
     },
     -- Talent: Movement speed reduced by $w1%.
@@ -689,7 +693,7 @@ spec:RegisterAuras( {
     lights_deliverance = {
         id = 433674,
         duration = 3600,
-        max_stack = 60
+        max_stack = 50
     },
     -- The damage and healing of your next Dawnlight is increased by $w1%.
     morning_star = {
@@ -957,12 +961,6 @@ spec:RegisterGear({
     tww3 = {
         items = { 237619, 237617, 237622, 237620, 237618 },
         auras = {
-            -- Templar
-            hammer_of_light = {
-                id = 427441,
-                duration = 20,
-                max_stack = 2
-            },
             -- Herald of the Sun
             solar_wrath= {
                 id = 1236972,
@@ -1029,7 +1027,7 @@ spec:RegisterHook( "spend", function( amt, resource )
             reduceCooldown( "blessing_of_sacrifice", 1 )
             reduceCooldown( "blessing_of_spellwarding", 1 )
         end
-        if buff.divine_hammer.up then buff.divine_hammer.expires = buff.divine_hammer.expires + ( amt * 0.5 ) end
+        if buff.divine_hammer.up then buff.divine_hammer.expires = buff.divine_hammer.expires + ( amt * 0.3 ) end
     end
 end )
 
@@ -1058,6 +1056,29 @@ local current_crusading_strikes = 1
 -- Strike 2 = The non-producing Holy Power swing has landed.
 -- Strike 3 = Should never actually reach due to SPELL_ENERGIZE reset, but this would be the next productive swing.
 local last_crusading_strike = 0
+local freeHOLApplied = 0
+local willBeFree = false
+
+
+spec:RegisterStateExpr( "hammer_of_light_is_free", function ()
+    return ( query_time - freeHOLApplied ) < 12
+
+end )
+
+spec:RegisterStateExpr( "hammer_of_light_will_be_free", function ()
+    return willBeFree
+
+end )
+
+local empyreanHammerCallers = {
+    [198034] = true,
+    [53385] = true,
+    [383328] = true,
+    [336872] = true,
+    [85256] = true,
+    [427453] = true,
+
+     }
 
 spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _, _, destGUID, destName, destFlags, _, spellID, spellName )
     if sourceGUID == state.GUID then
@@ -1071,6 +1092,23 @@ spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _
                 if current_crusading_strikes < 2 then
                     Hekili:ForceUpdate( "CRUSADING_STRIKES", true )
                 end
+            end
+        elseif spellID == 433732 then
+            -- This is the event where you actually gain the free cast for 12 seconds, separate from the 20 second cast window
+            freeHOLApplied = ( subtype == "SPELL_AURA_APPLIED" ) and GetTime() or 0
+            willBeFree = false
+            Hekili:ForceUpdate( "HAMMER_OF_LIGHT", true )
+        elseif subtype == "SPELL_CAST_SUCCESS" and state.talent.lights_deliverance.enabled and empyreanHammerCallers[ spellID ] and state.talent.hammerfall.enabled then
+            -- Not all-inclusive, but this adds more strength to the free HoL predictions
+            local wake = GetSpellCooldown( 255937 )
+            local ld = GetPlayerAuraBySpellID( 433674 ) or false
+            local sth = GetPlayerAuraBySpellID( 431536) or false
+            local stacks = 1 + ( sth and 1 or 0 )
+            local ld_count = ld and ld.applications or 0
+            if wake.activeCategory and wake.activeCategory == 2285 then
+                willBeFree = ( ( ld_count + stacks ) >= 50 ) or false
+            else
+                willBeFree = false
             end
         end
     end
@@ -1118,11 +1156,6 @@ end )
 
 spec:RegisterStateExpr( "consecration", function () return buff.consecration end )
 
-local tempDebug = { 387174, 255937, 427453, 429826, 427441 }
-
-local ld_stacks = 0
-local free_hol_triggered = 0
-
 spec:RegisterHook( "reset_precast", function ()
     if buff.divine_resonance.up then
         state:QueueAuraEvent( "divine_toll", class.abilities.judgment.handler, buff.divine_resonance.expires, "AURA_PERIODIC" )
@@ -1135,42 +1168,9 @@ spec:RegisterHook( "reset_precast", function ()
     if now - last_ts < 3 and action.templar_slash.lastCast < last_ts then
         applyBuff( "templar_strikes" )
     end
-
-    if IsSpellKnownOrOverridesKnown( 427453 ) then
-        if talent.lights_deliverance.enabled then
-            -- We need to track when it ticks over from 59/60 stacks.
-            local stacks = buff.lights_deliverance.stack
-
-            if stacks < ld_stacks then
-                free_hol_triggered = now
-            end
-            ld_stacks = stacks
-
-            if free_hol_triggered + 12 < now then free_hol_triggered = 0 end -- Reset.
-
-            if free_hol_triggered > 0 and action.hammer_of_light.lastCast > action.wake_of_ashes.lastCast then
-                local hol_remains = free_hol_triggered + 12 - query_time
-                hol_remains = hol_remains > 0 and hol_remains or ( 2 * gcd.max )
-
-                applyBuff( "hammer_of_light_free", max( 2 * gcd.max, hol_remains ) )
-                if Hekili.ActiveDebug then Hekili:Debug( "Hammer of Light active; applied hammer_of_light_free: %.2f : %.2f : %.2f : %d", buff.hammer_of_light_free.remains, free_hol_triggered, query_time, ld_stacks ) end
-            else
-                if Hekili.ActiveDebug then Hekili:Debug( "Hammer of Light active; hammer_of_light_free ruled out: %.2f : %.2f : %d", free_hol_triggered, query_time, ld_stacks ) end
-            end
-        end
-
-        if not buff.hammer_of_light_free.up then
-            local hol_remains = action.wake_of_ashes.lastCast + 12 - query_time
-            hol_remains = hol_remains > 0 and hol_remains or ( 2 * gcd.max )
-            applyBuff( "hammer_of_light_ready", hol_remains )
-            if Hekili.ActiveDebug then Hekili:Debug( "Hammer of Light not active; applied hammer_of_light_ready: %.2f", buff.hammer_of_light_ready.remains ) end
-        end
-
-        if buff.hammer_of_light_ready.down and buff.hammer_of_light_free.down then
-            if Hekili.ActiveDebug then Hekili:Debug( "Hammer of Light appears active [ %.2f ] but I don't know why; applying hammer_of_light_ready." ) end
-            applyBuff( "hammer_of_light_ready", 2 * gcd.max )
-        end
-    end
+    -- reset to force refresh with real combatlog data
+    hammer_of_light_is_free = nil
+    hammer_of_light_will_be_free = nil
 
     if time > 0 and talent.crusading_strikes.enabled then
         if not action.rebuke.in_range then
@@ -1209,7 +1209,32 @@ spec:RegisterHook( "reset_precast", function ()
             if spendType == "holy_power" then gain( spend, "holy_power" ) end
         end
     end
+
+    if hammer_of_light_will_be_free and buff.hammer_of_light.down then
+        -- This seems silly, but it's to handle the delay for the 50 stacks to consume themselves and pop the free cast
+        hammer_of_light_is_free = true
+    end
+    if hammer_of_light_is_free and buff.hammer_of_light_ready.down then
+        -- This is the case where we've already seen it in combatlogs
+        addStack( "hammer_of_light_ready" )
+
+    end
+
 end )
+
+local DeliverLight = setfenv( function ( incomingStacks )
+
+    if incomingStacks and incomingStacks > 0 then
+        addStack( "lights_deliverance", nil, incomingStacks )
+    end
+
+    if buff.lights_deliverance.at_max_stacks and buff.hammer_of_light.down and cooldown.wake_of_ashes.remains > 0 then
+        hammer_of_light_is_free = true
+        addStack( "hammer_of_light_ready" )
+        removeBuff( "lights_deliverance" )
+    end
+
+end, state )
 
 spec:RegisterHook( "runHandler_startCombat", csStartCombat )
 
@@ -1534,12 +1559,12 @@ spec:RegisterAbilities( {
     divine_hammer = {
         id = 198034,
         cast = 0,
-        cooldown = 60,
+        cooldown = 120,
         gcd = "spell",
 
         spend = function ()
             if buff.divine_purpose.up then return 0 end
-            return ( talent.vanguard_of_justice.enabled and 4 or 3 )
+            return 3
         end,
         spendType = "holy_power",
 
@@ -1549,6 +1574,9 @@ spec:RegisterAbilities( {
 
         handler = function ()
             applyBuff( "divine_hammer" )
+            if talent.lights_deliverance.enabled and talent.hammerfall.enabled then
+                DeliverLight( 1 + ( buff.shake_the_heavens.up and 1 or 0 ) )
+            end
         end,
     },
 
@@ -1656,7 +1684,9 @@ spec:RegisterAbilities( {
             end
 
             -- Hero Talents
-            if talent.lights_deliverance.enabled and talent.hammerfall.enabled then addStack( "lights_deliverance", nil, 1 + ( buff.shake_the_heavens.up and 1 or 0 ) ) end
+            if talent.lights_deliverance.enabled and talent.hammerfall.enabled then
+                DeliverLight( 1 + ( buff.shake_the_heavens.up and 1 or 0 ) )
+            end
             -- Legacy
             removeBuff( "echoes_of_wrath" )
         end,
@@ -1844,35 +1874,30 @@ spec:RegisterAbilities( {
         gcd = "spell",
 
         spend = function()
-            if buff.divine_purpose.up or buff.hammer_of_light_free.up then return 0 end
+            if buff.divine_purpose.up or hammer_of_light_is_free then return 0 end
             return 5
         end,
         spendType = "holy_power",
 
         startsCombat = true,
-        buff = function() return buff.hammer_of_light_free.up and "hammer_of_light_free" or "hammer_of_light_ready" end,
+        buff = "hammer_of_light_ready",
 
         handler = function ()
-            removeBuff( "divine_purpose" )
+
+            if hammer_of_light_is_free then
+                hammer_of_light_is_free = false
+            else
+                removeBuff( "divine_purpose" ) -- Confirmed it does not consume Divine Purpose when its already free
+            end
 
             if talent.undisputed_ruling.enabled then
                 applyDebuff( "target", "judgment" )
                 applyBuff( "undisputed_ruling" )
             end
 
+            removeStack( "hammer_of_light_ready" ) -- do this first or else that function misbehaves
             if talent.lights_deliverance.enabled then
-                addStack( "lights_deliverance", nil, 3 + ( 2 * talent.zealous_vindication.rank ) )
-            end
-
-            if buff.hammer_of_light_free.up then
-                removeBuff( "hammer_of_light_free" )
-            else
-                removeStack( "hammer_of_light_ready" )
-
-                if buff.lights_deliverance.stack_pct == 100 then
-                    removeBuff( "lights_deliverance" )
-                    applyBuff( "hammer_of_light_free" )
-                end
+                DeliverLight( 3 + ( 2 * talent.zealous_vindication.rank ) )
             end
         end,
 
@@ -2059,10 +2084,6 @@ spec:RegisterAbilities( {
 
         handler = function ()
             removeBuff( "empyrean_legacy" )
-            if buff.blessing_of_dawn.up then
-                removeBuff( "blessing_of_dawn" )
-                applyBuff( "blessing_of_dusk" )
-            end
             if buff.dawnlight.up then
                 applyBuff( "dawnlight_dot" )
                 removeStack( "dawnlight" )
@@ -2305,7 +2326,9 @@ spec:RegisterAbilities( {
             removeBuff( "divine_purpose" )
 
             -- Hero Talents
-            if talent.lights_deliverance.enabled and talent.hammerfall.enabled then addStack( "lights_deliverance", nil, 1 + ( buff.shake_the_heavens.up and 1 or 0 ) ) end
+            if talent.lights_deliverance.enabled and talent.hammerfall.enabled then
+                DeliverLight( 1 + ( buff.shake_the_heavens.up and 1 or 0 ) )
+            end
 
             -- Legacy
             removeBuff( "echoes_of_wrath" )
@@ -2347,7 +2370,7 @@ spec:RegisterAbilities( {
         spendType = "holy_power",
 
         talent = "wake_of_ashes",
-        nobuff = function() return buff.hammer_of_light_free.up and "hammer_of_light_free" or "hammer_of_light_ready" end,
+        nobuff = "hammer_of_light_ready",
         startsCombat = true,
 
         usable = function ()
