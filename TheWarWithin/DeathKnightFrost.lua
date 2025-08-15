@@ -4,6 +4,7 @@
 
 if UnitClassBase( "player" ) ~= "DEATHKNIGHT" then return end
 
+
 local addon, ns = ...
 local Hekili = _G[ addon ]
 local class, state = Hekili.Class, Hekili.State
@@ -16,13 +17,13 @@ local strformat = string.format
 -- Tables
 local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
 -- Math
-local abs, ceil, floor, max, sqrt = math.abs, math.ceil, math.floor, math.max, math.sqrt
+local abs, ceil, floor, max, min, sqrt = math.abs, math.ceil, math.floor, math.max, math.min, math.sqrt
 
 -- Common WoW APIs, comment out unneeded per-spec
 -- local GetSpellCastCount = C_Spell.GetSpellCastCount
 -- local GetSpellInfo = C_Spell.GetSpellInfo
 -- local GetSpellInfo = ns.GetUnpackedSpellInfo
--- local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
+local GetPlayerAuraBySpellID = C_UnitAuras.GetPlayerAuraBySpellID
 -- local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
 -- local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
 -- local IsSpellKnownOrOverridesKnown = C_SpellBook.IsSpellInSpellBook
@@ -508,7 +509,7 @@ spec:RegisterAuras( {
     exterminate = {
         id = 441416,
         duration = 30,
-        max_stack = function() 
+        max_stack = function()
             local base = talent.reapers_onslaught.enabled and 1 or 2
             local tier_bonus = set_bonus.tww3 >= 2 and 1 or 0
             return base + tier_bonus
@@ -997,6 +998,7 @@ end
 
 spec:RegisterHook( "spend", spendHook )
 
+
 spec:RegisterHook( "TALENTS_UPDATED", function()
     class.abilityList.any_dnd = "|T136144:0|t |cff00ccff[Any " .. class.abilities.death_and_decay.name .. "]|r"
     class.abilities.any_dnd = class.abilities.death_and_decay_actual
@@ -1011,11 +1013,58 @@ spec:RegisterStateExpr( "erw_discount", function()
     return ERWDiscount
 end )
 
+--[[
+Exterminate Killing Machine Prediction System
+
+Problem: When using Obliterate/Frostscythe with Exterminate, there's a ~0.5 GCD delay
+between the ability cast and when the Killing Machine proc actually appears. This causes
+recommendation flickering as Hekili doesn't know the KM proc is coming.
+
+Solution: Track Exterminate consumption via combat logs and provide immediate KM procs
+in the simulation to bridge the timing gap until the real proc arrives.
+
+Components:
+1. Combat log tracking of Exterminate buff state (ExterminatesReady -> exterminates_ready)
+2. Immediate KM grants in ability handlers for instant feedback
+3. Backup KM grants in reset_precast for cases where immediate grants aren't sufficient
+--]]
+
+-- Track current Exterminate stack count for Killing Machine proc prediction
+local ExterminatesReady = 0
+-- Track if the last frostscythe/obliterate consumed exterminate for better KM prediction
+local LastCastHadExterminate = false
+
+-- Register state expression so the simulation engine can access this variable
+spec:RegisterStateExpr( "exterminates_ready", function()
+    return ExterminatesReady
+end )
+
+-- Register state expression for tracking last cast exterminate status
+spec:RegisterStateExpr( "last_cast_had_exterminate", function()
+    return LastCastHadExterminate
+end )
+
 spec:RegisterCombatLogEvent( function( _, subtype, _, sourceGUID, sourceName, sourceFlags, _, destGUID, destName, destFlags, _, spellID, spellName )
     if spellID == 47568 and ( subtype == "SPELL_CAST_SUCCESS" ) and state.talent.obliteration.enabled and state.buff.pillar_of_frost.up then
         ERWDiscount = 1
     elseif spellID == 49020 or spellID == 207230 then
         ERWDiscount = 0
+        -- Track if this Obliterate (49020) or Frostscythe (207230) was cast with Exterminate
+        if subtype == "SPELL_CAST_SUCCESS" and sourceGUID == state.GUID and state.talent.exterminate.enabled then
+            -- Check if we had exterminate when we cast
+            LastCastHadExterminate = ExterminatesReady > 0
+        end
+    end
+
+    -- Track Exterminate buff changes to maintain accurate stack count
+    -- Spell ID 441416 is the Exterminate buff that grants empowered Obliterate/Frostscythe
+    if sourceGUID == state.GUID and spellID == 441416 and state.talent.exterminate.enabled then
+        if subtype == "SPELL_AURA_APPLIED" or subtype == "SPELL_AURA_REMOVED" or
+           subtype == "SPELL_AURA_APPLIED_DOSE" or subtype == "SPELL_AURA_REMOVED_DOSE" then
+            -- Sync with actual buff state using API call (more reliable than simulation state)
+            local aura = GetPlayerAuraBySpellID( 441416 )
+            ExterminatesReady = aura and aura.applications or 0
+        end
     end
 
 end )
@@ -1041,6 +1090,35 @@ spec:RegisterHook( "reset_precast", function ()
     -- Queue aura event for Breath of Sindragosa rune generation
     if buff.breath_of_sindragosa.up then
         state:QueueAuraEvent( "breath_of_sindragosa", BreathOfSindragosaExpire, buff.breath_of_sindragosa.expires, "AURA_EXPIRATION" )
+    end
+
+    -- Force refresh of exterminates_ready and last_cast_had_exterminate by setting to nil
+    -- This ensures state expressions retrieve fresh data from local variables
+    exterminates_ready = nil
+    last_cast_had_exterminate = nil
+
+    -- Predictive KM logic for Exterminate consumption
+    -- The handler adds KM immediately, but the simulation might need reinforcement
+    -- during the GCD to ensure recommendations don't flicker
+    if talent.exterminate.enabled then
+        local prev_gcd1 = prev_gcd[1]
+        local recently_used_empowered = prev_gcd1.frostscythe or prev_gcd1.obliterate
+        
+        if recently_used_empowered then
+            -- Only add predictive KM if we don't already have it
+            -- This prevents double-adding while ensuring KM is present for recommendations
+            
+            -- Case 1: We still have exterminate stacks and no KM
+            -- (KM was consumed but exterminate should grant another)
+            if exterminates_ready > 0 and not buff.killing_machine.up then
+                addStack( "killing_machine" )
+            
+            -- Case 2: We just consumed the last exterminate stack
+            -- The handler should have added KM, but reinforce if missing
+            elseif last_cast_had_exterminate and exterminates_ready == 0 and not buff.killing_machine.up then
+                addStack( "killing_machine" )
+            end
+        end
     end
 
 end )
@@ -1492,16 +1570,23 @@ spec:RegisterAbilities( {
 
             if talent.obliteration.enabled then erw_discount = 0 end
 
-            if buff.killing_machine.up then KillingMachineConsumer( ) end
-
+            -- Handle KM and Exterminate atomically to prevent flickering
             if buff.exterminate.up then
-                -- Each empowered cast summons both scythes
-                -- First scythe: grants Killing Machine with 100% chance
+                -- Process KM consumption and exterminate proc together
+                if buff.killing_machine.up then
+                    -- Consume KM but we'll immediately replace it from exterminate
+                    KillingMachineConsumer( )
+                end
+                -- Exterminate empowers this cast to summon two scythes
+                -- First scythe: Grants Killing Machine proc (immediate for prediction accuracy)
                 addStack( "killing_machine" )
-                -- Second scythe: applies Frost Fever to all enemies around target
+                -- Second scythe: Applies Frost Fever to all enemies around target
                 applyDebuff( "target", "frost_fever" )
                 active_dot.frost_fever = max ( active_dot.frost_fever, active_enemies )
                 removeStack( "exterminate" )
+            else
+                -- No exterminate, just consume KM normally
+                if buff.killing_machine.up then KillingMachineConsumer( ) end
             end
 
         end,
@@ -1665,17 +1750,25 @@ spec:RegisterAbilities( {
         handler = function ()
             if talent.inexorable_assault.enabled then removeStack( "inexorable_assault", 3 ) end
             if talent.obliteration.enabled then erw_discount = 0 end
+            
+            -- Handle KM and Exterminate atomically to prevent flickering
             if buff.exterminate.up then
-                -- Each empowered cast summons both scythes
-                -- First scythe: grants Killing Machine with 100% chance
+                -- Process KM consumption and exterminate proc together
+                if buff.killing_machine.up then
+                    -- Consume KM but we'll immediately replace it from exterminate
+                    KillingMachineConsumer( )
+                end
+                -- Exterminate empowers this cast to summon two scythes
+                -- First scythe: Grants Killing Machine proc (immediate for prediction accuracy)
                 addStack( "killing_machine" )
-                -- Second scythe: applies Frost Fever to all enemies around target
+                -- Second scythe: Applies Frost Fever to all enemies around target
                 applyDebuff( "target", "frost_fever" )
                 active_dot.frost_fever = max ( active_dot.frost_fever, active_enemies )
                 removeStack( "exterminate" )
+            else
+                -- No exterminate, just consume KM normally
+                if buff.killing_machine.up then KillingMachineConsumer( ) end
             end
-
-            if buff.killing_machine.up then KillingMachineConsumer( ) end
 
             -- Koltira's Favor is not predictable.
             if conduit.eradicating_blow.enabled then addStack( "eradicating_blow", nil, 1 ) end
@@ -1794,7 +1887,7 @@ spec:RegisterAbilities( {
                 setCooldown( "soul_reaper", 0 )
                 applyBuff( "reaper_of_souls" )
             end
-            
+
             -- 2-Set bonus: Casting Reaper's Mark grants 1 stack of Exterminate
             if talent.exterminate.enabled and set_bonus.tww3 >= 2 then
                 applyBuff( "exterminate", nil, 1 )
