@@ -2554,8 +2554,8 @@ spec:RegisterSetting( "sw_death_protection", 50, {
 } )
 
 spec:RegisterSetting( "hold_crash", 0, {
-    name = strformat( "Reserve %s Charge for Target Count", Hekili:GetSpellLinkWithTexture( spec.abilities.shadow_crash.id )),
-    desc = strformat( "If set above 0, the addon will not recommend your second charge of %s while there are fewer targets than specified.", Hekili:GetSpellLinkWithTexture( spec.abilities.shadow_crash.id )),
+    name = strformat( "Reserve %s Charge for Target Count", Hekili:GetSpellLinkWithTexture( spec.abilities.shadow_crash.id ) ),
+    desc = strformat( "If set above 0, the addon will not recommend your second charge of %s while there are fewer targets than specified.", Hekili:GetSpellLinkWithTexture( spec.abilities.shadow_crash.id ) ),
     type = "range",
     min = 0,
     max = 15,
