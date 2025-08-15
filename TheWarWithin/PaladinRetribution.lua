@@ -1111,6 +1111,8 @@ spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _
                 willBeFree = false
             end
         end
+
+        if SpellID == 427453 and freeHOLApplied > 0 then freeHOLApplied = 0 end
     end
 end )
 
@@ -1218,6 +1220,20 @@ spec:RegisterHook( "reset_precast", function ()
         -- This is the case where we've already seen it in combatlogs
         addStack( "hammer_of_light_ready" )
 
+    end
+
+    -- Debug snapshot for hammer_of_light
+    if Hekili.ActiveDebug then
+        Hekili:Debug( "Hammer of Light - freeHOLApplied: %.2f, willBeFree: %s, hammer_of_light_is_free: %s, hammer_of_light_will_be_free: %s, buff.hammer_of_light_ready.stack: %d, set_bonus.tww3: %d, buff.lights_deliverance.stack: %d, action.wake_of_ashes.time_since: %.2f",
+            freeHOLApplied or 0,
+            willBeFree and "TRUE" or "FALSE",
+            hammer_of_light_is_free and "TRUE" or "FALSE",
+            hammer_of_light_will_be_free and "TRUE" or "FALSE",
+            buff.hammer_of_light_ready.stack or 0,
+            set_bonus.tww3 or 0,
+            buff.lights_deliverance.stack or 0,
+            action.wake_of_ashes.time_since or 0
+        )
     end
 
 end )
