@@ -2158,6 +2158,11 @@ spec:RegisterAbilities( {
             end
         end,
 
+        readyTime = function() 
+            local holdCount = settings.hold_crash
+            if holdCount > 0 and active_enemies < holdCount then return action.shadow_crash.full_recharge_time end 
+        end,
+
         copy = { 205385, 457042 }
     },
 
@@ -2545,6 +2550,16 @@ spec:RegisterSetting( "sw_death_protection", 50, {
     min = 0,
     max = 100,
     step = 0.1,
+    width = "full"
+} )
+
+spec:RegisterSetting( "hold_crash", 0, {
+    name = strformat( "Reserve %s Charge for Target Count", Hekili:GetSpellLinkWithTexture( spec.abilities.shadow_crash.id ) ),
+    desc = strformat( "If set above 0, the addon will not recommend your second charge of %s while there are fewer targets than specified.", Hekili:GetSpellLinkWithTexture( spec.abilities.shadow_crash.id ) ),
+    type = "range",
+    min = 0,
+    max = 15,
+    step = 1,
     width = "full"
 } )
 
