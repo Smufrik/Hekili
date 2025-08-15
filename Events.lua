@@ -1096,7 +1096,7 @@ ns.castsAll = { 'no_action', 'no_action', 'no_action', 'no_action', 'no_action' 
 local castsOn, castsOff, castsAll = ns.castsOn, ns.castsOff, ns.castsAll
 
 
-function state:AddToHistory( spellID, destGUID )
+function state:AddToHistory( spellID, destGUID, rank )
     local ability = class.abilities[ spellID ]
     local key = ability and ability.key or dynamic_keys[ spellID ]
 
@@ -1106,7 +1106,7 @@ function state:AddToHistory( spellID, destGUID )
     player.lastcast = key
     player.casttime = now
 
-    if ability and not ability.essence then
+    if ability then
         local history = self.prev.history
         insert( history, 1, key )
         history[6] = nil
@@ -1125,6 +1125,7 @@ function state:AddToHistory( spellID, destGUID )
 
         ability.realCast = now
         ability.realUnit = destGUID
+        ability.realRank = rank
     end
 end
 
@@ -1627,7 +1628,10 @@ local cast_events = {
     SPELL_CAST_FAILED       = true,
     SPELL_CAST_SUCCESS      = true,
     SPELL_DAMAGE            = true,
-    SPELL_AURA_REMOVED      = true
+    SPELL_AURA_REMOVED      = true,
+    SPELL_EMPOWER_START     = true,
+    SPELL_EMPOWER_INTERRUPT = true,
+    SPELL_EMPOWER_END       = true
 }
 
 
@@ -1908,6 +1912,9 @@ local function CLEU_HANDLER( event, timestamp, subtype, hideCaster, sourceGUID, 
                     end
 
                     state:AddToHistory( ability.key, destGUID )
+
+                elseif subtype == "SPELL_EMPOWER_END" then
+                    state:AddToHistory( ability.key, destGUID, amount )
 
                 elseif subtype == "SPELL_DAMAGE" then
                     -- Could be an impact.
