@@ -1542,7 +1542,8 @@ spec:RegisterAbilities( {
         spend = 0.03,
         spendType = "mana",
 
-        talent = "ice_barrier",
+        -- FIXME: Skeleton Generator strange edgecase doesn't find this talent
+        -- talent = "ice_barrier",
         startsCombat = false,
 
         handler = function ()
