@@ -2350,7 +2350,7 @@ spec:RegisterAbilities( {
                 active_dot.blood_plague = active_enemies
             end
             if buff.visceral_strength_unholy.up then
-                if action.death_coil.last_cast >= action.epidemic.last_Cast then
+                if action.death_coil.time_since < action.epidemic.time_since then
                     spec.abilities.death_coil.handler()
                 else
                     spec.abilities.epidemic.handler()
