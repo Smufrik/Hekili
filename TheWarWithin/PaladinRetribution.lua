@@ -1109,7 +1109,7 @@ spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _
         end
 
         if spellID == 427453 and freeHOLApplied > 0 then
-            freeHOLApplied = 0 end
+            freeHOLApplied = 0
             Hekili:ForceUpdate( "HAMMER_OF_LIGHT_CAST", true )
         end
     end
