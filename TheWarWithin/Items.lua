@@ -1844,18 +1844,18 @@ all:RegisterAbilities( {
 
         proc = "primary",
         self_buff = "unyielding_netherprism",
+        buff = "latent_energy",
 
         handler = function()
-            removeBuff( "latent_power" )
+            removeBuff( "latent_energy" )
             applyBuff( "unyielding_netherprism" )
         end,
 
         auras = {
-            latent_power = {
+            latent_energy = {
                 id = 1239675,
                 duration = 3600,
-                max_stack = 18,
-                copy = { 197317, 197285, 197306, 197315, 197287, 197291, 197304, 197312 }
+                max_stack = 18
             },
             unyielding_netherprism = {
                 id = 1233556,
