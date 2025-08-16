@@ -38,7 +38,6 @@ spec:RegisterResource( Enum.PowerType.Mana )
 
 -- Talents
 spec:RegisterTalents( {
-
     -- Paladin
     a_just_reward                  = { 103858,  469411, 1 }, -- After Cleanse Toxins successfully removes an effect from an ally, they are healed for $s1
     afterimage                     = {  93189,  385414, 1 }, -- After you spend $s1 Holy Power, your next Word of Glory echoes onto a nearby ally at $s2% effectiveness
@@ -1062,12 +1061,10 @@ local willBeFree = false
 
 spec:RegisterStateExpr( "hammer_of_light_is_free", function ()
     return ( query_time - freeHOLApplied ) < 12
-
 end )
 
 spec:RegisterStateExpr( "hammer_of_light_will_be_free", function ()
     return willBeFree
-
 end )
 
 local empyreanHammerCallers = {
@@ -1077,8 +1074,7 @@ local empyreanHammerCallers = {
     [336872] = true,
     [85256] = true,
     [427453] = true,
-
-     }
+}
 
 spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _, _, destGUID, destName, destFlags, _, spellID, spellName )
     if sourceGUID == state.GUID then
@@ -1097,7 +1093,7 @@ spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _
             -- This is the event where you actually gain the free cast for 12 seconds, separate from the 20 second cast window
             freeHOLApplied = ( subtype == "SPELL_AURA_APPLIED" ) and GetTime() or 0
             willBeFree = false
-            Hekili:ForceUpdate( "HAMMER_OF_LIGHT", true )
+            Hekili:ForceUpdate( "HAMMER_OF_LIGHT_APPLIED", true )
         elseif subtype == "SPELL_CAST_SUCCESS" and state.talent.lights_deliverance.enabled and empyreanHammerCallers[ spellID ] and state.talent.hammerfall.enabled then
             -- Not all-inclusive, but this adds more strength to the free HoL predictions
             local wake = GetSpellCooldown( 255937 )
@@ -1112,7 +1108,10 @@ spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _
             end
         end
 
-        if SpellID == 427453 and freeHOLApplied > 0 then freeHOLApplied = 0 end
+        if spellID == 427453 and freeHOLApplied > 0 then
+            freeHOLApplied = 0 end
+            Hekili:ForceUpdate( "HAMMER_OF_LIGHT_CAST", true )
+        end
     end
 end )
 
