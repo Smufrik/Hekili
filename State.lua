@@ -3773,6 +3773,14 @@ local mt_resource = {
             -- Assassination, April 2021
             -- Using the same as time_to_max because our time_to_max uses modeled regen events...
             return state:TimeToResource( t, t.max )
+        
+        elseif k:sub(1, 16) == "time_to_deficit_" then
+            local amount = k:sub(17)
+            amount = tonumber(amount)
+
+            if not amount then return 0 end
+
+            return state:TimeToResource( t, t.max - amount )
 
         elseif k:sub(1, 8) == "time_to_" then
             local amount = k:sub(9)
