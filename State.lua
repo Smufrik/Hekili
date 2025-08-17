@@ -448,10 +448,12 @@ local mt_trinket = {
             return isEnabled and t.__id or 0
         elseif k == "ability" then
             return rawget( t, "__ability" ) or "null_cooldown"
-        elseif k == "usable" then
+        elseif k == "usable" or k == "has_use" then
             return rawget( t, "__usable" ) or false
         elseif k == "has_use_buff" or k == "use_buff" then
             return isEnabled and t.__has_use_buff or false
+        elseif k == "has_use_damage" then
+            return isEnabled and t.__has_use_damage or false
         elseif k == "use_buff_duration" or k == "buff_duration" then
             return isEnabled and t.__has_use_buff and t.__use_buff_duration or 0.01
         elseif k == "has_proc" or k == "proc" then
@@ -483,6 +485,7 @@ local mt_trinket = {
             return t.usable and t.ability and class.abilities[ t.ability ] and class.abilities[ t.ability ].cast or 0
         end
 
+        Hekili:Error( "Unknown trinket expression '%s' in %s.", k, state.this_id )
         return k
     end
 }
