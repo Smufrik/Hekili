@@ -98,6 +98,7 @@ actions.aoe=frostscythe,if=(buff.killing_machine.stack=2|(buff.killing_machine.u
 actions.aoe+=/obliterate,cycle_targets=1,if=buff.killing_machine.stack=2|(buff.killing_machine.up&rune>=3)
 actions.aoe+=/howling_blast,if=buff.rime.up&talent.frostbound_will|!dot.frost_fever.ticking
 ## actions.aoe+=/frost_strike,target_if=max:(talent.shattering_blade&debuff.razorice.stack=5),if=debuff.razorice.stack=5&buff.frostbane.up
+actions.aoe+=/frost_strike,cycle_targets=1,if=debuff.razorice.stack=5&buff.frostbane.up
 actions.aoe+=/frost_strike,cycle_targets=1,if=debuff.razorice.stack=5&talent.shattering_blade&active_enemies<5&!variable.rp_pooling&!talent.frostbane
 actions.aoe+=/frostscythe,if=buff.killing_machine.up&!variable.rune_pooling&active_enemies>=variable.frostscythe_prio
 ## actions.aoe+=/obliterate,target_if=max:(hero_tree.rider_of_the_apocalypse&debuff.chains_of_ice_trollbane_slow.up),if=buff.killing_machine.up&!variable.rune_pooling

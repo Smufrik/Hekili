@@ -511,7 +511,7 @@ spec:RegisterAuras( {
         duration = 30,
         max_stack = function()
             local base = talent.reapers_onslaught.enabled and 1 or 2
-            local tier_bonus = set_bonus.tww3 >= 2 and 1 or 0
+            local tier_bonus = set_bonus.tww3_deathbringer >= 2 and 1 or 0
             return base + tier_bonus
         end
     },
@@ -718,16 +718,26 @@ spec:RegisterAuras( {
         id = 434765,
         duration = 12.0,
         tick_time = 1.0,
-        max_stack = function() return set_bonus.tww3 >= 4 and 55 or 40 end,
+        max_stack = function() return set_bonus.tww3_deathbringer >= 4 and 55 or 40 end,
         copy = "reapers_mark_debuff",
 
         onRemove = function()
-            if set_bonus.tww3 >= 4 then
+            -- 4-piece tier set: 10% crit chance after explosion
+            if set_bonus.tww3_deathbringer >= 4 then
                 applyBuff( "empowered_soul" )
             end
             if talent.exterminate.enabled then
                 local stacks = talent.reapers_onslaught.enabled and 1 or 2
                 applyBuff( "exterminate", nil, stacks )
+            end
+            -- Wave of Souls: Damage amplification debuff
+            if talent.wave_of_souls.enabled then
+                applyDebuff( "target", "wave_of_souls_debuff" )
+                active_dot.wave_of_souls_debuff = max( active_dot.wave_of_souls_debuff, active_enemies )
+            end
+            -- Swift and Painful: Strength buff if no enemies struck (single target optimization)
+            if talent.swift_and_painful.enabled and active_enemies == 1 then
+                applyBuff( "swift_and_painful_strength" )
             end
         end,
     },
@@ -912,6 +922,53 @@ spec:RegisterAuras( {
         duration = 6,
         max_stack = 1
     },
+    -- Whitemane's Undeath debuff
+    undeath = {
+        id = 444633,
+        duration = 24,
+        tick_time = 3,
+        max_stack = 99, -- Technically no in-game limit
+        type = "Magic"
+    },
+    -- Nazgrim's Apocalyptic Conquest
+    apocalyptic_conquest = {
+        id = 444763,
+        duration = 10,
+        max_stack = 1
+    },
+    -- Mograine's Might: Damage increased while standing in Mograine's Death and Decay
+    mograines_might = {
+        id = 444505,
+        duration = 3600, -- No in-game limit, lasts as long as player is in D&D
+        max_stack = 1
+    },
+    -- Trollbane's Chains of Ice (slow)
+    chains_of_ice_trollbane_slow = {
+        id = 444826,
+        duration = 8,
+        max_stack = 1,
+        type = "Magic"
+    },
+    -- Trollbane's Chains of Ice (damage amp)
+    chains_of_ice_trollbane_damage = {
+        id = 444828,
+        duration = 8,
+        max_stack = 1,
+        type = "Magic"
+    },
+    -- Wave of Souls damage amplification
+    wave_of_souls_debuff = {
+        id = 443404,
+        duration = 15,
+        max_stack = 2,
+        type = "Magic"
+    },
+    -- Swift and Painful Strength
+    swift_and_painful_strength = {
+        id = 469169,
+        duration = 8,
+        max_stack = 1
+    },
 } )
 
 spec:RegisterTotem( "ghoul", 1100170 )
@@ -993,11 +1050,15 @@ local spendHook = function( amt, resource )
         if talent.rune_carved_plates.enabled then
             addStack( "rune_carved_plates", nil, amt )
         end
+
+        -- Nazgrim's Conquest: Each Rune spent increases Apocalyptic Conquest Strength by 1%
+        if talent.nazgrims_conquest.enabled and buff.apocalyptic_conquest.up then
+            addStack( "apocalyptic_conquest", nil, amt )
+        end
     end
 end
 
 spec:RegisterHook( "spend", spendHook )
-
 
 spec:RegisterHook( "TALENTS_UPDATED", function()
     class.abilityList.any_dnd = "|T136144:0|t |cff00ccff[Any " .. class.abilities.death_and_decay.name .. "]|r"
@@ -1103,16 +1164,16 @@ spec:RegisterHook( "reset_precast", function ()
     if talent.exterminate.enabled then
         local prev_gcd1 = prev_gcd[1]
         local recently_used_empowered = prev_gcd1.frostscythe or prev_gcd1.obliterate
-        
+
         if recently_used_empowered then
             -- Only add predictive KM if we don't already have it
             -- This prevents double-adding while ensuring KM is present for recommendations
-            
+
             -- Case 1: We still have exterminate stacks and no KM
             -- (KM was consumed but exterminate should grant another)
             if exterminates_ready > 0 and not buff.killing_machine.up then
                 addStack( "killing_machine" )
-            
+
             -- Case 2: We just consumed the last exterminate stack
             -- The handler should have added KM, but reinforce if missing
             elseif last_cast_had_exterminate and exterminates_ready == 0 and not buff.killing_machine.up then
@@ -1156,6 +1217,13 @@ local KillingMachineConsumer = setfenv( function ()
 
     -- Breath of Sindragosa
     if buff.breath_of_sindragosa.up then buff.breath_of_sindragosa.expires = buff.breath_of_sindragosa.expires + 0.8 * stacksConsumed end
+
+    -- Arctic Assault - fires Glacial Advance through target
+    if talent.arctic_assault.enabled then
+        -- This would trigger the glacial advance effect in the game
+        -- For simulation purposes, we can apply Razorice stacks to represent the effect
+        applyDebuff( "target", "razorice", nil, min( 5, debuff.razorice.stack + 1 ) )
+    end
 
 end, state )
 
@@ -1589,6 +1657,21 @@ spec:RegisterAbilities( {
                 if buff.killing_machine.up then KillingMachineConsumer( ) end
             end
 
+            -- Horsemen interactions
+            if talent.trollbanes_icy_fury.enabled and (debuff.chains_of_ice_trollbane_slow.up or debuff.chains_of_ice_trollbane_damage.up) then
+                removeDebuff( "target", "chains_of_ice_trollbane_slow" )
+                removeDebuff( "target", "chains_of_ice_trollbane_damage" )
+                -- Apply AoE damage and slow to nearby enemies
+                if active_enemies > 1 then
+                    active_dot.chains_of_ice_trollbane_slow = min( active_dot.chains_of_ice_trollbane_slow, active_enemies )
+                end
+            end
+
+            if talent.whitemanes_famine.enabled and debuff.undeath.up then
+                addStack( "undeath" )
+                -- Infect another nearby enemy
+                active_dot.undeath = min( active_dot.undeath + 1, active_enemies )
+            end
         end,
     },
 
@@ -1605,7 +1688,15 @@ spec:RegisterAbilities( {
         toggle = "cooldowns",
 
         handler = function ()
-            -- if talent.apocalypse_now.enabled then do stuff end
+            -- Apocalypse Now: Frostwyrm's Fury calls upon all 4 Horsemen for 20 sec
+            if talent.apocalypse_now.enabled then
+                -- Summon all 4 Horsemen
+                applyBuff( "mograines_might" )           -- Mograine
+                applyDebuff( "target", "undeath" )       -- Whitemane
+                applyDebuff( "target", "chains_of_ice_trollbane_slow" )   -- Trollbane
+                applyDebuff( "target", "chains_of_ice_trollbane_damage" ) -- Trollbane
+                applyBuff( "apocalyptic_conquest" )      -- Nazgrim
+            end
             applyDebuff( "target", "frostwyrms_fury" )
             if set_bonus.tier30_4pc > 0 then applyDebuff( "target", "lingering_chill" ) end
             if legendary.absolute_zero.enabled then applyDebuff( "target", "absolute_zero" ) end
@@ -1662,6 +1753,7 @@ spec:RegisterAbilities( {
                 if set_bonus.tier30_2pc > 0 then addStack( "wrath_of_the_frostwyrm" ) end
                 if talent.frostbound_will.enabled then reduceCooldown( "empower_rune_weapon", 6 ) end
                 if buff.breath_of_sindragosa.up then buff.breath_of_sindragosa.expires = buff.breath_of_sindragosa.expires + 0.8 end
+                if talent.cryogenic_chamber.enabled then addStack( "cryogenic_chamber" ) end
             end
 
             if pvptalent.delirium.enabled then applyDebuff( "target", "delirium" ) end
@@ -1719,6 +1811,10 @@ spec:RegisterAbilities( {
 
         handler = function ()
             if conduit.spirit_drain.enabled then gain( conduit.spirit_drain.mod * 0.1, "runic_power" ) end
+            if talent.coldthirst.enabled then
+                gain( 10, "runic_power" )
+                reduceCooldown( "mind_freeze", 3 )
+            end
             interrupt()
         end,
     },
@@ -1742,14 +1838,14 @@ spec:RegisterAbilities( {
         school = function() if buff.killing_machine.up then return "frost" end return "physical" end,
 
         cycle = function ()
-            if hero_tree.rider_of_the_apocalypse then return "chains_of_ice_trollbane_slow" end
+            if hero_tree.rider_of_the_apocalypse then return "chains_of_ice_trollbane_damage" end
         end,
         cycle_to = true,
 
         handler = function ()
             if talent.inexorable_assault.enabled then removeStack( "inexorable_assault", 3 ) end
             if talent.obliteration.enabled then erw_discount = 0 end
-            
+
             -- Handle KM and Exterminate atomically to prevent flickering
             if buff.exterminate.up then
                 -- Process KM consumption and exterminate proc together
@@ -1769,6 +1865,21 @@ spec:RegisterAbilities( {
                 if buff.killing_machine.up then KillingMachineConsumer( ) end
             end
 
+            -- Horsemen interactions
+            if talent.trollbanes_icy_fury.enabled and (debuff.chains_of_ice_trollbane_slow.up or debuff.chains_of_ice_trollbane_damage.up) then
+                removeDebuff( "target", "chains_of_ice_trollbane_slow" )
+                removeDebuff( "target", "chains_of_ice_trollbane_damage" )
+                -- Apply AoE damage and slow to nearby enemies (simulated)
+                if active_enemies > 1 then
+                    active_dot.chains_of_ice_trollbane_slow = min( active_dot.chains_of_ice_trollbane_slow, active_enemies )
+                end
+            end
+
+            if talent.whitemanes_famine.enabled and debuff.undeath.up then
+                addStack( "undeath" )
+                -- Infect another nearby enemy (simulated by expanding the debuff)
+                active_dot.undeath = min( active_dot.undeath + 1, active_enemies )
+            end
             -- Koltira's Favor is not predictable.
             if conduit.eradicating_blow.enabled then addStack( "eradicating_blow", nil, 1 ) end
         end,
@@ -1813,6 +1924,12 @@ spec:RegisterAbilities( {
         handler = function ()
             applyBuff( "pillar_of_frost" )
             if talent.frozen_dominion.enabled then spec.abilities.remorseless_winter.handler() end
+
+            -- 2-piece tier set: Pillar of Frost summons Trollbane for 10 sec
+            if hero_tree.rider_of_the_apocalypse and set_bonus.tww3_rider_of_the_apocalypse >= 2 then
+                applyDebuff( "target", "chains_of_ice_trollbane_slow" )
+                applyDebuff( "target", "chains_of_ice_trollbane_damage" )
+            end
 
             -- Legacy
             if set_bonus.tier30_2pc > 0 then
@@ -1888,7 +2005,7 @@ spec:RegisterAbilities( {
             end
 
             -- 2-Set bonus: Casting Reaper's Mark grants 1 stack of Exterminate
-            if talent.exterminate.enabled and set_bonus.tww3 >= 2 then
+            if talent.exterminate.enabled and set_bonus.tww3_deathbringer >= 2 then
                 applyBuff( "exterminate", nil, 1 )
             end
         end,
