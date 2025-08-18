@@ -243,6 +243,13 @@ state.totem = {}
 state.trinket = {
     t1 = {
         slot = "t1",
+        __id = 0,
+        __ability = "null_cooldown",
+        __usable = false,
+        __has_use_buff = false,
+        __has_use_damage = false,
+        __use_buff_duration = nil,
+        ilvl = 0,
 
         --[[ has_cooldown = {
             slot = "t1"
@@ -269,6 +276,13 @@ state.trinket = {
 
     t2 = {
         slot = "t2",
+        __id = 0,
+        __ability = "null_cooldown",
+        __usable = false,
+        __has_use_buff = false,
+        __has_use_damage = false,
+        __use_buff_duration = nil,
+        ilvl = 0,
 
         --[[ has_cooldown = {
             slot = "t2",
@@ -295,6 +309,13 @@ state.trinket = {
 
     main_hand = {
         slot = "main_hand",
+        __id = 0,
+        __ability = "null_cooldown",
+        __usable = false,
+        __has_use_buff = false,
+        __has_use_damage = false,
+        __use_buff_duration = nil,
+        ilvl = 0,
 
         --[[ has_cooldown = {
             slot = "main_hand",
