@@ -788,7 +788,7 @@ spec:RegisterStateTable( "evoker", setmetatable( {}, {
     __index = setfenv( function( t, k )
         if k == "prescience_buffs" then return active_dot.prescience end
         if k == "allied_cds_up" then
-            if buff.sense_power.up then return group and active_dot.sense_power_active or 1 end
+            -- if buff.sense_power.up then return group and active_dot.sense_power_active or 1 end
             return 1 -- If Sense Power isn't used, always assume there's a CD active.
         end
         if k == "scales_up" then return active_dot.blistering_scales > 0 end
