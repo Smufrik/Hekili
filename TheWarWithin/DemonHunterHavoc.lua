@@ -1205,7 +1205,9 @@ spec:RegisterHook( "reset_precast", function ()
         end
         if talent.demonic_intensity.enabled and cooldown.metamorphosis.remains then
             local metaApplied = buff.metamorphosis.applied - 0.2
-            if action.metamorphosis.lastCast >= metaApplied or action.eye_beam.lastCast >= metaApplied then
+            local metaLastCast = action.metamorphosis.lastCast
+            local beamLastCast = action.eye_beam.lastCast
+            if metaLastCast >= metaApplied or ( beamLastCast >= metaApplied and beamLastCast >= metaLastCast ) then
                 applyBuff( "demonsurge_hardcast", metaRemains )
             end
             for _, name in ipairs( demonsurge.hardcast ) do
