@@ -1797,7 +1797,7 @@ spec:RegisterAbilities( {
         school = function() if buff.killing_machine.up then return "frost" end return "physical" end,
 
         cycle = function ()
-            if hero_tree.rider_of_the_apocalypse then return "chains_of_ice_trollbane_damage" end
+            if hero_tree.rider_of_the_apocalypse then return "chains_of_ice_trollbane_slow" end
         end,
         cycle_to = true,
 
