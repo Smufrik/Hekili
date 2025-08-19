@@ -1057,23 +1057,29 @@ local current_crusading_strikes = 1
 local last_crusading_strike = 0
 local freeHOLApplied = 0
 local willBeFree = false
+local holProcGcdSafe = false
 
 
-spec:RegisterStateExpr( "hammer_of_light_is_free", function ()
+spec:RegisterStateExpr( "hol_is_free", function ()
     return ( query_time - freeHOLApplied ) < 12
 end )
 
-spec:RegisterStateExpr( "hammer_of_light_will_be_free", function ()
+spec:RegisterStateExpr( "hol_will_be_free", function ()
     return willBeFree
 end )
 
+spec:RegisterStateExpr( "hol_proc_before_gcd", function ()
+    return holProcGcdSafe
+end )
+
 local empyreanHammerCallers = {
-    [198034] = true,
-    [53385] = true,
-    [383328] = true,
-    [336872] = true,
-    [85256] = true,
-    [427453] = true,
+    [198034]    = true,     -- Divine Hammer Initial Cast
+    [53385]     = true,     -- Divine Storm
+    [383328]    = true,     -- TV
+    [336872]    = true,     -- TV variations
+    [85256]     = true,     -- TV variations
+    [427453]    = true,     -- Hammer of Light
+    [198137]    = true,     -- Divine Hammer Tick
 }
 
 spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _, _, destGUID, destName, destFlags, _, spellID, spellName )
@@ -1084,30 +1090,46 @@ spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _
             local now = GetTime()
             if now - last_crusading_strike > 0.5 then -- Crusader Strikes: Swing Damage
                 current_crusading_strikes = current_crusading_strikes + 1
-                last_crusading_strike = GetTime()
+                last_crusading_strike = now
                 if current_crusading_strikes < 2 then
                     Hekili:ForceUpdate( "CRUSADING_STRIKES", true )
                 end
             end
+        -- Hammer of Light stuff
+        ----
         elseif spellID == 433732 then
             -- This is the event where you actually gain the free cast for 12 seconds, separate from the 20 second cast window
             freeHOLApplied = ( subtype == "SPELL_AURA_APPLIED" ) and GetTime() or 0
             willBeFree = false
-            Hekili:ForceUpdate( "HAMMER_OF_LIGHT_APPLIED", true )
+            Hekili:ForceUpdate( "HAMMER_OF_LIGHT_FREE_CAST_APPLIED", true )
         elseif subtype == "SPELL_CAST_SUCCESS" and state.talent.lights_deliverance.enabled and empyreanHammerCallers[ spellID ] and state.talent.hammerfall.enabled then
-            -- Not all-inclusive, but this adds more strength to the free HoL predictions
+            -- An empyrean hammer (or 2) is on the way, hasn't hit yet
             local wake = GetSpellCooldown( 255937 )
-            local ld = GetPlayerAuraBySpellID( 433674 ) or false
-            local sth = GetPlayerAuraBySpellID( 431536) or false
+            local ld = GetPlayerAuraBySpellID( 433674 )
+            local sth = GetPlayerAuraBySpellID( 431536 )
             local stacks = 1 + ( sth and 1 or 0 )
             local ld_count = ld and ld.applications or 0
-            if wake.activeCategory and wake.activeCategory == 2285 then
-                willBeFree = ( ( ld_count + stacks ) >= 50 ) or false
-            else
-                willBeFree = false
+            willBeFree = wake.activeCategory == 2285 and ( ld_count + stacks ) >= 50
+            if willBeFree then Hekili:ForceUpdate( "HAMMER_OF_LIGHT_50_LD_STACK_SOON", true ) end
+        elseif spellID == 433674 and ( subtype == "SPELL_AURA_APPLIED_DOSE" or subtype == "SPELL_AURA_APPLIED" ) then
+            -- Calculate GCD remains when LD hits 50 stacks
+            local ld = GetPlayerAuraBySpellID( 433674 )
+            -- Quick exits
+            if not ld or ld.applications ~= 50 then
+                return
+            elseif state.prev_gcd[1].hammer_of_light then
+                holProcGcdSafe = true
+                return
             end
-        end
 
+            local rawGCD = GetSpellCooldown( 61304 )
+            local gcdRemains = rawGCD.startTime > 0 and ( rawGCD.startTime + rawGCD.duration ) - GetTime() or 0
+            -- if GCD remains is more than 600ms, we are safe to recommend HoL NOW.
+            -- If 600ms or less, we are running a high risk of the user being recommended an uncastable spell
+            holProcGcdSafe = gcdRemains >= 0.6
+            Hekili:ForceUpdate( "HAMMER_OF_LIGHT_50_LD_STACK_NOW", true )
+        end
+        -- Gets its own block because it's also in empyreanHammerCallers
         if spellID == 427453 and freeHOLApplied > 0 then
             freeHOLApplied = 0
             Hekili:ForceUpdate( "HAMMER_OF_LIGHT_CAST", true )
@@ -1170,8 +1192,9 @@ spec:RegisterHook( "reset_precast", function ()
         applyBuff( "templar_strikes" )
     end
     -- reset to force refresh with real combatlog data
-    hammer_of_light_is_free = nil
-    hammer_of_light_will_be_free = nil
+    hol_is_free = nil
+    hol_will_be_free = nil
+    hol_proc_before_gcd = nil
 
     if time > 0 and talent.crusading_strikes.enabled then
         if not action.rebuke.in_range then
@@ -1211,23 +1234,23 @@ spec:RegisterHook( "reset_precast", function ()
         end
     end
 
-    if hammer_of_light_will_be_free and buff.hammer_of_light.down then
-        -- This seems silly, but it's to handle the delay for the 50 stacks to consume themselves and pop the free cast
-        hammer_of_light_is_free = true
+    if hol_will_be_free and buff.hammer_of_light.down then
+        if hol_proc_before_gcd then
+            hol_is_free = true
+        end
     end
-    if hammer_of_light_is_free and buff.hammer_of_light_ready.down then
+    if hol_is_free and buff.hammer_of_light_ready.down then
         -- This is the case where we've already seen it in combatlogs
         addStack( "hammer_of_light_ready" )
-
     end
 
     -- Debug snapshot for hammer_of_light
     if Hekili.ActiveDebug then
-        Hekili:Debug( "Hammer of Light - freeHOLApplied: %.2f, willBeFree: %s, hammer_of_light_is_free: %s, hammer_of_light_will_be_free: %s, buff.hammer_of_light_ready.stack: %d, set_bonus.tww3: %d, buff.lights_deliverance.stack: %d, action.wake_of_ashes.time_since: %.2f",
+        Hekili:Debug( "Hammer of Light - freeHOLApplied: %.2f, willBeFree: %s, hol_is_free: %s, hol_will_be_free: %s, buff.hammer_of_light_ready.stack: %d, set_bonus.tww3: %d, buff.lights_deliverance.stack: %d, action.wake_of_ashes.time_since: %.2f",
             freeHOLApplied or 0,
             willBeFree and "TRUE" or "FALSE",
-            hammer_of_light_is_free and "TRUE" or "FALSE",
-            hammer_of_light_will_be_free and "TRUE" or "FALSE",
+            hol_is_free and "TRUE" or "FALSE",
+            hol_will_be_free and "TRUE" or "FALSE",
             buff.hammer_of_light_ready.stack or 0,
             set_bonus.tww3 or 0,
             buff.lights_deliverance.stack or 0,
@@ -1239,12 +1262,14 @@ end )
 
 local DeliverLight = setfenv( function ( incomingStacks )
 
+    if  buff.lights_deliverance.at_max_stacks then return end
+
     if incomingStacks and incomingStacks > 0 then
         addStack( "lights_deliverance", nil, incomingStacks )
     end
 
     if buff.lights_deliverance.at_max_stacks and buff.hammer_of_light.down and cooldown.wake_of_ashes.remains > 0 then
-        hammer_of_light_is_free = true
+        hol_is_free = true
         addStack( "hammer_of_light_ready" )
         removeBuff( "lights_deliverance" )
     end
@@ -1252,6 +1277,18 @@ local DeliverLight = setfenv( function ( incomingStacks )
 end, state )
 
 spec:RegisterHook( "runHandler_startCombat", csStartCombat )
+
+spec:RegisterHook( "runHandler", function( a )
+    if talent.lights_deliverance.enabled then
+        -- This handles the case where we don't think HoL proc will arrive before the GCD is over, so we apply it in the next slot.
+        if hol_will_be_free and not hol_proc_before_gcd then
+            addStack( "hammer_of_light_ready" )
+            hol_is_free = true
+            hol_will_be_free = false
+            hol_proc_before_gcd = false
+        end
+    end
+end )
 
 spec:RegisterStateFunction( "apply_aura", function( name )
     removeBuff( "concentration_aura" )
@@ -1889,7 +1926,7 @@ spec:RegisterAbilities( {
         gcd = "spell",
 
         spend = function()
-            if buff.divine_purpose.up or hammer_of_light_is_free then return 0 end
+            if buff.divine_purpose.up or hol_is_free then return 0 end
             return 5
         end,
         spendType = "holy_power",
@@ -1899,8 +1936,8 @@ spec:RegisterAbilities( {
 
         handler = function ()
 
-            if hammer_of_light_is_free then
-                hammer_of_light_is_free = false
+            if hol_is_free then
+                hol_is_free = false
             else
                 removeBuff( "divine_purpose" ) -- Confirmed it does not consume Divine Purpose when its already free
             end
@@ -2475,4 +2512,4 @@ spec:RegisterSetting( "sov_damage", 20, {
     step = 1,
 } )
 
-spec:RegisterPack( "Retribution", 20250310, [[Hekili:T3rAVTnY1FlglIIvwhfrAPyNTwQaDrx0nyr(q1wKVjXrIuwCnfPkjLpae4V9(MHxZm8ndjLOCdqcqqIdNhF3xZf9CJ5)58z2KyN5FXCO54HxBmCGXOXJngnFw8l7CMpBhz1dK7HFWNSf(7)TtCO7Y9XUb(0XEXlGytXruW(WvW4ZNTCVRx8V7pFjoInay35SA(xUz48zBCTTDsb1jA18zuqF)WRFVXWFjXAM72FnX6)SJILKpN850bnFV5TWG)5x)kaHdjkWpXYmXAppyJae8EZpbG9pxV2DLRJ)QxsScwNy9BU(UrBCcJsSUCT7Zo29lELHFkfZPKnfF)TeR)vWFKybG(35b0y4vjw0xWu6fkb62uS9BUpNHdIVDbuwRdd2M9M8VXOI3GSDRtykp)hU3VjUeSBEV51ufWganFLaW8v34nUuRryWAxpWgqwrnprd2f6Sky7ss8pp5drBCD8SxeSEXJo(37q8xb8kgGpscDjl9CUIAVNagB)hCIxySy5(1RJU6rI3(INoWyWgseBKbrXHaEJ3C4aYGBjrXoHVGo2JGXGe765gJp(g67IoYQq342idMOYGPozWuJmywJmyQugmpEzWyr0l(RUky3KiNy31zYIr6)UWXlYzYWbJVAvGVTlfNtYrZajlzVll1ORcc8SdEYFG9(qc9TEZBkE0QW9reBNIHMm8WbLd(M3ObP03Sz0KqDrD9VFXtWqBWjTcyQHd63gDT5jRRnL11MNdDncs5116PzNORr5GwPR3f6gaHcViRTn512gC66lu6yRYkC4GA7Jwdu5yqg2vdi(VSWExuX49F3Lgdg)ZAYNaqGqAQZv)(tVuBGy5ynH2i5JXOTrgTP1uYmrGHj0z5(hC4FYkIN3I0)7cp3O4utwotgvpO3747amAauUTKufsj992fqF2vURNW4AjpT97oCilnzQZp9b2oSh58SZkwBilIC8JHk8PJUmikQ3AAfZfHoBjU(r3D9WKp)t)euagH(U(pg8a4E9mKB3N4X0DP8(UGNCcx46VEFuxYH4QbpkdhT4V2BF)wawk1GMKavAmj8EN4ObsamDI5HdxesCTx4amu8aITDeqqqZd(5Yp31F6nJR(yvmZAxWvWliWUfcDpH)Fum004eJHhJQyFKZc3yNTxf5feNNFWGYkxEjoZ0tvIQmhGPJg2q(TFVlIjEufuiX2L4hV4EVawnFKN27YCGRkDLS0teW9c66IaDDgLZrtQrZ0Vpf5cjuYriAE9m0IKHlpV6eJ(8vFrtMmDIqCtpAOulSrMFhBJmuyJmALnYSpV1TRSrSSzlDIIb4bZv03BMPw4cZsZOUZcSUekmRvFTI(oUqwJvPPUC1R5WCOBVPXCyBevtCrTshRyEWk1q)FxurMLlvofIzMAmwN)gWvA9N6LY02Up667SydBE6klMvffSOVMRLmglfVvwATgL0Ddhql6xNQKsaSqsi72MaVxwWAdA6Kr9ID36Cham)tVM90PWtfag6njfAajz4otDr2)mmlzIQ8a0CQL9alOHZ53C9HS(hmBIKkDeghqBHAaLJwehSW21z6T9Qy)HzWV4jxppkJvbEdZ(1Kg6U7xzJ7ciQ3zM)2Oyf0R9uOn50AioTCzklaBTlTBxyAzpe4dmxjmSYAv7uexTOkmmZzLkS88)yTYQQMrfyuv6VBrX5KBLvGNG)OQaiSjPNxEUsKow08uA5svfgv1)Dg0ziQbENOgwvZyGsbKzrmAi)CgPorPlMALP1BdndraHJ(G0jYFP48zY0)rWCd3YsyKMXD7UxcHS2P2lHO6u)GhDcTDxfNhhaf12bn2qL34nolytsAjus6EAG)fIO0Z5EYQxOjBV4s(miKWLqXXWIgzKECQfYCuFCXonldLbyeVygtsphCGj2VOonLYKA1Kn0yioBjanRsFnfTqEzMTH(Ufv75SQzAxvIzDPXBDs8le93vhYnfC1F31nPj17OrUOr94QL)Ap0c9kcuNqO3Ixxw71vVJRiOrDEP6bw043NAbXeEzJyNT(Lf7XWEh(eMLRhwdrWAIxKJI3hFj3kyXRIGMZxfpXqQK5eHYVq9tEDrOtuGpPyT0y1EaQ46Z68vFrgfSzM3YIipa6I8JfpfyYhelu9otfyAPh4AqjBAKil67c7aAtC72hEpB(Xq)jREakaKxHGjPR9antupzNI4apVAyEbbvWppBb5UFVRnHnRb0g1KGQbTt8rnroFuzR66MotdAnC6iS(7U7220Ya0EanETANe9vOB5ScInkEhTpToGU1RSngRrBRAMrhoiU8Y3QsaBtaA5uQZte0vHt9024vlc10INCh(Ix8XQ7YSafkZDxoVi1u4oZYKZGskkYXEXkaf7ae3pndg7XutmnC1h0Gc93GRdzAlfaLVu7nudD(fZ6egQdHkpXux7AKyjEvbuKWvewyByiWMZNr37BaQSJ5HP5TZN9ejKoxTO5Zyhsb3T7ccJtSwheMy92I9c8TjwHo)39UHGVUvuWwasY(4GTKy6daXgCGIgK85)aupjw0dAXVg4duJn8B1SLxaIJd4ajghMlnEUFhIE6QSrH7iWC2rlqhFxcs3I8tGR5o0d64CrW6EICcsa7yzOJ3ZbOlr8jWV0dlIo2nB8oeTQy2RvGvKn)UcMXHPJr)jW4QcyqbPBr(jW16cuucw3tKtqcWdAqaOlr8jWVOHnvhVdrRkMDKYy8YP8KT)HiX5yWCwr)zdX)GV)UGVd25Kcre0BPpGL63Wwm8F6h8omSYFY7QHQDYrVdNh6NRGpsvZrQzojftDYCJ0l1Pwk8PgRmtC9oR4Wiel01O)SH4FW3FxW31NZSYj)ad)DqoZAoTY1q1tj3qn8G6CMnt1CKAMtsXuNm3i9sDQLcFQp2XoRsXcDn6BaIrpJDiixfCnK)BkzOUzlAp6B6KI1oN7th9QMEIkmFS9fEMrFdqCZSNQHRH8FtjZr5208v28OCBAo6BOBtLkyNPBacAEwvXOs3)cPaHgEVpq7gwL5vMIg1sX8B7rU6)vuV9HxD92hod6nWJKTpgRd88cEckGs3OIqc4h(Kti8Caj2P(KXuWs31Kel6w(LyTCFCoC(bSnbzVVa022uGTjXKLKiNFj5ZjwVpXk9EbMryXnqjxMJEBR2aLkZohzRnlIqrgBGJpv9ylhM(kJ3QBITeYr2L7MsHmFdXlCHIIDCd3qKw4RMT5S66HPeKZiYRfTnVcuJk0D6KrBHUktLQJCeFLXBh6GRAYLg6DWRmCdrAT(GOGCgrETOT5DM3ih8tNmTRtUoYr8vgVDOd(nDA(WZkYlq7TDQlUep3TiVaTF6SBjzFWpohoHQqS8faqc3Yd3w0FU570ZQdotNDGwBjIRCtyuzlZhxjbmoVA8k7H6Rc6pDd6RnIZwPrjuMV(Jvqg6CnkoSIVTvZ1qHhGWD4qIVegtPOIJxnxdejQObsv0SYbOPJIdvm)MZfEBP3GwCDYUSkA99O4Xx52Zpz7JIUIokz)vUZTtq2rZUuEUsBx6ffULCN1FjMJBKwAULoa)s4vA0VHW9j7cC(ND65Y5vrZQvpz6siVkaTTfQLshz7keqCyLOxH)9jJ(Kp)7S4pkshlUqL0GR5Zy)e7lcOZAYEVy4h)c7leykOZNL(ncA(Smup)FmpE(xmPqu(KcGLV)dP4Fr63rWIvXKIHRpgmuM9aqrm9ZFx2blVcxJ8vbOgriyh8woXLOiF1HP)K3E4FuSqYjwhoaMLx1bzCxMsjdK8L0ht52czZuht8QmiMSzwkBJWLn314sxvTeDj(b)Sq6D91LucT8EJKy1dcJembv27HeR3a1QYFQ8g9NynjXAyQWQbO3uhnkXsZ5ff78pklPe2gYz9ZCJyFY2MpB4GXf(vgut24tZKzwVjZuHjdzdQ6Ctgknqmz1YlDUjtdNvNj7JNMjl)7BeVr7IelTHAQnQujVotETw9piaGWQUcQJeR3XWHXaOk5pRjXvbKk2UsgeWFMwHRqdG(GaanMRKlvOMRm44krBUrHf3mTAkx118YPTQgc7MlZ7nKFVgXk3w6xaCD5fbL5Foo1Kl90rmtnvEXU6YPVcB0IRVmtQ7Xf1GEjMbXkMERmPICZAdPyjsWQ1wkymMrX10mX6UeR7xzpyl5zMTZSK2cxVpSsEcXukUn0mbx9CHe1li3o6s2r(ApILrxWAErbHvmHMQM3PtyFrN7v)B2ppGxvQWcfmeb(rfjYrGr30n4OAPSPEwpsev9DWMr)r50x(UyZCrUvK243q6umu9wsZWVXq8HzHhLwzHqdSkaLMyEd3DfgUZdd2gRTX4gyUZbsV9McHWv(UWyuQX4cAO6RB0fK(O8v9(et6CBhK0buSQVwYzHKAsk9jLSqTyLpqx9uW1NbYyOUuq6yH7yCa1cFbhxGpr6CpqMwDjY1nVKjLUk1mEuykPIgfPzJAyYdA(frxgOR5bQIwrcy1vn6wfKEvWyuvaZjsIF)ipKsxFDzyVHhwzYkb7T8WkFv25bnMpi7O6aQgfBMZFrJkv(2xjR1r3He(ONgS5g5UWxit0IVow5dFPy3vLFLSQ04LWxklwAvZrz9xM37h3hok9T)XWRQpRpYke0LCMtJkoE(7l3NJ4NgOSIqy(tmMrFtExOGYvQtKoI(25kktWP9emEQ1tsLjviP1OOQvrJ0hK0(v0GsW8T9Enhpv(LHQ0Ht4Rdfl1uE7c10Wwf9plgSf9U(nQC9TL7aFjRkFQ003f5pu2hVYw(ZXgw)N1xTI(PktX01J5xTEKsHsPVR8XQuHbH(qTFE4tFn6h4AQsTAh4xZLMo93Ja6lUO9lQVqb5JBUl3mw1Cxk5tjQ2G1mOPQtf(3tk9V1PSl5WIV()yvNk85sxqjdPy48Mgq45EnBABJgEuIxrWz9ZKtpeTzI91Uys8lwREp9(svtfxWXCQKjaiRSPqELkl7x(cWMQUyKsarvwRrAOGu8wV0qrikYliMZbaPgQKtI5pCsoVojg6CsQESoBItIzvNKkltEJDsmXQ9xmX1YFXe8d)KUZpj)xxF8QxK(c0LpVUTO5YgKkcdhc7KZf4whTD7zou8DpEheZ0n)QAkn5LutxknTYypLB7tT6jJVT1tM6x3pPmdzl2ABIiYy9A9156kx98UXoci1UWHhJspFjLRPxSA16q)T0Fbo0qOB8AzxuarEdxs3qn6ooWOnYUUrH6AoOMwafc6YAKMhFfKwCMnvor2numQUBaQxqhEBYXoHRsUV6EZmLTDa9q9SLpU85IhkwmmtA02uYV49Lo5vJrkx4zv(4DPFG2nXtT5wYmQBlYqo8dk(nzrXzBir7EMLB)vzpgkmvBXWVYLQhv5kRngFuA2kRcE5A)FKM0BBaHNOemZZDuSUuCQolo8nGQiVTQCYtlB6REgUN2Us5E)klHvRIOR1Rv3IrKZjkwKIrIE0srpSv7HUmr7J3eeoFg9xqXSNm))9]] )
+spec:RegisterPack( "Retribution", 20250818, [[Hekili:T31EVTnYr8plghIIvoBzrAjhLulvCnTf9cccouDf3FuujUsCLeVqrQsszhdiWp7D2Lp3LZUKsI29asWDiXMC4mZ(BEUpiZmJz)6SP2Ki6SpB23Cy)rgVRx)r9VB4DZMg90o6SP7il)czn8dEKTWF(pPrbol2h547XU3tU(eBgpc93hSeU)SPl274g9ZEZwGX4Bhya0UJUC2NFB)zt34yBttiLgUC20RVo26x3qJT(nsa8horBC8ITMsjH(WFFB8hz866(JU2y07JT(PF5tWnFYBz8hJ)O(h1m7rV9AJ(WJo1z7hIT(x7yAy2TmV2KX1F93(TYpN1(cIgap81MVdi6VTALZshQ3YNIT8xfB93D8Cc3qdcJTUCLZxP2DtFG(VlHRjcmHx)PyR)HpO6aH)5cYm6FvSfJCtjYZizucN(7oFn95jE250yTkWFB6Zvq)GC6jB3sds01p5SEtugrV9AZBFFvKdSTb(RCCbl6p8dXwBII2f((BUznCZ9l6T0F7nHoB37sy(bldiRIy)(YBw46V4MOn0hjbpY5Zn)0sgj)sGJFGt0tFYjmk8gB6kYE3OB2rCj2oEZdk8P6Xyt8hzYCAUa(ataXwFWF7wNOeloOY2lUJE7Ybje)xbmaUwH7bZLGDJ)90NcCw9FITa3Ja6kAayZOGvkYp2c8dDDNhrcwtJc7z78GJhDEyKFWwgT7CjlPaaZgiawdJJhOZPE0ToWZdCNWhzH92fqb8ybj6hhFt4ghQR9C)vZFG6TMsazHt4dKahYcx6vSOQXWW37l0O5gZxSF1QWREG4Up)Q9m6THeYVtVWiq)xhT5WbKBULegrdEc9EpaUMaw6c2a07VH9SO3zjy3oMXGj6yWu3yWuZyWSMXGPYXG5PpgmMhc(yx5VBCinYzv6yXi5VNtDdPJ73B4vl99SDy8CCgB6jzj7CzbIU03312)rVE27d4U1V6v5xAzW(qInn)wJ7F4GYB(QxPHPSNSzYKWCrD8wp)r4wBWfTcAQrd6EmyT5zJ1MYyT5ZbwJW0YyTEz2kynQgCuy9U00WYOTzz02OewFHshBvwHdhuBF0AGkUhu5zzpI3tZT3fMF)UV5sJEd)rn5takqenZ5QB3jxQnqS4Enr2i5JXKTrQSlvRammb0f7)cT8vwsGIqj)6CxO(yIjltjdRN01qrjqr9deklLZa4525ZU2voRgZ1AjpT97oCinnzIZp7c2u(LOFLUKxyEEi1lIv7mHC)WWoRy9rafV3sC8cV)2(jfCXKVJ3d(FbCV(kKB3J4YXUeDFN)J0G5oER2h2MAiom4Yu4W5)(E71BbAzstSfajcMm28WHlcio2ZPGcf1JyBhccK1eZHdYx3XBYBhw9YQuMvoGRGRVV9rmO7i87HrqR5Jn6FkqX(q6CNi62RcD9JYYpyWuLlVexz6OkrvQdWKb9BO(2TZfrexgafaT)r8IMV21NxZh5QDUmJ4QJUcv6rc4EbDDrGEWdZ0OX1GmD7YyUqcLmgIMxpLTiz4YYRo2OB5QVOjtMmwiUPdlu6iSrMFdBJmuyJmokBKz3Yw32YgXZMTGggb0dMRWV1mthHlmpnJ6olW6si3Sw9XY774czeRstDzWRz)mQpEtJz)JzOAIpuR0XkMhSse6)7dvKz5YgNcXmtmgQZFd0kT(tDsu605KVHV6fklMvLf8OVMJsgdLI3kkTwdiDF)ESI(1bLmbGfscz3247(0CEBqtgpOtKZw69aXLV6T8RobUQaXqVjjudmjL3PWfz)xHzjtuLhGLtTOhybeotFZWdz8hmBIIk5oCnG1cvpMgnpYFUTdDYOovS)Wm4N)OJRltXQqVHz3AsdD)6L24UaI4o38FmaRaU2rbAwc1qCAlLPmNSvoSUDHPL9fFpq5kOHxwRANI4WIQWWuNv2GTS(pu7yvvZOckQk8Bekphpsgapd)rvbqytspR8CLiDSO5jSYLQkmQQ)7uQtzud8ornSQMXatciZIyq)2paT8mdxLTw1vwNaBO7kcGwSlKSYaxkUUNGn)Wb5lLhWav)2bDaXaMOn058ztTaQDTMgu0NY(Wnmc43mDqap2tbqzKehiHrrIJ5d0aBNLrnqozfoYzPlDnz5tSS)xCzzeJeSaQwhK3zL0LtCzmh0fh2sq18Xr(u4KUoerrSFsTzrPrSgRVrFC1sGAERh1uff5H5R)n7zZB)OKxrwOM6XjUbTwh6J0DUO1I0qt1zhMarLV52M0p99SKmOjOWbSFFp0T)scustOnOxwvRJEdslJ74ablE0nbh4XPFBIcIPstVJD6sTMVDi7PLtfxS0DnKbRiUHufpp(QdMRIxfcZJyz0ydPQ7Jf6uak1xglcOH(EK8L9JxMeKIJhpOwF9qfQzQ3Y8qxG68mN5xfuYViwt9nMk40cxW1Gj2KirE03f2(S(n3TpynFQ8qRul)cuAiR2bFKUYfqMWoYofr(UU1O8cdub)801oC9EhBcFcoO9ukrvd685onro3PCwf6M5vd6IDYaSwrVFujol1Yy9D9ozWX0Be0helAVAltDvyzkzdf7i(EwdPTGCR3uzmuJTs1uapCqCD0hPAa2SW75cl4qEseP5imOXPBvKyuUhWbTvWENkDxEeb)k7mnN4hQUT8cCTOcsXejf569MfLfaiomKApFj8y7aM1nbf5xM5EWsu4b4Vqpx44dhjuqu2(r0qK4S8FglT6CzEqpp4vDOcZRr1WjXvTgOts)uqfjyjHN7iiauZztzN0aGQ8JU0OztFKeWsMfoBk)OY4SDNFquS1k)GyRxNVZRVMDWr(V7DcyhCKq)TaLK9r(BjrSladBW7lSx8h)eeofBXoOpFW3dKg)2VwZgm(6KtSsojr40CPXx72ISNTMMm6oboNEqo0P3fK0Um)m06shXeDAUizTVqoJra)qWOt3ZiOnz8zOVSJMJo1n9(TiBvPS3QGRih1GkCgNMwM9NHIRkGbLK2L5NHwRlqrjzTVqoJraEqdcbTjJpd9fnSP69Br2QszhOmgVywBP7wlsCognpRS)zJXFxV)MqV93rtOie6T0d4s9Bpog)p)J5igxlFohRrQTYbDexh6MbWNi0CIiZzbm1nMBeUuhSK7tnuzM46DwXPriwOTz)ZgJ)UE)nHExFoZkNZgm(3c5mR5SHxJupNCd1OdQZz2mO5erMZcyQBm3iCPoyj3N6Uw2zvkwOTzFdym6jAeH5QORH6FtfdZnB(XZ(MoPyTZ5(8zVQPNOIZNAFHpZSVbmUz2t101q9VPI5KCBA(kBEsUnnN9n0TPsfSNP33g08SQIrLEBxKceA4BzdA3WQmVYs0OwjM9U1Kb)VG42nV442npd4g4rY3hJv(UU(pcfqzBurab8dFKgaxhyIDIpzeJSKDnj2ITVrXwl2hLrNNpFtq27jqTTnJyBsezbjK((4pYF9BtElmtfS4gOKnMdF9rTbkQMDU4lZHIu7LUDJMYF1JJUUk2fK8mY8AzBZZ32O06NVy0Mwx1ehm0BoRC7gY0ArCusEgzETST5DD1iZ55lgTMZ32Q(6pRmpNTJAvdQKo3UmVhlx6pZtJY42qXS0SKKZMc5o34hmBk7ZcXSP8RZ)GFK8bya(XpZ)aGK8GZMM8YPoBk1Jv1WE2Fzw0SpBYOO4k5elFEcs4)8Kpti5j0zC42tHdfBqpWIi23JI09yVIwJ86OuZqWFh8u0OcwKvOK9tU7H)srn1yRdhatZl6n5AxkOKssw3nyG7rm2m1PeVi3eBSzwm2gGp2CwHp6QIsSUDa)Sa2z62HuqTCBIXwDGyvbtqL2WITEf0bs2vLxZJyRXXw9tgSAi6v1jJcU0CDrXIGGQskPTHAw3u3i(3kGzt73ByUFLbZKn88mzM1BYmvyYq6vV1nzOYaXKvRU06MmnAwDMS7optw2lwBzJ2fXwAd1uBuzJ86m51A1VrGaHMua4i26nCEaZDk26h1K4kNsfZCJtb8)tQOvObq3iqqJ1k5sfQ1kJsALOn3i3IBMunTu11SYPhvne(5qVS3q25eeRCBHFbO1fhdvU)5WetU0vhWn1SXl2brp5r43n)WOZh1Dkf1GEK0HHve7uoYgYnRnK8ZhjwT2IbgxzuCSwJTUp2A9s7EBjFLB7mlKTWjDeRKNqmLIZ2oFGx98T3lLnI4cYzDVqDKpkPyz0fSMxKlyPt2EHWLnVtgZ)SQ1P(NSBwaVQuH5amebENIe5i0GDmSrKAXyd5GYlm8YfQ6tupx(dYKV8jRN7Imcv2YNMECbR4m3Nj1Y8f)KWNWVQNgEohm6JFBEyxH3JqihwLLcxNYoe3N7q88OGhJxKXWg4gLrKE)igfchT)CJCbIvkyKHxVTr41KX5Es80ofhI)ISMchKFUGZGOYjvlEJa53s8GBNkiD5jZFLdeR4NxlqzI0rTqI0o4kSUKRVtPyr5u5KuvFdcYS06ZEA0xx6tzXEpxQmBXfLKS4HMxotfhXwG8khuOysNcEUEjmfAraxA2ZgMLjn7LrqMOBltufKqIyTv5q8JoRQ2gARGDMMa9G8DOGm3DucrEBzkLE3gKPDuzALfReTVRmTYVNdLjnQmQDs9eIaMSWOBvNCrictZB1TqNmfMLGYVl5IjE5bfvEnKLTRcVD5cc5y0PUzQLOqZFZZZU9LIjFlEd0R0SRWBHoVKJ5G0E6Z63U0lLT(wU58v1lgRmGiwxOkIIx3qU3sXxU20c0yESCLrFJ1xOqYvQHMCh9TqNNzPe6vQXJgavQ8RQ2KHcSOgOSwtbshIz16X7meRbMYtg52tUtIAAJUIfI)Lf4iMrXFqhxcr7Q9wEHChkxyUYNJa99G)DW(0bB5p5byDVxFft2NdaflIsu59qbPCSuc(kF7Auyqyxu7xlYKhJ99UJbQvN)YTLsKN8zfvF5hTFGnZ7cif(pHz(92H43UCfcjP2GvYPPWPc)7Xf(36a7cnm)Jbkw9RCFUKL5ZqkgoRTceDUtZM07G(N0WRRC7yQNhSEkoMLBPtDlXx5LqxVNExPQPIldCMushaiR3SqELklgB2YINaxCrjWOkRamluqkERtsOief56hvYbaPgQKtI53DsEEDsm05KuD36BItIzvNKkBErJDsmXQ9Np98IVtPF3pP98tY(3iLYWlsFb6YNFrnBC2Lnivegpe2FTlWToA72ZSV4ZE6oiMjBjz1uAYlkOUuAAhJDuUzC1Itg)XgNm1VkMszgsxQ6JjIiv1R1xVux5QNzo2bZP2Le9ua9SfKVMEXQf1H(BzFpxBi1nENaYlGGSk(Wny7dex2i7fA6cOLt1KCQqyxAJ0L5xUOfNzt(xKZJjZA3Jyzok0tuFKChTgUyhy7y2e(MP0b1Zo77mR8WdLlgMXnAZJlV9dfo5vJrkwEDv(4TPFG2TwvT5wYmQBJlroskk3UX0tCsS2DCmZ(RYE0xyQ2IHFfBibk4kJgdpjKTYkXxSdhNOjDude8yLKz(ChfRlfNQtiv5gqvK3wvo5jfn9vVc3rBxPLE(klH1rfrxRxRUfJittuSifd6)YN6S8IlieSYxCPK)B2)l]] )
