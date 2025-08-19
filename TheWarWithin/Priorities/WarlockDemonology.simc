@@ -1,4 +1,4 @@
-## https://github.com/simulationcraft/simc/blob/thewarwithin/ActionPriorityLists/default/warlock_affliction.simc
+## https://github.com/simulationcraft/simc/blob/thewarwithin/ActionPriorityLists/default/warlock_demonology.simc
 ## SimulationCraft Commit Sync: e599542
 ## Date: 2025-08-18
 
@@ -16,7 +16,7 @@ actions.precombat+=/summon_pet,if=!pet.alive&!buff.grimoire_of_sacrifice.up
 ## actions.precombat+=/variable,name=first_tyrant_time,op=min,value=10
 ## actions.precombat+=/variable,name=in_opener,op=set,value=1
 actions.precombat+=/power_siphon,if=buff.wild_imps.stack>1
-actions.precombat+=/demonbolt,if=soul_shards.deficit>1&(boss&buff.power_siphon.down|!boss&buff.power_siphon.up)
+actions.precombat+=/demonbolt,if=soul_shards.deficit>1&(boss&buff.demonic_core.down|!boss&buff.demonic_core.up)
 actions.precombat+=/shadow_bolt
 
 ## Executed every time the actor is available.
@@ -29,7 +29,7 @@ actions+=/call_action_list,name=items,use_off_gcd=1
 ## actions+=/invoke_external_buff,name=power_infusion,if=variable.imp_despawn&variable.imp_despawn<time+gcd.max*6+cast_time
 ## [Hekili] Simplified logic.
 ## actions+=/summon_demonic_tyrant,if=variable.imp_despawn&pet.dreadstalker.active&(!talent.summon_vilefiend|cooldown.summon_vilefiend.remains)&(!talent.grimoire_felguard|cooldown.grimoire_felguard.remains)&(variable.imp_despawn<time+gcd.max+cast_time|buff.wild_imps.stack>=9-2*prev_gcd.1.hand_of_guldan)
-actions+=/summon_demonic_tyrant,if=buff.dreadstalkers.up&action.hand_of_guldan.time_since<action.call_dreadstalkers.time_since&pet.dreadstalker.active&(time>10|buff.wild_imps.stack>7-prev_gcd.1.hand_of_guldan)&(!talent.summon_vilefiend|cooldown.summon_vilefiend.remains)&(!talent.grimoire_felguard|cooldown.grimoire_felguard.remains)
+actions+=/summon_demonic_tyrant,if=buff.dreadstalkers.up&action.hand_of_guldan.time_since<action.call_dreadstalkers.time_since&(time>10|buff.wild_imps.stack>7-prev_gcd.1.hand_of_guldan)&(!talent.summon_vilefiend|cooldown.summon_vilefiend.remains)&(!talent.grimoire_felguard|cooldown.grimoire_felguard.remains)
 actions+=/grimoire_felguard,if=cooldown.summon_demonic_tyrant.remains<=15&cooldown.call_dreadstalkers.remains<10
 actions+=/summon_vilefiend,if=cooldown.summon_demonic_tyrant.remains>=25+cast_time|cooldown.summon_demonic_tyrant.remains<=13&cooldown.call_dreadstalkers.remains<10
 actions+=/call_dreadstalkers,if=cooldown.summon_demonic_tyrant.remains>=10|cooldown.summon_demonic_tyrant.remains<=10
