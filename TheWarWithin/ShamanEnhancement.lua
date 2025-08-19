@@ -1132,6 +1132,26 @@ spec:RegisterCombatLogEvent( function( _, subtype, _,  sourceGUID, sourceName, _
 
 end )
 
+spec:RegisterEvent( "CHALLENGE_MODE_START", function()
+    TempestMaelstromSpent = 0
+    TWW3ProcsToAsc = 8
+end)
+
+spec:RegisterEvent( "ENCOUNTER_START", function()
+    TempestMaelstromSpent = 0
+    TWW3ProcsToAsc = 8
+end)
+
+spec:RegisterEvent( "PLAYER_DEAD", function()
+    TempestMaelstromSpent = 0
+    TWW3ProcsToAsc = 8
+end)
+
+spec:RegisterEvent( "TRAIT_CONFIG_UPDATED", function()
+    TempestMaelstromSpent = 0
+    TWW3ProcsToAsc = 8
+end)
+
 spec:RegisterStateExpr( "vesper_totem_heal_charges", function()
     return vesper_heal
 end )
@@ -1591,13 +1611,6 @@ spec:RegisterStateFunction( "maelstrom_mod", function( amount )
     return mod * amount
 end )
 
-spec:RegisterEvent( "CHALLENGE_MODE_START", function()
-    TempestMaelstromSpent = 0
-end)
-
-spec:RegisterEvent( "ENCOUNTER_START", function()
-    TempestMaelstromSpent = 0
-end)
 
 
 spec:RegisterTotems( {
