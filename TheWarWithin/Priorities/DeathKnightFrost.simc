@@ -33,7 +33,9 @@ actions+=/variable,name=rune_pooling,value=hero_tree.deathbringer&cooldown.reape
 ## actions+=/variable,name=rp_pooling,value=talent.breath_of_sindragosa&cooldown.breath_of_sindragosa.remains<4*gcd.max&runic_power<60+(35+5*buff.icy_onslaught.up)-(10*rune)&variable.sending_cds
 actions+=/variable,name=rp_pooling,value=talent.breath_of_sindragosa&cooldown.breath_of_sindragosa.remains<4*gcd.max&runic_power<60+(35+5*buff.icy_onslaught.up)-(10*rune)
 # Frostscythe is equal at 3 targets, except with Rider 4pc which brings Obliterate higher at 3, unless cleaving strikes is up
-actions+=/variable,name=frostscythe_prio,value=3+(1*(set_bonus.tww3_rider_of_the_apocalypse_4pc&!(talent.cleaving_strikes&buff.remorseless_winter.up)))
+## [Hekili] Revised to fix target count based on 4pc.
+## actions+=/variable,name=frostscythe_prio,value=3+(1*(set_bonus.tww3_rider_of_the_apocalypse_4pc&!(talent.cleaving_strikes&buff.remorseless_winter.up)))
+actions+=/variable,name=frostscythe_prio,value=4,value_else=3,condition=set_bonus.tww3_rider_of_the_apocalypse_4pc>0&!(talent.cleaving_strikes&buff.remorseless_winter.up)
 actions+=/variable,name=breath_of_sindragosa_check,value=talent.breath_of_sindragosa&(cooldown.breath_of_sindragosa.remains>20|(cooldown.breath_of_sindragosa.up&runic_power>=(60-20*hero_tree.deathbringer)))
 
 ## actions+=/call_action_list,name=trinkets
