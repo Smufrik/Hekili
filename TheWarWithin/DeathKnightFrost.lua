@@ -922,47 +922,6 @@ spec:RegisterAuras( {
         duration = 6,
         max_stack = 1
     },
-    -- Whitemane's Undeath debuff
-    undeath = {
-        id = 444633,
-        duration = 24,
-        tick_time = 3,
-        max_stack = 99, -- Technically no in-game limit
-        type = "Magic"
-    },
-    -- Nazgrim's Apocalyptic Conquest
-    apocalyptic_conquest = {
-        id = 444763,
-        duration = 10,
-        max_stack = 1
-    },
-    -- Mograine's Might: Damage increased while standing in Mograine's Death and Decay
-    mograines_might = {
-        id = 444505,
-        duration = 3600, -- No in-game limit, lasts as long as player is in D&D
-        max_stack = 1
-    },
-    -- Trollbane's Chains of Ice (slow)
-    chains_of_ice_trollbane_slow = {
-        id = 444826,
-        duration = 8,
-        max_stack = 1,
-        type = "Magic"
-    },
-    -- Trollbane's Chains of Ice (damage amp)
-    chains_of_ice_trollbane_damage = {
-        id = 444828,
-        duration = 8,
-        max_stack = 1,
-        type = "Magic"
-    },
-    -- Wave of Souls damage amplification
-    wave_of_souls_debuff = {
-        id = 443404,
-        duration = 15,
-        max_stack = 2,
-        type = "Magic"
-    },
     -- Swift and Painful Strength
     swift_and_painful_strength = {
         id = 469169,
@@ -1222,7 +1181,7 @@ local KillingMachineConsumer = setfenv( function ()
     if talent.arctic_assault.enabled then
         -- This would trigger the glacial advance effect in the game
         -- For simulation purposes, we can apply Razorice stacks to represent the effect
-        applyDebuff( "target", "razorice", nil, min( 5, debuff.razorice.stack + 1 ) )
+        spec.abilities.glacial_advance.handler()
     end
 
 end, state )
