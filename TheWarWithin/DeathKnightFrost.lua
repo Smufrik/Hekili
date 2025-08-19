@@ -511,7 +511,7 @@ spec:RegisterAuras( {
         duration = 30,
         max_stack = function()
             local base = talent.reapers_onslaught.enabled and 1 or 2
-            local tier_bonus = set_bonus.tww3_deathbringer >= 2 and 1 or 0
+            local tier_bonus = set_bonus.tww3 >= 2 and 1 or 0
             return base + tier_bonus
         end
     },
@@ -718,12 +718,12 @@ spec:RegisterAuras( {
         id = 434765,
         duration = 12.0,
         tick_time = 1.0,
-        max_stack = function() return set_bonus.tww3_deathbringer >= 4 and 55 or 40 end,
+        max_stack = function() return set_bonus.tww3 >= 4 and 55 or 40 end,
         copy = "reapers_mark_debuff",
 
         onRemove = function()
             -- 4-piece tier set: 10% crit chance after explosion
-            if set_bonus.tww3_deathbringer >= 4 then
+            if set_bonus.tww3 >= 4 then
                 applyBuff( "empowered_soul" )
             end
             if talent.exterminate.enabled then
@@ -2005,7 +2005,7 @@ spec:RegisterAbilities( {
             end
 
             -- 2-Set bonus: Casting Reaper's Mark grants 1 stack of Exterminate
-            if talent.exterminate.enabled and set_bonus.tww3_deathbringer >= 2 then
+            if talent.exterminate.enabled and set_bonus.tww3 >= 2 then
                 applyBuff( "exterminate", nil, 1 )
             end
         end,
