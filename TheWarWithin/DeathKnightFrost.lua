@@ -1617,7 +1617,7 @@ spec:RegisterAbilities( {
             end
 
             -- Horsemen interactions
-            if talent.trollbanes_icy_fury.enabled and (debuff.chains_of_ice_trollbane_slow.up or debuff.chains_of_ice_trollbane_damage.up) then
+            if talent.trollbanes_icy_fury.enabled and ( debuff.chains_of_ice_trollbane_slow.up or debuff.chains_of_ice_trollbane_damage.up ) then
                 removeDebuff( "target", "chains_of_ice_trollbane_slow" )
                 removeDebuff( "target", "chains_of_ice_trollbane_damage" )
                 -- Apply AoE damage and slow to nearby enemies
@@ -1825,7 +1825,7 @@ spec:RegisterAbilities( {
             end
 
             -- Horsemen interactions
-            if talent.trollbanes_icy_fury.enabled and (debuff.chains_of_ice_trollbane_slow.up or debuff.chains_of_ice_trollbane_damage.up) then
+            if talent.trollbanes_icy_fury.enabled and ( debuff.chains_of_ice_trollbane_slow.up or debuff.chains_of_ice_trollbane_damage.up ) then
                 removeDebuff( "target", "chains_of_ice_trollbane_slow" )
                 removeDebuff( "target", "chains_of_ice_trollbane_damage" )
                 -- Apply AoE damage and slow to nearby enemies (simulated)
