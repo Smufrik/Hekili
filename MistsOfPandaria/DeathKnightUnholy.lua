@@ -2,6 +2,7 @@
 -- January 2025
 
 -- MoP: Use UnitClass instead of UnitClassBase
+-- TODO: Formatting all files similarly
 local _, playerClass = UnitClass('player')
 if playerClass ~= 'DEATHKNIGHT' then return end
 

@@ -11,6 +11,7 @@
 -- Check if switching talents breaks Hekili logic on APL (may need a reload after changing talents)
 
 -- MoP: Use UnitClass instead of UnitClassBase
+-- TODO: Formatting all files similarly
 local _, playerClass = UnitClass('player')
 if playerClass ~= 'DEATHKNIGHT' then return end
 

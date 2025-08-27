@@ -1,9 +1,8 @@
-
 -- State.lua
 -- January 2025
 
 local addon, ns = ...
-local Hekili = _G[ addon ]
+local Hekili = _G[addon]
 
 local auras = ns.auras
 
@@ -36,25 +35,26 @@ local UnpackAuraData = function(data)
 end
 
 -- MoP: Spell charges compatibility
-local GetSpellCharges = (_G and rawget( _G, "GetSpellCharges" ))
-if type( GetSpellCharges ) ~= "function" then
-    GetSpellCharges = function( spellID )
+local GetSpellCharges = (_G and rawget(_G, "GetSpellCharges"))
+if type(GetSpellCharges) ~= "function" then
+    GetSpellCharges = function(spellID)
         return 0, 0, 0, 0, 1
     end
 end
 -- Fallbacks for constants in static analyzer env
-local MAX_PLAYER_LEVEL = (_G and rawget( _G, "MAX_PLAYER_LEVEL" )) or 90
-local CR_CRIT_TAKEN_SPELL = _G and rawget( _G, "CR_CRIT_TAKEN_SPELL" )
+local MAX_PLAYER_LEVEL = (_G and rawget(_G, "MAX_PLAYER_LEVEL")) or 90
+local CR_CRIT_TAKEN_SPELL = _G and rawget(_G, "CR_CRIT_TAKEN_SPELL")
 
 -- Clean up table_x later.
 ---@diagnostic disable-next-line: deprecated
-local insert, remove, sort, tcopy, unpack, wipe = table.insert, table.remove, table.sort, ns.tableCopy, unpack, table.wipe
+local insert, remove, sort, tcopy, unpack, wipe = table.insert, table.remove, table.sort, ns.tableCopy, unpack,
+    table.wipe
 local format = string.format
 
 local Mark, SuperMark, ClearMarks = ns.Mark, ns.SuperMark or function() end, ns.ClearMarks
 
-local RC = LibStub( "LibRangeCheck-3.0", true ) -- MoP: Use silent loading to prevent errors
-local LSR = LibStub( "SpellRange-1.0" )
+local RC = LibStub("LibRangeCheck-3.0", true)   -- MoP: Use silent loading to prevent errors
+local LSR = LibStub("SpellRange-1.0")
 
 local class = Hekili.Class
 local scripts = Hekili.Scripts
@@ -134,7 +134,7 @@ state.empowerment = {
     hold = 0,
     stages = {}
 }
- state.max_empower = 3
+state.max_empower = 3
 state.empowering = {}
 
 -- MoP: Simple placeholder for empowerment
@@ -146,7 +146,7 @@ state.health = {
     current = 1,
     max = 1,
     percent = 100,
-    timeTo = function( amount )
+    timeTo = function(amount)
         if state.health.current >= amount then return 0 end
         return 3600
     end,
@@ -168,22 +168,22 @@ state.off_hand = {
 state.gcd = {}
 
 
-state.history = {
+state.history        = {
     casts = {},
     units = {}
 }
 
-state.holds = {}
+state.holds          = {}
 
-state.items = {}
-state.pet = {
+state.items          = {}
+state.pet            = {
     fake_pet = {
         name = "Mary-Kate Olsen",
         expires = 0,
         permanent = false,
     }
 }
-state.player = {
+state.player         = {
     lastcast = "none",
     lastgcd = "none",
     lastoffgcd = "none",
@@ -194,44 +194,44 @@ state.player = {
     channel_end = 0,
     channel_spell = nil
 }
-state.prev = {
+state.prev           = {
     meta = "castsAll",
     history = { "no_action", "no_action", "no_action", "no_action", "no_action", "no_action", "no_action", "no_action", "no_action", "no_action" }
 }
-state.prev_gcd = {
+state.prev_gcd       = {
     meta = "castsOn",
     history = { "no_action", "no_action", "no_action", "no_action", "no_action", "no_action", "no_action", "no_action", "no_action", "no_action" }
 }
-state.prev_off_gcd = {
+state.prev_off_gcd   = {
     meta = "castsOff",
     history = { "no_action", "no_action", "no_action", "no_action", "no_action", "no_action", "no_action", "no_action", "no_action", "no_action" }
 }
-state.predictions = {}
+state.predictions    = {}
 state.predictionsOff = {}
-state.predictionsOn = {}
-state.purge = {}
-state.pvptalent = {}
-state.hero_tree = { current = "none" }  -- MoP: Add empty hero_tree for compatibility
-state.race = {}
-state.script = {}
-state.set_bonus = {}
-state.settings = {}
-state.sim = {}
-state.spec = {}
-state.stance = {}
-state.stat = {}
-state.swings = {
+state.predictionsOn  = {}
+state.purge          = {}
+state.pvptalent      = {}
+state.hero_tree      = { current = "none" } -- MoP: Add empty hero_tree for compatibility
+state.race           = {}
+state.script         = {}
+state.set_bonus      = {}
+state.settings       = {}
+state.sim            = {}
+state.spec           = {}
+state.stance         = {}
+state.stat           = {}
+state.swings         = {
     mh_actual = 0,
-    mh_speed = UnitAttackSpeed( "player" ) > 0 and UnitAttackSpeed( "player" ) or 2.6,
+    mh_speed = UnitAttackSpeed("player") > 0 and UnitAttackSpeed("player") or 2.6,
     mh_projected = 2.6,
     oh_actual = 0,
-    oh_speed = select( 2, UnitAttackSpeed( "player" ) ) or 2.6,
+    oh_speed = select(2, UnitAttackSpeed("player")) or 2.6,
     oh_projected = 3.9
 }
-state.system = {}
-state.table = table
-state.talent = {}
-state.target = {
+state.system         = {}
+state.table          = table
+state.talent         = {}
+state.target         = {
     debuff = state.debuff,
     dot = state.dot,
     health = {},
@@ -242,18 +242,18 @@ state.target = {
 -- Unknown key warnings when referenced early by APL expressions before a spec initializes them.
 -- (Specs can still override/update these as needed.)
 state.last_cast_time = state.last_cast_time or {}
-state.last_ability   = state.last_ability   == nil and false or state.last_ability
-state.rage = state.rage or { current = 0, max = 100, time_to_max = 0, per_second = 0 }
-state.damage = state.damage or { incoming_damage_3s = 0 }
+state.last_ability   = state.last_ability == nil and false or state.last_ability
+state.rage           = state.rage or { current = 0, max = 100, time_to_max = 0, per_second = 0 }
+state.damage         = state.damage or { incoming_damage_3s = 0 }
 
 -- Windwalker (and other Monk specs) may have APL lines that reference chi/energy before
 -- the specialization file finishes registering resources (due to load order). Provide
 -- safe placeholder tables so early emulation doesn't spam Unknown key errors. These
 -- are replaced/extended once spec:RegisterResource runs.
-state.chi = state.chi or { current = 0, max = 4, time_to_max = 0, per_second = 0, regen = 0 }
-state.energy = state.energy or { current = 0, max = 100, time_to_max = 0, per_second = 10, regen = 10 }
+state.chi            = state.chi or { current = 0, max = 4, time_to_max = 0, per_second = 0, regen = 0 }
+state.energy         = state.energy or { current = 0, max = 100, time_to_max = 0, per_second = 10, regen = 10 }
 -- Some APLs may reference combo_points before the spec registers resources; seed a safe placeholder.
-state.combo_points = state.combo_points or { current = 0, max = 5, time_to_max = 0, per_second = 0, regen = 0 }
+state.combo_points   = state.combo_points or { current = 0, max = 5, time_to_max = 0, per_second = 0, regen = 0 }
 -- Ensure the keys are known to the expression parser even if specialization resources not yet registered.
 if ns and ns.commitKey then
     ns.commitKey('chi')
@@ -264,16 +264,16 @@ end
 
 state.movement = {}
 
-setmetatable( state.movement, {
-    __index = function( t, k )
+setmetatable(state.movement, {
+    __index = function(t, k)
         if k == "distance" then
             if state.buff.movement.up then return state.target.maxR end
             return 0
         end
 
-        return state.target[ k ]
+        return state.target[k]
     end
-} )
+})
 
 state.sim.target = state.target
 state.toggle = {}
@@ -384,18 +384,18 @@ state.trinket.proc = state.trinket.stat
 state.trinket[1] = state.trinket.t1
 state.trinket[2] = state.trinket.t2
 
-state.using_apl = setmetatable( {}, {
-    __index = function( t, k )
+state.using_apl = setmetatable({}, {
+    __index = function(t, k)
         return false
     end
-} )
+})
 
 
-state.role = setmetatable( {}, {
-    __index = function( t, k )
+state.role = setmetatable({}, {
+    __index = function(t, k)
         return false
     end
-} )
+})
 
 local mt_no_trinket_cooldown = {
 }
@@ -408,8 +408,8 @@ local mt_no_trinket_stat = {
 
 
 local mt_no_trinket = {
-    __index = function( t, k )
-        if k:sub(1,4) == "has_" then
+    __index = function(t, k)
+        if k:sub(1, 4) == "has_" then
             return false
         elseif k == "down" then
             return true
@@ -419,77 +419,84 @@ local mt_no_trinket = {
     end
 }
 
-local no_trinket = setmetatable( {
+local no_trinket = setmetatable({
     slot = "none",
-    cooldown = setmetatable( {}, mt_no_trinket_cooldown ),
-    stacking_stat = setmetatable( {}, mt_no_trinket_stacking_stat ),
-    stat = setmetatable( {}, mt_no_trinket_stat ),
-    is = setmetatable( {}, {
-        __index = function( t, k )
+    cooldown = setmetatable({}, mt_no_trinket_cooldown),
+    stacking_stat = setmetatable({}, mt_no_trinket_stacking_stat),
+    stat = setmetatable({}, mt_no_trinket_stat),
+    is = setmetatable({}, {
+        __index = function(t, k)
             return false
         end
-    } )
-}, mt_no_trinket )
+    })
+}, mt_no_trinket)
 
-setmetatable( state.trinket, {
-    __index = function( t, k )
-        if t.t1.is[ k ] then
+setmetatable(state.trinket, {
+    __index = function(t, k)
+        if t.t1.is[k] then
             return t.t1
-        elseif t.t2.is[ k ] then
+        elseif t.t2.is[k] then
             return t.t2
         else
             return no_trinket
         end
     end
-} )
+})
 
 state.trinket.stat.any = state.trinket.any
 
 
 local mt_trinket_any = {
-    __index = function( t, k )
-        return state.trinket.t1[ k ] or state.trinket.t2[ k ]
+    __index = function(t, k)
+        return state.trinket.t1[k] or state.trinket.t2[k]
     end
 }
 
-setmetatable( state.trinket.any, mt_trinket_any )
+setmetatable(state.trinket.any, mt_trinket_any)
 
 local mt_trinket_any_stacking_stat = {
-    __index = function( t, k )
-        if state.trinket.t1.has_stacking_stat[k] then return state.trinket.t1
-            elseif state.trinket.t2.has_stacking_stat[k] then return state.trinket.t2 end
+    __index = function(t, k)
+        if state.trinket.t1.has_stacking_stat[k] then
+            return state.trinket.t1
+        elseif state.trinket.t2.has_stacking_stat[k] then
+            return state.trinket.t2
+        end
         return no_trinket
     end
 }
 
-setmetatable( state.trinket.stacking_stat, mt_trinket_any_stacking_stat )
-setmetatable( state.trinket.stacking_proc, mt_trinket_any_stacking_stat )
+setmetatable(state.trinket.stacking_stat, mt_trinket_any_stacking_stat)
+setmetatable(state.trinket.stacking_proc, mt_trinket_any_stacking_stat)
 
 local mt_trinket_any_stat = {
-    __index = function( t, k )
+    __index = function(t, k)
         --[[ if k == "any" then
         return ( state.trinket.has_stat[
     end ]]
 
-        if state.trinket.t1.has_stat[k] then return state.trinket.t1
-        elseif state.trinket.t2.has_stat[k] then return state.trinket.t2 end
+        if state.trinket.t1.has_stat[k] then
+            return state.trinket.t1
+        elseif state.trinket.t2.has_stat[k] then
+            return state.trinket.t2
+        end
         return no_trinket
     end
 }
 
-setmetatable( state.trinket.stat, mt_trinket_any_stat )
+setmetatable(state.trinket.stat, mt_trinket_any_stat)
 
 
 local mt_trinket = {
-    __index = function( t, k )
-        local isEnabled = ( not rawget( t, "__usable" ) ) or ( rawget( t, "__ability" ) and not state:IsDisabled( t.__ability ) or false )
+    __index = function(t, k)
+        local isEnabled = (not rawget(t, "__usable")) or
+        (rawget(t, "__ability") and not state:IsDisabled(t.__ability) or false)
 
         if k == "id" then
             return isEnabled and t.__id or 0
         elseif k == "ability" then
-            return rawget( t, "__ability" ) or "null_cooldown"
+            return rawget(t, "__ability") or "null_cooldown"
         elseif k == "usable" then
-            return rawget( t, "__usable" ) or false
+            return rawget(t, "__usable") or false
         elseif k == "has_use_buff" or k == "use_buff" then
             return isEnabled and t.__has_use_buff or false
         elseif k == "use_buff_duration" or k == "buff_duration" then
@@ -499,50 +506,50 @@ local mt_trinket = {
         end
 
         if k == "up" or k == "ticking" or k == "active" then
-            return isEnabled and class.trinkets[ t.id ].buff and state.buff[ class.trinkets[ t.id ].buff ].up or false
+            return isEnabled and class.trinkets[t.id].buff and state.buff[class.trinkets[t.id].buff].up or false
         elseif k == "react" or k == "stack" or k == "stacks" then
-            return isEnabled and class.trinkets[ t.id ].buff and state.buff[ class.trinkets[ t.id ].buff ][ k ] or 0        elseif k == "remains" then
-            return isEnabled and class.trinkets[ t.id ].buff and state.buff[ class.trinkets[ t.id ].buff ].remains or 0
+            return isEnabled and class.trinkets[t.id].buff and state.buff[class.trinkets[t.id].buff][k] or 0
+        elseif k == "remains" then
+            return isEnabled and class.trinkets[t.id].buff and state.buff[class.trinkets[t.id].buff].remains or 0
         elseif k == "has_cooldown" then
-            return isEnabled and ( GetItemSpell( t.id ) ~= nil ) or false
+            return isEnabled and (GetItemSpell(t.id) ~= nil) or false
         elseif k == "ready_cooldown" then
             if isEnabled and t.usable and t.ability then
                 return t.cooldown.ready
             end
             return true
         elseif k == "cooldown" then
-            if t.usable and t.ability and state.cooldown[ t.ability ] then
-                return state.cooldown[ t.ability ]
+            if t.usable and t.ability and state.cooldown[t.ability] then
+                return state.cooldown[t.ability]
             end
             return state.cooldown.null_cooldown
-
         elseif k == "cast_time" or k == "cast_time" then
-            return t.usable and t.ability and class.abilities[ t.ability ] and class.abilities[ t.ability ].cast or 0
+            return t.usable and t.ability and class.abilities[t.ability] and class.abilities[t.ability].cast or 0
         end
 
         return k
     end
 }
 
-setmetatable( state.trinket.t1, mt_trinket )
-setmetatable( state.trinket.t2, mt_trinket )
-setmetatable( state.trinket.main_hand, mt_trinket )
+setmetatable(state.trinket.t1, mt_trinket)
+setmetatable(state.trinket.t2, mt_trinket)
+setmetatable(state.trinket.main_hand, mt_trinket)
 
 
 local mt_trinket_is = {
-    __index = function( t, k )
-        local item = state.trinket[ t.slot ]
+    __index = function(t, k)
+        local item = state.trinket[t.slot]
 
         if item.usable and item.ability == k then return true end
-        if item.__id and class.gear[ k ] and class.gear[ k ][ 1 ] == item.__id then return true end
+        if item.__id and class.gear[k] and class.gear[k][1] == item.__id then return true end
 
         return false
     end,
 }
 
-setmetatable( state.trinket.t1.is, mt_trinket_is )
-setmetatable( state.trinket.t2.is, mt_trinket_is )
-setmetatable( state.trinket.main_hand.is, mt_trinket_is )
+setmetatable(state.trinket.t1.is, mt_trinket_is)
+setmetatable(state.trinket.t2.is, mt_trinket_is)
+setmetatable(state.trinket.main_hand.is, mt_trinket_is)
 
 
 --[[ local mt_trinket_cooldown = {
@@ -576,15 +583,15 @@ setmetatable( state.trinket.t1.cooldown, mt_trinket_cooldown )
 setmetatable( state.trinket.t2.cooldown, mt_trinket_cooldown ) ]]
 
 local mt_trinket_has_stacking_stat = {
-    __index = function( t, k )
-        local trinket = state.trinket[ t.slot ]
+    __index = function(t, k)
+        local trinket = state.trinket[t.slot]
         trinket = trinket and trinket.__ability
-        trinket = trinket and class.abilities[ trinket ]
+        trinket = trinket and class.abilities[trinket]
 
         if not trinket then return false end
 
         local buff = trinket.self_buff
-        buff = buff and class.auras[ buff ]
+        buff = buff and class.auras[buff]
 
         if not buff or buff.max_stack == 1 then return false end
 
@@ -593,28 +600,28 @@ local mt_trinket_has_stacking_stat = {
         local proc = trinket.proc or "none"
         if not proc then return false end
 
-        if k == "any_dps" then return not ( proc == "damage" or proc == "healing" or proc == "health" or proc == "absorb" or proc == "mana" or proc == "speed" or proc == "leech" or proc == "avoidance" ) end
+        if k == "any_dps" then return not (proc == "damage" or proc == "healing" or proc == "health" or proc == "absorb" or proc == "mana" or proc == "speed" or proc == "leech" or proc == "avoidance") end
         return proc == k
     end
 }
 
-setmetatable( state.trinket.t1.has_stacking_stat, mt_trinket_has_stacking_stat )
-setmetatable( state.trinket.t2.has_stacking_stat, mt_trinket_has_stacking_stat )
-setmetatable( state.trinket.main_hand.has_stacking_stat, mt_trinket_has_stacking_stat )
+setmetatable(state.trinket.t1.has_stacking_stat, mt_trinket_has_stacking_stat)
+setmetatable(state.trinket.t2.has_stacking_stat, mt_trinket_has_stacking_stat)
+setmetatable(state.trinket.main_hand.has_stacking_stat, mt_trinket_has_stacking_stat)
 
 
 local mt_trinket_has_stat = {
-    __index = function( t, k )
-        local trinket = state.trinket[ t.slot ]
+    __index = function(t, k)
+        local trinket = state.trinket[t.slot]
         trinket = trinket and trinket.__ability
-        trinket = trinket and class.abilities[ trinket ]
+        trinket = trinket and class.abilities[trinket]
 
         if not trinket then
             return false
         end
 
         local buff = trinket.self_buff
-        buff = buff and class.auras[ buff ]
+        buff = buff and class.auras[buff]
 
         if not buff then
             return false
@@ -627,39 +634,39 @@ local mt_trinket_has_stat = {
             return false
         end
 
-        if k == "any_dps" then return not ( proc == "damage" or proc == "healing" or proc == "absorb" or proc == "mana" or proc == "speed" or proc == "leech" or proc == "avoidance" ) end
+        if k == "any_dps" then return not (proc == "damage" or proc == "healing" or proc == "absorb" or proc == "mana" or proc == "speed" or proc == "leech" or proc == "avoidance") end
         return proc == k
     end
 }
 
-setmetatable( state.trinket.t1.has_stat, mt_trinket_has_stat )
-setmetatable( state.trinket.t2.has_stat, mt_trinket_has_stat )
-setmetatable( state.trinket.main_hand.has_stat, mt_trinket_has_stat )
+setmetatable(state.trinket.t1.has_stat, mt_trinket_has_stat)
+setmetatable(state.trinket.t2.has_stat, mt_trinket_has_stat)
+setmetatable(state.trinket.main_hand.has_stat, mt_trinket_has_stat)
 
 
 local mt_trinkets_has_stat = {
-    __index = function( t, k )
-        return state.trinket.t1.has_stat[ k ] or state.trinket.t2.has_stat[ k ]
+    __index = function(t, k)
+        return state.trinket.t1.has_stat[k] or state.trinket.t2.has_stat[k]
     end
 }
 
-setmetatable( state.trinket.has_stat, mt_trinkets_has_stat )
+setmetatable(state.trinket.has_stat, mt_trinkets_has_stat)
 
 
 local mt_trinkets_has_stacking_stat = {
-    __index = function( t, k )
-        return state.trinket.t1.has_stacking_stat[ k ] or state.trinket.t2.has_stacking_stat[ k ]
+    __index = function(t, k)
+        return state.trinket.t1.has_stacking_stat[k] or state.trinket.t2.has_stacking_stat[k]
     end
 }
 
-setmetatable( state.trinket.has_stacking_stat, mt_trinkets_has_stacking_stat )
+setmetatable(state.trinket.has_stacking_stat, mt_trinkets_has_stacking_stat)
 
 
 state.max = safeMax
 state.min = safeMin
 state.abs = safeAbs
 
-if Hekili.Version:match( "^Dev" ) then
+if Hekili.Version:match("^Dev") then
     state.print = print
 else
     state.print = function() end
@@ -678,9 +685,9 @@ state.GetActiveLossOfControlDataCount = function() return 0 end
 state.GetNumGroupMembers = GetNumGroupMembers
 -- state.GetItemCooldown = GetItemCooldown
 -- MoP: Use legacy GetItemCount
-state.GetItemCount = (type(_G)=="table" and _G.GetItemCount) or function() return 0 end
-state.GetItemGem = (type(_G)=="table" and _G.GetItemGem) or function() return nil end
-state.GetItemInfo = ns.CachedGetItemInfo  -- Use cached version for MoP compatibility
+state.GetItemCount = (type(_G) == "table" and _G.GetItemCount) or function() return 0 end
+state.GetItemGem = (type(_G) == "table" and _G.GetItemGem) or function() return nil end
+state.GetItemInfo = ns.CachedGetItemInfo -- Use cached version for MoP compatibility
 state.GetPlayerAuraBySpellID = GetPlayerAuraBySpellID
 state.GetShapeshiftForm = GetShapeshiftForm
 state.GetShapeshiftFormInfo = GetShapeshiftFormInfo
@@ -688,10 +695,10 @@ state.GetShapeshiftFormInfo = GetShapeshiftFormInfo
 state.GetSpellCount = function() return 0 end
 state.GetSpellInfo = ns.GetUnpackedSpellInfo
 -- Guarded WoW API accessors for analyzer environments
-state.GetSpellLink = (type(_G)=="table" and _G.GetSpellLink) or function() return nil end
+state.GetSpellLink = (type(_G) == "table" and _G.GetSpellLink) or function() return nil end
 -- MoP: Use legacy GetSpellTexture
-state.GetSpellTexture = (type(_G)=="table" and _G.GetSpellTexture) or function() return nil end
-state.GetStablePetInfo = (type(_G)=="table" and _G.GetStablePetInfo) or function() return nil end
+state.GetSpellTexture = (type(_G) == "table" and _G.GetSpellTexture) or function() return nil end
+state.GetStablePetInfo = (type(_G) == "table" and _G.GetStablePetInfo) or function() return nil end
 state.GetTime = GetTime
 state.GetTotemInfo = GetTotemInfo
 state.InCombatLockdown = InCombatLockdown
@@ -704,8 +711,8 @@ state.IsSpellKnownOrOverridesKnown = IsSpellKnownOrOverridesKnown
 -- MoP: Use legacy IsUsableItem
 state.IsUsableItem = IsUsableItem
 -- MoP: Use legacy IsUsableSpell
-state.IsUsableSpell = (type(_G)=="table" and _G.IsUsableSpell) or function() return true end
-state.UnitAura = (type(_G)=="table" and _G.UnitAura) or ns.UnitAura
+state.IsUsableSpell = (type(_G) == "table" and _G.IsUsableSpell) or function() return true end
+state.UnitAura = (type(_G) == "table" and _G.UnitAura) or ns.UnitAura
 -- MoP: Aura slots not available
 state.UnitAuraSlots = function() return {} end
 state.UnitBuff = UnitBuff
@@ -724,20 +731,21 @@ state.UnitName = UnitName
 state.UnitIsFriend = UnitIsFriend
 
 -- MoP: Glyph system support
-state.glyph = setmetatable( {}, {
-    __index = function( t, k )
+state.glyph = setmetatable({}, {
+    __index = function(t, k)
         -- First check if we have this glyph in our registered glyphs
         local spec = state.spec
         -- Use class spec glyphs if state spec glyphs is not a table
         local glyphsTable = (spec and type(spec.glyphs) == "table") and spec.glyphs or
-                           (Hekili.Class and Hekili.Class.specs and Hekili.Class.specs[spec.id] and Hekili.Class.specs[spec.id].glyphs)
+            (Hekili.Class and Hekili.Class.specs and Hekili.Class.specs[spec.id] and Hekili.Class.specs[spec.id].glyphs)
 
         if glyphsTable then
-            local glyphID = glyphsTable[ k ]
-            if glyphID and type( glyphID ) == "number" then
+            local glyphID = glyphsTable[k]
+            if glyphID and type(glyphID) == "number" then
                 -- Use the GetGlyphSocketInfo API with return values
-                local GetGlyphSocketInfo = (type(_G)=="table" and _G.GetGlyphSocketInfo) or function(...) return nil end
-                local GetNumGlyphSockets = (type(_G)=="table" and _G.GetNumGlyphSockets) or function() return 6 end
+                local GetGlyphSocketInfo = (type(_G) == "table" and _G.GetGlyphSocketInfo) or
+                function(...) return nil end
+                local GetNumGlyphSockets = (type(_G) == "table" and _G.GetNumGlyphSockets) or function() return 6 end
 
                 local numSockets = GetNumGlyphSockets()
                 for i = 1, numSockets do
@@ -753,12 +761,12 @@ state.glyph = setmetatable( {}, {
         -- Return false glyph object if not found
         return { enabled = false }
     end
-} )
+})
 
 local UnitIsUnit = _G.UnitIsUnit
 
-state.UnitIsUnit = function( a, b )
-    return a == b or UnitIsUnit( a, b )
+state.UnitIsUnit = function(a, b)
+    return a == b or UnitIsUnit(a, b)
 end
 
 state.UnitIsPlayer = UnitIsPlayer
@@ -785,14 +793,14 @@ state.tostring = tostring
 state.type = type
 state.unpack = unpack
 
-state.safenum = function( val )
-    if type( val ) == "number" then return val end
+state.safenum = function(val)
+    if type(val) == "number" then return val end
     if val == nil then return 0 end
     return val == true and 1 or 0
 end
 
-state.safebool = function( val )
-    if type( val ) == "boolean" then return val end
+state.safebool = function(val)
+    if type(val) == "boolean" then return val end
     if val == nil then return false end
     if val == 0 then return false end
     return true
@@ -801,11 +809,11 @@ end
 -- Safe proxy for evaluating registered state expressions by key.
 -- Some spec modules may incorrectly call state:EvaluateExpr("key");
 -- provide a compatible helper that returns the expression's value if present.
-function state:EvaluateExpr( key )
+function state:EvaluateExpr(key)
     local class = self.class
     if class and class.stateExprs then
-        local f = class.stateExprs[ key ]
-        if type( f ) == "function" then
+        local f = class.stateExprs[key]
+        if type(f) == "function" then
             return f()
         end
     end
@@ -813,9 +821,9 @@ function state:EvaluateExpr( key )
 end
 
 state.combat = 0
-state.faction = UnitFactionGroup( "player" )
+state.faction = UnitFactionGroup("player")
 if formatKey then
-    state.race[ formatKey( UnitRace("player") ) ] = true
+    state.race[formatKey(UnitRace("player"))] = true
 end
 
 state.class = Hekili.Class
@@ -825,29 +833,29 @@ state._G = 0
 
 
 -- Place an ability on cooldown in the simulated game state.
-local function setCooldown( action, duration )
-    local cd = state.cooldown[ action ] or {}
+local function setCooldown(action, duration)
+    local cd = state.cooldown[action] or {}
     cd.duration = duration > 0 and duration or cd.duration
     cd.expires = state.query_time + duration
 
     cd.charge = 0
     cd.recharge_began = state.query_time
 
-    state.cooldown[ action ] = cd
+    state.cooldown[action] = cd
 end
 state.setCooldown = setCooldown
 
 
-local function spendCharges( action, charges )
-    local ability = class.abilities[ action ]
+local function spendCharges(action, charges)
+    local ability = class.abilities[action]
 
     if not ability.charges or ability.charges == 1 then
-        setCooldown( action, ability.cooldown )
+        setCooldown(action, ability.cooldown)
         return
     end
 
-    if not state.cooldown[ action ] then state.cooldown[ action ] = {} end
-    local cd = state.cooldown[ action ]
+    if not state.cooldown[action] then state.cooldown[action] = {} end
+    local cd = state.cooldown[action]
 
     if cd.charges == ability.charges then
         cd.charge = ability.charges
@@ -855,50 +863,47 @@ local function spendCharges( action, charges )
     elseif cd.charges > cd.charge then
         local addl = cd.charges_fractional - cd.charges
         cd.charge = cd.charges
-        cd.recharge_began = state.query_time - ( addl * ( ability.recharge or ability.cooldown ) )
+        cd.recharge_began = state.query_time - (addl * (ability.recharge or ability.cooldown))
     end
 
-    cd.charge = max( 0, cd.charge - charges )
+    cd.charge = max(0, cd.charge - charges)
     if cd.recharge_began == 0 then cd.recharge_began = state.query_time end
 
     local dur = ability.recharge or ability.cooldown
     cd.duration = dur > 0 and dur or cd.duration
-    cd.expires = cd.charge == 0 and ( cd.recharge_began + dur ) or 0
+    cd.expires = cd.charge == 0 and (cd.recharge_began + dur) or 0
 end
 state.spendCharges = spendCharges
 
 
-local function gainCharges( action, charges )
-
-    if class.abilities[ action ].charges then
-        state.cooldown[ action ].charge = min( class.abilities[ action ].charges, state.cooldown[ action ].charge + charges )
+local function gainCharges(action, charges)
+    if class.abilities[action].charges then
+        state.cooldown[action].charge = min(class.abilities[action].charges, state.cooldown[action].charge + charges)
 
         -- resolve cooldown state.
-        if state.cooldown[ action ].charge > 0 then
+        if state.cooldown[action].charge > 0 then
             -- state.cooldown[ action ].duration = 0
-            state.cooldown[ action ].expires = 0
+            state.cooldown[action].expires = 0
         end
 
-        if state.cooldown[ action ].charge == class.abilities[ action ].charges then
-            state.cooldown[ action ].recharge_began = 0
+        if state.cooldown[action].charge == class.abilities[action].charges then
+            state.cooldown[action].recharge_began = 0
         end
-
     else
         -- Error-proof gaining charges for abilities without charges.
         if charges >= 1 then
-            setCooldown( action, 0 )
+            setCooldown(action, 0)
         end
     end
-
 end
 state.gainCharges = gainCharges
 
 
-function state.gainChargeTime( action, time, debug )
-    local ability = class.abilities[ action ]
+function state.gainChargeTime(action, time, debug)
+    local ability = class.abilities[action]
     if not ability then return end
 
-    local cooldown = state.cooldown[ action ]
+    local cooldown = state.cooldown[action]
 
     if not ability.charges then
         -- Error-proof gaining charge time on chargeless abilities.
@@ -909,79 +914,82 @@ function state.gainChargeTime( action, time, debug )
     if cooldown.charge == ability.charges then return end
     cooldown.recharge_began = cooldown.recharge_began - time
 
-    if cooldown.expires > 0 then cooldown.expires = max( 0, cooldown.expires - time ) end
+    if cooldown.expires > 0 then cooldown.expires = max(0, cooldown.expires - time) end
 end
 
-
-function state.reduceCooldown( action, time )
-    local ability = class.abilities[ action ]
+function state.reduceCooldown(action, time)
+    local ability = class.abilities[action]
     if not ability then return end
 
     if ability.charges then
-        state.gainChargeTime( action, time )
+        state.gainChargeTime(action, time)
         return
     end
 
-    state.cooldown[ action ].expires = max( 0, state.cooldown[ action ].expires - time )
+    state.cooldown[action].expires = max(0, state.cooldown[action].expires - time)
 end
-
 
 -- Cycling System...
 do
     local cycle = {}
-    local debug = function( ... ) if Hekili.ActiveDebug then Hekili:Debug( ... ) end end
+    local debug = function(...) if Hekili.ActiveDebug then Hekili:Debug(...) end end
 
-    function state.SetupCycle( ability, quiet )
-        wipe( cycle )
+    function state.SetupCycle(ability, quiet)
+        wipe(cycle)
 
         if not ability and not quiet then
-            debug( " - no ability provided to SetupCycle." )
+            debug(" - no ability provided to SetupCycle.")
             return
         end
 
         local aura = ability.cycle or ability.aura or ability.key
 
         if not aura and not quiet then
-            debug( " - no aura identified for target-cycling and no aura matching " .. ability.key .. " found in ability / spec module; target cycling disabled." )
+            debug(" - no aura identified for target-cycling and no aura matching " ..
+            ability.key .. " found in ability / spec module; target cycling disabled.")
             return
         end
 
-        local cDebuff = class.auras[ aura ] and state.debuff[ aura ]
+        local cDebuff = class.auras[aura] and state.debuff[aura]
 
         if not cDebuff then
-            debug( " - the debuff '%s' was not found in our database.", aura )
+            debug(" - the debuff '%s' was not found in our database.", aura)
             return
         end
 
         if cDebuff.up and not ability.cycle_to then
             -- We want to target enemies with this debuff.
             cycle.expires = cDebuff.expires
-            cycle.minTTD  = max( state.settings.cycle_min, ability.min_ttd or 0, cDebuff.duration / 2 )
+            cycle.minTTD  = max(state.settings.cycle_min, ability.min_ttd or 0, cDebuff.duration / 2)
             cycle.maxTTD  = ability.max_ttd
 
-            cycle.aura = aura
+            cycle.aura    = aura
 
-            if state.active_dot[ aura ] >= state.cycle_enemies then
-                if not quiet then debug( " - we do not have another valid target for " .. aura .. ": " .. state.active_dot[ aura ] .. " vs " .. state.cycle_enemies .. "." ) end
+            if state.active_dot[aura] >= state.cycle_enemies then
+                if not quiet then debug(" - we do not have another valid target for " ..
+                    aura .. ": " .. state.active_dot[aura] .. " vs " .. state.cycle_enemies .. ".") end
                 state.ClearCycle()
                 return
             end
 
             if not quiet then
-                debug( " - we will use the ability on a different target, if available, until %s expires at %.2f [+%.2f].", cycle.aura, cycle.expires, cycle.expires - state.query_time )
+                debug(
+                " - we will use the ability on a different target, if available, until %s expires at %.2f [+%.2f].",
+                    cycle.aura, cycle.expires, cycle.expires - state.query_time)
             end
-        elseif cDebuff.down and ability.cycle_to and state.active_dot[ aura ] > 0 and state.query_time < state.now + ( 3 * state.gcd.max ) then
-            cycle.expires = state.query_time + ( 2 * state.gcd.max ) -- Assume the aura is available for 3 GCDs (don't forecast a slow target swap).
-            cycle.minTTD  = max( state.settings.cycle_min, ability.min_ttd or 0, cDebuff.duration / 2 )
+        elseif cDebuff.down and ability.cycle_to and state.active_dot[aura] > 0 and state.query_time < state.now + (3 * state.gcd.max) then
+            cycle.expires = state.query_time +
+            (2 * state.gcd.max)                                      -- Assume the aura is available for 3 GCDs (don't forecast a slow target swap).
+            cycle.minTTD  = max(state.settings.cycle_min, ability.min_ttd or 0, cDebuff.duration / 2)
             cycle.maxTTD  = ability.max_ttd
 
-            cycle.aura = aura
+            cycle.aura    = aura
 
             if not quiet then
-                debug( " - we will use the ability on a target with %s, if available, .", cycle.aura )
+                debug(" - we will use the ability on a target with %s, if available, .", cycle.aura)
             end
         else
-            if not quiet then debug( " - cycle aura appears to be down, so we're sticking with our current target." ) end
+            if not quiet then debug(" - cycle aura appears to be down, so we're sticking with our current target.") end
         end
 
         --[[ Possible future version:
@@ -1017,42 +1025,43 @@ do
         return cycle.expires, cycle.minTTD, cycle.maxTTD, cycle.aura
     end
 
-    function state.SetCycleInfo( expires, minTTD, maxTTD, aura )
+    function state.SetCycleInfo(expires, minTTD, maxTTD, aura)
         cycle.expires = expires
         cycle.minTTD  = minTTD
         cycle.maxTTD  = maxTTD
         cycle.aura    = aura
     end
 
-    function state.HasCyclingDebuff( aura )
+    function state.HasCyclingDebuff(aura)
         if not cycle.aura then return false end
         if aura and aura ~= cycle.aura then return false end
         return true
     end
 
-    function state.IsCycling( aura, quiet )
+    function state.IsCycling(aura, quiet)
         if not cycle.aura then
             return false, "cycle.aura is nil"
         end
         if aura and cycle.aura ~= aura then
-            if not quiet then debug( "cycle.aura ~= '%s'", aura ) end
-            return false, format( "cycle aura (%s) is not '%s'", cycle.aura or "none", aura )
+            if not quiet then debug("cycle.aura ~= '%s'", aura) end
+            return false, format("cycle aura (%s) is not '%s'", cycle.aura or "none", aura)
         end
         if state.cycle_enemies == 1 then
             return false, "cycle_enemies == 1"
         end
         if cycle.expires < state.query_time then
-            return false, format( "cycle aura (%s) expires before current time", cycle.aura )
+            return false, format("cycle aura (%s) expires before current time", cycle.aura)
         end
-        if state.active_dot[ cycle.aura ] >= state.cycle_enemies then
-            return false, format( "active_dot[%d] >= cycle_enemies[%d]", state.active_dot[ cycle.aura ], state.cycle_enemies )
+        if state.active_dot[cycle.aura] >= state.cycle_enemies then
+            return false,
+                format("active_dot[%d] >= cycle_enemies[%d]", state.active_dot[cycle.aura], state.cycle_enemies)
         end
 
         return true
     end
 
     function state.ClearCycle()
-        if cycle.aura then wipe( cycle ) end
+        if cycle.aura then wipe(cycle) end
         state.cycle = nil
     end
 
@@ -1061,23 +1070,23 @@ end
 
 
 -- Apply a buff to the current game state.
-local function applyBuff( aura, duration, stacks, value, v2, v3, applied )
+local function applyBuff(aura, duration, stacks, value, v2, v3, applied)
     if not aura then
-        Error( "Attempted to apply/remove a nameless aura '%s'.\n\n%s", aura or "nil", debugstack() )
+        Error("Attempted to apply/remove a nameless aura '%s'.\n\n%s", aura or "nil", debugstack())
         return
     end
 
-    local model = class.auras[ aura ]
+    local model = class.auras[aura]
 
     if not model then
-        Error( "Warning: attempted to apply unknown buff '%s'.", aura )
-        local spec = class.specs[ state.spec.id ]
+        Error("Warning: attempted to apply unknown buff '%s'.", aura)
+        local spec = class.specs[state.spec.id]
         if spec then
-            spec:RegisterAura( aura, { ["duration"] = duration } )
-            class.auras[ aura ] = spec.auras[ aura ]
+            spec:RegisterAura(aura, { ["duration"] = duration })
+            class.auras[aura] = spec.auras[aura]
         end
 
-        model = class.auras[ aura ]
+        model = class.auras[aura]
         if not model then return end
     end
 
@@ -1086,12 +1095,15 @@ local function applyBuff( aura, duration, stacks, value, v2, v3, applied )
     end
 
     if state.cycle then
-        if duration == 0 then state.active_dot[ aura ] = max( 0, state.active_dot[ aura ] - 1 )
-        else state.active_dot[ aura ] = max( state.active_enemies, state.active_dot[ aura ] + 1 ) end
+        if duration == 0 then
+            state.active_dot[aura] = max(0, state.active_dot[aura] - 1)
+        else
+            state.active_dot[aura] = max(state.active_enemies, state.active_dot[aura] + 1)
+        end
         return
     end
 
-    local b = state.buff[ aura ]
+    local b = state.buff[aura]
     if not b then return end
 
     duration = duration or model.duration or 15
@@ -1112,12 +1124,11 @@ local function applyBuff( aura, duration, stacks, value, v2, v3, applied )
         b.applied = 0
         b.caster = "unknown"
 
-        state.active_dot[ aura ] = max( 0, state.active_dot[ aura ] - 1 )
+        state.active_dot[aura] = max(0, state.active_dot[aura] - 1)
 
         if model.funcs.onRemove then model.funcs.onRemove() end
-
     else
-        if not b.up or model.friendly then state.active_dot[ aura ] = min( state.group_members, state.active_dot[ aura ] + 1 ) end
+        if not b.up or model.friendly then state.active_dot[aura] = min(state.group_members, state.active_dot[aura] + 1) end
 
         b.lastCount = b.count
         b.lastApplied = b.applied
@@ -1130,36 +1141,42 @@ local function applyBuff( aura, duration, stacks, value, v2, v3, applied )
         b.expires = b.applied + duration
         b.last_expiry = b.expires
 
-        b.count = max( 0, min( class.auras[ aura ].max_stack or 1, stacks or 1 ) )
+        b.count = max(0, min(class.auras[aura].max_stack or 1, stacks or 1))
         b.v1 = value or 0
-        if v2 == nil then b.v2 = 0
-        else b.v2 = v2 end
-        if v3 == nil then b.v3 = 0
-        else b.v3 = v3 end
+        if v2 == nil then
+            b.v2 = 0
+        else
+            b.v2 = v2
+        end
+        if v3 == nil then
+            b.v3 = 0
+        else
+            b.v3 = v3
+        end
         b.caster = "player"
     end
 
-    for resource, auras in pairs( class.resourceAuras ) do
-        if auras[ aura ] then
-            state.forecastResources( resource )
+    for resource, auras in pairs(class.resourceAuras) do
+        if auras[aura] then
+            state.forecastResources(resource)
         end
     end
 
-    if aura ~= "potion" and class.auras.potion and class.auras[ aura ].id == class.auras.potion.id then
-        applyBuff( "potion", duration, stacks, value )
+    if aura ~= "potion" and class.auras.potion and class.auras[aura].id == class.auras.potion.id then
+        applyBuff("potion", duration, stacks, value)
     end
 end
 state.applyBuff = applyBuff
 
 
-local function removeBuff( aura )
-    local model = class.auras[ aura ]
+local function removeBuff(aura)
+    local model = class.auras[aura]
     if model and model.alias then
-        for _, child in ipairs( model.alias ) do
-            applyBuff( child, 0 )
+        for _, child in ipairs(model.alias) do
+            applyBuff(child, 0)
         end
     else
-        applyBuff( aura, 0 )
+        applyBuff(aura, 0)
     end
 end
 state.removeBuff = removeBuff
@@ -1167,36 +1184,35 @@ state.removeBuff = removeBuff
 
 -- Apply stacks of a buff to the current game state.
 -- Wraps around applyBuff() to check for an existing buff.
-local function addStack( aura, duration, stacks, value )
-    local a = class.auras[ aura ]
+local function addStack(aura, duration, stacks, value)
+    local a = class.auras[aura]
 
-    duration = duration or ( a and a.duration or 15 )
+    duration = duration or (a and a.duration or 15)
     stacks = stacks or 1
 
     local max_stack = a and a.max_stack or 1
 
-    local b = state.buff[ aura ]
+    local b = state.buff[aura]
 
     if b.remains > 0 then
-        applyBuff( aura, duration, min( max_stack, b.count + stacks ), value )
+        applyBuff(aura, duration, min(max_stack, b.count + stacks), value)
     else
-        applyBuff( aura, duration, min( max_stack, stacks ), value )
+        applyBuff(aura, duration, min(max_stack, stacks), value)
     end
-
 end
 state.addStack = addStack
 
 
-local function removeStack( aura, stacks )
+local function removeStack(aura, stacks)
     stacks = stacks or 1
 
-    local b = state.buff[ aura ]
+    local b = state.buff[aura]
 
     if b.count > stacks then
         b.lastCount = b.count
-        b.count = max( 1, b.count - stacks )
+        b.count = max(1, b.count - stacks)
     else
-        state.removeBuff( aura )
+        state.removeBuff(aura)
     end
 end
 state.removeStack = removeStack
@@ -1204,9 +1220,9 @@ state.removeStack = removeStack
 
 -- Add a debuff to the simulated game state.
 -- Needs to actually use "unit" !
-local function applyDebuff( unit, aura, duration, stacks, value, noPandemic )
+local function applyDebuff(unit, aura, duration, stacks, value, noPandemic)
     -- Off by 1.
-    if not aura or type( aura ) == "number" then
+    if not aura or type(aura) == "number" then
         noPandemic = value
         value = stacks
         stacks = duration
@@ -1215,33 +1231,33 @@ local function applyDebuff( unit, aura, duration, stacks, value, noPandemic )
         unit = "target"
     end
 
-    local model = class.auras[ aura ]
+    local model = class.auras[aura]
     if not model then
-        Error( "Warning: attempted to apply unknown debuff '%s'.", aura )
-        local spec = class.specs[ state.spec.id ]
+        Error("Warning: attempted to apply unknown debuff '%s'.", aura)
+        local spec = class.specs[state.spec.id]
         if spec then
-            spec:RegisterAura( aura, { ["duration"] = duration } )
-            class.auras[ aura ] = spec.auras[ aura ]
+            spec:RegisterAura(aura, { ["duration"] = duration })
+            class.auras[aura] = spec.auras[aura]
         end
 
-        model = class.auras[ aura ]
+        model = class.auras[aura]
         if not model then return end
     end
 
     if state.cycle then
         if duration == 0 then
-            if Hekili.ActiveDebug then Hekili:Debug( "Removed an application of '%s' while target-cycling.", aura ) end
-            state.active_dot[ aura ] = state.active_dot[ aura ] - 1
-            if model.key ~= aura then state.active_dot[ model.key ] = state.active_dot[ aura ] end
+            if Hekili.ActiveDebug then Hekili:Debug("Removed an application of '%s' while target-cycling.", aura) end
+            state.active_dot[aura] = state.active_dot[aura] - 1
+            if model.key ~= aura then state.active_dot[model.key] = state.active_dot[aura] end
         else
-            if Hekili.ActiveDebug then Hekili:Debug( "Added an application of '%s' while target-cycling.", aura ) end
-            state.active_dot[ aura ] = state.active_dot[ aura ] + 1
-            if model.key ~= aura then state.active_dot[ model.key ] = state.active_dot[ aura ] end
+            if Hekili.ActiveDebug then Hekili:Debug("Added an application of '%s' while target-cycling.", aura) end
+            state.active_dot[aura] = state.active_dot[aura] + 1
+            if model.key ~= aura then state.active_dot[model.key] = state.active_dot[aura] end
         end
         return
     end
 
-    local d = state.debuff[ aura ]
+    local d = state.debuff[aura]
     duration = duration or model.duration or 15
 
     if duration == 0 then
@@ -1255,17 +1271,17 @@ local function applyDebuff( unit, aura, duration, stacks, value, noPandemic )
         d.applied = 0
         d.unit = unit
 
-        state.active_dot[ aura ] = max( 0, state.active_dot[ aura ] - 1 )
-        if model.key ~= aura then state.active_dot[ model.key ] = state.active_dot[ aura ] end
+        state.active_dot[aura] = max(0, state.active_dot[aura] - 1)
+        if model.key ~= aura then state.active_dot[model.key] = state.active_dot[aura] end
     else
-        if d.down or state.active_dot[ aura ] == 0 then
-            state.active_dot[ aura ] = state.active_dot[ aura ] + 1
-            if model.key ~= aura then state.active_dot[ model.key ] = state.active_dot[ aura ] end
+        if d.down or state.active_dot[aura] == 0 then
+            state.active_dot[aura] = state.active_dot[aura] + 1
+            if model.key ~= aura then state.active_dot[model.key] = state.active_dot[aura] end
             -- TODO: Aura scraping utility may want to populate active_dot table when it sees an aura that wasn't tracked.
         end
 
         -- state.debuff[ aura ] = state.debuff[ aura ] or {}
-        if not noPandemic then duration = min( 1.3 * duration, d.remains + duration ) end
+        if not noPandemic then duration = min(1.3 * duration, d.remains + duration) end
 
         -- d.duration = duration
         d.expires = state.query_time + duration
@@ -1273,34 +1289,33 @@ local function applyDebuff( unit, aura, duration, stacks, value, noPandemic )
         d.lastCount = d.count or 0
         d.lastApplied = d.applied or 0
 
-        d.count = min( model.max_stack or 1, stacks or 1 )
+        d.count = min(model.max_stack or 1, stacks or 1)
         d.value = value or 0
         d.applied = state.query_time
         d.unit = unit or "target"
     end
-
 end
 state.applyDebuff = applyDebuff
 
 
-local function removeDebuff( unit, aura )
-    applyDebuff( unit, aura, 0 )
+local function removeDebuff(unit, aura)
+    applyDebuff(unit, aura, 0)
 end
 state.removeDebuff = removeDebuff
 
 
-local function removeDebuffStack( unit, aura, stacks )
+local function removeDebuffStack(unit, aura, stacks)
     stacks = stacks or 1
-    local d = state.debuff[ aura ]
+    local d = state.debuff[aura]
     if not d then return 0 end
 
-    local removed = min( stacks, d.count )
+    local removed = min(stacks, d.count)
 
     if d.count > stacks then
         d.lastCount = d.count
-        d.count = max( 0, d.count - stacks )
+        d.count = max(0, d.count - stacks)
     else
-        removeDebuff( unit, aura )
+        removeDebuff(unit, aura)
     end
 
     return removed
@@ -1309,17 +1324,17 @@ end
 state.removeDebuffStack = removeDebuffStack
 
 
-local function setStance( stance )
-    for k in pairs( state.stance ) do
-        state.stance[ k ] = false
+local function setStance(stance)
+    for k in pairs(state.stance) do
+        state.stance[k] = false
     end
-    state.stance[ stance ] = true
+    state.stance[stance] = true
 end
 state.setStance = setStance
 
 
 local function interrupt()
-    state.removeDebuff( "target", "casting" )
+    state.removeDebuff("target", "casting")
 end
 state.interrupt = interrupt
 
@@ -1329,72 +1344,72 @@ local function timeToInterrupt()
     local casting = state.debuff.casting
     if casting.down or casting.v2 == 1 then return 3600 end
     if casting.v3 == 1 then return 0 end
-    return max( 0, casting.remains - ( Hekili.DB.profile.toggles.interrupts.castRemainingThreshold or 0.25 ) )
+    return max(0, casting.remains - (Hekili.DB.profile.toggles.interrupts.castRemainingThreshold or 0.25))
 end
 state.timeToInterrupt = timeToInterrupt
 
 
 -- Pet stuff.
-local function summonPet( name, duration, spec )
-    state.pet[ name ] = rawget( state.pet, name ) or {}
-    state.pet[ name ].name = name
-    state.pet[ name ].expires = state.query_time + ( duration or 3600 )
+local function summonPet(name, duration, spec)
+    state.pet[name] = rawget(state.pet, name) or {}
+    state.pet[name].name = name
+    state.pet[name].expires = state.query_time + (duration or 3600)
 
-    local model = class.pets[ name ]
+    local model = class.pets[name]
 
     if model then
-        state.pet[ name ].model = model  -- access id dynamically via metatable
-        if ( type( model.duration ) == "function" and model.duration() or model.duration ) == 3600 then
+        state.pet[name].model = model   -- access id dynamically via metatable
+        if (type(model.duration) == "function" and model.duration() or model.duration) == 3600 then
             state.pet.alive = true
         end
     end
 
     if spec then
-        state.pet[ name ].spec = spec
-        state.pet[ spec ] = state.pet[ name ]
+        state.pet[name].spec = spec
+        state.pet[spec] = state.pet[name]
     end
 end
 state.summonPet = summonPet
 
 
-local function dismissPet( name )
-    local pet = rawget( state.pet, name ) or {}
+local function dismissPet(name)
+    local pet = rawget(state.pet, name) or {}
     pet.name = name
     pet.expires = 0
     if pet.spec then
-        rawset( state.pet, pet.spec, nil )
+        rawset(state.pet, pet.spec, nil)
     end
-    state.pet[ name ] = pet
+    state.pet[name] = pet
 end
 state.dismissPet = dismissPet
 
 
-local function summonTotem( name, elem, duration )
+local function summonTotem(name, elem, duration)
     if elem then
-        state.totem[ elem ] = rawget( state.totem, elem ) or {}
-        state.totem[ elem ].name = name
-        state.totem[ elem ].expires = state.query_time + duration
-        summonPet( elem, duration )
+        state.totem[elem] = rawget(state.totem, elem) or {}
+        state.totem[elem].name = name
+        state.totem[elem].expires = state.query_time + duration
+        summonPet(elem, duration)
     end
 
-    summonPet( name, duration )
+    summonPet(name, duration)
 end
 state.summonTotem = summonTotem
 
 
 -- Useful for things like leap/charge/etc.
-local function setDistance( minimum, maximum )
+local function setDistance(minimum, maximum)
     state.target.minR = minimum or 5
     state.target.maxR = maximum or minimum or 5
-    state.target.distance = ( state.target.minR + state.target.maxR ) / 2
+    state.target.distance = (state.target.minR + state.target.maxR) / 2
 end
 state.setDistance = setDistance
 
 
 -- For tracking if we are currently channeling.
-function state.channelSpell( name, start, duration, id )
+function state.channelSpell(name, start, duration, id)
     if name then
-        local ability = class.abilities[ name ]
+        local ability = class.abilities[name]
 
         start = start or state.query_time
 
@@ -1404,51 +1419,52 @@ function state.channelSpell( name, start, duration, id )
 
         if not duration or duration == 0 then return end
 
-        applyBuff( "casting", duration, nil, id or ( ability and ability.id ) or 0, nil, 1, start )
+        applyBuff("casting", duration, nil, id or (ability and ability.id) or 0, nil, 1, start)
     end
 end
 
-function state.stopChanneling( reset, action )
+function state.stopChanneling(reset, action)
     if not reset then
         local spell = state.channel
-        local ability = spell and class.abilities[ spell ]
+        local ability = spell and class.abilities[spell]
 
         if spell then
-            if Hekili.ActiveDebug then Hekili:Debug( "Breaking channel of %s.", spell ) end
+            if Hekili.ActiveDebug then Hekili:Debug("Breaking channel of %s.", spell) end
             if ability and ability.breakchannel then ability.breakchannel() end
-            state:RemoveSpellEvents( spell )
-            state.removeBuff( "casting" )
+            state:RemoveSpellEvents(spell)
+            state.removeBuff("casting")
         end
     end
 
     -- This will lock in gains from channeling before the channel ends.
-    for resource, auras in pairs( class.resourceAuras ) do
-        if auras.casting then state[ resource ].actual = state[ resource ].current end
+    for resource, auras in pairs(class.resourceAuras) do
+        if auras.casting then state[resource].actual = state[resource].current end
     end
 
-    removeBuff( "casting" )
+    removeBuff("casting")
 end
+
 -- See mt_state for 'isChanneling'.
 
 
 -- Spell Targets, so I don't have to convert it in APLs any more.
 -- This will also factor in target caps and TTD restrictions.
-state.spell_targets = setmetatable( {}, {
-    __index = function( t, k )
+state.spell_targets = setmetatable({}, {
+    __index = function(t, k)
         if state.active_enemies == 1 then return 1 end
         if k == "any" then return state.active_enemies end
 
-        local ability = class.abilities[ k ]
+        local ability = class.abilities[k]
         if not ability then return state.active_enemies end
 
         local n = state.active_enemies
-        if ability.max_ttd then n = min( n, Hekili:GetNumTTDsBefore( ability.max_ttd + state.offset + state.delay ) ) end
-        if ability.min_ttd then n = min( n, Hekili:GetNumTTDsAfter( ability.min_ttd + state.offset + state.delay ) ) end
-        if ability.max_targets then n = min( n, ability.max_targets ) end
+        if ability.max_ttd then n = min(n, Hekili:GetNumTTDsBefore(ability.max_ttd + state.offset + state.delay)) end
+        if ability.min_ttd then n = min(n, Hekili:GetNumTTDsAfter(ability.min_ttd + state.offset + state.delay)) end
+        if ability.max_targets then n = min(n, ability.max_targets) end
 
         return n
     end
-} )
+})
 
 
 local raid_event_filter = {
@@ -1466,33 +1482,35 @@ local raid_event_filter = {
     down = true
 }
 
-state.raid_event = setmetatable( {}, {
-    __index = function( t, k )
-        return raid_event_filter[ k ] or raid_event_filter
+state.raid_event = setmetatable({}, {
+    __index = function(t, k)
+        return raid_event_filter[k] or raid_event_filter
     end
-} )
+})
 
 
 -- We'll pretend we're in an active raid_event.adds when there are multiple targets.
-state.raid_event.adds = setmetatable( {
+state.raid_event.adds = setmetatable({
     ["in"] = 3600, -- raid_event.adds.in appears to return time to the next add event, so we can just always say it's waaaay in the future.
 }, {
-    __index = function( t, k )
+    __index = function(t, k)
         if k == "up" or k == "exists" then
             return state.active_enemies > 1
         elseif k == "down" then
             return state.active_enemies <= 1
         elseif k == "count" then
-            return max( 0, state.active_enemies - 1 )
+            return max(0, state.active_enemies - 1)
         elseif k == "in" then
             return state.active_enemies > 1 and 0 or 3600
         elseif k == "duration" or k == "remains" then
             return state.active_enemies > 1 and state.fight_remains or 0
-        elseif raid_event_filter[k] ~= nil then return raid_event_filter[k] end
+        elseif raid_event_filter[k] ~= nil then
+            return raid_event_filter[k]
+        end
 
         return 0
     end
-} )
+})
 
 -- Resource Modeling!
 local forecastResources
@@ -1501,84 +1519,83 @@ do
     local events = {}
     local remains = {}
 
-    local function resourceModelSort( a, b )
-        return b == nil or ( a.next < b.next )
+    local function resourceModelSort(a, b)
+        return b == nil or (a.next < b.next)
     end
 
     -- Increase max forecast duration because Assassination is pooling hard this tier.
     local FORECAST_DURATION = 10.01
 
-    forecastResources = function( resource )
+    forecastResources = function(resource)
         if not resource then return end
 
         -- Initialize or wipe tables
-        wipe( events )
-        wipe( remains )
+        wipe(events)
+        wipe(remains)
 
         local now = state.now + state.offset
         local timeout = FORECAST_DURATION * state.haste
 
         if state.class.file == "DEATHKNIGHT" and state.runes then
             -- Adjust timeout based on rune cooldowns and regen models for Frost DK
-            timeout = max( timeout, 0.01 + state.runes.expiry[ 6 ] - state.query_time )
+            timeout = max(timeout, 0.01 + state.runes.expiry[6] - state.query_time)
         elseif state.spec.assassination then
-            timeout = max( timeout, 0.01 + state.energy.max / max( 0.001, state.energy.regen_combined or 0 ) )
+            timeout = max(timeout, 0.01 + state.energy.max / max(0.001, state.energy.regen_combined or 0))
         end
 
         timeout = timeout + state.gcd.remains
-        local r = state[ resource ]
+        local r = state[resource]
 
         -- Initialize forecast tables
-        remains[ resource ] = timeout
+        remains[resource] = timeout
 
         -- Ensure tables exist before wiping
         r.times = r.times or {}
         r.values = r.values or {}
-        wipe( r.times )
-        wipe( r.values )
+        wipe(r.times)
+        wipe(r.values)
 
         r.forecast = r.forecast or {}
-        r.forecast[ 1 ] = r.forecast[ 1 ] or {}
-        r.forecast[ 1 ].t = now
-        r.forecast[ 1 ].v = r.actual
-        r.forecast[ 1 ].e = "actual"
+        r.forecast[1] = r.forecast[1] or {}
+        r.forecast[1].t = now
+        r.forecast[1].v = r.actual
+        r.forecast[1].e = "actual"
         r.fcount = 1
 
         local models = r.regenModel
 
         if models then
-            for k, v in pairs( models ) do
-                if ( not v.resource or v.resource == resource ) and
-                   ( not v.spec or state.spec[ v.spec ] ) and
-                   ( not v.equip or state.equipped[ v.equip ] ) and
-                   ( not v.talent or state.talent[ v.talent ].enabled ) and
-                   ( not v.pvptalent or state.pvptalent[ v.pvptalent ].enabled ) and
-                   ( not v.aura or state[ v.debuff and "debuff" or "buff" ][ v.aura ].remains > 0 ) and
-                   ( not v.set_bonus or state.set_bonus[ v.set_bonus ] > 0 ) and
-                   ( not v.setting or state.settings[ v.setting ] ) and
-                   ( not v.swing or state.swings[ v.swing .. "_speed" ] and state.swings[ v.swing .. "_speed" ] > 0 ) and
-                   ( not v.channel or state.buff.casting.up and state.buff.casting.v3 == 1 and state.buff.casting.v1 == class.abilities[ v.channel ].id ) then
-
+            for k, v in pairs(models) do
+                if (not v.resource or v.resource == resource) and
+                    (not v.spec or state.spec[v.spec]) and
+                    (not v.equip or state.equipped[v.equip]) and
+                    (not v.talent or state.talent[v.talent].enabled) and
+                    (not v.pvptalent or state.pvptalent[v.pvptalent].enabled) and
+                    (not v.aura or state[v.debuff and "debuff" or "buff"][v.aura].remains > 0) and
+                    (not v.set_bonus or state.set_bonus[v.set_bonus] > 0) and
+                    (not v.setting or state.settings[v.setting]) and
+                    (not v.swing or state.swings[v.swing .. "_speed"] and state.swings[v.swing .. "_speed"] > 0) and
+                    (not v.channel or state.buff.casting.up and state.buff.casting.v3 == 1 and state.buff.casting.v1 == class.abilities[v.channel].id) then
                     local l = v.last()
                     if not l or type(l) ~= "number" then
-                        l = now  -- Fallback to current time if last() returns nil or invalid value
+                        l = now -- Fallback to current time if last() returns nil or invalid value
                     end
 
-                    local i = type( v.interval ) == "number" and v.interval or
-                              ( type( v.interval ) == "function" and v.interval( now, r.actual ) or
-                              ( type( v.interval ) == "string" and state[ v.interval ] or 0 ) )
+                    local i = type(v.interval) == "number" and v.interval or
+                        (type(v.interval) == "function" and v.interval(now, r.actual) or
+                            (type(v.interval) == "string" and state[v.interval] or 0))
 
                     v.next = l + i
                     v.name = k
 
                     if i > 0 and v.next >= 0 then
-                        table.insert( events, v )
+                        table.insert(events, v)
                     end
                 end
             end
         end
 
-        sort( events, resourceModelSort )
+        sort(events, resourceModelSort)
 
         local finish = now + timeout
         local prev = now
@@ -1587,83 +1604,84 @@ do
         local regen = r.regen_combined and r.regen_combined or r.regen or 0
         regen = regen > 0.001 and regen or 0
 
-        while ( #events > 0 and now <= finish and iter < 30 ) do
-            local e = events[ 1 ]
+        while (#events > 0 and now <= finish and iter < 30) do
+            local e = events[1]
             iter = iter + 1
 
             if e.next > finish or not r or not r.actual then
-                table.remove( events, 1 )
+                table.remove(events, 1)
             else
                 now = e.next
 
-                local bonus = regen * ( now - prev )
-                local stop = e.stop and e.stop( r.forecast[ r.fcount ].v )
-                local aura = e.aura and state[ e.debuff and "debuff" or "buff" ][ e.aura ].expires < now
-                local channel = ( e.channel and state.buff.casting.expires < now )
+                local bonus = regen * (now - prev)
+                local stop = e.stop and e.stop(r.forecast[r.fcount].v)
+                local aura = e.aura and state[e.debuff and "debuff" or "buff"][e.aura].expires < now
+                local channel = (e.channel and state.buff.casting.expires < now)
 
                 if stop or aura or channel then
-                    table.remove( events, 1 )
-                    local v = max( 0, min( r.max, r.forecast[ r.fcount ].v + bonus ) )
+                    table.remove(events, 1)
+                    local v = max(0, min(r.max, r.forecast[r.fcount].v + bonus))
                     local idx
 
-                    if r.forecast[ r.fcount ].t == now then
+                    if r.forecast[r.fcount].t == now then
                         idx = r.fcount
                     else
                         idx = r.fcount + 1
                     end
 
-                    r.forecast[ idx ] = r.forecast[ idx ] or {}
-                    r.forecast[ idx ].t = now
-                    r.forecast[ idx ].v = v
-                    r.forecast[ idx ].e = ( e.name or "none" ) .. ( stop and "-stop" or aura and "-aura" or channel and "-channel" or "-unknown" )
+                    r.forecast[idx] = r.forecast[idx] or {}
+                    r.forecast[idx].t = now
+                    r.forecast[idx].v = v
+                    r.forecast[idx].e = (e.name or "none") ..
+                    (stop and "-stop" or aura and "-aura" or channel and "-channel" or "-unknown")
                     r.fcount = idx
                 else
                     prev = now
 
-                    local val = r.fcount > 0 and r.forecast[ r.fcount ].v or r.actual
-                    local v = max( 0, min( r.max, val + bonus ) )
-                    v = max( 0, min( r.max, v + ( type( e.value ) == "number" and e.value or e.value( now ) ) ) )
+                    local val = r.fcount > 0 and r.forecast[r.fcount].v or r.actual
+                    local v = max(0, min(r.max, val + bonus))
+                    v = max(0, min(r.max, v + (type(e.value) == "number" and e.value or e.value(now))))
                     local idx
 
-                    if r.forecast[ r.fcount ].t == now then
+                    if r.forecast[r.fcount].t == now then
                         idx = r.fcount
                     else
                         idx = r.fcount + 1
                     end
 
-                    r.forecast[ idx ] = r.forecast[ idx ] or {}
-                    r.forecast[ idx ].t = now
-                    r.forecast[ idx ].v = v
-                    r.forecast[ idx ].e = e.name or "none"
+                    r.forecast[idx] = r.forecast[idx] or {}
+                    r.forecast[idx].t = now
+                    r.forecast[idx].v = v
+                    r.forecast[idx].e = e.name or "none"
                     r.fcount = idx
 
-                    local step = roundDown( type( e.interval ) == "number" and e.interval or
-                                           ( type( e.interval ) == "function" and e.interval( now, v ) or
-                                           ( type( e.interval ) == "string" and state[ e.interval ] or 0 ) ), 3 )
+                    local step = roundDown(type(e.interval) == "number" and e.interval or
+                        (type(e.interval) == "function" and e.interval(now, v) or
+                            (type(e.interval) == "string" and state[e.interval] or 0)), 3)
 
-                    remains[ e.resource ] = finish - e.next
+                    remains[e.resource] = finish - e.next
                     e.next = e.next + step
 
                     if e.next > finish or step < 0 or
-                       ( e.aura and state[ e.debuff and "debuff" or "buff" ][ e.aura ].expires < e.next ) or
-                       ( e.channel and state.buff.casting.expires < e.next ) then
-                        table.remove( events, 1 )
+                        (e.aura and state[e.debuff and "debuff" or "buff"][e.aura].expires < e.next) or
+                        (e.channel and state.buff.casting.expires < e.next) then
+                        table.remove(events, 1)
                     end
                 end
 
-                if #events > 1 then sort( events, resourceModelSort ) end
+                if #events > 1 then sort(events, resourceModelSort) end
             end
         end
 
-        if regen > 0 and r.forecast[ r.fcount ].v < r.max then
-            for k, v in pairs( remains ) do
-                local val = r.fcount > 0 and r.forecast[ r.fcount ].v or r.actual
+        if regen > 0 and r.forecast[r.fcount].v < r.max then
+            for k, v in pairs(remains) do
+                local val = r.fcount > 0 and r.forecast[r.fcount].v or r.actual
                 local idx = r.fcount + 1
 
-                r.forecast[ idx ] = r.forecast[ idx ] or {}
-                r.forecast[ idx ].t = finish
-                r.forecast[ idx ].v = min( r.max, val + ( v * regen ) )
-                r.forecast[ idx ].e = "to_max"
+                r.forecast[idx] = r.forecast[idx] or {}
+                r.forecast[idx].t = finish
+                r.forecast[idx].v = min(r.max, val + (v * regen))
+                r.forecast[idx].e = "to_max"
                 r.fcount = idx
             end
         end
@@ -1675,18 +1693,17 @@ end
 
 
 function state:ForecastSwingbasedResources()
-    for k, v in pairs( class.resources ) do
+    for k, v in pairs(class.resources) do
         if v and v.state and v.state.swingGen then
-            forecastResources( k )
+            forecastResources(k)
         end
     end
 end
 
-
-local resourceChange = function( amount, resource, overcap )
+local resourceChange = function(amount, resource, overcap)
     if amount == 0 then return false end
 
-    local r = state[ resource ]
+    local r = state[resource]
     if not r then
         return false -- Resource doesn't exist
     end
@@ -1698,11 +1715,13 @@ local resourceChange = function( amount, resource, overcap )
 
     local pre = r.current
 
-    if amount < 0 and r.spend then r.spend( -amount, resource, overcap )
-    elseif amount > 0 and r.gain then r.gain( amount, resource, overcap )
+    if amount < 0 and r.spend then
+        r.spend(-amount, resource, overcap)
+    elseif amount > 0 and r.gain then
+        r.gain(amount, resource, overcap)
     else
-        r.current = max( 0, r.current + amount )
-        if not overcap then r.current = min( r.max or 100, r.current ) end
+        r.current = max(0, r.current + amount)
+        if not overcap then r.current = min(r.max or 100, r.current) end
         r.actual = r.current
     end
 
@@ -1714,31 +1733,31 @@ end
 -- pregain - the hook is expected to return modified values for the resource (i.e., special cost reduction or refunds).
 -- gain    - the hook can do whatever it wants, but if it changes the same resource again it will cause another forecast.
 
-local gain = function( amount, resource, overcap, noforecast )
-    amount, resource, overcap = ns.callHook( "pregain", amount, resource, overcap )
-    resourceChange( amount, resource, overcap )
-    if not noforecast and resource ~= "health" then forecastResources( resource ) end
-    ns.callHook( "gain", amount, resource, overcap )
+local gain = function(amount, resource, overcap, noforecast)
+    amount, resource, overcap = ns.callHook("pregain", amount, resource, overcap)
+    resourceChange(amount, resource, overcap)
+    if not noforecast and resource ~= "health" then forecastResources(resource) end
+    ns.callHook("gain", amount, resource, overcap)
 end
 
-local rawGain = function( amount, resource, overcap )
-    resourceChange( amount, resource, overcap )
-    forecastResources( resource )
+local rawGain = function(amount, resource, overcap)
+    resourceChange(amount, resource, overcap)
+    forecastResources(resource)
 end
 
 
-local spend = function( amount, resource, noforecast )
-    amount, resource = ns.callHook( "prespend", amount, resource )
+local spend = function(amount, resource, noforecast)
+    amount, resource = ns.callHook("prespend", amount, resource)
     -- Spending never overcaps; pass false for overcap.
-    resourceChange( -amount, resource, false )
-    if not noforecast and resource ~= "health" then forecastResources( resource ) end
-    ns.callHook( "spend", amount, resource, false, true )
+    resourceChange(-amount, resource, false)
+    if not noforecast and resource ~= "health" then forecastResources(resource) end
+    ns.callHook("spend", amount, resource, false, true)
 end
 
-local rawSpend = function( amount, resource )
+local rawSpend = function(amount, resource)
     -- Spending never overcaps; pass false for overcap.
-    resourceChange( -amount, resource, false )
-    forecastResources( resource )
+    resourceChange(-amount, resource, false)
+    forecastResources(resource)
 end
 
 
@@ -1756,34 +1775,37 @@ do
     local workTable = {}
     state.recheckTimes = {}
 
-    local function recheckHelper( t, ... )
-        local n = select( "#", ... )
+    local function recheckHelper(t, ...)
+        local n = select("#", ...)
 
         for i = 1, n do
-            local x = select( i, ... )
-            if type( x ) == "number" then
+            local x = select(i, ...)
+            if type(x) == "number" then
                 if x > 0 and x >= state.delayMin and x <= state.delayMax then
-                    t[ x ] = true
-                -- elseif Hekili.ActiveDebug and x < 60 then
-                --    Hekili:Debug( "Excluded %.2f recheck time as it is outside our constraints ( %.2f - %.2f ).", x, state.delayMin or -1, state.delayMax or -1 )
+                    t[x] = true
+                    -- elseif Hekili.ActiveDebug and x < 60 then
+                    --    Hekili:Debug( "Excluded %.2f recheck time as it is outside our constraints ( %.2f - %.2f ).", x, state.delayMin or -1, state.delayMax or -1 )
                 end
             end
         end
     end
 
     local recurseRechecks
-    recurseRechecks = function( script, seen )
-        if not seen then seen = {}
-        else seen[ script.ID ] = script.Recheck or true end
+    recurseRechecks = function(script, seen)
+        if not seen then
+            seen = {}
+        else
+            seen[script.ID] = script.Recheck or true
+        end
 
         if script.Variables then
-            for _, var in ipairs( script.Variables ) do
-                local varIDs = state:GetVariableIDs( var )
+            for _, var in ipairs(script.Variables) do
+                local varIDs = state:GetVariableIDs(var)
                 if varIDs then
-                    for _, entry in ipairs( varIDs ) do
-                        if not seen[ entry.id ] then
-                            local subscript = scripts.DB[ entry.id ]
-                            if subscript then recurseRechecks( subscript, seen ) end
+                    for _, entry in ipairs(varIDs) do
+                        if not seen[entry.id] then
+                            local subscript = scripts.DB[entry.id]
+                            if subscript then recurseRechecks(subscript, seen) end
                         end
                     end
                 end
@@ -1793,69 +1815,69 @@ do
         return seen
     end
 
-    function state.recheck( ability, script, stack, block )
+    function state.recheck(ability, script, stack, block)
         local times = state.recheckTimes
-        wipe( workTable )
+        wipe(workTable)
 
         -- local debug = Hekili.ActiveDebug
         -- local steps = {}
 
         if script then
             if script.Recheck then
-                recheckHelper( workTable, script.Recheck() )
+                recheckHelper(workTable, script.Recheck())
             end
 
             if script.Variables then
                 if not script.AllRechecks then
-                    script.AllRechecks = recurseRechecks( script )
+                    script.AllRechecks = recurseRechecks(script)
 
-                    for id, func in pairs( script.AllRechecks ) do
-                        if type( func ) ~= "function" then script.AllRechecks[ id ] = nil end
+                    for id, func in pairs(script.AllRechecks) do
+                        if type(func) ~= "function" then script.AllRechecks[id] = nil end
                     end
                 end
 
-                for id, func in pairs( script.AllRechecks ) do
-                    recheckHelper( workTable, func() )
+                for id, func in pairs(script.AllRechecks) do
+                    recheckHelper(workTable, func())
                 end
             end
         end
 
         -- if Hekili.ActiveDebug then table.insert( steps, debugprofilestop() ) end
 
-        local data = class.abilities[ ability ]
+        local data = class.abilities[ability]
         if data and data.aura then
-            local a = state.buff[ data.aura ]
+            local a = state.buff[data.aura]
             if a and a.up then
-                recheckHelper( workTable, a.remains )
+                recheckHelper(workTable, a.remains)
             end
 
-            a = state.debuff[ data.aura ]
+            a = state.debuff[data.aura]
             if a and a.up then
-                recheckHelper( workTable, a.remains )
+                recheckHelper(workTable, a.remains)
             end
         end
 
         -- if Hekili.ActiveDebug then table.insert( steps, debugprofilestop() ) end
 
         if stack and #stack > 0 then
-            for i, caller in ipairs( stack ) do
+            for i, caller in ipairs(stack) do
                 local callScript = caller.script
-                callScript = callScript and scripts:GetScript( callScript )
+                callScript = callScript and scripts:GetScript(callScript)
 
                 if callScript and callScript.Recheck then
-                    recheckHelper( workTable, callScript.Recheck() )
+                    recheckHelper(workTable, callScript.Recheck())
 
                     if callScript.Variables then
                         if not callScript.AllRechecks then
-                            callScript.AllRechecks = recurseRechecks( callScript )
+                            callScript.AllRechecks = recurseRechecks(callScript)
 
-                            for id, func in pairs( callScript.AllRechecks ) do
-                                if type( func ) ~= "function" then callScript.AllRechecks[ id ] = nil end
+                            for id, func in pairs(callScript.AllRechecks) do
+                                if type(func) ~= "function" then callScript.AllRechecks[id] = nil end
                             end
                         end
 
-                        for id, func in pairs( callScript.AllRechecks ) do
-                            recheckHelper( workTable, func() )
+                        for id, func in pairs(callScript.AllRechecks) do
+                            recheckHelper(workTable, func())
                         end
                     end
                 end
@@ -1863,44 +1885,44 @@ do
         end
 
         if block and #block > 0 then
-            for i, caller in ipairs( block ) do
+            for i, caller in ipairs(block) do
                 local callScript = caller.script
-                callScript = callScript and scripts:GetScript( callScript )
+                callScript = callScript and scripts:GetScript(callScript)
 
                 if callScript and callScript.Recheck then
-                    recheckHelper( workTable, callScript.Recheck() )
+                    recheckHelper(workTable, callScript.Recheck())
                 end
 
                 if callScript and callScript.Recheck then
-                    recheckHelper( workTable, callScript.Recheck() )
+                    recheckHelper(workTable, callScript.Recheck())
 
                     if callScript.Variables then
                         if not callScript.AllRechecks then
-                            callScript.AllRechecks = recurseRechecks( callScript )
+                            callScript.AllRechecks = recurseRechecks(callScript)
 
-                            for id, func in pairs( callScript.AllRechecks ) do
-                                if type( func ) ~= "function" then callScript.AllRechecks[ id ] = nil end
+                            for id, func in pairs(callScript.AllRechecks) do
+                                if type(func) ~= "function" then callScript.AllRechecks[id] = nil end
                             end
                         end
 
-                        for id, func in pairs( callScript.AllRechecks ) do
-                            recheckHelper( workTable, func() )
+                        for id, func in pairs(callScript.AllRechecks) do
+                            recheckHelper(workTable, func())
                         end
                     end
                 end
             end
         end
 
-        wipe( times )
+        wipe(times)
 
-        for k, v in pairs( workTable ) do
+        for k, v in pairs(workTable) do
             -- if Hekili.ActiveDebug then Hekili:Debug( "%s - %s", tostring( k ), tostring( v ) ) end
-            times[ #times + 1 ] = k
+            times[#times + 1] = k
         end
 
-        ns.callHook( "recheck", times )
+        ns.callHook("recheck", times)
 
-        sort( times )
+        sort(times)
     end
 end
 
@@ -1928,40 +1950,40 @@ do
 
     if a then
         a.applied = true
-    a.caster = true
-    a.cooldown_remains = true
-    a.count = true
-    a.down = true
-    a.duration = true
-    a.expires = true
-    a.i_up = true
-    a.id = true
-    a.key = true
-    a.lastApplied = true
-    a.lastCount = true
-    a.last_application = true
-    a.last_expiry = true
-    a.max_stack = true
-    a.max_stacks = true
-    a.mine = true
-    a.name = true
-    a.rank = true
-    a.react = true
-    a.refreshable = true
-    a.remains = true
-    a.stack = true
-    a.stack_pct = true
-    a.stacks = true
-    a.tick_time_remains = true
-    a.ticking = true
-    a.ticks = true
-    a.ticks_remain = true
-    a.time_to_refresh = true
-    a.timeMod = true
-    a.unit = true
-    a.up = true
-    a.v2 = true
-    a.v3 = true
+        a.caster = true
+        a.cooldown_remains = true
+        a.count = true
+        a.down = true
+        a.duration = true
+        a.expires = true
+        a.i_up = true
+        a.id = true
+        a.key = true
+        a.lastApplied = true
+        a.lastCount = true
+        a.last_application = true
+        a.last_expiry = true
+        a.max_stack = true
+        a.max_stacks = true
+        a.mine = true
+        a.name = true
+        a.rank = true
+        a.react = true
+        a.refreshable = true
+        a.remains = true
+        a.stack = true
+        a.stack_pct = true
+        a.stacks = true
+        a.tick_time_remains = true
+        a.ticking = true
+        a.ticks = true
+        a.ticks_remain = true
+        a.time_to_refresh = true
+        a.timeMod = true
+        a.unit = true
+        a.up = true
+        a.v2 = true
+        a.v3 = true
     end
 end
 
@@ -1974,7 +1996,7 @@ local mt_state
 do
     local logged_state_errors = {}
 
-    local autoReset = setmetatable( {
+    local autoReset = setmetatable({
         -- Internal processing stuff.
         display = 1,
         latency = 1,
@@ -1987,8 +2009,8 @@ do
         expected_combat_length = 1,
         false_start = 1,
         fight_remains = 1,
-            interpolated_fight_remains = 1,
-            time_to_die = 1,
+        interpolated_fight_remains = 1,
+        time_to_die = 1,
         index = 1,
         longest_ttd = 1,
         now = 1,
@@ -2015,7 +2037,7 @@ do
         active_allies = 1,
         level = 1,
         mounted = 1,
-            is_mounted = 1,
+        is_mounted = 1,
         moving = 1,
         raid = 1,
         solo = 1,
@@ -2033,18 +2055,18 @@ do
         my_enemies = 1,
         stationary_enemies = 1,
         true_active_enemies = 1,
-            true_stationary_enemies = 1,
+        true_stationary_enemies = 1,
         true_my_enemies = 1,
 
         -- Stats (that really come from state.stat )
         crit = 1,
-            attack_crit = 1,
-            spell_crit = 1,
-            crit_chance = 1,
+        attack_crit = 1,
+        spell_crit = 1,
+        crit_chance = 1,
         haste = 1,
-            spell_haste = 1,
+        spell_haste = 1,
         melee_haste = 1,
-            attack_haste = 1,
+        attack_haste = 1,
         mastery_value = 1,
 
         -- ???
@@ -2082,18 +2104,18 @@ do
         charges = 1,
         charges_fractional = 1,
         charges_max = 1,
-            max_charges = 1,
+        max_charges = 1,
         cooldown_react = 1,
-            cooldown_up = 1,
+        cooldown_up = 1,
         cost = 1,
         -- These two belong with ability data because individual abilities have modeled crit modifiers.
         crit_pct_current = 1,
-            crit_percent_current = 1,
+        crit_percent_current = 1,
         execute_remains = 1,
         execute_time = 1,
         executing = 1,
         full_recharge_time = 1,
-            time_to_max_charges = 1,
+        time_to_max_charges = 1,
         hardcast = 1,
         in_flight = 1,
         in_flight_remains = 1,
@@ -2110,7 +2132,7 @@ do
         tick_time = 1,
         tick_time_remains = 1,
         ticking = 1,
-            up = 1,
+        up = 1,
         ticks = 1,
         ticks_remain = 1,
         time_to_refresh = 1,
@@ -2139,36 +2161,36 @@ do
         shapeshift = 1,
         vehicleui = 1, ]]
     }, {
-        __index = function ( t, k )
+        __index = function(t, k)
             -- Make sure to get anything that should be dynamic, in case it was set (via newindex).
-            if state.class.stateExprs[ k ] then return 1 end
-            if class.knownAuraAttributes[ k ] then return 1 end
-            if k:match( "^time_to_pct" ) then return 1 end
-            if k:match( "^incoming_damage" ) then return 1 end
-            if k:match( "^incoming_physical" ) then return 1 end
-            if k:match( "^incoming_magic" ) then return 1 end
-            if k:match( "^incoming_heal" ) then return 1 end
+            if state.class.stateExprs[k] then return 1 end
+            if class.knownAuraAttributes[k] then return 1 end
+            if k:match("^time_to_pct") then return 1 end
+            if k:match("^incoming_damage") then return 1 end
+            if k:match("^incoming_physical") then return 1 end
+            if k:match("^incoming_magic") then return 1 end
+            if k:match("^incoming_heal") then return 1 end
 
             -- I should reorder this file to avoid this.
-            local x = rawget( t, "GetVariableIDs" )
-            if x and x( t, k ) ~= nil then return 1 end
+            local x = rawget(t, "GetVariableIDs")
+            if x and x(t, k) ~= nil then return 1 end
 
-            x = rawget( t, "settings" )
-            if x and x[ k ] ~= nil then return 1 end
+            x = rawget(t, "settings")
+            if x and x[k] ~= nil then return 1 end
 
-            x = rawget( t, "toggle" )
-            if x and x[ k ] ~= nil then return 1 end
+            x = rawget(t, "toggle")
+            if x and x[k] ~= nil then return 1 end
         end
-    } )
+    })
 
     mt_state = {
-        __index = function( t, k )
+        __index = function(t, k)
             -- Simple rules for a resettable table.
             -- If the information won't change (unless explicitly set), assign the value so it's more efficient when used multiple times.
             -- If the information will change and is time-sensitive, just return the calculated value.
             -- If something externally will set the value and it needs to persist, do not include in the reset table.
             -- If it's possible that something will set a value during recommendations generation, the key should also be in the reset table so it'll get wiped for each new set of recommendations.
-            if state.class.stateExprs[ k ] then return state.class.stateExprs[ k ]() end
+            if state.class.stateExprs[k] then return state.class.stateExprs[k]() end
 
             -- Removed early numeric fast-path for 'chi'/'energy' because it broke table field access (chi.max, energy.max)
             -- and led to recursion when expressions mixed bare and dotted forms. Bare tokens now resolved via explicit
@@ -2178,69 +2200,103 @@ do
                 -- Provide conservative default until spec/state expression overwrites.
                 return 0
 
-            -- Internal processing stuff.
-            elseif k == "display" then t[k] = "Primary"
-            elseif k == "latency" then t[k] = select( 4, GetNetStats() ) / 1000
-            elseif k == "resetting" then t[k] = false
-            elseif k == "scriptID" then t[k] = "NilScriptID"
-            elseif k == "whitelist" then return nil
-            elseif k == "cycle" then t[k] = false
+                -- Internal processing stuff.
+            elseif k == "display" then
+                t[k] = "Primary"
+            elseif k == "latency" then
+                t[k] = select(4, GetNetStats()) / 1000
+            elseif k == "resetting" then
+                t[k] = false
+            elseif k == "scriptID" then
+                t[k] = "NilScriptID"
+            elseif k == "whitelist" then
+                return nil
+            elseif k == "cycle" then
+                t[k] = false
 
-            -- Timings.
-            elseif k == "delay" then t[k] = 0
+                -- Timings.
+            elseif k == "delay" then
+                t[k] = 0
             elseif k == "expected_combat_length" then
                 if not t.boss then t[k] = 3600 end
                 t[k] = t.longest_ttd + t.time -- + t.offset + t.delay
-            elseif k == "false_start" then return 0
+            elseif k == "false_start" then
+                return 0
             elseif k == "fight_remains" or k == "interpolated_fight_remains" or k == "time_to_die" then
                 local n = t.longest_ttd
-                if not n then Hekili:Error( "longest_ttd was nil, GetGreatestTTD is " .. ( Hekili:GetGreatestTTD() or "nil" ) .. "." ) end
-                return max( 1, t.longest_ttd - ( t.offset + t.delay ) )
-            elseif k == "index" then t[k] = 0
-            elseif k == "longest_ttd" then t[k] = Hekili:GetGreatestTTD()
-            elseif k == "now" then t[k] = GetTime()
-            elseif k == "offset" then t[k] = 0
-            elseif k == "query_time" then  return t.now + t.offset + t.delay
-            elseif k == "shortest_ttd" then t[k] = Hekili:GetLowestTTD()
+                if not n then Hekili:Error("longest_ttd was nil, GetGreatestTTD is " ..
+                    (Hekili:GetGreatestTTD() or "nil") .. ".") end
+                return max(1, t.longest_ttd - (t.offset + t.delay))
+            elseif k == "index" then
+                t[k] = 0
+            elseif k == "longest_ttd" then
+                t[k] = Hekili:GetGreatestTTD()
+            elseif k == "now" then
+                t[k] = GetTime()
+            elseif k == "offset" then
+                t[k] = 0
+            elseif k == "query_time" then
+                return t.now + t.offset + t.delay
+            elseif k == "shortest_ttd" then
+                t[k] = Hekili:GetLowestTTD()
             elseif k == "time" then
                 -- Calculate time in combat.
                 local c, fs = t.combat, t.false_start
                 if c == 0 and fs == 0 then return 0 end
-                return t.query_time - max( c, fs )
+                return t.query_time - max(c, fs)
             elseif type(k) == "string" and k:sub(1, 12) == "time_to_pct_" then
-                local percent = tonumber( k:sub( 13 ) ) or 0
-                return Hekili:GetGreatestTimeToPct( percent ) - ( t.offset + t.delay )
+                local percent = tonumber(k:sub(13)) or 0
+                return Hekili:GetGreatestTimeToPct(percent) - (t.offset + t.delay)
 
-            -- Current ability in question, or selected ability to compare to ability in question.
-            elseif k == "current_action" then return t.this_action
-            elseif k == "modified" then t[k] = false
-            elseif k == "selected_action" then return
-            elseif k == "selection" then return t.selection_time < 60
-            elseif k == "selection_time" then t[k] = 60
-            elseif k == "this_action" then t[k] = "wait"
-            elseif k == "this_list" then t[k] = "default"
+                -- Current ability in question, or selected ability to compare to ability in question.
+            elseif k == "current_action" then
+                return t.this_action
+            elseif k == "modified" then
+                t[k] = false
+            elseif k == "selected_action" then
+                return
+            elseif k == "selection" then
+                return t.selection_time < 60
+            elseif k == "selection_time" then
+                t[k] = 60
+            elseif k == "this_action" then
+                t[k] = "wait"
+            elseif k == "this_list" then
+                t[k] = "default"
 
-            -- Calculated from real event data.
-            elseif k == "aggro" then t[k] = ( UnitThreatSituation( "player" ) or 0 ) > 1
-            elseif k == "threat_situation" then t[k] = UnitThreatSituation( "player" ) or 0
+                -- Calculated from real event data.
+            elseif k == "aggro" then
+                t[k] = (UnitThreatSituation("player") or 0) > 1
+            elseif k == "threat_situation" then
+                t[k] = UnitThreatSituation("player") or 0
             elseif k == "threat_percent" then
-                local status, percent = UnitThreatSituation( "player" )
+                local status, percent = UnitThreatSituation("player")
                 t[k] = percent or 0
-            elseif k == "has_aggro" then t[k] = ( UnitThreatSituation( "player" ) or 0 ) >= 3
-            elseif k == "losing_aggro" then t[k] = ( UnitThreatSituation( "player" ) or 0 ) == 2
-            elseif k == "gaining_aggro" then t[k] = ( UnitThreatSituation( "player" ) or 0 ) == 1
-            elseif k == "no_threat" then t[k] = ( UnitThreatSituation( "player" ) or 0 ) == 0
+            elseif k == "has_aggro" then
+                t[k] = (UnitThreatSituation("player") or 0) >= 3
+            elseif k == "losing_aggro" then
+                t[k] = (UnitThreatSituation("player") or 0) == 2
+            elseif k == "gaining_aggro" then
+                t[k] = (UnitThreatSituation("player") or 0) == 1
+            elseif k == "no_threat" then
+                t[k] = (UnitThreatSituation("player") or 0) == 0
             elseif k == "threat_above_tank" then
-                local playerThreat = UnitThreatSituation( "player" ) or 0
+                local playerThreat = UnitThreatSituation("player") or 0
                 local tankThreat = 0
                 -- Check if we're above tank threat (simplified logic)
                 t[k] = playerThreat > 1
-            elseif k == "threat_safe" then t[k] = ( UnitThreatSituation( "player" ) or 0 ) <= 1
+            elseif k == "threat_safe" then
+                t[k] = (UnitThreatSituation("player") or 0) <= 1
             elseif k == "boss" then
-                t[k] = t.encounterID > 0 or UnitCanAttack( "player", "target" ) and ( UnitClassification( "target" ) == "worldboss" or UnitLevel( "target" ) == -1 )
-            elseif k == "encounter" then t[k] = t.encounterID > 0
-            elseif k == "group" then t[k] = t.group_members > 1
-            elseif k == "group_members" then t[k] = max( 1, GetNumGroupMembers() )
+                t[k] = t.encounterID > 0 or
+                UnitCanAttack("player", "target") and
+                (UnitClassification("target") == "worldboss" or UnitLevel("target") == -1)
+            elseif k == "encounter" then
+                t[k] = t.encounterID > 0
+            elseif k == "group" then
+                t[k] = t.group_members > 1
+            elseif k == "group_members" then
+                t[k] = max(1, GetNumGroupMembers())
             elseif k == "active_allies" then
                 local n = GetNumGroupMembers()
                 local maxUnits = IsInRaid() and 40 or 5
@@ -2249,21 +2305,26 @@ do
 
                 for i = 1, maxUnits do
                     local unit = token .. i
-                    if UnitExists( unit ) and not UnitIsDead( unit ) and UnitIsConnected( unit ) and UnitInRange( unit ) then
+                    if UnitExists(unit) and not UnitIsDead(unit) and UnitIsConnected(unit) and UnitInRange(unit) then
                         count = count + 1
                         if n == 1 then break end
                         n = n - 1
                     end
                 end
 
-                t[k] = max( 1, count )
-
-            elseif k == "level" then t[k] = UnitEffectiveLevel("player") or MAX_PLAYER_LEVEL
-            elseif k == "mounted" or k == "is_mounted" then t[k] = IsMounted()
-            elseif k == "moving" then t[k] = ( GetUnitSpeed("player") > 0 )
-            elseif k == "raid" then t[k] = IsInRaid() and t.group_members > 5
-            elseif k == "solo" then t[k] = t.group_members == 1
-            elseif k == "tanking" then t[k] = t.role.tank and t.aggro
+                t[k] = max(1, count)
+            elseif k == "level" then
+                t[k] = UnitEffectiveLevel("player") or MAX_PLAYER_LEVEL
+            elseif k == "mounted" or k == "is_mounted" then
+                t[k] = IsMounted()
+            elseif k == "moving" then
+                t[k] = (GetUnitSpeed("player") > 0)
+            elseif k == "raid" then
+                t[k] = IsInRaid() and t.group_members > 5
+            elseif k == "solo" then
+                t[k] = t.group_members == 1
+            elseif k == "tanking" then
+                t[k] = t.role.tank and t.aggro
             elseif k == "dispellable" then
                 -- Check if target has any dispellable debuffs
                 local hasDispellable = false
@@ -2284,63 +2345,64 @@ do
                 t[k] = hasDispellable
             elseif k == "group_health" then
                 local UnitGetTotalAbsorbs = UnitGetTotalAbsorbs or function() return 0 end
-                local health, maxHealth, absorbs = UnitHealth( "player" ), UnitHealthMax( "player" ), UnitGetTotalAbsorbs( "player" )
-                local count = 1                for i = 2, 5 do
+                local health, maxHealth, absorbs = UnitHealth("player"), UnitHealthMax("player"),
+                    UnitGetTotalAbsorbs("player")
+                local count = 1
+                for i = 2, 5 do
                     local token = "party" .. i
-                    if UnitExists( token ) and not UnitIsDeadOrGhost( token )then
+                    if UnitExists(token) and not UnitIsDeadOrGhost(token) then
                         count = count + 1
 
-                        health = health + UnitHealth( token )
-                        maxHealth = maxHealth + UnitHealthMax( token )
-                        absorbs = absorbs + UnitGetTotalAbsorbs( token )
+                        health = health + UnitHealth(token)
+                        maxHealth = maxHealth + UnitHealthMax(token)
+                        absorbs = absorbs + UnitGetTotalAbsorbs(token)
                     end
                 end
 
-                local effHealthPct = 100 * ( health + absorbs ) / maxHealth
+                local effHealthPct = 100 * (health + absorbs) / maxHealth
                 t[k] = effHealthPct
-
             elseif k == "at_risk" then
-                local health, maxHealth, absorbs = UnitHealth( "player" ), UnitHealthMax( "player" ), UnitGetTotalAbsorbs( "player" )
-                local count = ( 100 * ( health + absorbs ) / maxHealth ) < 70 and 1 or 0
+                local health, maxHealth, absorbs = UnitHealth("player"), UnitHealthMax("player"),
+                    UnitGetTotalAbsorbs("player")
+                local count = (100 * (health + absorbs) / maxHealth) < 70 and 1 or 0
 
                 for i = 2, 5 do
                     local token = "party" .. i
-                    if UnitExists( token ) and not UnitIsDeadOrGhost( token )then
-                        health = health + UnitHealth( token )
-                        maxHealth = maxHealth + UnitHealthMax( token )
-                        absorbs = absorbs + UnitGetTotalAbsorbs( token )
+                    if UnitExists(token) and not UnitIsDeadOrGhost(token) then
+                        health = health + UnitHealth(token)
+                        maxHealth = maxHealth + UnitHealthMax(token)
+                        absorbs = absorbs + UnitGetTotalAbsorbs(token)
 
-                        if ( 100 * ( health + absorbs ) / maxHealth ) < 70 and 1 or 0 then count = count + 1 end
+                        if (100 * (health + absorbs) / maxHealth) < 70 and 1 or 0 then count = count + 1 end
                     end
                 end
 
                 t[k] = count
 
-            -- Enemy counting.
+                -- Enemy counting.
             elseif k == "active_enemies" then
                 local n = t.true_active_enemies
-                if t.min_targets > 0 then n = max( t.min_targets, n ) end
-                if t.max_targets > 0 then n = min( t.max_targets, n ) end
-                t[k] = max( 1, n or 1 )
-
+                if t.min_targets > 0 then n = max(t.min_targets, n) end
+                if t.max_targets > 0 then n = min(t.max_targets, n) end
+                t[k] = max(1, n or 1)
             elseif k == "cycle_enemies" then
                 if not t.settings.cycle or t.active_enemies == 1 then return 1 end
 
                 local targets = t.true_active_enemies
                 local timeframe = t.delay + t.offset
 
-                local minTTD = timeframe + min( t.cycleInfo.minTTD or 10, t.settings.cycle_min )
+                local minTTD = timeframe + min(t.cycleInfo.minTTD or 10, t.settings.cycle_min)
                 local maxTTD = t.cycleInfo.maxTTD
 
                 if not t.HasCyclingDebuff() and t.settings.cycleDebuff then
                     -- See if the specialization has a default aura to use for cycling (i.e., Unholy using Festering Wound).
-                    minTTD = max( minTTD, t.debuff[ t.settings.cycleDebuff ].duration / 2 )
+                    minTTD = max(minTTD, t.debuff[t.settings.cycleDebuff].duration / 2)
                 end
 
-                targets = targets - Hekili:GetNumTTDsBefore( minTTD )
+                targets = targets - Hekili:GetNumTTDsBefore(minTTD)
 
                 if maxTTD then
-                    targets = targets - Hekili:GetNumTTDsAfter( maxTTD )
+                    targets = targets - Hekili:GetNumTTDsAfter(maxTTD)
                 end
 
                 -- So the reason we're stuck here is that we may need "cycle_enemies" when we *aren't* cycling targets.
@@ -2350,68 +2412,82 @@ do
                 -- if t.min_targets > 0 then targets = max( t.min_targets, targets ) end
 
                 -- cap cycle_targets if forced into single-target model.
-                if t.max_targets > 0 then targets = min( t.max_targets, targets ) end
+                if t.max_targets > 0 then targets = min(t.max_targets, targets) end
 
                 -- if Hekili.ActiveDebug then Hekili:Debug( "cycle min:%.2f, max:%.2f, ae:%d, before:%d, after:%d, cycle_enemies:%d", minTTD or 0, maxTTD or 0, t.active_enemies, minTTD and Hekili:GetNumTTDsBefore( minTTD ) or 0, maxTTD and Hekili:GetNumTTDsAfter( maxTTD ) or 0, max( 1, targets ) ) end
 
-                return max( 1, targets )
-
-            elseif k == "desired_targets" then t[k] = 1
-            elseif k == "max_targets" then t[k] = 0
-            elseif k == "min_targets" then t[k] = 0
+                return max(1, targets)
+            elseif k == "desired_targets" then
+                t[k] = 1
+            elseif k == "max_targets" then
+                t[k] = 0
+            elseif k == "min_targets" then
+                t[k] = 0
             elseif k == "my_enemies" then
                 local n = t.true_my_enemies
-                if t.min_targets > 0 then n = max( t.min_targets, n ) end
-                if t.max_targets > 0 then n = min( t.max_targets, n ) end
-                t[k] = max( 1, n )
-
+                if t.min_targets > 0 then n = max(t.min_targets, n) end
+                if t.max_targets > 0 then n = min(t.max_targets, n) end
+                t[k] = max(1, n)
             elseif k == "stationary_enemies" then
                 local n = t.true_stationary_enemies
-                if t.min_targets > 0 then n = max( t.min_targets, n ) end
-                if t.max_targets > 0 then n = min( t.max_targets, n ) end
-                t[k] = max( 1, n )
-
+                if t.min_targets > 0 then n = max(t.min_targets, n) end
+                if t.max_targets > 0 then n = min(t.max_targets, n) end
+                t[k] = max(1, n)
             elseif k == "true_active_enemies" or k == "true_stationary_enemies" then
                 local n, s = ns.getNumberTargets()
-                t.true_active_enemies = max( 1, n or 1 )
-                t.true_stationary_enemies = max( 1, s or 1 )
+                t.true_active_enemies = max(1, n or 1)
+                t.true_stationary_enemies = max(1, s or 1)
+            elseif k == "true_my_enemies" then
+                t[k] = max(1, ns.numTargets())
 
-            elseif k == "true_my_enemies" then t[k] = max( 1, ns.numTargets() )
+                -- Stats (that refer to state.stat, generally)
+            elseif k == "crit" or k == "spell_crit" or k == "attack_crit" then
+                return (t.stat.crit / 100)
+            elseif k == "haste" or k == "spell_haste" then
+                return (1 / (1 + t.stat.spell_haste))
+            elseif k == "raw_haste_pct" then
+                return t.stat.haste
+            elseif k == "melee_haste" or k == "attack_haste" then
+                return (1 / (1 + t.stat.melee_haste))
+            elseif k == "mastery_value" then
+                return t.stat.mastery_value
 
-            -- Stats (that refer to state.stat, generally)
-            elseif k == "crit" or k == "spell_crit" or k == "attack_crit" then return ( t.stat.crit / 100 )
-            elseif k == "haste" or k == "spell_haste" then return ( 1 / ( 1 + t.stat.spell_haste ) )
-            elseif k == "raw_haste_pct" then return t.stat.haste
-            elseif k == "melee_haste" or k == "attack_haste" then return ( 1 / ( 1 + t.stat.melee_haste ) )
-            elseif k == "mastery_value" then return t.stat.mastery_value
+                -- ???; assume it's "durable" and don't expect it to get reset.
+            elseif k == "active" then
+                return false
+            elseif k == "cast_target" then
+                return "nobody"
+            elseif k == "miss_react" then
+                return false
+            elseif k == "ranged" then
+                return false
+            elseif k == "wait_for_gcd" then
+                return false
 
-            -- ???; assume it's "durable" and don't expect it to get reset.
-            elseif k == "active" then return false
-            elseif k == "cast_target" then return "nobody"
-            elseif k == "miss_react" then return false
-            elseif k == "ranged" then return false
-            elseif k == "wait_for_gcd" then return false
+                -- Specialization State Expressions
+            elseif k == "effective_combo_points" then
+                return 0
+            elseif k == "prowling" then
+                return t.buff.prowl.up or (t.buff.cat_form.up and t.buff.shadowform.up)
 
-            -- Specialization State Expressions
-            elseif k == "effective_combo_points" then return 0
-            elseif k == "prowling" then return t.buff.prowl.up or ( t.buff.cat_form.up and t.buff.shadowform.up )
+                -- Durable stuff; should get manually set if/when needed.
+                -- Don't reset.
 
-            -- Durable stuff; should get manually set if/when needed.
-            -- Don't reset.
-
-            -- Channels.
+                -- Channels.
             elseif k == "channel" then
                 if t.buff.casting.down or t.buff.casting.v3 ~= 1 then return nil end
-                local chan = class.abilities[ t.buff.casting.v1 ]
+                local chan = class.abilities[t.buff.casting.v1]
 
                 if chan then return chan.key end
-                return tostring( t.buff.casting.v1 )
+                return tostring(t.buff.casting.v1)
+            elseif k == "channel_breakable" then
+                t[k] = false
+            elseif k == "channel_remains" then
+                return t.buff.casting.up and t.buff.casting.v3 == 1 and t.buff.casting.remains or 0
+            elseif k == "channeling" then
+                return t.buff.casting.up and t.buff.casting.v3 == 1
 
-            elseif k == "channel_breakable" then t[k] = false
-            elseif k == "channel_remains" then return t.buff.casting.up and t.buff.casting.v3 == 1 and t.buff.casting.remains or 0
-            elseif k == "channeling" then return t.buff.casting.up and t.buff.casting.v3 == 1
-
-            -- Real incoming damage/healing information.
+                -- Real incoming damage/healing information.
             elseif type(k) == "string" and k:sub(1, 15) == "incoming_damage" then
                 local remains = k:sub(17)
                 local time = remains:match("^(%d+)[m]?s")
@@ -2421,16 +2497,15 @@ do
                     -- Error("ERR: " .. remains )
                 end
 
-                time = tonumber( time )
+                time = tonumber(time)
 
                 if time > 100 then
-                    t[k] = ns.damageInLast( time / 1000 )
+                    t[k] = ns.damageInLast(time / 1000)
                 else
-                    t[k] = ns.damageInLast( min( 15, time ) )
+                    t[k] = ns.damageInLast(min(15, time))
                 end
 
-                return t[ k ]
-
+                return t[k]
             elseif type(k) == "string" and k:sub(1, 17) == "incoming_physical" then
                 local remains = k:sub(18, 24) == "_damage" and k:sub(26) or k:sub(19)
                 local time = remains:match("^(%d+)[m]?s")
@@ -2440,16 +2515,15 @@ do
                     -- Error("ERR: " .. remains )
                 end
 
-                time = tonumber( time )
+                time = tonumber(time)
 
                 if time > 100 then
-                    t[k] = ns.damageInLast( time / 1000, true )
+                    t[k] = ns.damageInLast(time / 1000, true)
                 else
-                    t[k] = ns.damageInLast( min( 15, time ), true )
+                    t[k] = ns.damageInLast(min(15, time), true)
                 end
 
-                return t[ k ]
-
+                return t[k]
             elseif type(k) == "string" and k:sub(1, 14) == "incoming_magic" then
                 local remains = k:sub(15, 21) == "_damage" and k:sub(23) or k:sub(16)
                 local time = remains:match("^(%d+)[m]?s")
@@ -2459,16 +2533,15 @@ do
                     -- Error("ERR: " .. remains )
                 end
 
-                time = tonumber( time )
+                time = tonumber(time)
 
                 if time > 100 then
-                    t[k] = ns.damageInLast( time / 1000, false )
+                    t[k] = ns.damageInLast(time / 1000, false)
                 else
-                    t[k] = ns.damageInLast( min( 15, time ), false )
+                    t[k] = ns.damageInLast(min(15, time), false)
                 end
 
-                return t[ k ]
-
+                return t[k]
             elseif type(k) == "string" and k:sub(1, 13) == "incoming_heal" then
                 local remains = k:sub(15)
                 local time = remains:match("^(%d+)[m]?s")
@@ -2478,32 +2551,33 @@ do
                     -- Error("ERR: " .. remains)
                 end
 
-                time = tonumber( time )
+                time = tonumber(time)
 
                 if time > 100 then
-                    t[ k ] = ns.healingInLast( time / 1000 )
+                    t[k] = ns.healingInLast(time / 1000)
                 else
-                    t[ k ] = ns.healingInLast( min( 15, time ) )
+                    t[k] = ns.healingInLast(min(15, time))
                 end
 
-                return t[ k ]
-
+                return t[k]
             end
 
             -- If we successfully calculated during the above, return it.
-            local value = rawget( t, k )
+            local value = rawget(t, k)
             if value ~= nil then return value end
 
             -- The next block are values that reference an ability.
             local action = t.this_action
-            local model = t.action[ action ]
-            local ability = class and class.abilities and class.abilities[ action ]
-            local cooldown = t.cooldown[ action ]
+            local model = t.action[action]
+            local ability = class and class.abilities and class.abilities[action]
+            local cooldown = t.cooldown[action]
 
             -- MoP: Empowerment spells don't exist, removed this check
 
-            if k == "action_cooldown" then return ability and ability.cooldown or 0
-            elseif k == "cast_delay" then return 0
+            if k == "action_cooldown" then
+                return ability and ability.cooldown or 0
+            elseif k == "cast_delay" then
+                return 0
             elseif k == "cast_regen" then
                 local resType = class.primaryResource
                 local amount, resource
@@ -2519,19 +2593,25 @@ do
 
                 resType = resource or resType
 
-                local regen = t[ resType ].regen
+                local regen = t[resType].regen
                 if regen == 0.001 then regen = 0 end
 
                 if not amount then return t.gcd.execute * regen end
-                return ( max( t.gcd.execute, ability.cast or 0 ) * regen ) - ( ability.spend or 0 )
-
-            elseif k == "cast_time" then return ability and ability.cast or 0
-            elseif k == "charges" then return cooldown.charges
-            elseif k == "charges_fractional" then return cooldown.charges_fractional
-            elseif k == "charges_max" or k == "max_charges" then return ability and ability.charges or 1
-            elseif k == "cooldown_duration" then return cooldown.duration
-            elseif k == "cooldown_react" or k == "cooldown_up" then return cooldown.remains == 0
-            elseif k == "cooldown_remains" then return cooldown.remains
+                return (max(t.gcd.execute, ability.cast or 0) * regen) - (ability.spend or 0)
+            elseif k == "cast_time" then
+                return ability and ability.cast or 0
+            elseif k == "charges" then
+                return cooldown.charges
+            elseif k == "charges_fractional" then
+                return cooldown.charges_fractional
+            elseif k == "charges_max" or k == "max_charges" then
+                return ability and ability.charges or 1
+            elseif k == "cooldown_duration" then
+                return cooldown.duration
+            elseif k == "cooldown_react" or k == "cooldown_up" then
+                return cooldown.remains == 0
+            elseif k == "cooldown_remains" then
+                return cooldown.remains
             elseif k == "cost" then
                 if not ability then return 0 end
 
@@ -2540,33 +2620,41 @@ do
 
                 c = ability.spend
                 if c and c > 0 and c < 1 then
-                    local mm = t[ ability.spendType or class.primaryResource ] and t[ ability.spendType or class.primaryResource ].modmax or 1
+                    local mm = t[ability.spendType or class.primaryResource] and
+                    t[ability.spendType or class.primaryResource].modmax or 1
                     c = c * mm
                 end
                 return c or 0
-
-            elseif k == "crit_pct_current" or k == "crit_percent_current" then return ability and ability.critical or t.stat.crit
-
+            elseif k == "crit_pct_current" or k == "crit_percent_current" then
+                return ability and ability.critical or t.stat.crit
             elseif k == "execute_remains" then
                 -- TODO:  Check out if this is functioning as expected.
                 -- Should buff.casting already suffice for a cast?  A queued cast should already trigger a casting buff.
-                return ( t:IsCasting( action ) and max( t:QueuedCastRemains( action ), t.gcd.remains ) ) or ( t.prev[1][ action ] and t.gcd.remains ) or 0
-
-            elseif k == "execute_time" then return max( t.gcd.execute, ability and ability.cast or 0 )
-            elseif k == "executing" then return t:IsCasting( action ) or ( t.prev[ 1 ][ action ] and t.gcd.remains > 0 )
-            elseif k == "full_recharge_time" or k == "time_to_max_charges" then return cooldown.full_recharge_time
-            elseif k == "hardcast" then return false -- will set to true if/when a spell is hardcast.
-            elseif k == "in_flight" or k == "in_flight_to_target" then return model and model.in_flight or false
-            elseif k == "in_flight_remains" then return model and model.in_flight_remains or 0
-            elseif k == "in_range" then return model.in_range
-            elseif k == "recharge" then return cooldown.recharge
-            elseif k == "recharge_time" then return cooldown.recharge_time
+                return (t:IsCasting(action) and max(t:QueuedCastRemains(action), t.gcd.remains)) or
+                (t.prev[1][action] and t.gcd.remains) or 0
+            elseif k == "execute_time" then
+                return max(t.gcd.execute, ability and ability.cast or 0)
+            elseif k == "executing" then
+                return t:IsCasting(action) or (t.prev[1][action] and t.gcd.remains > 0)
+            elseif k == "full_recharge_time" or k == "time_to_max_charges" then
+                return cooldown.full_recharge_time
+            elseif k == "hardcast" then
+                return false                         -- will set to true if/when a spell is hardcast.
+            elseif k == "in_flight" or k == "in_flight_to_target" then
+                return model and model.in_flight or false
+            elseif k == "in_flight_remains" then
+                return model and model.in_flight_remains or 0
+            elseif k == "in_range" then
+                return model.in_range
+            elseif k == "recharge" then
+                return cooldown.recharge
+            elseif k == "recharge_time" then
+                return cooldown.recharge_time
             elseif k == "travel_time" then
                 local f, v = ability.flightTime or 0, ability.velocity or 0
                 if f > 0 then return f end
                 if v == 0 then return 0 end
                 return t.target.maxR / v
-
             end
 
             --[[ None of the Abilities/Actions/Cooldowns block currently sets a value, so there's no need for this.
@@ -2574,8 +2662,9 @@ do
             if value ~= nil then return value end ]]
 
             local aura_name = ability and ability.aura or t.this_action
-            local aura = aura_name and class and class.auras and class.auras[ aura_name ]
-            local app = aura and ( ( t.buff[ aura_name ].up and t.buff[ aura_name ] ) or ( t.debuff[ aura_name ].up and t.debuff[ aura_name ] ) or t.buff[ aura_name ] )
+            local aura = aura_name and class and class.auras and class.auras[aura_name]
+            local app = aura and
+            ((t.buff[aura_name].up and t.buff[aura_name]) or (t.debuff[aura_name].up and t.debuff[aura_name]) or t.buff[aura_name])
 
             if not app then
                 if ability and ability.startsCombat then
@@ -2585,10 +2674,10 @@ do
                 end
             end
 
-            if aura and class.knownAuraAttributes[ k ] then
+            if aura and class.knownAuraAttributes[k] then
                 -- Buffs, debuffs...
 
-                value = app and app[ k ]
+                value = app and app[k]
                 if value ~= nil then return value end
 
                 -- This uses the default aura duration (if available) to keep pandemic windows accurate.
@@ -2597,23 +2686,33 @@ do
                 -- This allows for overridden tick times on a particular application of an aura (i.e., Exsanguinate).
                 -- local tick_time = app and app.tick_time or ( aura and aura.tick_time ) or ( 3 * t.haste )
 
-                if k == "up" or k == "ticking" then return false
-                elseif k == "down" then return true
-                elseif k == "duration" then return ( aura.duration or 15 )
-                elseif k == "refreshable" then return true
+                if k == "up" or k == "ticking" then
+                    return false
+                elseif k == "down" then
+                    return true
+                elseif k == "duration" then
+                    return (aura.duration or 15)
+                elseif k == "refreshable" then
+                    return true
                     -- When cycling targets, we want to consider that there may be a valid other target.
                     -- if t.isCyclingTargets( action, aura_name ) then return true end
                     -- if app then return app.remains < 0.3 * ( aura.duration or 15 ) end
                     -- return true
-
-                elseif k == "remains" then return 0
+                elseif k == "remains" then
+                    return 0
                     -- if app then return app.remains end
                     -- return 0
-                elseif k == "tick_time" then return aura.tick_time or ( 3 * state.haste )
-                elseif k == "tick_time_remains" then return 0
-                elseif k == "ticks" then return ( aura.duration or 15 ) / ( aura.tick_time or ( 3 * haste ) )
-                elseif k == "ticks_remain" then return 0
-                elseif k == "time_to_refresh" then return 0 end
+                elseif k == "tick_time" then
+                    return aura.tick_time or (3 * state.haste)
+                elseif k == "tick_time_remains" then
+                    return 0
+                elseif k == "ticks" then
+                    return (aura.duration or 15) / (aura.tick_time or (3 * haste))
+                elseif k == "ticks_remain" then
+                    return 0
+                elseif k == "time_to_refresh" then
+                    return 0
+                end
             end
 
             -- Fallback to action cast time; found in Augmentation APL.
@@ -2624,34 +2723,34 @@ do
             -- before the spec's stateExprs/resources are registered. Maintain a small recursion sentinel table.
             if k == "_resolving" then
                 -- Directly return/create the sentinel table without invoking further __index recursion.
-                local r = rawget( state, "_resolving" )
+                local r = rawget(state, "_resolving")
                 if not r then
                     r = { depth = 0 }
-                    rawset( state, "_resolving", r )
+                    rawset(state, "_resolving", r)
                 end
                 return r
             end
-            local _resolving = rawget( state, "_resolving" )
+            local _resolving = rawget(state, "_resolving")
             if not _resolving then
                 _resolving = { depth = 0 }
-                rawset( state, "_resolving", _resolving )
+                rawset(state, "_resolving", _resolving)
             end
             -- If a seeded resource table exists (e.g., state.energy, state.combo_points), return the table so
             -- callers can access fields like .current/.max during early emulation before spec finishes init.
             do
-                local seeded = rawget( t, k ) or rawget( state, k )
-                if type( seeded ) == 'table' and ( seeded.current ~= nil or seeded.actual ~= nil ) then
+                local seeded = rawget(t, k) or rawget(state, k)
+                if type(seeded) == 'table' and (seeded.current ~= nil or seeded.actual ~= nil) then
                     return seeded
                 end
             end
             if class and class.resources and class.resources[k] then
                 -- Depth + per-key sentinel to prevent runaway recursion loops.
-                if _resolving[k] or ( _resolving.depth or 0 ) > 8 then
+                if _resolving[k] or (_resolving.depth or 0) > 8 then
                     return 0
                 end
                 _resolving[k] = true
-                _resolving.depth = ( _resolving.depth or 0 ) + 1
-                local res = rawget( t, k ) or state[k]
+                _resolving.depth = (_resolving.depth or 0) + 1
+                local res = rawget(t, k) or state[k]
                 -- If the resource is a table, return the table to support downstream dotted access (energy.current).
                 -- If it's a number, return the numeric value.
                 local val = res
@@ -2660,13 +2759,13 @@ do
                 return val
             end
 
-            if t:GetVariableIDs( k ) then return t.variable[ k ] end
-            if t.settings[ k ] ~= nil then return t.settings[ k ] end
-            if t.toggle[ k ]   ~= nil then return t.toggle[ k ] end
+            if t:GetVariableIDs(k) then return t.variable[k] end
+            if t.settings[k] ~= nil then return t.settings[k] end
+            if t.toggle[k] ~= nil then return t.toggle[k] end
 
             -- Check for state tables
-            if state.class.stateTables and state.class.stateTables[ k ] then
-                return state.class.stateTables[ k ]
+            if state.class.stateTables and state.class.stateTables[k] then
+                return state.class.stateTables[k]
             end
 
             -- Provide safe defaults for core tables that may be referenced by scripts during early init.
@@ -2680,25 +2779,27 @@ do
             -- Retain only a safeguard for time_to_max_energy.
             if k == 'time_to_max_energy' then return 0 end
 
-            if k ~= "scriptID" and not ( logged_state_errors[ t.scriptID ] and logged_state_errors[ t.scriptID ][ k ] ) then
+            if k ~= "scriptID" and not (logged_state_errors[t.scriptID] and logged_state_errors[t.scriptID][k]) then
                 -- Provide a safe default for early queries of derived expressions that may be registered later.
                 if k == 'time_to_max_energy' then return 0 end
                 local key_str = type(k) == "function" and tostring(k) or k
-                Hekili:Error( "Unknown key '" .. key_str .. "' in emulated environment for [ " .. t.scriptID .. " : " .. t.this_action .. " ].\n\n" .. debugstack() )
-                logged_state_errors[ t.script ] = logged_state_errors[ t.script ] or {}
-                logged_state_errors[ t.script ][ k ] = true
+                Hekili:Error("Unknown key '" ..
+                key_str ..
+                "' in emulated environment for [ " .. t.scriptID .. " : " .. t.this_action .. " ].\n\n" .. debugstack())
+                logged_state_errors[t.script] = logged_state_errors[t.script] or {}
+                logged_state_errors[t.script][k] = true
             end
         end,
-        __newindex = function( t, k, v )
-            if v ~= nil and autoReset[ k ] then
-                Mark( t, k )
+        __newindex = function(t, k, v)
+            if v ~= nil and autoReset[k] then
+                Mark(t, k)
             end
-            rawset( t, k, v )
+            rawset(t, k, v)
         end
     }
 
     -- Guard for environments where SuperMark signature is unknown
-    local ok = pcall(function() ns.SuperMark( state, autoReset ) end)
+    local ok = pcall(function() ns.SuperMark(state, autoReset) end)
     if not ok and ns.SuperMark then
         pcall(function() ns.SuperMark() end)
     end
@@ -2717,141 +2818,102 @@ ns.metatables.mt_spec = mt_spec
 local mt_stat = {
     __index = function(t, k)
         if k == "strength" then
-            t[k] = UnitStat( "player", 1 )
-
+            t[k] = UnitStat("player", 1)
         elseif k == "agility" then
-            t[k] = UnitStat( "player", 2 )
-
+            t[k] = UnitStat("player", 2)
         elseif k == "stamina" then
-            t[k] = UnitStat( "player", 3 )
-
+            t[k] = UnitStat("player", 3)
         elseif k == "intellect" then
-            t[k] = UnitStat( "player", 4 )
-
+            t[k] = UnitStat("player", 4)
         elseif k == "spirit" then
-            t[k] = UnitStat( "player", 5 )
-
+            t[k] = UnitStat("player", 5)
         elseif k == "health" then
             return state.health and state.health.current or 50000
-
         elseif k == "maximum_health" then
             return state.health and state.health.max or 50000
-
         elseif k == "health_pct" then
             return state.health and state.health.pct or 100
-
         elseif k == "mana" then
             return state.mana and state.mana.current or 0
-
         elseif k == "maximum_mana" then
             return state.mana and state.mana.max or 0
-
         elseif k == "rage" then
             return state.rage and state.rage.current or 0
-
         elseif k == "maximum_rage" then
             return state.rage and state.rage.max or 0
-
         elseif k == "energy" then
             return state.energy and state.energy.current or 0
-
         elseif k == "maximum_energy" then
             return state.energy and state.energy.max or 0
-
         elseif k == "focus" then
             return state.focus and state.focus.current or 0
-
         elseif k == "maximum_focus" then
             return state.focus and state.focus.max or 0
-
         elseif k == "runic" or k == "runic_power" then
             return state.runic_power and state.runic_power.current or 0
-
         elseif k == "maximum_runic" or k == "maximum_runic_power" then
             return state.runic_power and state.runic_power.max or 0
-
         elseif k == "spell_power" then
             t[k] = GetSpellBonusDamage(7)
-
         elseif k == "mp5" then
             t[k] = state.mana and state.mana.regen or 0
-
         elseif k == "attack_power" then
             t[k] = UnitAttackPower("player") + UnitWeaponAttackPower("player")
-
         elseif k == "crit_rating" then
             t[k] = GetCombatRating(CR_CRIT_MELEE)
-
         elseif k == "haste_rating" then
             t[k] = GetCombatRating(CR_HASTE_MELEE)
-
         elseif k == "weapon_dps" or k == "weapon_offhand_dps" then
-            local low, high, offlow, offhigh = UnitDamage( "player" )
-            t.weapon_dps = 0.5 * ( low + high )
-            t.weapon_offhand_dps = 0.5 * ( low + high )
-
+            local low, high, offlow, offhigh = UnitDamage("player")
+            t.weapon_dps = 0.5 * (low + high)
+            t.weapon_offhand_dps = 0.5 * (low + high)
         elseif k == "weapon_speed" or k == "weapon_offhand_speed" then
-            local main, off = UnitAttackSpeed( "player" )
+            local main, off = UnitAttackSpeed("player")
             t.weapon_speed = main or 0
             t.weapon_offhand_speed = off or 0
-
         elseif k == "armor" or k == "bonus_armor" then
-            local _, eff, _, bonus = UnitArmor( "player" )
+            local _, eff, _, bonus = UnitArmor("player")
             t.armor = eff or 0
             t.bonus_armor = bonus or 0
-
         elseif k == "resilience_rating" then
             if CR_CRIT_TAKEN_SPELL then
                 t[k] = GetCombatRating(CR_CRIT_TAKEN_SPELL)
             else
                 t[k] = 0
             end
-
         elseif k == "mastery_rating" then
             t[k] = GetCombatRating(CR_MASTERY)
-
         elseif k == "mastery_value" then
             t[k] = GetMasteryEffect() / 100
-
         elseif k == "versatility_atk_rating" then
             t[k] = GetCombatRating(CR_VERSATILITY_DAMAGE_DONE)
-
         elseif k == "versatility_atk_mod" then
             t[k] = GetCombatRatingBonus(CR_VERSATILITY_DAMAGE_DONE) / 100
-
         elseif k == "versatility_def_rating" then
             t[k] = GetCombatRating(CR_VERSATILITY_DAMAGE_TAKEN)
-
         elseif k == "versatility_def_mod" then
             t[k] = GetCombatRatingBonus(CR_VERSATILITY_DAMAGE_TAKEN) / 100
-
         elseif k == "mod_haste_pct" then
             t[k] = 0
-
         elseif k == "spell_haste" then
-            t[k] = ( UnitSpellHaste( "player" ) + ( t.mod_haste_pct or 0 ) ) / 100
-
+            t[k] = (UnitSpellHaste("player") + (t.mod_haste_pct or 0)) / 100
         elseif k == "melee_haste" then
-            t[k] = ( GetMeleeHaste() + ( t.mod_haste_pct or 0 ) ) / 100
-
+            t[k] = (GetMeleeHaste() + (t.mod_haste_pct or 0)) / 100
         elseif k == "haste" then
             t[k] = t.spell_haste or t.melee_haste
-
         elseif k == "mod_crit_pct" then
             t[k] = 0
-
         elseif k == "crit" then
             local spellCrit = (GetSpellCritChance and GetSpellCritChance()) or 0
-            t[k] = ( max( GetCritChance(), spellCrit, GetRangedCritChance() ) + ( t.mod_crit_pct or 0 ) )
-
+            t[k] = (max(GetCritChance(), spellCrit, GetRangedCritChance()) + (t.mod_crit_pct or 0))
         end
 
-        return rawget( t, k )
+        return rawget(t, k)
     end,
-    __newindex = function( t, k, v )
+    __newindex = function(t, k, v)
         if v == nil then return end
-        Mark( t, k )
-        rawset( t, k, v )
+        Mark(t, k)
+        rawset(t, k, v)
     end
 }
 ns.metatables.mt_stat = mt_stat
@@ -2868,18 +2930,18 @@ do
 
     -- Table of default handlers for specific pets/totems.
     mt_default_pet = {
-        __index = function( t, k )
+        __index = function(t, k)
             if k == "expires" then
-                local totemIcon = rawget( t, "icon" )
+                local totemIcon = rawget(t, "icon")
 
                 if totemIcon then
                     -- This is actually a totem; check them.
                     for i = 1, 5 do
-                        local present, name, start, duration, icon, _, spellID = GetTotemInfo( i )
+                        local present, name, start, duration, icon, _, spellID = GetTotemInfo(i)
                         if duration == 0 then duration = 3600 end
 
-                        local ability = class.abilities[ spellID ]
-                        if present and ( icon == totemIcon or ( ability and t.key == ability.key ) ) then
+                        local ability = class.abilities[spellID]
+                        if present and (icon == totemIcon or (ability and t.key == ability.key)) then
                             t.expires = start + duration
                             return t.expires
                         end
@@ -2889,15 +2951,15 @@ do
                     return t.expires
                 end
 
-                local petSpell = rawget( t, "spell" )
-                petSpell = petSpell and state.action[ petSpell ]
+                local petSpell = rawget(t, "spell")
+                petSpell = petSpell and state.action[petSpell]
 
                 if petSpell then
                     -- We have to track by time since cast.
                     local lastCast = petSpell.lastCast
                     local duration = t.duration
 
-                    if type( duration ) == 'function' then duration = duration() end
+                    if type(duration) == 'function' then duration = duration() end
                     local expires = lastCast + duration
 
                     if expires > state.query_time then
@@ -2906,56 +2968,49 @@ do
                     end
                 end
 
-                local petGUID = UnitGUID( "pet" )
+                local petGUID = UnitGUID("pet")
                 if petGUID then
-                    local petIdStr = petGUID:match( "%-(%d+)%-[0-9A-F]+$" )
-                    petGUID = petIdStr and tonumber( petIdStr ) or nil
+                    local petIdStr = petGUID:match("%-(%d+)%-[0-9A-F]+$")
+                    petGUID = petIdStr and tonumber(petIdStr) or nil
                 end
 
                 local id = t.id
-                if petGUID and id == petGUID and UnitHealth( "pet" ) > 0 then
+                if petGUID and id == petGUID and UnitHealth("pet") > 0 then
                     t.expires = state.query_time + 3600
                 else
                     t.expires = 0
                 end
                 return t.expires
-
             elseif k == "remains" then
-                return max( 0, t.expires - ( state.query_time ) )
-
+                return max(0, t.expires - (state.query_time))
             elseif k == "up" or k == "active" or k == "alive" or k == "exists" then
-                return ( t.expires >= ( state.query_time ) )
-
+                return (t.expires >= (state.query_time))
             elseif k == "down" then
-                return ( t.expires < ( state.query_time ) )
-
+                return (t.expires < (state.query_time))
             elseif k == "id" then
                 local id = t.model and t.model.id
-                if type( id ) == "function" then id = id() end
+                if type(id) == "function" then id = id() end
                 return id
-
             elseif k == "spec" then
-                return t.exists and GetSpecialization( false, true )
-
+                return t.exists and GetSpecialization(false, true)
             elseif k == "key" then
-                for pet, v in pairs( state.pet ) do
-                    if type( v ) == "table" and t == v then
+                for pet, v in pairs(state.pet) do
+                    if type(v) == "table" and t == v then
                         t.key = pet
                     end
                     return pet
                 end
-
             end
         end,
-        __newindex = function( t, k, v )
+        __newindex = function(t, k, v)
             if v == nil then return end
-            if autoReset[ k ] then Mark( t, k ) end
-            rawset( t, k, v )
+            if autoReset[k] then Mark(t, k) end
+            rawset(t, k, v)
         end
     }
     ns.metatables.mt_default_pet = mt_default_pet
 
-    local petAutoReset = setmetatable( {
+    local petAutoReset = setmetatable({
         real_pet = 1,
         up = 1,
         exists = 1,
@@ -2965,46 +3020,46 @@ do
         health_pct = 1,
         health_percent = 1,
     }, {
-        __index = function( t, k )
+        __index = function(t, k)
             -- default to false for unknown boolean flags and mark on access
-            Mark( t, k )
+            Mark(t, k)
             return false
         end
-    } )
+    })
 
     mt_pets = {
-        __index = function( t, k )
-            local guid = UnitGUID( "pet" )
+        __index = function(t, k)
+            local guid = UnitGUID("pet")
 
-            if rawget( t, "__last_pet_guid" ) ~= guid then
-                rawset( t, "__last_pet_guid", guid )
-                rawset( t, "real_pet", nil )
+            if rawget(t, "__last_pet_guid") ~= guid then
+                rawset(t, "__last_pet_guid", guid)
+                rawset(t, "real_pet", nil)
 
-        for alias, petData in pairs( class.pets ) do
+                for alias, petData in pairs(class.pets) do
                     local token = petData.token or alias
-                    local entry = rawget( t, token )
-                    if entry and type( entry ) == "table" then
-            entry.expires = 0
+                    local entry = rawget(t, token)
+                    if entry and type(entry) == "table" then
+                        entry.expires = 0
                     end
                 end
             end
 
-            if not rawget( t, "real_pet" ) then
+            if not rawget(t, "real_pet") then
                 local key
-                local petID = UnitGUID( "pet" )
+                local petID = UnitGUID("pet")
 
                 if petID then
-                    local pid = petID and petID:match( "%-(%d+)%-[0-9A-F]+$" )
-                    petID = pid and tonumber( pid ) or nil
+                    local pid = petID and petID:match("%-(%d+)%-[0-9A-F]+$")
+                    petID = pid and tonumber(pid) or nil
                     local model, token
                     -- Try direct alias match first
-                    model = class.pets[ petID ]
+                    model = class.pets[petID]
                     if model then
                         token = model.token or petID
                     else
                         -- Fall back to checking .id from each registered pet
-                        for k, v in pairs( class.pets ) do
-                            local id = type( v.id ) == "function" and v.id() or v.id
+                        for k, v in pairs(class.pets) do
+                            local id = type(v.id) == "function" and v.id() or v.id
                             if id == petID then
                                 model = v
                                 token = v.token or k
@@ -3016,51 +3071,47 @@ do
                     if model then
                         key = token
                         local spell = model.spell
-                        local ability = spell and class.abilities[ spell ]
+                        local ability = spell and class.abilities[spell]
                         local lastCast = ability and ability.lastCast or 0
-                        local duration = model.duration and ( type( model.duration ) == "function" and model.duration() or model.duration ) or 3600
+                        local duration = model.duration and
+                        (type(model.duration) == "function" and model.duration() or model.duration) or 3600
 
                         if lastCast > 0 and duration < 3600 then
-                            summonPet( key, lastCast + duration - state.now )
+                            summonPet(key, lastCast + duration - state.now)
                         else
-                            summonPet( key )
+                            summonPet(key)
                         end
                     end
-
                 end
 
-                t.real_pet = key or rawget( t, "real_pet" ) or "fake_pet"
+                t.real_pet = key or rawget(t, "real_pet") or "fake_pet"
                 if key == nil then
                     if Hekili.ActiveDebug then
-                        Hekili:Debug( "Failed to resolve pet ID %s to any registered pet.", tostring( petID ) )
+                        Hekili:Debug("Failed to resolve pet ID %s to any registered pet.", tostring(petID))
                     end
                 end
             end
 
             if k == "up" or k == "exists" or k == "active" then
-                for k, v in pairs( t ) do
+                for k, v in pairs(t) do
                     if type(v) == "table" then
                         if v.expires > state.query_time then return true end
                     end
                 end
-                return UnitExists( "pet" ) and ( not UnitIsDead( "pet" ) )
-
+                return UnitExists("pet") and (not UnitIsDead("pet"))
             elseif k == "alive" then
-                return UnitExists( "pet" ) and not UnitIsDead( "pet" ) and UnitHealth( "pet" ) > 0
-
+                return UnitExists("pet") and not UnitIsDead("pet") and UnitHealth("pet") > 0
             elseif k == "dead" then
-                return UnitExists( "pet" ) and UnitIsDead( "pet" )
-
+                return UnitExists("pet") and UnitIsDead("pet")
             elseif k == "health_pct" or k == "health_percent" then
-                if t.alive then return 100 * UnitHealth( "pet" ) / UnitHealthMax( "pet" ) end
+                if t.alive then return 100 * UnitHealth("pet") / UnitHealthMax("pet") end
                 return 100
-
             end
 
-            local model = class.pets[ k ]
+            local model = class.pets[k]
 
             if model then
-                t[ k ] = {
+                t[k] = {
                     name = k,
                     spell = model.spell,
                     duration = model.duration,
@@ -3070,21 +3121,21 @@ do
                 }
 
                 if model.spec then
-                    t[ model.spec ] = t[ k ]
+                    t[model.spec] = t[k]
                 end
 
-                return t[ k ]
+                return t[k]
             end
 
-            local ttm = class.totems[ k ]
+            local ttm = class.totems[k]
 
             if ttm then
-                t[ k ] = {
+                t[k] = {
                     key = k,
                     icon = ttm
                 }
 
-                return t[ k ]
+                return t[k]
             end
 
             return t.fake_pet
@@ -3093,12 +3144,12 @@ do
         __newindex = function(t, k, v)
             if type(v) == "table" then
                 if not v.key then v.key = k end
-                rawset( t, k, setmetatable( v, mt_default_pet ) )
+                rawset(t, k, setmetatable(v, mt_default_pet))
                 return
             end
             if v == nil then return end
-            if petAutoReset[ k ] then Mark( t, k ) end
-            rawset( t, k, v )
+            if petAutoReset[k] then Mark(t, k) end
+            rawset(t, k, v)
         end
 
     }
@@ -3108,17 +3159,21 @@ end
 
 -- TODO: This may require revision, since other code might change buffs w/o changing stance.
 local mt_stances = {
-    __index = function( t, k )
-        if not class.stances[ k ] or not GetShapeshiftForm() then return false
-        elseif GetShapeshiftForm() < 1 then return false
-        elseif not select( 5, GetShapeshiftFormInfo( GetShapeshiftForm() ) ) == class.stances[k] then return false end
-        rawset(t, k, select( 5, GetShapeshiftFormInfo( GetShapeshiftForm() ) ) == class.stances[k] )
-        return t [ k]
+    __index = function(t, k)
+        if not class.stances[k] or not GetShapeshiftForm() then
+            return false
+        elseif GetShapeshiftForm() < 1 then
+            return false
+        elseif not select(5, GetShapeshiftFormInfo(GetShapeshiftForm())) == class.stances[k] then
+            return false
+        end
+        rawset(t, k, select(5, GetShapeshiftFormInfo(GetShapeshiftForm())) == class.stances[k])
+        return t[k]
     end,
-    __newindex = function( t, k, v )
+    __newindex = function(t, k, v)
         if v == nil then return end
-        Mark( t, k )
-        rawset( t, k, v )
+        Mark(t, k)
+        rawset(t, k, v)
     end,
 }
 ns.metatables.mt_stances = mt_stances
@@ -3126,15 +3181,15 @@ ns.metatables.mt_stances = mt_stances
 -- Table of supported toggles (via keybinding).
 -- Need to add a commandline interface for these, but for some reason, I keep neglecting that.
 local mt_toggle = {
-    __index = function( t, k )
+    __index = function(t, k)
         if not k then return end
 
         local db = Hekili.DB
         if not db then return end
 
-        local toggle = db.profile.toggles[ k ]
+        local toggle = db.profile.toggles[k]
 
-        if k == "cooldowns" and ( toggle.override and state.buff.bloodlust.up or toggle.infusion and state.buff.power_infusion.up ) then return true end
+        if k == "cooldowns" and (toggle.override and state.buff.bloodlust.up or toggle.infusion and state.buff.power_infusion.up) then return true end
         if k == "cooldowns" and toggle.override then return true end
         if k == "potions" and toggle.override and state.toggle.cooldowns then return true end
 
@@ -3145,16 +3200,19 @@ ns.metatables.mt_toggle = mt_toggle
 
 
 local mt_settings = {
-    __index = function( t, k )
-        local ability = state.this_action and class.abilities[ state.this_action ]
+    __index = function(t, k)
+        local ability = state.this_action and class.abilities[state.this_action]
 
-        if rawget( t, "spec" ) then
-            if t.spec.settings[ k ] ~= nil then return t.spec.settings[ k ] end
-            if t.spec[ k ] ~= nil then return t.spec[ k ] end
+        if rawget(t, "spec") then
+            if t.spec.settings[k] ~= nil then return t.spec.settings[k] end
+            if t.spec[k] ~= nil then return t.spec[k] end
 
             if ability then
-                if ability.item and t.spec.items[ state.this_action ] ~= nil then return t.spec.items[ state.this_action ][ k ]
-                elseif not ability.item and t.spec.abilities[ state.this_action ] ~= nil then return t.spec.abilities[ state.this_action ][ k ] end
+                if ability.item and t.spec.items[state.this_action] ~= nil then
+                    return t.spec.items[state.this_action][k]
+                elseif not ability.item and t.spec.abilities[state.this_action] ~= nil then
+                    return t.spec.abilities[state.this_action][k]
+                end
             end
         end
 
@@ -3168,7 +3226,7 @@ ns.metatables.mt_settings = mt_settings
 -- Needs review.
 local mt_target
 do
-    local autoReset = setmetatable( {
+    local autoReset = setmetatable({
         distance = 1,
         in_range = 1,
         maxR = 1,
@@ -3202,116 +3260,138 @@ do
         npcid = 1,
         token = 1
     }, {
-        __index = function( t, k )
-            local expr, value = k:match( "^(.+)_?(%d+)$" )
+        __index = function(t, k)
+            local expr, value = k:match("^(.+)_?(%d+)$")
             if expr and value then
                 if expr == "time_to_pct" then return 1 end
                 if expr == "within" then return 1 end
             end
 
             local value2
-            expr, value, value2 = k:match( "^(.+)(%d+)to(%d+)$" )
+            expr, value, value2 = k:match("^(.+)(%d+)to(%d+)$")
             if expr and value and value2 then
                 if expr == "range" then return 1 end
             end
         end
-    } )
+    })
 
     local PvpDummies = ns.PvpDummies or {}
     local TargetDummies = ns.TargetDummies or {}
 
     mt_target = {
-        __index = function( t, k )
-            if k == "distance" then t[k] = UnitCanAttack( "player", "target" ) and ( ( t.minR + t.maxR ) / 2 ) or 7.5
-            elseif k == "in_range" then return t.distance <= 8            elseif k == "minR" or k == "maxR" then
+        __index = function(t, k)
+            if k == "distance" then
+                t[k] = UnitCanAttack("player", "target") and ((t.minR + t.maxR) / 2) or 7.5
+            elseif k == "in_range" then
+                return t.distance <= 8
+            elseif k == "minR" or k == "maxR" then
                 local minR, maxR
                 if RC and RC.GetRange then
-                    minR, maxR = RC:GetRange( "target" )
+                    minR, maxR = RC:GetRange("target")
                 end
                 t.minR = minR or 5
                 t.maxR = maxR or 10
-
             elseif k:sub(1, 7) == "outside" then
-                local minR = k:match( "^outside([0-9.]+)$" )
+                local minR = k:match("^outside([0-9.]+)$")
                 if not minR then return false end
-                return ( t.minR > tonumber( minR ) )
-
+                return (t.minR > tonumber(minR))
             elseif k:sub(1, 6) == "within" then
-                local maxR = k:match( "^within([0-9.]+)$" )
+                local maxR = k:match("^within([0-9.]+)$")
                 if not maxR then return false end
-                return ( t.maxR <= tonumber( maxR ) )
-
+                return (t.maxR <= tonumber(maxR))
             elseif k:sub(1, 5) == "range" then
-                local minR, maxR = k:match( "^range([0-9.]+)to([0-9.]+)$" )
+                local minR, maxR = k:match("^range([0-9.]+)to([0-9.]+)$")
                 if not minR or not maxR then return false end
-                return ( t.minR >= tonumber( minR ) and t.maxR <= tonumber( maxR ) )
-
-            elseif k == "adds" then t[k] = state.active_enemies - 1
-            elseif k == "casting" then return state.debuff.casting.up and not state.debuff.casting.v2
+                return (t.minR >= tonumber(minR) and t.maxR <= tonumber(maxR))
+            elseif k == "adds" then
+                t[k] = state.active_enemies - 1
+            elseif k == "casting" then
+                return state.debuff.casting.up and not state.debuff.casting.v2
             elseif k == "class" then
-                if not t.exists then t[k] = "virtual"
-                elseif not t.is_player then t[k] = "npc"
+                if not t.exists then
+                    t[k] = "virtual"
+                elseif not t.is_player then
+                    t[k] = "npc"
                 else
-                    local c = UnitClassBase( "target" )
-                    if c then t[k] = strlower( c )
-                    else t[k] = "unknown" end
+                    local c = UnitClassBase("target")
+                    if c then
+                        t[k] = strlower(c)
+                    else
+                        t[k] = "unknown"
+                    end
                 end
-            elseif k == "exists" then t[k] = UnitExists( "target" )
-            elseif k == "health_current" then return t.health.current
-            elseif k == "health_max" then return t.health.max
-            elseif k == "health_pct" or k == "health_percent" then return t.health.percent
-            elseif k == "has_vehicle_ui" then t[k] = UnitInVehicle( "target" )
-            elseif k == "is_add" then t[k] = not t.is_boss
+            elseif k == "exists" then
+                t[k] = UnitExists("target")
+            elseif k == "health_current" then
+                return t.health.current
+            elseif k == "health_max" then
+                return t.health.max
+            elseif k == "health_pct" or k == "health_percent" then
+                return t.health.percent
+            elseif k == "has_vehicle_ui" then
+                t[k] = UnitInVehicle("target")
+            elseif k == "is_add" then
+                t[k] = not t.is_boss
             elseif k == "is_boss" then
-                if UnitExists( "boss1" ) and UnitIsUnit( "target", "boss1" ) or
-                    UnitExists( "boss2" ) and UnitIsUnit( "target", "boss2" ) or
-                    UnitExists( "boss3" ) and UnitIsUnit( "target", "boss3" ) or
-                    UnitExists( "boss4" ) and UnitIsUnit( "target", "boss4" ) or
-                    UnitExists( "boss5" ) and UnitIsUnit( "target", "boss5" ) then t[k] = true
+                if UnitExists("boss1") and UnitIsUnit("target", "boss1") or
+                    UnitExists("boss2") and UnitIsUnit("target", "boss2") or
+                    UnitExists("boss3") and UnitIsUnit("target", "boss3") or
+                    UnitExists("boss4") and UnitIsUnit("target", "boss4") or
+                    UnitExists("boss5") and UnitIsUnit("target", "boss5") then
+                    t[k] = true
                 else
-                    t[k] = ( UnitCanAttack( "player", "target" ) and ( UnitClassification( "target" ) == "worldboss" or UnitLevel( "target" ) == -1 ) )
+                    t[k] = (UnitCanAttack("player", "target") and (UnitClassification("target") == "worldboss" or UnitLevel("target") == -1))
                 end
-            elseif k == "is_dead" then t[k] = UnitIsDeadOrGhost("target")
-            elseif k == "is_demon" then t[k] = UnitCreatureType( "target" ) == PET_TYPE_DEMON
-            elseif k == "is_friendly" then t[k] = UnitCanAssist( "player", "target" )
-            elseif k == "is_in_party" then t[k] = UnitInParty( "target" )
-            elseif k == "is_in_raid" then t[k] = UnitInRaid( "target" ) ~= nil
+            elseif k == "is_dead" then
+                t[k] = UnitIsDeadOrGhost("target")
+            elseif k == "is_demon" then
+                t[k] = UnitCreatureType("target") == PET_TYPE_DEMON
+            elseif k == "is_friendly" then
+                t[k] = UnitCanAssist("player", "target")
+            elseif k == "is_in_party" then
+                t[k] = UnitInParty("target")
+            elseif k == "is_in_raid" then
+                t[k] = UnitInRaid("target") ~= nil
             elseif k == "is_player" then
-                local isPlayer = UnitIsPlayer( "target" )
-                if not isPlayer then isPlayer = PvpDummies[ t.npcid ] end
-                t[k] = isPlayer or false -- Enables proper treatment of Absolute Corruption and similar modified-in-PvP effects.
-
+                local isPlayer = UnitIsPlayer("target")
+                if not isPlayer then isPlayer = PvpDummies[t.npcid] end
+                t[k] = isPlayer or
+                false                    -- Enables proper treatment of Absolute Corruption and similar modified-in-PvP effects.
             elseif k == "is_dummy" then
-                t[k] = ( TargetDummies and TargetDummies[ t.npcid ] ~= nil ) or false
-            elseif k == "is_undead" then t[k] = UnitCreatureType( "target" ) == BATTLE_PET_NAME_4
-
-            elseif k == "level" then t[k] = UnitLevel( "target" ) or UnitLevel( "player" ) or MAX_PLAYER_LEVEL
-            elseif k == "moving" then t[k] = GetUnitSpeed( "target" ) > 0
+                t[k] = (TargetDummies and TargetDummies[t.npcid] ~= nil) or false
+            elseif k == "is_undead" then
+                t[k] = UnitCreatureType("target") == BATTLE_PET_NAME_4
+            elseif k == "level" then
+                t[k] = UnitLevel("target") or UnitLevel("player") or MAX_PLAYER_LEVEL
+            elseif k == "moving" then
+                t[k] = GetUnitSpeed("target") > 0
             elseif k == "real_ttd" or k == "true_ttd" then
-                t[k] = Hekili:GetTTD( "target" )
-
+                t[k] = Hekili:GetTTD("target")
             elseif k == "time_to_die" then
                 if state.IsCycling() then return state.raid_event.adds.remains end
 
                 local ttd = t.real_ttd
-                if ttd == 3600 then t[k] = ttd
-                else return max( 1, t.real_ttd - ( state.offset + state.delay ) ) end
-
+                if ttd == 3600 then
+                    t[k] = ttd
+                else
+                    return max(1, t.real_ttd - (state.offset + state.delay))
+                end
             elseif k:sub(1, 12) == "time_to_pct_" then
-                local percent = tonumber( k:sub( 13 ) ) or 0
-                return Hekili:GetTimeToPct( "target", percent ) - ( state.offset + state.delay )
-
+                local percent = tonumber(k:sub(13)) or 0
+                return Hekili:GetTimeToPct("target", percent) - (state.offset + state.delay)
             elseif k == "unit" then
-                if state.args.cycle_target == 1 then return tostring( UnitGUID( "target" ) or "" ) .. "c" or "cycle"
-                elseif state.args.target then return tostring( UnitGUID( "target" ) or "" ) .. '+' .. tostring( state.args.target ) end
-                return tostring( UnitGUID( "target" ) or "unknown" )
-
+                if state.args.cycle_target == 1 then
+                    return tostring(UnitGUID("target") or "") .. "c" or "cycle"
+                elseif state.args.target then
+                    return tostring(UnitGUID("target") or "") .. '+' .. tostring(state.args.target)
+                end
+                return tostring(UnitGUID("target") or "unknown")
             elseif k == "npcid" then
-                if UnitExists( "target" ) then
-                    local id = UnitGUID( "target" )
-                    id = id and id:match( "(%d+)-%x-$" )
+                if UnitExists("target") then
+                    local id = UnitGUID("target")
+                    id = id and id:match("(%d+)-%x-$")
                     if id then
-                        local nid = tonumber( id )
+                        local nid = tonumber(id)
                         id = nid
                     end
 
@@ -3319,24 +3399,23 @@ do
                 end
 
                 return -1
-
             elseif k == "token" then
-                for _, token in ipairs( { "focus", "mouseover", "target", "targettarget" } ) do
-                    if UnitExists( token ) and
-                        not UnitIsDeadOrGhost( token ) and
-                        UnitCanAttack( "player", token ) then
+                for _, token in ipairs({ "focus", "mouseover", "target", "targettarget" }) do
+                    if UnitExists(token) and
+                        not UnitIsDeadOrGhost(token) and
+                        UnitCanAttack("player", token) then
                         t[k] = token
                         break
                     end
                 end
             end
 
-            return rawget( t, k )
+            return rawget(t, k)
         end,
-        __newindex = function( t, k, v )
+        __newindex = function(t, k, v)
             if v == nil then return end
-            if autoReset[ k ] then Mark( t, k ) end
-            rawset( t, k, v )
+            if autoReset[k] then Mark(t, k) end
+            rawset(t, k, v)
         end
     }
     ns.metatables.mt_target = mt_target
@@ -3356,19 +3435,18 @@ do
     mt_target_health = {
         __index = function(t, k)
             if k == "current" or k == "actual" then
-                return UnitCanAttack("player", "target") and not UnitIsDead( "target" ) and UnitHealth("target") or 100000
-
+                return UnitCanAttack("player", "target") and not UnitIsDead("target") and UnitHealth("target") or 100000
             elseif k == "max" then
-                return UnitCanAttack("player", "target") and not UnitIsDead( "target" ) and UnitHealthMax("target") or 100000
-
+                return UnitCanAttack("player", "target") and not UnitIsDead("target") and UnitHealthMax("target") or
+                100000
             elseif k == "pct" or k == "percent" then
-                return t.max ~= 0 and ( 100 * t.current / t.max ) or 100
+                return t.max ~= 0 and (100 * t.current / t.max) or 100
             end
         end,
-        __newindex = function( t, k, v )
+        __newindex = function(t, k, v)
             if v == nil then return end
-            if autoReset[ k ] then Mark( t, k ) end
-            rawset( t, k, v )
+            if autoReset[k] then Mark(t, k) end
+            rawset(t, k, v)
         end
     }
     ns.metatables.mt_target_health = mt_target_health
@@ -3377,11 +3455,11 @@ end
 
 
 local mt_consumable = {
-    __index = function( t, k )
+    __index = function(t, k)
         return class.potion == k
     end
 }
-setmetatable( state.consumable, mt_consumable )
+setmetatable(state.consumable, mt_consumable)
 
 
 local mt_default_cooldown
@@ -3401,27 +3479,28 @@ do
         true_remains = 1,
     }
 
-    local function GetUnpackedSpellCooldown( spellID )
+    local function GetUnpackedSpellCooldown(spellID)
         -- MoP: Use legacy GetSpellCooldown
-        local start, duration, enabled = GetSpellCooldown( spellID )
+        local start, duration, enabled = GetSpellCooldown(spellID)
         local spellCooldownInfo = { startTime = start, duration = duration, isEnabled = enabled }
         if spellCooldownInfo then
-            return spellCooldownInfo.startTime, spellCooldownInfo.duration, spellCooldownInfo.isEnabled, spellCooldownInfo.modRate;
+            return spellCooldownInfo.startTime, spellCooldownInfo.duration, spellCooldownInfo.isEnabled,
+                spellCooldownInfo.modRate;
         end
     end
 
     -- Table of default handlers for specific ability cooldowns.
     mt_default_cooldown = {
-        __index = function( t, k )
-            local ability = rawget( t, "key" ) and class.abilities[ t.key ] or class.abilities.null_cooldown
+        __index = function(t, k)
+            local ability = rawget(t, "key") and class.abilities[t.key] or class.abilities.null_cooldown
 
             local GetCooldown = GetUnpackedSpellCooldown
             local profile = Hekili.DB.profile
             local id = ability.id
 
             if ability then
-                if rawget( ability, "meta" ) and ability.meta[ k ] then
-                    return ability.meta[ k ]( t )
+                if rawget(ability, "meta") and ability.meta[k] then
+                    return ability.meta[k](t)
                 end
 
                 if ability.funcs.cooldown_special then
@@ -3438,10 +3517,11 @@ do
                 return id
             end
 
-            local noFeignCD = rawget( profile.specs, state.spec.id )
+            local noFeignCD = rawget(profile.specs, state.spec.id)
             noFeignCD = noFeignCD and noFeignCD.noFeignedCooldown
 
-            local raw = ( state.display ~= "Primary" and state.display ~= "AOE" ) or ( profile.toggles.cooldowns.value and profile.toggles.cooldowns.separate and noFeignCD )
+            local raw = (state.display ~= "Primary" and state.display ~= "AOE") or
+            (profile.toggles.cooldowns.value and profile.toggles.cooldowns.separate and noFeignCD)
 
             if k:sub(1, 5) == "true_" then
                 k = k:sub(6)
@@ -3452,8 +3532,8 @@ do
                 local start, duration = 0, 0
 
                 if id > 0 then
-                    start, duration = GetSpellCooldown( id )
-                    local lossStart, lossDuration = GetSpellLossOfControlCooldown( id )
+                    start, duration = GetSpellCooldown(id)
+                    local lossStart, lossDuration = GetSpellLossOfControlCooldown(id)
                     if lossStart and lossDuration and lossStart + lossDuration > start + duration then
                         start = lossStart
                         duration = lossDuration
@@ -3470,140 +3550,127 @@ do
 
                 if t.key == "ascendance" and state.buff.ascendance.up then
                     start = state.buff.ascendance.expires - class.auras.ascendance.duration
-                    duration = class.abilities[ "ascendance" ].cooldown
-
+                    duration = class.abilities["ascendance"].cooldown
                 elseif t.key == "potion" then
                     local potion = class.abilities.potion.item
                     if state.toggle.potions and potion then
-                        start, duration = GetItemCooldown( potion )
-
+                        start, duration = GetItemCooldown(potion)
                     else
                         start = state.now
                         duration = 0
-
                     end
-
                 end
 
-                t.duration = max( duration or 0, ability.cooldown or 0, ability.recharge or 0 )
-                t.expires = start > 0 and ( start + duration ) or 0
+                t.duration = max(duration or 0, ability.cooldown or 0, ability.recharge or 0)
+                t.expires = start > 0 and (start + duration) or 0
                 t.true_duration = true_duration
-                t.true_expires = start > 0 and ( start + true_duration ) or 0
+                t.true_expires = start > 0 and (start + true_duration) or 0
 
                 if ability.charges and ability.charges > 1 then
                     local charges, _
-                    charges, _, start, duration = GetSpellCharges( id )
+                    charges, _, start, duration = GetSpellCharges(id)
 
-                    if not duration then duration = max( ability.recharge or 0, ability.cooldown or 0 ) end
+                    if not duration then duration = max(ability.recharge or 0, ability.cooldown or 0) end
 
                     t.true_duration = duration
-                    duration = max( duration, ability.recharge or 0 )
+                    duration = max(duration, ability.recharge or 0)
 
                     t.charge = charges or 1
                     t.duration = duration
                     t.recharge = duration
 
                     t.recharge_began = start or t.expires - t.duration
-
                 else
                     t.charge = t.expires < state.query_time and 1 or 0
                     t.recharge_began = t.expires - t.duration
                 end
 
-                return t[ k ]
-
+                return t[k]
             elseif k == "charges" then
                 if not raw then
-                    if ( state:IsDisabled( t.key ) or ability.disabled ) then return 0 end
-                    if not state:IsKnown( t.key ) then return ability.charges or 1 end
+                    if (state:IsDisabled(t.key) or ability.disabled) then return 0 end
+                    if not state:IsKnown(t.key) then return ability.charges or 1 end
                 end
 
-                if t.charge == ( ability.charges or 1 ) then return t.charge end
-                return floor( t[ raw and "true_charges_fractional" or "charges_fractional" ] )
-
+                if t.charge == (ability.charges or 1) then return t.charge end
+                return floor(t[raw and "true_charges_fractional" or "charges_fractional"])
             elseif k == "charges_max" or k == "max_charges" then
                 return ability.charges or 1
-
             elseif k == "recharge" then
                 return ability.recharge or ability.cooldown or 0
-
             elseif k == "time_to_max_charges" or k == "full_recharge_time" then
                 if not raw then
                     -- if state.buff.empowering.up and state.buff.empowering.spell ~= t.key then return 0 end
-                    if ( state:IsDisabled( t.key ) or ability.disabled ) then return ( ability.charges or 1 ) * t.duration end
-                    if not state:IsKnown( t.key ) then return 0 end
+                    if (state:IsDisabled(t.key) or ability.disabled) then return (ability.charges or 1) * t.duration end
+                    if not state:IsKnown(t.key) then return 0 end
                 end
 
-                return ( ( ability.charges or 1 ) - t.true_charges_fractional ) * max( ability.recharge or ability.cooldown, t.true_duration )
-
+                return ((ability.charges or 1) - t.true_charges_fractional) *
+                max(ability.recharge or ability.cooldown, t.true_duration)
             elseif k == "remains" then
                 if t.key == "global_cooldown" then
-                    return max( 0, t.expires - state.query_time )
+                    return max(0, t.expires - state.query_time)
                 end
 
                 -- If the ability is toggled off in the profile, we may want to fake its CD.
                 -- Revisit this if I add base_cooldown to the ability tables.
                 if not raw then
-                    if ( state:IsDisabled( t.key ) or ability.disabled ) then return ability.cooldown end
-                    if not state:IsKnown( t.key ) then return 0 end
+                    if (state:IsDisabled(t.key) or ability.disabled) then return ability.cooldown end
+                    if not state:IsKnown(t.key) then return 0 end
                 end
 
                 local bonus_cdr = 0
-                bonus_cdr = ns.callHook( "cooldown_recovery", bonus_cdr ) or bonus_cdr
+                bonus_cdr = ns.callHook("cooldown_recovery", bonus_cdr) or bonus_cdr
 
-                return max( 0, t.expires - state.query_time - bonus_cdr )
-
+                return max(0, t.expires - state.query_time - bonus_cdr)
             elseif k == "charges_fractional" then
                 if not raw then
-                    if state:IsDisabled( t.key ) or ability.disabled then return 0 end
-                    if not state:IsKnown( t.key ) then return ability.charges or 1 end
+                    if state:IsDisabled(t.key) or ability.disabled then return 0 end
+                    if not state:IsKnown(t.key) then return ability.charges or 1 end
                 end
 
                 if not ability.charges or t.charge == ability.charges then return t.charge or 1 end
-                return min( ability.charges, t.charge + max( 0, ( state.query_time - t.recharge_began ) / ( ability.recharge or ability.cooldown ) ) )
-
+                return min(ability.charges,
+                    t.charge +
+                    max(0, (state.query_time - t.recharge_began) / (ability.recharge or ability.cooldown)))
             elseif k == "recharge_time" then
                 if not ability.charges then return t.duration or 0 end
                 return t.recharge
-
             elseif k == "ready" or k == "up" then
-                return ( ability.cooldown_ready == nil or ability.cooldown_ready ) and t.remains == 0
+                return (ability.cooldown_ready == nil or ability.cooldown_ready) and t.remains == 0
 
-            -- Hunters
+                -- Hunters
             elseif k == "remains_guess" or k == "remains_expected" then
                 local remains, duration = t.remains, t.duration
                 if remains == 0 or remains == duration then return remains end
 
-                local lastCast = state.action[ t.key ].lastCast or 0
+                local lastCast = state.action[t.key].lastCast or 0
                 if lastCast == 0 then return remains end
 
-                local reduction = ( state.query_time - lastCast ) / ( duration - remains )
+                local reduction = (state.query_time - lastCast) / (duration - remains)
                 return remains * reduction
-
             elseif k == "duration_guess" or k == "duration_expected" then
-                local expected = class.abilities[ t.key ].cooldown_estimate
+                local expected = class.abilities[t.key].cooldown_estimate
                 if expected then return expected end
 
                 local remains, duration = t.remains, t.duration
                 if remains == 0 or remains == duration then return duration end
 
                 -- not actually the same as simc here, which tracks when CDs charge.
-                local lastCast = state.action[ t.key ].lastCast or 0
+                local lastCast = state.action[t.key].lastCast or 0
                 if lastCast == 0 then return duration end
 
-                local reduction = ( state.query_time - lastCast ) / ( duration - remains )
+                local reduction = (state.query_time - lastCast) / (duration - remains)
                 return duration * reduction
-
             end
 
-            Error( "UNK: cooldown." .. t.key .. "." .. k )
+            Error("UNK: cooldown." .. t.key .. "." .. k)
             return
-
         end,
-        __newindex = function( t, k, v )
+        __newindex = function(t, k, v)
             if v == nil then return end
-            if autoReset[ k ] then Mark( t, k ) end
-            rawset( t, k, v )
+            if autoReset[k] then Mark(t, k) end
+            rawset(t, k, v)
         end
     }
     ns.metatables.mt_default_cooldown = mt_default_cooldown
@@ -3614,49 +3681,49 @@ do
     -- Needs review.
     mt_cooldowns = {
         -- The action doesn't exist in our table so check the real game state, -- and copy it so we don't have to use the API next time.
-        __index = function( t, k )
-            local entry = class.abilities[ k ]
+        __index = function(t, k)
+            local entry = class.abilities[k]
 
             if not entry then
                 -- Check if this is one of SimC's lovely itemname_spellid type tokens.
-                local shortkey = k:match( "^([a-z0-9_])_%d+$" )
+                local shortkey = k:match("^([a-z0-9_])_%d+$")
 
-                if shortkey and class.abilities[ shortkey ] then
-                    class.abilities[ k ] = class.abilities[ shortkey ]
-                    entry = class.abilities[ k ]
+                if shortkey and class.abilities[shortkey] then
+                    class.abilities[k] = class.abilities[shortkey]
+                    entry = class.abilities[k]
                 else
-                    if not rawget( t, "null_cooldown" ) then t.null_cooldown = { key = "null_cooldown", duration = 1 } end
+                    if not rawget(t, "null_cooldown") then t.null_cooldown = { key = "null_cooldown", duration = 1 } end
                     return t.null_cooldown
                 end
             end
 
             if k ~= entry.key then
-                t[ k ] = t[ entry.key ]
-                return t[ k ]
+                t[k] = t[entry.key]
+                return t[k]
             end
 
-            t[ k ] = { key = k }
-            return t[ k ]
+            t[k] = { key = k }
+            return t[k]
         end,
         __newindex = function(t, k, v)
-            rawset( t, k, setmetatable( v, mt_default_cooldown ) )
+            rawset(t, k, setmetatable(v, mt_default_cooldown))
         end
     }
     ns.metatables.mt_cooldowns = mt_cooldowns
 end
 
 local mt_dot = {
-    __index = function( t, k )
-        local a = class.auras[ k ]
+    __index = function(t, k)
+        local a = class.auras[k]
         local dotType = a and a.dot
-        if not dotType then return state.debuff[ k ] end
+        if not dotType then return state.debuff[k] end
 
         if dotType == "both" then
-            if state.buff[ k ].up then return state.buff[ k ] end
-            return state.debuff[ k ]
+            if state.buff[k].up then return state.buff[k] end
+            return state.debuff[k]
         end
 
-        return state[ dotType ][ k ]
+        return state[dotType][k]
     end,
 }
 ns.metatables.mt_dot = mt_dot
@@ -3669,93 +3736,95 @@ local one_sec_gcd = {
 }
 
 local mt_gcd = {
-    __index = function( t, k )
+    __index = function(t, k)
         if k == "execute" then
-            local ability = state.this_action and class.abilities[ state.this_action ]
+            local ability = state.this_action and class.abilities[state.this_action]
 
             -- We can specify this for any ability, if we want.
-            if ability and ability.gcdTime then return ability.gcdTime end            local gcd = ( state.this_action == "wait" and "spell" ) or ( ability and ability.gcd or "spell" )
+            if ability and ability.gcdTime then return ability.gcdTime end
+            local gcd = (state.this_action == "wait" and "spell") or (ability and ability.gcd or "spell")
 
             if gcd == "off" then return 0 end
             if gcd == "totem" then return 1 end
 
             -- MoP: Use legacy power type constants
-            if one_sec_gcd[ class.file ] or class.file == "DRUID" and UnitPowerType( "player" ) == 3 then -- ENERGY = 3 in MoP
-                return state.buff.adrenaline_rush.up and max( 0.75, state.haste ) or 1
+            if one_sec_gcd[class.file] or class.file == "DRUID" and UnitPowerType("player") == 3 then     -- ENERGY = 3 in MoP
+                return state.buff.adrenaline_rush.up and max(0.75, state.haste) or 1
             end
 
-            return max( 1.5 * state.haste, state.buff.voidform.up and 0.67 or 0.75 )
-
+            return max(1.5 * state.haste, state.buff.voidform.up and 0.67 or 0.75)
         elseif k == "remains" then
             return state.cooldown.global_cooldown.remains
-
         elseif k == "expires" then
-            return state.cooldown.global_cooldown.expires        elseif k == "max" or k == "duration" then
+            return state.cooldown.global_cooldown.expires
+        elseif k == "max" or k == "duration" then
             -- MoP: Use legacy power type constants
-            if one_sec_gcd[ class.file ] or class.file == "DRUID" and UnitPowerType( "player" ) == 3 then -- ENERGY = 3 in MoP
-                return state.buff.adrenaline_rush.up and max( 0.75, state.haste ) or 1
+            if one_sec_gcd[class.file] or class.file == "DRUID" and UnitPowerType("player") == 3 then     -- ENERGY = 3 in MoP
+                return state.buff.adrenaline_rush.up and max(0.75, state.haste) or 1
             end
 
-            return max( 1.5 * state.haste, state.buff.voidform.up and 0.67 or 0.75 )
-
+            return max(1.5 * state.haste, state.buff.voidform.up and 0.67 or 0.75)
         elseif k == "lastStart" then
             return 0
-
         end
 
         return
     end
 }
 ns.metatables.mt_gcd = mt_gcd
-setmetatable( state.gcd, mt_gcd )
+setmetatable(state.gcd, mt_gcd)
 
 
 local mt_prev_lookup = {
-    __index = function( t, k )
+    __index = function(t, k)
         local idx = t.index
         local preds, prev
 
-        if     t.meta == "castsAll" then preds, prev = state.predictions   , state.prev
-        elseif t.meta == "castsOn"  then preds, prev = state.predictionsOn , state.prev_gcd
-        elseif t.meta == "castsOff" then preds, prev = state.predictionsOff, state.prev_off_gcd end
+        if t.meta == "castsAll" then
+            preds, prev = state.predictions, state.prev
+        elseif t.meta == "castsOn" then
+            preds, prev = state.predictionsOn, state.prev_gcd
+        elseif t.meta == "castsOff" then
+            preds, prev = state.predictionsOff, state.prev_off_gcd
+        end
 
         if k == "spell" then
             -- Return the actual spell for the slot, for lookups.
-            if preds[ idx ] then return preds[ idx ] end
+            if preds[idx] then return preds[idx] end
 
             if state.player.queued_ability then
                 if idx == #preds + 1 then return state.player.queued_ability end
-                return prev.history[ idx - #preds + 1 ]
+                return prev.history[idx - #preds + 1]
             end
 
             if idx == 1 and prev.override then
                 return prev.override
             end
 
-            return prev.history[ idx - #preds ]
+            return prev.history[idx - #preds]
         end
 
-        if preds[ idx ] then return preds[ idx ] == k end
+        if preds[idx] then return preds[idx] == k end
 
         if state.player.queued_ability then
             if idx == #preds + 1 then
                 return state.player.queued_ability == k
             end
-            return prev.history[ idx - #preds + 1 ] == k
+            return prev.history[idx - #preds + 1] == k
         end
 
         if idx == 1 and prev.override then
             return prev.override == k
         end
 
-        return prev.history[ idx - #preds ] == k
+        return prev.history[idx - #preds] == k
     end,
 }
 
-local prev_lookup = setmetatable( {
+local prev_lookup = setmetatable({
     index = 1,
     meta = 'castsAll'
-}, mt_prev_lookup )
+}, mt_prev_lookup)
 
 
 local mt_prev
@@ -3767,16 +3836,20 @@ do
     }
 
     mt_prev = {
-        __index = function( t, k )
-            if type( k ) == "number" then
+        __index = function(t, k)
+            if type(k) == "number" then
                 prev_lookup.meta = t.meta -- Which data to use? castsAll, castsOn (GCD), castsOff (offGCD)?
                 prev_lookup.index = k
                 return prev_lookup
             elseif k == "last" then
-                if t.meta == "castAll" then t.last = state.player.lastcast
-                elseif t.meta == "castsOn" then t.last = state.player.lastgcd
-                elseif t.meta == "castsOff" then t.last = state.player.lastoffgcd end
-                return rawget( t, "last" ) or "none"
+                if t.meta == "castAll" then
+                    t.last = state.player.lastcast
+                elseif t.meta == "castsOn" then
+                    t.last = state.player.lastgcd
+                elseif t.meta == "castsOff" then
+                    t.last = state.player.lastoffgcd
+                end
+                return rawget(t, "last") or "none"
             end
 
             if k == t.last then
@@ -3785,10 +3858,10 @@ do
 
             return false
         end,
-        __newindex = function( t, k, v )
+        __newindex = function(t, k, v)
             if v == nil then return end
-            if autoReset[ k ] then Mark( t, k ) end
-            rawset( t, k, v )
+            if autoReset[k] then Mark(t, k) end
+            rawset(t, k, v)
         end
     }
     ns.metatables.mt_prev = mt_prev
@@ -3797,32 +3870,31 @@ end
 
 local resource_meta_functions = {}
 
-function state:AddResourceMetaFunction( name, f )
-    resource_meta_functions[ name ] = f
+function state:AddResourceMetaFunction(name, f)
+    resource_meta_functions[name] = f
 end
 
-
-function state:CombinedResourceRegen( t )
-    local regen = tonumber( t.regen ) or 0
+function state:CombinedResourceRegen(t)
+    local regen = tonumber(t.regen) or 0
     if regen == 0.001 then regen = 0 end
 
     local model = t.regenModel
     if not model then return regen end
 
-    for _, source in pairs( model ) do
-        local value = type( source.value ) == "function" and source.value() or source.value
-        local interval = type( source.interval ) == "function" and source.interval() or source.interval
-        value = tonumber( value ) or 0
-        interval = tonumber( interval ) or 0
+    for _, source in pairs(model) do
+        local value = type(source.value) == "function" and source.value() or source.value
+        local interval = type(source.interval) == "function" and source.interval() or source.interval
+        value = tonumber(value) or 0
+        interval = tonumber(interval) or 0
 
         local aura = source.aura
 
         if aura then
-            local auraRef = source.debuff and state.debuff[ aura ] or state.buff[ aura ]
+            local auraRef = source.debuff and state.debuff[aura] or state.buff[aura]
 
             if auraRef and auraRef.up then
                 if interval > 0 then
-                    regen = regen + ( value / interval )
+                    regen = regen + (value / interval)
                 end
             end
         end
@@ -3831,12 +3903,12 @@ function state:CombinedResourceRegen( t )
     return regen
 end
 
-function state:TimeToResource( t, amount )
+function state:TimeToResource(t, amount)
     -- Handle invalid or overflow cases.
     if not amount or amount > t.max then return 3600 end
     if t.current >= amount then return 0 end
 
-    local regen, lastTick, pad = tonumber( t.regen ) or 0, nil, 0
+    local regen, lastTick, pad = tonumber(t.regen) or 0, nil, 0
     local queryTime = state.query_time
     local deficit = amount - t.current
 
@@ -3865,34 +3937,33 @@ function state:TimeToResource( t, amount )
 
     -- Handle forecasted resources with slices (e.g., energy/focus models).
     if t.forecast and t.fcount > 0 then
-        if t.times[ amount ] then return t.times[ amount ] - queryTime end
+        if t.times[amount] then return t.times[amount] - queryTime end
 
         if regen == 0 then
             for i = 1, t.fcount do
-                local v = t.forecast[ i ]
+                local v = t.forecast[i]
                 if v.v >= amount then
-                    t.times[ amount ] = v.t
-                    return max( 0, t.times[ amount ] - queryTime )
+                    t.times[amount] = v.t
+                    return max(0, t.times[amount] - queryTime)
                 end
             end
-            t.times[ amount ] = queryTime + 3600
-            return max( 0, t.times[ amount ] - queryTime )
+            t.times[amount] = queryTime + 3600
+            return max(0, t.times[amount] - queryTime)
         end
 
         for i = 1, t.fcount do
-            local slice = t.forecast[ i ]
-            local after = t.forecast[ i + 1 ]
+            local slice = t.forecast[i]
+            local after = t.forecast[i + 1]
 
             if slice.v >= amount then
-                t.times[ amount ] = slice.t
+                t.times[amount] = slice.t
 
                 if lastTick then
-                    pad = ( slice.t - lastTick ) % 0.1
+                    pad = (slice.t - lastTick) % 0.1
                     pad = 0.1 - pad
                 end
 
-                return max( 0, pad + t.times[ amount ] - queryTime )
-
+                return max(0, pad + t.times[amount] - queryTime)
             elseif after and after.v >= amount then
                 -- Check if regeneration fills the deficit before the next slice.
                 local time_diff = after.t - slice.t
@@ -3900,40 +3971,38 @@ function state:TimeToResource( t, amount )
                 local regen_time = deficit / regen
 
                 if lastTick then
-                    pad = ( slice.t - lastTick ) % 0.1
+                    pad = (slice.t - lastTick) % 0.1
                     pad = 0.1 - pad
                 end
 
                 if regen_time < time_diff then
-                    t.times[ amount ] = ( pad + slice.t + regen_time )
+                    t.times[amount] = (pad + slice.t + regen_time)
                 else
-                    t.times[ amount ] = after.t
+                    t.times[amount] = after.t
                 end
-                return max( 0, t.times[ amount ] - queryTime )
+                return max(0, t.times[amount] - queryTime)
             end
         end
 
-        t.times[ amount ] = queryTime + 3600
-        return max( 0, t.times[ amount ] - queryTime )
+        t.times[amount] = queryTime + 3600
+        return max(0, t.times[amount] - queryTime)
     end
 
     -- Fallback for non-modeled resources.
     if lastTick and regen > 0 then
-        pad = ( queryTime - lastTick ) % 0.1
+        pad = (queryTime - lastTick) % 0.1
         pad = 0.1 - pad
     end
 
     if regen <= 0 then return 3600 end
-    return max( 0, pad + ( ( amount - t.current ) / regen ) )
+    return max(0, pad + ((amount - t.current) / regen))
 end
 
-
 local mt_resource = {
-    __index = function( t, k )
-
-        local meta = t.meta[ k ]
+    __index = function(t, k)
+        local meta = t.meta[k]
         if meta ~= nil then
-            local result = meta( t )
+            local result = meta(t)
 
             if result ~= nil then
                 return result
@@ -3941,13 +4010,11 @@ local mt_resource = {
         end
 
         if k == "pct" or k == "percent" then
-            return 100 * ( t.current / t.max )
-
+            return 100 * (t.current / t.max)
         elseif k == "deficit_pct" or k == "deficit_percent" then
             return 100 - t.pct
-
         elseif k == "current" then
-            local regen = tonumber( t.regen ) or 0
+            local regen = tonumber(t.regen) or 0
             if regen == 0.001 then regen = 0 end
 
             -- If this is a modeled resource, use our lookup system.
@@ -3955,10 +4022,10 @@ local mt_resource = {
                 local q = state.query_time
                 local index, slice
 
-                if t.values[ q ] then return t.values[ q ] end
+                if t.values[q] then return t.values[q] end
 
                 for i = 1, t.fcount do
-                    local v = t.forecast[ i ]
+                    local v = t.forecast[i]
                     if v.t <= q and v.v ~= nil then
                         index = i
                         slice = v
@@ -3969,61 +4036,49 @@ local mt_resource = {
 
                 -- We have a slice.
                 if index and slice and slice.v then
-                    t.values[ q ] = max( 0, min( t.max, slice.v + ( ( state.query_time - slice.t ) * regen ) ) )
-                    return t.values[ q ]
+                    t.values[q] = max(0, min(t.max, slice.v + ((state.query_time - slice.t) * regen)))
+                    return t.values[q]
                 end
             end
 
             -- No forecast.
             if regen ~= 0 then
-                return max( 0, min( t.max, t.actual + ( regen * state.delay ) ) )
+                return max(0, min(t.max, t.actual + (regen * state.delay)))
             end
 
             return t.actual
-
         elseif k == "deficit" or k == "base_deficit" then
             return t.max - t.current
-
         elseif k == "max_nonproc" then
             return t.max -- need to accommodate buffs that increase mana, etc.
-
         elseif k == "time_to_max" or k == "base_time_to_max" then
-            return state:TimeToResource( t, t.max )
-
+            return state:TimeToResource(t, t.max)
         elseif k == "time_to_max_combined" then
             if not state.spec.assassination then return t.time_to_max end
 
             -- Assassination, April 2021
             -- Using the same as time_to_max because our time_to_max uses modeled regen events...
-            return state:TimeToResource( t, t.max )
-
+            return state:TimeToResource(t, t.max)
         elseif k:sub(1, 8) == "time_to_" then
             local amount = k:sub(9)
             amount = tonumber(amount)
 
             if not amount then return 3600 end
 
-            return state:TimeToResource( t, amount )
-
+            return state:TimeToResource(t, amount)
         elseif k == "regen" then
-            return ( state.time > 0 and t.active_regen or t.inactive_regen ) or 0
-
+            return (state.time > 0 and t.active_regen or t.inactive_regen) or 0
         elseif k == "regen_combined" then
-            local regen = tonumber( t.regen ) or 0
+            local regen = tonumber(t.regen) or 0
             if regen == 0.001 then regen = 0 end
-            return max( regen, state:CombinedResourceRegen( t ) )
-
+            return max(regen, state:CombinedResourceRegen(t))
         elseif k == "modmax" then
             return t.max
-
         elseif k == "model" then
             return
-
         elseif k == 'onAdvance' then
             return
-
         end
-
     end
 }
 ns.metatables.mt_resource = mt_resource
@@ -4050,15 +4105,13 @@ local default_buff_values = {
 }
 
 
-function state:AddBuffMetaFunction( aura, key, func )
-    local a = class.auras[ aura ]
+function state:AddBuffMetaFunction(aura, key, func)
+    local a = class.auras[aura]
     if not a then return end
 
     if not a.meta then a.meta = {} end
-    a.meta[ key ] = setfenv( func, self )
+    a.meta[key] = setfenv(func, self)
 end
-
-
 
 local requiresLookup = {
     name = true,
@@ -4088,7 +4141,7 @@ local mt_default_buff
 local mt_buffs
 
 do
-    local autoReset = setmetatable( {
+    local autoReset = setmetatable({
         applied = 1,
         caster = 1,
         count = 1,
@@ -4105,68 +4158,74 @@ do
         v2 = 1,
         v3 = 1,
     }, {
-        __index = function( t, k )
-            if class.knownAuraAttributes[ k ] ~= nil then return 1 end
+        __index = function(t, k)
+            if class.knownAuraAttributes[k] ~= nil then return 1 end
         end,
-    } )
+    })
 
     -- Developed mainly for RtB; it will also report "stack" or "count" as the sum of stacks of multiple buffs.
     mt_alias_buff = {
-        __index = function( t, k )
-            local aura = class.auras[ t.key ]
+        __index = function(t, k)
+            local aura = class.auras[t.key]
             local type = aura.aliasType or "buff"
 
-            if aura.meta and aura.meta[ k ] then return aura.meta[ k ]() end
+            if aura.meta and aura.meta[k] then return aura.meta[k]() end
 
-            if k == "max_stack" then return aura.max_stack or 1
+            if k == "max_stack" then
+                return aura.max_stack or 1
             elseif k == "count" or k == "stack" or k == "stacks" then
                 local n = 0
 
                 if type == "any" then
-                    for i, child in ipairs( aura.alias ) do
-                        if state.buff[ child ].up then n = n + max( 1, state.buff[ child ].stack ) end
-                        if state.debuff[ child ].up then n = n + max( 1, state.debuff[ child ].stack ) end
+                    for i, child in ipairs(aura.alias) do
+                        if state.buff[child].up then n = n + max(1, state.buff[child].stack) end
+                        if state.debuff[child].up then n = n + max(1, state.debuff[child].stack) end
                     end
                 else
-                    for i, child in ipairs( aura.alias ) do
-                        if state[ type ][ child ].up then n = n + max( 1, state[ type ][ child ].stack ) end
+                    for i, child in ipairs(aura.alias) do
+                        if state[type][child].up then n = n + max(1, state[type][child].stack) end
                     end
                 end
 
                 return n
-
             end
 
             local alias
             local mode = aura.aliasMode or "first"
 
-            for i, v in ipairs( aura.alias ) do
+            for i, v in ipairs(aura.alias) do
                 local child
 
                 if type == "any" then
-                    child = state.debuff[ v ].up and state.debuff[ v ] or state.buff[ v ]
+                    child = state.debuff[v].up and state.debuff[v] or state.buff[v]
                 else
-                    child = state[ type ][ v ]
+                    child = state[type][v]
                 end
 
-                if not alias and mode == "first" and child.up then return child[ k ] end
+                if not alias and mode == "first" and child.up then return child[k] end
 
                 if child.up then
-                    if mode == "shortest" and ( not alias or child.remains < alias.remains ) then alias = child
-                    elseif mode == "longest" and ( not alias or child.remains > alias.remains ) then alias = child end
+                    if mode == "shortest" and (not alias or child.remains < alias.remains) then
+                        alias = child
+                    elseif mode == "longest" and (not alias or child.remains > alias.remains) then
+                        alias = child
+                    end
                 end
             end
 
             if type == "any" then type = "buff" end
 
-            if alias then return alias[ k ]
-            else return state[ type ][ aura.alias[1] ][ k ] end
+            if alias then
+                return alias[k]
+            else
+                return state[type][aura.alias[1]][k]
+            end
         end,
-        __newindex = function( t, k, v )
+        __newindex = function(t, k, v)
             if v == nil then return end
-            class.knownAuraAttributes[ k ] = true
-            if autoReset[ k ] then Mark( t, k ) end
-            rawset( t, k, v )
+            class.knownAuraAttributes[k] = true
+            if autoReset[k] then Mark(t, k) end
+            rawset(t, k, v)
         end
     }
     ns.metatables.mt_alias_buff = mt_alias_buff
@@ -4174,61 +4233,62 @@ do
     mt_default_buff = {
         mtID = "default_buff",
 
-        __index = function( t, k )
-            local aura = class.auras[ t.key ]
+        __index = function(t, k)
+            local aura = class.auras[t.key]
 
             if aura and aura.hidden then
                 -- Hidden auras might be detectable with FindPlayerAuraByID.
-                local name, _, count, _, duration, expires, caster, _, _, spellID, _, _, _, _, timeMod, v1, v2, v3 = state.FindPlayerAuraByID( aura.id )
+                local name, _, count, _, duration, expires, caster, _, _, spellID, _, _, _, _, timeMod, v1, v2, v3 =
+                state.FindPlayerAuraByID(aura.id)
 
                 if name then
-                    local buff = auras.player.buff[ t.key ] or {}
+                    local buff                 = auras.player.buff[t.key] or {}
 
-                    buff.key = t.key
-                    buff.id = spellID
-                    buff.name = name
-                    buff.count = count > 0 and count or 1
+                    buff.key                   = t.key
+                    buff.id                    = spellID
+                    buff.name                  = name
+                    buff.count                 = count > 0 and count or 1
                     -- buff.duration = duration
-                    buff.expires = expires
-                    buff.caster = caster
-                    buff.applied = expires - duration
-                    buff.caster = caster
-                    buff.timeMod = timeMod
-                    buff.v1 = v1
-                    buff.v2 = v2
-                    buff.v3 = v3
+                    buff.expires               = expires
+                    buff.caster                = caster
+                    buff.applied               = expires - duration
+                    buff.caster                = caster
+                    buff.timeMod               = timeMod
+                    buff.v1                    = v1
+                    buff.v2                    = v2
+                    buff.v3                    = v3
 
-                    buff.last_application = buff.last_application or 0
-                    buff.last_expiry      = buff.last_expiry or 0
+                    buff.last_application      = buff.last_application or 0
+                    buff.last_expiry           = buff.last_expiry or 0
 
-                    buff.unit = "player"
+                    buff.unit                  = "player"
 
-                    auras.player.buff[ t.key ] = buff
+                    auras.player.buff[t.key]   = buff
                 end
             end
 
-            if aura and rawget( aura, "meta" ) and aura.meta[ k ] then
-                if not t.metastack[ k ] then
-                    t.metastack[ k ] = true
-                    local value = aura.meta[ k ]( t, "buff" )
-                    t.metastack[ k ] = nil
+            if aura and rawget(aura, "meta") and aura.meta[k] then
+                if not t.metastack[k] then
+                    t.metastack[k] = true
+                    local value = aura.meta[k](t, "buff")
+                    t.metastack[k] = nil
                     if value ~= nil then return value end
                 end
             end
 
-            if requiresLookup[ k ] then
+            if requiresLookup[k] then
                 if aura and aura.generate then
-                    for attr, a_val in pairs( default_buff_values ) do
-                        t[ attr ] = rawget( t, attr ) or rawget( aura, attr ) or a_val
+                    for attr, a_val in pairs(default_buff_values) do
+                        t[attr] = rawget(t, attr) or rawget(aura, attr) or a_val
                     end
 
-                    aura.generate( t, "buff" )
+                    aura.generate(t, "buff")
                     t.id = aura and aura.id or t.key
 
-                    return rawget( t, k )
+                    return rawget(t, k)
                 end
 
-                local real = auras.player.buff[ t.key ] or auras.target.buff[ t.key ]
+                local real = auras.player.buff[t.key] or auras.target.buff[t.key]
 
                 if real then
                     t.name = real.name
@@ -4239,7 +4299,7 @@ do
                     t.expires = real.expires
                     t.applied = real.applied
                     t.caster = real.caster
-                    t.id = real.id or class.auras[ t.key ].id
+                    t.id = real.id or class.auras[t.key].id
                     t.timeMod = real.timeMod
                     t.v1 = real.v1
                     t.v2 = real.v2
@@ -4250,136 +4310,111 @@ do
 
                     t.unit = real.unit
                 else
-                    local meta = aura and rawget( aura, "meta" )
+                    local meta = aura and rawget(aura, "meta")
 
-                    for attr, a_val in pairs( default_buff_values ) do
-                        if not meta or not meta[ attr ] then
-                            t[ attr ] = aura and aura[ attr ] or a_val
+                    for attr, a_val in pairs(default_buff_values) do
+                        if not meta or not meta[attr] then
+                            t[attr] = aura and aura[attr] or a_val
                         end
                     end
 
-                    t.id = rawget( t, 'id' ) or ( aura and aura.id ) or t.key
+                    t.id = rawget(t, 'id') or (aura and aura.id) or t.key
                 end
 
-                return rawget( t, k )
-
+                return rawget(t, k)
             elseif k == "up" or k == "ticking" then
                 return t.remains > 0
-
             elseif k == "down" then
                 return t.remains == 0
-
             elseif k == "remains" then
                 -- if state.IsCycling( t.key ) then return 0 end
-                return t.applied <= state.query_time and max( 0, t.expires - state.query_time ) or 0
-
+                return t.applied <= state.query_time and max(0, t.expires - state.query_time) or 0
             elseif k == "duration" then
-                return aura.duration or ( t.remains > 0 and t.expires - t.applied or 0 ) or 15
-
+                return aura.duration or (t.remains > 0 and t.expires - t.applied or 0) or 15
             elseif k == "refreshable" then
                 local tr = t.remains
-                return tr == 0 or tr < ( 0.3 * ( aura.duration or 30 ) )
-
+                return tr == 0 or tr < (0.3 * (aura.duration or 30))
             elseif k == "time_to_refresh" then
                 local remains = t.remains
                 if remains == 0 then return 0 end
-                return max( 0, 0.01 + remains - ( 0.3 * ( aura.duration or 30 ) ) )
-
+                return max(0, 0.01 + remains - (0.3 * (aura.duration or 30)))
             elseif k == "cooldown_remains" then
-                return state.cooldown[ t.key ] and state.cooldown[ t.key ].remains or 0
-
+                return state.cooldown[t.key] and state.cooldown[t.key].remains or 0
             elseif k == "react" or k == "stack" or k == "stacks" then
                 if t.remains == 0 then return 0 end
                 return t.count
-
             elseif k == "max_stack" or k == "max_stacks" then
-                return max( t.stacks, aura and aura.max_stack or 1 )
-
+                return max(t.stacks, aura and aura.max_stack or 1)
             elseif k == "mine" then
                 return t.caster == "player"
-
             elseif k == "v1" then
                 return 0
-
             elseif k == "v2" then
                 return 0
-
             elseif k == "v3" then
                 return 0
-
             elseif k == "value" then
                 if t.remains == 0 then return 0 end
                 return t.v1 or 0
-
             elseif k == "stack_value" then
                 if t.remains == 0 then return 0 end
                 return t.value * t.stack
-
             elseif k == "stack_pct" then
                 if t.remains == 0 then return 0 end
-                return ( 100 * t.stack / t.max_stack )
-
+                return (100 * t.stack / t.max_stack)
             elseif k == "at_max_stacks" then
                 return t.stack_pct >= 100
-
             elseif k == "ticks" then
                 if t.remains == 0 then return 0 end
                 -- if t.applied <= state.query_time and state.query_time < t.expires then return t.duration / t.tick_time - t.ticks_remain end
                 -- if t.up then return 1 + ( ( class.auras[ t.key ].duration or ( 30 * state.haste ) ) / ( class.auras[ t.key ].tick_time or ( 3 * t.haste ) ) ) - t.ticks_remain end
                 return t.duration / t.tick_time - t.ticks_remain
-
             elseif k == "tick_time" then
                 if t.remains == 0 then return 0 end
-                return aura and aura.tick_time or ( 3 * state.haste ) -- Default tick time will be 3 because why not?
-
+                return aura and aura.tick_time or (3 * state.haste)   -- Default tick time will be 3 because why not?
             elseif k == "ticks_remain" then
                 if t.remains == 0 then return 0 end
                 return t.remains / t.tick_time
-
             elseif k == "tick_time_remains" then
                 if t.remains == 0 then return 0 end
                 if t.applied <= state.query_time and state.query_time < t.expires then
                     if not aura.tick_time then return t.remains end
-                    return aura.tick_time - ( ( query_time - t.applied ) % aura.tick_time )
+                    return aura.tick_time - ((query_time - t.applied) % aura.tick_time)
                 end
                 return 0
-
             elseif k == "last_trigger" then
-                if state.combat > 0 then return max( 0, t.last_application - state.combat ) end
+                if state.combat > 0 then return max(0, t.last_application - state.combat) end
                 return 0
-
             elseif k == "last_expire" then
-                if state.combat > 0 and t.last_expiry < state.query_time then return max( 0, t.last_expiry - state.combat ) end
+                if state.combat > 0 and t.last_expiry < state.query_time then return max(0, t.last_expiry - state.combat) end
                 return 0
-
             else
-                if class.auras[ t.key ] and class.auras[ t.key ][ k ] ~= nil then
-                    return class.auras[ t.key ][ k ]
+                if class.auras[t.key] and class.auras[t.key][k] ~= nil then
+                    return class.auras[t.key][k]
                 end
             end
 
             local key_str = type(k) == "function" and tostring(k) or k
-            Error( "UNK: buff." .. t.key .. "." .. key_str .. "\n\n" .. debugstack() )
-
+            Error("UNK: buff." .. t.key .. "." .. key_str .. "\n\n" .. debugstack())
         end,
 
-        __newindex = function( t, k, v )
+        __newindex = function(t, k, v)
             if v == nil then return end
 
-            class.knownAuraAttributes[ k ] = true
+            class.knownAuraAttributes[k] = true
             -- Prevent a fixed value from being entered if it is calculated by a meta function.
             -- 20220828:  This was bugged, and fixing it might cause new bugs.  Watch carefully.
             --[[ if t.meta and t.meta[ k ] then
                 return
             end ]]
 
-            if autoReset[ k ] then Mark( t, k ) end
-            rawset( t, k, v )
+            if autoReset[k] then Mark(t, k) end
+            rawset(t, k, v)
         end
     }
     ns.metatables.mt_default_buff = mt_default_buff
 
-    unknown_buff = setmetatable( {
+    unknown_buff = setmetatable({
         key = "unknown_buff",
         name = "No Name",
         count = 0,
@@ -4394,7 +4429,7 @@ do
         v2 = 0,
         v3 = 0,
         unit = "player"
-    }, mt_default_buff )
+    }, mt_default_buff)
 
 
 
@@ -4407,7 +4442,7 @@ do
     -- Fullscan definitely needs revamping, but it works for now.
     mt_buffs = {
         -- The aura doesn't exist in our table so check the real game state, -- and copy it so we don't have to use the API next time.
-        __index = function( t, k )
+        __index = function(t, k)
             if k == "__scanned" then
                 return false
             end
@@ -4417,23 +4452,23 @@ do
                 return unknown_buff
             end
 
-            local aura = class.auras[ k ]
+            local aura = class.auras[k]
 
             if not aura then
-                if Hekili.PLAYER_ENTERING_WORLD and not buffs_warned[ k ] then
+                if Hekili.PLAYER_ENTERING_WORLD and not buffs_warned[k] then
                     local key_str = type(k) == "function" and tostring(k) or k
-                    Hekili:Error( "Unknown buff in [" .. state.scriptID .. "]: " .. key_str .. "\n\n" .. debugstack() )
-                    buffs_warned[ k ] = true
+                    Hekili:Error("Unknown buff in [" .. state.scriptID .. "]: " .. key_str .. "\n\n" .. debugstack())
+                    buffs_warned[k] = true
                 end
                 return unknown_buff
             end
 
             if k ~= aura.key then
-                t[ aura.key ] = rawget( t, aura.key ) or {
+                t[aura.key] = rawget(t, aura.key) or {
                     key = aura.key,
                     name = aura.name
                 }
-                t[ k ] = t[ aura.key ]
+                t[k] = t[aura.key]
             else
                 t[k] = {
                     key = aura.key,
@@ -4442,14 +4477,14 @@ do
             end
 
             if aura.generate then
-                for attr, a_val in pairs( default_buff_values ) do
-                    t[ k ][ attr ] = rawget( t[ k ], attr ) or a_val
+                for attr, a_val in pairs(default_buff_values) do
+                    t[k][attr] = rawget(t[k], attr) or a_val
                 end
-                aura.generate( t[ k ], "buff" )
-                return t[ k ]
+                aura.generate(t[k], "buff")
+                return t[k]
             end
 
-            local real = auras.player.buff[ k ] or auras.target.buff[ k ]
+            local real = auras.player.buff[k] or auras.target.buff[k]
 
             local buff = t[k]
 
@@ -4471,23 +4506,22 @@ do
                 buff.unit = real.unit
             end
 
-            return t[ k ]
-
+            return t[k]
         end,
 
-        __newindex = function( t, k, v )
-            local aura = class.auras[ k ]
+        __newindex = function(t, k, v)
+            local aura = class.auras[k]
 
             if aura then
                 aura.used = true
-                if aura.meta then rawset( v, "metastack", {} ) end
+                if aura.meta then rawset(v, "metastack", {}) end
                 if aura.alias then
-                    rawset( t, k, setmetatable( v, mt_alias_buff ) )
+                    rawset(t, k, setmetatable(v, mt_alias_buff))
                     return
                 end
             end
 
-            rawset( t, k, setmetatable( v, mt_default_buff ) )
+            rawset(t, k, setmetatable(v, mt_default_buff))
         end
     }
     ns.metatables.mt_buffs = mt_buffs
@@ -4495,7 +4529,7 @@ end
 
 
 local mt_default_talent = {
-    __index = function( t, k )
+    __index = function(t, k)
         if k == "i_enabled" or k == "rank" then return t.enabled and 1 or 0 end
         return k
     end,
@@ -4503,29 +4537,29 @@ local mt_default_talent = {
 ns.metatables.mt_default_talent = mt_default_talent
 
 
-local null_talent = setmetatable( {
+local null_talent = setmetatable({
     enabled = false,
-}, mt_default_talent )
+}, mt_default_talent)
 ns.metatables.null_talent = null_talent
 
 local logged_talent_errors = {}
 
 local mt_talents = {
-    __index = function( t, k )
-        if class.talents[ k ] == nil and not logged_talent_errors[ k ] and #class.specs > 1 then
+    __index = function(t, k)
+        if class.talents[k] == nil and not logged_talent_errors[k] and #class.specs > 1 then
             local key_str = type(k) == "function" and tostring(k) or k
-            Hekili:Error( "Unknown talent in [ " .. state.scriptID .. " ]: " .. key_str .. "\n\n" .. debugstack() )
-            logged_talent_errors[ k ] = true
+            Hekili:Error("Unknown talent in [ " .. state.scriptID .. " ]: " .. key_str .. "\n\n" .. debugstack())
+            logged_talent_errors[k] = true
         end
-        return ( null_talent )
+        return (null_talent)
     end,
 
-    __newindex = function( t, k, v )
-        if type( v ) == "table" then
-            rawset( t, k, setmetatable( v, mt_default_talent ) )
+    __newindex = function(t, k, v)
+        if type(v) == "table" then
+            rawset(t, k, setmetatable(v, mt_default_talent))
             return
         end
-        rawset( t, k, v )
+        rawset(t, k, v)
     end,
 }
 ns.metatables.mt_talents = mt_talents
@@ -4537,37 +4571,41 @@ local function IslandPvP()
 end
 
 local mt_default_pvptalent = {
-    __index = function( t, k )
+    __index = function(t, k)
         local enlisted = state.bg or state.arena or state.buff.enlisted.up or IslandPvP()
 
-        if k == "enabled" then return enlisted and rawget( t, "_enabled" ) or false
-        elseif k == "_enabled" then return false
-        elseif k == "i_enabled" or k == "rank" then return enlisted and rawget( t, "_enabled" ) and 1 or 0 end
+        if k == "enabled" then
+            return enlisted and rawget(t, "_enabled") or false
+        elseif k == "_enabled" then
+            return false
+        elseif k == "i_enabled" or k == "rank" then
+            return enlisted and rawget(t, "_enabled") and 1 or 0
+        end
 
         return k
     end,
 }
 
 
-local null_pvptalent = setmetatable( {
+local null_pvptalent = setmetatable({
     _enabled = false
-}, mt_default_pvptalent )
+}, mt_default_pvptalent)
 
 
 local mt_pvptalents = {
-    __index = function( t, k )
+    __index = function(t, k)
         return null_pvptalent
     end,
 
-    __newindex = function( t, k, v )
-        rawset( t, k, setmetatable( v, mt_default_pvptalent ) )
+    __newindex = function(t, k, v)
+        rawset(t, k, setmetatable(v, mt_default_pvptalent))
     end,
 }
 
 
 do
     local mt_default_gen_trait = {
-        __index = function( t, k )
+        __index = function(t, k)
             if k == "enabled" or k == "minor" or k == "equipped" then
                 return t.rank and t.rank > 0
             elseif k == "time_value" then
@@ -4586,23 +4624,19 @@ do
     ns.metatables.mt_default_gen_trait = mt_default_gen_trait
 
     local mt_generic_traits = {
-        __index = function( t, k )
+        __index = function(t, k)
             return t.no_trait
         end,
 
-        __newindex = function( t, k, v )
-            rawset( t, k, setmetatable( v, mt_default_gen_trait ) )
-            return t[ k ]
+        __newindex = function(t, k, v)
+            rawset(t, k, setmetatable(v, mt_default_gen_trait))
+            return t[k]
         end
     }
     ns.metatables.mt_generic_traits = mt_generic_traits
 
-    setmetatable( state.legendary, mt_generic_traits )
+    setmetatable(state.legendary, mt_generic_traits)
     state.legendary.no_trait = { rank = 0 }
-
-
-
-
 end
 
 
@@ -4610,12 +4644,12 @@ do
     local db = scripts.DB
 
     -- Args table, make it nicer.
-    setmetatable( state.args, {
-        __index = function( t, k )
+    setmetatable(state.args, {
+        __index = function(t, k)
             -- No script selected.
             if not state.scriptID then return end
 
-            local script = db[ state.scriptID ]
+            local script = db[state.scriptID]
 
             -- No script by that name.
             if not script then return end
@@ -4623,51 +4657,49 @@ do
             -- Script has no modifiers.
             if not script.Modifiers then return end
 
-            local mod = script.Modifiers[ k ]
+            local mod = script.Modifiers[k]
 
             if mod then
-                local s, val = pcall( mod )
+                local s, val = pcall(mod)
                 if s then return val end
             end
         end,
-    } )
+    })
 end
 
 
 -- Table for counting active dots.
 local mt_active_dot = {
     __index = function(t, k)
-        local aura = class.auras[ k ]
+        local aura = class.auras[k]
 
         if aura then
-            if rawget( t, aura.key ) then return t[ aura.key ] end
+            if rawget(t, aura.key) then return t[aura.key] end
             local id = aura.id
-            local count = ns.numDebuffs( id )
+            local count = ns.numDebuffs(id)
 
             if aura.copy then
-                if type( aura.copy ) == "table" then
-                    for _, v in ipairs( aura.copy ) do
+                if type(aura.copy) == "table" then
+                    for _, v in ipairs(aura.copy) do
                         if type(v) == "number" and v > 0 and v ~= id then
-
-                            count = count + ns.numDebuffs( v )
+                            count = count + ns.numDebuffs(v)
                         end
                     end
-                elseif type( aura.copy ) == "number" and aura.copy > 0 and aura.copy ~= id then
-                    count = count + ns.numDebuffs( aura.copy )
+                elseif type(aura.copy) == "number" and aura.copy > 0 and aura.copy ~= id then
+                    count = count + ns.numDebuffs(aura.copy)
                 end
             end
 
-            t[ k ] = count
-            return t[ k ]
+            t[k] = count
+            return t[k]
         else
             return 0
-
         end
     end,
-    __newindex = function( t, k, v )
+    __newindex = function(t, k, v)
         if v == nil then return end
-        Mark( t, k )
-        rawset( t, k, v )
+        Mark(t, k)
+        rawset(t, k, v)
     end
 }
 ns.metatables.mt_active_dot = mt_active_dot
@@ -4676,34 +4708,31 @@ ns.metatables.mt_active_dot = mt_active_dot
 -- Table of default handlers for a totem. Under-implemented at the moment.
 -- Needs review.
 local mt_default_totem = {
-    __index = function( t, k )
+    __index = function(t, k)
         if k == "expires" then
-            local _, name, start, duration, icon, modRate, spellID = GetTotemInfo( t.totem )
+            local _, name, start, duration, icon, modRate, spellID = GetTotemInfo(t.totem)
 
             t.name = name
-            t.expires = ( start or 0 ) + ( duration or 0 )
+            t.expires = (start or 0) + (duration or 0)
 
-            return t[ k ]
-
+            return t[k]
         elseif k == "up" or k == "active" or k == "alive" then
-            return ( t.expires > ( state.query_time ) )
-
+            return (t.expires > (state.query_time))
         elseif k == "remains" then
-            if t.expires > ( state.query_time ) then
-                return ( t.expires - ( state.query_time ) )
+            if t.expires > (state.query_time) then
+                return (t.expires - (state.query_time))
             else
                 return 0
             end
-
         end
 
-    local nm = rawget(t, "name") or "no_name"
-    Error( "UNK: totem." .. nm .. "." .. k )
+        local nm = rawget(t, "name") or "no_name"
+        Error("UNK: totem." .. nm .. "." .. k)
     end,
-    __newindex = function( t, k, v )
+    __newindex = function(t, k, v)
         if v == nil then return end
-        Mark( t, k )
-        rawset( t, k, v )
+        Mark(t, k)
+        rawset(t, k, v)
     end
 }
 Hekili.mt_default_totem = mt_default_totem
@@ -4717,37 +4746,34 @@ local mt_totem = {
             local _, name, start, duration = GetTotemInfo(1)
 
             t[k] = {
-            key = k, totem = 1, name = name, expires = (start + duration) or 0, }
+                key = k, totem = 1, name = name, expires = (start + duration) or 0, }
             return t[k]
-
         elseif k == "earth" then
             local _, name, start, duration = GetTotemInfo(2)
 
             t[k] = {
-            key = k, totem = 2, name = name, expires = (start + duration) or 0, }
+                key = k, totem = 2, name = name, expires = (start + duration) or 0, }
             return t[k]
-
         elseif k == "water" then
             local _, name, start, duration = GetTotemInfo(3)
 
             t[k] = {
-            key = k, totem = 3, name = name, expires = (start + duration) or 0, }
+                key = k, totem = 3, name = name, expires = (start + duration) or 0, }
             return t[k]
-
         elseif k == "air" then
             local _, name, start, duration = GetTotemInfo(4)
 
             t[k] = {
-            key = k, totem = 4, name = name, expires = (start + duration) or 0, }
+                key = k, totem = 4, name = name, expires = (start + duration) or 0, }
             return t[k]
         end
 
-        if state.pet[ k ] ~= nil then return state.pet[ k ] end
+        if state.pet[k] ~= nil then return state.pet[k] end
 
-        Error( "UNK: totem." .. k )
+        Error("UNK: totem." .. k)
     end,
-    __newindex = function( t, k, v )
-        rawset( t, k, setmetatable( v, mt_default_totem ) )
+    __newindex = function(t, k, v)
+        rawset(t, k, setmetatable(v, mt_default_totem))
     end
 }
 ns.metatables.mt_totem = mt_totem
@@ -4765,15 +4791,15 @@ do
 
     local entryPool = {}
 
-    function state:RegisterVariable( key, scriptID, list, preconditions )
-        db[ key ] = db[ key ] or {}
-        local data = db[ key ]
+    function state:RegisterVariable(key, scriptID, list, preconditions)
+        db[key] = db[key] or {}
+        local data = db[key]
 
-        cache[ key ] = cache[ key ] or {}
+        cache[key] = cache[key] or {}
 
         local fullPath = scriptID
 
-        local entry = remove( entryPool ) or {
+        local entry = remove(entryPool) or {
             mustPass = {},
             -- mustFail = {}
         }
@@ -4782,10 +4808,10 @@ do
         entry.list = list
 
         if preconditions then
-            for i, prereq in ipairs( preconditions ) do
+            for i, prereq in ipairs(preconditions) do
                 local script = prereq.script
                 if script ~= 0 then
-                    insert( entry.mustPass, script )
+                    insert(entry.mustPass, script)
                     fullPath = fullPath .. "+" .. script
                 end
             end
@@ -4802,60 +4828,55 @@ do
         end ]]
 
         entry.fullPath = fullPath
-        insert( data, entry )
+        insert(data, entry)
     end
 
-
-    function state:PurgeListVariables( list )
-        for variable, data in pairs( db ) do
+    function state:PurgeListVariables(list)
+        for variable, data in pairs(db) do
             for i = #data, 1, -1 do
-                if data[ i ].list == list then
-                    local item = remove( data, i )
-                    wipe( item.mustPass )
-                    insert( entryPool, item )
-                    wipe( cache[ variable ] )
+                if data[i].list == list then
+                    local item = remove(data, i)
+                    wipe(item.mustPass)
+                    insert(entryPool, item)
+                    wipe(cache[variable])
                 end
             end
         end
     end
 
-
     function state:ResetVariables()
-        for k, v in pairs( db ) do
+        for k, v in pairs(db) do
             for i = #v, 1, -1 do
-                local x = remove( v, i )
-                wipe( x.mustPass )
+                local x = remove(v, i)
+                wipe(x.mustPass)
                 -- wipe( x.mustFail )
-                insert( entryPool, x )
+                insert(entryPool, x)
             end
-            wipe( cache[ k ] )
-            wipe( self.variable )
+            wipe(cache[k])
+            wipe(self.variable)
         end
 
-        wipe( pathState )
+        wipe(pathState)
     end
 
-
-    function state:GetVariableIDs( key )
-        return db[ key ]
+    function state:GetVariableIDs(key)
+        return db[key]
     end
-
 
     local defaultValue = 0
 
-    function state:SetDefaultVariable( value )
+    function state:SetDefaultVariable(value)
         if value == nil then value = 0 end
         defaultValue = value
     end
 
-
-    state.variable = setmetatable( {
+    state.variable = setmetatable({
     }, {
-        __index = function( t, var )
+        __index = function(t, var)
             local debug = Hekili.ActiveDebug
 
-            if class.variables[ var ] then
-                return class.variables[ var ]()
+            if class.variables[var] then
+                return class.variables[var]()
             end
 
             local now = state.query_time
@@ -4864,39 +4885,39 @@ do
                 return defaultValue
             end
 
-            if not db[ var ] then
-                if debug then Hekili:Debug( "No such variable '%s'.", var ) end
-                Hekili:Error( "Variable '%s' referenced in %s but is undefined.", var, state.scriptID )
+            if not db[var] then
+                if debug then Hekili:Debug("No such variable '%s'.", var) end
+                Hekili:Error("Variable '%s' referenced in %s but is undefined.", var, state.scriptID)
                 return defaultValue
             end
 
             local value
 
-            local data = db[ var ]
+            local data = db[var]
             local parent = state.scriptID
             local which_mod = "value"
 
             -- If we're checking variable with no script loaded, don't bother.
             if not parent or parent == "NilScriptID" then return 0 end
 
-            for i, entry in ipairs( data ) do
+            for i, entry in ipairs(data) do
                 local scriptID = entry.id
                 local currPath = entry.fullPath .. ":" .. now
 
-                value = rawget( state.variable, var )
+                value = rawget(state.variable, var)
                 if value == nil then
-                    state.variable[ var ] = defaultValue
+                    state.variable[var] = defaultValue
                     value = defaultValue
                 end
 
                 -- Check the requirements/exclusions in the APL stack.
-                if pathState[ currPath ] == nil then
-                    pathState[ currPath ] = true
+                if pathState[currPath] == nil then
+                    pathState[currPath] = true
 
-                    for r, prereq in ipairs( entry.mustPass ) do
+                    for r, prereq in ipairs(entry.mustPass) do
                         state.scriptID = prereq
-                        if not scripts:CheckScript( prereq ) then
-                            pathState[ currPath ] = false
+                        if not scripts:CheckScript(prereq) then
+                            pathState[currPath] = false
                             break
                         end
                     end
@@ -4912,18 +4933,17 @@ do
                     end ]]
                 end
 
-                if pathState[ currPath ] then
+                if pathState[currPath] then
                     local pathKey = currPath .. "-" .. i
 
-                    if cache[ var ][ pathKey ] ~= nil then
-                        value = cache[ var ][ pathKey ]
-                        state.variable[ var ] = value
-
+                    if cache[var][pathKey] ~= nil then
+                        value = cache[var][pathKey]
+                        state.variable[var] = value
                     else
                         state.scriptID = scriptID
                         local op = state.args.op or "set"
 
-                        local passed = scripts:CheckScript( scriptID )
+                        local passed = scripts:CheckScript(scriptID)
 
                         local conditions = "(none)"
                         local valueString = "(none)"
@@ -4946,8 +4966,11 @@ do
                         if op == "set" or op == "setif" then
                             if passed then
                                 local v1 = state.args.value
-                                if v1 ~= nil then value = v1
-                                else value = state.args.default end
+                                if v1 ~= nil then
+                                    value = v1
+                                else
+                                    value = state.args.default
+                                end
                             else
                                 local v2 = state.args.value_else
                                 if v2 ~= nil then
@@ -4955,7 +4978,6 @@ do
                                     which_mod = "value_else"
                                 end
                             end
-
                         elseif op == "reset" then
                             if passed then
                                 local v = state.args.value
@@ -4963,35 +4985,40 @@ do
                                 if v == nil then v = 0 end
                                 value = v
                             end
-
                         elseif passed then
                             -- Math Ops.
-                            local currType = type( value )
+                            local currType = type(value)
 
                             if currType == "number" then
                                 -- Operations on existing value.
                                 if op == "floor" then
-                                    value = floor( value )
+                                    value = floor(value)
                                 elseif op == "ceil" then
-                                    value = ceil( value )
+                                    value = ceil(value)
                                 else
                                     -- Operations with two values.
                                     local newVal = state.args.value
-                                    local valType = type( newVal )
+                                    local valType = type(newVal)
 
                                     if valType == "number" then
                                         if op == "add" then
                                             value = value + newVal
                                         elseif op == "div" then
-                                            if newVal == 0 then value = 0
-                                            else value = value / newVal end
+                                            if newVal == 0 then
+                                                value = 0
+                                            else
+                                                value = value / newVal
+                                            end
                                         elseif op == "max" then
-                                            value = max( value, newVal )
+                                            value = max(value, newVal)
                                         elseif op == "min" then
-                                            value = min( value, newVal )
+                                            value = min(value, newVal)
                                         elseif op == "mod" then
-                                            if newVal == 0 then value = 0
-                                            else value = value % newVal end
+                                            if newVal == 0 then
+                                                value = 0
+                                            else
+                                                value = value % newVal
+                                            end
                                         elseif op == "mul" then
                                             value = value * newVal
                                         elseif op == "pow" then
@@ -5006,19 +5033,23 @@ do
 
                         -- Cache the value in case it is an intermediate value (i.e., multiple calculation steps).
                         if debug then
-                            conditions = format( "%s: %s", passed and "PASS" or "FAIL", scripts:GetConditionsAndValues( scriptID ) )
-                            valueString = format( "%s: %s", value ~= nil and tostring( value ) or "nil", scripts:GetModifierValues( "value", scriptID ) )
+                            conditions = format("%s: %s", passed and "PASS" or "FAIL",
+                                scripts:GetConditionsAndValues(scriptID))
+                            valueString = format("%s: %s", value ~= nil and tostring(value) or "nil",
+                                scripts:GetModifierValues("value", scriptID))
 
-                            Hekili:Debug( var .. " #" .. i .. " [" .. scriptID .. "]; conditions = " .. conditions .. "\n - value = " .. valueString )
+                            Hekili:Debug(var ..
+                            " #" ..
+                            i .. " [" .. scriptID .. "]; conditions = " .. conditions .. "\n - value = " .. valueString)
                         end
-                        state.variable[ var ] = value
-                        cache[ var ][ pathKey ] = value
+                        state.variable[var] = value
+                        cache[var][pathKey] = value
                     end
                 end
             end
 
             -- Clear cache and clear the flag that we are checking this variable already.
-            state.variable[ var ] = nil
+            state.variable[var] = nil
 
             --[[ if debug then
                 Hekili:Debug( "%s Result = %s.", var, tostring( value ) )
@@ -5028,15 +5059,15 @@ do
 
             return value
         end
-    } )
+    })
 end
 
 -- Table of set bonuses. Some string manipulation to honor the SimC syntax.
 -- Currently returns 1 for true, 0 for false to be consistent with SimC conditionals.
 -- Won't catch fake set names. Should revise.
 local mt_set_bonuses = {
-    __index = function( t, k )
-        if type( k ) == "number" then return 0 end
+    __index = function(t, k)
+        if type(k) == "number" then return 0 end
 
         -- Aliases to account for syntax differences across specs in SimC
         local aliasMap = {
@@ -5045,13 +5076,13 @@ local mt_set_bonuses = {
         }
 
         -- Match suffix pattern like tww2_2pc, tww2_4pc, thewarwithin_season_2_2pc, etc.
-        local rawSet, pieces = k:match( "^([%w_]+)_([24])pc$" )
+        local rawSet, pieces = k:match("^([%w_]+)_([24])pc$")
         if rawSet and pieces then
-            local set = aliasMap[ rawSet ] or rawSet
-            pieces = tonumber( pieces )
+            local set = aliasMap[rawSet] or rawSet
+            pieces = tonumber(pieces)
 
-            if not t[ set ] then return 0 end
-            return t[ set ] >= pieces and 1 or 0
+            if not t[set] then return 0 end
+            return t[set] >= pieces and 1 or 0
         end
 
         -- Non-matching or malformed key
@@ -5074,7 +5105,7 @@ ns.metatables.mt_equipped = mt_equipped
 local mt_alias_debuff
 
 do
-    local autoReset = setmetatable( {
+    local autoReset = setmetatable({
         applied = 1,
         caster = 1,
         count = 1,
@@ -5091,29 +5122,29 @@ do
         v2 = 1,
         v3 = 1,
     }, {
-        __index = function( t, k )
-            if class.knownAuraAttributes[ k ] ~= nil then return 1 end
+        __index = function(t, k)
+            if class.knownAuraAttributes[k] ~= nil then return 1 end
         end,
-    } )
+    })
 
     mt_alias_debuff = {
-        __index = function( t, k )
-            local aura = class.auras[ t.key ]
+        __index = function(t, k)
+            local aura = class.auras[t.key]
             local type = aura.aliasType or "debuff"
 
-            if aura.meta and aura.meta[ k ] then return aura.meta[ k ]() end
+            if aura.meta and aura.meta[k] then return aura.meta[k]() end
 
             if k == "count" or k == "stack" or k == "stacks" then
                 local n = 0
 
                 if type == "any" then
-                    for i, child in ipairs( aura.alias ) do
-                        if state.buff[ child ].up then n = n + max( 1, state.buff[ child ].stack ) end
-                        if state.debuff[ child ].up then n = n + max( 1, state.debuff[ child ].stack ) end
+                    for i, child in ipairs(aura.alias) do
+                        if state.buff[child].up then n = n + max(1, state.buff[child].stack) end
+                        if state.debuff[child].up then n = n + max(1, state.debuff[child].stack) end
                     end
                 else
-                    for i, child in ipairs( aura.alias ) do
-                        if state[ type ][ child ].up then n = n + max( 1, state[ type ][ child ].stack ) end
+                    for i, child in ipairs(aura.alias) do
+                        if state[type][child].up then n = n + max(1, state[type][child].stack) end
                     end
                 end
 
@@ -5123,33 +5154,39 @@ do
             local alias
             local mode = aura.aliasMode or "first"
 
-            for i, v in ipairs( aura.alias ) do
+            for i, v in ipairs(aura.alias) do
                 local child
 
                 if type == "any" then
-                    child = state.buff[ v ].up and state.buff[ v ] or state.debuff[ v ]
+                    child = state.buff[v].up and state.buff[v] or state.debuff[v]
                 else
-                    child = state.debuff[ v ]
+                    child = state.debuff[v]
                 end
 
-                if not alias and mode == "first" and child.up then return child[ k ] end
+                if not alias and mode == "first" and child.up then return child[k] end
 
                 if child.up then
-                    if mode == "shortest" and ( not alias or child.remains < alias.remains ) then alias = child
-                    elseif mode == "longest" and ( not alias or child.remains > alias.remains ) then alias = child end
+                    if mode == "shortest" and (not alias or child.remains < alias.remains) then
+                        alias = child
+                    elseif mode == "longest" and (not alias or child.remains > alias.remains) then
+                        alias = child
+                    end
                 end
             end
 
             if type == "any" then type = "debuff" end
 
-            if alias then return alias[ k ]
-            else return state[ type ][ aura.alias[1] ][ k ] end
+            if alias then
+                return alias[k]
+            else
+                return state[type][aura.alias[1]][k]
+            end
         end,
-        __newindex = function( t, k, v )
+        __newindex = function(t, k, v)
             if v == nil then return end
-            class.knownAuraAttributes[ k ] = true
-            if autoReset[ k ] then Mark( t, k ) end
-            rawset( t, k, v )
+            class.knownAuraAttributes[k] = true
+            if autoReset[k] then Mark(t, k) end
+            rawset(t, k, v)
         end
     }
 end
@@ -5234,56 +5271,55 @@ do
     mt_default_debuff = {
         mtID = "default_debuff",
 
-        ticks_before = function( t, span )
+        ticks_before = function(t, span)
             if span <= 0 then return 0 end
 
             local remains = t.remains
             if remains == 0 then return 0 end
 
             local ticks_remain = t.ticks_remain
-            span = min( span, remains )
+            span = min(span, remains)
 
             local real_delay = state.delay
             state.delay = state.delay + span
 
-            local ticks_before = max( 0, ticks_remain - t.ticks_remain )
+            local ticks_before = max(0, ticks_remain - t.ticks_remain)
             state.delay = real_delay
 
             return ticks_before
         end,
 
-        __index = function( t, k )
-            local aura = class.auras[ t.key ]
+        __index = function(t, k)
+            local aura = class.auras[t.key]
 
-            if state.IsCycling() and state.active_dot[ t.key ] < state.cycle_enemies and cycle_debuff[ k ] ~= nil then
-                return cycle_debuff[ k ]
+            if state.IsCycling() and state.active_dot[t.key] < state.cycle_enemies and cycle_debuff[k] ~= nil then
+                return cycle_debuff[k]
             end
 
-            local meta = aura and rawget( aura, "meta" )
+            local meta = aura and rawget(aura, "meta")
 
-            if meta and meta[ k ]  then
-                if not t.metastack[ k ] then
-                    t.metastack[ k ] = true
-                    local value = meta[ k ]( t, "debuff" )
-                    t.metastack[ k ] = nil
+            if meta and meta[k] then
+                if not t.metastack[k] then
+                    t.metastack[k] = true
+                    local value = meta[k](t, "debuff")
+                    t.metastack[k] = nil
                     if value ~= nil then return value end
                 end
-
-            elseif requiresLookup[ k ] then
+            elseif requiresLookup[k] then
                 if aura and aura.generate then
-                    for attr, a_val in pairs( default_debuff_values ) do
-                        t[ attr ] = rawget( t, attr ) or rawget( aura, attr ) or  a_val
+                    for attr, a_val in pairs(default_debuff_values) do
+                        t[attr] = rawget(t, attr) or rawget(aura, attr) or a_val
                     end
 
-                    aura.generate( t, "debuff" )
+                    aura.generate(t, "debuff")
                     t.id = aura and aura.id or t.key
 
-                    return rawget( t, k )
+                    return rawget(t, k)
                 end
 
-                local real = auras.target.debuff[ t.key ] or auras.player.debuff[ t.key ]
-                if aura and aura.shared and auras[ aura.shared ] then
-                    real = auras.player.debuff[ t.key ]
+                local real = auras.target.debuff[t.key] or auras.player.debuff[t.key]
+                if aura and aura.shared and auras[aura.shared] then
+                    real = auras.player.debuff[t.key]
                 end
 
                 if real then
@@ -5303,97 +5339,108 @@ do
 
                     t.unit = real.unit
                 else
-                    for attr, a_val in pairs( default_debuff_values ) do
-                        t[ attr ] = aura and aura[ attr ] or a_val
+                    for attr, a_val in pairs(default_debuff_values) do
+                        t[attr] = aura and aura[attr] or a_val
                     end
 
                     t.id = aura and aura.id or t.id
                 end
 
-                return rawget( t, k )
+                return rawget(t, k)
             end
 
             -- 20250412: Revamped to avoid having this metatable call this metatable call this metatable...
             -- This change means that any references to t.X should only occur where X is a real value and not a metatable lookup.
 
             local moment = state.query_time
-            local applied = meta and meta.applied and meta.applied( t, "debuff" ) or t.applied
-            local expires = meta and meta.expires and meta.expires( t, "debuff" ) or t.expires
-            local remains = meta and meta.remains and meta.remains( t, "debuff" ) or applied > 0 and applied <= moment and expires > moment and expires - moment or 0
+            local applied = meta and meta.applied and meta.applied(t, "debuff") or t.applied
+            local expires = meta and meta.expires and meta.expires(t, "debuff") or t.expires
+            local remains = meta and meta.remains and meta.remains(t, "debuff") or
+            applied > 0 and applied <= moment and expires > moment and expires - moment or 0
 
             if k == "remains" then return remains end
 
             if k == "up" or
-                k == "ticking" then return remains > 0 end
+                k == "ticking" then
+                return remains > 0
+            end
 
             if k == "down" then return remains == 0 end
 
             -- These should be long since deprecated.
             if k == "i_up" or
-                k == "rank" then return remains > 0 and 1 or 0 end
+                k == "rank" then
+                return remains > 0 and 1 or 0
+            end
 
             if k == "stack" or
                 k == "stacks" or
-                k == "react" then return remains > 0 and t.count or 0 end
+                k == "react" then
+                return remains > 0 and t.count or 0
+            end
 
             if k == "max_stack" or
-               k == "max_stacks" then return max( t.count, aura.max_stack or 1 ) end
+                k == "max_stacks" then
+                return max(t.count, aura.max_stack or 1)
+            end
 
-            if k == "at_max_stacks" then return remains > 0 and t.count >= ( aura.max_stack or 1 ) end
-            if k == "stack_pct" then return remains > 0 and ( 100 * t.count / ( aura.max_stack or 1 ) ) or 0 end
+            if k == "at_max_stacks" then return remains > 0 and t.count >= (aura.max_stack or 1) end
+            if k == "stack_pct" then return remains > 0 and (100 * t.count / (aura.max_stack or 1)) or 0 end
             if k == "value" then return remains > 0 and t.v1 or 0 end
             if k == "stack_value" then return remains > 0 and t.v1 * t.count or 0 end
 
-            local duration = remains > 0 and ( expires - applied ) or aura.duration or 30
+            local duration = remains > 0 and (expires - applied) or aura.duration or 30
             local apply_duration = aura.duration or duration
 
             if k == "duration" then return duration end
             if k == "apply_duration" then return apply_duration end
             if k == "refreshable" then return remains < 0.3 * apply_duration end
-            if k == "time_to_refresh" then return remains > 0 and max( 0, 0.01 + remains - ( 0.3 * apply_duration ) ) or 0 end
+            if k == "time_to_refresh" then return remains > 0 and max(0, 0.01 + remains - (0.3 * apply_duration)) or 0 end
 
             if k == "pmultiplier" then
-                t.pmultiplier = remains > 0 and ns.getModifier( aura.id, state.target.unit ) or 0
+                t.pmultiplier = remains > 0 and ns.getModifier(aura.id, state.target.unit) or 0
                 return t.pmultiplier
             end
 
-            local tick_time = aura.tick_time or ( 3 * state.haste )
+            local tick_time = aura.tick_time or (3 * state.haste)
             if k == "tick_time" then return tick_time end
 
-            local last_tick = remains > 0 and max( ns.GetDebuffNextTick( t.key, state.target.unit ), applied ) or 0
+            local last_tick = remains > 0 and max(ns.GetDebuffNextTick(t.key, state.target.unit), applied) or 0
             if last_tick > 0 and moment - last_tick > tick_time then
-                last_tick = last_tick + floor( ( moment - last_tick ) / tick_time ) * tick_time
+                last_tick = last_tick + floor((moment - last_tick) / tick_time) * tick_time
             end
 
             if k == "last_tick" then return last_tick end
-            if k == "ticks" then return remains > 0 and floor( ( last_tick - applied ) / tick_time ) or 0 end
+            if k == "ticks" then return remains > 0 and floor((last_tick - applied) / tick_time) or 0 end
 
-            local next_tick = remains > 0 and max( ns.GetDebuffNextTick( t.key, state.target.unit ), last_tick + tick_time ) or 0
+            local next_tick = remains > 0 and
+            max(ns.GetDebuffNextTick(t.key, state.target.unit), last_tick + tick_time) or 0
             if next_tick > 0 and next_tick < moment then
-                next_tick = next_tick + ceil( ( moment - last_tick ) / tick_time ) * tick_time
+                next_tick = next_tick + ceil((moment - last_tick) / tick_time) * tick_time
             end
 
             if k == "next_tick" then return next_tick end
-            if k == "tick_time_remains" then return max( 0, next_tick - moment ) end
-            if k == "ticks_remain" then return expires > moment and max( 0, 1 + floor( ( expires - next_tick ) / tick_time ) ) or 0 end
+            if k == "tick_time_remains" then return max(0, next_tick - moment) end
+            if k == "ticks_remain" then return expires > moment and
+                max(0, 1 + floor((expires - next_tick) / tick_time)) or 0 end
 
-            local attr = aura[ k ]
+            local attr = aura[k]
             if attr ~= nil then return attr end
 
-            if not flagged_debuffs[ t.key ] then
-                Error( "UNK: debuff." .. t.key .. "." .. k )
-                flagged_debuffs[ t.key ] = true
+            if not flagged_debuffs[t.key] then
+                Error("UNK: debuff." .. t.key .. "." .. k)
+                flagged_debuffs[t.key] = true
             end
         end,
-        __newindex = function( t, k, v )
-            if v ~= nil and autoReset[ k ] then Mark( t, k ) end
-            rawset( t, k, v )
+        __newindex = function(t, k, v)
+            if v ~= nil and autoReset[k] then Mark(t, k) end
+            rawset(t, k, v)
         end
     }
     ns.metatables.mt_default_debuff = mt_default_debuff
 
 
-    unknown_debuff = setmetatable( {
+    unknown_debuff = setmetatable({
         key = "unknown_debuff",
         name = "No Name",
         count = 0,
@@ -5408,7 +5455,7 @@ do
         v2 = 0,
         v3 = 0,
         unit = "player"
-    }, mt_default_debuff )
+    }, mt_default_debuff)
 
 
     -- Table of debuffs applied to the target by the player.
@@ -5417,51 +5464,51 @@ do
         -- The debuff/ doesn't exist in our table so check the real game state,
         -- and copy it so we don't have to use the API next time.
 
-        __index = function( t, k )
+        __index = function(t, k)
             -- Safety check: ignore function keys
             if type(k) == "function" then
                 return unknown_debuff
             end
 
-            local aura = class.auras[ k ]
+            local aura = class.auras[k]
 
             if aura then
                 if k ~= aura.key then
-                    t[ aura.key ] = rawget( t, aura.key ) or {
+                    t[aura.key] = rawget(t, aura.key) or {
                         key = aura.key,
                         name = aura.name
                     }
-                    t[ k ] = t[ aura.key ]
+                    t[k] = t[aura.key]
                 else
-                    t[ k ] = {
+                    t[k] = {
                         key = aura.key,
                         name = aura.name
                     }
                 end
 
                 if aura.generate then
-                    for attr, a_val in pairs( default_debuff_values ) do
-                        t[ k ][ attr ] = rawget( t[ k ], attr ) or a_val
+                    for attr, a_val in pairs(default_debuff_values) do
+                        t[k][attr] = rawget(t[k], attr) or a_val
                     end
-                    aura.generate( t[ k ], "debuff" )
-                    return t[ k ]
+                    aura.generate(t[k], "debuff")
+                    return t[k]
                 end
-
             else
-                if Hekili.PLAYER_ENTERING_WORLD and not debuffs_warned[ k ] then
+                if Hekili.PLAYER_ENTERING_WORLD and not debuffs_warned[k] then
                     local key_str = type(k) == "function" and tostring(k) or k
-                    Hekili:Error( "WARNING: Unknown debuff in [" .. ( state.scriptID or "unknown" ) .. "]: " .. key_str .. "\n\n" .. debugstack() )
-                    debuffs_warned[ k ] = true
+                    Hekili:Error("WARNING: Unknown debuff in [" ..
+                    (state.scriptID or "unknown") .. "]: " .. key_str .. "\n\n" .. debugstack())
+                    debuffs_warned[k] = true
                 end
 
-                t[ k ] = {
+                t[k] = {
                     key = k,
                     name = k,
                     id = k
                 }
             end
 
-            local real = auras.player.debuff[ k ] or auras.target.debuff[ k ]
+            local real = auras.player.debuff[k] or auras.target.debuff[k]
             local debuff = t[k]
 
             if real then
@@ -5480,7 +5527,6 @@ do
                 debuff.v3 = real.v3
 
                 debuff.unit = real.unit
-
             else
                 debuff.name = aura and aura.name or "No Name"
                 debuff.count = 0
@@ -5500,22 +5546,22 @@ do
             end
 
             t[k] = debuff
-            return t[ k ]
+            return t[k]
         end,
 
-        __newindex = function( t, k, v )
-            local aura = class.auras[ k ]
+        __newindex = function(t, k, v)
+            local aura = class.auras[k]
 
             if aura then
                 aura.used = true
-                if aura.meta then rawset( v, "metastack", {} ) end
+                if aura.meta then rawset(v, "metastack", {}) end
                 if aura.alias then
-                    rawset( t, k, setmetatable( v, mt_alias_debuff ) )
+                    rawset(t, k, setmetatable(v, mt_alias_debuff))
                     return
                 end
             end
 
-            rawset( t, k, setmetatable( v, mt_default_debuff ) )
+            rawset(t, k, setmetatable(v, mt_default_debuff))
         end
     }
     ns.metatables.mt_debuffs = mt_debuffs
@@ -5525,16 +5571,14 @@ end
 -- Table of default handlers for actions.
 -- Needs review.
 local mt_default_action = {
-    __index = function( t, k )
-        local ability = t.action and class.abilities[ t.action ]
+    __index = function(t, k)
+        local ability = t.action and class.abilities[t.action]
         local aura = ability and ability.aura or t.action
 
         if k == "enabled" or k == "known" then
-            return state:IsKnown( t.action )
-
+            return state:IsKnown(t.action)
         elseif k == "disabled" then
-            return state:IsDisabled( t.action )
-
+            return state:IsDisabled(t.action)
         elseif k == "gcd" then
             local queued_action = state.this_action
             state.this_action = t.action
@@ -5543,7 +5587,6 @@ local mt_default_action = {
             state.this_action = queued_action
 
             return value
-
         elseif k == "execute_time" then
             local queued_action = state.this_action
             state.this_action = t.action
@@ -5551,81 +5594,60 @@ local mt_default_action = {
             local value = state.gcd.execute
             state.this_action = queued_action
 
-            return max( value, t.cast_time )
-
+            return max(value, t.cast_time)
         elseif k == "charges" then
-            return state.cooldown[ t.action ].charges
-
+            return state.cooldown[t.action].charges
         elseif k == "charges_fractional" then
-            return state.cooldown[ t.action ].charges_fractional
-
+            return state.cooldown[t.action].charges_fractional
         elseif k == "recharge_time" then
-            return state.cooldown[ t.action ].recharge_time
-
+            return state.cooldown[t.action].recharge_time
         elseif k == "max_charges" then
             return ability.charges or 0
-
         elseif k == "time_to_max_charges" or k == "full_recharge_time" then
-            return state.cooldown[ t.action ].full_recharge_time
-
+            return state.cooldown[t.action].full_recharge_time
         elseif k == "ready_time" then
-            return state:IsUsable( t.action ) and state:TimeToReady( t.action ) or 999
-
+            return state:IsUsable(t.action) and state:TimeToReady(t.action) or 999
         elseif k == "ready" then
-            return state:IsUsable( t.action ) and state:IsReady( t.action )
-
+            return state:IsUsable(t.action) and state:IsReady(t.action)
         elseif k == "usable_in" then
-            return state.cooldown[ t.action ].remains
-
+            return state.cooldown[t.action].remains
         elseif k == "cast_time" then
             return ability.cast
-
         elseif k == "cooldown" then
             return ability.cooldown
-
         elseif k == "damage" then
             return ability.damage or 1
-
         elseif k == "crit_pct_current" then
             return ability.critical or state.stat.crit
-
         elseif k == "ticking" then
-            return ( state.dot[ aura ].ticking )
-
+            return (state.dot[aura].ticking)
         elseif k == "ticks" then
-            return 1 + ( state.dot[ aura ].duration or ( 30 * state.haste ) / class.auras[ aura ].tick_time or ( 3 * state.haste ) ) - t.ticks_remain
-
+            return 1 +
+            (state.dot[aura].duration or (30 * state.haste) / class.auras[aura].tick_time or (3 * state.haste)) -
+            t.ticks_remain
         elseif k == "ticks_remain" then
-            return state.dot[ aura ].remains / ( class.auras[ aura ].tick_time or ( 3 * state.haste ) )
-
+            return state.dot[aura].remains / (class.auras[aura].tick_time or (3 * state.haste))
         elseif k == "remains" then
-            return ( state.dot[ aura ].remains )
-
+            return (state.dot[aura].remains)
         elseif k == "tick_time" then
-            return class.auras[ aura ].tick_time or ( 3 * state.haste )
-
+            return class.auras[aura].tick_time or (3 * state.haste)
         elseif k == "travel_time" then
             -- NYI: maybe capture the last travel time for the spell and use that?
             local f, v = ability.flightTime, ability.velocity
             if f then return f end
             if v and v > 0 then return state.target.maxR / v end
             return 0
-
         elseif k == "miss_react" then
             return false
-
         elseif k == "cooldown_react" then
-            return state.cooldown[ t.action ].remains == 0
-
+            return state.cooldown[t.action].remains == 0
         elseif k == "cast_delay" then
             return 0
-
         elseif k == "cast_regen" then
             local regen = t.regen
             if regen == 0.001 then regen = 0 end
 
-            return floor( max( state.gcd.execute, t.cast_time ) * regen ) - t.cost
-
+            return floor(max(state.gcd.execute, t.cast_time) * regen) - t.cost
         elseif k == "cost" then
             if ability then
                 local c = ability.cost
@@ -5635,7 +5657,8 @@ local mt_default_action = {
                 c = ability.spend
 
                 if c and c > 0 and c < 1 then
-                    local mm2 = state[ ability.spendType or class.primaryResource ] and state[ ability.spendType or class.primaryResource ].modmax or 1
+                    local mm2 = state[ability.spendType or class.primaryResource] and
+                    state[ability.spendType or class.primaryResource].modmax or 1
                     c = c * mm2
                 end
 
@@ -5643,63 +5666,52 @@ local mt_default_action = {
             end
 
             return 0
-
         elseif k == "cost_type" then
             local a = ability.spendType
-            if type( a ) == "string" then return a end
+            if type(a) == "string" then return a end
 
             a = ability.spend
-            if type( a ) == "function" then _, a = a() end
-            if type( a ) == "string" then return a end
+            if type(a) == "function" then _, a = a() end
+            if type(a) == "string" then return a end
             return class.primaryResource
-
         elseif k == "in_flight" or k == "in_flight_to_target" then
             if ability.flightTime then
-                return ability.lastCast + max( ability.flightTime, 0.25 ) > state.query_time
+                return ability.lastCast + max(ability.flightTime, 0.25) > state.query_time
             end
 
-            return state:IsInFlight( t.action ) or ability.isProjectile and ability.lastCast + 0.25 > state.query_time
-
+            return state:IsInFlight(t.action) or ability.isProjectile and ability.lastCast + 0.25 > state.query_time
         elseif k == "in_flight_remains" then
             if ability.flightTime then
-
-                return max( 0, ability.lastCast + max( ability.flightTime, 0.25 ) - state.query_time )
+                return max(0, ability.lastCast + max(ability.flightTime, 0.25) - state.query_time)
             end
-            return max( state:InFlightRemains( t.action ), ability.isProjectile and ability.lastCast + 0.25 - state.query_time or 0 )
-
+            return max(state:InFlightRemains(t.action),
+                ability.isProjectile and ability.lastCast + 0.25 - state.query_time or 0)
         elseif k == "channeling" then
-            return state:IsChanneling( t.action )
-
+            return state:IsChanneling(t.action)
         elseif k == "channel_remains" then
-            return state:IsChanneling( t.action ) and state:QueuedCastRemains( t.action ) or 0
-
+            return state:IsChanneling(t.action) and state:QueuedCastRemains(t.action) or 0
         elseif k == "executing" then
-            return state:IsCasting( t.action ) or ( state.prev[ 1 ][ t.action ] and state.gcd.remains > 0 )
-
+            return state:IsCasting(t.action) or (state.prev[1][t.action] and state.gcd.remains > 0)
         elseif k == "execute_remains" then
-            return ( state:IsCasting( t.action ) and max( state:QueuedCastRemains( t.action ), state.gcd.remains ) ) or ( state.prev[1][ t.action ] and state.gcd.remains ) or 0
-
+            return (state:IsCasting(t.action) and max(state:QueuedCastRemains(t.action), state.gcd.remains)) or
+            (state.prev[1][t.action] and state.gcd.remains) or 0
         elseif k == "last_used" then
-            return state.combat > 0 and max( 0, ability.lastCast - state.combat ) or 0
-
+            return state.combat > 0 and max(0, ability.lastCast - state.combat) or 0
         elseif k == "time_since" then
-            return min( 3600, max( 0, state.query_time - ability.lastCast ) )
-
+            return min(3600, max(0, state.query_time - ability.lastCast))
         elseif k == "in_range" then
-            if UnitExists( "target" ) and UnitCanAttack( "player", "target" ) and LSR.IsSpellInRange( ability.rangeSpell or ability.id, "target" ) == 0 then
+            if UnitExists("target") and UnitCanAttack("player", "target") and LSR.IsSpellInRange(ability.rangeSpell or ability.id, "target") == 0 then
                 return false
             end
 
             return true
-
         elseif k == "cycle" then
             return ability.cycle == "cycle"
-
         else
-            local val = ability[ k ]
+            local val = ability[k]
 
             if val ~= nil then
-                if type( val ) == "function" then return val() end
+                if type(val) == "function" then return val() end
                 return val
             end
         end
@@ -5714,7 +5726,7 @@ ns.metatables.mt_default_action = mt_default_action
 -- NYI.
 local mt_actions = {
     __index = function(t, k)
-        local action = class.abilities[ k ]
+        local action = class.abilities[k]
 
         -- Need a null_action table.
         if not action then return nil end
@@ -5730,9 +5742,10 @@ local mt_actions = {
         t[k].base_cast = action.cast
         state.haste = h
 
-        return ( t[k] )
-        end, __newindex = function(t, k, v)
-        rawset( t, k, setmetatable( v, mt_default_action ) )
+        return (t[k])
+    end,
+    __newindex = function(t, k, v)
+        rawset(t, k, setmetatable(v, mt_default_action))
     end
 }
 ns.metatables.mt_actions = mt_actions
@@ -5741,19 +5754,15 @@ ns.metatables.mt_actions = mt_actions
 
 -- mt_swings: used for projecting weapon swing-based resource gains.
 local mt_swings = {
-    __index = function( t, k )
+    __index = function(t, k)
         if k == "mainhand" then
             return t.mh_pseudo or t.mh_actual
-
         elseif k == "offhand" then
             return t.oh_pseudo or t.oh_actual
-
         elseif k == "mainhand_speed" then
             return t.mh_pseudo_speed or t.mh_speed or 0
-
         elseif k == "offhand_speed" then
             return t.oh_pseudo_speed or t.oh_speed or 0
-
         end
     end
 }
@@ -5762,8 +5771,8 @@ local mt_swings = {
 state.swing = {}
 
 local mt_swing_timer = {
-    __index = function( t, k )
-        local speed = state.swings[ t.type .. "_speed" ]
+    __index = function(t, k)
+        local speed = state.swings[t.type .. "_speed"]
         if speed == 0 then return 999 end
 
         local swing = state.time == 0 and state.now or state.swings.mainhand
@@ -5771,21 +5780,21 @@ local mt_swing_timer = {
 
         -- Technically, we didn't even check if this were "remains" but there are no other symbols.
         local t = state.query_time
-        return swing + ( ceil( ( t - swing ) / speed ) * speed ) - t
+        return swing + (ceil((t - swing) / speed) * speed) - t
     end,
 }
 
-state.swing.mh = setmetatable( { type = "mainhand" }, mt_swing_timer )
+state.swing.mh = setmetatable({ type = "mainhand" }, mt_swing_timer)
 state.swing.mainhand = state.swing.mh
 state.swing.main_hand = state.swing.mh
 
-state.swing.oh = setmetatable( { type = "offhand" }, mt_swing_timer )
+state.swing.oh = setmetatable({ type = "offhand" }, mt_swing_timer)
 state.swing.offhand = state.swing.oh
 state.swing.off_hand = state.swing.oh
 
 
 local mt_weapon_type = {
-    __index = function( t, k )
+    __index = function(t, k)
         local size = t.size
 
         if k == "two_handed" or k == "2h" or k == "two_hand" then
@@ -5800,69 +5809,69 @@ local mt_weapon_type = {
 
 
 local mt_aura = {
-    __index = function( t, k )
-        return rawget( state.buff, k ) or rawget( state.debuff, k )
+    __index = function(t, k)
+        return rawget(state.buff, k) or rawget(state.debuff, k)
     end
 }
 
 -- Empowering system disabled for MoP - completely removed
 
 
-setmetatable( state, mt_state )
-setmetatable( state.action, mt_actions )
-setmetatable( state.active_dot, mt_active_dot )
-setmetatable( state.aura, mt_aura )
-setmetatable( state.buff, mt_buffs )
-setmetatable( state.cooldown, mt_cooldowns )
-setmetatable( state.debuff, mt_debuffs )
-setmetatable( state.dot, mt_dot )
+setmetatable(state, mt_state)
+setmetatable(state.action, mt_actions)
+setmetatable(state.active_dot, mt_active_dot)
+setmetatable(state.aura, mt_aura)
+setmetatable(state.buff, mt_buffs)
+setmetatable(state.cooldown, mt_cooldowns)
+setmetatable(state.debuff, mt_debuffs)
+setmetatable(state.dot, mt_dot)
 -- setmetatable( state.empowering, mt_empowering ) -- Disabled for MoP
-setmetatable( state.equipped, mt_equipped )
-setmetatable( state.main_hand, mt_weapon_type )
-setmetatable( state.off_hand, mt_weapon_type )
+setmetatable(state.equipped, mt_equipped)
+setmetatable(state.main_hand, mt_weapon_type)
+setmetatable(state.off_hand, mt_weapon_type)
 -- setmetatable( state.health, mt_resource )
-setmetatable( state.pet, mt_pets )
-setmetatable( state.pet.fake_pet, mt_default_pet )
-setmetatable( state.prev, mt_prev )
-setmetatable( state.prev_gcd, mt_prev )
-setmetatable( state.prev_off_gcd, mt_prev )
-setmetatable( state.pvptalent, mt_pvptalents )
-setmetatable( state.race, mt_false )
-setmetatable( state.set_bonus, mt_set_bonuses )
-setmetatable( state.settings, mt_settings )
-setmetatable( state.spec, mt_spec )
-setmetatable( state.stance, mt_stances )
-setmetatable( state.stat, mt_stat )
-setmetatable( state.swings, mt_swings )
-setmetatable( state.talent, mt_talents )
-setmetatable( state.target, mt_target )
-setmetatable( state.target.health, mt_target_health )
-setmetatable( state.toggle, mt_toggle )
-setmetatable( state.totem, mt_totem )
+setmetatable(state.pet, mt_pets)
+setmetatable(state.pet.fake_pet, mt_default_pet)
+setmetatable(state.prev, mt_prev)
+setmetatable(state.prev_gcd, mt_prev)
+setmetatable(state.prev_off_gcd, mt_prev)
+setmetatable(state.pvptalent, mt_pvptalents)
+setmetatable(state.race, mt_false)
+setmetatable(state.set_bonus, mt_set_bonuses)
+setmetatable(state.settings, mt_settings)
+setmetatable(state.spec, mt_spec)
+setmetatable(state.stance, mt_stances)
+setmetatable(state.stat, mt_stat)
+setmetatable(state.swings, mt_swings)
+setmetatable(state.talent, mt_talents)
+setmetatable(state.target, mt_target)
+setmetatable(state.target.health, mt_target_health)
+setmetatable(state.toggle, mt_toggle)
+setmetatable(state.totem, mt_totem)
 
 -- Ensure class.specs is initialized
 if not class.specs then
     class.specs = {}
 end
 
-local all = class.specs[ 0 ]
+local all = class.specs[0]
 
 -- Cataclysm-style: Simple and clean autoAuraKey without recursion issues
-local autoAuraKey = setmetatable( {}, {
-    __index = function( t, k )
-        local aura_name = GetSpellInfo( k )
+local autoAuraKey = setmetatable({}, {
+    __index = function(t, k)
+        local aura_name = GetSpellInfo(k)
 
         if not aura_name then return end
 
         local name
 
-        if class.auras[ aura_name ] then
+        if class.auras[aura_name] then
             local i = 1
 
-            while( true ) do
+            while (true) do
                 local new = aura_name .. ' ' .. i
 
-                if not class.auras[ new ] then
+                if not class.auras[new] then
                     name = new
                     break
                 end
@@ -5872,15 +5881,15 @@ local autoAuraKey = setmetatable( {}, {
         end
         name = name or aura_name
 
-        local key = ns.formatKey( aura_name )
+        local key = ns.formatKey(aura_name)
 
-        if class.auras[ key ] then
+        if class.auras[key] then
             local i = 1
 
-            while ( true ) do
+            while (true) do
                 local new = key .. "_" .. i
 
-                if not class.auras[ new ] then
+                if not class.auras[new] then
                     key = new
                     break
                 end
@@ -5890,18 +5899,18 @@ local autoAuraKey = setmetatable( {}, {
         end
 
         -- Store the aura and save the key if we can.
-        if not all then all = class.specs[ 0 ] end
+        if not all then all = class.specs[0] end
         if all then
-            all:RegisterAura( key, {
+            all:RegisterAura(key, {
                 id = k,
                 name = name
-            } )
+            })
         end
         t[k] = key
 
         return t[k]
     end
-} )
+})
 
 
 
@@ -5915,24 +5924,24 @@ do
         return nil
     end
 
-    function state.StoreMatchingAuras( unit, auras, filter, ... )
+    function state.StoreMatchingAuras(unit, auras, filter, ...)
         local n = auras.count
         auras.count = nil
 
-        local db = ns.auras[ unit ][ filter == "HELPFUL" and "buff" or "debuff" ]
+        local db = ns.auras[unit][filter == "HELPFUL" and "buff" or "debuff"]
 
-        for k, v in pairs( auras ) do
-            local aura = class.auras[ v ]
-            local key = aura.key
+        for k, v in pairs(auras) do
+            local aura         = class.auras[v]
+            local key          = aura.key
 
-            local a = db[ key ] or {}
+            local a            = db[key] or {}
 
             a.key              = key
             a.name             = nil
             a.lastCount        = a.count or 0
             a.lastApplied      = a.applied or 0
-            a.last_application = max( 0, a.applied or 0, a.last_application or 0 )
-            a.last_expiry      = max( 0, a.expires or 0, a.last_expiry or 0 )
+            a.last_application = max(0, a.applied or 0, a.last_application or 0)
+            a.last_expiry      = max(0, a.expires or 0, a.last_expiry or 0)
             a.count            = 0
             a.expires          = 0
             a.applied          = 0
@@ -5944,64 +5953,82 @@ do
             a.v3               = 0
             a.unit             = unit
 
-            db[ key ] = a
+            db[key]            = a
         end
 
-        for i = select( "#", ... ), 1, -1 do
-            local slot = select( i, ... )
-            local name, _, count, _, duration, expires, caster, _, _, spellID, _, _, _, _, timeMod, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10 = UnitAuraBySlot( unit, slot )
+        for i = select("#", ...), 1, -1 do
+            local slot = select(i, ...)
+            local name, _, count, _, duration, expires, caster, _, _, spellID, _, _, _, _, timeMod, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10 =
+            UnitAuraBySlot(unit, slot)
 
-            local key = auras[ spellID ]
+            local key = auras[spellID]
 
-            if key and name and ( unit == "player" or caster and ( UnitIsUnit( caster, "player" ) or UnitIsUnit( caster, "pet" ) ) ) then
-                local a = db[ key ]
+            if key and name and (unit == "player" or caster and (UnitIsUnit(caster, "player") or UnitIsUnit(caster, "pet"))) then
+                local a = db[key]
 
                 if expires == 0 then
                     expires = GetTime() + 3600
                     duration = 7200
                 end
 
-                a.name     = name
-                a.count    = count > 0 and count or 1
+                a.name    = name
+                a.count   = count > 0 and count or 1
                 -- a.duration = duration
-                a.expires  = expires
-                a.applied  = expires - duration
-                a.caster   = caster
-                a.timeMod  = timeMod
-                a.v1       = v1
-                a.v2       = v2
-                a.v3       = v3
-                a.v4       = v4
-                a.v5       = v5
-                a.v6       = v6
-                a.v7       = v7
-                a.v8       = v8
-                a.v9       = v9
-                a.v10      = v10
+                a.expires = expires
+                a.applied = expires - duration
+                a.caster  = caster
+                a.timeMod = timeMod
+                a.v1      = v1
+                a.v2      = v2
+                a.v3      = v3
+                a.v4      = v4
+                a.v5      = v5
+                a.v6      = v6
+                a.v7      = v7
+                a.v8      = v8
+                a.v9      = v9
+                a.v10     = v10
 
-                n = n - 1
+                n         = n - 1
                 if n == 0 then break end
             end
         end
     end
+
     Hekili.StoreMatchingAuras = state.StoreMatchingAuras
 
 
-    function state.ScrapeUnitAuras( unit, newTarget, why )
-        local db = ns.auras[ unit ]
+    function state.ScrapeUnitAuras(unit, newTarget, why)
+        local db = ns.auras[unit]
 
-        for k,v in pairs( db.buff ) do
+        for k, v in pairs(db.buff) do
+            v.name             = nil
+            v.lastCount        = newTarget and 0 or v.count
+            v.lastApplied      = newTarget and 0 or v.applied
+
+            v.last_application = max(0, v.applied or 0, v.last_application or 0)
+            v.last_expiry      = max(0, v.expires or 0, v.last_expiry or 0)
+
+            v.count            = 0
+            v.expires          = 0
+            v.applied          = 0
+            v.duration         = class.auras[k] and class.auras[k].duration or v.duration
+            v.caster           = "nobody"
+            v.timeMod          = 1
+            v.v1               = 0
+            v.v2               = 0
+            v.v3               = 0
+            v.unit             = unit
+        end
+
+        for k, v in pairs(db.debuff) do
             v.name = nil
             v.lastCount = newTarget and 0 or v.count
             v.lastApplied = newTarget and 0 or v.applied
-
-            v.last_application = max( 0, v.applied or 0, v.last_application or 0 )
-            v.last_expiry  = max( 0, v.expires or 0, v.last_expiry or 0 )
-
             v.count = 0
             v.expires = 0
             v.applied = 0
-            v.duration = class.auras[ k ] and class.auras[ k ].duration or v.duration
+            v.duration = class.auras[k] and class.auras[k].duration or v.duration
             v.caster = "nobody"
             v.timeMod = 1
             v.v1 = 0
@@ -6010,60 +6037,45 @@ do
             v.unit = unit
         end
 
-        for k,v in pairs( db.debuff ) do
-            v.name = nil
-            v.lastCount = newTarget and 0 or v.count
-            v.lastApplied = newTarget and 0 or v.applied
-            v.count = 0
-            v.expires = 0
-            v.applied = 0
-            v.duration = class.auras[ k ] and class.auras[ k ].duration or v.duration
-            v.caster = "nobody"
-            v.timeMod = 1
-            v.v1 = 0
-            v.v2 = 0
-            v.v3 = 0
-            v.unit = unit
-        end
-
-        if not UnitExists( unit ) then return end
+        if not UnitExists(unit) then return end
 
         -- Cataclysm-style: Simple buff scanning
         local i = 1
-        while ( true ) do
-            local name, _, count, _, duration, expires, caster, _, _, spellID, _, _, _, _, timeMod, v1, v2, v3 = UnitBuff( unit, i )
+        while (true) do
+            local name, _, count, _, duration, expires, caster, _, _, spellID, _, _, _, _, timeMod, v1, v2, v3 = UnitBuff(
+            unit, i)
             if not name then break end
 
-            local aura = class.auras[ spellID ]
+            local aura = class.auras[spellID]
             local shared = aura and aura.shared
-            local key = aura and aura.key or autoAuraKey[ spellID ]
+            local key = aura and aura.key or autoAuraKey[spellID]
 
-            if key and ( shared or caster and ( UnitIsUnit( caster, "player" ) or UnitIsUnit( caster, "pet" ) ) ) then
-                db.buff[ key ] = db.buff[ key ] or {}
-                local buff = db.buff[ key ]
+            if key and (shared or caster and (UnitIsUnit(caster, "player") or UnitIsUnit(caster, "pet"))) then
+                db.buff[key] = db.buff[key] or {}
+                local buff = db.buff[key]
 
                 if expires == 0 then
                     expires = GetTime() + 3600
                     duration = 7200
                 end
 
-                buff.key = key
-                buff.id = spellID
-                buff.name = name
-                buff.count = count > 0 and count or 1
-                buff.duration = duration
-                buff.expires = expires
-                buff.applied = expires - duration
-                buff.caster = caster
-                buff.timeMod = timeMod or 1
-                buff.v1 = v1 or 0
-                buff.v2 = v2 or 0
-                buff.v3 = v3 or 0
+                buff.key              = key
+                buff.id               = spellID
+                buff.name             = name
+                buff.count            = count > 0 and count or 1
+                buff.duration         = duration
+                buff.expires          = expires
+                buff.applied          = expires - duration
+                buff.caster           = caster
+                buff.timeMod          = timeMod or 1
+                buff.v1               = v1 or 0
+                buff.v2               = v2 or 0
+                buff.v3               = v3 or 0
 
                 buff.last_application = buff.last_application or 0
                 buff.last_expiry      = buff.last_expiry or 0
 
-                buff.unit = unit
+                buff.unit             = unit
             end
 
             i = i + 1
@@ -6071,17 +6083,18 @@ do
 
         -- Cataclysm-style: Simple debuff scanning
         i = 1
-        while ( true ) do
-            local name, _, count, _, duration, expires, caster, _, _, spellID, _, _, _, _, timeMod, v1, v2, v3 = UnitDebuff( unit, i )
+        while (true) do
+            local name, _, count, _, duration, expires, caster, _, _, spellID, _, _, _, _, timeMod, v1, v2, v3 =
+            UnitDebuff(unit, i)
             if not name then break end
 
-            local aura = class.auras[ spellID ]
+            local aura = class.auras[spellID]
             local shared = aura and aura.shared
-            local key = aura and aura.key or autoAuraKey[ spellID ]
+            local key = aura and aura.key or autoAuraKey[spellID]
 
-            if key and ( shared or caster and ( UnitIsUnit( caster, "player" ) or UnitIsUnit( caster, "pet" ) ) ) then
-                db.debuff[ key ] = db.debuff[ key ] or {}
-                local debuff = db.debuff[ key ]
+            if key and (shared or caster and (UnitIsUnit(caster, "player") or UnitIsUnit(caster, "pet"))) then
+                db.debuff[key] = db.debuff[key] or {}
+                local debuff = db.debuff[key]
 
                 if expires == 0 then
                     expires = GetTime() + 3600
@@ -6110,7 +6123,7 @@ do
 
     Hekili.ScrapeUnitAuras = state.ScrapeUnitAuras
 
-    Hekili:ProfileCPU( "ScrapeUnitAuras", state.ScrapeUnitAuras )
+    Hekili:ProfileCPU("ScrapeUnitAuras", state.ScrapeUnitAuras)
 
     Hekili.AuraDB = ns.auras
 end
@@ -6119,42 +6132,40 @@ local ScrapeUnitAuras = state.ScrapeUnitAuras
 
 -- Helper functions to query the real aura data that has been scraped.
 -- Used for snapshotting projectile data to be handled when a spell impacts.
-function state.PlayerBuffUp( buff )
-    local aura = state.auras.player.buff[ buff ]
+function state.PlayerBuffUp(buff)
+    local aura = state.auras.player.buff[buff]
     return aura and aura.expires > GetTime()
 end
 
-function state.PlayerDebuffUp( debuff )
-    local aura = state.auras.player.debuff[ debuff ]
+function state.PlayerDebuffUp(debuff)
+    local aura = state.auras.player.debuff[debuff]
     return aura and aura.expires > GetTime()
 end
 
-function state.PlayerDebuffRemains( debuff )
-    local aura = state.auras.player.debuff[ debuff ]
+function state.PlayerDebuffRemains(debuff)
+    local aura = state.auras.player.debuff[debuff]
     return aura and aura.expires > GetTime() and aura.expires - GetTime() or 0
 end
 
-function state.TargetBuffUp( buff )
-    local aura = state.auras.target.buff[ buff ]
+function state.TargetBuffUp(buff)
+    local aura = state.auras.target.buff[buff]
     return aura and aura.expires > GetTime()
 end
 
-function state.TargetDebuffUp( debuff )
-    local aura = state.auras.target.debuff[ debuff ]
+function state.TargetDebuffUp(debuff)
+    local aura = state.auras.target.debuff[debuff]
     return aura and aura.expires > GetTime()
 end
 
-
-function state.putTrinketsOnCD( val )
+function state.putTrinketsOnCD(val)
     val = val or 10
 
-    for i, item in ipairs( state.items ) do
-        if not class.abilities[ item ].no_icd and state.cooldown[ item ].remains < val then
-            state.setCooldown( item, val )
+    for i, item in ipairs(state.items) do
+        if not class.abilities[item].no_icd and state.cooldown[item].remains < val then
+            state.setCooldown(item, val)
         end
     end
 end
-
 
 do
     -- Simpler Queue System
@@ -6164,7 +6175,7 @@ do
     local virtualQueue = {}
     state.queue = virtualQueue
 
-    local byTime = function( a, b )
+    local byTime = function(a, b)
         return a.time < b.time
     end
 
@@ -6173,14 +6184,14 @@ do
 
     local function NewEvent()
         if #eventPool > 0 then
-            return remove( eventPool, 1 )
+            return remove(eventPool, 1)
         end
 
         return {}
     end
 
-    local function RecycleEvent( queue, i )
-        local e = queue[ i ]
+    local function RecycleEvent(queue, i)
+        local e = queue[i]
 
         if e then
             e.action = nil
@@ -6191,29 +6202,29 @@ do
             e.real   = nil
             e.func   = nil
 
-            insert( eventPool, e )
-            remove( queue, i )
+            insert(eventPool, e)
+            remove(queue, i)
         end
     end
 
-    function state:QueueEvent( action, start, time, type, target, real )
+    function state:QueueEvent(action, start, time, type, target, real)
         local queue = real and realQueue or virtualQueue
         local e = NewEvent()
 
         if not time then
-            local ability = class.abilities[ action ]
+            local ability = class.abilities[action]
 
             if ability then
                 if type == "PROJECTILE_IMPACT" then
-                    if ability.flightTime then time = start + 0.05 + ability.flightTime
-                    else time = start + 0.05 + ( state.target.maxR / ability.velocity ) end
-
+                    if ability.flightTime then
+                        time = start + 0.05 + ability.flightTime
+                    else
+                        time = start + 0.05 + (state.target.maxR / ability.velocity)
+                    end
                 elseif type == "CHANNEL_START" then
                     time = start
-
-                elseif not time and ( type == "CHANNEL_FINISH" or type == "CAST_FINISH" ) then
+                elseif not time and (type == "CHANNEL_FINISH" or type == "CAST_FINISH") then
                     time = start + ability.cast
-
                 end
             end
         end
@@ -6229,20 +6240,21 @@ do
             e.real   = real
             e.func   = nil
 
-            insert( queue, e )
-            sort( queue, byTime )
+            insert(queue, e)
+            sort(queue, byTime)
 
             if real then
-                queue[ action ] = ( queue[ action ] or 0 ) + 1
+                queue[action] = (queue[action] or 0) + 1
             end
 
-            if Hekili.ActiveDebug and not real then Hekili:Debug( "Queued %s from %.2f to %.2f (%s).", action, start, time, type ) end
+            if Hekili.ActiveDebug and not real then Hekili:Debug("Queued %s from %.2f to %.2f (%s).", action, start, time,
+                    type) end
         end
     end
 
-    Hekili:ProfileCPU( "QueueEvent", state.QueueEvent )
+    Hekili:ProfileCPU("QueueEvent", state.QueueEvent)
 
-    function state:QueueAuraEvent( action, func, time, eType, data )
+    function state:QueueAuraEvent(action, func, time, eType, data)
         local queue = virtualQueue
         local e = NewEvent()
 
@@ -6257,100 +6269,99 @@ do
         e.real   = false
         e.data   = data
 
-        insert( queue, e )
-        sort( queue, byTime )
+        insert(queue, e)
+        sort(queue, byTime)
 
-        if Hekili.ActiveDebug then Hekili:Debug( "Queued %s %s at +%.2f.", action, eType, time - state.query_time ) end
+        if Hekili.ActiveDebug then Hekili:Debug("Queued %s %s at +%.2f.", action, eType, time - state.query_time) end
     end
 
-    function state:RemoveAuraEvent( action, eType )
+    function state:RemoveAuraEvent(action, eType)
         local queue = virtualQueue
         eType = eType or "AURA_EXPIRATION"
 
-        Hekili:Debug( "Trying to remove %s %s from queue.", action, eType )
+        Hekili:Debug("Trying to remove %s %s from queue.", action, eType)
 
         for i = 1, #queue do
-            local e = queue[ i ]
+            local e = queue[i]
 
             if e.action == action and e.type == eType then
-                RecycleEvent( queue, i )
-                Hekili:Debug( "Removed #%d from queue.", i )
+                RecycleEvent(queue, i)
+                Hekili:Debug("Removed #%d from queue.", i)
                 break
             end
         end
     end
 
-    function state:QueueAuraExpiration( action, func, time, data )
-        self:QueueAuraEvent( action, func, time, "AURA_EXPIRATION", data )
+    function state:QueueAuraExpiration(action, func, time, data)
+        self:QueueAuraEvent(action, func, time, "AURA_EXPIRATION", data)
     end
 
-    function state:RemoveAuraExpiration( action )
-        self:RemoveAuraEvent( action, "AURA_EXPIRATION" )
+    function state:RemoveAuraExpiration(action)
+        self:RemoveAuraEvent(action, "AURA_EXPIRATION")
     end
 
-    function state:RemoveEvent( e, real )
+    function state:RemoveEvent(e, real)
         local queue = real and realQueue or virtualQueue
 
-        Hekili:Debug( "Trying to remove %s %s from queue.", ( e.action or "NO_ACTION" ), ( e.type or "NO_TYPE" ) )
+        Hekili:Debug("Trying to remove %s %s from queue.", (e.action or "NO_ACTION"), (e.type or "NO_TYPE"))
 
         for i = #queue, 1, -1 do
-            if queue[ i ] == e then
-                Hekili:Debug( "Removing %d from queue.", i )
-                RecycleEvent( queue, i )
+            if queue[i] == e then
+                Hekili:Debug("Removing %d from queue.", i)
+                RecycleEvent(queue, i)
 
                 if real then
-                    queue[ action ] = max( 0, ( queue[ action ] or 0 ) - 1 )
+                    queue[action] = max(0, (queue[action] or 0) - 1)
                 end
                 break
             end
         end
     end
 
-    Hekili:ProfileCPU( "RemoveEvent", state.RemoveEvent )
+    Hekili:ProfileCPU("RemoveEvent", state.RemoveEvent)
 
-    function state:GetEventInfo( action, start, time, type, target, real )
+    function state:GetEventInfo(action, start, time, type, target, real)
         local queue = real and realQueue or virtualQueue
 
-        if real and ( queue[ action ] or 0 ) == 0 then return end
+        if real and (queue[action] or 0) == 0 then return end
 
         -- Find the first event that matches the provided criteria and return all the data.
-        for i, event in ipairs( queue ) do
-            if ( not action or event.action == action ) and
-               ( not start  or event.start  == start  ) and
-               ( not time   or event.time   == time   ) and
-               ( not type   or event.type   == type   ) and
-               ( not target or event.target == target ) then
-
-               return event.action, event.start, event.time, event.type, event.target, event.real
+        for i, event in ipairs(queue) do
+            if (not action or event.action == action) and
+                (not start or event.start == start) and
+                (not time or event.time == time) and
+                (not type or event.type == type) and
+                (not target or event.target == target) then
+                return event.action, event.start, event.time, event.type, event.target, event.real
             end
         end
     end
 
-    function state:RemoveSpellEvent( action, real, eType, reverse )
+    function state:RemoveSpellEvent(action, real, eType, reverse)
         local queue = real and realQueue or virtualQueue
 
         local success = false
 
         if reverse then
             for i = #queue, 1, -1 do
-                local e = queue[ i ]
+                local e = queue[i]
 
-                if e.action == action and ( eType == nil or e.type == eType ) then
-                    RecycleEvent( queue, i )
+                if e.action == action and (eType == nil or e.type == eType) then
+                    RecycleEvent(queue, i)
                     if real then
-                        queue[ action ] = ( queue[ action ] or 1 ) - 1
+                        queue[action] = (queue[action] or 1) - 1
                     end
                     return true
                 end
             end
         else
             for i = 1, #queue do
-                local e = queue[ i ]
+                local e = queue[i]
 
-                if e.action == action and ( eType == nil or e.type == eType ) then
-                    RecycleEvent( queue, i )
+                if e.action == action and (eType == nil or e.type == eType) then
+                    RecycleEvent(queue, i)
                     if real then
-                        queue[ action ] = ( queue[ action ] or 0 ) - 1
+                        queue[action] = (queue[action] or 0) - 1
                     end
                     return true
                 end
@@ -6360,88 +6371,84 @@ do
         return false
     end
 
-    function state:RemoveSpellEvents( action, real, eType )
+    function state:RemoveSpellEvents(action, real, eType)
         local queue = real and realQueue or virtualQueue
 
         local success = false
-        local impactSpells = class.abilities[ action ] and class.abilities[ action ].impactSpells
+        local impactSpells = class.abilities[action] and class.abilities[action].impactSpells
 
         for i = #queue, 1, -1 do
-            local e = queue[ i ]
+            local e = queue[i]
 
-            if ( e.action == action or impactSpells and impactSpells[ action ] ) and ( eType == nil or e.type == eType ) then
-                RecycleEvent( queue, i )
+            if (e.action == action or impactSpells and impactSpells[action]) and (eType == nil or e.type == eType) then
+                RecycleEvent(queue, i)
                 if real then
-                    queue[ action ] = ( queue[ action ] or 1 ) - 1
+                    queue[action] = (queue[action] or 1) - 1
                 end
                 success = true
             end
         end
 
         if success then
-            for k in pairs( class.resources ) do
-                forecastResources( k )
+            for k in pairs(class.resources) do
+                forecastResources(k)
             end
         end
 
         return success
     end
 
-
     local EVENT_EXPIRE_MARGIN = 0.2
 
     function state:ResetQueues()
         for i = #virtualQueue, 1, -1 do
-            RecycleEvent( virtualQueue, i )
+            RecycleEvent(virtualQueue, i)
         end
 
         local now = GetTime()
 
         for i = #realQueue, 1, -1 do
-            local e = realQueue[ i ]
+            local e = realQueue[i]
 
             if e.time + EVENT_EXPIRE_MARGIN < now then
-                RecycleEvent( realQueue, i )
+                RecycleEvent(realQueue, i)
                 if e.action then
-                    realQueue[ e.action ] = max( 0, ( realQueue[ e.action ] or 1 ) - 1 )
+                    realQueue[e.action] = max(0, (realQueue[e.action] or 1) - 1)
                 end
             end
         end
 
-        for i, r in ipairs( realQueue ) do
-            local e = NewEvent()
+        for i, r in ipairs(realQueue) do
+            local e           = NewEvent()
 
-            e.action = r.action
-            e.start  = r.start
-            e.time   = r.time
-            e.type   = r.type
-            e.target = r.target
+            e.action          = r.action
+            e.start           = r.start
+            e.time            = r.time
+            e.type            = r.type
+            e.target          = r.target
 
-            virtualQueue[ i ] = e
+            virtualQueue[i]   = e
         end
     end
-
 
     local times = {}
 
-    function state:GetQueueTimes( queue )
-        wipe( times )
+    function state:GetQueueTimes(queue)
+        wipe(times)
 
-        for i, v in ipairs( queue ) do
-            times[ i ] = v.time
+        for i, v in ipairs(queue) do
+            times[i] = v.time
         end
 
-        return unpack( times )
+        return unpack(times)
     end
 
-
-    function state:GetQueue( real )
+    function state:GetQueue(real)
         if real then return realQueue end
         return virtualQueue
     end
 
-
-    function state:HandleEvent( e )
+    function state:HandleEvent(e)
         if not e then return end
 
         local action = e.action
@@ -6449,17 +6456,17 @@ do
         local curr_action = self.this_action
 
         if e.type ~= "AURA_EXPIRATION" and e.type ~= "AURA_PERIODIC" then
-            ability = class.abilities[ e.action ]
+            ability = class.abilities[e.action]
 
             if not ability then
-                state:RemoveEvent( e )
+                state:RemoveEvent(e)
                 return
             end
 
             self.this_action = action
         end
 
-        if Hekili.ActiveDebug then Hekili:Debug( "\nHandling %s at %.2f (%s).", action, e.time, e.type ) end
+        if Hekili.ActiveDebug then Hekili:Debug("\nHandling %s at %.2f (%s).", action, e.time, e.type) end
 
         if e.type == "CAST_FINISH" then
             self.hardcast = true
@@ -6467,17 +6474,16 @@ do
 
             -- Put the action on cooldown. (It's slightly premature, but addresses CD resets like Echo of the Elements.)
             -- if ability.charges and ability.charges > 1 and ability.recharge > 0 then
-            if ability.charges and ( ability.recharge or ability.cooldown ) > 0 then
-                self.spendCharges( action, 1 )
-
+            if ability.charges and (ability.recharge or ability.cooldown) > 0 then
+                self.spendCharges(action, 1)
             elseif action ~= "global_cooldown" then
-                self.setCooldown( action, cooldown )
+                self.setCooldown(action, cooldown)
             end
 
             -- Spend resources.
-            ns.spendResources( action )
+            ns.spendResources(action)
 
-            local wasCycling = self.IsCycling( nil, true )
+            local wasCycling = self.IsCycling(nil, true)
             local expires, minTTD, maxTTD, aura
 
             if wasCycling then
@@ -6485,36 +6491,33 @@ do
             end
 
             if e.target and e.target ~= self.target.unit then
-                if Hekili.ActiveDebug then Hekili:Debug( "Using ability on a different target." ) end
-                self.SetupCycle( ability )
+                if Hekili.ActiveDebug then Hekili:Debug("Using ability on a different target.") end
+                self.SetupCycle(ability)
             end
 
             -- Perform the action.
-            self:RunHandler( action )
+            self:RunHandler(action)
             self.hardcast = nil
             self.whitelist = nil
-            self.removeBuff( "casting" ) -- TODO: Revisit for Casting while Casting scenarios; check Fire Mage.
+            self.removeBuff("casting")   -- TODO: Revisit for Casting while Casting scenarios; check Fire Mage.
 
             if wasCycling then
-                self.SetCycleInfo( expires, minTTD, maxTTD, aura )
+                self.SetCycleInfo(expires, minTTD, maxTTD, aura)
             else
                 self.ClearCycle()
             end
 
             if ability.item and not ability.no_icd then
-                self.putTrinketsOnCD( cooldown / 6 )
+                self.putTrinketsOnCD(cooldown / 6)
             end
-
         elseif e.type == "CHANNEL_TICK" then
             if ability.tick then ability.tick() end
-
         elseif e.type == "CHANNEL_FINISH" then
             if ability.finish then ability.finish() end
             self.whitelist = nil
-            self.removeBuff( "casting" )
-
+            self.removeBuff("casting")
         elseif e.type == "PROJECTILE_IMPACT" then
-            local wasCycling = self.IsCycling( nil, true )
+            local wasCycling = self.IsCycling(nil, true)
             local expires, minTTD, maxTTD, aura
 
             if wasCycling then
@@ -6522,114 +6525,110 @@ do
             end
 
             if e.target and e.target ~= self.target.unit then
-                if Hekili.ActiveDebug then Hekili:Debug( "Using ability on a different target." ) end
-                self.SetupCycle( ability )
+                if Hekili.ActiveDebug then Hekili:Debug("Using ability on a different target.") end
+                self.SetupCycle(ability)
             end
 
-            if ability.impact then ability.impact( e.real ) end
+            if ability.impact then ability.impact(e.real) end
             self:StartCombat()
 
             if wasCycling then
-                self.SetCycleInfo( expires, minTTD, maxTTD, aura )
+                self.SetCycleInfo(expires, minTTD, maxTTD, aura)
             else
                 self.ClearCycle()
             end
         end
 
-        if e.func then e.func( e.data ) end
+        if e.func then e.func(e.data) end
 
         state.this_action = curr_action
-        state:RemoveEvent( e )
+        state:RemoveEvent(e)
     end
 
-    Hekili:ProfileCPU( "HandleEvent", state.HandleEvent )
+    Hekili:ProfileCPU("HandleEvent", state.HandleEvent)
 
 
-    function state:IsQueued( action, real )
-        if real and ( realQueue[ action ] or 0 ) == 0 then return false end
+    function state:IsQueued(action, real)
+        if real and (realQueue[action] or 0) == 0 then return false end
 
         local queue = real and realQueue or virtualQueue
 
-        for i, entry in ipairs( queue ) do
+        for i, entry in ipairs(queue) do
             if entry.action == action then return true end
         end
 
         return false
     end
 
-
-    function state:IsInFlight( action, real )
-        if real and ( realQueue[ action ] or 0 ) == 0 then return false end
+    function state:IsInFlight(action, real)
+        if real and (realQueue[action] or 0) == 0 then return false end
 
         local queue = real and realQueue or virtualQueue
 
-        for i, entry in ipairs( queue ) do
+        for i, entry in ipairs(queue) do
             if entry.action == action and entry.type == "PROJECTILE_IMPACT" and entry.start <= self.query_time then return true end
         end
 
         return false
     end
 
-
-    function state:InFlightRemains( action, real )
-        if real and ( realQueue[ action ] or 0 ) == 0 then return 0 end
+    function state:InFlightRemains(action, real)
+        if real and (realQueue[action] or 0) == 0 then return 0 end
 
         local queue = real and realQueue or virtualQueue
 
-        for i, entry in ipairs( queue ) do
-            if entry.action == action and entry.type == "PROJECTILE_IMPACT" and entry.start <= self.query_time then return max( 0, entry.time - self.query_time ) end
+        for i, entry in ipairs(queue) do
+            if entry.action == action and entry.type == "PROJECTILE_IMPACT" and entry.start <= self.query_time then return
+                max(0, entry.time - self.query_time) end
         end
 
         return 0
     end
-
 
     local cast_events = {
         CAST_FINISH = true,
         CHANNEL_FINISH = true
     }
 
-    function state:IsCasting( action, real )
-        if real and ( realQueue[ action ] or 0 ) == 0 then return false end
+    function state:IsCasting(action, real)
+        if real and (realQueue[action] or 0) == 0 then return false end
         local queue = real and realQueue or virtualQueue
 
-        for i, entry in ipairs( queue ) do
-            if entry.type == "CAST_FINISH" and ( action == nil or entry.action == action ) and entry.start <= self.query_time then return true end
+        for i, entry in ipairs(queue) do
+            if entry.type == "CAST_FINISH" and (action == nil or entry.action == action) and entry.start <= self.query_time then return true end
         end
 
         return false
     end
 
-
-    function state:QueuedCastRemains( action, real )
-        if real and ( realQueue[ action ] or 0 ) == 0 then return 0 end
+    function state:QueuedCastRemains(action, real)
+        if real and (realQueue[action] or 0) == 0 then return 0 end
 
         local queue = real and realQueue or virtualQueue
 
-        for i, entry in ipairs( queue ) do
-            if cast_events[ entry.type ] and ( action == nil or entry.action == action ) and entry.start <= self.query_time then return max( 0, entry.time - self.query_time ) end
+        for i, entry in ipairs(queue) do
+            if cast_events[entry.type] and (action == nil or entry.action == action) and entry.start <= self.query_time then return
+                max(0, entry.time - self.query_time) end
         end
 
         return 0
     end
 
-
-    function state:IsChanneling( action, real )
+    function state:IsChanneling(action, real)
         local queue = real and realQueue or virtualQueue
 
-        for i, entry in ipairs( queue ) do
-            if entry.type == "CHANNEL_FINISH" and ( action == nil or entry.action == action ) and entry.start <= self.query_time then return true end
+        for i, entry in ipairs(queue) do
+            if entry.type == "CHANNEL_FINISH" and (action == nil or entry.action == action) and entry.start <= self.query_time then return true end
         end
 
         return false
     end
 
-
-    function state:ApplyCastingAuraFromQueue( action, real )
+    function state:ApplyCastingAuraFromQueue(action, real)
         local queue = real and realQueue or virtualQueue
 
-        for i, entry in ipairs( queue ) do
-            if cast_events[ entry.type ] and ( action == nil or entry.action == action ) and entry.start <= self.query_time then
+        for i, entry in ipairs(queue) do
+            if cast_events[entry.type] and (action == nil or entry.action == action) and entry.start <= self.query_time then
                 local casting = self.buff.casting
 
                 casting.applied = entry.start
@@ -6645,7 +6644,7 @@ do
                 casting.v3 = entry.type == "CHANNEL_FINISH" and 1 or 0
 
                 if entry.action then
-                    local spell = class.abilities[ entry.action ]
+                    local spell = class.abilities[entry.action]
                     if spell and spell.id then
                         casting.v1 = spell.id
                     else
@@ -6662,8 +6661,8 @@ do
 end
 
 
-function state:RunHandler( key, noStart )
-    local ability = class.abilities[ key ]
+function state:RunHandler(key, noStart)
+    local ability = class.abilities[key]
 
     if not ability then
         -- ns.Error( "runHandler() attempting to run handler for non-existant ability '" .. key .. "'." )
@@ -6679,18 +6678,20 @@ function state:RunHandler( key, noStart )
 
     if ability.channeled then
         if ability.start then ability.start() end
-        self.channelSpell( key, self.query_time, ability.cast, ability.id )
-    elseif ability.handler then ability.handler() end
+        self.channelSpell(key, self.query_time, ability.cast, ability.id)
+    elseif ability.handler then
+        ability.handler()
+    end
 
     -- if self.buff.empowering.up then removeBuff( "empowering" ) end -- Disabled for MoP
 
     self.prev.last = key
-    self[ ability.gcd == "off" and "prev_off_gcd" or "prev_gcd" ].last = key
+    self[ability.gcd == "off" and "prev_off_gcd" or "prev_gcd"].last = key
 
-    table.insert( self.predictions, 1, key )
-    table.insert( self[ ability.gcd == "off" and 'predictionsOff' or 'predictionsOn' ], 1, key )
+    table.insert(self.predictions, 1, key)
+    table.insert(self[ability.gcd == "off" and 'predictionsOff' or 'predictionsOn'], 1, key)
 
-    self.history.casts[ key ] = self.query_time
+    self.history.casts[key] = self.query_time
 
     self.predictions[11] = nil
     self.predictionsOn[11] = nil
@@ -6701,37 +6702,36 @@ function state:RunHandler( key, noStart )
     self.prev_off_gcd.override = nil
 
     if Hekili.ActiveDebug then
-        Hekili:Debug( "Running %s at %.2f.", key, self.query_time )
+        Hekili:Debug("Running %s at %.2f.", key, self.query_time)
     end
 
     if self.time == 0 and ability.startsCombat and not noStart then -- and not ability.isProjectile
         -- Assume MH swing at combat start and OH swing half a swing later?
         self:StartCombat()
-        ns.callHook( "runHandler_startCombat", key )
+        ns.callHook("runHandler_startCombat", key)
     end
 
     -- state.cast_start = 0
-    ns.callHook( "runHandler", key )
+    ns.callHook("runHandler", key)
 end
 
-function state.runHandler( key, noStart )
-    state:RunHandler( key, noStart )
+function state.runHandler(key, noStart)
+    state:RunHandler(key, noStart)
 end
-
 
 do
     local firstTime = true
 
-    function state.reset( dispName, full )
+    function state.reset(dispName, full)
         local started = debugprofilestop()
 
         dispName = dispName or "Primary"
-        local displayFrame = _G[ "HekiliDisplay" .. dispName ]
+        local displayFrame = _G["HekiliDisplay" .. dispName]
 
         full = dispName == "Primary" or state.offset > 0
 
-    ClearMarks( firstTime )
-    firstTime = false
+        ClearMarks(firstTime)
+        firstTime = false
 
         state.ClearCycle()
         state:ResetVariables()
@@ -6741,22 +6741,22 @@ do
         -- TODO:  Review.  How many of these are necessary?
         state.resetting = true
 
-        ns.callHook( "reset_preauras" )
+        ns.callHook("reset_preauras")
 
         if state.target.updated then
-            ScrapeUnitAuras( "target" )
+            ScrapeUnitAuras("target")
             state.target.updated = false
         end
 
         if state.player.updated then
-            ScrapeUnitAuras( "player" )
+            ScrapeUnitAuras("player")
             state.player.updated = false
         end
 
         local p = Hekili.DB.profile
 
-        local display = dispName and p.displays[ dispName ]
-        local spec = state.spec.id and p.specs[ state.spec.id ]
+        local display = dispName and p.displays[dispName]
+        local spec = state.spec.id and p.specs[state.spec.id]
         local mode = p.toggles.mode.value
 
         state.display = dispName
@@ -6765,15 +6765,21 @@ do
 
         if display then
             if dispName == 'Primary' then
-                if mode == "single" or mode == "dual" or mode == "reactive" then state.max_targets = 1
-                elseif mode == "aoe" then state.min_targets = spec and spec.aoe or 3 end
+                if mode == "single" or mode == "dual" or mode == "reactive" then
+                    state.max_targets = 1
+                elseif mode == "aoe" then
+                    state.min_targets = spec and spec.aoe or 3
+                end
                 state.filter = "none"
             elseif dispName == 'AOE' then
                 state.min_targets = spec and spec.aoe or 3
                 state.filter = "none"
-            elseif dispName == 'Cooldowns' then state.filter = "cooldowns"
-            elseif dispName == 'Interrupts' then state.filter = "interrupts"
-            elseif dispName == 'Defensives' then state.filter = "defensives"
+            elseif dispName == 'Cooldowns' then
+                state.filter = "cooldowns"
+            elseif dispName == 'Interrupts' then
+                state.filter = "interrupts"
+            elseif dispName == 'Defensives' then
+                state.filter = "defensives"
             end
 
             state.rangefilter = display.range.enabled and display.range.type == "xclude"
@@ -6786,7 +6792,8 @@ do
             displayFrame.resetShortLast = debugprofilestop() - started
 
             if displayFrame.resetShortN then
-                displayFrame.resetShortMean = ( displayFrame.resetShortMean * displayFrame.resetShortN + displayFrame.resetShortLast ) / ( displayFrame.resetShortN + 1 )
+                displayFrame.resetShortMean = (displayFrame.resetShortMean * displayFrame.resetShortN + displayFrame.resetShortLast) /
+                (displayFrame.resetShortN + 1)
                 displayFrame.resetShortN = displayFrame.resetShortN + 1
             else
                 displayFrame.resetShortMean = displayFrame.resetShortLast
@@ -6798,35 +6805,36 @@ do
         end
 
         -- TODO: Determine if we can Mark/Purge these tables instead of having their own resets.
-        for k in pairs( class.stateTables ) do
-            local tbl = state[ k ]
-            if type( tbl ) == "table" then
-                local onReset = rawget( tbl, "onReset" )
-                if type( onReset ) == "function" then onReset( tbl ) end
+        for k in pairs(class.stateTables) do
+            local tbl = state[k]
+            if type(tbl) == "table" then
+                local onReset = rawget(tbl, "onReset")
+                if type(onReset) == "function" then onReset(tbl) end
             end
         end
 
         -- Hekili:Yield( "Reset Post-States" )
 
         for i = 1, 5 do
-            local _, _, start, duration, icon = GetTotemInfo( i )
-            if icon and class.totems[ icon ] then
-                summonPet( class.totems[ icon ], start + duration - state.now )
+            local _, _, start, duration, icon = GetTotemInfo(i)
+            if icon and class.totems[icon] then
+                summonPet(class.totems[icon], start + duration - state.now)
             end
         end
 
         -- TODO: These could be cleaner but also it doesn't matter.
-        wipe( state.predictions )
-        wipe( state.predictionsOn )
-        wipe( state.predictionsOff )
-        wipe( state.history.casts )
-        wipe( state.history.units )
+        wipe(state.predictions)
+        wipe(state.predictionsOn)
+        wipe(state.predictionsOff)
+        wipe(state.history.casts)
+        wipe(state.history.units)
 
         if state.time == 0 and InCombatLockdown() then
-            local a = state.player.lastcast and class.abilities[ state.player.lastcast ]
+            local a = state.player.lastcast and class.abilities[state.player.lastcast]
             if a and a.startsCombat and state.now - a.lastCast < 1 then
                 state.false_start = a.lastCast - 0.01
-                if Hekili.ActiveDebug then Hekili:Debug( format( "Starting combat based on %s cast; time is now: %.2f.", state.player.lastcast, state.time ) ) end
+                if Hekili.ActiveDebug then Hekili:Debug(format("Starting combat based on %s cast; time is now: %.2f.",
+                        state.player.lastcast, state.time)) end
             end
         end
 
@@ -6834,26 +6842,26 @@ do
 
         -- Hekili:Yield( "Reset Pre-Powers" )
 
-        for k, power in pairs( class.resources ) do
-            local res = rawget( state, k )
+        for k, power in pairs(class.resources) do
+            local res = rawget(state, k)
 
             if res then
-                res.actual = UnitPower( "player", power.type )
-                res.max = UnitPowerMax( "player", power.type )
-                res.current = res.actual or 0  -- Ensure current is always initialized
+                res.actual = UnitPower("player", power.type)
+                res.max = UnitPowerMax("player", power.type)
+                res.current = res.actual or 0 -- Ensure current is always initialized
                 -- Ensure modmax has a sane default (avoid nil multipliers in cost math).
-                if res.max and ( res.modmax == nil or res.modmax == 0 ) then
+                if res.max and (res.modmax == nil or res.modmax == 0) then
                     res.modmax = res.max
                 end
 
                 if res.max > 0 then foundResource = true end
 
                 if k == "mana" and state.spec.arcane then
-                    res.modmax = res.max / ( 1 + state.mastery_value )
+                    res.modmax = res.max / (1 + state.mastery_value)
                 end
 
-                res.last_tick = rawget( res, "last_tick" ) or 0
-                res.tick_rate = rawget( res, "tick_rate" ) or 0.1
+                res.last_tick = rawget(res, "last_tick") or 0
+                res.tick_rate = rawget(res, "tick_rate") or 0.1
 
                 -- MoP: Use legacy power type constants
                 if power.type == 0 then -- MANA = 0 in MoP
@@ -6863,8 +6871,8 @@ do
                     res.inactive_regen = inactive or 0
                     res.regen = nil
                 else
-                    if ResourceRegenerates( k ) then
-                        local inactive, active = GetPowerRegenForPowerType( power.type )
+                    if ResourceRegenerates(k) then
+                        local inactive, active = GetPowerRegenForPowerType(power.type)
                         res.active_regen = active or 0.001
                         res.inactive_regen = inactive or 0.001
                         res.regen = nil
@@ -6874,7 +6882,7 @@ do
                 end
 
                 if res.reset then res.reset() end
-                forecastResources( k )
+                forecastResources(k)
             end
         end
 
@@ -6883,7 +6891,8 @@ do
             displayFrame.resetAbortLast = debugprofilestop() - started
 
             if displayFrame.resetAbortN then
-                displayFrame.resetAbortMean = ( displayFrame.resetAbortMean * displayFrame.resetAbortN + displayFrame.resetAbortLast ) / ( displayFrame.resetAbortN + 1 )
+                displayFrame.resetAbortMean = (displayFrame.resetAbortMean * displayFrame.resetAbortN + displayFrame.resetAbortLast) /
+                (displayFrame.resetAbortN + 1)
                 displayFrame.resetAbortN = displayFrame.resetAbortN + 1
             else
                 displayFrame.resetAbortMean = displayFrame.resetAbortLast
@@ -6901,31 +6910,33 @@ do
             state.health.resource = "health"
             state.health.meta = {}
             state.health.percent = nil
-            setmetatable( state.health, mt_resource )
+            setmetatable(state.health, mt_resource)
             state.health.initialized = true
         end
         state.health.current = nil
-        state.health.actual = UnitHealth( "player" ) or 10000
-        state.health.max = max( 1, UnitHealthMax( "player" ) or 10000 )
+        state.health.actual = UnitHealth("player") or 10000
+        state.health.max = max(1, UnitHealthMax("player") or 10000)
         state.health.regen = 0.001
 
         -- TODO: All of this stuff for swings is terrible.
-        state.swings.mh_speed, state.swings.oh_speed = UnitAttackSpeed( "player" )
+        state.swings.mh_speed, state.swings.oh_speed = UnitAttackSpeed("player")
         state.swings.mh_speed = state.swings.mh_speed or 0
         state.swings.oh_speed = state.swings.oh_speed or 0
 
         state.mainhand_speed = state.swings.mh_speed or 0
         state.offhand_speed = state.swings.oh_speed or 0
 
-        state.nextMH = ( state.combat > 0 and state.swings.mh_actual > state.combat and state.swings.mh_actual + state.mainhand_speed ) or 0
-        state.nextOH = ( state.combat > 0 and state.swings.oh_actual > state.combat and state.swings.oh_actual + state.offhand_speed ) or 0
+        state.nextMH = (state.combat > 0 and state.swings.mh_actual > state.combat and state.swings.mh_actual + state.mainhand_speed) or
+        0
+        state.nextOH = (state.combat > 0 and state.swings.oh_actual > state.combat and state.swings.oh_actual + state.offhand_speed) or
+        0
 
         state.swings.mh_pseudo = nil
         state.swings.oh_pseudo = nil
 
         -- Special case spells that suck.
-        if class.abilities[ "ascendance" ] and state.buff.ascendance.up then
-            state.setCooldown( "ascendance", state.buff.ascendance.remains + 165 )
+        if class.abilities["ascendance"] and state.buff.ascendance.up then
+            state.setCooldown("ascendance", state.buff.ascendance.remains + 165)
         end
 
         --[[ Trinkets that need special handling.
@@ -6968,12 +6979,12 @@ do
         end ]]
 
         -- Hekili:Yield( "Reset Pre-Cast Hook" )
-        ns.callHook( "reset_precast" )
+        ns.callHook("reset_precast")
         -- Hekili:Yield( "Reset Pre-Casting" )
 
         -- TODO: All of this cast-queuing seems like it should be simpler, but that's for another time.
         local cast_time, casting, ability = 0, nil, nil
-        state.buff.casting.generate( state.buff.casting, "buff" )
+        state.buff.casting.generate(state.buff.casting, "buff")
 
         -- print( state.display, GetTime(), "Casting: ", state.buff.casting.name, state.buff.casting.applied, state.buff.casting.expires, state.buff.casting.remains )
 
@@ -6981,7 +6992,7 @@ do
             cast_time = state.buff.casting.remains
 
             local castID = state.buff.casting.v1
-            ability = class.abilities[ castID ] or class.abilities[ state.buff.casting.name ]
+            ability = class.abilities[castID] or class.abilities[state.buff.casting.name]
 
             if ability then
                 casting = ability.key
@@ -7001,29 +7012,30 @@ do
 
             if ability then
                 channeled = channeled or ability.channeled
-                destGUID  = Hekili:GetMacroCastTarget( ability.key, state.buff.casting.applied, "RESET" ) or state.target.unit
+                destGUID  = Hekili:GetMacroCastTarget(ability.key, state.buff.casting.applied, "RESET") or
+                state.target.unit
             end
 
             if not state:IsCasting() and not channeled then
-                state:QueueEvent( casting, state.buff.casting.applied, state.buff.casting.expires, "CAST_FINISH", destGUID )
+                state:QueueEvent(casting, state.buff.casting.applied, state.buff.casting.expires, "CAST_FINISH", destGUID)
 
                 -- Projectile spells have two handlers, effectively.  An onCast handler, and then an onImpact handler.
                 if ability and ability.isProjectile then
-                    state:QueueEvent( ability.key, state.buff.casting.expires, nil, "PROJECTILE_IMPACT", destGUID )
+                    state:QueueEvent(ability.key, state.buff.casting.expires, nil, "PROJECTILE_IMPACT", destGUID)
                     -- state:QueueEvent( action, "projectile", true )
                 end
-
             elseif not state:IsChanneling() and channeled then
-                state:QueueEvent( casting, state.buff.casting.applied, state.buff.casting.expires, "CHANNEL_FINISH", destGUID )
+                state:QueueEvent(casting, state.buff.casting.applied, state.buff.casting.expires, "CHANNEL_FINISH",
+                    destGUID)
 
                 if channeled and ability then
-                    local tick_time = ability.tick_time or ( ability.aura and class.auras[ ability.aura ].tick_time )
+                    local tick_time = ability.tick_time or (ability.aura and class.auras[ability.aura].tick_time)
 
                     if tick_time and tick_time > 0 then
                         local eoc = state.buff.casting.expires - tick_time
 
-                        while ( eoc > state.now ) do
-                            state:QueueEvent( casting, state.buff.casting.applied, eoc, "CHANNEL_TICK", destGUID )
+                        while (eoc > state.now) do
+                            state:QueueEvent(casting, state.buff.casting.applied, eoc, "CHANNEL_TICK", destGUID)
                             eoc = eoc - tick_time
                         end
                     end
@@ -7031,7 +7043,7 @@ do
 
                 -- Projectile spells have two handlers, effectively.  An onCast handler, and then an onImpact handler.
                 if ability and ability.isProjectile then
-                    state:QueueEvent( ability.key, state.buff.casting.expires, nil, "PROJECTILE_IMPACT", destGUID )
+                    state:QueueEvent(ability.key, state.buff.casting.expires, nil, "PROJECTILE_IMPACT", destGUID)
                     -- state:QueueEvent( action, "projectile", true )
                 end
             end
@@ -7041,14 +7053,15 @@ do
                 local delay = 0
 
                 if not state.spec.can_dual_cast and state.buff.casting.up and state.buff.casting.v3 ~= 1 then -- v3=1 means it's channeled.
-                    delay = max( delay, state.buff.casting.remains )
+                    delay = max(delay, state.buff.casting.remains)
                 end
 
-                delay = ns.callHook( "reset_postcast", delay )
+                delay = ns.callHook("reset_postcast", delay)
 
                 if delay > 0 then
-                    if Hekili.ActiveDebug then Hekili:Debug( "Advancing by %.2f per GCD or cast or channel or reset_postcast value.", delay ) end
-                    state.advance( delay )
+                    if Hekili.ActiveDebug then Hekili:Debug(
+                        "Advancing by %.2f per GCD or cast or channel or reset_postcast value.", delay) end
+                    state.advance(delay)
                 end
             end
 
@@ -7062,7 +7075,8 @@ do
         displayFrame.resetFullLast = debugprofilestop() - started
 
         if displayFrame.resetFullN then
-            displayFrame.resetFullMean = ( displayFrame.resetFullMean * displayFrame.resetFullN + displayFrame.resetFullLast ) / ( displayFrame.resetFullN + 1 )
+            displayFrame.resetFullMean = (displayFrame.resetFullMean * displayFrame.resetFullN + displayFrame.resetFullLast) /
+            (displayFrame.resetFullN + 1)
             displayFrame.resetFullN = displayFrame.resetFullN + 1
         else
             displayFrame.resetFullMean = displayFrame.resetFullLast
@@ -7073,24 +7087,23 @@ do
         return true
     end
 end
-Hekili:ProfileCPU( "state.reset", state.reset )
+Hekili:ProfileCPU("state.reset", state.reset)
 
 
-function state:SetConstraint( min, max )
+function state:SetConstraint(min, max)
     if min then state.delayMin = min end
     if max then state.delayMax = max end
 end
 
-
-function state:SetWhitelist( t )
+function state:SetWhitelist(t)
     state.whitelist = t
 end
-
 
 function state:StartCombat()
     if self.time == 0 then
         self.false_start = self.query_time - 0.01
-        if Hekili.ActiveDebug then Hekili:Debug( format( "Starting combat at %.2f -- time is %.2f.", self.false_start, self.time ) ) end
+        if Hekili.ActiveDebug then Hekili:Debug(format("Starting combat at %.2f -- time is %.2f.", self.false_start,
+                self.time)) end
     end
 
     local swing = false
@@ -7101,51 +7114,51 @@ function state:StartCombat()
     end
 
     if self.swings.offhand == 0 and self.swings.offhand_speed > 0 then
-        self.swings.oh_pseudo = self.query_time + ( self.swings.offhand_speed / 2 )
+        self.swings.oh_pseudo = self.query_time + (self.swings.offhand_speed / 2)
         swing = true
     end
 
     if swing then self:ForecastSwingbasedResources() end
 end
 
-
-function state.advance( time )
+function state.advance(time)
     if not state.resetting and not state.modified then
         state.modified = true
     end
 
-    time = ns.callHook( "advance", time ) or time
-    if not state.resetting then time = roundUp( time, 3 ) end
+    time = ns.callHook("advance", time) or time
+    if not state.resetting then time = roundUp(time, 3) end
 
     state.delay = 0
 
     local realOffset = state.offset
 
     if state.player.queued_ability then
-        local lands = max( state.now + 0.01, state.player.queued_lands )
+        local lands = max(state.now + 0.01, state.player.queued_lands)
 
         if lands > state.query_time and lands <= state.query_time + time then
             state.offset = lands - state.query_time
-            state:RunHandler( state.player.queued_ability, true )
+            state:RunHandler(state.player.queued_ability, true)
 
             state.offset = realOffset
         end
     end
 
     local events = state:GetQueue()
-    local event = events[ 1 ]
+    local event = events[1]
 
     local eCount = 0
 
-    while( event ) do
+    while (event) do
         if event.time <= state.query_time + time then
             state.offset = event.time - state.now
 
-            if Hekili.ActiveDebug then Hekili:Debug( "While advancing by %.2f to %.2f, %s %s occurred at %.2f.", time, realOffset + time, event.action, event.type, state.offset ) end
+            if Hekili.ActiveDebug then Hekili:Debug("While advancing by %.2f to %.2f, %s %s occurred at %.2f.", time,
+                    realOffset + time, event.action, event.type, state.offset) end
 
-            state:HandleEvent( event )
+            state:HandleEvent(event)
 
-            event = events[ 1 ]
+            event = events[1]
             state.offset = realOffset
         else
             break
@@ -7159,17 +7172,17 @@ function state.advance( time )
         return
     end
 
-    for k in pairs( class.resources ) do
-        local resource = state[ k ]
+    for k in pairs(class.resources) do
+        local resource = state[k]
 
         if not resource.regenModel then
-            local override = ns.callHook( "advance_resource_regen", false, k, time )
+            local override = ns.callHook("advance_resource_regen", false, k, time)
 
             local regen = resource.regen
             if regen == 0.001 then regen = 0 end
 
             if not override and resource.regen and regen ~= 0 then
-                resource.actual = min( resource.max, max( 0, resource.actual + ( regen * time ) ) )
+                resource.actual = min(resource.max, max(0, resource.actual + (regen * time)))
             end
         else
             -- revisit this, may want to forecastResources( k ) instead.
@@ -7180,32 +7193,28 @@ function state.advance( time )
     end
 
     state.offset = state.offset + time
-    time = ns.callHook( "advance_end", time ) or time
+    time = ns.callHook("advance_end", time) or time
     return time
 end
 
-
-function state.GetResourceType( ability )
-    local action = class.abilities[ ability ]
+function state.GetResourceType(ability)
+    local action = class.abilities[ability]
 
     if not action then return end
 
     if action.spend ~= nil then
-        if type( action.spend ) == "number" then
+        if type(action.spend) == "number" then
             return action.spendType or class.primaryResource
-
-        elseif type( action.spend ) == "function" then
-            return select( 2, action.spend() ) or action.spendType or class.primaryResource
-
+        elseif type(action.spend) == "function" then
+            return select(2, action.spend()) or action.spendType or class.primaryResource
         end
     end
 
     return nil
 end
 
-
-ns.spendResources = function( ability )
-    local action = class.abilities[ ability ]
+ns.spendResources = function(ability)
+    local action = class.abilities[ability]
 
     if not action then return end
 
@@ -7213,10 +7222,10 @@ ns.spendResources = function( ability )
     if action.spend ~= nil then
         local cost, resource
 
-        if type( action.spend ) == "number" then
+        if type(action.spend) == "number" then
             cost = action.spend
             resource = action.spendType or class.primaryResource
-        elseif type( action.spend ) == "function" then
+        elseif type(action.spend) == "function" then
             cost, resource = action.spend()
             resource = resource or action.spendType or class.primaryResource
         else
@@ -7225,12 +7234,12 @@ ns.spendResources = function( ability )
         end
 
         if cost > 0 and cost < 1 then
-            local mm3 = state[ resource ] and state[ resource ].modmax or 1
-            cost = ( cost * mm3 )
+            local mm3 = state[resource] and state[resource].modmax or 1
+            cost = (cost * mm3)
         end
 
         if cost ~= 0 then
-            state.spend( cost, resource )
+            state.spend(cost, resource)
         end
     end
 end
@@ -7241,214 +7250,216 @@ do
     local HOLD_PERMANENT = 1
     local HOLD_COMBAT    = 2
 
-    function Hekili:PlaceHold( action, combat, verbose )
+    function Hekili:PlaceHold(action, combat, verbose)
         if not action then return end
 
         action = action:trim()
-        local ability = class.abilities[ action ]
+        local ability = class.abilities[action]
 
         if not ability then
             action = action:lower()
             -- Try to auto-complete.
-            for k, v in orderedPairs( class.abilities ) do
-                if type(k) == "string" and k:sub( 1, action:len() ):lower() == action then
+            for k, v in orderedPairs(class.abilities) do
+                if type(k) == "string" and k:sub(1, action:len()):lower() == action then
                     action = v.key
-                    ability = class.abilities[ action ]
+                    ability = class.abilities[action]
                     break
                 end
             end
         end
 
         if ability then
-            state.holds[ ability.key ] = combat and HOLD_COMBAT or HOLD_PERMANENT
-            if verbose then Hekili:Print( class.abilities[ ability.key ].name .. " placed on hold" .. ( combat and " until end of combat." or "." ) ) end
-            Hekili:ForceUpdate( "HEKILI_HOLD_APPLIED" )
+            state.holds[ability.key] = combat and HOLD_COMBAT or HOLD_PERMANENT
+            if verbose then Hekili:Print(class.abilities[ability.key].name ..
+                " placed on hold" .. (combat and " until end of combat." or ".")) end
+            Hekili:ForceUpdate("HEKILI_HOLD_APPLIED")
         end
     end
 
-    function Hekili:RemoveHold( action, verbose )
+    function Hekili:RemoveHold(action, verbose)
         if not action then return end
 
         action = action:trim()
-        local ability = class.abilities[ action ]
+        local ability = class.abilities[action]
 
         if not ability then
             action = action:lower()
             -- Try to auto-complete.
-            for k, v in orderedPairs( class.abilities ) do
-                if type(k) == "string" and k:sub( 1, action:len() ):lower() == action then
+            for k, v in orderedPairs(class.abilities) do
+                if type(k) == "string" and k:sub(1, action:len()):lower() == action then
                     action = v.key
-                    ability = class.abilities[ action ]
+                    ability = class.abilities[action]
                     break
                 end
             end
         end
 
-        if ability and state.holds[ ability.key ] then
-            state.holds[ ability.key ] = nil
-            if verbose then Hekili:Print( class.abilities[ ability.key ].name .. " hold removed." ) end
-            Hekili:ForceUpdate( "HEKILI_HOLD_REMOVED" )
+        if ability and state.holds[ability.key] then
+            state.holds[ability.key] = nil
+            if verbose then Hekili:Print(class.abilities[ability.key].name .. " hold removed.") end
+            Hekili:ForceUpdate("HEKILI_HOLD_REMOVED")
         end
     end
 
-    function Hekili:ToggleHold( action, combat, verbose )
-        if self:IsHeld( action ) then
-            self:RemoveHold( action, verbose )
+    function Hekili:ToggleHold(action, combat, verbose)
+        if self:IsHeld(action) then
+            self:RemoveHold(action, verbose)
             return
         end
 
-        self:PlaceHold( action, combat, verbose )
+        self:PlaceHold(action, combat, verbose)
     end
 
-    function Hekili:IsHeld( action )
+    function Hekili:IsHeld(action)
         action = action and action:trim()
-        local ability = class.abilities[ action ]
+        local ability = class.abilities[action]
 
         if not ability then
             action = action:lower()
             -- Try to auto-complete.
-            for k, v in orderedPairs( class.abilities ) do
-                if type(k) == "string" and k:sub( 1, action:len() ):lower() == action then
+            for k, v in orderedPairs(class.abilities) do
+                if type(k) == "string" and k:sub(1, action:len()):lower() == action then
                     action = v.key
-                    ability = class.abilities[ action ]
+                    ability = class.abilities[action]
                     break
                 end
             end
         end
 
-        if ability and state.holds[ ability.key ] then
-            return true, state.holds[ ability.key ]
+        if ability and state.holds[ability.key] then
+            return true, state.holds[ability.key]
         end
 
         return false
     end
 
-    function Hekili:ReleaseHolds( combat )
+    function Hekili:ReleaseHolds(combat)
         local holdRemoved = false
 
-        for k, v in pairs( state.holds ) do
+        for k, v in pairs(state.holds) do
             if not combat or v == HOLD_COMBAT then
-                state.holds[ k ] = nil
+                state.holds[k] = nil
                 holdRemoved = true
             end
         end
 
-        if holdRemoved then Hekili:ForceUpdate( "HEKILI_COMBAT_HOLD_REMOVED" ) end
+        if holdRemoved then Hekili:ForceUpdate("HEKILI_COMBAT_HOLD_REMOVED") end
     end
 end
 
 
-function state:IsKnown( sID )
+function state:IsKnown(sID)
     local original = sID
-    if type(sID) ~= "number" then sID = class.abilities[ sID ] and class.abilities[ sID ].id or nil end
+    if type(sID) ~= "number" then sID = class.abilities[sID] and class.abilities[sID].id or nil end
 
     if not sID then
         return false, "could not find valid ID" -- no ability
     end
 
-    local ability = class.abilities[ sID ]
+    local ability = class.abilities[sID]
 
     if not ability then
-        Error( "IsKnown() - " .. tostring( sID ) .. " / " .. original .. " not found in abilities table.\n\n" .. debugstack() )
-        return false, format( "%s / %s not found in abilities table", tostring( original ), tostring( sID ) )
+        Error("IsKnown() - " ..
+        tostring(sID) .. " / " .. original .. " not found in abilities table.\n\n" .. debugstack())
+        return false, format("%s / %s not found in abilities table", tostring(original), tostring(sID))
     end
 
-    if IsAbilityDisabled( ability ) then return false, "not usable here" end
+    if IsAbilityDisabled(ability) then return false, "not usable here" end
 
     local z -- scratch variable
 
     if sID < 0 then
         if ability.known ~= nil then
-            if type( ability.known ) == "number" then
-                return IsUsableItem( ability.known ), "IsUsableItem known"
+            if type(ability.known) == "number" then
+                return IsUsableItem(ability.known), "IsUsableItem known"
             end
             return ability.known
         end
 
         if ability.item and ability.key ~= "potion" then
-            return IsUsableItem( ability.item ), "IsUsableItem item " .. ability.item .. " and " .. ( tostring( ability.known ) or "nil" )
-        end        return true
+            return IsUsableItem(ability.item),
+                "IsUsableItem item " .. ability.item .. " and " .. (tostring(ability.known) or "nil")
+        end
+        return true
     end
 
-    if ability.spec and not state.spec[ ability.spec ] then
+    if ability.spec and not state.spec[ability.spec] then
         return false, "wrong specialization"
     end
 
-    if ability.nospec and state.spec[ ability.nospec ] then
+    if ability.nospec and state.spec[ability.nospec] then
         return false, "spec [ " .. ability.nospec .. " ] disallowed"
     end
 
     z = ability.talent
-    if type( z ) == "table" then
-        for _, v in ipairs( z ) do
-            if not state.talent[ v ].enabled then
+    if type(z) == "table" then
+        for _, v in ipairs(z) do
+            if not state.talent[v].enabled then
                 return false, "talent [ " .. v .. " ] missing"
             end
         end
-    elseif z and not state.talent[ z ].enabled then
+    elseif z and not state.talent[z].enabled then
         return false, "talent [ " .. z .. " ] missing"
     end
 
     z = ability.notalent
-    if type( z ) == "table" then
-        for _, v in ipairs( z ) do
-            if state.talent[ v ].enabled then
+    if type(z) == "table" then
+        for _, v in ipairs(z) do
+            if state.talent[v].enabled then
                 return false, "talent [ " .. v .. " ] disallowed"
             end
         end
-    elseif z and state.talent[ z ].enabled then
+    elseif z and state.talent[z].enabled then
         return false, "talent [ " .. z .. " ] disallowed"
     end
 
     z = ability.pvptalent
-    if type( z ) == "table" then
-        for _, v in ipairs( z ) do
-            if not state.pvptalent[ v ].enabled then
+    if type(z) == "table" then
+        for _, v in ipairs(z) do
+            if not state.pvptalent[v].enabled then
                 return false, "PvP talent [ " .. v .. " ] missing"
             end
         end
-    elseif z and not state.pvptalent[ z ].enabled then
+    elseif z and not state.pvptalent[z].enabled then
         return false, "PvP talent [ " .. z .. " ] missing"
     end
 
     z = ability.nopvptalent
-    if type( z ) == "table" then
-        for _, v in ipairs( z ) do
-            if state.pvptalent[ v ].enabled then
+    if type(z) == "table" then
+        for _, v in ipairs(z) do
+            if state.pvptalent[v].enabled then
                 return false, "PvP talent [ " .. v .. " ] disallowed"
             end
         end
-    elseif z and state.pvptalent[ z ].enabled then
+    elseif z and state.pvptalent[z].enabled then
         return false, "PvP talent [ " .. z .. " ] disallowed"
-    end    -- MoP: Commented out artifact trait check (Legion feature not in MoP)
+    end -- MoP: Commented out artifact trait check (Legion feature not in MoP)
     -- if ability.trait and not state.artifact[ ability.trait ].enabled then
     --     return false, "trait [ " .. ability.trait .. " ] missing"
     -- end
 
-    if ability.equipped and not state.equipped[ ability.equipped ] then
+    if ability.equipped and not state.equipped[ability.equipped] then
         return false, "equipment [ " .. ability.equipped .. " ] missing"
     end
 
-    if ability.item and not ability.bagItem and not state.equipped[ ability.item ] then
+    if ability.item and not ability.bagItem and not state.equipped[ability.item] then
         return false, "item [ " .. ability.item .. " ] missing"
     end
 
-    if ability.noOverride and IsSpellKnownOrOverridesKnown( ability.noOverride ) then
+    if ability.noOverride and IsSpellKnownOrOverridesKnown(ability.noOverride) then
         return false, "override [ " .. ability.noOverride .. " ] disallowed"
     end
 
     if ability.known ~= nil then
-        if type( ability.known ) == "number" then
-            return IsPlayerSpell( ability.known ) or IsSpellKnownOrOverridesKnown( ability.known ) or IsSpellKnown( ability.known, true )
+        if type(ability.known) == "number" then
+            return IsPlayerSpell(ability.known) or IsSpellKnownOrOverridesKnown(ability.known) or
+            IsSpellKnown(ability.known, true)
         end
         return ability.known
     end
 
-    return IsPlayerSpell( sID ) or IsSpellKnownOrOverridesKnown( sID ) or IsSpellKnown( sID, true )
-
+    return IsPlayerSpell(sID) or IsSpellKnownOrOverridesKnown(sID) or IsSpellKnown(sID, true)
 end
-
-
 
 do
     local toggleSpells = {
@@ -7458,10 +7469,10 @@ do
     }
 
     -- If an ability has been manually disabled, don't consider it.
-    function state:IsDisabled( spell, strict )
+    function state:IsDisabled(spell, strict)
         spell = spell or self.this_action
 
-        local ability = class and class.abilities and class.abilities[ spell ]
+        local ability = class and class.abilities and class.abilities[spell]
         if not ability then return false end
 
         if ability.id > -100 and ability.id < 0 then
@@ -7471,51 +7482,63 @@ do
         spell = ability.key
 
         local profile = Hekili.DB.profile
-        local spec = rawget( profile.specs, state.spec.id )
+        local spec = rawget(profile.specs, state.spec.id)
         if not spec then return true end
 
-        local option = ability.item and spec.items[ spell ] or spec.abilities[ spell ]
+        local option = ability.item and spec.items[spell] or spec.abilities[spell]
 
         if not strict then
             local toggle = option.toggle
             if not toggle or toggle == "default" then toggle = ability.toggle end
 
-            if toggle == "potion" and profile.toggles[ toggle ].separate and not profile.toggles[ toggle ].value then toggle = "cooldowns" end
+            if toggle == "potion" and profile.toggles[toggle].separate and not profile.toggles[toggle].value then toggle =
+                "cooldowns" end
 
-            if toggle and toggle ~= "none" and ( not self.toggle[ toggle ] or ( profile.toggles[ toggle ].separate and state.filter ~= toggle ) ) then return true, format( "toggle %s", toggle ) end
+            if toggle and toggle ~= "none" and (not self.toggle[toggle] or (profile.toggles[toggle].separate and state.filter ~= toggle)) then return
+                true, format("toggle %s", toggle) end
 
-            if ability.id < -100 or ability.id > 0 or toggleSpells[ spell ] then
-                if state.filter ~= "none" and state.filter ~= toggle and not ability[ state.filter ] then return true, "display"
-                elseif ability.item and not ability.bagItem and not state.equipped[ ability.item ] then return false end
+            if ability.id < -100 or ability.id > 0 or toggleSpells[spell] then
+                if state.filter ~= "none" and state.filter ~= toggle and not ability[state.filter] then
+                    return true, "display"
+                elseif ability.item and not ability.bagItem and not state.equipped[ability.item] then
+                    return false
+                end
             end
         end
 
         if ability.disabled then return true, "disabled per ability function" end
-        if self.holds[ spell ] then return true, "on hold" end
+        if self.holds[spell] then return true, "on hold" end
         if option.disabled then return true, "preference" end
         if option.boss and not state.boss then return true, "boss-only" end
         if option.targetMin > 0 and self.active_enemies < option.targetMin then
-            return true, "active_enemies[" .. self.active_enemies .. "] is less than ability's minimum targets [" .. option.targetMin .. "]"
+            return true,
+                "active_enemies[" ..
+                self.active_enemies .. "] is less than ability's minimum targets [" .. option.targetMin .. "]"
         elseif option.targetMax > 0 and self.active_enemies > option.targetMax then
-            return true, "active_enemies[" .. self.active_enemies .. "] is more than ability's maximum targets [" .. option.targetMax .. "]"
+            return true,
+                "active_enemies[" ..
+                self.active_enemies .. "] is more than ability's maximum targets [" .. option.targetMax .. "]"
         end
 
         -- New: DoT Cap
         local dotCap = option.dotCap
-        if dotCap and dotCap > 0 and class.auras[ spell ] then
-            local activeDot = state.active_dot[ spell ]
-            local aura = state.dot[ spell ]
+        if dotCap and dotCap > 0 and class.auras[spell] then
+            local activeDot = state.active_dot[spell]
+            local aura = state.dot[spell]
             if activeDot and activeDot >= dotCap then
                 if aura and not aura.refreshable then
-                    return true, "applications[" .. activeDot .. "] meet/exceed the ability's maximum targets [" .. dotCap .. "]"
+                    return true,
+                        "applications[" .. activeDot .. "] meet/exceed the ability's maximum targets [" .. dotCap .. "]"
                 end
             end
 
             if Hekili.ActiveDebug then
                 if activeDot < dotCap then
-                    Hekili:Debug( "    %s: current applications fewer than maximum applications [%d/%d].", spell, activeDot, dotCap )
+                    Hekili:Debug("    %s: current applications fewer than maximum applications [%d/%d].", spell,
+                        activeDot, dotCap)
                 elseif aura and aura.refreshable then
-                    Hekili:Debug( "    %s: target refreshable despite maximum applications [%d/%d]", spell, activeDot, dotCap )
+                    Hekili:Debug("    %s: target refreshable despite maximum applications [%d/%d]", spell, activeDot,
+                        dotCap)
                 end
             end
         end
@@ -7524,10 +7547,10 @@ do
     end
 
     -- TODO:  Finish this, need to support toggles that knock spells to their own display vs. toggles that disable an ability entirely.
-    function state:IsFiltered( spell )
+    function state:IsFiltered(spell)
         spell = spell or self.this_action
 
-        local ability = class.abilities[ spell ]
+        local ability = class.abilities[spell]
         if not ability then return false end
 
         if ability.id > -100 and ability.id < 0 then
@@ -7539,49 +7562,50 @@ do
         if state.filter == "none" then return false end
 
         local profile = Hekili.DB.profile
-        local spec = rawget( profile.specs, state.spec.id )
+        local spec = rawget(profile.specs, state.spec.id)
         if not spec then return true end
 
-        local option = ability.item and spec.items[ spell ] or spec.abilities[ spell ]
+        local option = ability.item and spec.items[spell] or spec.abilities[spell]
         local toggle = option.toggle
         if not toggle or toggle == "default" then toggle = ability.toggle end
 
-        if toggle == "potion" and profile.toggles[ toggle ].separate and not profile.toggles[ toggle ].value then toggle = "cooldowns" end
+        if toggle == "potion" and profile.toggles[toggle].separate and not profile.toggles[toggle].value then toggle =
+            "cooldowns" end
 
         -- if state.buff.empowering.up and state.buff.empowering.spell ~= spell then return true, "empowerment" end -- Disabled for MoP
-        if state.filter ~= "none" and state.filter ~= toggle and not ability[ state.filter ] then return true, "display" end
-        if ability.item and not ability.bagItem and not state.equipped[ ability.item ] then return false, "not equipped" end
-        if toggleSpells[ spell ] and toggle and toggle ~= "none" then
-            if not self.toggle[ toggle ] or ( profile.toggles[ toggle ].separate and state.filter ~= toggle and not spec.noFeignedCooldown ) then return true, format( "%s filtered", toggle ) end
+        if state.filter ~= "none" and state.filter ~= toggle and not ability[state.filter] then return true, "display" end
+        if ability.item and not ability.bagItem and not state.equipped[ability.item] then return false, "not equipped" end
+        if toggleSpells[spell] and toggle and toggle ~= "none" then
+            if not self.toggle[toggle] or (profile.toggles[toggle].separate and state.filter ~= toggle and not spec.noFeignedCooldown) then return
+                true, format("%s filtered", toggle) end
         end
 
         return false
     end
 
-
     -- Filter out non-resource driven issues with abilities.
     -- Unusable abilities are treated as on CD unless overridden.
-    function state:IsUsable( spell )
+    function state:IsUsable(spell)
         spell = spell or self.this_action
 
-        local ability = class.abilities[ spell ]
+        local ability = class.abilities[spell]
         if not ability then return true end
 
-        local hook, reason = ns.callHook( "IsUsable", spell )
+        local hook, reason = ns.callHook("IsUsable", spell)
         if hook == false then
             return false, reason
         end
 
         if ability.funcs.usable then
-            local usable, reason = ability.funcs.usable( self, ability )
+            local usable, reason = ability.funcs.usable(self, ability)
             if usable == false then -- Have allowed nil return values for usable to be treated as usable before.
                 return false, reason
             end
         else
             local usable = ability.usable
-            if type( usable ) == "number" then
+            if type(usable) == "number" then
                 -- Analyzer-safe: skip IsUsableSpell probe during emulation; assume usable.
-            elseif type( usable ) == "boolean" and not usable then
+            elseif type(usable) == "boolean" and not usable then
                 return false, "ability.usable was false"
             end
         end
@@ -7589,13 +7613,14 @@ do
         local profile = Hekili.DB.profile
         local z -- scratch variable
 
-        if self.rangefilter and UnitExists( "target" ) then
-            if LSR.IsSpellInRange( ability.rangeSpell or ability.id, "target" ) == 0 then
+        if self.rangefilter and UnitExists("target") then
+            if LSR.IsSpellInRange(ability.rangeSpell or ability.id, "target") == 0 then
                 return false, "filtered out of range"
-            end            if ability.range then
+            end
+            if ability.range then
                 local _, dist
                 if RC and RC.GetRange then
-                    _, dist = RC:GetRange( "target" )
+                    _, dist = RC:GetRange("target")
                 end
 
                 if dist and dist > ability.range then
@@ -7605,7 +7630,7 @@ do
         end
 
         if ability.item then
-            if not ability.bagItem and not self.equipped[ ability.item ] then
+            if not ability.bagItem and not self.equipped[ability.item] then
                 return false, "item not equipped"
             end
         end
@@ -7618,7 +7643,7 @@ do
             return false, "empowerment level " .. self.args.empower_to .. " not available"
         end
 
-        if self.args.only_cwc and ( not self.buff.casting.up or self.buff.casting.v3 ~= 1 or not ability.dual_cast ) then
+        if self.args.only_cwc and (not self.buff.casting.up or self.buff.casting.v3 ~= 1 or not ability.dual_cast) then
             return false, "only castable while channeling"
         end
 
@@ -7630,41 +7655,54 @@ do
             return false, "not usable in combat"
         end
 
-        if ability.form and not state.buff[ ability.form ].up then
+        if ability.form and not state.buff[ability.form].up then
             return false, "required form (" .. ability.form .. ") not active"
         end
 
-        if ability.noform and state.buff[ ability.noform ].up then
+        if ability.noform and state.buff[ability.noform].up then
             return false, "not usable in current form (" .. ability.noform .. ")"
         end
 
         z = ability.buff
-        if type( z ) == "table" then
-            for _, v in ipairs( z ) do
-                if not state.buff[ v ].up then
+        if type(z) == "table" then
+            for _, v in ipairs(z) do
+                if not state.buff[v].up then
                     return false, "required buff (" .. v .. ") not active"
                 end
             end
-        elseif z and not state.buff[ z ].up then
+        elseif z and not state.buff[z].up then
             return false, "required buff (" .. z .. ") not active"
         end
 
         z = ability.debuff
-        if type( z ) == "table" then
-            for _, v in ipairs( z ) do
-                if not state.debuff[ v ].up then
+        if type(z) == "table" then
+            for _, v in ipairs(z) do
+                if not state.debuff[v].up then
                     return false, "required debuff (" .. v .. ") not active"
                 end
             end
-        elseif z and not state.debuff[ z ].up then
+        elseif z and not state.debuff[z].up then
             return false, "required debuff (" .. z .. ") not active"
         end
 
         if ability.channeling then
-            local c = class.abilities[ ability.channeling ] and class.abilities[ ability.channeling ].id
+            local c = class.abilities[ability.channeling] and class.abilities[ability.channeling].id
 
             if not c or state.buff.casting.remains < 0.1 or state.buff.casting.v3 ~= 1 or state.buff.casting.v1 ~= c then
-                return false, "required channel (" .. c .. " / " .. ability.channeling .. ") not active or too short [ " .. state.buff.casting.remains .. " / " .. state.buff.casting.applied .. " / " .. state.buff.casting.expires .. " / " .. state.query_time .. " / " .. tostring( state.buff.casting.v3 ) .. " / " .. state.buff.casting.v1 .. " ]"
+                return false,
+                    "required channel (" ..
+                    c ..
+                    " / " ..
+                    ability.channeling ..
+                    ") not active or too short [ " ..
+                    state.buff.casting.remains ..
+                    " / " ..
+                    state.buff.casting.applied ..
+                    " / " ..
+                    state.buff.casting.expires ..
+                    " / " ..
+                    state.query_time ..
+                    " / " .. tostring(state.buff.casting.v3) .. " / " .. state.buff.casting.v1 .. " ]"
             end
         end
 
@@ -7683,11 +7721,10 @@ do
 
         return true
     end
-
 end
 
-ns.hasRequiredResources = function( ability )
-    local action = class.abilities[ ability ]
+ns.hasRequiredResources = function(ability)
+    local action = class.abilities[ability]
 
     if not action then return end
 
@@ -7695,10 +7732,10 @@ ns.hasRequiredResources = function( ability )
     if action.spend and action.spend ~= 0 then
         local spend, resource
 
-        if type( action.spend ) == "number" then
+        if type(action.spend) == "number" then
             spend = action.spend
             resource = action.spendType or class.primaryResource
-        elseif type( action.spend ) == "function" then
+        elseif type(action.spend) == "function" then
             spend, resource = action.spend()
         end
 
@@ -7709,21 +7746,20 @@ ns.hasRequiredResources = function( ability )
         end
 
         if spend > 0 and spend < 1 then
-            local mm = state[ resource ] and state[ resource ].modmax or 1
-            spend = ( spend * mm )
+            local mm = state[resource] and state[resource].modmax or 1
+            spend = (spend * mm)
         end
 
         if spend > 0 then
-            return ( state[ resource ].current >= spend )
+            return (state[resource].current >= spend)
         end
     end
 
     return true
 end
-function state:HasRequiredResources( action )
-    return ns.hasRequiredResources( action )
+function state:HasRequiredResources(action)
+    return ns.hasRequiredResources(action)
 end
-
 
 local power_tick_rate = 0.115
 
@@ -7757,10 +7793,10 @@ local function profilestop( name, reset )
 end ]]
 
 
-function state:TimeToReady( action, pool )
+function state:TimeToReady(action, pool)
     local now = self.now + self.offset
     action = action or self.this_action
-    local ability = class.abilities[ action ]
+    local ability = class.abilities[action]
     if not ability then return 3600, "not modeled" end
 
     if ability.id > -100 and ability.id < 0 then
@@ -7771,7 +7807,7 @@ function state:TimeToReady( action, pool )
     state.delay = 0
 
     -- Need to ignore the wait for this part.
-    local wait = self.cooldown[ action ].remains
+    local wait = self.cooldown[action].remains
 
     -- Early exit for timeToReadyOverride. This is to fix the fact that some spells show as unavailable in game even though
     -- the addon knows that it will become available on the next GCD due to a guaranteed buff/proc
@@ -7795,8 +7831,8 @@ function state:TimeToReady( action, pool )
     -- 1. The "use_off_gcd" flag is set in the priority.
     -- 2. The ability is flagged as an interrupt or defensive.
     local requires = ability.toggle
-    if requires ~= "interrupts" and requires ~= "defensives" and not self.safebool( self.args.use_off_gcd ) then
-        wait = max( wait, self.cooldown.global_cooldown.remains )
+    if requires ~= "interrupts" and requires ~= "defensives" and not self.safebool(self.args.use_off_gcd) then
+        wait = max(wait, self.cooldown.global_cooldown.remains)
     end
 
     if not state.channel_breakable and not ability.dual_cast then
@@ -7817,9 +7853,9 @@ function state:TimeToReady( action, pool )
     local spend = ability.spend
     local resource
     if spend then
-        if type( spend ) == "number" then
+        if type(spend) == "number" then
             resource = ability.spendType or class.primaryResource
-        elseif type( spend ) == "function" then
+        elseif type(spend) == "function" then
             spend, resource = spend()
             resource = resource or ability.spendType or class.primaryResource
         end
@@ -7828,8 +7864,8 @@ function state:TimeToReady( action, pool )
     end
 
     if spend and resource and spend > 0 and spend < 1 then
-    local m = self[ resource ] and self[ resource ].modmax or 1
-    spend = spend * m
+        local m = self[resource] and self[resource].modmax or 1
+        spend = spend * m
     end
 
     if not pool then
@@ -7845,37 +7881,37 @@ function state:TimeToReady( action, pool )
     end
 
     -- Okay, so we don't have enough of the resource.
-    z = resource and self[ resource ]
-    z = z and z[ "time_to_" .. spend ]
+    z = resource and self[resource]
+    z = z and z["time_to_" .. spend]
     if spend and z and z > wait then
-        wait = max( wait, ceil( z * 100 ) / 100 )
+        wait = max(wait, ceil(z * 100) / 100)
     end
 
     z = ability.nobuff
-    if type( z ) == "table" then
-        for _, v in ipairs( z ) do
-            z = self.buff[ v ].remains
+    if type(z) == "table" then
+        for _, v in ipairs(z) do
+            z = self.buff[v].remains
             if z and z > wait then
                 wait = z
             end
         end
     else
-        z = z and self.buff[ z ].remains
+        z = z and self.buff[z].remains
         if z and z > wait then
             wait = z
         end
     end
 
     z = ability.nodebuff
-    if type( z ) == "table" then
-        for _, v in ipairs( z ) do
-            z = self.debuff[ v ].remains
+    if type(z) == "table" then
+        for _, v in ipairs(z) do
+            z = self.debuff[v].remains
             if z and z > wait then
                 wait = z
             end
         end
     else
-        z = z and self.debuff[ z ].remains
+        z = z and self.debuff[z].remains
         if z and z > wait then
             wait = z
         end
@@ -7907,123 +7943,125 @@ function state:TimeToReady( action, pool )
     z = ability.icd
     z = z and z + lastCast - now
     if z and z > wait then
-        if Hekili.ActiveDebug then Hekili:Debug( "ICD is " .. z .. ", last cast was " .. lastCast .. ", remaining CD: " .. max( 0, lastCast + z - now ) ) end
+        if Hekili.ActiveDebug then Hekili:Debug("ICD is " ..
+            z .. ", last cast was " .. lastCast .. ", remaining CD: " .. max(0, lastCast + z - now)) end
         wait = z
     end
 
     local line_cd = self.args.line_cd
-    if self.time > 0 and lastCast > max( self.combat, self.false_start ) and line_cd and type( line_cd ) == "number" then
-        if Hekili.ActiveDebug then Hekili:Debug( "Line CD is " .. line_cd .. ", last cast was " .. lastCast .. ", remaining CD: " .. max( 0, lastCast + line_cd - now ) ) end
-        wait = max( wait, lastCast + line_cd - now )
+    if self.time > 0 and lastCast > max(self.combat, self.false_start) and line_cd and type(line_cd) == "number" then
+        if Hekili.ActiveDebug then Hekili:Debug("Line CD is " ..
+            line_cd .. ", last cast was " .. lastCast .. ", remaining CD: " .. max(0, lastCast + line_cd - now)) end
+        wait = max(wait, lastCast + line_cd - now)
     end
 
     local sync = state.args.sync
-    local synced = sync and class.abilities[ sync ]
+    local synced = sync and class.abilities[sync]
 
-    if synced and sync ~= action and state:IsKnown( sync ) then
-        wait = max( wait, state:TimeToReady( sync ) )
+    if synced and sync ~= action and state:IsKnown(sync) then
+        wait = max(wait, state:TimeToReady(sync))
     end
 
-    wait = ns.callHook( "TimeToReady", wait, action )
+    wait = ns.callHook("TimeToReady", wait, action)
 
     state.delay = delay
-    return max( wait, self.delayMin )
+    return max(wait, self.delayMin)
 end
 
-
-function state:IsReady( action )
+function state:IsReady(action)
     action = action or self.this_action
-    local ability = action and class.abilities[ action ]
+    local ability = action and class.abilities[action]
 
     if not ability then
-        Hekili:Error( "Failed state:IsReady( " .. ( action or "BLANK" ) .. " )." )
+        Hekili:Error("Failed state:IsReady( " .. (action or "BLANK") .. " ).")
         return false
     end
 
     if ability.spend then
         local spend, resource
 
-        if type( ability.spend ) == "number" then
+        if type(ability.spend) == "number" then
             spend = ability.spend
             resource = ability.spendType or class.primaryResource
-        elseif type( ability.spend ) == "function" then
+        elseif type(ability.spend) == "function" then
             spend, resource = ability.spend()
         end
 
         if resource == "focus" or resource == "energy" or state.script.entry then
-            local ttr = self:TimeToReady( action )
+            local ttr = self:TimeToReady(action)
 
-            if ttr < self.delayMin or ttr > self.delayMax then return false, format( "not ready within  time contraint ( %.2f - %.2f )", self.delayMin, self.delayMax )
-            elseif ttr >= self.selection_time then return false, format( "not ready [%.2f] before selected action %s [%.2f]", ttr, self.selected_action or "no_action", self.selection_time ) end
+            if ttr < self.delayMin or ttr > self.delayMax then
+                return false, format("not ready within  time contraint ( %.2f - %.2f )", self.delayMin, self.delayMax)
+            elseif ttr >= self.selection_time then
+                return false,
+                    format("not ready [%.2f] before selected action %s [%.2f]", ttr, self.selected_action or "no_action",
+                        self.selection_time)
+            end
 
             return true
         end
-
     end
 
-    return self:HasRequiredResources( action ) and self.cooldown[ action ].remains <= self.delay
+    return self:HasRequiredResources(action) and self.cooldown[action].remains <= self.delay
 end
 
-
-function state:IsReadyNow( action )
+function state:IsReadyNow(action)
     action = action or self.this_action
-    local a = class.abilities[ action ]
+    local a = class.abilities[action]
 
     if not a then return false end
 
     action = a.key
     local profile = Hekili.DB.profile
-    local spec = rawget( profile.specs, state.spec.id )
+    local spec = rawget(profile.specs, state.spec.id)
     if not spec then return false end
 
-    local option = spec.abilities[ action ]
+    local option = spec.abilities[action]
     local clash = option.clash or 0
 
-    if self.cooldown[ action ].remains - clash > 0 then return false end
-    local wait = ns.callHook( "TimeToReady", 0, action )
+    if self.cooldown[action].remains - clash > 0 then return false end
+    local wait = ns.callHook("TimeToReady", 0, action)
     if wait and wait > 0 then return false end
 
-    if a.ready and type( a.ready ) == "function" and a.ready() > 0 then return false end
+    if a.ready and type(a.ready) == "function" and a.ready() > 0 then return false end
 
     if a.spend and a.spend ~= 0 then
         local spend, resource
 
-        if type( a.spend ) == "number" then
+        if type(a.spend) == "number" then
             spend = a.spend
             resource = a.spendType or class.primaryResource
-
-        elseif type( a.spend ) == "function" then
+        elseif type(a.spend) == "function" then
             spend, resource = a.spend()
-
         end
 
-        if a.ready and type( a.ready ) == "number" then
+        if a.ready and type(a.ready) == "number" then
             spend = a.ready
         end
 
         if spend > 0 and spend < 1 then
-            local mm4 = state[ resource ] and state[ resource ].modmax or 1
-            spend = ( spend * mm4 )
+            local mm4 = state[resource] and state[resource].modmax or 1
+            spend = (spend * mm4)
         end
 
         if spend > 0 then
-            return state[ resource ].current >= spend
+            return state[resource].current >= spend
         end
     end
 
     return true
 end
 
-function state:ClashOffset( action )
-    local a = class.abilities[ action ]
+function state:ClashOffset(action)
+    local a = class.abilities[action]
     if not a then return 0 end
     action = a.key
 
-    local spec = rawget( Hekili.DB.profile.specs, state.spec.id )
+    local spec = rawget(Hekili.DB.profile.specs, state.spec.id)
     if not spec then return 0 end
 
-    local option = spec.abilities[ action ]
+    local option = spec.abilities[action]
 
 
-    return ns.callHook( "clash", option.clash, action )
+    return ns.callHook("clash", option.clash, action)
 end
