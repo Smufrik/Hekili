@@ -1,76 +1,28 @@
 -- DeathKnightBlood.lua
 -- Updated August 19, 2025
 
--- TODO:
--- Implement Engineer quickflip_deflection_plates
--- Implement Tier Sets Properly
--- Implement Glyphs on abilities
--- Test Necrotic Strike rune spending
--- Track Scent of Blood Runic Power generation
--- Soul Reaper Haste Effect
--- Check if switching talents breaks Hekili logic on APL (may need a reload after changing talents)
-
 -- MoP: Use UnitClass instead of UnitClassBase
--- TODO: Formatting all files similarly
 local _, playerClass = UnitClass('player')
 if playerClass ~= 'DEATHKNIGHT' then return end
 
 local addon, ns = ...
-local Hekili = _G["Hekili"]
-
-if not Hekili or not Hekili.NewSpecialization then
-    return
-end
-
-local class = Hekili.Class
-local state = Hekili.State
-
--- Ensure death_knight namespace exists early to avoid unknown key errors in emulation.
-if not state.death_knight then state.death_knight = { runeforge = {} } end
-if not state.death_knight.runeforge then state.death_knight.runeforge = {} end
+local Hekili = _G[addon]
+local class, state = Hekili.Class, Hekili.State
 
 -- Safe local references to WoW API (helps static analyzers and emulation)
 local GetRuneCooldown = rawget(_G, "GetRuneCooldown") or function() return 0, 10, true end
 local GetRuneType = rawget(_G, "GetRuneType") or function() return 1 end
 
-local function getReferences()
-    -- Legacy function for compatibility
-    return class, state
-end
-
-local spec = Hekili:NewSpecialization(250) -- Blood spec ID for MoP
-
-local strformat = string.format
 local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+local strformat = string.format
 
--- Enhanced Helper Functions (following Hunter Survival pattern)
-local function UA_GetPlayerAuraBySpellID(spellID, filter)
-    -- MoP compatibility: use fallback methods since C_UnitAuras doesn't exist
-    if filter == "HELPFUL" or not filter then
-        return FindUnitBuffByID("player", spellID)
-    else
-        return FindUnitDebuffByID("player", spellID)
-    end
-end
+local spec = Hekili:NewSpecialization(250, true) -- Blood spec ID for MoP
 
-local function GetTargetDebuffByID(spellID, caster)
-    local name, icon, count, debuffType, duration, expirationTime, unitCaster = FindUnitDebuffByID("target", spellID,
-        caster or "PLAYER")
-    if name then
-        return {
-            name = name,
-            icon = icon,
-            count = count or 1,
-            duration = duration,
-            expires = expirationTime,
-            applied = expirationTime - duration,
-            caster = unitCaster
-        }
-    end
-    return nil
-end
+spec.name = "Blood"
+spec.role = "TANK"
+spec.primaryStat = 1 -- Strength
 
--- Local shim for resource changes to normalize names and avoid global gain/spend calls.
+-- Local shim for resource changes to avoid global gain/spend errors and normalize names.
 local function _normalizeResource(res)
     if res == "runicpower" or res == "rp" then return "runic_power" end
     return res
@@ -102,150 +54,15 @@ local function spend(amount, resource, noforecast)
     if state.spend then return state.spend(amount, r, noforecast) end
 end
 
--- Minimal compatibility stubs to avoid undefineds in placeholder logic.
-local function heal(amount)
-    if state and state.gain then
-        state.gain(amount, "health", true, true)
-    elseif state and state.health then
-        local cur, maxv = state.health.current or 0, state.health.max or 1
-        state.health.current = math.min(maxv, cur + (tonumber(amount) or 0))
-    end
-end
+-- Local aliases for core state helpers and tables (improves static checks and readability).
+local applyBuff, removeBuff, applyDebuff, removeDebuff = state.applyBuff, state.removeBuff, state.applyDebuff,
+    state.removeDebuff
+local removeDebuffStack = state.removeDebuffStack
+local summonPet, dismissPet, setDistance, interrupt = state.summonPet, state.dismissPet, state.setDistance,
+    state.interrupt
+local buff, debuff, cooldown, active_dot, pet, totem, action = state.buff, state.debuff, state.cooldown, state
+    .active_dot, state.pet, state.totem, state.action
 
-local mastery = { blood_shield = { enabled = false } }
-local mastery_value = (state and (state.mastery_value or (state.stat and state.stat.mastery_value))) or 0
-
--- Combat Log Event Tracking System (following Hunter Survival structure)
-local bloodCombatLogFrame = CreateFrame("Frame")
-local bloodCombatLogEvents = {}
-
-local function RegisterBloodCombatLogEvent(event, handler)
-    if not bloodCombatLogEvents[event] then
-        bloodCombatLogEvents[event] = {}
-    end
-    table.insert(bloodCombatLogEvents[event], handler)
-end
-
-bloodCombatLogFrame:SetScript("OnEvent", function(self, event, ...)
-    if event == "COMBAT_LOG_EVENT_UNFILTERED" then
-        local timestamp, subevent, hideCaster, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags =
-            CombatLogGetCurrentEventInfo()
-
-        if sourceGUID == UnitGUID("player") then
-            local handlers = bloodCombatLogEvents[subevent]
-            if handlers then
-                for _, handler in ipairs(handlers) do
-                    handler(timestamp, subevent, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName,
-                        destFlags, destRaidFlags, select(12, CombatLogGetCurrentEventInfo()))
-                end
-            end
-        end
-    end
-end)
-
-bloodCombatLogFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-
--- MoP runeforge detection (classic-safe), matching Unholy implementation
-local blood_runeforges = {
-    [3370] = "razorice",
-    [3368] = "fallen_crusader",
-    [3847] = "stoneskin_gargoyle",
-}
-
-local function Blood_ResetRuneforges()
-    if not state.death_knight then state.death_knight = {} end
-    if not state.death_knight.runeforge then state.death_knight.runeforge = {} end
-    table.wipe(state.death_knight.runeforge)
-end
-
-local function Blood_UpdateRuneforge(slot)
-    if slot ~= 16 and slot ~= 17 then return end
-    if not state.death_knight then state.death_knight = {} end
-    if not state.death_knight.runeforge then state.death_knight.runeforge = {} end
-
-    local link = GetInventoryItemLink("player", slot)
-    local enchant = link and link:match("item:%d+:(%d+)")
-    if enchant then
-        local name = blood_runeforges[tonumber(enchant)]
-        if name then
-            state.death_knight.runeforge[name] = true
-            if name == "razorice" then
-                if slot == 16 then state.death_knight.runeforge.razorice_mh = true end
-                if slot == 17 then state.death_knight.runeforge.razorice_oh = true end
-            end
-        end
-    end
-end
-
-do
-    local f = CreateFrame("Frame")
-    f:RegisterEvent("PLAYER_ENTERING_WORLD")
-    f:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
-    f:SetScript("OnEvent", function(_, evt, ...)
-        if evt == "PLAYER_ENTERING_WORLD" then
-            Blood_ResetRuneforges()
-            Blood_UpdateRuneforge(16)
-            Blood_UpdateRuneforge(17)
-        elseif evt == "PLAYER_EQUIPMENT_CHANGED" then
-            local slot = ...
-            if slot == 16 or slot == 17 then
-                Blood_ResetRuneforges()
-                Blood_UpdateRuneforge(16)
-                Blood_UpdateRuneforge(17)
-            end
-        end
-    end)
-end
-
-Hekili:RegisterGearHook(Blood_ResetRuneforges, Blood_UpdateRuneforge)
-
--- Blood Shield tracking
-RegisterBloodCombatLogEvent("SPELL_AURA_APPLIED",
-    function(timestamp, subevent, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags,
-             destRaidFlags, spellID, spellName, spellSchool)
-        if spellID == 77535 then     -- Blood Shield
-            -- Track Blood Shield absorption for optimization
-        elseif spellID == 49222 then -- Bone Armor
-            -- Track Bone Armor stacks
-        elseif spellID == 55233 then -- Vampiric Blood
-            -- Track Vampiric Blood for survival cooldown
-        end
-    end)
-
--- Crimson Scourge proc tracking
-RegisterBloodCombatLogEvent("SPELL_AURA_APPLIED",
-    function(timestamp, subevent, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags,
-             destRaidFlags, spellID, spellName, spellSchool)
-        if spellID == 81141 then     -- Crimson Scourge
-            -- Track Crimson Scourge proc for free Death and Decay
-        elseif spellID == 59052 then -- Freezing Fog
-            -- Track Freezing Fog proc for Howling Blast
-        end
-    end)
-
--- Disease application tracking
-RegisterBloodCombatLogEvent("SPELL_AURA_APPLIED",
-    function(timestamp, subevent, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags,
-             destRaidFlags, spellID, spellName, spellSchool)
-        if spellID == 55078 then     -- Blood Plague
-            -- Track Blood Plague for disease management
-        elseif spellID == 55095 then -- Frost Fever
-            -- Track Frost Fever for disease management
-        end
-    end)
-
--- Death Strike healing tracking
-RegisterBloodCombatLogEvent("SPELL_HEAL",
-    function(timestamp, subevent, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags,
-             destRaidFlags, spellID, spellName, spellSchool, amount)
-        if spellID == 45470 then -- Death Strike
-            -- Track Death Strike healing for survival optimization
-        end
-    end)
-
--- Register resources
--- MoP: Use legacy power type constants
-spec:RegisterResource(6) -- RunicPower = 6 in MoP
 -- Runes (unified model on the resource itself to avoid collision with a state table)
 do
     local function buildTypeCounter(indices, typeId)
@@ -292,6 +109,7 @@ do
         end,
     }, {
         __index = function(t, k)
+            -- runes.time_to_1 .. runes.time_to_6
             local idx = tostring(k):match("time_to_(%d)")
             if idx then
                 local i = tonumber(idx)
@@ -299,8 +117,8 @@ do
                 return math.max(0, e - state.query_time)
             end
             if k == "blood" then return buildTypeCounter({ 1, 2 }, 1) end
-            if k == "frost" then return buildTypeCounter({ 3, 4 }, 2) end
-            if k == "unholy" then return buildTypeCounter({ 5, 6 }, 3) end
+            if k == "frost" then return buildTypeCounter({ 5, 6 }, 2) end
+            if k == "unholy" then return buildTypeCounter({ 3, 4 }, 3) end
             if k == "death" then return buildTypeCounter({}, 4) end
             if k == "count" or k == "current" then
                 local c = 0
@@ -313,10 +131,14 @@ do
         end
     })) -- Runes = 5 in MoP with unified state
 
+    -- Keep expiry fresh when we reset the simulation step
     spec:RegisterHook("reset_precast", function()
         if state.runes and state.runes.reset then state.runes.reset() end
     end)
 end
+
+-- Register resources
+spec:RegisterResource(6) -- RunicPower = 6 in MoP
 
 -- Register individual rune types for MoP 5.5.0
 spec:RegisterResource(20, { -- Blood Runes = 20 in MoP
@@ -545,6 +367,152 @@ spec:RegisterResource(22, { -- Unholy Runes = 22 in MoP
     end
 }))
 
+-- Ensure death_knight namespace exists early to avoid unknown key errors in emulation.
+if not state.death_knight then state.death_knight = { runeforge = {} } end
+if not state.death_knight.runeforge then state.death_knight.runeforge = {} end
+
+-- Minimal compatibility stubs to avoid undefineds in placeholder logic.
+local function heal(amount)
+    if state and state.gain then
+        state.gain(amount, "health", true, true)
+    elseif state and state.health then
+        local cur, maxv = state.health.current or 0, state.health.max or 1
+        state.health.current = math.min(maxv, cur + (tonumber(amount) or 0))
+    end
+end
+
+local mastery = { blood_shield = { enabled = false } }
+local mastery_value = (state and (state.mastery_value or (state.stat and state.stat.mastery_value))) or 0
+
+-- Combat Log Event Tracking System (following Hunter Survival structure)
+local bloodCombatLogFrame = CreateFrame("Frame")
+local bloodCombatLogEvents = {}
+
+local function RegisterBloodCombatLogEvent(event, handler)
+    if not bloodCombatLogEvents[event] then
+        bloodCombatLogEvents[event] = {}
+    end
+    table.insert(bloodCombatLogEvents[event], handler)
+end
+
+bloodCombatLogFrame:SetScript("OnEvent", function(self, event, ...)
+    if event == "COMBAT_LOG_EVENT_UNFILTERED" then
+        local timestamp, subevent, hideCaster, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags =
+            CombatLogGetCurrentEventInfo()
+
+        if sourceGUID == UnitGUID("player") then
+            local handlers = bloodCombatLogEvents[subevent]
+            if handlers then
+                for _, handler in ipairs(handlers) do
+                    handler(timestamp, subevent, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName,
+                        destFlags, destRaidFlags, select(12, CombatLogGetCurrentEventInfo()))
+                end
+            end
+        end
+    end
+end)
+
+bloodCombatLogFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+
+-- MoP runeforge detection (classic-safe), matching Unholy implementation
+local blood_runeforges = {
+    [3370] = "razorice",
+    [3368] = "fallen_crusader",
+    [3847] = "stoneskin_gargoyle",
+}
+
+local function Blood_ResetRuneforges()
+    if not state.death_knight then state.death_knight = {} end
+    if not state.death_knight.runeforge then state.death_knight.runeforge = {} end
+    table.wipe(state.death_knight.runeforge)
+end
+
+local function Blood_UpdateRuneforge(slot)
+    if slot ~= 16 and slot ~= 17 then return end
+    if not state.death_knight then state.death_knight = {} end
+    if not state.death_knight.runeforge then state.death_knight.runeforge = {} end
+
+    local link = GetInventoryItemLink("player", slot)
+    local enchant = link and link:match("item:%d+:(%d+)")
+    if enchant then
+        local name = blood_runeforges[tonumber(enchant)]
+        if name then
+            state.death_knight.runeforge[name] = true
+            if name == "razorice" then
+                if slot == 16 then state.death_knight.runeforge.razorice_mh = true end
+                if slot == 17 then state.death_knight.runeforge.razorice_oh = true end
+            end
+        end
+    end
+end
+
+-- Keep runeforge state fresh using classic-safe events.
+do
+    local f = CreateFrame("Frame")
+    f:RegisterEvent("PLAYER_ENTERING_WORLD")
+    f:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
+    f:SetScript("OnEvent", function(_, evt, ...)
+        if evt == "PLAYER_ENTERING_WORLD" then
+            Blood_ResetRuneforges()
+            Blood_UpdateRuneforge(16)
+            Blood_UpdateRuneforge(17)
+        elseif evt == "PLAYER_EQUIPMENT_CHANGED" then
+            local slot = ...
+            if slot == 16 or slot == 17 then
+                Blood_ResetRuneforges()
+                Blood_UpdateRuneforge(16)
+                Blood_UpdateRuneforge(17)
+            end
+        end
+    end)
+end
+
+Hekili:RegisterGearHook(Blood_ResetRuneforges, Blood_UpdateRuneforge)
+
+-- Blood Shield tracking
+RegisterBloodCombatLogEvent("SPELL_AURA_APPLIED",
+    function(timestamp, subevent, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags,
+             destRaidFlags, spellID, spellName, spellSchool)
+        if spellID == 77535 then     -- Blood Shield
+            -- Track Blood Shield absorption for optimization
+        elseif spellID == 49222 then -- Bone Armor
+            -- Track Bone Armor stacks
+        elseif spellID == 55233 then -- Vampiric Blood
+            -- Track Vampiric Blood for survival cooldown
+        end
+    end)
+
+-- Crimson Scourge proc tracking
+RegisterBloodCombatLogEvent("SPELL_AURA_APPLIED",
+    function(timestamp, subevent, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags,
+             destRaidFlags, spellID, spellName, spellSchool)
+        if spellID == 81141 then     -- Crimson Scourge
+            -- Track Crimson Scourge proc for free Death and Decay
+        elseif spellID == 59052 then -- Freezing Fog
+            -- Track Freezing Fog proc for Howling Blast
+        end
+    end)
+
+-- Disease application tracking
+RegisterBloodCombatLogEvent("SPELL_AURA_APPLIED",
+    function(timestamp, subevent, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags,
+             destRaidFlags, spellID, spellName, spellSchool)
+        if spellID == 55078 then     -- Blood Plague
+            -- Track Blood Plague for disease management
+        elseif spellID == 55095 then -- Frost Fever
+            -- Track Frost Fever for disease management
+        end
+    end)
+
+-- Death Strike healing tracking
+RegisterBloodCombatLogEvent("SPELL_HEAL",
+    function(timestamp, subevent, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags,
+             destRaidFlags, spellID, spellName, spellSchool, amount)
+        if spellID == 45470 then -- Death Strike
+            -- Track Death Strike healing for survival optimization
+        end
+    end)
+
 -- Unified DK Runes interface across specs
 -- Removed duplicate RegisterStateTable("runes"); unified model lives on the resource.
 
@@ -750,71 +718,91 @@ spec:RegisterStateTable("death_runes", setmetatable({
     end
 }))
 
+-- Legacy rune type expressions for SimC compatibility
+spec:RegisterStateExpr("blood", function()
+    if GetRuneCooldown then
+        local count = 0
+        for i = 1, 2 do
+            local start, duration, ready = GetRuneCooldown(i)
+            if ready then count = count + 1 end
+        end
+        return count
+    else
+        return 2 -- Fallback for emulation
+    end
+end)
+spec:RegisterStateExpr("frost", function()
+    if GetRuneCooldown then
+        local count = 0
+        for i = 5, 6 do
+            local start, duration, ready = GetRuneCooldown(i)
+            if ready then count = count + 1 end
+        end
+        return count
+    else
+        return 2 -- Fallback for emulation
+    end
+end)
+spec:RegisterStateExpr("unholy", function()
+    if GetRuneCooldown then
+        local count = 0
+        for i = 3, 4 do
+            local start, duration, ready = GetRuneCooldown(i)
+            if ready then count = count + 1 end
+        end
+        return count
+    else
+        return 2 -- Fallback for emulation
+    end
+end)
+spec:RegisterStateExpr("death", function()
+    if GetRuneCooldown and GetRuneType then
+        local count = 0
+        for i = 1, 6 do
+            local start, duration, ready = GetRuneCooldown(i)
+            local type = GetRuneType(i)
+            if ready and type == 4 then count = count + 1 end
+        end
+        return count
+    else
+        return 0 -- Fallback for emulation
+    end
+end)
+
+-- Provide rune_regeneration (mirrors Unholy) representing rune deficit relative to maximum.
+spec:RegisterStateExpr("rune_regeneration", function()
+    local total = 0
+    if state.blood_runes and state.blood_runes.current then total = total + state.blood_runes.current end
+    if state.frost_runes and state.frost_runes.current then total = total + state.frost_runes.current end
+    if state.unholy_runes and state.unholy_runes.current then total = total + state.unholy_runes.current end
+    if state.death_runes and state.death_runes.count then total = total + state.death_runes.count end
+    return 6 - total
+end)
+
+-- MoP Death Rune conversion tracking
+spec:RegisterStateExpr("death_rune_conversion_available", function()
+    local br = state.blood_runes and state.blood_runes.current or 0
+    local fr = state.frost_runes and state.frost_runes.current or 0
+    local ur = state.unholy_runes and state.unholy_runes.current or 0
+    return br > 0 or fr > 0 or ur > 0
+end)
+
+-- Unify with Unholy: provide 'rune' expression for total ready runes.
+spec:RegisterStateExpr("rune", function()
+    local total = 0
+    for i = 1, 6 do
+        local _, _, ready = GetRuneCooldown(i)
+        if ready then total = total + 1 end
+    end
+    return total
+end)
+
 -- Ensure the death_runes state is initialized during engine reset so downstream expressions are safe.
 spec:RegisterHook("reset_precast", function()
     if state.death_runes and state.death_runes.reset then
         state.death_runes.reset()
     end
 end)
-
--- Tier sets
-spec:RegisterGear("tier14", 86919, 86920, 86921, 86922, 86923)                             -- T14 Battleplate of the Lost Cataphract
-spec:RegisterGear("tier15", 95225, 95226, 95227, 95228, 95229)                             -- T15 Battleplate of the All-Consuming Maw
-spec:RegisterGear(13, 6, {                                                                 -- Tier 14 (Heart of Fear)
-    { 86886, head = 86886, shoulder = 86889, chest = 86887, hands = 86888, legs = 86890 }, -- LFR
-    { 86919, head = 86919, shoulder = 86922, chest = 86920, hands = 86921, legs = 86923 }, -- Normal
-    { 87139, head = 87139, shoulder = 87142, chest = 87140, hands = 87141, legs = 87143 }, -- Heroic
-})
-
-spec:RegisterAura("tier14_2pc_blood", {
-    id = 105677,
-    duration = 15,
-    max_stack = 1,
-})
-
-spec:RegisterAura("tier14_4pc_blood", {
-    id = 105679,
-    duration = 30,
-    max_stack = 1,
-})
-
-spec:RegisterGear(14, 6, {                                                                 -- Tier 15 (Throne of Thunder)
-    { 95225, head = 95225, shoulder = 95228, chest = 95226, hands = 95227, legs = 95229 }, -- LFR
-    { 95705, head = 95705, shoulder = 95708, chest = 95706, hands = 95707, legs = 95709 }, -- Normal
-    { 96101, head = 96101, shoulder = 96104, chest = 96102, hands = 96103, legs = 96105 }, -- Heroic
-})
-
-spec:RegisterAura("tier15_2pc_blood", {
-    id = 138252,
-    duration = 20,
-    max_stack = 1,
-})
-
-spec:RegisterAura("tier15_4pc_blood", {
-    id = 138253,
-    duration = 10,
-    max_stack = 1,
-})
-
-spec:RegisterGear(15, 6,
-    {                                                                                          -- Tier 16 (Siege of Orgrimmar)
-        { 99625, head = 99625, shoulder = 99628, chest = 99626, hands = 99627, legs = 99629 }, -- LFR
-        { 98310, head = 98310, shoulder = 98313, chest = 98311, hands = 98312, legs = 98314 }, -- Normal
-        { 99170, head = 99170, shoulder = 99173, chest = 99171, hands = 99172, legs = 99174 }, -- Heroic
-        { 99860, head = 99860, shoulder = 99863, chest = 99861, hands = 99862, legs = 99864 }, -- Mythic
-    })
-
-spec:RegisterAura("tier16_2pc_blood", {
-    id = 144958,
-    duration = 8,
-    max_stack = 1,
-})
-
-spec:RegisterAura("tier16_4pc_blood", {
-    id = 144966,
-    duration = 15,
-    max_stack = 1,
-})
 
 spec:RegisterGear("resolve_of_undying", 104769, {
     trinket1 = 104769,
@@ -835,27 +823,26 @@ spec:RegisterGear("armageddon", 105531, {
     main_hand = 105531,
 })
 
--- Talents (MoP talent system and Blood spec-specific talents)
+-- Talents
 spec:RegisterTalents({
-    -- Common MoP talent system (Tier 1-6)
     -- Tier 1 (Level 56)
-    roiling_blood      = { 1, 1, 108170 }, -- Your Pestilence refreshes disease durations and spreads diseases from each diseased target to all other targets.
+    roiling_blood      = { 1, 1, 108170 }, -- Your Blood Boil ability now also triggers Pestilence if it strikes a diseased target.
     plague_leech       = { 1, 2, 123693 }, -- Extract diseases from an enemy target, consuming up to 2 diseases on the target to gain 1 Rune of each type that was removed.
     unholy_blight      = { 1, 3, 115989 }, -- Causes you to spread your diseases to all enemy targets within 10 yards.
 
     -- Tier 2 (Level 57)
-    lichborne          = { 2, 1, 49039 },  -- Draw upon unholy energy to become undead for 10 sec, immune to charm, fear, and sleep effects.
-    anti_magic_zone    = { 2, 2, 51052 },  -- Places an Anti-Magic Zone that reduces spell damage taken by party members by 40%.
-    purgatory          = { 2, 3, 114556 }, -- An unholy pact that prevents fatal damage, instead absorbing incoming healing.
+    lichborne          = { 2, 1, 49039 },  -- Draw upon unholy energy to become undead for 10 sec. While undead, you are immune to Charm, Fear, and Sleep effects.
+    anti_magic_zone    = { 2, 2, 51052 },  -- Places a large, stationary Anti-Magic Zone that reduces spell damage taken by party or raid members by 40%. The Anti-Magic Zone lasts for 30 sec or until it absorbs a massive amount of spell damage.
+    purgatory          = { 2, 3, 114556 }, -- An unholy pact that prevents fatal damage, instead absorbing incoming healing equal to the damage that would have been fatal for 3 sec.
 
     -- Tier 3 (Level 58)
-    deaths_advance     = { 3, 1, 96268 },  -- For 8 sec, you are immune to movement impairing effects and take 50% less damage from area of effect abilities.
-    chilblains         = { 3, 2, 50041 },  -- Victims of your Chains of Ice, Howling Blast, or Remorseless Winter are Chilblained, reducing movement speed by 50% for 10 sec.
-    asphyxiate         = { 3, 3, 108194 }, -- Lifts an enemy target off the ground and crushes their throat, silencing them for 5 sec.
+    deaths_advance     = { 3, 1, 96268 },  -- For 8 sec, you are immune to movement impairing effects and your movement speed is increased by 50%.
+    chilblains         = { 3, 2, 50041 },  -- Victims of your Chains of Ice take 5% increased damage from your abilities for 8 sec.
+    asphyxiate         = { 3, 3, 108194 }, -- Lifts the enemy target off the ground, crushing their throat and stunning them for 5 sec.
 
     -- Tier 4 (Level 60)
-    death_pact         = { 4, 1, 48743 },  -- Sacrifice your ghoul to heal yourself for 20% of your maximum health.
-    death_siphon       = { 4, 2, 108196 }, -- Inflicts Shadow damage to target enemy and heals you for 100% of the damage done.
+    death_pact         = { 4, 1, 48743 },  -- Drains 50% of your summoned minion's health to heal you for 25% of your maximum health.
+    death_siphon       = { 4, 2, 108196 }, -- Deals Shadow damage to the target and heals you for 150% of the damage dealt.
     conversion         = { 4, 3, 119975 }, -- Continuously converts 2% of your maximum health per second into 20% of maximum health as healing.
 
     -- Tier 5 (Level 75)
@@ -866,7 +853,7 @@ spec:RegisterTalents({
     -- Tier 6 (Level 90)
     gorefiends_grasp   = { 6, 1, 108199 }, -- Shadowy tendrils coil around all enemies within 20 yards of a hostile target, pulling them to the target's location.
     remorseless_winter = { 6, 2, 108200 }, -- Surrounds the Death Knight with a swirling blizzard that grows over 8 sec, slowing enemies by up to 50% and reducing their melee and ranged attack speed by up to 20%.
-    desecrated_ground  = { 6, 3, 108201 }, -- Corrupts the ground targeted by the Death Knight for 30 sec. While standing on this ground you are immune to effects that cause loss of control.
+    desecrated_ground  = { 6, 3, 108201 }, -- Corrupts the ground beneath you, causing all nearby enemies to deal 10% less damage for 30 sec.
 })
 
 -- Glyphs
@@ -912,70 +899,38 @@ spec:RegisterGlyphs({
     [63335] = "tranquil_grip",    -- Your Death Grip spell no longer taunts the target.
 })
 
--- Enhanced Tier Sets with comprehensive bonuses for Blood Death Knight tanking
-spec:RegisterGear(13, 8,
-    {                                                                                          -- Tier 14 (Heart of Fear) - Death Knight
-        { 88183, head = 86098, shoulder = 86101, chest = 86096, hands = 86097, legs = 86099 }, -- LFR
-        { 88184, head = 85251, shoulder = 85254, chest = 85249, hands = 85250, legs = 85252 }, -- Normal
-        { 88185, head = 87003, shoulder = 87006, chest = 87001, hands = 87002, legs = 87004 }, -- Heroic
-    })
-
--- Reduces the cooldown of your Vampiric Blood ability by 20 sec.
-spec:RegisterAura("tier14_2pc_blood", {
-    id = 123079,
-    duration = 3600,
-    max_stack = 1,
-})
-
-spec:RegisterAura("tier14_4pc_blood", {
-    id = 105925,
-    duration = 6,
-    max_stack = 1,
-})
-
-spec:RegisterGear(14, 8,
-    {                                                                                          -- Tier 15 (Throne of Thunder) - Death Knight
-        { 96548, head = 95101, shoulder = 95104, chest = 95099, hands = 95100, legs = 95102 }, -- LFR
-        { 96549, head = 95608, shoulder = 95611, chest = 95606, hands = 95607, legs = 95609 }, -- Normal
-        { 96550, head = 96004, shoulder = 96007, chest = 96002, hands = 96003, legs = 96005 }, -- Heroic
-    })
-
-spec:RegisterAura("tier15_2pc_blood", {
-    id = 138292,
-    duration = 15,
-    max_stack = 1,
-})
-
-spec:RegisterAura("tier15_4pc_blood", {
-    id = 138295,
-    duration = 8,
-    max_stack = 1,
-})
-
-spec:RegisterGear(15, 8,
-    {                                                                                          -- Tier 16 (Siege of Orgrimmar) - Death Knight
-        { 99683, head = 99455, shoulder = 99458, chest = 99453, hands = 99454, legs = 99456 }, -- LFR
-        { 99684, head = 98340, shoulder = 98343, chest = 98338, hands = 98339, legs = 98341 }, -- Normal
-        { 99685, head = 99200, shoulder = 99203, chest = 99198, hands = 99199, legs = 99201 }, -- Heroic
-        { 99686, head = 99890, shoulder = 99893, chest = 99888, hands = 99889, legs = 99891 }, -- Mythic
-    })
-
-spec:RegisterAura("tier16_2pc_blood", {
-    id = 144953,
-    duration = 20,
-    max_stack = 1,
-})
-
-spec:RegisterAura("tier16_4pc_blood", {
-    id = 144955,
-    duration = 12,
-    max_stack = 1,
-})
-
--- Advanced Mastery and Specialization Bonuses
-spec:RegisterGear(16, 8, {                                                                       -- PvP Sets
-    { 138001, head = 138454, shoulder = 138457, chest = 138452, hands = 138453, legs = 138455 }, -- Grievous Gladiator's
-    { 138002, head = 139201, shoulder = 139204, chest = 139199, hands = 139200, legs = 139202 }, -- Prideful Gladiator's
+spec:RegisterGear({
+    -- Mists of Pandaria Tier Sets
+    tier16 = {
+        items = { 99369, 99370, 99371, 99372, 99373 }, -- Death Knight T16
+        auras = {
+            death_shroud = {
+                id = 144901,
+                duration = 30,
+                max_stack = 5
+            }
+        }
+    },
+    tier15 = {
+        items = { 95339, 95340, 95341, 95342, 95343 }, -- Death Knight T15
+        auras = {
+            unholy_vigor = {
+                id = 138547,
+                duration = 15,
+                max_stack = 1
+            }
+        }
+    },
+    tier14 = {
+        items = { 85316, 85314, 85318, 85315, 85317 }, -- Death Knight T14 - Plate of the Lost Catacomb - https://www.wowhead.com/mop-classic/item-set=1124/plate-of-the-lost-catacomb
+        auras = {
+            shadow_clone = {
+                id = 123556,
+                duration = 8,
+                max_stack = 1
+            }
+        }
+    }
 })
 
 -- Combat Log Event Registration for advanced tracking
@@ -1078,6 +1033,12 @@ spec:RegisterAuras({
             t.applied = 0
             t.caster = "nobody"
         end
+    },
+
+    horn_of_winter = {
+        id = 57330,
+        duration = 300,
+        max_stack = 1
     },
 
     vampiric_blood = {
@@ -2112,7 +2073,9 @@ spec:RegisterAbilities({
 
         toggle = "cooldowns",
 
+        usable = function() return not pet.alive end,
         handler = function()
+            summonPet("ghoul", 60)
         end,
     },
 
@@ -2287,56 +2250,29 @@ spec:RegisterAbilities({
 
 })
 
--- Legacy rune type expressions for SimC compatibility
-spec:RegisterStateExpr("blood", function()
-    if GetRuneCooldown then
-        local count = 0
-        for i = 1, 2 do
-            local start, duration, ready = GetRuneCooldown(i)
-            if ready then count = count + 1 end
-        end
-        return count
-    else
-        return 2 -- Fallback for emulation
-    end
-end)
-spec:RegisterStateExpr("frost", function()
-    if GetRuneCooldown then
-        local count = 0
-        for i = 5, 6 do
-            local start, duration, ready = GetRuneCooldown(i)
-            if ready then count = count + 1 end
-        end
-        return count
-    else
-        return 2 -- Fallback for emulation
-    end
-end)
-spec:RegisterStateExpr("unholy", function()
-    if GetRuneCooldown then
-        local count = 0
-        for i = 3, 4 do
-            local start, duration, ready = GetRuneCooldown(i)
-            if ready then count = count + 1 end
-        end
-        return count
-    else
-        return 2 -- Fallback for emulation
-    end
-end)
-spec:RegisterStateExpr("death", function()
-    if GetRuneCooldown and GetRuneType then
-        local count = 0
-        for i = 1, 6 do
-            local start, duration, ready = GetRuneCooldown(i)
-            local type = GetRuneType(i)
-            if ready and type == 4 then count = count + 1 end
-        end
-        return count
-    else
-        return 0 -- Fallback for emulation
-    end
-end)
+-- Pets
+spec:RegisterPets({
+    ghoul = {
+        id = 26125,
+        spell = "raise_dead",
+        duration = 60,
+    }
+})
+
+spec:RegisterTotems({
+    gargoyle = {
+        id = 49206,
+        duration = 30,
+    },
+    ghoul = {
+        id = 26125,
+        duration = 60,
+    },
+    army_ghoul = {
+        id = 24207,
+        duration = 40,
+    }
+})
 
 -- Convert runes to death runes (Blood Tap, etc.)
 spec:RegisterStateFunction("convert_to_death_rune", function(rune_type, amount)
@@ -2359,10 +2295,6 @@ spec:RegisterStateFunction("gain_runic_power", function(amount)
     -- Logic to gain runic power
     gain(amount, "runicpower")
 end)
-
-
--- Unified DK Runes interface across specs (matches Unholy/Frost implementation)
--- Duplicate unified runes state table removed; resource(5) provides state.runes.
 
 -- State Expressions for Blood Death Knight
 spec:RegisterStateExpr("blood_shield_absorb", function()
@@ -2445,25 +2377,7 @@ end)
 
 -- Rune state expressions for MoP 5.5.0
 -- Simplified rune count expression; unique name 'rune_count' to avoid collisions with any internal engine usage.
--- Unify with Unholy: provide 'rune' expression for total ready runes.
-spec:RegisterStateExpr("rune", function()
-    local total = 0
-    for i = 1, 6 do
-        local _, _, ready = GetRuneCooldown(i)
-        if ready then total = total + 1 end
-    end
-    return total
-end)
 
--- Provide rune_regeneration (mirrors Unholy) representing rune deficit relative to maximum.
-spec:RegisterStateExpr("rune_regeneration", function()
-    local total = 0
-    if state.blood_runes and state.blood_runes.current then total = total + state.blood_runes.current end
-    if state.frost_runes and state.frost_runes.current then total = total + state.frost_runes.current end
-    if state.unholy_runes and state.unholy_runes.current then total = total + state.unholy_runes.current end
-    if state.death_runes and state.death_runes.count then total = total + state.death_runes.count end
-    return 6 - total
-end)
 
 -- Consolidated rune_deficit definition (single source).
 spec:RegisterStateExpr("rune_deficit", function()
@@ -2557,4 +2471,4 @@ spec:RegisterSetting("dps_shell", false, {
 
 -- Register default pack for MoP Blood Death Knight
 spec:RegisterPack("Blood", 20250819,
-    [[Hekili:nRv)UTnYr8NLGc4AFvrws2kj2jYanNZHK0EPgh917pkosUKCL0wrUl7UlTJaei6RrF96tsNzxsXpePKCo3IMahlTC5oF9B(nZoiUJDV31jIOPUFzYOjth9MjJgoAYOPx66OxNsDDsjHRilGpWjjW)((yHicxDDSGeHVSsKjdHN46eKXI1FI7gS7joE6vJHTMsdHvNoY1zjlkIA3kvf66C)sMk3h)HK7xiZCFXC47HAMGN7hZuA4XZfYC)psxXIzdb9qkMZIbP)7Y9F52)K7FNKgksci6gl)z7zPgMw(4zbO94bFxr5H0bS5ZErq285dBU(WS0oE5)WSZdeCQNAjJghv7DRwS3xCPqY9eZ9EKX1uz(Nb9)urkUps8zGhqsFzQa0Eg4buzPPcPMgL7hSo3Fn4Wn(HvxBEVUoE4DrN2NnBOUJ5dCTeoJ7eGC703mlKeh7z)Ih6ZhGb(zr05uUI9avTDNGy6EVeHXrIR)a1JYPjmQ6MzxuOo)jkn9CjDo4BxM7hXuuIcowFkrgV2AXCknIgnSUOez6ajLScpznrUGQhgrRhQIjlYOdL0ecJRE3Sl2SP52MlfkT3C6duzTDvOtFVGdRRlqFsnJeN7)d)853sjAqjvmDgXcdb)Mi3)whyRpqyXKaaiQx3qvTkKMKA11ykxpC7AdPCsqmn6Ktnk0SXB2KXxkIxJFkcf3SXNDYlGuL44HzkCVdnl7P0s2kAHc)JG(BvdyplOwKaeF)zfK284skhvFqhLWxdeOnGiXA7b8LM4d6Yn5ujmnBrHrE6hVds4epczGWtm585(ogeneXepYpRU9wx9qt2Ayt2AyWNwsjX6Ldtd1VB2RhTzt9KSAzkgn8hKu6505ZzHmkcs)JIpGjeIqqViXkW7VWQp3Vf9Gw3kawzrpwxon6Clm6SR3n4eiyXOQAuJqjlrbiyviKzTat2p502G3jTHtDJ6wegnmH81VBNT3j6B7UpRW0DsP8OToCzghZlcJPeogMcOqGcS1qsAkJVObMdCWsDTyGr9MnP4C)iBbGa(jiOQiZPA4SIYssRorbOwWP24erPx7aHVYc9sfpsL3m7QrLXkwCmvIm3CeRebuzgs7hiXGBPpqsFkEpIVX2BXBUdbNbT4Kf8Y)mWh1n7pWpn7)A0jG6uqAqWq5T0qYABHnWye8ffAOEjiD9BHGPijXaZbnYcFb(DmjJ)V)N)lyLhj4dz6RBO)BDOGq8ImYO1JRW5TFsNqLBMnU9(6kcuEehkkCBv5c)ZbghTHLS7WrvPLNs14coqTHh89qf3scQ3IeaP1RJmaD3iJyirPh2LGpAs7UkW3ISU2d7tuhttdfw4FhjG)(Bb3iWnx2bGLn1sodF(beGXbGedHxrKeOGqFM5dKKuMeYKn2gk(6uZVcOMlpjp7b5nfy)k2dYvnA4fJm62h4lyG)vAe6sahQqwf7x)RV)6EK))iJfUAEmlfqTZJP2whGKnnvTLpUPowgT)lytpq)gbqZH1tuyr8FVgRNTas4r(NTIOz7rnuJmf1JPPjduXc9mJ2VpXBoOFrO)szHOxEdqNMHGU7nynihoIbgr86(C8MSPc4LrmpcuNyoean940qPivaTqvjUp8vTK0qk2Y62yX6TLhmL4l6fjMwq7aUgG(aFseRvXI(vR6iH3m6KMLq(rYcwyZUeoVOKIGScs6irrL9McniGDDOaTtZsS1hG4f0PptwVTUMQcq0XsqPaPbq(eQrhbw8KqHigBjzyR3VKvEwzTkhDg)8I0fvkYQ5hKP1cEFkelKgiYacwOiPg6amYWiPGJP8SV5yYxUCAze9N(fWnvEfho6oXw2HkiRldUydDyTco27VLqb2UUOzSpExFQknXuz2ZeoFKssf82r0PJoCxL3r1fDdQ4iIZwL6CQfkAnqBS8w0wmAzyMucKLydkzP9cZiqJAqkpPgJxeHhI(TA6Cf6)w7dlX))I5Xxd(nrAHggWGNMMfhRg0uDhyjgdYKGdfQqbGdvF6vh6qNxDbQ(dazpTWlIrF3SXt3SPBUcxhiCQabvE73Xx568irYbPOkVMBXTwTH6eMszS0IR5vyElaHlriceF4ROAWe8Z9)K2(sMR6b9neHLe0lrec1IJsLmH0uRfaMXaMfVzfdizKaDOP9))MP))pbSFQFDac8yHlRVBcFDLulcY0VMgd9JBIYf7mY20hCYvc9TgxFHyU3Ee5(J)1cwPQLMutYirynlQ4i1LB14nmlXZscOsuWiRnes)us59IVS1CcGh66qY0qJkUoqpyROWVnpbhzb0ed8RVyM9rrLD3376a3dakGWiUohUJWC)3nl3)IC)nBW(noqNHf7gKSrjDDkB)0o(djl1U8r1iRRgWwTu9gNYX3)5GNq)NvkFRopr95cJBT45vTEwxhHDDzVo8a7nEUb8sJRoO6DQIV)06sPw7PTeZRQVTMTQ2CNA0wMtYI1DbhkpH2d5OL3(BzSn7BMnh14ASGzp7m5Qy06cA0Vzu5(BY3zJdx0qgyktzC()Rszo(PjTFeyFT8N7FsU)PqGdvXCFeGATa7WnQVsKnVZUWzMx8fyRg9uZTDcdi0w22V5PsTnPPttUYKMSJjvSsvde24XRhzx)fy91DNGtBoIsdTHvTZORo4CREUgA1wYHU5G6EwqLaGUYrM0fyUFSFX8EY9)UEE1EZdA9MN1nzBd38Z)y0q33Rpefo6v6HbVP(90M1fk730RSRnCkBG5Qr9uOOHkCSJfdf(v7RI7(hdwpzfWHoEuJsvnCwnkPnE8Xv6B8KNwTVY6g7TBOMj71MctBuy5J2txnhEWqDvd7iPP3QOnNLsxeX12YH5H7EqtdoWGM2F9YU11A6snfCVfUAtr)Qck6DVxQn1O6UPg2e8o0vsT59z2Xn8npnQ9xiQVRsvQv7zOrTuXdmuQJOaqVJLPv63UOKVLbu9CmDQJDWu7N(Unm6nJm5nDYQ3Jd4zEIv7NY)jaVngYHgtKXgRLj0AB7KkSVPHn4PmnSUkU0ctIJCItTb7NuQ9LtRmODNMv7cY9oFSQsvhf0z6ONqVVDm5Q2WQNHXMvvdDVKXDpsQAa)TJXQLo(BFWzvvV7ud78gAfTqwnzkR)F8u7doeTAhwB7jj8mpfoBFhBV07)7A7OZ))GS)onEIfOV44B8Y(x3)Zd]])
+    [[Hekili:9EvyVTTnq0Flbblibl112joXzioalRTRnaTlikB9BsIsIoMWYIcKuXiag63(UJKYwuYYXPBOfOfwINU7DV7oEV6pW)rFVeII6)TH9hoQ)4Hd7n48bNp03t9so13lNepN8e8JmYc4FVnLZtW3(skNKGFSKxiIHt89IkyPQVK5h12JND2fJgd2MtJHxpQVV3mwsc1ylvg7794mMSme)lPm0g0Yq(u45yfJNvgMYKk44PCrz4NPZzPSE(E6xQZb6usrQc(5305enJeLst8V1eablh9IV3KU(tz49cgxWuVugUdJ(9cfpMiva2uZOauI580e(YmaAhReSS5uL8u40S3viPWpOQ4EN47zYcFp4LbmfDH0xbmrdKwzelMgXlYscGKvXufj0gzXxSgug(PklaIs9EYufIPXxj99aRHhyeOsYwahFZe8amSN1ry5fQibLmVrWEGovqLZkdtyskrsHmDjtbp)xw7H6guNOmdHORHa6aksXH6fjn1bmeXtuvVeAuX0P9IW(PG8uYtf0Ec6ccdjYRbOoOmC1kWfoMpvWLQGP0NPIgwJ515DKxr8mAGCgJMM0i1(yMSqaCZTGfLHEAtmzqrEDqBW6g30dR4yih1riFMSiNjyXbrMbgNO(p2dH4INIvUYWl6)lqF99qNdWHP8LurDamJssvZ6LhRm57f9XOFrhrNUihDqGOaq8skjhFPBnTat4hj5yNk0exiv8fWGNGdO6ysHaMcV6Ibxo4KELHpqHcumTQSdL5YqOUNwgI8sziE1aWAGFEbUmaFldOOQjxzp7S5Vo59AaPi5NYMorZPlzPPb8PbGpdYOXcEohgP7va46JMKacVgRFxNgMwnGEmCfbhb(aLGWYdM(MdgMXvycje0mvkmmJtRidTl6Cu)YWJkdp44J1DyMHLb63vKnJJUr)MtmnLTTkXGbhJC(Y2wDcwbVSJkO2YaPoLAu6AKUlNrZ(TYWHWvbgqH9pWt)Tn6iLl11RKxoDD3fsF2NS9Gvn)lysjl7P6SvTSDyloX8MUiutlIDm3o7aJwqMpUJmx3IS1eh6dWzM7nDfjflYnzpwIZZbVudYc02aBdecZlhHb9QDTA4tWnvrWMNwDufs9gWTwBaNoOFxPcbUWmamV5fapGhOdtIPH(dKSyG0B1RlTTZOhF2Pd(anVMy(U6d6w6DqZTGo8lmc29fciGMviu2XRioYf2UeB3ebV009kYMDaJnDarMVt3POXvx78mTirCwAdKzJ8TWjMlR(dbBHe)HxmCDdktaV2Q111XgZcKgRQ4LUw(b4xO2EJ3NXJCN42BAPv(3CjLtK(tAgvGxS(W9Mo8TpxG(P5Mhh)8vyZOIG3i)zUiZOJ67WRWPbd8zjP1APNbwHxdVuBd4FfOXtqJ5lIiBvtLBvdmvsZIPTxz6CSzR5Bqpg9D3xKMUd9y7seLZw)9yvENngUCttx5E8AVPlZvUiNB3lV27kdhd6yK4jwPYdUY3BjrKbJ0GaUValafkAI(owhvW9kVdCEHcInUpiEoIlyiykdlQhUlbS3DynI9UDBA1(71DcWgC3kAh2SHD3UbUC22TXWzL39AG8WAc3Fft1N)JjGFngbKTwcV1JVUy86FDBT9OyiuI(ntgFL1L)3LCxpKv661b6vLFF9KbRw9QYUbRSyDxAORJIADfiqoO1GiAU2J7P(46o3vVn6)n7JUEYf9R41FcYEX4SbyVbfVw68)zzV1zPT8)lOjvnQ)rhuxGJ2wza5zcl14onk)5icTo2Rdke06EYBMmC1kJAu9pDZKvRoyBQp30lSt5K1dETLVySRPU8Mjdgw1DTBbKDLmvW5httOdkxR3CZa22vi2ECy)f91IxSD315(X9pst6qrXgQ9ufNZfgRveUE4PTMoR7FRs0QhN6k)0rYf5T0K1rJH189t6Lt8Bl(Y)F)d]])

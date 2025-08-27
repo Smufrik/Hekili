@@ -3,49 +3,64 @@
 # Updated May 28, 2025 
 
 ## Precombat Actions
-actions.precombat+=/horn_of_winter,if=!buff.horn_of_winter.up
-actions.precombat+=/blood_presence
 actions.precombat+=/bone_shield
+actions.precombat+=/army_of_the_dead
+actions.precombat+=/raise_dead
+actions.precombat+=/potion,name=mogu_power
+
+actions.precombat+=/dancing_rune_weapon
+actions.precombat+=/outbreak
+actions.precombat+=/death_strike
+actions.precombat+=/heart_strike
+actions.precombat+=/death_strike
+actions.precombat+=/rune_strike
+actions.precombat+=/rune_strike
+actions.precombat+=/death_and_decay,if=buff.crimson_scourge.react
+actions.precombat+=/heart_strike
+actions.precombat+=/death_strike
 actions.precombat+=/raise_dead
 
-## Default Actions - Tank Priority
-actions+=/mind_freeze
-actions+=/antimagic_shell,if=incoming_damage_5s>=health.max*0.30&cooldown.antimagic_shell.remains=0
-
-# Active Mitigation Priority
-actions+=/death_strike,if=incoming_damage_5s>=health.max*0.65|health.pct<50
+# High-priority mitigation
 actions+=/death_strike,if=death_strike_runes_available&(incoming_damage_5s>=health.max*0.45|health.pct<60)
 
-# Major Cooldowns
-actions+=/army_of_the_dead,if=buff.bone_shield.up&buff.dancing_rune_weapon.down
-actions+=/dancing_rune_weapon,if=incoming_damage_5s>=health.max*0.65|(target.time_to_die<40&buff.bone_shield.up)
-actions+=/vampiric_blood,if=incoming_damage_5s>=health.max*0.45|health.pct<35
-actions+=/icebound_fortitude,if=incoming_damage_5s>=health.max*0.35|health.pct<20
-actions+=/rune_tap,if=incoming_damage_5s>=health.max*0.25|health.pct<25
-
-# Bone Shield Maintenance
-actions+=/bone_shield,if=buff.bone_shield.down
-actions+=/empower_rune_weapon,if=blood<1&frost<1&unholy<1
-
-# Trinket Usage
-actions+=/use_item,name=trinket1,if=cooldown.vampiric_blood.remains<10|cooldown.dancing_rune_weapon.remains<10
-actions+=/use_item,name=trinket2,if=cooldown.vampiric_blood.remains<10|cooldown.dancing_rune_weapon.remains<10
-
-## Active Mitigation and Disease Maintenance
-actions+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.stack>=10&(blood<1|frost<1|unholy<1)
-actions+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.stack>=5&death_strike_runes_available
-
-# Disease Management
+# Disease maintenance
 actions+=/outbreak,if=!dot.blood_plague.ticking|!dot.frost_fever.ticking
-actions+=/soul_reaper,if=target.health.pct<35&(blood>1|frost>1|unholy>1)
 actions+=/plague_strike,if=!dot.blood_plague.ticking
 actions+=/icy_touch,if=!dot.frost_fever.ticking
 
-# AoE and DPS Abilities
-actions+=/death_and_decay,if=active_enemies>=2
-actions+=/death_strike,if=death_strike_runes_available
-actions+=/blood_boil,if=active_enemies>=2
+# RP management
+actions+=/rune_strike,if=runic_power>=90
+actions+=/rune_strike
+
+# Damage fillers
+actions+=/soul_reaper,if=target.health.pct<35
+actions+=/death_and_decay,if=buff.crimson_scourge.react&dot.blood_plague.remains>15
+actions+=/blood_boil,if=buff.crimson_scourge.react&dot.blood_plague.remains<=15
 actions+=/heart_strike,if=blood>1
 actions+=/blood_boil
+
+# Utility
 actions+=/horn_of_winter,if=!buff.horn_of_winter.up|buff.horn_of_winter.remains<5
-actions+=/death_coil,if=runic_power>80
+
+# AoE
+actions.aoe+=/death_and_decay
+actions.aoe+=/outbreak,if=!dot.blood_plague.ticking|!dot.frost_fever.ticking
+actions.aoe+=/pestilence,if=dot.blood_plague.ticking&dot.frost_fever.ticking
+actions.aoe+=/blood_boil,if=buff.crimson_scourge.react
+actions.aoe+=/blood_boil,if=blood>1
+actions.aoe+=/blood_boil,if=death>1
+actions.aoe+=/death_strike,if=death_strike_runes_available
+actions.aoe+=/rune_strike,if=runic_power>=90
+actions.aoe+=/rune_strike
+
+# Major CDs
+actions+=/dancing_rune_weapon,if=incoming_damage_5s>=health.max*0.50|buff.vengeance.up
+actions+=/vampiric_blood,if=health.pct<40|incoming_damage_5s>=health.max*0.40
+actions+=/icebound_fortitude,if=health.pct<25|incoming_damage_5s>=health.max*0.30
+actions+=/anti_magic_shell,if=incoming_damage_5s_magic>=health.max*0.25
+actions+=/rune_tap,if=health.pct<30
+actions+=/raise_dead
+
+# Optional offensive swaps
+actions+=/death_siphon,if=attack_power>=<breakpoint_value>
+actions+=/death_coil,if=attack_power>=<breakpoint_value>&runic_power>=80

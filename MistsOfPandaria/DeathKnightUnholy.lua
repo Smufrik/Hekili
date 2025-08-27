@@ -2,7 +2,6 @@
 -- January 2025
 
 -- MoP: Use UnitClass instead of UnitClassBase
--- TODO: Formatting all files similarly
 local _, playerClass = UnitClass('player')
 if playerClass ~= 'DEATHKNIGHT' then return end
 
@@ -14,7 +13,7 @@ local class, state = Hekili.Class, Hekili.State
 local GetRuneCooldown = rawget(_G, "GetRuneCooldown") or function() return 0, 10, true end
 local GetRuneType = rawget(_G, "GetRuneType") or function() return 1 end
 
-local FindUnitBuffByID = ns.FindUnitBuffByID
+local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
 local strformat = string.format
 
 local spec = Hekili:NewSpecialization(252, true)
@@ -138,6 +137,7 @@ do
     end)
 end
 
+-- Register resources
 spec:RegisterResource(6) -- RunicPower = 6 in MoP
 
 -- Register individual rune types for MoP 5.5.0
@@ -367,11 +367,6 @@ spec:RegisterResource(22, { -- Unholy Runes = 22 in MoP
     end
 }))
 
--- Unified DK Runes interface across specs
--- Removed duplicate RegisterStateTable("runes"); unified model lives on the resource.
-
--- Death Runes State Table for MoP 5.5.0 - Removed duplicate registration
-
 spec:RegisterResource(6, {
     -- Frost Fever Tick RP (20% chance to generate 4 RP)
     frost_fever_tick = {
@@ -461,52 +456,47 @@ spec:RegisterTalents({
     desecrated_ground  = { 6, 3, 108201 }, -- Corrupts the ground beneath you, causing all nearby enemies to deal 10% less damage for 30 sec.
 })
 
--- Glyphs (Enhanced System - authentic MoP 5.4.8 glyph system)
+-- Glyphs
 spec:RegisterGlyphs({
-    -- Major glyphs - Unholy Combat
-    [58623] = "anti_magic_shell",    -- Causes your Anti-Magic Shell to absorb all incoming magical damage, up to the absorption limit.
-    [58617] = "army_of_the_dead",    -- Your Army of the Dead spell summons an additional skeleton, but the cast time is increased by 2 sec
-    [58618] = "bone_armor",          -- Your Bone Armor gains an additional charge but the duration is reduced by 30 sec
-    [58619] = "chains_of_ice",       -- Your Chains of Ice no longer reduces movement speed but increases the duration by 2 sec
-    [58620] = "dark_simulacrum",     -- Dark Simulacrum gains an additional charge but the duration is reduced by 4 sec
-    [58621] = "death_and_decay",     -- Your Death and Decay no longer slows enemies but lasts 50% longer
-    [58622] = "death_coil",          -- Your Death Coil refunds 20 runic power when used on friendly targets but heals for 30% less
-    [58623] = "death_grip",          -- Your Death Grip no longer moves the target but reduces its movement speed by 50% for 8 sec
-    [58624] = "death_pact",          -- Your Death Pact no longer requires a ghoul but heals for 50% less
-    [58625] = "death_strike",        -- Your Death Strike deals 25% additional damage but heals for 25% less
-    [58626] = "frost_strike",        -- Your Frost Strike has no runic power cost but deals 20% less damage
-    [58627] = "heart_strike",        -- Your Heart Strike generates 10 additional runic power but affects 1 fewer target
-    [58628] = "icebound_fortitude",  -- Your Icebound Fortitude grants immunity to stun effects but the damage reduction is lowered by 20%
-    [58629] = "icy_touch",           -- Your Icy Touch dispels 1 beneficial magic effect but no longer applies Frost Fever
-    [58630] = "mind_freeze",         -- Your Mind Freeze has its cooldown reduced by 2 sec but its range is reduced by 5 yards
-    [58631] = "outbreak",            -- Your Outbreak no longer costs a Blood rune but deals 50% less damage
-    [58632] = "plague_strike",       -- Your Plague Strike does additional disease damage but no longer applies Blood Plague
-    [58633] = "raise_dead",          -- Your Raise Dead spell no longer requires a corpse but the ghoul has 20% less health
-    [58634] = "rune_strike",         -- Your Rune Strike generates 10% more threat but costs 10 additional runic power
-    [58635] = "rune_tap",            -- Your Rune Tap heals nearby allies for 5% of their maximum health but heals you for 50% less
-    [58636] = "scourge_strike",      -- Your Scourge Strike deals additional Shadow damage for each disease on the target but consumes all diseases
-    [58637] = "strangulate",         -- Your Strangulate has its cooldown reduced by 10 sec but the duration is reduced by 2 sec
-    [58638] = "vampiric_blood",      -- Your Vampiric Blood generates 5 runic power per second but increases damage taken by 10%
-    [58639] = "blood_boil",          -- Your Blood Boil deals 20% additional damage but no longer spreads diseases
-    [58640] = "dancing_rune_weapon", -- Your Dancing Rune Weapon lasts 5 sec longer but generates 20% less runic power
-    [58641] = "vampiric_aura",       -- Your Vampiric Aura affects 2 additional party members but the healing is reduced by 25%
-    [58642] = "unholy_frenzy",       -- Your Unholy Frenzy grants an additional 10% attack speed but lasts 50% shorter
-    [58643] = "corpse_explosion",    -- Your corpses explode when they expire, dealing damage to nearby enemies
-    [58644] = "disease",             -- Your diseases last 50% longer but deal 25% less damage
-    [58645] = "resilient_grip",      -- Your Death Grip removes one movement impairing effect from yourself
-    [58646] = "shifting_presences",  -- Reduces the rune cost to change presences by 1, but you cannot change presences while in combat
+    -- Major Glyphs (affecting tanking and mechanics)
+    [58623] = "antimagic_shell",     -- Causes your Anti-Magic Shell to absorb all incoming magical damage, up to the absorption limit.
+    [58620] = "chains_of_ice",       -- Your Chains of Ice also causes 144 to 156 Frost damage, with additional damage depending on your attack power.
+    [63330] = "dancing_rune_weapon", -- Increases your threat generation by 100% while your Dancing Rune Weapon is active, but reduces its damage dealt by 25%.
+    [63331] = "dark_simulacrum",     -- Reduces the cooldown of Dark Simulacrum by 30 sec and increases its duration by 4 sec.
+    [96279] = "dark_succor",         -- When you kill an enemy that yields experience or honor, while in Frost or Unholy Presence, your next Death Strike within 15 sec is free and will restore at least 20% of your maximum health.
+    [58629] = "death_and_decay",     -- Your Death and Decay also reduces the movement speed of enemies within its radius by 50%.
+    [63333] = "death_coil",          -- Your Death Coil spell is now usable on all allies.  When cast on a non-undead ally, Death Coil shrouds them with a protective barrier that absorbs up to [(1133 + 0.514 * Attack Power) * 1] damage.
+    [62259] = "death_grip",          -- Increases the range of your Death Grip ability by 5 yards.
+    [58671] = "enduring_infection",  -- Your diseases are undispellable, but their damage dealt is reduced by 15%.
+    [146650] = "festering_blood",    -- Blood Boil will now treat all targets as though they have Blood Plague or Frost Fever applied.
+    [58673] = "icebound_fortitude",  -- Reduces the cooldown of your Icebound Fortitude by 50%, but also reduces its duration by 75%.
+    [58631] = "icy_touch",           -- Your Icy Touch dispels one helpful Magic effect from the target.
+    [58686] = "mind_freeze",         -- Reduces the cooldown of your Mind Freeze ability by 1 sec, but also raises its cost by 10 Runic Power.
+    [59332] = "outbreak",            -- Your Outbreak spell no longer has a cooldown, but now costs 30 Runic Power.
+    [58657] = "pestilence",          -- Increases the radius of your Pestilence effect by 5 yards.
+    [58635] = "pillar_of_frost",     -- Empowers your Pillar of Frost, making you immune to all effects that cause loss of control of your character, but also reduces your movement speed by 70% while the ability is active.
+    [146648] = "regenerative_magic", -- If Anti-Magic Shell expires after its full duration, the cooldown is reduced by up to 50%, based on the amount of damage absorbtion remaining.
+    [58647] = "shifting_presences",  -- You retain 70% of your Runic Power when switching Presences.
+    [58618] = "strangulate",         -- Increases the Silence duration of your Strangulate ability by 2 sec when used on a target who is casting a spell.
+    [146645] = "swift_death",        -- The haste effect granted by Soul Reaper now also increases your movement speed by 30% for the duration.
+    [146646] = "loud_horn",          -- Your Horn of Winter now generates an additional 10 Runic Power, but the cooldown is increased by 100%.
+    [59327] = "unholy_command",      -- Immediately finishes the cooldown of your Death Grip upon dealing a killing blow to a target that grants experience or honor.
+    [58616] = "unholy_frenzy",       -- Causes your Unholy Frenzy to no longer deal damage to the affected target.
+    [58676] = "vampiric_blood",      -- Increases the bonus healing received while your Vampiric Blood is active by an additional 15%, but your Vampiric Blood no longer grants you health.
 
-    -- Minor glyphs - Cosmetic and convenience
-    [58647] = "corpse_walker",  -- Your undead minions appear to be spectral
-    [58648] = "the_geist",      -- Your ghoul appears as a geist
-    [58649] = "deaths_embrace", -- Your death grip has enhanced visual effects
-    [58650] = "bone_spikes",    -- Your abilities create bone spike visual effects
-    [58651] = "unholy_vigor",   -- Your character emanates an unholy aura
-    [58652] = "the_bloodied",   -- Your weapons appear to be constantly dripping blood
-    [58653] = "runic_mastery",  -- Your runes glow with enhanced energy when available
-    [58654] = "the_forsaken",   -- Your character appears more skeletal and undead
-    [58655] = "shadow_walk",    -- Your movement leaves shadowy footprints
-    [58656] = "deaths_door",    -- Your abilities create portal-like visual effects
+    -- Minor Glyphs (convenience and visual)
+    [58669] = "army_of_the_dead", -- The ghouls summoned by your Army of the Dead no longer taunt their target.
+    [59336] = "corpse_explosion", -- Teaches you the ability Corpse Explosion.
+    [60200] = "death_gate",       -- Reduces the cast time of your Death Gate spell by 60%.
+    [58677] = "deaths_embrace",   -- Your Death Coil refunds 20 Runic Power when used to heal an allied minion, but will no longer trigger Blood Tap when used this way.
+    [58642] = "foul_menagerie",   -- Causes your Army of the Dead spell to summon an assortment of undead minions.
+    [58680] = "horn_of_winter",   -- When used outside of combat, your Horn of Winter ability causes a brief, localized snow flurry.
+    [59307] = "path_of_frost",    -- Your Path of Frost ability allows you to fall from a greater distance without suffering damage.
+    [59309] = "resilient_grip",   -- When your Death Grip ability fails because its target is immune, its cooldown is reset.
+    [58640] = "geist",            -- Your Raise Dead spell summons a geist instead of a ghoul.
+    [146653] = "long_winter",     -- The effect of your Horn of Winter now lasts for 1 hour.
+    [146652] = "skeleton",        -- Your Raise Dead spell summons a skeleton instead of a ghoul.
+    [63335] = "tranquil_grip",    -- Your Death Grip spell no longer taunts the target.
 })
 
 -- Auras
@@ -544,14 +534,21 @@ spec:RegisterAuras({
         mechanic = "taunt",
         max_stack = 1
     },
+    -- Your next Death Strike is free and heals for an additional $s1% of maximum health.
+    -- https://wowhead.com/spell=101568
+    dark_succor = {
+        id = 101568,
+        duration = 15,
+        max_stack = 1
+    },
     -- Talent: $?$w2>0[Transformed into an undead monstrosity.][Gassy.] Damage dealt increased by $w1%.
     -- https://wowhead.com/spell=63560
     dark_transformation = {
         id = 63560,
         duration = 30,
         max_stack = 1,
-        generate = function ( t )
-            local name, _, count, _, duration, expires, caster = FindUnitBuffByID( "pet", 63560 )
+        generate = function(t)
+            local name, _, count, _, duration, expires, caster = FindUnitBuffByID("pet", 63560)
 
             if name then
                 t.name = name
@@ -680,8 +677,8 @@ spec:RegisterAuras({
         id = 91342,
         duration = 30,
         max_stack = 5,
-        generate = function ( t )
-            local name, _, count, _, duration, expires, caster = FindUnitBuffByID( "pet", 91342 )
+        generate = function(t)
+            local name, _, count, _, duration, expires, caster = FindUnitBuffByID("pet", 91342)
 
             if name then
                 t.name = name
@@ -1254,7 +1251,7 @@ spec:RegisterAbilities({
 
         handler = function()
             removeBuff("blood_charge", 5)
-            -- gain(1, "runes") -- this is wrong
+            --TODO: Add in generation of Death rune
         end,
     },
 
@@ -1430,21 +1427,21 @@ spec:RegisterAbilities({
         end,
     },
 
-    -- Pet transformed into an undead monstrosity. Damage dealt increased by 100%. --
+    -- Pet transformed into an undead monstrosity. Damage dealt increased by 100%.
     dark_transformation = {
         id = 63560,
         cast = 0,
         cooldown = 0,
         gcd = "spell",
 
-        spend_runes = {0,0,1},
+        spend_runes = { 0, 0, 1 },
 
         startsCombat = false,
         texture = 342913,
         usable = function()
             if pet.ghoul.down then return false, "requires a living ghoul" end
-            if buff.shadow_infusion.stacks < 5 then return false, "requires five stacks of shadow_infusion" end 
-            return true 
+            if buff.shadow_infusion.stacks < 5 then return false, "requires five stacks of shadow_infusion" end
+            return true
         end,
 
         handler = function()
@@ -1495,7 +1492,7 @@ spec:RegisterAbilities({
             removeBuff("sudden_doom")
         end
     },
-    
+
     -- Opens a gate which you can use to return to Ebon Hold.    Using a Death Gate ...
     death_gate = {
         id = 50977,
@@ -1553,14 +1550,15 @@ spec:RegisterAbilities({
         cooldown = 0,
         gcd = "spell",
 
-        spend = function()
-            return 40
+        spend_runes = function()
+            if buff.dark_succor.up then return { 0, 0, 0 } end
+            return { 0, 1, 1 }
         end,
-        spendType = "runic_power",
 
         startsCombat = true,
 
         handler = function()
+            removeBuff("dark_succor")
         end
     },
 
@@ -1865,9 +1863,6 @@ spec:RegisterAbilities({
         gcd = "spell",
 
         startsCombat = false,
-
-        usable = function()
-        end,
 
         handler = function()
             applyBuff("horn_of_winter")
@@ -2193,7 +2188,6 @@ spec:RegisterStateTable("death_runes", setmetatable({
     end
 }))
 
-
 -- Legacy rune type expressions for SimC compatibility
 spec:RegisterStateExpr("blood", function()
     if GetRuneCooldown then
@@ -2220,7 +2214,6 @@ spec:RegisterStateExpr("pure_blood", function()
         return 2 -- Fallback for emulation
     end
 end)
-
 spec:RegisterStateExpr("frost", function()
     if GetRuneCooldown then
         local count = 0
