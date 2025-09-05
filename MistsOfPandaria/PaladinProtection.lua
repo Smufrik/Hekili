@@ -1164,6 +1164,30 @@ spec:RegisterAbilities( {
             -- Creates consecrated ground that deals Holy damage over time
         end
     },
+
+    holy_wrath = {
+        -- MoP Holy Wrath (AoE burst; stuns Demons/Undead). 
+        id = 119072,
+        cast = 0,
+        cooldown = 15,
+        gcd = "spell",
+
+        spend = 0.12,
+        spendType = "mana",
+
+        startsCombat = true,
+        range = 10,
+
+        usable = function()
+            -- Add any “don’t break CC / don’t use in single-target” guards here if you want.
+            return true
+        end,
+
+        handler = function()
+            -- No special states to track for Prot; damage/CC handled by the game.
+        end
+    },
+
     
     repentance = {
         id = 20066,
@@ -1266,7 +1290,7 @@ end
 -- } )
 
 -- Range
-spec:RegisterRanges( "judgment", "avengers_shield", "hammer_of_justice", "rebuke", "crusader_strike", "hammer_of_the_righteous" )
+spec:RegisterRanges( "judgment", "avengers_shield", "hammer_of_justice", "rebuke", "crusader_strike", "hammer_of_the_righteous", "holy_wrath" )
 
 -- Options
 spec:RegisterOptions( {
@@ -1290,3 +1314,4 @@ spec:RegisterOptions( {
 
 -- Register default pack for MoP Protection Paladin
 spec:RegisterPack( "Protection", 20250515, [[Hekili:T1PBVTTn04FlXjHj0OfnrQ97Lvv9n0KxkzPORkyzyV1ikA2JC7fSOhtkfLjjRKKGtkLQfifs4YC7O3MF11Fw859fNZXPb72TQWN3yiOtto8jREEP(D)CaaR7oXR]hYdVp)NhS4(SZdhFpzmYBPn2qGdjcw5Jt8jc((52Lbb6W0P)MM]] )
+
