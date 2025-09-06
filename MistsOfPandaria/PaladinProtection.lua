@@ -12,30 +12,6 @@ local class = Hekili.Class
 local state = Hekili.State
 local spec = Hekili:NewSpecialization( 66 )
 
-local function getReferences()
-
-
--- MoP Seal detection
-local function GetActiveSeal()
-    local numForms = GetNumShapeshiftForms()
-    for i = 1, numForms do
-        local _, active, _, spellID = GetShapeshiftFormInfo(i)
-        if active then
-            if spellID == 31801 then return "seal_of_truth", spellID
-            elseif spellID == 20164 then return "seal_of_justice", spellID
-            elseif spellID == 20165 then return "seal_of_insight", spellID
-            elseif spellID == 20154 then return "seal_of_righteousness", spellID
-            end
-        end
-    end
-    return nil, nil
-end
-
-
-    -- Legacy function for compatibility
-    return class, state
-end
-
 local strformat = string.format
 local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
 local function UA_GetPlayerAuraBySpellID(spellID)
@@ -183,6 +159,22 @@ blessing_of_kings = {
     duration = 3600,
     max_stack = 1,
     texture = GetSpellTexture(20217),
+
+generate = function( t )
+    local name, icon, count, debuffType, duration, expirationTime, caster = FindUnitBuffByID( "player", 20217 )
+    if name then
+        t.name = name
+        t.count = count and count > 0 and count or 1
+        t.expires = expirationTime
+        t.applied = expirationTime - (duration or 3600)
+        t.caster = caster or "any"
+        return
+    end
+    t.count = 0
+    t.expires = 0
+    t.applied = 0
+    t.caster = "nobody"
+end,
 },
 
 blessing_of_might = {
@@ -688,62 +680,6 @@ blessing_of_might = {
 -- Protection Paladin abilities
 spec:RegisterAbilities( {
     
-    seal_of_righteousness_cast = {
-        id = 20154,
-        cast = 0,
-        cooldown = 0,
-        gcd = "spell",
-        startsCombat = false,
-        texture = GetSpellTexture(20154),
-        usable = function()
-            local active = select(1, GetActiveSeal())
-            return active ~= "seal_of_righteousness"
-        end,
-        handler = function() end
-    },
-
-    seal_of_insight_cast = {
-        id = 20165,
-        cast = 0,
-        cooldown = 0,
-        gcd = "spell",
-        startsCombat = false,
-        texture = GetSpellTexture(20165),
-        usable = function()
-            local active = select(1, GetActiveSeal())
-            return active ~= "seal_of_insight"
-        end,
-        handler = function() end
-    },
-
-    seal_of_justice_cast = {
-        id = 20164,
-        cast = 0,
-        cooldown = 0,
-        gcd = "spell",
-        startsCombat = false,
-        texture = GetSpellTexture(20164),
-        usable = function()
-            local active = select(1, GetActiveSeal())
-            return active ~= "seal_of_justice"
-        end,
-        handler = function() end
-    },
-
-    seal_of_truth_cast = {
-        id = 31801,
-        cast = 0,
-        cooldown = 0,
-        gcd = "spell",
-        startsCombat = false,
-        texture = GetSpellTexture(31801),
-        usable = function()
-            local active = select(1, GetActiveSeal())
-            return active ~= "seal_of_truth"
-        end,
-        handler = function() end
-    },
-
     blessing_of_might_cast = {
         id = 19740,
         cast = 0,
@@ -1449,5 +1385,5 @@ spec:RegisterOptions( {
 } )
 
 -- Register default pack for MoP Protection Paladin
-spec:RegisterPack( "Protection", 20250916, [[Hekili:fJv7UTTnx4RLIbeK014A7e51oehGT20I0xKSIQc0)jrAjAB2ijkqsLudyqSlIDfURKDiLLfjTKDt6EX(tIK4HNZZ5t(qhnk6ZrHPyjj62Xdhhm81dNmy04GjdhhfkxvsIclXj3HxapuGZH)(rotssKuwHEPvzmCQwfcwfpbwo86BEJcfC(Ro9vrHZQOzYRlIM1LjopambUsUKXJc)FlXG(wsttj1ItejrH3(hF(QFvHcj4mHcbIKMruOvGPeKS5duORle0flLkefwpLmhxLbVmNXvOsaNac5S50max)KcDd7Jkul8HNXz4uk8WF)N)LcPHG2wLsqXtKlvinAvi1hG9ElSRFeKO(GrnFKtsy5ZWW7ydiedkB(0pp9LZYicbTyrmBE8DW)fXjyrpY(1Q0f5KIgnpDQ5FVDJLB(K5H3tkiCAIcj50I7iYnoayGTQguyLGetLKCXlOZNoRA(8b47jfl0W5bowUCqv561sAo5Ird3O4pHtO6aILwMLXyPXZR4RC(kbIt878SiMNGliXsgN36i3G)QoO9M3k0HElHDaJ9klzzRInlt4ASlXzG6gy)5bKcmeCt3yJ3W4etwIazT7jooqk9EkaQY26eRfxuH5PuCHobHlsOGDQtuBJzownL9qXrMplwsjzP6TjxsI56sfcRsyjXo21SMB4kvBpdStRD1)FyY6161t3altC8kjHxGZuO3LbZguOkbmOqHo(Q3PqCszgobITOVWE)jU5YhyCdWwKX4RSszKA9fpxRUMC2rhBaK7ACsoMwiUyCnANbTjGU3QZbcjm16YXhDSj4uYEGWVC6zRx743v8sMGa11NCYthD7Z(td2eOczYpTn8yM2abDTfVhExxUtYj8fKIeNUMEYGAiz7wb95wRxtlG5f6MMuCoy74rbdhMlUC6syog0rNJ)2Zho4Sgqc5zjDofAtqFX0KHeRGjhlCavZChRaJy7g3mPWj2SZueNynMkFHGKmnHXY0vwdA0Ftk(7Xo9U5lh2)AxmD4Ga7jKyyqeuUESOmJ2m7(3yx5uBKWHKi08flGzP3r0GRongdAiNsexCMZOjCoKy7md6UnO4C)HfpdBhDoKm2bHEeXowCJz44cRiYlHGbnldMH3vHWJpD(0txhD8H8Kt7vbNCzTt6DKc4vX1nA7CMYMtA20CKW1ngH1IIQkVJqk1vlW5)NQl0DQtegX3OyNsyRV72N4UuJx3Kv(Sz)AemRskbJyBnY3ijvMbqcTqfje7Xw7Sy7PHTQitxBkIRlyT2TZ37AJTL42HR3ZzvfPM(h3r)jW)ijGKW7AZ8mjnPMxWoH)sovK7FGU5Jn4ik8Ei9b7PHz5OjrHpG5f6dQIcVoVKXnXSXkuTYvOmQqkgO(quO5jd93AstWJ3AOd3O9Fh4NA2vu4wYr1ut50Y6VdCS2Y5st4ApCTIcHTbhHqXAIXDoyeTEnSrQ(O0luOrdJKGJ5HihZVHawloBPFP37z69UDPTCWS1hi152s5YjZtYG9HfBIBw6ZXj1kzINsAJk7H4wRcTxvRUFzFyYNOxRA2H7JwxVQxO1nrlf6iD)4biB1kv3eUAbvVKU0G71)NaU213pJq7kihAQAOdvYD3w5q1Yl39yix2rvuNS1mEZXBCOozuA68g361DZStHUSrkqBTKXGVdZaoRUrUBszkeG3tmrf)HnpcFy)ydWqqFbzTH9NP0izpfkEjMVFYS2UKFqky)bj9ADZETE7TmyvONRqalwJNDwpEwdzaFxPxkVDKn6J(zBczNj6gmDUhMGZ)aT3hnfR8gqM6XcJEvRPID4HK5IP6qzGb2(d7BGLhXlVi6EzsB7nU8FnTD1PW(pFWFlMEnRtg6MSTrP(Ns4Md6Hlz)PIdTZUI29kQDq3)ei3ty3dZ8ok116Z)qJNAT3)o1vndmpCm509QUtQZ9BcAJh6qGXLuVhdMXJSLTLLVVy9oH0MK(odto4ve6SDUJBeyD2Dx3kW0Tu779nWBxw)EODNlu015p9E1bJT9hSTZ(78YdTy0zzJgdCYoU3SWpf5pNy78jRBy4pCY(wj249zAA3M7HyuT)0IUPO6DveNIkZAr6EWWT)OTDD)cV(7N2pq9p(VoD7pmT9vj66hJE7vs29Kv70JXZfLW0MBNmX8w0)8]] )
+spec:RegisterPack( "Protection", 20250916, [[Hekili:fJ16UTTnu4NLIbeK0146lrzTdXbyRnTiDizfvfO)tI0s02SrwuGKkPbWGype7jCpj7qkllsQlUTBd7pX2IhEoF87CHFkrtI(yuykwsIUD64PbJF54Zhnz2zZMeefkFSGefwGtUdVc(soEd833ZzssIKYY1l9ygdNQDHGvYtGLdV(MxPqbN9ItFru4IsAM868OfTdX0GZcMgfIlLRz8OWFBng83AAAkPYCIijk82F)Jx9ZkuibNjuiWK0mIc9iekbjB5if66CbD1APcrH1tjlXLzWpwY4kubGtaHC2sAgGRFqHUH9EfQb(W3Xz4uk8L)6p(tfsdbDSkKGJpxUwH0OvHuVd27TWU(NGe17mU59CscBZcm8BSbeIrf1p6hN)8fzeHGMVkMTm(o4trCcw0JTFUmD1gsETNNp38XR3f56hz(YBj5eonrHKCA(De5UdaeG9UgCyPGetLKnINrxoFr5YLJW3tYxPHZdCSC9OYITBL0nKlMmENJ)aoHQjelVSiJXsJxwYF05PeGN435frmpbNtILmoV5GCd(ZAs7vVwOPElJDaJ9kRzzpgBwMW1yxIZa3nY(XJi5yGCt3fJxX4etwIazT7johGu69uaufn1jwlUQeZtP4CDccNNqH4uLO2ZzornL9q(rMhlwtjzP6TjxtI56sfcRuyzrR4AwZLUs1XZa70QJ6)fHSATEpP7GLHhVss454mf6nzWSbfQuadkuOJV6nkeNuKHtaUf9j2BpXnx(aJBa2Qmg)rRugPYFXl1URoND0Xga5UgNSbtZfxmTcTlG2eW3795iHeMAD50Jo2qofShi8lNpB7wNZDjVGjiqD9jN89JUHI)8GDevit(H90JzAdq66iEp8BD5ozdHVIKN4010tgudj7JvqFhRTBP5W8cDttkEde74jbJhVrC581WCmOJEd(lpD8Oz1GeYZs6sk0MG(KPjdjEeMCSYbu1ZDSigX(nUBsHd30AkIdxJPYNjijZtySmDL1OA)xNI)AItVB(YX9V2fZhpkWEcjggebLRhlkYO1ZU)f2vo1gjCijcnFXcyw6Den4QsJXGh2qjIlM5mAcVbsSDMbD3guComT4fyB25q2ytc9yInxCJz44klg55azqZYGz4Dvi8TNo)(txhD8HojN2Rdo5YQdP3vkWPkUQrR1Dk7UPzxZrcx3yewzkQS4ocPqxTa3)FQUq3PorymFNJDkHTEUBFI7s1N66SYhn7xJGfLsjee7Or(cjP0masOnkpHyp2Q1In3g24ImDTPiUQG1A3opVRn2uIBtxVLZkZtn9pUJ(tGpijGLWV1H5jsAsLUGw0FbNk24FHU5H14ik8Ei9b7Pwz5KZJcFaZZ1xuffE9Mcg3WztvOkNRqzuHums9UOqZ3mYFRenbF9wJC4AV)RrHjCqseNI1Az7CwgA7wqxfvF73fk0KXGKwtGIc3RNQsnlNwu9Cqw2EzAAnAdiplschmpe54RDcWAcAJ8l9ENP37(L2RbZ2FGvNzBLRMmpldgcl2c3S8NdJPDY59sXdiCRXH2RQD3pneM8f614MwAF0(6fdN9Bj0sHos3pEaXwnw1TGRgq1ROln4E5)lGRz9HveAxb5itvdDOT4a58o1wzI9X7cFN6)mnDtBWy36WuOlRTc8wJ0j45q73SQE4ULqPqG01tAoCoAd9k2(wudByL(h2Cqwz4tlCQc6dZ6a7ptPjW(KtWWKJETU1ywT9gDMk0tviqRzdS6PQ0Ju)6voBozZoeL2NgYgwT1m(gixlPWhJ9kC2GPZ8WeC)haS(KPyL3aXuFRNGEDRPhy8HS5I56KuGb2(d7BaIR0vtpOvE1tyMhxnOsBtC7)(b)4A6ETUzOBX2gN6FlHBoOhTK9Nko0o7IT71uBs3)gi3ByhqzEhfPA)5FPX3BT3)o1v1JGpmNC6GU7KQC)osB6yhbmUI69uWmDITTnQ89nR)jKdjK36k3UeZB6uSgm7yuRzkh89nma9Gd86x(FdqABJhAA92hMy7pyRvS78LhAcRZYgpg4KDCFZc)uu)ZjEIwrEsLs39tLSEVd)rs2VRIX1(tl6wIQ3RI4uuzwls3dgU)FABxVFrJU9U(p)Ux)F7lGS5ctyefqR9TNFU5xr)9d]] )
 
