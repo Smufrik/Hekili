@@ -12,11 +12,6 @@ local class = Hekili.Class
 local state = Hekili.State
 local spec = Hekili:NewSpecialization( 66 )
 
-local function getReferences()
-    -- Legacy function for compatibility
-    return class, state
-end
-
 local strformat = string.format
 local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
 local function UA_GetPlayerAuraBySpellID(spellID)
@@ -158,7 +153,37 @@ spec:RegisterGlyphs( {
 
 -- Protection Paladin specific auras
 spec:RegisterAuras( {
-    -- Grand Crusader: Chance for free Avenger's Shield after Crusader Strike or Hammer of the Righteous
+    
+blessing_of_kings = {
+    id = 20217,
+    duration = 3600,
+    max_stack = 1,
+    texture = GetSpellTexture(20217),
+
+generate = function( t )
+    local name, icon, count, debuffType, duration, expirationTime, caster = FindUnitBuffByID( "player", 20217 )
+    if name then
+        t.name = name
+        t.count = count and count > 0 and count or 1
+        t.expires = expirationTime
+        t.applied = expirationTime - (duration or 3600)
+        t.caster = caster or "any"
+        return
+    end
+    t.count = 0
+    t.expires = 0
+    t.applied = 0
+    t.caster = "nobody"
+end,
+},
+
+blessing_of_might = {
+    id = 19740,
+    duration = 3600,
+    max_stack = 1,
+    texture = GetSpellTexture(19740),
+},
+-- Grand Crusader: Chance for free Avenger's Shield after Crusader Strike or Hammer of the Righteous
     grand_crusader = {
         id = 85416,
             texture = GetSpellTexture(85416),
@@ -654,7 +679,33 @@ spec:RegisterAuras( {
 
 -- Protection Paladin abilities
 spec:RegisterAbilities( {
-    -- Core Protection abilities
+    
+    blessing_of_might_cast = {
+        id = 19740,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        startsCombat = false,
+        texture = GetSpellTexture(19740),
+        usable = function()
+            return state.buff.blessing_of_might.down and state.buff.blessing_of_kings.down
+        end,
+        handler = function() end
+    },
+
+    blessing_of_kings_cast = {
+        id = 20217,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        startsCombat = false,
+        texture = GetSpellTexture(20217),
+        usable = function()
+            return state.buff.blessing_of_kings.down and state.buff.blessing_of_might.down
+        end,
+        handler = function() end
+    },
+-- Core Protection abilities
     shield_of_the_righteous = {
         id = 53600,
         cast = 0,
@@ -1334,4 +1385,5 @@ spec:RegisterOptions( {
 } )
 
 -- Register default pack for MoP Protection Paladin
-spec:RegisterPack( "Protection", 20250515, [[Hekili:nN1)UTTnq4NLHbeK0L444uN1UfhG200U2TeeuvG(FsKwI2MnsIcKuj1age7HypH7jzhPKSiPLSBc6WgkqJd5X7(UFYp6eEs4NcdsWss4nJgoA8Wxo8SbdF5OrNmomqUSGeguGJVdph(qood()B5mjjwsz56TwMYWjAviyL8yy7G3F9Lk04N)IJEryW0sAQ895Ht72eJcdWLYfmEyWVVad6BbnjHujorehgCdyQFrHEDkriO5ZfhhqWPcfcZjkuotQqIYIcgxssGfHnE1T)b8bd6GF7YsoNKltxQq0Cf63i3rtPWYPyqDX)QcfJfGoKlizkugoVeNQLLXvO7Py9sXC2aWn5Sz0uW5(rf6A2TkuBma(mofNOv)F)N)LcP9dfkGuihOqNjxOqAxwHuFao7)lCh1hmy5wojMLnfdhOifhtwWsti89V6EcFPCbGoqrLCTz5g0ibDotRkiyOptLxFG6d1WBqrJcNCCmy4OQ1JsPc5H6kNjjKz4YuzT9NmX8J30Sy9sMp8osoHtJbeWP53raZbr1KunOAm3pn54sbjIkjzIdPZMmTC2Sb47j5ZbPIEGJLlguwSALKMro)KH1k(J4yQoIBPLPPmws0Ss(sNvjCbHFNNfX8yCojsYm5HADEn(l6WYLVrOZYwc7ag7DGq9YiZ2eUg7sCkOUb2lpGKJNMcb(kBCjtxHabqsUGEpXXbsO3tbqv0wsAT58smpHIZJyZIW5XuWorAVQnM5y1e2d57zwwSGsst0hdkNI405lKewPWsInSRzp3WvI2EgyNu5Q)ByYQ961tRHLjoELKWZXPk0BtHksfQuad2uO9V6T6YCtFaKf)m7Dh4MlFGXnaBEkJV0kLrQ0x0mT6AYz7TVbqU7XjzyAU48rvODk0PQ7oA05aHeMYEXO923eCkypq4xm50vRC87sEbtqG66do4PJUTz)jJRdubm5hxhEmd2GGU2I3tQgOqYi85K8yNUMEYGAiz7wJ7ZTwTIMdZq0nnj4mW2rNmE4WmXftwadkHo6m8xF2WbN2asiplPZO65tF20KHelHjhZDa1xktMNbHdRaJy9bRNu4eB2ykItSgtLhkiXtIzWatOYAqJ(BsXFl2P3dFXW(378jdhm2EcjggebLR7lksPY6PZVIDLtTrmhsIqZxKaMLEhrdUQ0yeOHmkrC(PoJMWzqITZmO7XGIZThw8mSD0zxYyhe6re7yX1MHJZTIihdbdAAkmdVRcHhF68PNU2B)D5jh1Rco4IkN07kfWRIQA024oL6BAQBoInxChujkQS4ocPqxTqsNDKUq3PoryeVwXoLWwR72N4UvJx3Kv(K58AemTuk18xSSg5RK4sZaiHwO8yI9yRn2S92WwvKQRnfrvfSwN2z9UoyBjUD46DCwzEIP)XD0Fm8dsmij87AZ8dsACfVGnc)fCQiZ)cDZIn4imaOxjGZuZeESML9dyEU(IQWG3N1q(BudTpfstGsaS2ak2fK4WBo7SWaZAgI7v0NGpEJHiFJDEnWS2C(WG10KQivZPfvRdSTwZ(st9AlSUcdGJbxMqXAk9DoIeTAfCqQ(s1ZvOtggkbx0droMVMkwloBjIPp7P6ZUER1SXS1hi1ZTLYLDMNKJ3gwSPWzPphNuRKZ8usBuzlu4AvO9UA19ZBdt(u(AvZgSG066f9cTUPCPq7P7m3bTRwP6M6vlO6L(LgCV8)eW1U)25gAxb5qyvdDOsU72khsxE5UhdnZoQI6K3MXB2V2H6KBPPZBuRx3nhpf6IgPaT1sldwhMbCAvJC30ZuiaVhyIk(dBEe(W2XgGHX9fK1g2FMsJK9uO4Ly(2P1A7s(bPXBpiP3RBESvhVLlRc9mfc4ZA8St7XZAOf47k9s(TJSrFerBtiBmr3GPN7Hj4Mqq79ryXkVb0QESWOx1AQyhUlzoFIouo2aB)H9nWYJcMxeDRCQT9gxMWM2UQuy)3p4FetVM1ndDt72Ou)BjCZb9WQS)uXUozxr7Ef1oO7FdK7nSBHJEhL6A95FPXtT277tDvZaZDhtoARQ7GQCFDqB0qhcmU079yWm6eBzB577lwVtiTPRVXWKD(yHoBN74Tbw3D317dmDlv(EFd82K)VhA34PfDD)tVpIWyB)bBBC(oFgrlgD22OXXozh33y4NI8NtSE(K1Bn8hoz)(eB8(dAA3MxKyuT)0IUPO69OeNIkZEH6EWG1FLUD9(cV(7N23k()UFL4h(T(vI)96Bd3kv69vGx9MTOQ)eknVAR9FH)Zd]] )
+spec:RegisterPack( "Protection", 20250916, [[Hekili:fJ16UTTnu4NLIbeK0146lrzTdXbyRnTiDizfvfO)tI0s02SrwuGKkPbWGype7jCpj7qkllsQlUTBd7pX2IhEoF87CHFkrtI(yuykwsIUD64PbJF54Zhnz2zZMeefkFSGefwGtUdVc(soEd833ZzssIKYY1l9ygdNQDHGvYtGLdV(MxPqbN9ItFru4IsAM868OfTdX0GZcMgfIlLRz8OWFBng83AAAkPYCIijk82F)Jx9ZkuibNjuiWK0mIc9iekbjB5if66CbD1APcrH1tjlXLzWpwY4kubGtaHC2sAgGRFqHUH9EfQb(W3Xz4uk8L)6p(tfsdbDSkKGJpxUwH0OvHuVd27TWU(NGe17mU59CscBZcm8BSbeIrf1p6hN)8fzeHGMVkMTm(o4trCcw0JTFUmD1gsETNNp38XR3f56hz(YBj5eonrHKCA(De5UdaeG9UgCyPGetLKnINrxoFr5YLJW3tYxPHZdCSC9OYITBL0nKlMmENJ)aoHQjelVSiJXsJxwYF05PeGN435frmpbNtILmoV5GCd(ZAs7vVwOPElJDaJ9kRzzpgBwMW1yxIZa3nY(XJi5yGCt3fJxX4etwIazT7johGu69uaufn1jwlUQeZtP4CDccNNqH4uLO2ZzornL9q(rMhlwtjzP6TjxtI56sfcRuyzrR4AwZLUs1XZa70QJ6)fHSATEpP7GLHhVss454mf6nzWSbfQuadkuOJV6nkeNuKHtaUf9j2BpXnx(aJBa2Qmg)rRugPYFXl1URoND0Xga5UgNSbtZfxmTcTlG2eW3795iHeMAD50Jo2qofShi8lNpB7wNZDjVGjiqD9jN89JUHI)8GDevit(H90JzAdq66iEp8BD5ozdHVIKN4010tgudj7JvqFhRTBP5W8cDttkEde74jbJhVrC581WCmOJEd(lpD8Oz1GeYZs6sk0MG(KPjdjEeMCSYbu1ZDSigX(nUBsHd30AkIdxJPYNjijZtySmDL1OA)xNI)AItVB(YX9V2fZhpkWEcjggebLRhlkYO1ZU)f2vo1gjCijcnFXcyw6Den4QsJXGh2qjIlM5mAcVbsSDMbD3guComT4fyB25q2ytc9yInxCJz44klg55azqZYGz4Dvi8TNo)(txhD8HojN2Rdo5YQdP3vkWPkUQrR1Dk7UPzxZrcx3yewzkQS4ocPqxTa3)FQUq3PorymFNJDkHTEUBFI7s1N66SYhn7xJGfLsjee7Or(cjP0masOnkpHyp2Q1In3g24ImDTPiUQG1A3opVRn2uIBtxVLZkZtn9pUJ(tGpijGLWV1H5jsAsLUGw0FbNk24FHU5H14ik8Ei9b7Pwz5KZJcFaZZ1xuffE9Mcg3WztvOkNRqzuHums9UOqZ3mYFRenbF9wJC4AV)RrHjCqseNI1Az7CwgA7wqxfvF73fk0KXGKwtGIc3RNQsnlNwu9Cqw2EzAAnAdiplschmpe54RDcWAcAJ8l9ENP37(L2RbZ2FGvNzBLRMmpldgcl2c3S8NdJPDY59sXdiCRXH2RQD3pneM8f614MwAF0(6fdN9Bj0sHos3pEaXwnw1TGRgq1ROln4E5)lGRz9HveAxb5itvdDOT4a58o1wzI9X7cFN6)mnDtBWy36WuOlRTc8wJ0j45q73SQE4ULqPqG01tAoCoAd9k2(wudByL(h2Cqwz4tlCQc6dZ6a7ptPjW(KtWWKJETU1ywT9gDMk0tviqRzdS6PQ0Ju)6voBozZoeL2NgYgwT1m(gixlPWhJ9kC2GPZ8WeC)haS(KPyL3aXuFRNGEDRPhy8HS5I56KuGb2(d7BaIR0vtpOvE1tyMhxnOsBtC7)(b)4A6ETUzOBX2gN6FlHBoOhTK9Nko0o7IT71uBs3)gi3ByhqzEhfPA)5FPX3BT3)o1v1JGpmNC6GU7KQC)osB6yhbmUI69uWmDITTnQ89nR)jKdjK36k3UeZB6uSgm7yuRzkh89nma9Gd86x(FdqABJhAA92hMy7pyRvS78LhAcRZYgpg4KDCFZc)uu)ZjEIwrEsLs39tLSEVd)rs2VRIX1(tl6wIQ3RI4uuzwls3dgU)FABxVFrJU9U(p)Ux)F7lGS5ctyefqR9TNFU5xr)9d]] )
+
