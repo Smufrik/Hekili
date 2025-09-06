@@ -1,5 +1,5 @@
 -- PaladinProtection.lua
--- Updated May 28, 2025 - Modern Structure
+-- Updated September 6, 2025 - Modern Structure
 -- Mists of Pandaria module for Paladin: Protection spec
 
 -- MoP: Use UnitClass instead of UnitClassBase
@@ -161,6 +161,7 @@ spec:RegisterAuras( {
     -- Grand Crusader: Chance for free Avenger's Shield after Crusader Strike or Hammer of the Righteous
     grand_crusader = {
         id = 85416,
+            texture = GetSpellTexture(85416),
         duration = 6,
         max_stack = 1,
         generate = function( t )
@@ -185,6 +186,7 @@ spec:RegisterAuras( {
     -- Shield of the Righteous: Active mitigation ability
     shield_of_the_righteous = {
         id = 132403,
+            texture = GetSpellTexture(132403),
         duration = 3,
         max_stack = 1,
         generate = function( t )
@@ -209,6 +211,7 @@ spec:RegisterAuras( {
     -- Bastion of Glory: Increases healing of Word of Glory on self
     bastion_of_glory = {
         id = 114637,
+            texture = GetSpellTexture(114637),
         duration = 20,
         max_stack = 5,
         generate = function( t )
@@ -233,6 +236,7 @@ spec:RegisterAuras( {
     -- Divine Plea: Restore mana over time, but reduce healing done
     divine_plea = {
         id = 54428,
+            texture = GetSpellTexture(54428),
         duration = 15,
         max_stack = 1,
         generate = function( t )
@@ -257,6 +261,7 @@ spec:RegisterAuras( {
     -- Sacred Shield: Absorbs damage periodically
     sacred_shield = {
         id = 65148,
+            texture = GetSpellTexture(65148),
         duration = 30,
         tick_time = 6,
         max_stack = 1,
@@ -282,6 +287,7 @@ spec:RegisterAuras( {
     -- Holy Avenger: Holy Power abilities more effective
     holy_avenger = {
         id = 105809,
+            texture = GetSpellTexture(105809),
         duration = 18,
         max_stack = 1,
         generate = function( t )
@@ -306,6 +312,7 @@ spec:RegisterAuras( {
     -- Avenging Wrath: Increased damage and healing
     avenging_wrath = {
         id = 31884,
+            texture = GetSpellTexture(31884),
         duration = function() 
             return state.talent.sanctified_wrath.enabled and 25 or 20
         end,
@@ -332,6 +339,7 @@ spec:RegisterAuras( {
     -- Divine Protection: Reduces damage taken
     divine_protection = {
         id = 498,
+            texture = GetSpellTexture(498),
         duration = 10,
         max_stack = 1,
         generate = function( t )
@@ -356,6 +364,7 @@ spec:RegisterAuras( {
     -- Divine Shield: Complete immunity
     divine_shield = {
         id = 642,
+            texture = GetSpellTexture(642),
         duration = 8,
         max_stack = 1,
         generate = function( t )
@@ -380,6 +389,7 @@ spec:RegisterAuras( {
     -- Forbearance: Cannot receive certain immunities again
     forbearance = {
         id = 25771,
+            texture = GetSpellTexture(25771),
         duration = 60,
         max_stack = 1,
         generate = function( t )
@@ -404,6 +414,7 @@ spec:RegisterAuras( {
     -- Speed of Light: Increased movement speed
     speed_of_light = {
         id = 85499,
+            texture = GetSpellTexture(85499),
         duration = 8,
         max_stack = 1,
         generate = function( t )
@@ -428,6 +439,7 @@ spec:RegisterAuras( {
     -- Long Arm of the Law: Increased movement speed after Judgment
     long_arm_of_the_law = {
         id = 114158,
+            texture = GetSpellTexture(114158),
         duration = 3,
         max_stack = 1,
         generate = function( t )
@@ -452,6 +464,7 @@ spec:RegisterAuras( {
     -- Pursuit of Justice: Increased movement speed from Holy Power
     pursuit_of_justice = {
         id = 26023,
+            texture = GetSpellTexture(26023),
         duration = 3600,
         max_stack = 3,
         generate = function( t )
@@ -465,6 +478,7 @@ spec:RegisterAuras( {
     -- Divine Purpose: Free and enhanced Holy Power ability
     divine_purpose = {
         id = 86172,
+            texture = GetSpellTexture(86172),
         duration = 8,
         max_stack = 1,
         generate = function( t )
@@ -489,6 +503,7 @@ spec:RegisterAuras( {
     -- Eternal Flame: HoT from talent
     eternal_flame = {
         id = 114163,
+            texture = GetSpellTexture(114163),
         duration = function() return 30 + (3 * state.holy_power.current) end,
         tick_time = 3,
         max_stack = 1,
@@ -514,6 +529,7 @@ spec:RegisterAuras( {
     -- Guardian of Ancient Kings: Major defensive cooldown
     guardian_of_ancient_kings = {
         id = 86659,
+            texture = GetSpellTexture(86659),
         duration = 12,
         max_stack = 1,
         generate = function( t )
@@ -538,6 +554,7 @@ spec:RegisterAuras( {
     -- Ardent Defender: Emergency defensive cooldown
     ardent_defender = {
         id = 31850,
+            texture = GetSpellTexture(31850),
         duration = 10,
         max_stack = 1,
         generate = function( t )
@@ -562,6 +579,7 @@ spec:RegisterAuras( {
     -- Hand of Freedom: Immunity to movement impairing effects
     hand_of_freedom = {
         id = 1044,
+            texture = GetSpellTexture(1044),
         duration = 6,
         max_stack = 1,
         generate = function( t )
@@ -586,6 +604,7 @@ spec:RegisterAuras( {
     -- Hand of Protection: Immunity to physical damage
     hand_of_protection = {
         id = 1022,
+            texture = GetSpellTexture(1022),
         duration = 10,
         max_stack = 1,
         generate = function( t )
@@ -610,6 +629,7 @@ spec:RegisterAuras( {
     -- Hand of Sacrifice: Redirects damage to Paladin
     hand_of_sacrifice = {
         id = 6940,
+            texture = GetSpellTexture(6940),
         duration = 12,
         max_stack = 1,
         generate = function( t )
@@ -648,7 +668,7 @@ spec:RegisterAbilities( {
         spendType = "holy_power",
         
         startsCombat = true,
-        texture = 236265,
+            texture = GetSpellTexture(53600),
         
         handler = function()
             -- Shield of the Righteous mechanic
@@ -675,7 +695,7 @@ spec:RegisterAbilities( {
         spendType = "mana",
         
         startsCombat = true,
-        texture = 135874,
+            texture = GetSpellTexture(31935),
         
         usable = function()
             if state.buff.grand_crusader.up then return true end
@@ -698,7 +718,7 @@ spec:RegisterAbilities( {
         toggle = "defensives",
         
         startsCombat = false,
-        texture = 409594,
+            texture = GetSpellTexture(86659),
         
         handler = function()
             applyBuff("guardian_of_ancient_kings")
@@ -714,7 +734,7 @@ spec:RegisterAbilities( {
         toggle = "defensives",
         
         startsCombat = false,
-        texture = 135870,
+            texture = GetSpellTexture(31850),
         
         handler = function()
             applyBuff("ardent_defender")
@@ -734,7 +754,7 @@ spec:RegisterAbilities( {
         spendType = "holy_power",
         
         startsCombat = false,
-        texture = 646176,
+            texture = GetSpellTexture(85673),
         
         handler = function()
             -- Word of Glory mechanic - consumes all Holy Power and Bastion of Glory
@@ -778,7 +798,7 @@ spec:RegisterAbilities( {
         spendType = "mana",
         
         startsCombat = true,
-        texture = 236157,
+            texture = GetSpellTexture(53595),
         
         range = 8,
         
@@ -808,7 +828,7 @@ spec:RegisterAbilities( {
         talent = "holy_prism",
         
         startsCombat = function() return not state.option.holy_prism_heal end,
-        texture = 613407,
+            texture = GetSpellTexture(114165),
         
         handler = function()
             -- Holy Prism mechanic
@@ -829,7 +849,7 @@ spec:RegisterAbilities( {
         talent = "lights_hammer",
         
         startsCombat = true,
-        texture = 613952,
+            texture = GetSpellTexture(114158),
         
         handler = function()
             -- Light's Hammer mechanic - ground target AoE that heals allies and damages enemies
@@ -848,7 +868,7 @@ spec:RegisterAbilities( {
         talent = "execution_sentence",
         
         startsCombat = function() return not state.option.execution_sentence_heal end,
-        texture = 613954,
+            texture = GetSpellTexture(114157),
         
         handler = function()
             -- Execution Sentence mechanic
@@ -866,7 +886,7 @@ spec:RegisterAbilities( {
         toggle = "cooldowns",
         
         startsCombat = false,
-        texture = 237537,
+            texture = GetSpellTexture(54428),
         
         handler = function()
             applyBuff("divine_plea")
@@ -882,8 +902,8 @@ spec:RegisterAbilities( {
         toggle = "cooldowns",
         
         startsCombat = false,
-        texture = 135875,
-        
+        --texture = 135875,  my test on getspelltexture below. better solution than using static id in case of typo
+            texture = GetSpellTexture(31884),
         handler = function()
             applyBuff("avenging_wrath")
         end
@@ -900,7 +920,7 @@ spec:RegisterAbilities( {
         talent = "holy_avenger",
         
         startsCombat = false,
-        texture = 571555,
+            texture = GetSpellTexture(105809),
         
         handler = function()
             applyBuff("holy_avenger")
@@ -918,7 +938,7 @@ spec:RegisterAbilities( {
         toggle = "defensives",
         
         startsCombat = false,
-        texture = 524354,
+            texture = GetSpellTexture(642),
         
         handler = function()
             applyBuff("divine_shield")
@@ -937,7 +957,7 @@ spec:RegisterAbilities( {
         toggle = "defensives",
         
         startsCombat = false,
-        texture = 524353,
+            texture = GetSpellTexture(498),
         
         handler = function()
             applyBuff("divine_protection")
@@ -955,7 +975,7 @@ spec:RegisterAbilities( {
         toggle = "defensives",
         
         startsCombat = false,
-        texture = 135928,
+            texture = GetSpellTexture(633),
         
         handler = function()
             -- Heals target for Paladin's maximum health
@@ -976,7 +996,7 @@ spec:RegisterAbilities( {
         gcd = "spell",
         
         startsCombat = false,
-        texture = 135968,
+            texture = GetSpellTexture(1044),
         
         handler = function()
             applyBuff("hand_of_freedom")
@@ -997,7 +1017,7 @@ spec:RegisterAbilities( {
         toggle = "defensives",
         
         startsCombat = false,
-        texture = 135964,
+            texture = GetSpellTexture(1022),
         
         handler = function()
             applyBuff("hand_of_protection")
@@ -1019,7 +1039,7 @@ spec:RegisterAbilities( {
         toggle = "defensives",
         
         startsCombat = false,
-        texture = 135966,
+            texture = GetSpellTexture(6940),
         
         handler = function()
             applyBuff("hand_of_sacrifice", "target")
@@ -1035,7 +1055,7 @@ spec:RegisterAbilities( {
         talent = "hand_of_purity",
         
         startsCombat = false,
-        texture = 458726,
+            texture = GetSpellTexture(114039),
         
         handler = function()
             -- Applies Hand of Purity effect
@@ -1053,7 +1073,7 @@ spec:RegisterAbilities( {
         spendType = "mana",
         
         startsCombat = true,
-        texture = 135891,
+            texture = GetSpellTexture(35395),
         
         handler = function()
             gain(1, "holy_power")
@@ -1079,7 +1099,7 @@ spec:RegisterAbilities( {
         spendType = "mana",
         
         startsCombat = true,
-        texture = 135959,
+            texture = GetSpellTexture(20271),
         
         handler = function()
             gain(1, "holy_power")
@@ -1101,7 +1121,7 @@ spec:RegisterAbilities( {
         spendType = "mana",
         
         startsCombat = false,
-        texture = 135949,
+            texture = GetSpellTexture(4987),
         
         handler = function()
             -- Removes 1 Poison effect, 1 Disease effect, and 1 Magic effect from a friendly target
@@ -1120,7 +1140,7 @@ spec:RegisterAbilities( {
         gcd = "spell",
         
         startsCombat = true,
-        texture = 135963,
+            texture = GetSpellTexture(853),
         
         handler = function()
             -- Stuns target for 6 seconds
@@ -1141,7 +1161,7 @@ spec:RegisterAbilities( {
         end,
         
         startsCombat = true,
-        texture = 138168,
+            texture = GetSpellTexture(24275),
         
         handler = function()
             gain(1, "holy_power")
@@ -1158,7 +1178,7 @@ spec:RegisterAbilities( {
         spendType = "mana",
         
         startsCombat = true,
-        texture = 135926,
+            texture = GetSpellTexture(26573),
         
         handler = function()
             -- Creates consecrated ground that deals Holy damage over time
@@ -1168,6 +1188,7 @@ spec:RegisterAbilities( {
     holy_wrath = {
         -- MoP Holy Wrath (AoE burst; stuns Demons/Undead). 
         id = 119072,
+            texture = GetSpellTexture(119072),
         cast = 0,
         cooldown = 15,
         gcd = "spell",
@@ -1201,7 +1222,7 @@ spec:RegisterAbilities( {
         spendType = "mana",
         
         startsCombat = false,
-        texture = 135942,
+            texture = GetSpellTexture(20066),
         
         handler = function()
             -- Incapacitates target for up to 1 minute
@@ -1220,7 +1241,7 @@ spec:RegisterAbilities( {
         spendType = "mana",
         
         startsCombat = true,
-        texture = 571553,
+            texture = GetSpellTexture(115750),
         
         handler = function()
             -- Disorients all nearby enemies
@@ -1236,7 +1257,7 @@ spec:RegisterAbilities( {
         talent = "speed_of_light",
         
         startsCombat = false,
-        texture = 538056,
+            texture = GetSpellTexture(85499),
         
         handler = function()
             applyBuff("speed_of_light")
@@ -1255,7 +1276,7 @@ spec:RegisterAbilities( {
         spendType = "mana",
         
         startsCombat = false,
-        texture = 612316,
+            texture = GetSpellTexture(20925),
         
         handler = function()
             applyBuff("sacred_shield")
@@ -1313,5 +1334,4 @@ spec:RegisterOptions( {
 } )
 
 -- Register default pack for MoP Protection Paladin
-spec:RegisterPack( "Protection", 20250515, [[Hekili:nNv3UTTnu4NLIbe40L64yx312fhG20)3sqqvb6DsIwI2MnsIcKujnagc7Hy3SxV9KSZHsYIKwYUPOdBOajoKhEoFNF5hD9pX)t(EXef1)YXJgpD0ZgnDi(HPt89u3Lt99YjrxtwcFiJKc)8kbxrJumEwz4lPkckWDjCsmQijVqebc59(loVmC6JF6JEQV38cwI69z(Z70qtoX3JuOwXf(E)2ksMV3kwCmTsCQmY37D8Bldv8YqAgzEcTm8D8K7kd)SGOwvgMaQu88Ypu(HZHtVe2(gssbD2OYWzN18hNCuzijl(yUOmuqt53aIPwb)4NkdzGJSqWZuLH8f1lVcSqWT1gGLrhI6)tRiQ)(p(ljCe43)zgGOffcqEqP0yMc2iJsJPXAPVectphcrjuPKLTuEShLKaIqeG(Z4G1Kf55CHIgdlcB8IR(D4d6il8xNxie0mf6OiaFh9AwcdwoHaQl6xldJisLgTPLHPKScsckl6G3Wi4src(qi5i4lyjqkb80l4xvgAM)UIKqIr1dUtzig9l)ai3)lGogd)jeU0iE6CcCG8esefYmXuXGxFdvCNAfGoqrfc0ScnAuGoxGQcCC8mvE4HLFOgEdZBu4SJJadhuTEqctQocRWNftxqksu12F2m9VEvZI1lP)WBPzublcqGGLDnfmhebJtqq1yUFE2XfsAatrtLhXwmBEXIfdj3qZwcsvvHnSiF9AflLE6jJQv8hjrmmIBOL5jCECauVDN1QuHKkU2XIerejJgO468qToVG8fmSC(RGqLLWwGXChDtGEBQaXUIKaQBO5YdRAjJRTX5CScbcG0mj7gQLdeZUbAKcYBl)m2CzbreZizb8fbKSigyNa0RAJzwwnMFB2b6LLRy0Ky8yq5uGGTCLIYlKgsSLD17zhUIr7PHDCLR(VHjR2RxpTgw644RHrAzKKYW3KavKLHfscoyBWRFdwMR7dGS4N5V9q7C5TCHgylt4I7msz0k9fSavxto7GbAazVhmCKWYKNoUcTZHovS7OrNdLk42GZgFWaDWjNFlvC2SjRxB53fICUKc11hE43p62L9NnToq5XvFCt4rpedc6OfXb8y5onLkwsZIS6A6jdIqY0TM2NBTEnldMHGnnXKuW2bNmD0Ou5zZwbdkHo6uYxF4OHtAajKNvSfmC(u9LwY7GjhlTa1xkIxMcHdJaJCZbRNuyfB2AkIvSMWuhjPrZI4WatOYAyJ(BsXFl2P3dF2O(370zJgo1CcjbgebLRdK5jmv905xWFTvTrKasIqZxGeMLEnfbxvAma0qkJkpDI1OjskKy7mdAFmO4C3HfhdBgD2NmMbHEeXmwCHE44sJiYXqWGLKaZW7Qq4(No)(txhmyFEYJ6vbhEwLt6CLc4vbvnABDNs9nn1nhr6lU9QenSi)AknhRwOjlEewOBvNi1IxRyRsyJ1T7tS3QXRBYkFsFEebZlukK)IH1OFLgvOhajrHYIOMJT2AZ2BdBvrcwBkdQkynoT16DDW2sCZW1Bf8ISyD)J9O)i4x0iqs4VrZ8aflQIxWwH)CbtM6EHUEXgC47DlrKH3k579(0gMEJB44HCILkjqrdy8NtJ8V8jpX3tVM(1evCLGpEP(1fnk9LarF95992WjQIJVGLxToqTAdvlKN1oOy57bhdU5GrWxy058WW1RHdYWBqpTm8Kr(k4ThoiYY818UAXzlRl8StWZUzRnuVm1hi1JnLYMkMJKt3fwm5RzOplNevYtCusBuzh81AvO5UO6(LDHjx(DTQzlkpOUEAVqRB(vLHhGTH7HJvRuDZZQfu9Y1cb3Z(pbCT7VBIGMvqwStrOdvYD3wzXWYj3DF4u2rvuNK00EZGAhQtIK6oVXTED3e6kdpRrQb1p(wZbdwhMbmPQrUBUyLHaEpuhvCh2Cp8HDJnadt7liJg2DMsJK9uO4Ky(25WA6sUbPP7oiH71nP1QJ3sCTm8HLHa5vTNnPhpRHdGRR0lt3oYg9X6SnHS1eDnMESdMGR9aT3h7eJ8gWH6(cJEvRUID0(K50zyOCQg2Ud7BGLdFlNi6ojqB6n20E1TDvPW(VFW9i6EnJBg6MJTwPU3syNd6Hcz)PI9DYUI29kQzq39gi7By3bH8ok1r95EPX3BT3pM6QMbM7pM8ODQUdRY91bTXJSiWyZL3HbZ4tmLTLCVRy9oH0KB(wdt27ld6SDUJhcyC3Dxpgq3Tu579nWBBY(oODR3r019p9(IbTTDhST1578ndTy0ABTgNALDSFqHBkYDoXM5tgpSWD4K5JrmX7dqA36NFOvT70IUPO68ceRIk9E(ypO3MV)2TEFX8T6V3)x39)UFx3h9T(DD)J6R52iT58DBx9(SGQ)pCAEHw7)8)Nd]] )
-
+spec:RegisterPack( "Protection", 20250515, [[Hekili:nN1)UTTnq4NLHbeK0L444uN1UfhG200U2TeeuvG(FsKwI2MnsIcKuj1age7HypH7jzhPKSiPLSBc6WgkqJd5X7(UFYp6eEs4NcdsWss4nJgoA8Wxo8SbdF5OrNmomqUSGeguGJVdph(qood()B5mjjwsz56TwMYWjAviyL8yy7G3F9Lk04N)IJEryW0sAQ895Ht72eJcdWLYfmEyWVVad6BbnjHujorehgCdyQFrHEDkriO5ZfhhqWPcfcZjkuotQqIYIcgxssGfHnE1T)b8bd6GF7YsoNKltxQq0Cf63i3rtPWYPyqDX)QcfJfGoKlizkugoVeNQLLXvO7Py9sXC2aWn5Sz0uW5(rf6A2TkuBma(mofNOv)F)N)LcP9dfkGuihOqNjxOqAxwHuFao7)lCh1hmy5wojMLnfdhOifhtwWsti89V6EcFPCbGoqrLCTz5g0ibDotRkiyOptLxFG6d1WBqrJcNCCmy4OQ1JsPc5H6kNjjKz4YuzT9NmX8J30Sy9sMp8osoHtJbeWP53raZbr1KunOAm3pn54sbjIkjzIdPZMmTC2Sb47j5ZbPIEGJLlguwSALKMro)KH1k(J4yQoIBPLPPmws0Ss(sNvjCbHFNNfX8yCojsYm5HADEn(l6WYLVrOZYwc7ag7DGq9YiZ2eUg7sCkOUb2lpGKJNMcb(kBCjtxHabqsUGEpXXbsO3tbqv0wsAT58smpHIZJyZIW5XuWorAVQnM5y1e2d57zwwSGsst0hdkNI405lKewPWsInSRzp3WvI2EgyNu5Q)ByYQ961tRHLjoELKWZXPk0BtHksfQuad2uO9V6T6YCtFaKf)m7Dh4MlFGXnaBEkJV0kLrQ0x0mT6AYz7TVbqU7XjzyAU48rvODk0PQ7oA05aHeMYEXO923eCkypq4xm50vRC87sEbtqG66do4PJUTz)jJRdubm5hxhEmd2GGU2I3tQgOqYi85K8yNUMEYGAiz7wJ7ZTwTIMdZq0nnj4mW2rNmE4WmXftwadkHo6m8xF2WbN2asiplPZO65tF20KHelHjhZDa1xktMNbHdRaJy9bRNu4eB2ykItSgtLhkiXtIzWatOYAqJ(BsXFl2P3dFXW(378jdhm2EcjggebLR7lksPY6PZVIDLtTrmhsIqZxKaMLEhrdUQ0yeOHmkrC(PoJMWzqITZmO7XGIZThw8mSD0zxYyhe6re7yX1MHJZTIihdbdAAkmdVRcHhF68PNU2B)D5jh1Rco4IkN07kfWRIQA024oL6BAQBoInxChujkQS4ocPqxTqsNDKUq3PoryeVwXoLWwR72N4UvJx3Kv(K58AemTuk18xSSg5RK4sZaiHwO8yI9yRn2S92WwvKQRnfrvfSwN2z9UoyBjUD46DCwzEIP)XD0Fm8dsmij87AZ8dsACfVGnc)fCQiZ)cDZIn4imaOxjGZuZeESML9dyEU(IQWG3N1q(BudTpfstGsaS2ak2fK4WBo7SWaZAgI7v0NGpEJHiFJDEnWS2C(WG10KQivZPfvRdSTwZ(st9AlSUcdGJbxMqXAk9DoIeTAfCqQ(s1ZvOtggkbx0droMVMkwloBjIPp7P6ZUER1SXS1hi1ZTLYLDMNKJ3gwSPWzPphNuRKZ8usBuzlu4AvO9UA19ZBdt(u(AvZgSG066f9cTUPCPq7P7m3bTRwP6M6vlO6L(LgCV8)eW1U)25gAxb5qyvdDOsU72khsxE5UhdnZoQI6K3MXB2V2H6KBPPZBuRx3nhpf6IgPaT1sldwhMbCAvJC30ZuiaVhyIk(dBEe(W2XgGHX9fK1g2FMsJK9uO4Ly(2P1A7s(bPXBpiP3RBESvhVLlRc9mfc4ZA8St7XZAOf47k9s(TJSrFerBtiBmr3GPN7Hj4Mqq79ryXkVb0QESWOx1AQyhUlzoFIouo2aB)H9nWYJcMxeDRCQT9gxMWM2UQuy)3p4FetVM1ndDt72Ou)BjCZb9WQS)uXUozxr7Ef1oO7FdK7nSBHJEhL6A95FPXtT277tDvZaZDhtoARQ7GQCFDqB0qhcmU079yWm6eBzB577lwVtiTPRVXWKD(yHoBN74Tbw3D317dmDlv(EFd82K)VhA34PfDD)tVpIWyB)bBBC(oFgrlgD22OXXozh33y4NI8NtSE(K1Bn8hoz)(eB8(dAA3MxKyuT)0IUPO69OeNIkZEH6EWG1FLUD9(cV(7N23k()UFL4h(T(vI)96Bd3kv69vGx9MTOQ)eknVAR9FH)Zd]] )
