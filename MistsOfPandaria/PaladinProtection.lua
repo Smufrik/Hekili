@@ -13,6 +13,25 @@ local state = Hekili.State
 local spec = Hekili:NewSpecialization( 66 )
 
 local function getReferences()
+
+
+-- MoP Seal detection
+local function GetActiveSeal()
+    local numForms = GetNumShapeshiftForms()
+    for i = 1, numForms do
+        local _, active, _, spellID = GetShapeshiftFormInfo(i)
+        if active then
+            if spellID == 31801 then return "seal_of_truth", spellID
+            elseif spellID == 20164 then return "seal_of_justice", spellID
+            elseif spellID == 20165 then return "seal_of_insight", spellID
+            elseif spellID == 20154 then return "seal_of_righteousness", spellID
+            end
+        end
+    end
+    return nil, nil
+end
+
+
     -- Legacy function for compatibility
     return class, state
 end
@@ -158,7 +177,21 @@ spec:RegisterGlyphs( {
 
 -- Protection Paladin specific auras
 spec:RegisterAuras( {
-    -- Grand Crusader: Chance for free Avenger's Shield after Crusader Strike or Hammer of the Righteous
+    
+blessing_of_kings = {
+    id = 20217,
+    duration = 3600,
+    max_stack = 1,
+    texture = GetSpellTexture(20217),
+},
+
+blessing_of_might = {
+    id = 19740,
+    duration = 3600,
+    max_stack = 1,
+    texture = GetSpellTexture(19740),
+},
+-- Grand Crusader: Chance for free Avenger's Shield after Crusader Strike or Hammer of the Righteous
     grand_crusader = {
         id = 85416,
             texture = GetSpellTexture(85416),
@@ -654,7 +687,89 @@ spec:RegisterAuras( {
 
 -- Protection Paladin abilities
 spec:RegisterAbilities( {
-    -- Core Protection abilities
+    
+    seal_of_righteousness_cast = {
+        id = 20154,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        startsCombat = false,
+        texture = GetSpellTexture(20154),
+        usable = function()
+            local active = select(1, GetActiveSeal())
+            return active ~= "seal_of_righteousness"
+        end,
+        handler = function() end
+    },
+
+    seal_of_insight_cast = {
+        id = 20165,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        startsCombat = false,
+        texture = GetSpellTexture(20165),
+        usable = function()
+            local active = select(1, GetActiveSeal())
+            return active ~= "seal_of_insight"
+        end,
+        handler = function() end
+    },
+
+    seal_of_justice_cast = {
+        id = 20164,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        startsCombat = false,
+        texture = GetSpellTexture(20164),
+        usable = function()
+            local active = select(1, GetActiveSeal())
+            return active ~= "seal_of_justice"
+        end,
+        handler = function() end
+    },
+
+    seal_of_truth_cast = {
+        id = 31801,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        startsCombat = false,
+        texture = GetSpellTexture(31801),
+        usable = function()
+            local active = select(1, GetActiveSeal())
+            return active ~= "seal_of_truth"
+        end,
+        handler = function() end
+    },
+
+    blessing_of_might_cast = {
+        id = 19740,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        startsCombat = false,
+        texture = GetSpellTexture(19740),
+        usable = function()
+            return state.buff.blessing_of_might.down and state.buff.blessing_of_kings.down
+        end,
+        handler = function() end
+    },
+
+    blessing_of_kings_cast = {
+        id = 20217,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        startsCombat = false,
+        texture = GetSpellTexture(20217),
+        usable = function()
+            return state.buff.blessing_of_kings.down and state.buff.blessing_of_might.down
+        end,
+        handler = function() end
+    },
+-- Core Protection abilities
     shield_of_the_righteous = {
         id = 53600,
         cast = 0,
@@ -1334,4 +1449,5 @@ spec:RegisterOptions( {
 } )
 
 -- Register default pack for MoP Protection Paladin
-spec:RegisterPack( "Protection", 20250906, [[Hekili:nN1)UTTnq4NLHbeK0L444uN1UfhG200U2TeeuvG(FsKwI2MnsIcKuj1age7HypH7jzhPKSiPLSBc6WgkqJd5X7(UFYp6eEs4NcdsWss4nJgoA8Wxo8SbdF5OrNmomqUSGeguGJVdph(qood()B5mjjwsz56TwMYWjAviyL8yy7G3F9Lk04N)IJEryW0sAQ895Ht72eJcdWLYfmEyWVVad6BbnjHujorehgCdyQFrHEDkriO5ZfhhqWPcfcZjkuotQqIYIcgxssGfHnE1T)b8bd6GF7YsoNKltxQq0Cf63i3rtPWYPyqDX)QcfJfGoKlizkugoVeNQLLXvO7Py9sXC2aWn5Sz0uW5(rf6A2TkuBma(mofNOv)F)N)LcP9dfkGuihOqNjxOqAxwHuFao7)lCh1hmy5wojMLnfdhOifhtwWsti89V6EcFPCbGoqrLCTz5g0ibDotRkiyOptLxFG6d1WBqrJcNCCmy4OQ1JsPc5H6kNjjKz4YuzT9NmX8J30Sy9sMp8osoHtJbeWP53raZbr1KunOAm3pn54sbjIkjzIdPZMmTC2Sb47j5ZbPIEGJLlguwSALKMro)KH1k(J4yQoIBPLPPmws0Ss(sNvjCbHFNNfX8yCojsYm5HADEn(l6WYLVrOZYwc7ag7DGq9YiZ2eUg7sCkOUb2lpGKJNMcb(kBCjtxHabqsUGEpXXbsO3tbqv0wsAT58smpHIZJyZIW5XuWorAVQnM5y1e2d57zwwSGsst0hdkNI405lKewPWsInSRzp3WvI2EgyNu5Q)ByYQ961tRHLjoELKWZXPk0BtHksfQuad2uO9V6T6YCtFaKf)m7Dh4MlFGXnaBEkJV0kLrQ0x0mT6AYz7TVbqU7XjzyAU48rvODk0PQ7oA05aHeMYEXO923eCkypq4xm50vRC87sEbtqG66do4PJUTz)jJRdubm5hxhEmd2GGU2I3tQgOqYi85K8yNUMEYGAiz7wJ7ZTwTIMdZq0nnj4mW2rNmE4WmXftwadkHo6m8xF2WbN2asiplPZO65tF20KHelHjhZDa1xktMNbHdRaJy9bRNu4eB2ykItSgtLhkiXtIzWatOYAqJ(BsXFl2P3dFXW(378jdhm2EcjggebLR7lksPY6PZVIDLtTrmhsIqZxKaMLEhrdUQ0yeOHmkrC(PoJMWzqITZmO7XGIZThw8mSD0zxYyhe6re7yX1MHJZTIihdbdAAkmdVRcHhF68PNU2B)D5jh1Rco4IkN07kfWRIQA024oL6BAQBoInxChujkQS4ocPqxTqsNDKUq3PoryeVwXoLWwR72N4UvJx3Kv(K58AemTuk18xSSg5RK4sZaiHwO8yI9yRn2S92WwvKQRnfrvfSwN2z9UoyBjUD46DCwzEIP)XD0Fm8dsmij87AZ8dsACfVGnc)fCQiZ)cDZIn4imaOxjGZuZeESML9dyEU(IQWG3N1q(BudTpfstGsaS2ak2fK4WBo7SWaZAgI7v0NGpEJHiFJDEnWS2C(WG10KQivZPfvRdSTwZ(st9AlSUcdGJbxMqXAk9DoIeTAfCqQ(s1ZvOtggkbx0droMVMkwloBjIPp7P6ZUER1SXS1hi1ZTLYLDMNKJ3gwSPWzPphNuRKZ8usBuzlu4AvO9UA19ZBdt(u(AvZgSG066f9cTUPCPq7P7m3bTRwP6M6vlO6L(LgCV8)eW1U)25gAxb5qyvdDOsU72khsxE5UhdnZoQI6K3MXB2V2H6KBPPZBuRx3nhpf6IgPaT1sldwhMbCAvJC30ZuiaVhyIk(dBEe(W2XgGHX9fK1g2FMsJK9uO4Ly(2P1A7s(bPXBpiP3RBESvhVLlRc9mfc4ZA8St7XZAOf47k9s(TJSrFerBtiBmr3GPN7Hj4Mqq79ryXkVb0QESWOx1AQyhUlzoFIouo2aB)H9nWYJcMxeDRCQT9gxMWM2UQuy)3p4FetVM1ndDt72Ou)BjCZb9WQS)uXUozxr7Ef1oO7FdK7nSBHJEhL6A95FPXtT277tDvZaZDhtoARQ7GQCFDqB0qhcmU079yWm6eBzB577lwVtiTPRVXWKD(yHoBN74Tbw3D317dmDlv(EFd82K)VhA34PfDD)tVpIWyB)bBBC(oFgrlgD22OXXozh33y4NI8NtSE(K1Bn8hoz)(eB8(dAA3MxKyuT)0IUPO69OeNIkZEH6EWG1FLUD9(cV(7N23k()UFL4h(T(vI)96Bd3kv69vGx9MTOQ)eknVAR9FH)Zd]] )
+spec:RegisterPack( "Protection", 20250916, [[Hekili:fJv7UTTnx4RLIbeK014A7e51oehGT20I0xKSIQc0)jrAjAB2ijkqsLudyqSlIDfURKDiLLfjTKDt6EX(tIK4HNZZ5t(qhnk6ZrHPyjj62Xdhhm81dNmy04GjdhhfkxvsIclXj3HxapuGZH)(rotssKuwHEPvzmCQwfcwfpbwo86BEJcfC(Ro9vrHZQOzYRlIM1LjopambUsUKXJc)FlXG(wsttj1ItejrH3(hF(QFvHcj4mHcbIKMruOvGPeKS5duORle0flLkefwpLmhxLbVmNXvOsaNac5S50max)KcDd7Jkul8HNXz4uk8WF)N)LcPHG2wLsqXtKlvinAvi1hG9ElSRFeKO(GrnFKtsy5ZWW7ydiedkB(0pp9LZYicbTyrmBE8DW)fXjyrpY(1Q0f5KIgnpDQ5FVDJLB(K5H3tkiCAIcj50I7iYnoayGTQguyLGetLKCXlOZNoRA(8b47jfl0W5bowUCqv561sAo5Ird3O4pHtO6aILwMLXyPXZR4RC(kbIt878SiMNGliXsgN36i3G)QoO9M3k0HElHDaJ9klzzRInlt4ASlXzG6gy)5bKcmeCt3yJ3W4etwIazT7jooqk9EkaQY26eRfxuH5PuCHobHlsOGDQtuBJzownL9qXrMplwsjzP6TjxsI56sfcRsyjXo21SMB4kvBpdStRD1)FyY6161t3altC8kjHxGZuO3LbZguOkbmOqHo(Q3PqCszgobITOVWE)jU5YhyCdWwKX4RSszKA9fpxRUMC2rhBaK7ACsoMwiUyCnANbTjGU3QZbcjm16YXhDSj4uYEGWVC6zRx743v8sMGa11NCYthD7Z(td2eOczYpTn8yM2abDTfVhExxUtYj8fKIeNUMEYGAiz7wb95wRxtlG5f6MMuCoy74rbdhMlUC6syog0rNJ)2Zho4Sgqc5zjDofAtqFX0KHeRGjhlCavZChRaJy7g3mPWj2SZueNynMkFHGKmnHXY0vwdA0Ftk(7Xo9U5lh2)AxmD4Ga7jKyyqeuUESOmJ2m7(3yx5uBKWHKi08flGzP3r0GRongdAiNsexCMZOjCoKy7md6UnO4C)HfpdBhDoKm2bHEeXowCJz44cRiYlHGbnldMH3vHWJpD(0txhD8H8Kt7vbNCzTt6DKc4vX1nA7CMYMtA20CKW1ngH1IIQkVJqk1vlW5)NQl0DQtegX3OyNsyRV72N4UuJx3Kv(Sz)AemRskbJyBnY3ijvMbqcTqfje7Xw7Sy7PHTQitxBkIRlyT2TZ37AJTL42HR3ZzvfPM(h3r)jW)ijGKW7AZ8mjnPMxWoH)sovK7FGU5Jn4ik8Ei9b7PHz5OjrHpG5f6dQIcVoVKXnXSXkuTYvOmQqkgO(quO5jd93AstWJ3AOd3O9Fh4NA2vu4wYr1ut50Y6VdCS2Y5st4ApCTIcHTbhHqXAIXDoyeTEnSrQ(O0luOrdJKGJ5HihZVHawloBPFP37z69UDPTCWS1hi152s5YjZtYG9HfBIBw6ZXj1kzINsAJk7H4wRcTxvRUFzFyYNOxRA2H7JwxVQxO1nrlf6iD)4biB1kv3eUAbvVKU0G71)NaU213pJq7kihAQAOdvYD3w5q1Yl39yix2rvuNS1mEZXBCOozuA68g361DZStHUSrkqBTKXGVdZaoRUrUBszkeG3tmrf)HnpcFy)ydWqqFbzTH9NP0izpfkEjMVFYS2UKFqky)bj9ADZETE7TmyvONRqalwJNDwpEwdzaFxPxkVDKn6J(zBczNj6gmDUhMGZ)aT3hnfR8gqM6XcJEvRPID4HK5IP6qzGb2(d7BGLhXlVi6EzsB7nU8FnTD1PW(pFWFlMEnRtg6MSTrP(Ns4Md6Hlz)PIdTZUI29kQDq3)ei3ty3dZ8ok116Z)qJNAT3)o1vndmpCm509QUtQZ9BcAJh6qGXLuVhdMXJSLTLLVVy9oH0MK(odto4ve6SDUJBeyD2Dx3kW0Tu779nWBxw)EODNlu015p9E1bJT9hSTZ(78YdTy0zzJgdCYoU3SWpf5pNy78jRBy4pCY(wj249zAA3M7HyuT)0IUPO6DveNIkZAr6EWWT)OTDD)cV(7N2pq9p(VoD7pmT9vj66hJE7vs29Kv70JXZfLW0MBNmX8w0)8]] )
+
