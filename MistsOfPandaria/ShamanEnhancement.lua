@@ -1310,7 +1310,7 @@ spec:RegisterAbilities( {
     -- Ascendance replacement strike during Ascendance window
     stormblast = {
         id = 115356,
-        texture = 651244,
+        texture = 135990,
         cast = 0,
         cooldown = 8,
         gcd = "spell",
@@ -1894,8 +1894,8 @@ spec:RegisterAbilities( {
 
     -- Major CD: Ascendance (Enhancement)
     ascendance = {
-        id = 114051,
-        texture = 651244,
+        id = 114049,
+        texture = 135791,
         cast = 0,
         cooldown = 180,
         gcd = "off",
