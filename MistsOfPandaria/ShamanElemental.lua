@@ -518,7 +518,7 @@ spec:RegisterAbilities( {
 
     -- Ascendance (major cooldown)
     ascendance = {
-    id = 114050, -- Correct Elemental Ascendance spell ID
+    id = 114049, -- Correct Elemental Ascendance spell ID
         cast = 0,
         cooldown = 180,
         gcd = "spell",
