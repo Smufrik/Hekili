@@ -1303,7 +1303,8 @@ do
                                 b.Keybinding:SetText(nil)
                             end
 
-                            if conf.glow.enabled and ( i == 1 or conf.glow.queued ) and IsSpellOverlayed( ability.id ) then
+							local overlayAPI = _G.C_SpellActivationOverlay
+							if conf.glow.enabled and ( i == 1 or conf.glow.queued ) and overlayAPI and overlayAPI.IsSpellOverlayed and overlayAPI.IsSpellOverlayed( ability.id ) then
                                 b.glowColor = b.glowColor or {}
 
                                 if conf.glow.coloring == "class" then
@@ -1357,7 +1358,8 @@ if self.HasRecommendations then
                         local a = b.Ability
 
                         if i == 1 or conf.glow.queued then
-                            local glowing = a.id > 0 and IsSpellOverlayed( a.id )
+								local overlayAPI = _G.C_SpellActivationOverlay
+								local glowing = a.id > 0 and overlayAPI and overlayAPI.IsSpellOverlayed and overlayAPI.IsSpellOverlayed( a.id )
 
                             if glowing and not b.glowing then
                                 b.glowColor = b.glowColor or {}
