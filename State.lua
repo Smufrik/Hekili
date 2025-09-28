@@ -1806,7 +1806,7 @@ do
 		local now = state.now + state.offset
 		local timeout = FORECAST_DURATION * state.haste
 
-		if state.class.file == "DEATHKNIGHT" and state.runes then
+		if state.class.file == "DEATHKNIGHT" and state.runes and state.runes.expiry and state.runes.expiry[6] then
 			-- Adjust timeout based on rune cooldowns and regen models for Frost DK
 			timeout = max(timeout, 0.01 + state.runes.expiry[6] - state.query_time)
 		elseif state.spec.assassination then

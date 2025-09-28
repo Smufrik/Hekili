@@ -17,7 +17,7 @@ ns.TargetDummies = ns.TargetDummies or {}
 Hekili = LibStub("AceAddon-3.0"):NewAddon( "Hekili", "AceConsole-3.0", "AceSerializer-3.0", "AceTimer-3.0" )
 
 -- MoP compatibility - simple version detection
-Hekili.Version = "v5.5.0-1.0.0d"
+Hekili.Version = "v5.5.1-1.0.0e"
 Hekili.Flavor = "MoP"
 
 local format = string.format

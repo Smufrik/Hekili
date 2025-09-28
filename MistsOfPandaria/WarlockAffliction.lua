@@ -1113,7 +1113,6 @@ spec:RegisterAuras( {
         id = 86211,
         duration = 20,
         max_stack = 1,
-
     },
 
     soul_swap_exhale = {

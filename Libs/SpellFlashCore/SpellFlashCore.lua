@@ -301,28 +301,42 @@ FrameNames.Action = {
 }
 
 local function FrameScriptCheck(script,tipe)
-    if tipe == "Form" then
-        for i=1, 10, 1 do
-            if script == _G["StanceButton" .. i]:GetScript("OnClick") then return true end
-        end
-    elseif tipe == "Pet" then
-        for i=1, 10, 1 do
-            if script == _G["PetActionButton" .. i]:GetScript("OnClick") then return true end
-        end
-    elseif tipe == "Action" then
-        local BarNames = {"Action","MultiBarBottomRight","MultiBarBottomLeft","MultiBarRight","MultiBarLeft","MultiBar5","MultiBar6","MultiBar7","MultiBarRightAction","MultiBarLeftAction","MultiBarBottomRightAction","MultiBarBottomLeftAction","MultiBar5Action","MultiBar6Action","MultiBar7Action"}
-        for _, BarName in pairs(BarNames) do
-            for i=1, 12, 1 do
-                local button = _G[BarName .. "Button" .. i]
+    if not script then return false end
+    
+    local success, result = pcall(function()
+        if tipe == "Form" then
+            for i=1, 10, 1 do
+                local button = _G["StanceButton" .. i]
+                if button and script == button:GetScript("OnClick") then return true end
+            end
+        elseif tipe == "Pet" then
+            for i=1, 10, 1 do
+                local button = _G["PetActionButton" .. i]
+                if button and script == button:GetScript("OnClick") then return true end
+            end
+        elseif tipe == "Action" then
+            local BarNames = {"Action","MultiBarBottomRight","MultiBarBottomLeft","MultiBarRight","MultiBarLeft","MultiBar5","MultiBar6","MultiBar7","MultiBarRightAction","MultiBarLeftAction","MultiBarBottomRightAction","MultiBarBottomLeftAction","MultiBar5Action","MultiBar6Action","MultiBar7Action"}
+            for _, BarName in pairs(BarNames) do
+                for i=1, 12, 1 do
+                    local button = _G[BarName .. "Button" .. i]
+                    if button and script == button:GetScript("OnClick") then return true end
+                end
+            end
+        elseif tipe == "Vehicle" then
+            for i=1, 6, 1 do
+                local button = _G["OverrideActionBarButton" .. i]
                 if button and script == button:GetScript("OnClick") then return true end
             end
         end
-    elseif tipe == "Vehicle" then
-        for i=1, 6, 1 do
-            if script == _G["OverrideActionBarButton" .. i]:GetScript("OnClick") then return true end
-        end
+        return false
+    end)
+    
+    if success then
+        return result
+    else
+        -- Script comparison failed, likely due to deprecated references
+        return false
     end
-    return false
 end
 
 local function RegisterFrames()
@@ -349,35 +363,55 @@ local function RegisterFrames()
     }
 
     for _, lib in pairs(LAB) do
-        for frame in pairs(lib:GetAllButtons()) do
-            if not DuplicateFrame(frame) then
-                ButtonFrames.Action[frame] = 1
+        if lib and lib.GetAllButtons then
+            local success, buttons = pcall(function() return lib:GetAllButtons() end)
+            if success and buttons then
+                for frame in pairs(buttons) do
+                    local frameSuccess = pcall(function()
+                        if not DuplicateFrame(frame) then
+                            ButtonFrames.Action[frame] = 1
+                        end
+                    end)
+                    -- Skip frames that cause errors
+                end
             end
         end
     end
     local frame = EnumerateFrames()
 
     while frame do
-        if type(frame) == "table" and type(frame[0]) == "userdata" and frame.IsProtected and frame.GetObjectType and frame.GetScript and frame:GetObjectType() == "CheckButton" and frame:IsProtected() then
-            if FrameScriptCheck(frame:GetScript("OnClick"),"Form") then
-                if not DuplicateFrame(frame) then
-                    ButtonFrames.Form[frame] = 1
-                end
-            elseif FrameScriptCheck(frame:GetScript("OnClick"),"Pet") then
-                if not DuplicateFrame(frame) then
-                    ButtonFrames.Pet[frame] = 1
-                end
-            elseif FrameScriptCheck(frame:GetScript("OnClick"),"Action") then
-                if not DuplicateFrame(frame) then
-                    ButtonFrames.Action[frame] = 1
-                end
-            elseif FrameScriptCheck(frame:GetScript("OnClick"),"Vehicle") then
-                if not DuplicateFrame(frame) then
-                    ButtonFrames.Vehicle[frame] = 1
+        local success, result = pcall(function()
+            if type(frame) == "table" and type(frame[0]) == "userdata" and frame.IsProtected and frame.GetObjectType and frame.GetScript and frame:GetObjectType() == "CheckButton" and frame:IsProtected() then
+                if FrameScriptCheck(frame:GetScript("OnClick"),"Form") then
+                    if not DuplicateFrame(frame) then
+                        ButtonFrames.Form[frame] = 1
+                    end
+                elseif FrameScriptCheck(frame:GetScript("OnClick"),"Pet") then
+                    if not DuplicateFrame(frame) then
+                        ButtonFrames.Pet[frame] = 1
+                    end
+                elseif FrameScriptCheck(frame:GetScript("OnClick"),"Action") then
+                    if not DuplicateFrame(frame) then
+                        ButtonFrames.Action[frame] = 1
+                    end
+                elseif FrameScriptCheck(frame:GetScript("OnClick"),"Vehicle") then
+                    if not DuplicateFrame(frame) then
+                        ButtonFrames.Vehicle[frame] = 1
+                    end
                 end
             end
+        end)
+        
+        if not success then
+            -- Skip problematic frames that reference deprecated 'this'
         end
-        frame = EnumerateFrames(frame)
+        
+        local nextSuccess, nextFrame = pcall(EnumerateFrames, frame)
+        if nextSuccess then
+            frame = nextFrame
+        else
+            break
+        end
     end
 
     FRAMESREGISTERED = 1

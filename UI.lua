@@ -8,22 +8,19 @@ local Hekili = _G[addon]
 if Hekili.IsMoP and Hekili.IsMoP() then
     -- Create compatibility wrappers for missing MoP APIs
     if not C_Timer then
-        C_Timer = {}
-        C_Timer.NewTimer = function(duration, callback)
-            local frame = CreateFrame("Frame")
-            frame:SetScript("OnUpdate", function(self, elapsed)
-                self.elapsed = (self.elapsed or 0) + elapsed
-                if self.elapsed >= duration then
-                    self:SetScript("OnUpdate", nil)
-                    callback()
-                end
-            end)
-            return frame
-        end
-        
-        C_Timer.After = function(duration, callback)
-            return C_Timer.NewTimer(duration, callback)
-        end
+        C_Timer = {
+            After = function(duration, callback)
+                local frame = CreateFrame("Frame")
+                frame:SetScript("OnUpdate", function(self, elapsed)
+                    self.elapsed = (self.elapsed or 0) + elapsed
+                    if self.elapsed >= duration then
+                        self:SetScript("OnUpdate", nil)
+                        callback()
+                    end
+                end)
+                return frame
+            end
+        }
     end
     
     -- PixelUtil compatibility
@@ -463,7 +460,7 @@ function ns.StartConfiguration( external )
                 Hekili:UpdateDisplayVisibility()
             else
                 -- MoP compatibility: Use simple timer instead of C_Timer.After
-                local timer = C_Timer.NewTimer(0, function() Hekili:UpdateDisplayVisibility() end)
+                C_Timer.After(0, function() Hekili:UpdateDisplayVisibility() end)
             end
         end )
 
@@ -1557,7 +1554,8 @@ if self.HasRecommendations then
                             if start > 0 then earliest_time = start + duration - now end
                         end
 
-                        start, duration = select( 4, UnitCastingInfo( "player" ) )
+                        local castStart, castDuration = select( 4, UnitCastingInfo( "player" ) )
+                        start, duration = castStart or 0, castDuration or 0
                         if start and start > 0 then earliest_time = max( ( start / 1000 ) + ( duration / 1000 ) - now, earliest_time ) end                        local rStart, rDuration = 0, 0
                         if a.item then
                             rStart, rDuration = GetItemCooldown( a.item )
@@ -1881,7 +1879,7 @@ if self.HasRecommendations then
             end            if flashEvents[ event ] then
                 self.flashReady = false
                 -- MoP compatibility: Use simple timer
-                local timer = C_Timer.NewTimer(3, function()
+                C_Timer.After(3, function()
                     self.flashReady = true
                 end)
             end
@@ -2157,7 +2155,7 @@ if self.HasRecommendations then
             d.forceElvUpdate = nil
         end        if d.flashReady == nil then
             -- MoP compatibility: Use simple timer
-            local timer = C_Timer.NewTimer(3, function()
+            C_Timer.After(3, function()
                 d.flashReady = true
             end )
         end
@@ -2230,14 +2228,13 @@ if self.HasRecommendations then
 
         for a in pairs( actsActive ) do
             actsActive[ a ] = nil
-        end        local specEnabled = GetSpecialization()
-        specEnabled = specEnabled and GetSpecializationInfo( specEnabled )
-
-        if class.specs and class.specs[ specEnabled ] then
-            specEnabled = specEnabled and rawget( profile.specs, specEnabled )
-            specEnabled = specEnabled and rawget( specEnabled, "enabled" ) or false
-        else
-            specEnabled = false
+        end        local currentSpec = GetSpecialization()
+        local specID = currentSpec and GetSpecializationInfo( currentSpec )
+        
+        local specEnabled = false
+        if class.specs and class.specs[ specID ] then
+            local specConfig = specID and rawget( profile.specs, specID )
+            specEnabled = specConfig and rawget( specConfig, "enabled" ) or false
         end
 
         if profile.enabled and specEnabled then
