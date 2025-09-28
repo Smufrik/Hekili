@@ -3113,16 +3113,28 @@ function Hekili.Update()
 							and (dispName == "Primary" or dispName == "AOE")
 							and state.this_action ~= "wait"
 						then
-							Hekili:Print(
-								"Unable to make recommendation for "
-									.. dispName
-									.. " #"
-									.. i
-									.. "; triggering auto-snapshot..."
-							)
-							hasSnapped = dispName
-							UI:SetThreadLocked(false)
-							return "AutoSnapshot"
+							-- Instead of immediately triggering auto-snapshot, provide a wait fallback
+							-- to prevent the "?" icon from appearing for brief moments
+							if i == 1 then
+								-- For the first recommendation slot, try wait as a fallback
+								action = "wait"
+								wait = 0.5
+								if debug then
+									Hekili:Debug("No primary action found, using wait fallback for slot #1")
+								end
+							else
+								-- For subsequent slots, trigger auto-snapshot as before
+								Hekili:Print(
+									"Unable to make recommendation for "
+										.. dispName
+										.. " #"
+										.. i
+										.. "; triggering auto-snapshot..."
+								)
+								hasSnapped = dispName
+								UI:SetThreadLocked(false)
+								return "AutoSnapshot"
+							end
 						end
 					end
 					break
