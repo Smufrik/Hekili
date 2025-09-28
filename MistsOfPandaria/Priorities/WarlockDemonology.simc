@@ -1,51 +1,66 @@
-# Warlock: Demonology
-## Precombat
-actions.precombat+=/dark_intent
-actions.precombat+=/summon_pet,pet_type=felguard
-actions.precombat+=/snapshot_stats
-actions.precombat+=/grimoire_of_sacrifice,if=talent.grimoire_of_sacrifice.enabled
-actions.precombat+=/potion
-actions.precombat+=/dark_soul
+# Warlock: Demonology (MoP) — rebuilt from wowtbc.gg + wowsims JSON
 
-## Default
-actions+=/use_item,name=trinket1,if=cooldown.dark_soul.remains<5
-actions+=/potion,if=buff.dark_soul.up
-actions+=/berserking,if=buff.dark_soul.up
-actions+=/blood_fury,if=buff.dark_soul.up
-actions+=/dark_soul,if=!talent.archimondes_vengeance.enabled|buff.metamorphosis.up&cooldown.archimondes_vengeance.remains>15
+# Precombat
+actions.precombat+=/dark_intent
+actions.precombat+=/summon_pet
+actions.precombat+=/potion,name=jade_serpent_potion
+actions.precombat+=/shadow_bolt
+
+# Main
+actions+=/run_action_list,name=opener,if=time<10
 actions+=/run_action_list,name=aoe,if=active_enemies>=6
-actions+=/run_action_list,name=st_meta,if=buff.metamorphosis.up
-actions+=/run_action_list,name=st,if=!buff.metamorphosis.up
+actions+=/run_action_list,name=meta,if=buff.metamorphosis.up
+actions+=/run_action_list,name=st
 actions+=/fel_flame,moving=1
 
-## Single Target Normal Form
-actions.st+=/summon_doomguard,if=!talent.grimoire_of_sacrifice.enabled
+# Opener (guide-aligned)
+actions.opener+=/hand_of_gul'dan
+actions.opener+=/dark_soul
+actions.opener+=/corruption,if=debuff.corruption.down
+actions.opener+=/grimoire_of_service,if=talent.grimoire_of_service.enabled
+actions.opener+=/felguard:felstorm
+actions.opener+=/imp_swarm
+actions.opener+=/summon_doomguard
+actions.opener+=/hand_of_gul'dan
+actions.opener+=/metamorphosis
+actions.opener+=/doom,if=debuff.doom.down
+actions.opener+=/doom,if=debuff.doom.remains<gcd.remains+1
+
+# Cooldowns (shared)
+actions+=/use_items,if=buff.dark_soul.up
+actions+=/potion,name=jade_serpent_potion,if=buff.dark_soul.up
+actions+=/blood_fury,if=buff.dark_soul.up
+actions+=/berserking,if=buff.dark_soul.up
+
+# Single target (caster form)
+actions.st+=/curse_of_elements,if=debuff.curse_of_elements.down
+actions.st+=/summon_doomguard,if=active_enemies<=3
+actions.st+=/summon_infernal,if=active_enemies>3
+actions.st+=/imp_swarm,if=toggle.cooldowns
+actions.st+=/grimoire_of_service,if=talent.grimoire_of_service.enabled&toggle.cooldowns
 actions.st+=/felguard:felstorm
-actions.st+=/command_demon,if=pet.felguard.cooldown.felstorm.remains>10
-actions.st+=/corruption,if=remains<tick_time
-actions.st+=/shadow_bolt,if=prev_off_gcd.metamorphosis&buff.metamorphosis.down
-actions.st+=/metamorphosis,if=buff.dark_soul.up&demonic_fury>800
-actions.st+=/hand_of_gul'dan,if=cooldown.touch_of_chaos.remains>execute_time&demonic_fury<demonic_fury.max-60
+actions.st+=/corruption,if=debuff.corruption.remains<tick_time
+actions.st+=/hand_of_gul'dan,if=charges>=2|debuff.shadowflame.remains<3
+actions.st+=/metamorphosis,if=buff.dark_soul.up&demonic_fury>=250
+actions.st+=/soul_fire,if=buff.molten_core.up&(buff.molten_core.remains<5|buff.molten_core.stack>=9)
+actions.st+=/soul_fire,if=(target.health.pct<25)&buff.molten_core.up
+actions.st+=/metamorphosis,if=demonic_fury>=400
+actions.st+=/metamorphosis,if=target.time_to_die<25&demonic_fury>=200
 actions.st+=/life_tap,if=mana.pct<40
-actions.st+=/soul_fire,if=buff.molten_core.up&buff.molten_core.remains<5
-actions.st+=/metamorphosis,if=demonic_fury>=1000
-actions.st+=/soul_fire,if=buff.molten_core.react
 actions.st+=/shadow_bolt
 
-## Single Target Meta Form
-actions.st_meta+=/doom,if=remains<tick_time
-actions.st_meta+=/touch_of_chaos
-actions.st_meta+=/cancel_metamorphosis,if=dot.doom.ticking&buff.dark_soul.down&demonic_fury<=750&pet.wild_imp.active=0&cooldown.touch_of_chaos.remains=0
-actions.st_meta+=/metamorphosis,if=demonic_fury<=400
+# Metamorphosis (meta form)
+actions.meta+=/doom,if=debuff.doom.down|(debuff.doom.remains<15&buff.dark_soul.up)
+actions.meta+=/touch_of_chaos
+actions.meta+=/soul_fire,if=buff.molten_core.up&demonic_fury>=60
+actions.meta+=/cancel_metamorphosis,if=(buff.dark_soul.down&demonic_fury<=80)|(buff.molten_core.stack=0&demonic_fury<=100)
 
-## AoE Rotation (6+ targets)
+# AoE (6+ targets)
 actions.aoe+=/felguard:felstorm
-actions.aoe+=/hand_of_gul'dan,if=demonic_fury>=demonic_fury.max-40
+actions.aoe+=/hand_of_gul'dan,if=charges>=1
 actions.aoe+=/life_tap,if=mana.pct<40
-actions.aoe+=/corruption,cycle_targets=1,if=target!=focus&remains<tick_time&active_enemies<5
-actions.aoe+=/hellfire,if=buff.metamorphosis.up&!talent.mannoroths_fury.enabled
-actions.aoe+=/immolation_aura,if=buff.metamorphosis.up&talent.mannoroths_fury.enabled
-actions.aoe+=/hellfire,if=!talent.mannoroths_fury.enabled&demonic_fury>=250
-actions.aoe+=/immolation_aura,if=talent.mannoroths_fury.enabled
-actions.aoe+=/metamorphosis,if=demonic_fury>400
+actions.aoe+=/corruption,cycle_targets=1,if=debuff.corruption.remains<tick_time
+actions.aoe+=/metamorphosis,if=demonic_fury>=300|buff.dark_soul.up&demonic_fury>=250
+actions.aoe+=/immolation_aura,if=buff.metamorphosis.up&talent.mannoroth_fury.enabled
+actions.aoe+=/hellfire,if=buff.metamorphosis.up&!talent.mannoroth_fury.enabled
 actions.aoe+=/shadow_bolt

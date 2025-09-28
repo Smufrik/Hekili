@@ -166,7 +166,8 @@ local MoPPowerTypes = {
     maelstrom       = 11,
     chi             = 12,
     insanity        = 13,
-    obsolete        = 14,
+
+    burning_embers  = 14,
     obsolete2       = 15,
     arcane_charges  = 16,
     fury            = 17,
@@ -195,7 +196,7 @@ local ResourceInfo = {
     maelstrom       = (Enum and Enum.PowerType and Enum.PowerType.Maelstrom) or MoPPowerTypes.Maelstrom,
     chi             = (Enum and Enum.PowerType and Enum.PowerType.Chi) or MoPPowerTypes.Chi,
     insanity        = (Enum and Enum.PowerType and Enum.PowerType.Insanity) or MoPPowerTypes.Insanity,
-    obsolete        = (Enum and Enum.PowerType and Enum.PowerType.Obsolete) or MoPPowerTypes.Obsolete,
+    burning_embers  = (Enum and Enum.PowerType and Enum.PowerType.BurningEmbers) or MoPPowerTypes.burning_embers,
     obsolete2       = (Enum and Enum.PowerType and Enum.PowerType.Obsolete2) or MoPPowerTypes.Obsolete2,
     arcane_charges  = (Enum and Enum.PowerType and Enum.PowerType.ArcaneCharges) or MoPPowerTypes.ArcaneCharges,
     fury            = (Enum and Enum.PowerType and Enum.PowerType.Fury) or MoPPowerTypes.Fury,
@@ -433,7 +434,7 @@ ns.getSpecializationID = function( specIndex )
         DEATHKNIGHT = { [1] = 250, [2] = 251, [3] = 252 },  -- Blood, Frost, Unholy
         DRUID = { [1] = 102, [2] = 103, [3] = 104, [4] = 105 }, -- Balance, Feral, Guardian, Restoration
         MAGE = { [1] = 62, [2] = 63, [3] = 64 },            -- Arcane, Fire, Frost
-        MONK = { [1] = 268, [2] = 269, [3] = 270 },         -- Brewmaster, Windwalker, Mistweaver
+        MONK = { [1] = 268, [2] = 270, [3] = 269 },         -- Brewmaster, Mistweaver, Windwalker
         PALADIN = { [1] = 65, [2] = 66, [3] = 70 },         -- Holy, Protection, Retribution
         PRIEST = { [1] = 256, [2] = 257, [3] = 258 },       -- Discipline, Holy, Shadow
         ROGUE = { [1] = 259, [2] = 260, [3] = 261 },        -- Assassination, Combat, Subtlety

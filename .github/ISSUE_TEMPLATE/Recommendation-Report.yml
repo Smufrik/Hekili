@@ -1,0 +1,136 @@
+name: Priority/Recommendation Issue (incorrect rotation)
+description: The addon is working, but the recommended abilities seem wrong, incomplete, or unexpected.
+title: "[REC] ⚠️ Replace this text with a short, descriptive title of your Recommendation issue"
+labels: [recommendation, triage]
+assignees:
+  - Hekili
+  - syrifgit
+body:
+
+  - type: checkboxes
+    id: precheck
+    attributes:
+      label: Before You Begin
+      description: Please confirm that you have completed each of these steps before submitting your issue.
+      options:
+        - label: I confirm I am using the latest version of the addon (outdated versions may have problems that were fixed on the newest release).
+          required: true
+        - label: I confirm I am playing on official Blizzard servers (not private servers).
+          required: true
+        - label: I checked for an [existing, open ticket](https://github.com/Smufrik/Hekili/issues?q=state%3Aopen%20label%3Arecommendation) for this issue and was not able to find one.
+          required: true
+        - label: I have updated the issue title to clearly describe the problem.
+          required: true
+        - label: I am reporting an issue with the default specialization priority (not a custom or imported priority).
+          required: true
+
+  - type: dropdown
+    id: spec
+    attributes:
+      label: Specialization
+      description: Which spec
+      options: 
+        - DK - Blood
+        - DK - Frost
+        - DK - Unholy
+        - Druid - Balance
+        - Druid - Feral
+        - Druid - Guardian
+        - Druid - Restoration
+        - Hunter - Beast Mastery
+        - Hunter - Marksmanship
+        - Hunter - Survival
+        - Mage - Arcane
+        - Mage - Fire
+        - Mage - Frost
+        - Monk - Brewmaster
+        - Monk - Windwalker
+        - Paladin - Holy
+        - Paladin - Protection
+        - Paladin - Retribution
+        - Priest - Discipline
+        - Priest - Holy
+        - Priest - Shadow
+        - Rogue - Assassination
+        - Rogue - Combat
+        - Rogue - Subtlety
+        - Shaman - Elemental
+        - Shaman - Enhancement
+        - Shaman - Restoration
+        - Warlock - Affliction
+        - Warlock - Demonology
+        - Warlock - Destruction
+        - Warrior - Arms
+        - Warrior - Fury
+        - Warrior - Protection
+      default: 0
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the Issue
+      description: Please describe the issue in question.  Be specific and describe what you see.  You can CTRL+V to paste a screenshot (image) or supply links to screenshot images.
+      placeholder: "Example: For my Retribution Paladin, I expect the addon to recommend a Holy Power spender when I have 5 Holy Power.  However, the addon recommended Crusader Strike instead."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: How to Reproduce
+      description: Tell me exactly how I can recreate the problem, step-by-step.
+      placeholder: |
+        1. Enter game as a Retribution Paladin.
+        2. Take the Seraphim, Final Reckoning, and Execution Sentence talents.
+        3. Use Final Reckoning.
+        4. Build to 5 Holy Power.
+        5. See recommendations.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: evidence-source
+    attributes:
+      label: What is your information source?
+      description: Please select the option that best describes what information you referenced to decide the addon is making incorrect recommendations.
+      options:
+        - APL Conditions - I found a possible typo or mistake
+        - Snapshot - Contains errors/warnings
+        - Based on Class Guides (e.g., IcyVeins, Wowhead)
+        - Based on my own Raidbots Quick Sim results
+        - Based on my in-game experience and intuition
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: player-info
+    attributes:
+      label: Snapshot (Link)
+      description: |
+        Please provide a **Snapshot** from the addon, which is a **text** output created by a built-in command, **not** a screenshot.  
+        👉 [How to get a Snapshot (Click here)](https://github.com/Hekili/hekili/wiki/Report-An-Issue#how-do-i-get-a-snapshot)
+
+        ⚠️ **If you do not provide this information, your ticket may be declined.**
+      placeholder: http://pastebin.com/AbCdEfGh
+    validations:
+      required: true
+
+
+  - type: textarea
+    id: addl-info
+    attributes:
+      label: Additional Information
+      description: Please provide any additional information regarding this issue that was not included above.
+      placeholder: Leave blank, if all necessary details are included above.
+      
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Information
+      description: |
+        I will contact you via this GitHub ticket with questions and updates.
+        If you do not regularly check your GitHub email, please provide an alternate contact method (i.e., Discord ID) so that I can reach you if needed.
+      placeholder: Hekili#0001

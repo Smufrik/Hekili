@@ -1,136 +1,62 @@
-# Hunter: Marksmanship  
-# Pre-combat setup and pet management
-actions.precombat+=/aspect_of_the_hawk,if=!buff.aspect_of_the_iron_hawk.up
-actions.precombat+=/aspect_of_the_iron_hawk,if=talent.aspect_of_the_iron_hawk.enabled
-actions.precombat+=/call_pet_1,if=!pet.alive
-actions.precombat+=/hunters_mark
-actions.precombat+=/serpent_sting,if=!debuff.serpent_sting.up
+actions.precombat+=/aspect_of_the_hawk,if=!buff.aspect_of_the_hawk.up
+actions.precombat+=/hunters_mark,if=(settings.mark_any|target.is_boss)&active_dot.hunters_mark=0&target.time_to_die>15
+actions.precombat+=/explosive_trap,if=!debuff.explosive_trap.up
+actions.precombat+=/potion,name=virmens_bite
+actions.precombat+=/aimed_shot
 
-# Main combat priority system
-actions+=/auto_shot
-actions+=/use_items
-actions+=/potion,name=draenic_agility,if=buff.rapid_fire.up|target.time_to_die<=60
-
-# Emergency pet management and utility
-actions+=/call_pet_1,if=!pet.alive
-actions+=/mend_pet,if=pet.alive&pet.health_pct<50&!buff.rapid_fire.up
-actions+=/counter_shot,if=target.casting&target.time_to_die>5
-actions+=/silencing_shot,if=talent.silencing_shot.enabled&target.casting&target.time_to_die>5
-actions+=/misdirection,if=pet.alive&pet.threat<0.8&tanking
-
-# Primary DPS rotation
-actions+=/call_action_list,name=cooldowns
-actions+=/call_action_list,name=master_marksman_management
-actions+=/call_action_list,name=core_rotation
 actions+=/call_action_list,name=aoe,if=active_enemies>=3
-actions+=/call_action_list,name=filler
+# Careful Aim phase: above 80% target health, hardcast Aimed Shot aggressively without delaying Chimera Shot
+actions+=/call_action_list,name=careful_aim,if=target.health.pct>80
+# Rapid Fire burn window below 80%: favor Aimed Shot as dump while keeping Chimera on-time
+actions+=/call_action_list,name=rf_burn,if=buff.rapid_fire.up&target.health.pct<=80
+actions+=/call_action_list,name=single_target
 
-# Cooldown management
-actions.cooldowns+=/readiness,if=!talent.a_murder_of_crows.enabled&cooldown.rapid_fire.remains>60
-actions.cooldowns+=/rapid_fire,if=!buff.rapid_fire.up&(focus>=50|buff.careful_aim.up)
-actions.cooldowns+=/stampede,if=buff.rapid_fire.up|target.time_to_die<=20
-actions.cooldowns+=/a_murder_of_crows,if=talent.a_murder_of_crows.enabled&(buff.rapid_fire.up|target.time_to_die<=60)
-actions.cooldowns+=/lynx_rush,if=talent.lynx_rush.enabled&pet.alive&(buff.rapid_fire.up|target.time_to_die<=15)
-actions.cooldowns+=/dire_beast,if=talent.dire_beast.enabled&(focus_deficit>=40|buff.rapid_fire.up)
-actions.cooldowns+=/fervor,if=talent.fervor.enabled&focus<=50
-actions.cooldowns+=/binding_shot,if=talent.binding_shot.enabled&target.distance>=8&target.time_to_die>15
-actions.cooldowns+=/intimidation,if=talent.intimidation.enabled&pet.alive&target.time_to_die>10
+actions.cooldowns+=/a_murder_of_crows
+actions.cooldowns+=/stampede
+actions.cooldowns+=/rapid_fire
+actions.cooldowns+=/use_item,slot=hands,if=buff.rapid_fire.up
+actions.cooldowns+=/barrage,if=talent.barrage.enabled&cooldown.barrage.ready
+actions.cooldowns+=/powershot,if=talent.powershot.enabled&cooldown.powershot.ready
 
-# Master Marksman proc management for optimal Aimed Shot usage
-actions.master_marksman_management+=/aimed_shot,if=buff.master_marksman.up&buff.master_marksman.remains<=2
-actions.master_marksman_management+=/aimed_shot,if=buff.master_marksman.up&buff.rapid_fire.up
-actions.master_marksman_management+=/aimed_shot,if=buff.master_marksman.up&target.time_to_die<=10
-actions.master_marksman_management+=/aimed_shot,if=buff.master_marksman.up&focus>=60&!buff.careful_aim.up
-actions.master_marksman_management+=/aimed_shot,if=buff.master_marksman.up&buff.careful_aim.up&target.health_pct>90
+# Trinkets
+actions.cooldowns+=/use_item,slot=trinket1
+actions.cooldowns+=/use_item,slot=trinket2
 
-# Core rotation priorities
-actions.core_rotation+=/serpent_sting,if=!debuff.serpent_sting.up|(debuff.serpent_sting.remains<=4.5&target.time_to_die>8)
-actions.core_rotation+=/chimera_shot,if=debuff.serpent_sting.up&(cooldown.chimera_shot.ready|buff.rapid_fire.up)
-actions.core_rotation+=/explosive_shot,if=talent.explosive_shot.enabled&!debuff.explosive_shot.up
-actions.core_rotation+=/aimed_shot,if=buff.careful_aim.up&target.health_pct>90&focus>=60
-actions.core_rotation+=/kill_shot,if=target.health_pct<=20&focus>=40
-actions.core_rotation+=/piercing_shots,if=debuff.piercing_shots.up&debuff.piercing_shots.remains<=2
-actions.core_rotation+=/multi_shot,if=active_enemies>=2&active_enemies<=4&focus>=50
-actions.core_rotation+=/arcane_shot,if=buff.thrill_of_the_hunt.up&buff.thrill_of_the_hunt.stack>=3
-actions.core_rotation+=/steady_shot,if=buff.steady_focus.down&focus>=40
-actions.core_rotation+=/steady_shot,if=buff.steady_focus.remains<=3&buff.steady_focus.up
-actions.core_rotation+=/arcane_shot,if=focus>=66&(buff.rapid_fire.up|!talent.dire_beast.enabled|cooldown.dire_beast.remains>5)
-actions.core_rotation+=/aimed_shot,if=focus>=60&(buff.rapid_fire.up|cooldown.chimera_shot.remains>3)
+actions.single_target+=/steady_shot,if=!buff.steady_focus.up|buff.steady_focus.remains<5
+actions.single_target+=/chimera_shot
+actions.single_target+=/a_murder_of_crows
+actions.single_target+=/serpent_sting,if=!debuff.serpent_sting.up
+actions.cooldowns+=/fervor,if=talent.fervor.enabled&cooldown.fervor.ready&focus<50
+actions.single_target+=/aimed_shot,if=buff.aimed_shot_instant.up
+actions.single_target+=/a_murder_of_crows
+actions.aoe+=/glaive_toss,if=talent.glaive_toss.enabled&cooldown.glaive_toss.ready&focus>=15
+actions.single_target+=/arcane_shot,if=focus>85&cooldown.chimera_shot.remains>0.6
+actions.single_target+=/kill_shot,if=target.health.pct<=20
+actions.single_target+=/aimed_shot,if=cooldown.chimera_shot.remains>2
+actions.single_target+=/steady_shot
 
-# AoE priority adjustments
-actions.aoe+=/multi_shot,if=active_enemies>=3&focus>=50
-actions.aoe+=/explosive_shot,if=talent.explosive_shot.enabled&active_enemies>=3&!debuff.explosive_shot.up
-actions.aoe+=/barrage,if=talent.barrage.enabled&active_enemies>=5&focus>=60
-actions.aoe+=/glaive_toss,if=talent.glaive_toss.enabled&active_enemies>=2&focus>=15
-actions.aoe+=/powershot,if=talent.powershot.enabled&active_enemies>=4&focus>=40
-actions.aoe+=/explosive_trap,if=active_enemies>=4&!debuff.explosive_trap.up
-actions.aoe+=/arcane_shot,if=buff.thrill_of_the_hunt.up&active_enemies>=2
-actions.aoe+=/serpent_sting,cycle_targets=1,if=!debuff.serpent_sting.up&target.time_to_die>10&active_enemies<=4
+# Careful Aim phase priorities (target > 80% HP)
+actions.careful_aim+=/steady_shot,if=!buff.steady_focus.up|buff.steady_focus.remains<5
+actions.careful_aim+=/chimera_shot
+actions.careful_aim+=/serpent_sting,if=!debuff.serpent_sting.up
+# Hardcast Aimed Shot as the primary dump during Careful Aim; do not clip Chimera
+actions.careful_aim+=/aimed_shot,if=focus>=70&cooldown.chimera_shot.remains>1
+actions.careful_aim+=/glaive_toss,if=talent.glaive_toss.enabled&cooldown.glaive_toss.ready&focus>=15
+actions.careful_aim+=/steady_shot
 
-# Movement and utility
-actions.movement+=/aspect_of_the_cheetah,if=!combat&!buff.aspect_of_the_cheetah.up
-actions.movement+=/concussive_shot,if=target.distance>=15&!debuff.concussive_shot.up
-actions.movement+=/disengage,if=target.distance<=8
-actions.movement+=/steady_shot,if=should_steady_shot&movement.distance>=15&focus<=80
-actions.movement+=/cobra_shot,if=should_cobra_shot&movement.distance>=15&focus<=80
+# Rapid Fire burn priorities (target <= 80% HP & buff.rapid_fire.up)
+actions.rf_burn+=/steady_shot,if=!buff.steady_focus.up|buff.steady_focus.remains<5
+actions.rf_burn+=/chimera_shot
+actions.rf_burn+=/serpent_sting,if=!debuff.serpent_sting.up
+actions.rf_burn+=/aimed_shot,if=focus>=65&cooldown.chimera_shot.remains>1
+actions.rf_burn+=/glaive_toss,if=talent.glaive_toss.enabled&cooldown.glaive_toss.ready&focus>=15
+actions.rf_burn+=/arcane_shot,if=focus>85&cooldown.chimera_shot.remains>0.6
+actions.rf_burn+=/steady_shot
 
-# Defensive priorities
-actions.defensive+=/deterrence,if=incoming_damage_5s>health.max*0.4
-actions.defensive+=/feign_death,if=incoming_damage_3s>health.max*0.6
-actions.defensive+=/aspect_of_the_monkey,if=target.distance<=8&!buff.aspect_of_the_hawk.up&!buff.aspect_of_the_iron_hawk.up
-actions.defensive+=/misdirection,if=pet.alive&pet.threat<0.8&tanking
+actions.aoe+=/steady_shot,if=!buff.steady_focus.up|buff.steady_focus.remains<5
+actions.aoe+=/chimera_shot
+actions.aoe+=/multi_shot
+actions.aoe+=/kill_shot,if=target.health.pct<=20
+actions.aoe+=/glaive_toss
+actions.aoe+=/steady_shot
 
-# Pet utility and management
-actions.pet_management+=/masters_call,if=debuff.slowed.up|debuff.rooted.up
-actions.pet_management+=/intimidation,if=talent.intimidation.enabled&target.casting&target.time_to_die>5
-actions.pet_management+=/call_pet_1,if=!pet.alive&combat
-actions.pet_management+=/bestial_wrath,if=pet.alive&buff.rapid_fire.up
-
-# Focus management optimization using state expressions
-actions.focus_management+=/steady_shot,if=should_steady_shot&focus>=14&(focus_time_to_max>3|!buff.steady_focus.up|buff.steady_focus.remains<=2)
-actions.focus_management+=/cobra_shot,if=should_cobra_shot&focus>=14&(focus_time_to_max<=1.5|debuff.serpent_sting.remains<=4)
-actions.focus_management+=/thrill_of_the_hunt_active,if=buff.thrill_of_the_hunt.up&focus<=40
-
-# Target switching and priority targeting
-actions.target_switch+=/hunters_mark,cycle_targets=1,if=debuff.hunters_mark.down&target.time_to_die>30
-actions.target_switch+=/serpent_sting,cycle_targets=1,if=!debuff.serpent_sting.up&target.time_to_die>10&active_enemies<=4
-actions.target_switch+=/chimera_shot,cycle_targets=1,if=debuff.serpent_sting.up&target.time_to_die>15
-actions.target_switch+=/multi_shot,if=active_enemies>=3&focus>=50
-
-# Tier set and proc optimization
-actions.tier_bonuses+=/aimed_shot,if=set_bonus.tier14_4pc&buff.tier14_4pc.up&focus>=60
-actions.tier_bonuses+=/chimera_shot,if=set_bonus.tier15_2pc&buff.tier15_2pc.up&debuff.serpent_sting.up
-actions.tier_bonuses+=/arcane_shot,if=set_bonus.tier15_4pc&buff.tier15_4pc.up&focus>=40
-actions.tier_bonuses+=/multi_shot,if=set_bonus.tier16_2pc&buff.tier16_2pc.up&active_enemies>=2
-actions.tier_bonuses+=/steady_shot,if=set_bonus.tier16_4pc&buff.tier16_4pc.up&buff.steady_focus.down
-
-# Burst phase optimization
-actions.burst+=/rapid_fire,if=!buff.rapid_fire.up&focus>=50
-actions.burst+=/a_murder_of_crows,if=talent.a_murder_of_crows.enabled&buff.rapid_fire.up
-actions.burst+=/lynx_rush,if=talent.lynx_rush.enabled&pet.alive&buff.rapid_fire.up
-actions.burst+=/aimed_shot,if=buff.master_marksman.up&buff.rapid_fire.up
-actions.burst+=/chimera_shot,if=debuff.serpent_sting.up&buff.rapid_fire.up
-actions.burst+=/arcane_shot,if=buff.rapid_fire.up&focus>=40
-actions.burst+=/multi_shot,if=buff.rapid_fire.up&active_enemies>=2&focus>=50
-
-# Low-focus filler priorities using optimal shot rotation
-actions.filler+=/steady_shot,if=should_steady_shot&focus>=14
-actions.filler+=/cobra_shot,if=should_cobra_shot&focus>=14
-actions.filler+=/arcane_shot,if=focus>=40&(buff.thrill_of_the_hunt.up|target.time_to_die<=10)
-actions.filler+=/aimed_shot,if=focus>=60&target.time_to_die<=15
-
-# Execute phase (target below 20% health)
-actions.execute+=/kill_shot,if=target.health_pct<=20&focus>=40
-actions.execute+=/aimed_shot,if=target.health_pct<=20&buff.master_marksman.up
-actions.execute+=/chimera_shot,if=target.health_pct<=20&debuff.serpent_sting.up&focus>=30
-actions.execute+=/arcane_shot,if=target.health_pct<=20&focus>=40&buff.thrill_of_the_hunt.up
-actions.execute+=/steady_shot,if=target.health_pct<=20&focus<=50
-
-# Careful Aim optimization (opening phase)
-actions.careful_aim+=/aimed_shot,if=buff.careful_aim.up&target.health_pct>90&focus>=60
-actions.careful_aim+=/steady_shot,if=buff.careful_aim.up&target.health_pct>90&focus<=50
-actions.careful_aim+=/serpent_sting,if=buff.careful_aim.up&!debuff.serpent_sting.up&target.health_pct>90
-
-# Lock and Load proc management
-actions.lock_and_load+=/explosive_shot,if=talent.explosive_shot.enabled&buff.lock_and_load.up
-actions.lock_and_load+=/aimed_shot,if=buff.lock_and_load.up&!talent.explosive_shot.enabled

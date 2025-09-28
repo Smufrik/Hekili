@@ -1,4 +1,6 @@
-# Paladin: Protection
+# Paladin: Protection (MoP)
+# Enhanced APL with Vengeance system integration
+
 actions.precombat+=/seal_of_insight
 actions.precombat+=/blessing_of_kings
 actions.precombat+=/sacred_shield,if=talent.sacred_shield.enabled
@@ -8,6 +10,7 @@ actions.precombat+=/variable,name=trinket_sync_slot,value=2,if=trinket.2.has_coo
 actions+=/rebuke
 actions+=/call_action_list,name=mitigation
 actions+=/call_action_list,name=cooldowns
+actions+=/call_action_list,name=vengeance_rotation
 actions+=/call_action_list,name=trinkets
 actions+=/call_action_list,name=standard
 
@@ -21,7 +24,7 @@ actions.cooldowns+=/devotion_aura
 actions.cooldowns+=/blood_fury
 actions.cooldowns+=/berserking
 actions.cooldowns+=/arcane_torrent
-actions.cooldowns+=/potion,if=buff.avenging_wrath.up
+actions.cooldowns+=/potion,name=mogu_power_potion,if=buff.avenging_wrath.up
 
 actions.mitigation+=/shield_of_the_righteous,if=holy_power>=3|buff.divine_purpose.up
 actions.mitigation+=/sacred_shield,if=talent.sacred_shield.enabled&buff.sacred_shield.down
@@ -40,6 +43,13 @@ actions.standard+=/holy_prism,if=talent.holy_prism.enabled
 actions.standard+=/lights_hammer,if=talent.lights_hammer.enabled
 actions.standard+=/holy_wrath
 actions.standard+=/consecration
+
+# Vengeance-optimized rotation (when vengeance stacks are high) - temporarily disabled
+# actions.vengeance_rotation+=/hammer_of_wrath,if=should_prioritize_damage&target.health.pct<=20
+# actions.vengeance_rotation+=/avengers_shield,if=should_prioritize_damage&buff.grand_crusader.up
+# actions.vengeance_rotation+=/hammer_of_the_righteous,if=should_prioritize_damage&active_enemies>=3
+# actions.vengeance_rotation+=/crusader_strike,if=should_prioritize_damage&active_enemies<3
+# actions.vengeance_rotation+=/judgment,if=should_prioritize_damage
 
 actions.trinkets+=/use_item,slot=trinket1,if=variable.trinket_sync_slot=1&buff.avenging_wrath.up|boss&fight_remains<30
 actions.trinkets+=/use_item,slot=trinket2,if=variable.trinket_sync_slot=2&buff.avenging_wrath.up|boss&fight_remains<30

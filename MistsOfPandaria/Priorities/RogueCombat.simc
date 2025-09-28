@@ -1,7 +1,7 @@
 # Rogue: Combat
 # Precombat actions
 actions.precombat+=/tricks_of_the_trade,if=time<5
-actions.precombat+=/jade_serpent_potion
+actions.precombat+=/potion,name=virmens_bite_potion
 actions.precombat+=/stealth,if=!stealthed.all
 actions.precombat+=/slice_and_dice,if=buff.slice_and_dice.down
 
@@ -12,12 +12,12 @@ actions+=/slice_and_dice,if=(buff.slice_and_dice.remains<=4|combo_points>=5)&!bu
 actions+=/killing_spree,if=buff.slice_and_dice.up&(combo_points>=5|energy<=40)&(buff.killing_spree.up|buff.adrenaline_rush.up)
 actions+=/adrenaline_rush,if=time_to_ready.killing_spree>=15
 actions+=/shadow_blades,if=time_to_ready.killing_spree>=15
-actions+=/ambush,if=combo_points<=4
+actions+=/ambush,if=behind_target&combo_points<=4
 actions+=/revealing_strike,if=(combo_points<=4&buff.anticipation.up&buff.anticipation.stack<=4)|debuff.revealing_strike.remains<=3
 actions+=/rupture,if=combo_points>=5&dot.rupture.remains<=2
 actions+=/eviscerate,if=combo_points>=5
 actions+=/vanish,if=energy>=50&combo_points>=3
-actions+=/ambush,if=energy>=50&combo_points>=3
+actions+=/ambush,if=behind_target&energy>=50&combo_points>=3
 actions+=/sinister_strike,if=combo_points<=4
 actions+=/preparation,if=!cooldown.vanish.ready
 actions+=/tricks_of_the_trade,if=false
@@ -48,6 +48,7 @@ actions.finish+=/eviscerate,if=combo_points=5|target.time_to_die<6&combo_points>
 # Cooldowns
 actions.cds+=/use_item,slot=trinket1,if=buff.deep_insight.up|buff.adrenaline_rush.up
 actions.cds+=/use_item,slot=trinket2,if=buff.deep_insight.up|buff.adrenaline_rush.up
+actions.cds+=/use_item,slot=hands,if=buff.deep_insight.up|buff.adrenaline_rush.up
 actions.cds+=/adrenaline_rush,if=energy<35&!buff.killing_spree.up&debuff.revealing_strike.up&(buff.deep_insight.up|buff.bloodlust.up)
 actions.cds+=/killing_spree,if=energy<35&buff.slice_and_dice.up&!buff.adrenaline_rush.up&(buff.deep_insight.up|debuff.find_weakness.up)
 actions.cds+=/blood_fury,if=buff.deep_insight.up|buff.adrenaline_rush.up

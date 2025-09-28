@@ -1,0 +1,51 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+  "Lua.runtime.version": "Lua 5.1",
+  "Lua.workspace.ignoreDir": [
+    "Libs",
+    "**/Libs/**",
+    "Documentation",
+    "**/Documentation/**",
+    "Wrath",
+    "Cataclysm",
+    "TheBurningCrusade",
+    "**/tests/**",
+    "**/examples/**"
+  ],
+  "Lua.diagnostics.globals": [
+    "CreateFrame",
+    "UnitBuff",
+    "UnitDebuff",
+    "GetSpellInfo",
+    "GetSpellDescription",
+    "GetSpellTexture",
+    "RegisterAddonMessagePrefix",
+    "GetMinimapShape",
+    "IsAddOnLoaded",
+    "LoadAddOn",
+    "GetSpellBookItemName",
+    "GetNumRaidMembers",
+    "GetNumPartyMembers",
+    "IsPetActionUsable",
+    "OpacitySliderFrame",
+    "InterfaceOptionsFramePanelContainer",
+    "HekiliTooltip",
+    "HekiliNotification",
+    "HekiliDisplayPrimary",
+    "HekiliEngine",
+    "ElvUI",
+    "GAME_LOCALE",
+    "GetAddOnInfo"
+  ],
+  "Lua.diagnostics.disable": [
+    "protected-field",
+    "deprecated",
+    "duplicate-index",
+    "undefined-global",
+    "undefined-field",
+    "redundant-parameter",
+    "param-type-mismatch"
+  ]
+}
+
+

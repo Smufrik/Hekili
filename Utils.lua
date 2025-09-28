@@ -19,10 +19,14 @@ local GetSpellBookItemInfo = function(index, bookType)
 end
 
 ns.UnitBuff = function( unit, index, filter )
+    if not unit or type(unit) ~= 'string' then return nil end
+    if not index or index < 1 then return nil end
     return UnitBuff(unit, index, filter)
 end
 
 ns.UnitDebuff = function( unit, index, filter )
+    if not unit or type(unit) ~= 'string' then return nil end
+    if not index or index < 1 then return nil end
     return UnitDebuff(unit, index, filter)
 end
 

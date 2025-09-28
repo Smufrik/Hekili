@@ -52,11 +52,22 @@ local multiUnpack = ns.multiUnpack
 local orderedPairs = ns.orderedPairs
 local round = ns.round
 
--- MoP API compatibility
-local IsCurrentItem = IsCurrentItem
+-- Always reference the global API to avoid local recursion/shadowing.
+local IsCurrentItem = _G.IsCurrentItem
 local IsUsableItem = ns.IsUsableItem
-local IsCurrentSpell = IsCurrentSpell
-local GetItemCooldown = GetItemCooldown
+local IsCurrentSpell = _G.IsCurrentSpell
+
+-- Safe item cooldown wrapper for MoP: normalize return to 4 values.
+local GetItemCooldown = function(item)
+    local start, duration, enabled
+    if _G.GetItemCooldown then
+        start, duration, enabled = _G.GetItemCooldown(item)
+    else
+        start, duration, enabled = 0, 0, 1
+    end
+    -- modRate is not available in MoP; default to 1.
+    return start or 0, duration or 0, enabled or 1, 1
+end
 local GetItemInfoInstant = function(itemID)
     local GetItemInfoFunc = ns.CachedGetItemInfo
     if not GetItemInfoFunc then return nil, nil, nil end
@@ -64,28 +75,104 @@ local GetItemInfoInstant = function(itemID)
     return name, texture, quality
 end
 local GetSpellTexture = function(spellID)
-    local name, rank, icon = GetSpellInfo(spellID)
+    local name, rank, icon = _G.GetSpellInfo(spellID)
     return icon or "Interface\\Icons\\INV_Misc_QuestionMark"
 end
+-- Safe IsUsableSpell wrapper (avoid recursion); fall back to usable=true when API missing.
 local IsUsableSpell = function(spellID)
-    local usable, noMana = IsUsableSpell(spellID)
-    return usable and not noMana, noMana
+    local usable, noMana = true, false
+    if _G.IsUsableSpell then
+        usable, noMana = _G.IsUsableSpell(spellID)
+    end
+    return (usable and not noMana) or false, noMana
 end
 
--- MoP API compatibility for spell cooldowns
+-- Safe spell cooldown wrapper (avoid recursion); normalize to 4 values.
 local GetSpellCooldown = function(spellID)
-    local start, duration, enable, modRate = GetSpellCooldown(spellID)
-    return start or 0, duration or 0, enable ~= nil and enable or false, modRate or 0
+    local start, duration, enable, modRate = 0, 0, 1, 1
+    if _G.GetSpellCooldown then
+        start, duration, enable, modRate = _G.GetSpellCooldown(spellID)
+    end
+    return start or 0, duration or 0, enable ~= nil and enable or 1, modRate or 1
 end
 
 local floor, format, insert = math.floor, string.format, table.insert
 
 -- MoP API compatibility
-local HasVehicleActionBar, HasOverrideActionBar, IsInPetBattle, UnitHasVehicleUI, UnitOnTaxi = HasVehicleActionBar, HasOverrideActionBar, IsInPetBattle or function() return false end, UnitHasVehicleUI, UnitOnTaxi
+local HasVehicleActionBar = _G.HasVehicleActionBar
+local HasOverrideActionBar = _G.HasOverrideActionBar
+local IsInPetBattle = _G.IsInPetBattle or function() return false end
+local UnitHasVehicleUI = _G.UnitHasVehicleUI
+local UnitOnTaxi = _G.UnitOnTaxi
 local Tooltip = ns.Tooltip
 
 local Masque, MasqueGroup
 local _
+
+
+-- Simple performance presets for MoP fork (Low/Medium/High)
+local performanceSettings = {
+    [1] = { refreshRate = 0.5,  combatRate = 0.2,  frameCeiling = 20 }, -- Low
+    [2] = { refreshRate = 0.25, combatRate = 0.1,  frameCeiling = 15 }, -- Medium (default)
+    [3] = { refreshRate = 0.1,  combatRate = 0.05, frameCeiling = 10 }, -- High
+}
+
+-- FPS smoothing system for stable budget calculations
+local fpsTracker = {
+    samples = {}, -- Sliding window of FPS samples
+    maxSamples = 30, -- 30 samples for smoothing
+    smoothedFPS = 60, -- Current smoothed FPS value
+    lastUpdate = 0, -- Last update time
+    updateInterval = 0.1 -- Update every 100ms
+}
+
+local function updateSmoothedFPS()
+    local now = GetTime()
+    if now - fpsTracker.lastUpdate >= fpsTracker.updateInterval then
+        local currentFPS = GetFramerate()
+        
+        -- Add to sliding window
+        table.insert( fpsTracker.samples, currentFPS )
+        if #fpsTracker.samples > fpsTracker.maxSamples then
+            table.remove( fpsTracker.samples, 1 )
+        end
+        
+        -- Calculate smoothed average
+        local sum = 0
+        for _, fps in ipairs( fpsTracker.samples ) do
+            sum = sum + fps
+        end
+        fpsTracker.smoothedFPS = sum / #fpsTracker.samples
+        fpsTracker.lastUpdate = now
+    end
+    
+    return fpsTracker.smoothedFPS
+end
+
+-- Expose smoothed FPS for use in other places
+function Hekili.GetSmoothedFPS()
+    return updateSmoothedFPS()
+end
+
+-- Calculate frame budget based on user percentage
+local function calculateFrameBudget()
+    local smoothedFPS = updateSmoothedFPS()
+    local frameBudget = Hekili.DB.profile.performance.frameBudget or 0.7
+    
+    -- local rawFPS = GetFramerate()
+    
+    -- Calculate frame time
+    local frameTime = 1000 / math.max( smoothedFPS, 30 ) -- min 30 FPS
+    
+    -- Apply user percentage directly to frame time
+    local userBudget = frameTime * frameBudget
+    
+    -- Debug output
+    -- print(string.format("[Hekili Budget] Setting: %d%%, Raw FPS: %.1f, Smoothed FPS: %.1f, Frame Time: %.2fms, Budget: %.2fms",
+    --     frameBudget, rawFPS, smoothedFPS, frameTime, userBudget))
+    
+    return userBudget
+end
 
 
 function Hekili:GetScale()
@@ -1216,7 +1303,8 @@ do
                                 b.Keybinding:SetText(nil)
                             end
 
-                            if conf.glow.enabled and ( i == 1 or conf.glow.queued ) and IsSpellOverlayed( ability.id ) then
+							local overlayAPI = _G.C_SpellActivationOverlay
+							if conf.glow.enabled and ( i == 1 or conf.glow.queued ) and overlayAPI and overlayAPI.IsSpellOverlayed and overlayAPI.IsSpellOverlayed( ability.id ) then
                                 b.glowColor = b.glowColor or {}
 
                                 if conf.glow.coloring == "class" then
@@ -1260,7 +1348,6 @@ do
             end
 
             local postRecs = debugprofilestop()
-                
 if self.HasRecommendations then
                 if fullUpdate and conf.glow.enabled then
                     madeUpdate = true
@@ -1271,7 +1358,8 @@ if self.HasRecommendations then
                         local a = b.Ability
 
                         if i == 1 or conf.glow.queued then
-                            local glowing = a.id > 0 and IsSpellOverlayed( a.id )
+								local overlayAPI = _G.C_SpellActivationOverlay
+								local glowing = a.id > 0 and overlayAPI and overlayAPI.IsSpellOverlayed and overlayAPI.IsSpellOverlayed( a.id )
 
                             if glowing and not b.glowing then
                                 b.glowColor = b.glowColor or {}
@@ -2342,8 +2430,13 @@ if self.HasRecommendations then
 
         -- Safety check: ensure DB is initialized before accessing
         if Hekili.DB and Hekili.DB.profile and Hekili.DB.profile.enabled and not Hekili.Pause then
-            self.refreshRate = self.refreshRate or 0.5
-            self.combatRate = self.combatRate or 0.2
+            -- Apply performance preset if configured
+            local p = Hekili.DB.profile
+            p.performance = p.performance or {}
+            local mode = p.performance.mode or 2
+            local perf = performanceSettings[ mode ] or performanceSettings[2]
+            self.refreshRate = perf.refreshRate
+            self.combatRate  = perf.combatRate
 
             local thread = self.activeThread
 
@@ -2369,11 +2462,16 @@ if self.HasRecommendations then
                 else
                     local rate = GetFramerate()
                     local spf = 1000 / ( rate > 0 and rate or 100 )
-
+                    -- Use perf ceiling to bound per-frame work budget.
+                    local ceiling = perf.frameCeiling or 15
+                    -- Use enhanced frame budget calculation with FPS smoothing
+                    local frameBudget = calculateFrameBudget()
                     if HekiliEngine.threadUpdates then
-                        Hekili.maxFrameTime = 0.8 * max( 7, min( 16.667, spf, 1.1 * HekiliEngine.threadUpdates.meanWorkTime / floor( HekiliEngine.threadUpdates.meanFrames ) ) )
+                        -- One min() with all candidates; guard against division by zero.
+                        local dyn = 1.1 * HekiliEngine.threadUpdates.meanWorkTime / max( 1, floor( HekiliEngine.threadUpdates.meanFrames or 1 ) )
+                        Hekili.maxFrameTime = min( ceiling, 16.667, spf, dyn )
                     else
-                        Hekili.maxFrameTime = 0.8 * max( 7, min( 16.667, spf ) )
+                        Hekili.maxFrameTime = min( ceiling, 16.667, spf )
                     end
                 end
 
@@ -2409,8 +2507,13 @@ if self.HasRecommendations then
                 if coroutine.status( thread ) == "dead" or err then
                     self.activeThread = nil
 
-                    self.refreshRate = 0.5
-                    self.combatRate = 0.2
+                    -- Keep using the selected performance preset
+                    local p = Hekili.DB.profile
+                    p.performance = p.performance or {}
+                    local mode = p.performance.mode or 2
+                    local perf = performanceSettings[ mode ] or performanceSettings[2]
+                    self.refreshRate = perf.refreshRate
+                    self.combatRate  = perf.combatRate
 
                     if ok then
                         if self.firstThreadCompleted and not self.DontProfile then self:UpdatePerformance() end
@@ -2525,16 +2628,19 @@ if self.HasRecommendations then
 
         -- Indicator Icons.
         b.Icon = b.Icon or b:CreateTexture( nil, "OVERLAY" )
-        b.Icon: SetSize( max( 10, b:GetWidth() / 3 ), max( 10, b:GetHeight() / 3 ) )
+        b.Icon:SetSize( conf.indicators.width or 20, conf.indicators.height or 20 )
 
-        if conf.keepAspectRatio and b.Icon:GetHeight() ~= b.Icon:GetWidth() then
-            local biggest = max( b.Icon:GetHeight(), b.Icon:GetWidth() )
-            local height = 0.5 * b.Icon:GetHeight() / biggest
-            local width = 0.5 * b.Icon:GetWidth() / biggest
+        local zoom = 1 - ( ( conf.indicators.zoom or 0) / 200 )
+
+        if conf.indicators.keepAspectRatio and conf.indicators.height ~= conf.indicators.width then
+            local biggest = max( conf.indicators.height or 20, conf.indicators.width or 20 )
+            local height = 0.5 * zoom * ( conf.indicators.height or 20 ) / biggest
+            local width = 0.5 * zoom * ( conf.indicators.width or 20 ) / biggest
 
             b.Icon:SetTexCoord( 0.5 - width, 0.5 + width, 0.5 - height, 0.5 + height )
         else
-            b.Icon:SetTexCoord( 0, 1, 0, 1 )
+            local half = 0.5 * zoom
+            b.Icon:SetTexCoord( 0.5 - half, 0.5 + half, 0.5 - half, 0.5 + half )
         end
 
         local iconAnchor = conf.indicators.anchor or "RIGHT"
@@ -3009,8 +3115,7 @@ function ns.primeTooltipColors()
         "coroutine",
         "math",
         "string",
-        "table"
-    )
+        "table" )
     Color( "|cffddaaff", -- Some of WoW's aliases for standard Lua functions
         -- math
         "abs",

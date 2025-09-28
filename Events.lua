@@ -1,15 +1,23 @@
 -- Events.lua
--- June 2024
--- 
--- IMPORTANT: This file has been modified to prevent interference with Blizzard's talent selection UI.
--- We no longer override global functions like GetTalentInfoByID or C_SpecializationInfo.GetTalent
--- to avoid Lua taint errors. Instead, we use local functions for internal talent detection.
+-- July 2024
 
 local addon, ns = ...
-local Hekili = _G[ addon ]
+local Hekili = _G[addon]
 
 local class = Hekili.Class
 local state = Hekili.State
+
+-- Performance optimization: debounce ForceUpdate calls
+local pendingUpdate
+local function RequestUpdate(reason)
+    if pendingUpdate then return end
+    pendingUpdate = true
+    C_Timer.After(0, function()
+        Hekili:ForceUpdate(reason, true)
+        pendingUpdate = nil
+    end)
+end
+
 local PTR = ns.PTR
 local TTD = ns.TTD
 
@@ -21,7 +29,19 @@ local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table
 
 -- MoP API compatibility
 local CGetItemInfo = ns.CachedGetItemInfo
-local IsEquippedItem = IsEquippedItem
+-- Use a local wrapper to check if an itemID is equipped without deprecated APIs.
+local function IsEquippedItemLocal(itemID)
+    if type(itemID) ~= "number" then return false end
+    if C_Item and C_Item.IsEquippedItemByID then
+        local ok = C_Item.IsEquippedItemByID(itemID)
+        if ok ~= nil then return ok end
+    end
+    for slot = 1, 19 do
+        local id = GetInventoryItemID( "player", slot )
+        if id == itemID then return true end
+    end
+    return false
+end
 local GetDetailedItemLevelInfo = function(itemLink) 
     local _, _, _, itemLevel = CGetItemInfo(itemLink)
     return itemLevel or 0
@@ -91,6 +111,11 @@ local SpellIsSelfBuff = SpellIsSelfBuff or function(spellID)
     return false
 end
 
+-- Ensure UnitBuff is locally referenced (prevents undefined-global linter warnings)
+local UnitBuff = rawget( _G, "UnitBuff" ) or function( ... )
+    return nil
+end
+
 -- MoP: GetSpecialization/GetSpecializationInfo compatibility
 local GetSpecialization = GetSpecialization or function()
     -- Enhanced MoP Classic spec detection
@@ -104,6 +129,42 @@ local GetSpecialization = GetSpecialization or function()
         elseif IsPlayerSpell(18562) or IsPlayerSpell(2908) then return 4 -- Restoration (maps to 105)
         else return 1 end -- Default to Feral
     end
+
+    local Hekili = _G["Hekili"]
+local state  = Hekili and Hekili.State
+
+-- Create a dedicated event frame for encounter tracking
+local bossEvtFrame = CreateFrame("Frame", "HekiliBossEvents")
+
+-- Register boss-relevant events
+bossEvtFrame:RegisterEvent("ENCOUNTER_START")
+bossEvtFrame:RegisterEvent("ENCOUNTER_END")
+bossEvtFrame:RegisterEvent("PLAYER_ENTERING_WORLD") -- for resets on zoning/reload
+
+-- Define what happens on those events
+bossEvtFrame:SetScript("OnEvent", function(self, event, ...)
+    if not state then return end
+
+    if event == "ENCOUNTER_START" then
+        local encounterID, encounterName, difficultyID, groupSize = ...
+        state.encounterID   = encounterID or 0
+        state.encounterName = encounterName
+        Hekili:ForceUpdate(event)
+
+    elseif event == "ENCOUNTER_END" then
+        local encounterID = ...
+        if state.encounterID == encounterID then
+            state.encounterID   = 0
+            state.encounterName = nil
+            Hekili:ForceUpdate(event)
+        end
+
+    elseif event == "PLAYER_ENTERING_WORLD" then
+        state.encounterID   = 0
+        state.encounterName = nil
+        Hekili:ForceUpdate(event)
+    end
+end)
     
     -- For other classes, use talent group as fallback
     local activeTalentGroup = GetActiveTalentGroup and GetActiveTalentGroup() or 1
@@ -196,33 +257,65 @@ local GetSpecializationInfo = GetSpecializationInfo or function(specIndex)
     return specID, specName, nil, nil, nil, class
 end
 
--- MoP doesn't have C_UnitAuras, create compatibility function
+-- Enhanced MoP Classic UnitBuff for better APL compatibility
+-- Iterate player buffs to find a matching aura by spellID (number) or name (string).
 local UA_GetPlayerAuraBySpellID = function(spellID)
-    local name, icon, count, dispelType, duration, expirationTime, source, isStealable, 
-          nameplateShowPersonal, spellId = UnitBuff("player", spellID, "PLAYER")
-    if name then
-        return {
-            name = name,
-            icon = icon,
-            applications = count or 1,
-            dispelType = dispelType,
-            duration = duration or 0,
-            expirationTime = expirationTime or 0,
-            sourceUnit = source,
-            isStealable = isStealable,
-            nameplateShowPersonal = nameplateShowPersonal,
-            spellId = spellId,
-            isFromPlayerOrPlayerPet = true
-        }
+    if not spellID then return nil end
+
+    local i = 1
+    while true do
+        -- In MoP Classic, UnitBuff signature is UnitBuff(unit, index[, filter])
+        local name, icon, count, dispelType, duration, expirationTime, source, isStealable,
+              nameplateShowPersonal, foundSpellId = UnitBuff("player", i)
+
+        if not name then break end
+
+        local matches = false
+        if type(spellID) == "number" then
+            matches = (foundSpellId == spellID)
+        elseif type(spellID) == "string" then
+            -- Only match if the provided string is the actual aura name.
+            matches = (name == spellID)
+        end
+
+        if matches then
+            local auraData = {
+                name = name,
+                icon = icon,
+                applications = count or 1,
+                dispelType = dispelType,
+                duration = duration or 0,
+                expirationTime = expirationTime or 0,
+                sourceUnit = source,
+                isStealable = isStealable,
+                nameplateShowPersonal = nameplateShowPersonal,
+                spellId = foundSpellId,
+                isFromPlayerOrPlayerPet = (source == "player" or source == "pet")
+            }
+            
+            -- Enhanced aura data for APL compatibility
+            if Hekili.DB.profile.enhancedEvents then
+                auraData.remains = max(0, expirationTime - GetTime())
+                auraData.applied = expirationTime - duration
+                auraData.count = count or 1
+            end
+            
+            return auraData
+        end
+
+        i = i + 1
     end
+
+    return nil
 end
 
 local IsUsableItem = ns.IsUsableItem
 local GetItemSpell = ns.GetItemSpell
 
 -- MoP API compatibility for spell cooldowns
-local GetSpellCooldown = function(spellID)
-    local start, duration, enable, modRate = GetSpellCooldown(spellID)
+-- Avoid shadowing/global recursion: call the real API explicitly.
+local function GetSpellCooldownMoP(spellID)
+    local start, duration, enable, modRate = _G.GetSpellCooldown(spellID)
     return start, duration, enable, modRate
 end
 
@@ -275,6 +368,11 @@ local function GenericOnEvent( self, event, ... )
         eventData[ key ] = eventData[ key ] or {}
         eventData[ key ].max = max( eventData[ key ].max or 0, finish - start )
         eventData[ key ].total = ( eventData[ key ].total or 0 ) + ( finish - start )
+        
+        -- Enhanced event tracking for APL compatibility
+        if Hekili.DB.profile.enhancedEvents and eventData[ key ].total > 1000 then
+            Hekili:ForceUpdate( "EVENT_PERFORMANCE", true )
+        end
     end
 end
 
@@ -306,7 +404,10 @@ function ns.StartEventHandler()
 
     for unit, unitFrame in pairs( unitHandlers ) do
         unitFrame:SetScript( "OnEvent", UnitSpecificOnEvent )
-    end    events:SetScript( "OnUpdate", function( self, elapsed )
+    end
+    
+    -- Enhanced event handler with performance monitoring
+    events:SetScript( "OnUpdate", function( self, elapsed )
         if Hekili.PendingSpecializationChange then
             if Hekili.SpecializationChanged then
                 Hekili:SpecializationChanged()
@@ -316,11 +417,12 @@ function ns.StartEventHandler()
             end
         end
 
+        -- Enhanced frame update handling for APL compatibility
         if handlers.FRAME_UPDATE then
             for i, handler in pairs( handlers.FRAME_UPDATE ) do
                 local key = "FRAME_UPDATE_" .. i
                 local start = debugprofilestop()
-                handler( event, elapsed )
+                handler( "FRAME_UPDATE", elapsed )
                 local finish = debugprofilestop()
 
                 handlerCount[ key ] = ( handlerCount[ key ] or 0 ) + 1
@@ -328,6 +430,23 @@ function ns.StartEventHandler()
                 eventData[ key ] = eventData[ key ] or {}
                 eventData[ key ].max = max( eventData[ key ].max or 0, finish - start )
                 eventData[ key ].total = ( eventData[ key ].total or 0 ) + ( finish - start )
+                
+                -- Enhanced performance monitoring for APL compatibility
+                if Hekili.DB.profile.enhancedEvents and eventData[ key ].total > 5000 then
+                    Hekili:ForceUpdate( "FRAME_UPDATE_PERFORMANCE", true )
+                end
+            end
+        end
+        
+        -- Enhanced event performance monitoring
+        if Hekili.DB.profile.enhancedEvents then
+            local totalEventTime = 0
+            for _, data in pairs( eventData ) do
+                totalEventTime = totalEventTime + ( data.total or 0 )
+            end
+            
+            if totalEventTime > 10000 then
+                Hekili:ForceUpdate( "EVENT_PERFORMANCE_MONITOR", true )
             end
         end
     end )
@@ -362,6 +481,14 @@ ns.RegisterEvent = function( event, handler )
     local stack = debugstack(2)
     local file, line = stack:match([[Hekili/(.-)"%]:(%d+)]])
     Hekili.EventSources[ key ] = file and ( file .. ":" .. ( line or 0 ) ) or stack:match( "^(.*)\n" )
+    
+    -- Enhanced event registration for APL compatibility
+    if Hekili.DB.profile.enhancedEvents then
+        -- Track important events for APL compatibility
+        if event == "COMBAT_LOG_EVENT_UNFILTERED" or event == "UNIT_AURA" or event == "PLAYER_TARGET_CHANGED" then
+            Hekili:ForceUpdate( "EVENT_REGISTERED", true )
+        end
+    end
 end
 local RegisterEvent = ns.RegisterEvent
 
@@ -458,7 +585,7 @@ do
 
     local requeued = {}
 
-    local HandleSpellData = function( event, spellID, success )
+    local function HandleSpellData( event, spellID, success )
         local callbacks = spellCallbacks[ spellID ]
 
         if callbacks then
@@ -476,7 +603,9 @@ do
             UnregisterEvent( "SPELL_DATA_LOAD_RESULT", HandleSpellData )
             isUnregistered = true
         end
-    end    function Hekili:ContinueOnSpellLoad( spellID, func )
+    end
+
+    function Hekili:ContinueOnSpellLoad( spellID, func )
         -- MoP: No spell data caching system, call immediately
         func( true )
         return
@@ -817,7 +946,7 @@ do
         for set, items in pairs( class.gear ) do
             state.set_bonus[ set ] = 0
             for item, _ in pairs( items ) do
-                if type(item) == "number" and item > maxItemSlot and IsEquippedItem( item ) then
+                if type(item) == "number" and item > maxItemSlot and IsEquippedItemLocal( item ) then
                     state.set_bonus[ set ] = state.set_bonus[ set ] + 1
                 end
             end
@@ -834,7 +963,8 @@ do
         -- 1. Which trinket?
         -- 2. Does it have a spell?  (GetItemSpell)
         -- 3. Does it have an on-use?  (IsItemUsable)
-        -- 4. ???        local T1 = GetInventoryItemID( "player", 13 )
+    -- 4. ???
+    local T1 = GetInventoryItemID( "player", 13 )
 
         if not state.trinket then state.trinket = {} end
         if not state.trinket.t1 then state.trinket.t1 = {} end
@@ -1518,10 +1648,16 @@ local autoAuraKey = setmetatable( {}, {
             end
         end
 
+        -- Enhanced aura registration for APL compatibility
         -- Store the aura and save the key if we can.
         if ns.addAura then
             ns.addAura( key, k, 'name', name )
             t[k] = key
+            
+            -- Enhanced aura tracking for important auras
+            if class.auras[ key ] and (class.auras[ key ].important or class.auras[ key ].tracking) then
+                Hekili:ForceUpdate( "AURA_REGISTERED", true )
+            end
         end
 
         return t[k]
@@ -1640,6 +1776,14 @@ local dmg_filtered = {
     [462952] = true, -- Squall Sailor's Citrine
 }
 
+-- Enhanced damage filtering for APL compatibility
+local enhanced_dmg_filtered = {
+    -- Add more filtered spells as needed for APL compatibility
+    [280705] = true, -- Laser Matrix.
+    [450412] = true, -- Sentinel.
+    [462952] = true, -- Squall Sailor's Citrine
+}
+
 
 local function IsActuallyFriend( unit )
     if not IsInGroup() then return false end
@@ -1664,6 +1808,7 @@ function Hekili:UpdateDamageDetectionForCLEU()
 end
 
 
+-- Enhanced combat log event handler for better APL compatibility
 -- Use dots/debuffs to count active targets.
 -- Track dot power (until 6.0) for snapshotting.
 -- Note that this was ported from an unreleased version of Hekili, and is currently only counting damaged enemies.
@@ -1871,7 +2016,7 @@ local function CLEU_HANDLER( event, timestamp, subtype, hideCaster, sourceGUID, 
                 elseif subtype == "SPELL_DAMAGE" then
                     -- Could be an impact.
                     if state:RemoveSpellEvent( ability.key, true, "PROJECTILE_IMPACT" ) then
-                        Hekili:ForceUpdate( "PROJECTILE_IMPACT" )
+                        RequestUpdate( "PROJECTILE_IMPACT" )
                     end
                 end
             end
@@ -1918,35 +2063,100 @@ local function CLEU_HANDLER( event, timestamp, subtype, hideCaster, sourceGUID, 
         local aura = class.auras and class.auras[ spellID ]
 
         if aura then
+            -- Enhanced aura tracking for better APL compatibility
             if hostile and sourceGUID ~= destGUID and not aura.friendly then
                 -- Aura Tracking
                 if subtype == 'SPELL_AURA_APPLIED' or subtype == 'SPELL_AURA_REFRESH' or subtype == 'SPELL_AURA_APPLIED_DOSE' then
                     ns.trackDebuff( spellID, destGUID, time, true )
                     if ( not minion or countPets ) and countDots then ns.updateTarget( destGUID, time, amSource, spellID ) end
 
-                    --[[ if spellID == 48108 or spellID == 48107 then
-                        Hekili:ForceUpdate( "SPELL_AURA_SUPER", true )
-                    end ]]
+                    -- Enhanced tracking for important debuffs
+                    if aura.important or aura.tracking then
+                        RequestUpdate( "SPELL_AURA_APPLIED" )
+                        
+                        -- Enhanced aura tracking for APL compatibility
+                        if Hekili.DB.profile.enhancedEvents then
+                            Hekili:TrackImportantAura(spellID, aura.key, aura.important, aura.tracking)
+                            Hekili:UpdateAuraHistory(spellID, "APPLIED", {
+                                destGUID = destGUID,
+                                time = time,
+                                source = amSource
+                            })
+                        end
+                    end
 
                 elseif subtype == 'SPELL_PERIODIC_DAMAGE' or subtype == 'SPELL_PERIODIC_MISSED' then
                     ns.trackDebuff( spellID, destGUID, time )
                     if countDots and ( not minion or countPets ) then
                         ns.updateTarget( destGUID, time, amSource )
                     end
+                    
+                    -- Enhanced periodic tracking for APL compatibility
+                    if Hekili.DB.profile.enhancedEvents and (aura.important or aura.tracking) then
+                        Hekili:UpdateAuraHistory(spellID, "PERIODIC", {
+                            destGUID = destGUID,
+                            time = time,
+                            source = amSource,
+                            damage = (subtype == 'SPELL_PERIODIC_DAMAGE') and amount or 0
+                        })
+                    end
 
-                elseif destGUID and subtype == 'SPELL_AURA_REMOVED' or subtype == 'SPELL_AURA_BROKEN' or subtype == 'SPELL_AURA_BROKEN_SPELL' then
+                elseif destGUID and (subtype == 'SPELL_AURA_REMOVED' or subtype == 'SPELL_AURA_BROKEN' or subtype == 'SPELL_AURA_BROKEN_SPELL') then
                     ns.trackDebuff( spellID, destGUID )
+                    
+                    -- Enhanced friendly aura removal tracking for APL compatibility
+                    if Hekili.DB.profile.enhancedEvents and (aura.important or aura.tracking) then
+                        Hekili:UpdateAuraHistory(spellID, "FRIENDLY_REMOVED", {
+                            destGUID = destGUID,
+                            time = time,
+                            source = amSource
+                        })
+                    end
+                    
+                    -- Enhanced removal tracking
+                    if aura.important or aura.tracking then
+                        RequestUpdate( "SPELL_AURA_REMOVED" )
+                        
+                        -- Enhanced aura tracking for APL compatibility
+                        if Hekili.DB.profile.enhancedEvents then
+                            Hekili:UpdateAuraHistory(spellID, "REMOVED", {
+                                destGUID = destGUID,
+                                time = time,
+                                source = amSource
+                            })
+                        end
+                    end
 
                 end
 
             elseif ( amSource or petSource or isSensePower ) and aura.friendly then -- friendly effects
                 if subtype == 'SPELL_AURA_APPLIED'  or subtype == 'SPELL_AURA_REFRESH' or subtype == 'SPELL_AURA_APPLIED_DOSE' then
                     ns.trackDebuff( spellID, destGUID, time, true )
+                    
+                    -- Enhanced friendly aura tracking for APL compatibility
+                    if Hekili.DB.profile.enhancedEvents and (aura.important or aura.tracking) then
+                        Hekili:TrackImportantAura(spellID, aura.key, aura.important, aura.tracking)
+                        Hekili:UpdateAuraHistory(spellID, "FRIENDLY_APPLIED", {
+                            destGUID = destGUID,
+                            time = time,
+                            source = amSource
+                        })
+                    end
 
                 elseif subtype == 'SPELL_PERIODIC_HEAL' or subtype == 'SPELL_PERIODIC_MISSED' then
                     ns.trackDebuff( spellID, destGUID, time )
+                    
+                    -- Enhanced periodic heal tracking for APL compatibility
+                    if Hekili.DB.profile.enhancedEvents and (aura.important or aura.tracking) then
+                        Hekili:UpdateAuraHistory(spellID, "PERIODIC_HEAL", {
+                            destGUID = destGUID,
+                            time = time,
+                            source = amSource,
+                            healing = (subtype == 'SPELL_PERIODIC_HEAL') and amount or 0
+                        })
+                    end
 
-                elseif destGUID and subtype == 'SPELL_AURA_REMOVED' or subtype == 'SPELL_AURA_BROKEN' or subtype == 'SPELL_AURA_BROKEN_SPELL' then
+                elseif destGUID and (subtype == 'SPELL_AURA_REMOVED' or subtype == 'SPELL_AURA_BROKEN' or subtype == 'SPELL_AURA_BROKEN_SPELL') then
                     ns.trackDebuff( spellID, destGUID )
 
                 end
@@ -1955,14 +2165,21 @@ local function CLEU_HANDLER( event, timestamp, subtype, hideCaster, sourceGUID, 
 
         end
 
-        if hostile and ( countDots and dmg_events[ subtype ] or direct_dmg_events[ subtype ] ) and not dmg_filtered[ spellID ] then
+        if hostile and ( countDots and dmg_events[ subtype ] or direct_dmg_events[ subtype ] ) and not Hekili:IsEventFiltered( spellID, subtype ) then
+            -- Enhanced damage tracking for better APL compatibility
             -- Don't wipe overkill targets in rested areas (it is likely a dummy).
             -- Interrupt is actually overkill.
             if not IsResting() and ( ( ( subtype == "SPELL_DAMAGE" or subtype == "SPELL_PERIODIC_DAMAGE" ) and interrupt > 0 ) or ( subtype == "SWING_DAMAGE" and spellName > 0 ) ) and ns.isTarget( destGUID ) then
                 ns.eliminateUnit( destGUID, true )
-                -- Hekili:ForceUpdate( "SPELL_DAMAGE_OVERKILL" )
+                -- Enhanced overkill tracking
+                Hekili:ForceUpdate( "SPELL_DAMAGE_OVERKILL", true )
             elseif not ( subtype == "SPELL_MISSED" and amount == "IMMUNE" ) then
                 ns.updateTarget( destGUID, time, amSource, spellID )
+                
+                -- Enhanced damage tracking for important abilities
+                if amSource and class.abilities[ spellID ] and class.abilities[ spellID ].important then
+                    Hekili:ForceUpdate( "SPELL_DAMAGE_IMPORTANT", true )
+                end
             end
         end
     end
@@ -1970,15 +2187,39 @@ end
 Hekili:ProfileCPU( "CLEU_HANDLER", CLEU_HANDLER )
 RegisterEvent( "COMBAT_LOG_EVENT_UNFILTERED", function ( event ) CLEU_HANDLER( event, CombatLogGetCurrentEventInfo() ) end )
 
+-- Enhanced event system for better APL compatibility
 -- Initialize damage detection settings when addon loads
 RegisterEvent( "PLAYER_ENTERING_WORLD", function( event )
     Hekili:UpdateDamageDetectionForCLEU()
+    
+    -- Enhanced initialization for APL compatibility
+    if Hekili.DB.profile.enhancedEvents then
+        Hekili:ForceUpdate( "PLAYER_ENTERING_WORLD", true )
+    end
 end )
 
 -- Update damage detection when spec changes
 RegisterEvent( "PLAYER_SPECIALIZATION_CHANGED", function( event, unit )
     if unit == "player" then
         Hekili:UpdateDamageDetectionForCLEU()
+        
+        -- Enhanced spec change handling for APL compatibility
+        if Hekili.DB.profile.enhancedEvents then
+            Hekili:ForceUpdate( "PLAYER_SPECIALIZATION_CHANGED", true )
+        end
+    end
+end )
+
+-- Enhanced combat state tracking for APL compatibility
+RegisterEvent( "PLAYER_REGEN_DISABLED", function( event )
+    if Hekili.DB.profile.enhancedEvents then
+        Hekili:ForceUpdate( "PLAYER_REGEN_DISABLED", true )
+    end
+end )
+
+RegisterEvent( "PLAYER_REGEN_ENABLED", function( event )
+    if Hekili.DB.profile.enhancedEvents then
+        Hekili:ForceUpdate( "PLAYER_REGEN_ENABLED", true )
     end
 end )
 
@@ -2053,10 +2294,120 @@ local function StoreKeybindInfo( page, key, aType, id, console )
             if itemToAbility[ id ] then
                 action = itemToAbility[ id ]
             else
-                for k, v in pairs( class.potions ) do
-                    if v.item == id then
-                        action = "potion"
+                -- Check for Synapse Springs (hands slot item)
+                local synapseIDs = {96228, 96229, 96230, 82174, 126734, 141330}
+                for _, synapseID in ipairs(synapseIDs) do
+                    if id == synapseID then
+                        action = "hands"
                         break
+                    end
+                end
+                
+                -- Check for potions
+                if not action then
+                    for k, v in pairs( class.potions ) do
+                        if v.item == id then
+                            action = "potion"
+                            break
+                        end
+                    end
+                end
+            end
+        end
+    elseif aType == "macro" then
+        local GetMacroInfo = rawget( _G, "GetMacroInfo" )
+        if GetMacroInfo then
+            local _, _, body = GetMacroInfo( id )
+            if type( body ) == "string" then
+                local text = body:lower()
+
+                -- Equipment slots
+                if text:match( "/use%s*%b[]%s*10" ) or text:match( "/use%s+10" ) or 
+                   text:match( "/use%s*%b[]%s*hands" ) or text:match( "/use%s+hands" ) or
+                   text:match( "/use%s*%b[]%s*gloves" ) or text:match( "/use%s+gloves" ) then
+                    action = "hands"
+                elseif text:match( "/use%s*%b[]%s*13" ) or text:match( "/use%s+13" ) or
+                       text:match( "/use%s*%b[]%s*trinket1" ) or text:match( "/use%s+trinket1" ) then
+                    action = "trinket1"
+                elseif text:match( "/use%s*%b[]%s*14" ) or text:match( "/use%s+14" ) or
+                       text:match( "/use%s*%b[]%s*trinket2" ) or text:match( "/use%s+trinket2" ) then
+                    action = "trinket2"
+                end
+
+                -- Explicit item by ID in the macro text
+                if not action then
+                    local itemID = tonumber( text:match( "item:(%d+)" ) )
+                    if itemID then
+                        local item, link = CGetItemInfo( itemID )
+                        ability = item and ( class.abilities[ item ] or class.abilities[ link ] )
+                        action = ability and ability.key
+                        if not action then
+                            if itemToAbility[ itemID ] then
+                                action = itemToAbility[ itemID ]
+                            else
+                                for k, v in pairs( class.potions ) do
+                                    if v.item == itemID then
+                                        action = "potion"
+                                        break
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+
+                -- Explicit item by name (e.g., /use Virmen's Bite)
+                if not action then
+                    local useName = text:match( "/use%s+[^\n\r;]*" )
+                    if useName then
+                        useName = useName:gsub( "%b[]", "" ):gsub( "/use", "" ):gsub( "^%s+", "" ):gsub( "%s+$", "" )
+                        local item, link = CGetItemInfo( useName )
+                        if item or link then
+                            ability = item and ( class.abilities[ item ] or class.abilities[ link ] )
+                            action = ability and ability.key
+                            if not action then
+                                for k, v in pairs( class.potions ) do
+                                    if v.name == useName or v.link == link then
+                                        action = "potion"
+                                        break
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+
+                -- Spells cast via macro (/cast ...)
+                if not action then
+                    local castName = text:match( "/castsequence[^\n\r;]*;?%s*([^\n\r;]+)" ) or text:match( "/cast%s+([^\n\r;]+)" )
+                    if castName then
+                        castName = castName:gsub( "%b[]", "" ):gsub( "^%s+", "" ):gsub( "%s+$", "" )
+                        
+                        -- Check for specific spell names that have variants
+                        if castName:lower():match("shred!?") or castName:lower():match("shred") then
+                            action = "shred"
+                        elseif castName:lower():match("thrash") then
+                            action = "thrash"
+                        elseif castName:lower():match("explosive_trap") or castName:lower():match("explosive trap") then
+                            action = "explosive_trap"
+                        elseif castName:lower():match("freezing_trap") or castName:lower():match("freezing trap") then
+                            action = "freezing_trap"
+                        elseif castName:lower():match("ice_trap") or castName:lower():match("ice trap") then
+                            action = "ice_trap"
+                        elseif castName:lower():match("snake_trap") or castName:lower():match("snake trap") then
+                            action = "snake_trap"
+                        elseif castName:lower():match("immolation_trap") or castName:lower():match("immolation trap") then
+                            action = "immolation_trap"
+                        else
+                            local GetSpellInfo = rawget( _G, "GetSpellInfo" )
+                            if GetSpellInfo then
+                                local _, _, _, _, _, _, spellID = GetSpellInfo( castName )
+                                if spellID then
+                                    ability = class.abilities[ spellID ]
+                                    action = ability and ability.key
+                                end
+                            end
+                        end
                     end
                 end
             end
@@ -2064,6 +2415,27 @@ local function StoreKeybindInfo( page, key, aType, id, console )
     else
         ability = class.abilities[ id ]
         action = ability and ability.key
+        
+        -- Check for spell IDs with variants if not found above
+        if not action then
+            local spellIDs = {
+                -- Shred variants (normal and glyph-enhanced)
+                [5221] = "shred",              -- Shred (normal)
+                [114236] = "shred",            -- Shred! (glyph-enhanced)
+                -- Thrash variants (Bear and Cat forms)
+                [77758] = "thrash",            -- Thrash (Bear Form) - used by Guardian and Feral
+                [106830] = "thrash",           -- Thrash (Cat Form) - used by Feral
+                -- Trap spells
+                [13813] = "explosive_trap",    -- Explosive Trap
+                [1499] = "freezing_trap",      -- Freezing Trap  
+                [13809] = "ice_trap",          -- Ice Trap
+                [34600] = "snake_trap",         -- Snake Trap
+                [13795] = "immolation_trap"    -- Immolation Trap
+            }
+            if spellIDs[id] then
+                action = spellIDs[id]
+            end
+        end
     end
 
     if action then
@@ -2265,7 +2637,8 @@ local function ReadKeybindings( event )
                 end
             end
 
-        if _G.ConsolePort then
+        local ConsolePort = rawget( _G, "ConsolePort" )
+        if ConsolePort then
             for i = 1, 180 do
                 local action, id = GetActionInfo( i )
 
@@ -2387,7 +2760,8 @@ local function ReadOneKeybinding( event, slot )
         end
     end
 
-    if _G.ConsolePort then
+    local ConsolePort = rawget( _G, "ConsolePort" )
+    if ConsolePort then
         local action, id = GetActionInfo( slot )
 
         if action and id then
@@ -2400,35 +2774,6 @@ local function ReadOneKeybinding( event, slot )
         end
     end
 
-    ability = ability and class.abilities[ ability ]
-
-    if ability and ability.bind then
-        if type( ability.bind ) == 'table' then
-            for _, b in ipairs( ability.bind ) do
-                for page, value in pairs( v.lower ) do
-                    keys[ b ] = keys[ b ] or {
-                        lower = {},
-                        upper = {},
-                        console = {}
-                    }
-                    keys[ b ].lower[ page ] = value
-                    keys[ b ].upper[ page ] = v.upper[ page ]
-                    keys[ b ].console[ page ] = v.console[ page ]
-                end
-            end
-        else
-            for page, value in pairs( v.lower ) do
-                keys[ ability.bind ] = keys[ ability.bind ] or {
-                    lower = {},
-                    upper = {},
-                    console = {}
-                }
-                keys[ ability.bind ].lower[ page ] = value
-                keys[ ability.bind ].upper[ page ] = v.upper[ page ]
-                keys[ ability.bind ].console[ page ] = v.console[ page ]
-            end
-        end
-    end
 
     -- This is also the right time to update pet-based target detection.
     Hekili:SetupPetBasedTargetDetection()
@@ -2497,7 +2842,7 @@ if select( 2, UnitClass( "player" ) ) == "DRUID" then
 
         if display then
             caps = not ( queued and display.keybindings.queuedLowercase or display.keybindings.lowercase )
-            console = ConsolePort ~= nil and display.keybindings.cPortOverride
+            console = ( rawget( _G, "ConsolePort" ) ~= nil ) and display.keybindings.cPortOverride
         end
 
         local db = console and keys[ key ].console or ( caps and keys[ key ].upper or keys[ key ].lower )
@@ -2567,7 +2912,7 @@ elseif select( 2, UnitClass( "player" ) ) == "ROGUE" then
         local caps, console = true, false
         if display then
             caps = not ( queued and display.keybindings.queuedLowercase or display.keybindings.lowercase )
-            console = ConsolePort ~= nil and display.keybindings.cPortOverride
+            console = ( rawget( _G, "ConsolePort" ) ~= nil ) and display.keybindings.cPortOverride
         end
 
         local db = console and keys[ key ].console or ( caps and keys[ key ].upper or keys[ key ].lower )
@@ -2623,7 +2968,7 @@ else
         local caps, console = true, false
         if display then
             caps = not ( queued and display.keybindings.queuedLowercase or display.keybindings.lowercase )
-            console = ConsolePort ~= nil and display.keybindings.cPortOverride
+            console = ( rawget( _G, "ConsolePort" ) ~= nil ) and display.keybindings.cPortOverride
         end
 
         local db = console and keys[ key ].console or ( caps and keys[ key ].upper or keys[ key ].lower )
@@ -2654,4 +2999,158 @@ else
 
         return output, source
     end
+end
+
+-- Enhanced event performance monitoring for APL compatibility
+function Hekili:GetEventPerformanceStats()
+    if not Hekili.DB.profile.enhancedEvents then
+        return nil
+    end
+    
+    local stats = {
+        totalEvents = 0,
+        totalTime = 0,
+        maxEventTime = 0,
+        eventCounts = {},
+        performanceWarnings = {}
+    }
+    
+    for event, data in pairs( eventData ) do
+        stats.totalEvents = stats.totalEvents + ( handlerCount[ event ] or 0 )
+        stats.totalTime = stats.totalTime + ( data.total or 0 )
+        stats.maxEventTime = max( stats.maxEventTime, data.max or 0 )
+        
+        if data.total and data.total > 1000 then
+            stats.performanceWarnings[ event ] = data.total
+        end
+    end
+    
+    return stats
+end
+
+-- Enhanced event debugging for APL compatibility
+function Hekili:DebugEventPerformance()
+    if not Hekili.DB.profile.enhancedEvents then
+        return
+    end
+    
+    local stats = self:GetEventPerformanceStats()
+    if stats then
+        print( "Hekili Event Performance:" )
+        print( "Total Events:", stats.totalEvents )
+        print( "Total Time:", string.format( "%.2fms", stats.totalTime ) )
+        print( "Max Event Time:", string.format( "%.2fms", stats.maxEventTime ) )
+        
+        if next( stats.performanceWarnings ) then
+            print( "Performance Warnings:" )
+            for event, time in pairs( stats.performanceWarnings ) do
+                print( "  ", event, string.format( "%.2fms", time ) )
+            end
+        end
+    end
+end
+
+-- Enhanced aura tracking system for APL compatibility
+local enhancedAuraTracker = {
+    importantAuras = {},
+    trackedAuras = {},
+    auraHistory = {},
+    maxHistorySize = 100
+}
+
+function Hekili:TrackImportantAura(spellID, key, important, tracking)
+    if not Hekili.DB.profile.enhancedEvents then
+        return
+    end
+    
+    enhancedAuraTracker.importantAuras[spellID] = {
+        key = key,
+        important = important,
+        tracking = tracking,
+        lastSeen = GetTime()
+    }
+end
+
+function Hekili:GetEnhancedAuraInfo(spellID)
+    if not Hekili.DB.profile.enhancedEvents then
+        return nil
+    end
+    
+    return enhancedAuraTracker.importantAuras[spellID]
+end
+
+function Hekili:UpdateAuraHistory(spellID, event, data)
+    if not Hekili.DB.profile.enhancedEvents then
+        return
+    end
+    
+    local now = GetTime()
+    local history = enhancedAuraTracker.auraHistory[spellID] or {}
+    
+    insert(history, {
+        time = now,
+        event = event,
+        data = data
+    })
+    
+    -- Keep only recent history
+    while #history > enhancedAuraTracker.maxHistorySize do
+        remove(history, 1)
+    end
+    
+    enhancedAuraTracker.auraHistory[spellID] = history
+end
+
+-- Enhanced combat log event filtering for APL compatibility
+function Hekili:IsEventFiltered(spellID, eventType)
+    if not Hekili.DB.profile.enhancedEvents then
+        return dmg_filtered[spellID] or false
+    end
+    
+    -- Use enhanced filtering when available
+    return enhanced_dmg_filtered[spellID] or dmg_filtered[spellID] or false
+end
+
+-- Enhanced aura history retrieval for APL compatibility
+function Hekili:GetAuraHistory(spellID, eventType, timeWindow)
+    if not Hekili.DB.profile.enhancedEvents then
+        return nil
+    end
+    
+    local history = enhancedAuraTracker.auraHistory[spellID]
+    if not history then
+        return nil
+    end
+    
+    local now = GetTime()
+    local filteredHistory = {}
+    
+    for _, entry in ipairs(history) do
+        if (not timeWindow or (now - entry.time) <= timeWindow) and
+           (not eventType or entry.event == eventType) then
+            insert(filteredHistory, entry)
+        end
+    end
+    
+    return filteredHistory
+end
+
+-- Enhanced aura tracking status for APL compatibility
+function Hekili:GetAuraTrackingStatus(spellID)
+    if not Hekili.DB.profile.enhancedEvents then
+        return nil
+    end
+    
+    local info = enhancedAuraTracker.importantAuras[spellID]
+    if not info then
+        return nil
+    end
+    
+    return {
+        key = info.key,
+        important = info.important,
+        tracking = info.tracking,
+        lastSeen = info.lastSeen,
+        timeSinceLastSeen = GetTime() - info.lastSeen
+    }
 end

@@ -1,3 +1,62 @@
+# Warrior: Protection (MoP Classic)
+# Source: Wowhead Protection Warrior Tank Rotation Guide - MoP Classic (Phase 1)
+# https://www.wowhead.com/mop-classic/guide/classes/warrior/protection/tank-rotation-cooldowns-abilities-pve
+
+actions.precombat+=/stance,choose=defensive
+actions.precombat+=/battle_shout,if=buff.commanding_shout.down
+actions.precombat+=/commanding_shout,if=buff.battle_shout.down
+
+# Core
+actions+=/auto_attack
+actions+=/disrupting_shout,if=target.casting&target.cast_interruptible
+actions+=/heroic_throw,if=target.distance>8&target.distance<30
+actions+=/charge,if=target.distance>8&target.distance<25
+actions+=/call_action_list,name=mitigation
+actions+=/call_action_list,name=cooldowns
+actions+=/call_action_list,name=vengeance_rotation
+actions+=/call_action_list,name=standard
+
+# Mitigation (Shield Block first for physical, Barrier for magic or overflow)
+actions.mitigation+=/shield_block,if=cooldown.shield_block.charges>=1&rage>=60&buff.shield_block.down
+actions.mitigation+=/shield_barrier,if=(rage>=60&buff.shield_block.down)|(incoming_damage_5s>health.max*0.30)
+actions.mitigation+=/demoralizing_shout,if=incoming_damage_5s>health.max*0.30
+actions.mitigation+=/spell_reflection,if=target.casting&target.cast_interruptible
+
+# Major defensives and utility
+actions.cooldowns+=/last_stand,if=health.pct<50
+actions.cooldowns+=/shield_wall,if=health.pct<40|incoming_damage_5s>health.max*0.50
+actions.cooldowns+=/rallying_cry,if=health.pct<35
+actions.cooldowns+=/vigilance,if=talent.vigilance.enabled
+
+# Offensive CDs (use during safe windows; align with Shield Block for extra value)
+actions.cooldowns+=/avatar,if=talent.avatar.enabled&buff.shield_block.up
+actions.cooldowns+=/bloodbath,if=talent.bloodbath.enabled&buff.shield_block.up
+actions.cooldowns+=/recklessness,if=buff.shield_block.up&target.time_to_die>12
+
+# Vengeance-optimized rotation (when vengeance stacks are high) - temporarily disabled
+# actions.vengeance_rotation+=/shield_slam,if=should_prioritize_damage
+# actions.vengeance_rotation+=/revenge,if=should_prioritize_damage&active_enemies>=2
+# actions.vengeance_rotation+=/thunder_clap,if=should_prioritize_damage&active_enemies>=3
+# actions.vengeance_rotation+=/devastate,if=should_prioritize_damage
+actions.cooldowns+=/war_banner
+
+# Standard / Priority
+# Maintain Weakened Blows and Weakened Armor; core attacks on cooldown; sensible rage dumps
+actions.standard+=/thunder_clap,if=debuff.weakened_blows.down|active_enemies>=3
+actions.standard+=/shield_slam
+actions.standard+=/revenge
+actions.standard+=/storm_bolt,if=talent.storm_bolt.enabled
+actions.standard+=/shockwave,if=talent.shockwave.enabled&active_enemies>=3
+actions.standard+=/dragon_roar,if=talent.dragon_roar.enabled&active_enemies<=3
+actions.standard+=/bladestorm,if=talent.bladestorm.enabled&active_enemies>=4
+actions.standard+=/devastate,if=debuff.weakened_armor.stack<3
+actions.standard+=/devastate
+actions.standard+=/execute,if=target.health.pct<20
+
+# Rage dumps (off-GCD where appropriate). Avoid starving mitigation.
+actions.standard+=/cleave,if=active_enemies>=3&rage>=60&buff.shield_block.up
+actions.standard+=/heroic_strike,if=rage>=80&buff.shield_block.up
+
 # Warrior: Protection
 ## Precombat
 actions.precombat+=/battle_shout,if=settings.maintain_buffs&!buff.str_agi_int.up&!buff.battle_shout.up
@@ -12,6 +71,7 @@ actions+=/charge,if=time=0|movement.distance>8
 actions+=/pummel,if=target.debuff.casting.react
 actions+=/run_action_list,name=movement,if=movement.distance>5
 actions+=/berserker_rage,if=settings.use_berserker_rage&buff.enrage.down
+actions+=/use_item,slot=hands,if=buff.shield_block.up
 actions+=/use_item,name=trinket1,if=cooldown.shield_wall.remains>90
 actions+=/use_item,name=trinket2,if=cooldown.shield_wall.remains>90
 actions+=/blood_fury,if=buff.shield_block.up
@@ -19,7 +79,7 @@ actions+=/berserking,if=buff.shield_block.up
 actions+=/arcane_torrent,if=rage<rage.max-40
 actions+=/lights_judgment,if=cooldown.shield_slam.remains
 actions+=/bag_of_tricks,if=cooldown.shield_slam.remains
-actions+=/potion,if=buff.shield_wall.up|target.time_to_die<25
+actions+=/potion,name=mogu_power_potion,if=buff.shield_wall.up|target.time_to_die<25
 actions+=/call_action_list,name=defensives
 actions+=/taunt,if=settings.auto_taunt&!threat.exists
 actions+=/run_action_list,name=single_target,if=active_enemies=1
@@ -32,6 +92,7 @@ actions.defensives+=/demoralizing_shout,if=incoming_damage_2500ms>health.max*0.2
 actions.defensives+=/shield_barrier,if=buff.shield_barrier.down&(rage>=settings.shield_barrier_rage_threshold|health.pct<50)
 actions.defensives+=/shield_block,if=settings.shield_block_priority!='never'&(buff.shield_block.down|(settings.shield_block_priority='always'&buff.shield_block.remains<2))
 actions.defensives+=/spell_reflection,if=settings.use_spell_reflection&incoming_magic_damage_5s>health.max*0.15
+actions.defensives+=/enraged_regeneration,if=health.pct<50&buff.enrage.up
 actions.defensives+=/healthstone,if=health.pct<35
 actions.defensives+=/impending_victory,if=health.pct<40&talent.impending_victory.enabled
 actions.defensives+=/victory_rush,if=health.pct<40&!talent.impending_victory.enabled
@@ -39,12 +100,13 @@ actions.defensives+=/victory_rush,if=health.pct<40&!talent.impending_victory.ena
 ## Single-target rotation
 actions.single_target+=/avatar,if=settings.cooldown_usage!='never'&talent.avatar.enabled&(buff.shield_block.up|cooldown.shield_block.remains>8)
 actions.single_target+=/dragon_roar,if=settings.cooldown_usage!='never'&buff.shield_block.up
-actions.single_target+=/thunder_clap,if=!dot.deep_wounds.ticking
+actions.single_target+=/thunder_clap,if=debuff.weakened_blows.down|debuff.weakened_blows.remains<2
 actions.single_target+=/shield_slam
 actions.single_target+=/revenge
 actions.single_target+=/sunder_armor,if=settings.maintain_sunder_armor&(debuff.sunder_armor.down|debuff.sunder_armor.stack<3)
 actions.single_target+=/devastate,if=debuff.sunder_armor.stack<3|(rage<90&dot.deep_wounds.remains<4)
 actions.single_target+=/storm_bolt,if=settings.cooldown_usage!='never'
+actions.single_target+=/execute,if=target.health.pct<20
 actions.single_target+=/heroic_strike,if=settings.use_heroic_strike&rage>60
 actions.single_target+=/devastate
 actions.single_target+=/battle_shout,if=settings.maintain_buffs&rage<rage.max-20
@@ -56,6 +118,7 @@ actions.aoe+=/thunder_clap
 actions.aoe+=/bladestorm,if=settings.cooldown_usage!='never'
 actions.aoe+=/dragon_roar,if=settings.cooldown_usage!='never'
 actions.aoe+=/shockwave,if=settings.cooldown_usage!='never'
+actions.aoe+=/use_item,slot=hands,if=buff.shield_block.up
 actions.aoe+=/shield_slam
 actions.aoe+=/revenge
 actions.aoe+=/cleave,if=rage>60

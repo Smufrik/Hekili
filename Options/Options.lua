@@ -205,6 +205,64 @@ local oneTimeFixes = {
             spec.maxTime         = nil
         end
     end,
+
+    migrateIndicatorDefaults_20250126 = function( p )
+        -- Migrate existing profiles to include new indicator appearance settings
+        for displayName, display in pairs( p.displays ) do
+            if display.indicators and not display.indicators.width then
+                -- Set sensible defaults based on display size or use upstream defaults
+                local primarySize = max( display.primaryWidth or 50, display.primaryHeight or 50 )
+                local queueSize = max( display.queue and display.queue.width or 50, display.queue and display.queue.height or 30 )
+                
+                -- Use roughly one-third of the smaller display size for indicators
+                local indicatorSize = min( primarySize, queueSize ) / 3
+                indicatorSize = max( 8, min( 100, indicatorSize ) ) -- Clamp between 8-100
+                
+                display.indicators.width = indicatorSize
+                display.indicators.height = indicatorSize
+                display.indicators.zoom = 30
+                display.indicators.keepAspectRatio = true
+            end
+        end
+        
+        -- Trigger UI rebuild to apply new indicator settings
+        if Hekili.BuildUI then
+            Hekili:BuildUI()
+        end
+    end,
+
+    migrateFrameBudget_20250126 = function( p )
+        -- Migrate frameCapPct to frameBudget (percentage to decimal)
+        if p.performance and p.performance.frameCapPct then
+            p.performance.frameBudget = p.performance.frameCapPct
+            p.performance.frameCapPct = nil
+        end
+        
+        -- Ensure frameBudget exists with default
+        if not p.performance then
+            p.performance = {}
+        end
+        if not p.performance.frameBudget then
+            p.performance.frameBudget = 0.7
+        end
+    end,
+    
+    migrateEnhancedEvents_20250126 = function( p )
+        -- Initialize enhanced events setting for existing profiles
+        if not p.performance then
+            p.performance = {}
+        end
+        
+        -- Set enhanced events to false by default for existing profiles
+        if p.performance.enhancedEvents == nil then
+            p.performance.enhancedEvents = false
+        end
+        
+        -- Trigger UI rebuild to apply new settings
+        if Hekili.BuildUI then
+            Hekili:BuildUI()
+        end
+    end,
 }
 
 function Hekili:RunOneTimeFixes()
@@ -236,6 +294,35 @@ function Hekili:LoadOptionModules()
 
     for _, m in ipairs( modules ) do
         require( "Hekili.Options." .. m )
+    end
+    
+    -- Add enhanced events chat command
+    if Hekili.RegisterChatCommand then
+        Hekili:RegisterChatCommand( "hekili-events", function( msg )
+            if msg == "debug" then
+                if Hekili.DebugEventPerformance then
+                    Hekili:DebugEventPerformance()
+                else
+                    print( "Hekili: Enhanced Events not available. Enable the feature in Performance settings." )
+                end
+            elseif msg == "stats" then
+                if Hekili.GetEventPerformanceStats then
+                    local stats = Hekili:GetEventPerformanceStats()
+                    if stats then
+                        print( "Hekili Event Stats:" )
+                        print( "Total Events:", stats.totalEvents )
+                        print( "Total Time:", string.format( "%.2fms", stats.totalTime ) )
+                        print( "Max Event Time:", string.format( "%.2fms", stats.maxEventTime ) )
+                    end
+                else
+                    print( "Hekili: Enhanced Events not available. Enable the feature in Performance settings." )
+                end
+            else
+                print( "Hekili Event Commands:" )
+                print( "/hekili-events debug - Show detailed event performance" )
+                print( "/hekili-events stats - Show event statistics" )
+            end
+        end )
     end
 end
 
@@ -386,6 +473,12 @@ local displayTemplate = {
         anchor = "RIGHT",
         x = 0,
         y = 0,
+
+        -- Indicator icon appearance defaults
+        width = 20,
+        height = 20,
+        zoom = 30,
+        keepAspectRatio = true,
     },
 
     targets = {
@@ -762,6 +855,11 @@ do
                 -- (above)
 
                 runOnce = {
+                },
+                
+                performance = {
+                    frameBudget = 0.7,
+                    enhancedEvents = false,
                 },
 
                 clashes = {
@@ -3021,6 +3119,63 @@ return "Position" end,
                                 disabled = function () return data.indicators.enabled == false end,
                             },
 
+                            size = {
+                                type = "group",
+                                inline = true,
+                                name = "Appearance",
+                                order = 1.5,
+                                args = {
+                                    width = {
+                                        type = "range",
+                                        name = "Width",
+                                        desc = "Specify the width of indicator icons.",
+                                        min = 8,
+                                        max = 100,
+                                        step = 1,
+                                        width = 1.49,
+                                        order = 1,
+                                    },
+
+                                    height = {
+                                        type = "range",
+                                        name = "Height",
+                                        desc = "Specify the height of indicator icons.",
+                                        min = 8,
+                                        max = 100,
+                                        step = 1,
+                                        width = 1.49,
+                                        order = 2,
+                                    },
+
+                                    spacer01 = {
+                                        type = "description",
+                                        name = " ",
+                                        width = "full",
+                                        order = 3
+                                    },
+
+                                    zoom = {
+                                        type = "range",
+                                        name = "Icon Zoom",
+                                        desc = "Select the zoom percentage for indicator icon textures. (Roughly 30% will trim off the default Blizzard borders.)",
+                                        min = 0,
+                                        softMax = 100,
+                                        max = 200,
+                                        step = 1,
+                                        width = 1.49,
+                                        order = 4,
+                                    },
+
+                                    keepAspectRatio = {
+                                        type = "toggle",
+                                        name = "Keep Aspect Ratio",
+                                        desc = "When enabled, indicator icons will maintain their original aspect ratio when resized.",
+                                        width = 1.49,
+                                        order = 5,
+                                    },
+                                }
+                            },
+
                             pos = {
                                 type = "group",
                                 inline = true,
@@ -4239,6 +4394,10 @@ self:ForceUpdate( "SPEC_PACKAGE_CHANGED" )
         db = db or self.Options
         if not db then return end
 
+        -- Simple guard to avoid repeatedly rebuilding the heavy Ability Options UI in rapid succession.
+        if self.AbilityOptionsEmbedded then return end
+        self.AbilityOptionsEmbedded = true
+
         local abilities = {}
         local toggles = {}
 
@@ -5283,32 +5442,94 @@ found = true end
                             name = "Performance",
                             order = 10,
                             args = {
-                                placeboBar = {
-                                    type = "range",
-                                    name = "Not a Placebo",
-                                    desc = "This adjusts the VROOOM of your current specialization.",
-                                    order = 100,
-                                    width = "full",
-                                    min = 3,
-                                    max = 20,
-                                    step = 1
-                                },
-
-                                vroom = {
-                                    type = "header",
-                                    name = function()
-                                        local amount = self.DB.profile.specs[ id ].placeboBar or 5
-
-                                        if amount > 19 then
-                                            return "|cFFFF0000MAXIMAL VROOM|r - Secret Optimal Mode Unlocked"
-                                        elseif amount > 14 then
-                                            return "|cFFFF0000DANGER|r - Approaching Maximum VROOOM"
-                                        end
-
-                                        return format( "VR%sM!", string.rep( "O", amount ) )
+                                mode = {
+                                    type = "select",
+                                    name = "Mode",
+                                    desc = "Choose a performance preset:\n\n"
+                                        .. "• Low: conservative updates for slower/older systems.\n"
+                                        .. "• Medium: balanced updates for most systems.\n"
+                                        .. "• High: fastest updates for high-end machines.",
+                                    order = 1,
+                                    width = 1.5,
+                                    values = { "Low", "Medium", "High" },
+                                    get = function(info)
+                                        local p = Hekili.DB.profile
+                                        p.performance = p.performance or {}
+                                        return p.performance.mode or 2
                                     end,
-                                    order = 101,
-                                    width = "full"
+                                    set = function(info, v)
+                                        local p = Hekili.DB.profile
+                                        p.performance = p.performance or {}
+                                        p.performance.mode = v
+                                    end,
+                                },
+                                frameBudget = {
+                                    type = "range",
+                                    name = "Frame Budget",
+                                    desc = "This setting determines how much time can be used to calculate recommendations.",
+                                    order = 2,
+                                    min = 0.1,
+                                    softMin = 0.2,
+                                    softMax = 0.9,
+                                    max = 1,
+                                    step = 0.05,
+                                    isPercent = true,
+                                    get = function( _ ) return Hekili.DB.profile.performance.frameBudget or 0.7 end,
+                                    set = function( _, v ) Hekili.DB.profile.performance.frameBudget = v end,
+                                    width = "full",
+                                    order = 1,
+                                },
+                                frameBudgetInfo = {
+                                    type = "description",
+                                    name = function()
+                                        local fps = Hekili.GetSmoothedFPS and Hekili.GetSmoothedFPS() or GetFramerate()
+                                        local budget = Hekili.DB.profile.performance.frameBudget or 0.7
+                                        local frameBudgetMs = (1000 / math.max(fps, 30)) * budget
+                                        
+                                        return "This setting controls how much of your frame time Hekili can use for calculations.\n\n" ..
+                                               "|cFFFFD100• Higher values|r mean recommendations update more |cFF00FF00quickly|r but may risk lowering your frame rate, " ..
+                                               "especially when other addons are working at the same time.\n" ..
+                                               "|cFFFFD100• Lower values|r mean recommendations may update more slowly but may " ..
+                                               "|cFF00FF00preserve your frame rate|r.\n\n" ..
+                                               "Adjust this budget to balance |cFF00FF00smooth gameplay|r and " ..
+                                               "|cFF00FF00responsive recommendations|r. " ..
+                                               "Use the highest value that feels smooth on your system without your screen freezing or stuttering.\n\n" ..
+                                               "|cFF00B4FFDefault (recommended)|r: " ..
+                                               "|cFFFFD10070%|r\n\n" ..
+                                               "At |cFFFFD700" .. format( "%.1f", fps ) .. " FPS|r, a budget of " ..
+                                               "|cFFFFD700" .. ( budget * 100 ) .. "%|r " ..
+                                               "allows up to |cFFFFD700" .. format( "%.2f", frameBudgetMs ) .. " ms|r of frame time per update. Recommendations that take longer " ..
+                                               "to calculate will be delayed by at least 1 frame."
+                                    end,
+                                    fontSize = "medium",
+                                    width = "full",
+                                    order = 2,
+                                },
+                                enhancedEvents = {
+                                    type = "toggle",
+                                    name = "Enhanced Events",
+                                    desc = "Enable enhanced event handling for better APL compatibility and performance monitoring. This provides improved tracking of important auras, better combat log event handling, and performance monitoring tools.",
+                                    order = 3,
+                                    width = "full",
+                                    get = function()
+                                        return Hekili.DB.profile.enhancedEvents or false
+                                    end,
+                                    set = function( _, value )
+                                        Hekili.DB.profile.enhancedEvents = value
+                                        Hekili:BuildUI()
+                                    end,
+                                },
+                                enhancedEventsInfo = {
+                                    type = "description",
+                                    name = "Enhanced Events provides:\n" ..
+                                           "• Better APL compatibility with improved aura tracking\n" ..
+                                           "• Enhanced combat log event handling\n" ..
+                                           "• Performance monitoring and debugging tools\n" ..
+                                           "• Improved event registration and management\n\n" ..
+                                           "This feature is designed to work with APLs from version 5.5.0 and later.",
+                                    fontSize = "small",
+                                    width = "full",
+                                    order = 4,
                                 },
                             }
                         }
@@ -8720,6 +8941,13 @@ do
                         hidden = true
                     },
 
+                    debugTargets = {
+                        type = "toggle",
+                        name = "Debug Target Detection",
+                        desc = "If checked, the addon will show detailed information about target counting and filtering in the chat. Useful for troubleshooting target detection issues.",
+                        order = 4,
+                    },
+
                     welcome = {
                         type = 'description',
                         name = "",
@@ -9204,6 +9432,8 @@ function Hekili:TotalRefresh( noOptions )
     end
 
     self:RunOneTimeFixes()
+    -- Allow ability options to rebuild after a total refresh.
+    self.AbilityOptionsEmbedded = nil
     ns.checkImports()
 
     -- self:LoadScripts()
@@ -9633,7 +9863,6 @@ do
     local ignore_actions = {        snapshot_stats = 1,
         flask = 1,
         food = 1
-        -- MoP: Removed augmentation = 1 (not applicable in MoP)
     }
 
     local expressions = {
@@ -9646,6 +9875,7 @@ do
         { "rtb_buffs%.will_lose%.([%w_]+)"                  , "rtb_buffs_will_lose_buff.%1"             },
         { "rtb_buffs%.will_lose"                            , "rtb_buffs_will_lose"                     },
         { "rtb_buffs%.total"                                , "rtb_buffs"                               },
+        { "spell%.usable%.([%w_]+)"                         , "action.%1.ready"                          },
         { "buff.supercharge_(%d).up"                        , "supercharge_%1"                          },
         { "hyperthread_wristwraps%.([%w_]+)%.first_remains" , "hyperthread_wristwraps.first_remains.%1" },
         { "hyperthread_wristwraps%.([%w_]+)%.count"         , "hyperthread_wristwraps.%1"               },

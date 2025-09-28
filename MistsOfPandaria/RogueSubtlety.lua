@@ -12,6 +12,7 @@ local class, state = Hekili.Class, Hekili.State
 local insert, wipe = table.insert, table.wipe
 local strformat = string.format
 local GetSpellInfo = ns.GetUnpackedSpellInfo
+local floor = math.floor
 
 local spec = Hekili:NewSpecialization( 261 )
 
@@ -77,24 +78,8 @@ spec:RegisterResource( 3, { -- Energy with Subtlety-specific enhancements
         end,
     },
     
-    -- Relentless Strikes energy return (enhanced for Subtlety)
-    relentless_strikes_energy = {
-        last = function ()
-            return state.query_time
-        end,
-        interval = 1,
-        value = function()
-            -- Relentless Strikes: Enhanced for Subtlety with stealth bonuses
-            if state.talent.relentless_strikes.enabled and state.last_finisher_cp then
-                local energy_chance = state.last_finisher_cp * 0.05 -- 5% chance per combo point (enhanced for Subtlety)
-                local stealth_bonus = (state.buff.stealth.up or state.buff.vanish.up or state.buff.shadow_dance.up) and 1.5 or 1.0
-                return math.random() < energy_chance and (25 * stealth_bonus) or 0
-            end
-            return 0
-        end,
-    },
-    
-    -- Find Weakness energy efficiency bonus
+  -- NOTE: Relentless Strikes energy is not modeled as random regen to keep the engine deterministic.
+
     find_weakness_energy = {
         aura = "find_weakness",
         last = function ()
@@ -111,22 +96,28 @@ spec:RegisterResource( 3, { -- Energy with Subtlety-specific enhancements
     base_regen = function ()
         local base = 10 -- Base energy regeneration in MoP (10 energy per second)
         
-        -- Haste scaling for energy regeneration (minor in MoP)
-        local haste_bonus = 1.0 + ((state.stat.haste_rating or 0) / 42500) -- Approximate haste scaling
+        -- Haste scaling for energy regeneration (minor in MoP) with safety checks
+        local haste_rating = (state.stat and state.stat.haste_rating) or 0
+        local haste_bonus = 1.0 + (haste_rating / 42500) -- Approximate haste scaling
         
-        -- Subtlety gets enhanced energy efficiency in stealth
+        -- Subtlety gets enhanced energy efficiency in stealth with safety checks
         local stealth_bonus = 1.0
-        if state.talent.shadow_focus.enabled and (state.buff.stealth.up or state.buff.vanish.up or state.buff.shadow_dance.up) then
+        if state.talent and state.talent.shadow_focus and state.talent.shadow_focus.enabled and 
+           ((state.buff and state.buff.stealth and state.buff.stealth.up) or 
+            (state.buff and state.buff.vanish and state.buff.vanish.up) or 
+            (state.buff and state.buff.shadow_dance and state.buff.shadow_dance.up)) then
             stealth_bonus = 1.75 -- 75% bonus energy efficiency while stealthed (stronger than other specs)
         end
         
-        -- Master of Subtlety energy efficiency
+        -- Master of Subtlety energy efficiency with safety checks
         local subtlety_bonus = 1.0
-        if state.buff.master_of_subtlety.up then
+        if state.buff and state.buff.master_of_subtlety and state.buff.master_of_subtlety.up then
             subtlety_bonus = 1.10 -- 10% energy efficiency bonus
         end
         
-        return base * haste_bonus * stealth_bonus * subtlety_bonus
+        -- Ensure we never return nil or invalid values
+        local result = base * haste_bonus * stealth_bonus * subtlety_bonus
+        return math.max(result or 10, 1) -- Fallback to minimum 1 energy per second if something goes wrong
     end,
     
     -- Preparation energy burst
@@ -160,12 +151,13 @@ spec:RegisterResource( 4, { -- Combo Points = 4 in MoP
     -- Premeditation combo point generation (Subtlety opener)
     premeditation = {
         last = function ()
-            return state.last_cast_time.premeditation or 0
+            return state.query_time -- Simplified for Hekili compatibility
         end,
         interval = 1,
         value = function()
             -- Premeditation generates 2 combo points when opening from stealth
-            if state.last_ability == "premeditation" and (state.buff.stealth.up or state.buff.vanish.up) then
+            -- Simplified: check if premeditation buff is active and we're stealthed
+            if state.buff.premeditation.up and (state.buff.stealth.up or state.buff.vanish.up) then
                 return 2
             end
             return 0
@@ -257,29 +249,9 @@ spec:RegisterTalents( {
 -- Auras
 spec:RegisterAuras( {
   -- Abilities
-  blind = {
-    id = 2094,
-    duration = 60,
-    max_stack = 1
-  },
-  combat_readiness = {
-    id = 74001,
-    duration = 10,
-    max_stack = 5
-  },
-  evasion = {
-    id = 5277,
-    duration = 10,
-    max_stack = 1
-  },
-  feint = {
-    id = 1966,
-    duration = 5,
-    max_stack = 1
-  },
   kidney_shot = {
     id = 408,
-    duration = function() return 1 + min(5, effective_combo_points) end, -- MoP Classic: 1s base + 1s per combo point (correct)
+    duration = function() return 1 + min(5, combo_points.current or 0) end, -- MoP Classic: 1s base + 1s per combo point (correct)
     max_stack = 1
   },
   preparation = {
@@ -309,7 +281,7 @@ spec:RegisterAuras( {
   },
   slice_and_dice = {
     id = 5171,
-    duration = function() return 6 + (6 * min(5, effective_combo_points)) end, -- MoP: 6s base + 6s per combo point.
+    duration = function() return 6 + (6 * min(5, combo_points.current or 0)) end, -- MoP: 6s base + 6s per combo point.
     max_stack = 1
   },
   sprint = {
@@ -336,22 +308,63 @@ spec:RegisterAuras( {
   },
   rupture = {
     id = 1943,
-    duration = function() return 8 + (4 * min(5, effective_combo_points)) end, -- MoP Classic: 8s base + 4s per combo point
+    duration = function() return 8 + (4 * min(5, combo_points.current or 0)) end, -- MoP Classic: 8s base + 4s per combo point
     max_stack = 1
   },
-  deadly_poison = {
+  -- Poison Debuffs on targets
+  deadly_poison_dot = {
     id = 2818,
     duration = 12,
-    max_stack = 5
+    max_stack = 5,
+    copy = "deadly_poison_debuff"
   },
-  crippling_poison = {
+  crippling_poison_debuff = {
     id = 3409,
     duration = 12,
+    max_stack = 1,
+    copy = "crippling_poison_slow"
+  },
+  mind_numbing_poison_debuff = {
+    id = 5760,
+    duration = 10,
+    max_stack = 1,
+    copy = "mind_numbing_poison_slow"
+  },
+  instant_poison_debuff = {
+    id = 8681,
+    duration = 8,
+    max_stack = 1
+  },
+  wound_poison_debuff = {
+    id = 8680,
+    duration = 12,
+    max_stack = 1
+  },
+  
+  -- Weapon Poison Buffs (applied to weapons)
+  deadly_poison = {
+    id = 2823,
+    duration = 3600,
+    max_stack = 1
+  },
+  instant_poison = {
+    id = 8680,
+    duration = 3600,
+    max_stack = 1
+  },
+  wound_poison = {
+    id = 8679,
+    duration = 3600,
+    max_stack = 1
+  },
+  crippling_poison = {
+    id = 3408,
+    duration = 3600,
     max_stack = 1
   },
   mind_numbing_poison = {
-    id = 5760,
-    duration = 10,
+    id = 5761,
+    duration = 3600,
     max_stack = 1
   },
   
@@ -369,15 +382,126 @@ spec:RegisterAuras( {
     max_stack = 1
   },
   
+  -- Defensive and Utility Buffs
+  cloak_of_shadows = {
+    id = 31224,
+    duration = 5,
+    max_stack = 1
+  },
+  evasion = {
+    id = 5277,
+    duration = 5,
+    max_stack = 1
+  },
+  feint = {
+    id = 1966,
+    duration = 6,
+    max_stack = 1
+  },
+  recuperate = {
+    id = 73651,
+    duration = function() return 6 * min(5, combo_points.current or 0) end,
+    max_stack = 1
+  },
+  tricks_of_the_trade = {
+    id = 57934,
+    duration = 30,
+    max_stack = 1
+  },
+  
+  -- Debuffs on Targets
+  blind = {
+    id = 2094,
+    duration = 10,
+    max_stack = 1
+  },
+  gouge = {
+    id = 1776,
+    duration = 4,
+    max_stack = 1
+  },
+  crimson_tempest = {
+    id = 121411,
+    duration = function() return 4 + (2 * min(5, combo_points.current or 0)) end,
+    max_stack = 1
+  },
+  expose_armor = {
+    id = 8647,
+    duration = 30,
+    max_stack = 1
+  },
+  
+  -- Missing buffs/debuffs for abilities
+  shadow_blades = {
+    id = 121471,
+    duration = 12,
+    max_stack = 1
+  },
+  -- (removed) Cold Blood was not available in MoP Subtlety.
+  smoke_bomb = {
+    id = 76577,
+    duration = 10,
+    max_stack = 1
+  },
+  distract = {
+    id = 1725,
+    duration = 10,
+    max_stack = 1
+  },
+  
+  -- Additional missing debuffs and effects
+  sunder_armor = {
+    id = 7386,
+    duration = 30,
+    max_stack = 5
+  },
+  stun = {
+    id = 408, -- Generic stun effect
+    duration = 4,
+    max_stack = 1
+  },
+  magic = {
+    id = 1,
+    duration = 30,
+    max_stack = 1
+  },
+  
+  -- Missing ability buffs
+  burst_of_speed = {
+    id = 108212,
+    duration = 4,
+    max_stack = 1
+  },
+  
+  -- Stealth state tracking for SimC compatibility
+  stealthed = {
+    id = 115191,
+    duration = 3600,
+    max_stack = 1,
+    copy = "stealthed_all",
+    generate = function()
+      local stealth_up = buff.stealth.up or buff.vanish.up or buff.shadow_dance.up or buff.subterfuge.up
+      return {
+        all = stealth_up,
+        rogue = buff.stealth.up,
+        mantle = false,
+        normal = buff.stealth.up
+      }
+    end
+  },
+
+  -- Hemorrhage DoT (target debuff)
+  hemorrhage = {
+    id = 16511,
+    duration = 15,
+    max_stack = 1,
+    tick_time = 3
+  },
+  
   -- Talents
   master_of_subtlety = {
     id = 31665,
     duration = 6,
-    max_stack = 1
-  },
-  find_weakness = {
-    id = 91021,
-    duration = 10,
     max_stack = 1
   },
   honor_among_thieves = {
@@ -394,6 +518,31 @@ spec:RegisterAuras( {
     id = 115189,
     duration = 3600,
     max_stack = 5
+  },
+  
+  -- Cross-spec auras to prevent validation errors
+  -- These are referenced in other specs' priorities and need to exist to prevent errors
+  blindside = {
+    id = 121153,
+    duration = 10,
+    max_stack = 1
+  },
+  deep_insight = {
+    id = 84747,
+    duration = 15,
+    max_stack = 1,
+    debuff = true
+  },
+  revealing_strike = {
+    id = 84617,
+    duration = 15,
+    max_stack = 1,
+    debuff = true
+  },
+  vendetta = {
+    id = 79140,
+    duration = 30,
+    max_stack = 1
   },
 } )
 
@@ -415,6 +564,119 @@ end )
 
 -- Abilities
 spec:RegisterAbilities( {
+  -- Core Rogue Abilities
+  
+  -- Instantly attack with your off-hand weapon for 280% weapon damage and causes the target to bleed, dealing damage over 18 sec. Must be stealthed. Awards 1 combo point.
+  garrote = {
+    id = 703,
+    cast = 0,
+    cooldown = 0,
+    gcd = "totem",
+    school = "physical",
+
+    spend = function () return 45 * ( ( talent.shadow_focus.enabled and ( buff.stealth.up ) ) and 0.25 or 1 ) end,
+    spendType = "energy",
+
+    startsCombat = true,
+    
+  usable = function () return (buff.stealth.up or buff.vanish.up or buff.shadow_dance.up), "requires stealth" end,
+
+    handler = function ()
+      gain( 1, "combo_points" )
+      applyDebuff( "target", "garrote", 18 )
+      
+      -- Apply poisons from stealth
+      if buff.deadly_poison.up then
+        applyDebuff("target", "deadly_poison_dot", 12, min(5, (debuff.deadly_poison_dot.stack or 0) + 1))
+      end
+      
+      -- Remove stealth (unless Subterfuge talent extends it)
+      if not talent.subterfuge.enabled then
+        removeBuff("stealth")
+        removeBuff("vanish")
+      else
+        -- Subterfuge extends stealth abilities for 3 seconds
+        removeBuff("stealth")
+        removeBuff("vanish")
+        applyBuff("subterfuge", 3)
+      end
+    end
+  },
+
+  -- Allows the caster to vanish from sight, enabling the use of stealth for 10 sec.
+  vanish = {
+    id = 1856,
+    cast = 0,
+    cooldown = 180,
+    gcd = "off",
+    school = "physical",
+
+    startsCombat = false,
+    
+    toggle = "cooldowns",
+
+    handler = function ()
+      applyBuff( "vanish", 10 )
+      applyBuff( "stealth", 10 ) -- Vanish grants stealth
+    end
+  },
+
+  -- Kick the target, interrupting spellcasting and preventing any spell in that school from being cast for 5 sec.
+  kick = {
+    id = 1766,
+    cast = 0,
+    cooldown = 10,
+    gcd = "off",
+    school = "physical",
+
+    startsCombat = true,
+
+    toggle = "interrupts",
+
+    debuff = "casting",
+    readyTime = state.timeToInterrupt,
+
+    handler = function ()
+      interrupt()
+    end
+  },
+
+  -- Conceals you in the shadows until cancelled or upon attacking.
+  stealth = {
+    id = 1784,
+    cast = 0,
+    cooldown = 10,
+    gcd = "off",
+    school = "physical",
+
+    startsCombat = false,
+    
+    usable = function() return not buff.stealth.up and not state.combat, "cannot stealth in combat or while already stealthed" end,
+
+    handler = function ()
+      applyBuff( "stealth", 3600 ) -- Long duration until broken
+    end
+  },
+
+  -- When used, adds 2 combo points to your target. You must add the finishing move within 20 sec, or the combo points are lost.
+  premeditation = {
+    id = 14183,
+    cast = 0,
+    cooldown = 20,
+    gcd = "off",
+    school = "physical",
+
+    talent = "premeditation",
+    startsCombat = false,
+    
+  usable = function () return (buff.stealth.up or buff.vanish.up or buff.shadow_dance.up) and combo_points.current < 4, "requires stealth and less than 4 combo points" end,
+
+    handler = function ()
+      gain( 2, "combo_points" )
+      applyBuff( "premeditation", 20 )
+    end
+  },
+
   -- Stab the target, causing 632 Physical damage. Damage increased by 20% when you are behind your target. Awards 1 combo point.
   backstab = {
     id = 53,
@@ -423,13 +685,31 @@ spec:RegisterAbilities( {
     gcd = "totem",
     school = "physical",
 
-    spend = function () return 60 * ( ( talent.shadow_focus.enabled and ( buff.stealth.up ) ) and 0.25 or 1 ) * ( talent.slaughter_from_shadows.enabled and (1 - 0.04 * talent.slaughter_from_shadows.rank) or 1 ) end,
+  -- MoP: Backstab costs 35 energy (reduced by Shadow Focus while stealthed).
+  spend = function () return 35 * ( ( talent.shadow_focus.enabled and ( buff.stealth.up ) ) and 0.25 or 1 ) end,
     spendType = "energy",
 
     startsCombat = true,
 
     handler = function ()
       gain( 1, "combo_points" )
+      
+      -- Apply/refresh poisons
+      if buff.deadly_poison.up then
+        applyDebuff("target", "deadly_poison_dot", 12, min(5, (debuff.deadly_poison_dot.stack or 0) + 1))
+      end
+      if buff.instant_poison.up then
+        applyDebuff("target", "instant_poison_debuff", 8)
+      end
+      if buff.wound_poison.up then
+        applyDebuff("target", "wound_poison_debuff", 12)
+      end
+      if buff.crippling_poison.up then
+        applyDebuff("target", "crippling_poison_debuff", 12)
+      end
+      if buff.mind_numbing_poison.up then
+        applyDebuff("target", "mind_numbing_poison_debuff", 10)
+      end
     end
   },
 
@@ -445,7 +725,7 @@ spec:RegisterAbilities( {
     spendType = "energy",
 
     startsCombat = true,
-    usable = function () return combo_points.current > 0, "requires combo points" end,
+  usable = function () return combo_points.current >= ( settings.combo_point_threshold or 4 ), "need finisher CP threshold" end,
 
     handler = function ()
       local cp = combo_points.current
@@ -468,7 +748,8 @@ spec:RegisterAbilities( {
     gcd = "totem",
     school = "physical",
 
-    spend = function () return 35 * ( ( talent.shadow_focus.enabled and ( buff.stealth.up ) ) and 0.25 or 1 ) * ( talent.slaughter_from_shadows.enabled and (1 - 0.03 * talent.slaughter_from_shadows.rank) or 1 ) end,
+  -- MoP: Hemorrhage costs 30 energy (reduced by Shadow Focus while stealthed).
+  spend = function () return 30 * ( ( talent.shadow_focus.enabled and ( buff.stealth.up ) ) and 0.25 or 1 ) end,
     spendType = "energy",
 
     talent = "hemorrhage",
@@ -477,6 +758,23 @@ spec:RegisterAbilities( {
     handler = function ()
       gain( 1, "combo_points" )
       applyDebuff( "target", "hemorrhage", 24 )
+      
+      -- Apply/refresh poisons
+      if buff.deadly_poison.up then
+        applyDebuff("target", "deadly_poison_dot", 12, min(5, (debuff.deadly_poison_dot.stack or 0) + 1))
+      end
+      if buff.instant_poison.up then
+        applyDebuff("target", "instant_poison_debuff", 8)
+      end
+      if buff.wound_poison.up then
+        applyDebuff("target", "wound_poison_debuff", 12)
+      end
+      if buff.crippling_poison.up then
+        applyDebuff("target", "crippling_poison_debuff", 12)
+      end
+      if buff.mind_numbing_poison.up then
+        applyDebuff("target", "mind_numbing_poison_debuff", 10)
+      end
     end
   },
 
@@ -516,7 +814,13 @@ spec:RegisterAbilities( {
     spendType = "energy",
 
     startsCombat = false,
-    usable = function () return combo_points.current > 0, "requires combo points" end,
+    usable = function ()
+      -- Keep SnD rolling; refresh early when it is down or about to expire (<3s) with any CP.
+      if buff.slice_and_dice.remains < 3 and combo_points.current >= 1 then return true end
+      -- Or use at threshold CP if it's down.
+      if not buff.slice_and_dice.up and combo_points.current >= 1 then return true end
+      return false, "slice_and_dice ok"
+    end,
 
     handler = function ()
       local cp = combo_points.current
@@ -539,7 +843,7 @@ spec:RegisterAbilities( {
     spendType = "energy",
 
     startsCombat = true,
-    usable = function () return stealthed.all, "requires stealth" end,
+  usable = function () return (buff.stealth.up or buff.vanish.up or buff.shadow_dance.up), "requires stealth" end,
 
     handler = function ()
       gain( 2 + ( talent.initiative.enabled and talent.initiative.rank or 0 ), "combo_points" )
@@ -560,8 +864,6 @@ spec:RegisterAbilities( {
     cast = 0,
     cooldown = 60,
     gcd = "off",
-
-    talent = "shadow_dance",
     startsCombat = false,
 
     toggle = "cooldowns",
@@ -575,11 +877,6 @@ spec:RegisterAbilities( {
       if not buff.stealth.up then
         -- Only apply if not already stealthed
         applyBuff( "stealth", 8 ) -- Grants stealth-like benefits
-      end
-      
-      -- Shadow Clone effects if talented (MoP mechanic)
-      if talent.shadow_clone and talent.shadow_clone.enabled then
-        applyBuff( "shadow_clone", 8 )
       end
       
       -- Apply Find Weakness buff for enhanced damage
@@ -641,8 +938,8 @@ spec:RegisterAbilities( {
     nodebuff = "cheap_shot",
 
     usable = function ()
-      if boss then return false, "cheap_shot assumed unusable in boss fights" end
-      return stealthed.all, "not stealthed"
+  if target.boss then return false, "cheap_shot assumed unusable in boss fights" end
+  return (buff.stealth.up or buff.vanish.up or buff.shadow_dance.up), "not stealthed"
     end,
 
     handler = function ()
@@ -679,6 +976,334 @@ spec:RegisterAbilities( {
     end
   },
 
+  -- Finishing move that causes bleeding damage to up to 4 nearby targets. Lasts longer per combo point.
+  crimson_tempest = {
+    id = 121411,
+    cast = 0,
+    cooldown = 0,
+    gcd = "totem",
+    school = "physical",
+
+    spend = function () return 35 * ( ( talent.shadow_focus.enabled and ( buff.stealth.up ) ) and 0.25 or 1 ) end,
+    spendType = "energy",
+
+    startsCombat = true,
+    usable = function () return combo_points.current > 0, "requires combo points" end,
+
+    handler = function ()
+      local cp = combo_points.current
+      applyDebuff( "target", "crimson_tempest", 4 + (2 * cp) )
+      spend( cp, "combo_points" )
+      state.last_finisher_cp = cp
+    end
+  },
+
+  -- Instantly restores health based on your combo points and causes you to heal over time.
+  recuperate = {
+    id = 73651,
+    cast = 0,
+    cooldown = 0,
+    gcd = "totem",
+    school = "physical",
+
+    spend = function () return 30 * ( ( talent.shadow_focus.enabled and ( buff.stealth.up ) ) and 0.25 or 1 ) end,
+    spendType = "energy",
+
+    startsCombat = false,
+    usable = function () return combo_points.current > 0, "requires combo points" end,
+
+    handler = function ()
+      local cp = combo_points.current
+      applyBuff( "recuperate", 6 * cp )
+      spend( cp, "combo_points" )
+    end
+  },
+
+  -- Defensive and Utility Abilities
+  
+  -- You become 90% resistant to all spells for 5 sec.
+  cloak_of_shadows = {
+    id = 31224,
+    cast = 0,
+    cooldown = 60,
+    gcd = "off",
+    school = "physical",
+
+    startsCombat = false,
+    toggle = "defensives",
+
+    handler = function ()
+      applyBuff( "cloak_of_shadows", 5 )
+    end
+  },
+
+  -- Increases your dodge chance by 50% and reduces damage taken by 50% for 5 sec.
+  evasion = {
+    id = 5277,
+    cast = 0,
+    cooldown = 90,
+    gcd = "off",
+    school = "physical",
+
+    startsCombat = false,
+    toggle = "defensives",
+
+    handler = function ()
+      applyBuff( "evasion", 5 )
+    end
+  },
+
+  -- Reduces the damage you take from area of effect attacks by 40% for 6 sec.
+  feint = {
+    id = 1966,
+    cast = 0,
+    cooldown = 10,
+    gcd = "totem",
+    school = "physical",
+
+    spend = 20,
+    spendType = "energy",
+
+    startsCombat = false,
+
+    handler = function ()
+      applyBuff( "feint", 6 )
+    end
+  },
+
+  -- Causes the target to wander around for up to 10 sec.
+  blind = {
+    id = 2094,
+    cast = 0,
+    cooldown = 180,
+    gcd = "spell",
+    school = "physical",
+
+    spend = 40,
+    spendType = "energy",
+
+    startsCombat = true,
+
+    usable = function () return not debuff.blind.up, "target already blinded" end,
+
+    handler = function ()
+      applyDebuff( "target", "blind", 10 )
+    end
+  },
+
+  -- Causes the target to face you for 3 sec.
+  gouge = {
+    id = 1776,
+    cast = 0,
+    cooldown = 10,
+    gcd = "totem",
+    school = "physical",
+
+    spend = 45,
+    spendType = "energy",
+
+    startsCombat = true,
+
+    usable = function () return not debuff.gouge.up, "target already gouged" end,
+
+    handler = function ()
+      applyDebuff( "target", "gouge", 4 )
+    end
+  },
+
+  -- The next party or raid member to attack the target becomes the target's primary threat target.
+  tricks_of_the_trade = {
+    id = 57934,
+    cast = 0,
+    cooldown = 30,
+    gcd = "off",
+    school = "physical",
+
+    startsCombat = false,
+
+    handler = function ()
+      applyBuff( "tricks_of_the_trade", 30 )
+    end
+  },
+
+  -- Throws knives at all enemies within 10 yards, dealing damage and applying poison. Awards 1 combo point.
+  fan_of_knives = {
+    id = 51723,
+    cast = 0,
+    cooldown = 0,
+    gcd = "totem",
+    school = "physical",
+
+    spend = function () return 50 * ( ( talent.shadow_focus.enabled and ( buff.stealth.up ) ) and 0.25 or 1 ) end,
+    spendType = "energy",
+
+    startsCombat = true,
+
+    handler = function ()
+      gain( 1, "combo_points" )
+      
+      -- Apply poisons to all targets hit
+      if buff.deadly_poison.up then
+        applyDebuff("target", "deadly_poison_dot", 12, min(5, (debuff.deadly_poison_dot.stack or 0) + 1))
+      end
+    end
+  },
+
+  -- Instantly kill the target with 35% or less health. If target is not killed, adds 5 combo points.
+  marked_for_death = {
+    id = 137619,
+    cast = 0,
+    cooldown = 60,
+    gcd = "off",
+    school = "physical",
+
+    talent = "marked_for_death",
+    startsCombat = true,
+
+    handler = function ()
+      if target.health.pct <= 35 then
+        -- Instant kill (simulated by massive damage)
+      else
+        gain( 5, "combo_points" )
+      end
+    end
+  },
+
+  -- Increases damage and critical strike chance for 12 seconds.
+  shadow_blades = {
+    id = 121471,
+    cast = 0,
+    cooldown = 180,
+    gcd = "off",
+    school = "physical",
+
+    startsCombat = false,
+    toggle = "cooldowns",
+
+    handler = function ()
+      applyBuff( "shadow_blades", 12 )
+    end
+  },
+
+  -- (removed) Cold Blood was not available in MoP Subtlety.
+
+  -- Utility and misc abilities
+  
+  -- Allows you to pick the target's pocket.
+  pick_pocket = {
+    id = 921,
+    cast = 0,
+    cooldown = 0.5,
+    gcd = "off",
+    school = "physical",
+
+    startsCombat = false,
+    
+  usable = function () return (buff.stealth.up or buff.vanish.up or buff.shadow_dance.up), "requires stealth" end,
+
+    handler = function ()
+      -- Pick pocket implementation
+    end
+  },
+
+  -- Reduces the target's armor by 20% for 30 sec.
+  expose_armor = {
+    id = 8647,
+    cast = 0,
+    cooldown = 0,
+    gcd = "totem",
+    school = "physical",
+
+    spend = function () return 25 * ( ( talent.shadow_focus.enabled and ( buff.stealth.up ) ) and 0.25 or 1 ) end,
+    spendType = "energy",
+
+    startsCombat = true,
+    usable = function () return combo_points.current > 0, "requires combo points" end,
+
+    handler = function ()
+      local cp = combo_points.current
+      applyDebuff( "target", "expose_armor", 30 )
+      spend( cp, "combo_points" )
+    end
+  },
+
+  -- (removed) Potion ability mapping; potions are handled via items/packs.
+
+  -- Creates a cloud of thick smoke in a 10 yard radius around the caster for 10 sec.
+  smoke_bomb = {
+    id = 76577,
+    cast = 0,
+    cooldown = 180,
+    gcd = "spell",
+    school = "physical",
+
+    spend = 40,
+    spendType = "energy",
+
+    startsCombat = false,
+    toggle = "defensives",
+
+    handler = function ()
+      applyBuff( "smoke_bomb", 10 )
+    end
+  },
+
+  -- Distracts the target, reducing threat for 10 sec.
+  distract = {
+    id = 1725,
+    cast = 0,
+    cooldown = 30,
+    gcd = "spell",
+    school = "physical",
+
+    spend = 30,
+    spendType = "energy",
+
+    startsCombat = false,
+
+    handler = function ()
+      applyDebuff( "target", "distract", 10 )
+    end
+  },
+
+  -- Readies you for combat, increasing your chance to dodge by 100% for next 5 attacks.
+  combat_readiness = {
+    id = 74001,
+    cast = 0,
+    cooldown = 180,
+    gcd = "off",
+    school = "physical",
+
+    talent = "combat_readiness",
+    startsCombat = false,
+    toggle = "defensives",
+
+    handler = function ()
+      applyBuff( "combat_readiness", 20 )
+    end
+  },
+
+  -- Increases your movement speed by 70% for 4 sec.
+  burst_of_speed = {
+    id = 108212,
+    cast = 0,
+    cooldown = 30,
+    gcd = "off",
+    school = "physical",
+
+    spend = 30,
+    spendType = "energy",
+
+    talent = "burst_of_speed",
+    startsCombat = false,
+
+    handler = function ()
+      applyBuff( "burst_of_speed", 4 )
+    end
+  },
+
+  -- (removed) Ghostly Strike is not present in MoP Subtlety.
+
   -- When activated, the cooldown on your Vanish, Sprint, and Shadowstep abilities are reset.
   preparation = {
     id = 14185,
@@ -698,8 +1323,238 @@ spec:RegisterAbilities( {
       setCooldown( "sprint", 0 )
       if talent.shadowstep.enabled then setCooldown( "shadowstep", 0 ) end
     end
+  },
+
+  -- Poison Application Abilities
+  deadly_poison = {
+    id = 2823,
+    cast = 3,
+    cooldown = 0,
+    gcd = "spell",
+    school = "nature",
+    
+    startsCombat = false,
+    
+    usable = function() return not buff.deadly_poison.up, "deadly poison already applied" end,
+    
+    handler = function()
+      applyBuff("deadly_poison", 3600) -- Apply to weapon for 1 hour
+    end,
+  },
+  
+  instant_poison = {
+    id = 8680,
+    cast = 3,
+    cooldown = 0,
+    gcd = "spell",
+    school = "nature",
+    
+    startsCombat = false,
+    
+    usable = function() return not buff.instant_poison.up, "instant poison already applied" end,
+    
+    handler = function()
+      applyBuff("instant_poison", 3600) -- Apply to weapon for 1 hour
+    end,
+  },
+  
+  wound_poison = {
+    id = 8679,
+    cast = 3,
+    cooldown = 0,
+    gcd = "spell",
+    school = "nature",
+    
+    startsCombat = false,
+    
+    usable = function() return not buff.wound_poison.up, "wound poison already applied" end,
+    
+    handler = function()
+      applyBuff("wound_poison", 3600) -- Apply to weapon for 1 hour
+    end,
+  },
+  
+  crippling_poison = {
+    id = 3408,
+    cast = 3,
+    cooldown = 0,
+    gcd = "spell",
+    school = "nature",
+    
+    startsCombat = false,
+    
+    usable = function() return not buff.crippling_poison.up, "crippling poison already applied" end,
+    
+    handler = function()
+      applyBuff("crippling_poison", 3600) -- Apply to weapon for 1 hour
+    end,
+  },
+  
+  mind_numbing_poison = {
+    id = 5761,
+    cast = 3,
+    cooldown = 0,
+    gcd = "spell",
+    school = "nature",
+    
+    startsCombat = false,
+    
+    usable = function() return not buff.mind_numbing_poison.up, "mind numbing poison already applied" end,
+    
+    handler = function()
+      applyBuff("mind_numbing_poison", 3600) -- Apply to weapon for 1 hour
+    end,
+  },
+  
+  -- Apply Poison (generic poison application)
+  apply_poison = {
+    id = 2823, -- Deadly Poison spell ID (updated for MoP)
+    cast = 0,
+    cooldown = 0,
+    gcd = "spell",
+    
+    startsCombat = false,
+    
+    usable = function()
+      -- Check if deadly poison is missing (for SimC lethal=deadly,nonlethal=crippling)
+      return not buff.deadly_poison.up, "deadly poison already applied"
+    end,
+    
+    handler = function()
+      -- Apply deadly poison as lethal and crippling poison as nonlethal
+      -- This matches the SimC priority: apply_poison,lethal=deadly,nonlethal=crippling
+      applyBuff("deadly_poison", 3600)
+      applyBuff("crippling_poison", 3600)
+    end,
   }
 } )
+
+-- Advanced Stealth State Expressions for MoP Subtlety
+spec:RegisterStateExpr("stealthed", function()
+    return {
+        all = buff.stealth.up or buff.vanish.up or buff.shadow_dance.up,
+        normal = buff.stealth.up,
+        vanish = buff.vanish.up,
+        shadow_dance = buff.shadow_dance.up
+    }
+end)
+
+spec:RegisterStateExpr("behind_target", function()
+    -- Intelligent positioning logic for Subtlety
+    -- Stealth abilities work regardless of positioning
+    if buff.stealth.up or buff.vanish.up or buff.shadow_dance.up then
+        return true -- Stealth negates positioning requirements
+    end
+    
+    -- In group content, assume tank has aggro and we can be behind
+  if state.group then
+        return true -- Tank should have aggro in groups
+    end
+    
+    -- Solo PvE: assume we can position behind mobs
+    if target.exists and not target.is_player then
+        return true -- PvE mobs, can usually get behind
+    end
+    
+    -- PvP or uncertain cases: use time-based deterministic positioning
+    -- This prevents blocking abilities while being somewhat realistic
+    local time_factor = (query_time % 10) / 10 -- 0-1 based on time
+    return time_factor > 0.3 -- 70% of time cycles we're "behind"
+end)
+
+-- Proper stealthed state expressions for MoP compatibility
+spec:RegisterStateExpr("stealthed_rogue", function() return buff.stealth.up end)
+spec:RegisterStateExpr("stealthed_mantle", function() return false end) -- Not available in MoP
+spec:RegisterStateExpr("stealthed_all", function() return buff.stealth.up or buff.vanish.up or buff.shadow_dance.up end)
+
+-- Stealth-breaking hook for proper MoP mechanics
+spec:RegisterHook("runHandler", function(action, pool)
+    -- Handle stealth-breaking for non-stealth abilities
+    local stealth_abilities = {
+        "stealth", "vanish", "garrote", "ambush", "cheap_shot", "sap", "pick_pocket", "distract"
+    }
+    
+    local breaks_stealth = true
+    for _, ability in ipairs(stealth_abilities) do
+        if action == ability then
+            breaks_stealth = false
+            break
+        end
+    end
+    
+    if breaks_stealth then
+        if buff.stealth.up and not talent.subterfuge.enabled then
+            removeBuff("stealth")
+        elseif buff.stealth.up and talent.subterfuge.enabled then
+            -- Subterfuge extends stealth abilities for 3 seconds
+            removeBuff("stealth")
+            applyBuff("subterfuge", 3)
+        end
+        
+        if buff.vanish.up and not talent.subterfuge.enabled then
+            removeBuff("vanish")
+        elseif buff.vanish.up and talent.subterfuge.enabled then
+            removeBuff("vanish")
+            applyBuff("subterfuge", 3)
+        end
+        
+        if buff.shadow_dance.up then
+            -- Shadow Dance doesn't get broken by abilities in Subtlety
+        end
+    end
+    
+    -- Handle Master of Subtlety and other stealth-related buffs
+    if action == "ambush" or action == "garrote" or action == "cheap_shot" then
+  if (buff.stealth.up or buff.vanish.up or buff.shadow_dance.up) then
+            -- Subtlety gets enhanced benefits from stealth openers
+            if talent.master_of_subtlety.enabled then
+                applyBuff("master_of_subtlety", 6) -- 6-second damage bonus
+            end
+        end
+    end
+end)
+
+-- Additional required state expressions
+spec:RegisterStateExpr("effective_combo_points", function()
+    local cp = combo_points.current or 0
+    -- Account for Anticipation talent
+    if talent.anticipation.enabled and buff.anticipation.up then
+        return cp + buff.anticipation.stack
+    end
+    return cp
+end)
+
+spec:RegisterStateExpr("boss", function()
+    return target.boss or false
+end)
+
+-- Additional state expressions for SimC compatibility
+spec:RegisterStateExpr("poison", function()
+    return {
+        lethal = {
+            up = buff.deadly_poison.up or buff.instant_poison.up or buff.wound_poison.up,
+            down = not (buff.deadly_poison.up or buff.instant_poison.up or buff.wound_poison.up)
+        },
+        nonlethal = {
+            up = buff.crippling_poison.up or buff.mind_numbing_poison.up,
+            down = not (buff.crippling_poison.up or buff.mind_numbing_poison.up)
+        }
+    }
+end)
+
+spec:RegisterStateExpr("enemies", function()
+    return active_enemies or 1
+end)
+
+-- Magic debuff state for SimC compatibility
+spec:RegisterStateExpr("magic_debuff_active", function()
+    return false -- Simplified - no magic debuffs active by default
+end)
+
+-- Settings access for abilities and state expressions
+spec:RegisterStateExpr("should_use_shadowstep", function()
+    return settings.allow_shadowstep and talent.shadowstep.enabled
+end)
 
 spec:RegisterOptions( {
   enabled = true,
@@ -717,12 +1572,68 @@ spec:RegisterOptions( {
   damage = true,
   damageExpiration = 6,
 
-  potion = "draenic_agility",
+  potion = "virmen_bite_potion",
 
   package = "Subtlety",
 } )
 
-spec:RegisterPack( "Subtlety", 20250406, [[Hekili:TZv3Unom4FPB4dQDKQ(ovYLlr9QKCe4rnCvzUCBkQu8zJV3xRy3o2oKf1TojBwKC0AuXCTY)NUo8dZFcvz9Pih73(zAA94b7nzJn69Gzxi9Xh3FjGFAT)gU1Y0oF7n8XW)IbcEJEw8nC5PtEJd57w4G8CkUhF99I3Mx4u(BVN6LNMwbJ)fmolp3rj)YMZYj97X67mRZO8L7o(Z88Yy)xhxEhgpN(Cl4uGOWEZlxpJVCgDjwEgCXgqG92UqV4ooFJRmGR0MpFOTU)NsZm21z94Pco2f8UdcCrlUYXZhf76QKKYZtmUvxP6nrZwB1YEMTYFGtgYYYfGQK66yIwKEK8A51dT9Ys4HsPNKDPpGZyWEJpbMwLyBU3(yPG2Ev0NVl3aAUTJCUTPZ(UGxKG5W9)DdkGOMk4u4HZ)2bGEF6OFQ04g(NdzR9jgBf)M6vZ6JoswmQUPOmk1cMnjPeUjG7s9NKOMC)mjj9KuY1)Gu(OZ9FbWQIJf(gblB(sgpXmLW0vkwW03EsKbxlEYGhVdw98rTm)gKP(LLuEBjB(0gVs)4acUd)xbxvKfTm3LsGdUkygkxqyeQa0GqhZx9)uJHrwb(gMJyWVyXJBiIdTIVOl4FeN2YZAJJyGQ30ZKBu8MYHmcI3N(WGTfNcgTl2jy2Y28YUX65CjmMBZYlPiMmYlPdZS3WKSlYE)1Nck3SL0rqLkYc87gFIdPi1o0JKE9LsyWENzOBzILEXzMnBglZZR4G30Lh4r)YjMgwJEPz4cNbS7kMqZZZIKYoXqwFJspjRnzQ8h9kRHsv68iUPsQGiokI09Wj6vePRBzZsYm2)cKprgqoqaUEVkLyvPJuDLBXb8J5OXCVZSGZyWGbcMTrg9Qai4vDrE(CcK)P4uj3wFd27Ij5bfUG9HuqZdQ6vr1sbCfaFHLu4rL8d90yJxeNVHKSbUdPPNuoZEPsV9i3YyQFHFgCsB6h9wqwUZ7bCbeBJ4EXP9eDUvdvCFimVCYAZCFZVP1(iMpYtb1UfhcQVW16y1sJJN)bOBTwTJCc4Y4bYVhOGPeIjDUfFk(x)X0Gw3lFqvbw9Q0DWl7z5kNjSCszh2MwY9E1nUZIWZU(ByEFGK1qN4vwJVGX7Z5Tz9b28mPQFUTlm(3UD)qOsGgPZW2LrLAO1S9UPFqDgPo7qVvzixAHqcDd2sSvEuQaHBvJZTr6dCkr(lQpbq)SkOBHFQpZqkNWl0(h9MsDg0KCcYKjX7EqVVA9UFAvqZ9GXIBnP9(Q5J6kkFZkBbxHzXZgF(xFMbgIHyHMM(IfnW9oVtq5UEA0iOGcuaXNyYvXUQ2TpZOcuLJxJF6GQQFHEMklHhESRvmtGsQNMIxwgbQlGXSsjE)9zQWYErbmJpqK9sQOzDnxC5bLe0Lv5MxQK7sOEiEXI6lvb3bFw7fYSyI)yiPdFjHPIlFzIc8YMSXaFb01jrFzC4(hq10yNK21yiWdL0c7wK)7YW9I9(PjnF6WVrAZ2HdgYiKSA1kXIXOlIVAl2XuUonjlPB67yqp1gXA53DWBRCJAzDsUG7cwI87dDH(HdUXaAJ9wNbI8Vir4X6QfYgYVuQsGcjEXbgw)BO9Fh9fQGvS3JqEptLFwkwjwk(XpRvPFwSAX0NRFy(VCixF9PuDZZ89V5vbRK6I83GfDXkbV35Io0qfDGMZsCg83k07X3i1T1E2LLnVNn)FbKfYyMJj8uRZs6X7r3W9lzSa)y1WgmxrPMTmFZMVz)mGCEHxvwjG(hERUxTnR2lxiKlZgb29sBwQu1x53d8Vy7OQfr(dqupD6Wvx8GVyYcmIJ(pTtqKvnR91a3HoEZj)1LFaQyqpb5nz5ZZ4VtQI9gCUY9ztTY1s9fEUkRx8X1xVljZgpG4hL0VZMEKFLSk(t3I0VlnZVLt)2nKhE4U2kn09C35EpGlfP1HNVvlnm1)KORMmRcDVb5dQRVlGOblCXt9x3z1mWVS2uynKMdW1FJKr0Fo8OXWUKIFZlk90kvjLwVlkffN)XjPo2V0uAJnmDyf8kB3DpVh2Kju09Zs2GU1sBLuOIQFvT11klkjOVkd2H8N9Og5WtlpbFFxZ)2Xf3eMLaLPAuF7O2XVEJ9m0FU4Vo4Cf6pQi4xmOWQdLh24MFoxoW6S)5TFvxWVpR2lKGlZ33uSR1bCLFzvL)UVFQL)WL5MdRxlsGH)6q9D)XaH)hCEWap8v3QWrGHdaY)Wbm4z9)]] )
+-- SUBTLETY SETTINGS
+spec:RegisterSetting( "use_shadow_dance", true, {
+    name = strformat( "Use %s", Hekili:GetSpellLinkWithTexture( 185313 ) ), -- Shadow Dance
+    desc = "If checked, Shadow Dance will be recommended based on the Subtlety Rogue priority. If unchecked, it will not be recommended automatically.",
+    type = "toggle",
+    width = "full"
+} )
+
+spec:RegisterSetting( "combo_point_threshold", 4, {
+    name = strformat( "Combo Point Threshold for Finishers" ),
+    desc = "Minimum combo points before using finishers instead of building more (3-5)",
+    type = "range",
+    min = 3,
+    max = 5,
+    step = 1,
+    width = 1.5
+} )
+
+spec:RegisterSetting( "use_shadow_blades", true, {
+    name = strformat( "Use %s", Hekili:GetSpellLinkWithTexture( 121471 ) ), -- Shadow Blades
+    desc = "If checked, Shadow Blades will be recommended based on the Subtlety Rogue priority. If unchecked, it will not be recommended automatically.",
+    type = "toggle",
+    width = "full"
+} )
+
+spec:RegisterSetting( "allow_shadowstep", true, {
+    name = strformat( "Allow %s", Hekili:GetSpellLinkWithTexture( 36554 ) ), -- Shadowstep
+    desc = "If checked, Shadowstep may be recommended for mobility and positioning. If unchecked, it will only be recommended for damage bonuses.",
+    type = "toggle",
+    width = "full"
+} )
+
+spec:RegisterSetting( "use_tricks_of_the_trade", true, {
+    name = strformat( "Use %s", Hekili:GetSpellLinkWithTexture( 57934 ) ), -- Tricks of the Trade
+    desc = "If checked, Tricks of the Trade will be recommended in group content. If unchecked, it will not be recommended automatically.",
+    type = "toggle",
+    width = "full"
+} )
+
+spec:RegisterSetting( "auto_poison_apply", true, {
+    name = strformat( "Auto Apply Poisons" ),
+    desc = "If checked, the addon will recommend applying poisons when they're missing. If unchecked, poison application must be managed manually.",
+    type = "toggle",
+    width = "full"
+} )
+
+spec:RegisterSetting( "energy_threshold", 75, {
+    name = strformat( "Energy Threshold for Cooldowns" ),
+    desc = "Minimum energy before using major cooldowns like Shadow Dance (50-100)",
+    type = "range",
+    min = 50,
+    max = 100,
+    step = 5,
+    width = 1.5
+} )
+
+spec:RegisterPack( "Subtlety", 20250812, [[Hekili:9Qv7UTnUs0NLGciKSBwhh)rA2BTnGtIBRlsTZnYzlU)XwYw0Xcwwsx9rYgGa9SVZqkljkts70gTbOfwIIZqoCMdp8in98PtMQBzgrMoQr9gTRF55nQ1OzRM1VyQE0l(KP6(MlwB(i8dxZnW)RhppYHe9c2WloEMwObc9IdwanovFESTt0q3PZfz16T)t4z9jlGBFX5t1xzBzrypljCXu9jRSdtmW)zMyK63edVLW1lIS9CtmCSdJGMx6fKy8vYABh7At1P3ehgpsCjbMrEb4vJOtnIR5ChI10RMQZSb4vYgVGGv05e63aBFwdDFF)lX46XF)QXjg3nE4OjjgFzWOb33FY471tm2xFFJ)Ly8DtB3i4Fyyz7070eJOve4wxbHYWiZ5jgh7755y7(yIHRxuIra5)hBhqSGamCvZ2jgye8XxGfbOBF37UtMQdXNisGTj8lVnZ9M57bEcwd6KyapVgyZeJJsmS8IQLhzRfzVyn1pV(6oTfq2aJuMjALyCY0iiFO0IvUxNtwz7AnlYm4rse1HsghBh696ItL8175PZE0nnL6MDnQWmgWgTKAJithIBuTWvXb2RjUZI8cdRL(KhYihJh1ZDlNDqp3wsgDOJ9cYmtikzzVOYZQ)EFiDEWO(JUEW7EIm3cF8YL14NACPonfesX1(ZXq1fsxKcjrrqMzynZ4iAhd9CNz6778sHSzQVTiMwoVK(i1I9zjZBBfJW(yTuXh4K8ffQjtBdgrr4YYsZyNivytRHYM)nw)smUF8K(tgoE07(syIXqxiuhe7JliWkxIXnKLe3q7NiH8vlyfDTfMH46HAqGvetNOv18xaiaDax0Gv4y7cl)4sGL5gO6CwtmfiXi9P3y(3jg)wIr9ATYJWKNmdTPRikadSi0LyWM2lORRAzgnBi0SqL6cyJW1Z8wolCLPL3ZHQHjYYaJdjZIcGL8qSVawnCLPfH6Uhd8sDCK9gcDAv0Jc6MiecUmP7cS3ygaP59t3n9w6gN5ZcthNzSlMH7PYnMJOtFIvn4HyB5oJriiTLzHWEje3fervFY9qbdTa2AccEU0O3hpqGASGV9b6GL2U2HRibuhCPuhGD)jYmauEJnj1fnpqxy6rN))5pZ8Va7fkCHFabNRMcbmQwic9hUAYTdM8)qyIV8aaZ)haSXq9jaZLXFgi00F0n9VFyFGHZT911hEDr4eDkxWW)tIbTB)y8pMC111(YxO8jGMt5pcDX7XyiX(XyBmL)ypFC(FwGxKjl7Cfb2(dWgweEsQTEgkTS3eE2gp)IgQ)D3My8nD05hdflyP1zl8CTSr7GDEFt434FvGbV7(b)bYwSpWtuFWKhU7D3hqQgjALPdM6GBRjzJQdAJs4SaEUBnx2(GQrWpCqV9cYjh3g2BUeqvgfj2T3dWCX(YWEzm6GsXneiFIMzULrxUX5AwemSk0RZLYJJIcKJkQG2aBBhyxq3QN(31JhF7nJ)XOQ4um63WojYhB)7BzfFk(JW4acs7Y2XcGVpdM(eli8f7dT(xMiQoRFTY7hqoyjEkhMrd9G1nPPJfdF7CuIpYOAuo1IEtruut31gpZdYbcg55SwPR31ZAx0zIWh5c1LsfhDTAl6Gfidj5J6TPu1koVlmcWXyEU1t04R66UchGPzDEFW6oN1B1MR0X3miRW5ajnLoWN7aicH7BL440wxIhJ8zI5AxcCSmCWXi0Z4xbd9g1tVbJykEF4OxGTiPhnJJFp3yqDrFosQJd0LusIre)Iym53L7iJPdglyNqw6jnhQr5Xb2pvmVaOu31KOZrqgVOIxx(axfZj2EMhjreKqkhyZdHqdG52SL5FG5cBth4klyVCuoGBytcu)MWvEbqn7Kj3iIWxPbEJF5bk38UHAkGICqbbfC88SMTmo4frC9oyRaizKG1SnoJkYovfq))QN0)Zdhnu)RdQybR0DV5S7ziLmuCas767aK9bpzhUaPex8(qUdaMf8SDiP2UbB5QfCHk1cKJ1EepsEMSwcTv7IvSC5GLWutn3EoeQODqysM929(LcDUC4wLNYIKTWOg3J7iZWsqDjJ8S9QOlIWXEI9PwNREj)2S6LDo3PIYgEcAvCvJ(Kb9VDYxrI8)3hgqvj74X0d3ujNf5ZE4MkPNJco1fBUcNxQhT0cCoLieWyIyDc7293mpgPmH)gLlM9RCvIXRsRiNUR8McjdlJfI6QlrfTSnMLuRkNQS6tfG1spAgahUKVgE)vlP96TuTWlESjnyRUqrQ(55MHtd6iMsdkY4bBVbpVgSxSpjmQQZ57pEqfkPOAGjgEOivBATfxbdULIizryLjOseSFpseT00fp06AxQKNkZnpCCw6Q(taic2u6RvRoql6zZaxKC5u9HB8bgvyT4hl9gZQL8nee0BPTdur)H39fOKV9HFjrJODFRUr4fVJshLzUFs1J(wveUQgR(brcjvjEILDfwltJYFV7zf1r6uM6qDzAnDAMCrDxSvTOtTx2vXRIrOheOheNzKiTKgtlDHMmLfbAMJ4pPSWhNBVpQVl2hnL7qk2)C7JHwSiIqVUNxH5kLErqvLBu86GYIjqKaF1x48N)1cv8jsF1n4dLZSSt3gT1299a1l)Da9B1R1QOzk)YAq7v6f(Ov0(nRxS3)s5GAirJEObzfRcFHmCJ1sVWGtXxvq3YuF3jrC)MitwX9)OzhmD3SZ27V3apfSF87y2RBZ93Z83hsfwdOKSEv50QLYEoqt58erayQGS0kUAdfAkT8UizYy3RTdeNcZMY)McqlGfV2Um47DPsdY4JxoxUtBLDkN9D2arWh7s1LMMl6Ev5H3S07F6Ti9EEWnd4btzkOn2oGOfBuJz4ED)yBn(TP1el8RMaXtGmT6AILDVx3lepczQxJJTTJGwTlxvuEePuE9ENxxSNkieEU760SUMeL071QTYGktxAzrvwRYcEhlrV8xFflZ60Oo8JDk760Q(jQgrOc18K(kjgUMuHW1kjcoSs2iTy7NuXzXdumaH26uuR4UBLiphkJxkxHbHMswEfA6gVlMoxoAzMts)YeGwE)Qm4MCPLRkpSpbM)0biWCEGlJe0bVtxADANlKVDxrJMcwLT9sjfNlzK2I23Ri0IetlawStRdX2xk205kuOICi)Ojth3se5VOEPbcGSURGWvyojViwvIx2gqawXiVxEjP2ne2sRmV5wAhPqmRYoGtiQDP8SJ1Bw2a7z9TAcsFqXxoDv5qrF)0F6D47NopGMFCMD4twAv5yj8lF9vXSx60sMB2(PptXOk(DuRvYLBz30S9pXawsx4(8LlCudHFE0IhqaNIkmjR4hYCL4dXHL30UhnLV7bNv5eFZwL0Aq6LWVU5xF9izFxZ4x9qCeqEAQU(M4LWQhvn6P)Z]] )
 
 
 

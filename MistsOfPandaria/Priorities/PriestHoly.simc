@@ -12,7 +12,7 @@ actions+=/call_action_list,name=aoe_healing,if=active_enemies>=3|raid_health.def
 actions+=/call_action_list,name=single_target
 
 # Cooldowns
-actions.cooldowns+=/potion,if=buff.bloodlust.react|target.time_to_die<=40
+actions.cooldowns+=/potion,name=jade_serpent_potion,if=buff.bloodlust.react|target.time_to_die<=40
 actions.cooldowns+=/divine_hymn,if=raid_health.deficit>25000
 actions.cooldowns+=/guardian_spirit,if=health.pct<25
 actions.cooldowns+=/desperate_prayer,if=health.pct<50

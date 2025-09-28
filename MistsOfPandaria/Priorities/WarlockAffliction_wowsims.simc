@@ -1,0 +1,189 @@
+# Warlock: Affliction - Updated from WoWSims
+actions.precombat+=/dark_intent
+actions.precombat+=/summon_pet,pet_type=felhunter,if=!talent.grimoire_of_sacrifice.enabled&!pet.active
+# MoP Trinket Variables (initialized precombat for opener awareness)
+actions.precombat+=/variable,name=trinket_1_buffs,op=set,value=0
+actions.precombat+=/variable,name=trinket_2_buffs,op=set,value=0
+actions.precombat+=/variable,name=trinket_1_sync,op=set,value=variable.trinket_1_buffs
+actions.precombat+=/variable,name=trinket_2_sync,op=set,value=variable.trinket_2_buffs
+actions.precombat+=/variable,name=trinket_1_manual,op=set,value=0
+actions.precombat+=/variable,name=trinket_2_manual,op=set,value=0
+actions.precombat+=/variable,name=trinket_1_exclude,op=set,value=0
+actions.precombat+=/variable,name=trinket_2_exclude,op=set,value=0
+actions.precombat+=/variable,name=trinket_1_buff_duration,op=set,value=20
+actions.precombat+=/variable,name=trinket_2_buff_duration,op=set,value=20
+actions.precombat+=/variable,name=trinket_priority,op=set,value=2,if=variable.trinket_2_buffs&variable.trinket_1_buffs
+actions.precombat+=/variable,name=trinket_priority,op=set,value=1,if=!variable.trinket_2_buffs&variable.trinket_1_buffs
+actions.precombat+=/variable,name=trinket_priority,op=set,value=1,if=!variable.trinket_1_buffs&!variable.trinket_2_buffs
+actions.precombat+=/soulburn,if=time<20&!buff.soul_burn.up&soul_shards>=1
+actions.precombat+=/potion,name=jade_serpent_potion
+actions.precombat+=/haunt,if=time<1.6&soul_shards>=2
+
+# Variables for smart logic
+actions+=/call_action_list,name=variables
+actions+=/call_action_list,name=ogcd
+actions+=/call_action_list,name=items
+actions+=/call_action_list,name=end_of_fight,strict=1,if=boss&target.time_to_die<20
+
+# Opener (from WoWSims): Soulburn -> Soul Swap once at start to apply DoTs
+actions+=/run_action_list,name=opener,strict=1,if=time<=5&!variable.dots_up&soul_shards>=1
+
+# Proc fishing for trinkets early in fight
+actions+=/run_action_list,name=proc_fishing,if=time<=10&!buff.dark_soul_misery.up
+
+# Racial/potion usage is centralized in the OGCD list below
+
+# Dark Soul usage is handled in ST with smarter timing
+
+# Main action lists - improved structure
+actions+=/run_action_list,name=move,if=moving
+actions+=/call_action_list,name=cleave,if=active_enemies=2|active_enemies>2&variable.cleave_apl
+actions+=/call_action_list,name=aoe,if=active_enemies>2&!variable.cleave_apl
+
+# Enhanced ST rotation with smart conditions
+actions+=/call_action_list,name=st
+
+
+
+# Proc fishing sequence  
+actions.proc_fishing+=/malefic_grasp,interrupt=1,if=!buff.dark_soul_misery.up&time<=10
+actions.proc_fishing+=/soulburn,if=!buff.soul_burn.up&soul_shards>=2&variable.dots_up&!variable.haunt_pool&time<=10
+actions.proc_fishing+=/soul_swap,if=buff.soul_burn.up&variable.dots_up&time<=10
+actions.proc_fishing+=/summon_doomguard,if=active_enemies<3&variable.cds_active&!pet.doomguard.active&time<=12
+actions.proc_fishing+=/summon_infernal,if=active_enemies>=3&variable.cds_active&time<=12
+
+# Single target rotation - Enhanced with smart conditions
+actions.st+=/haunt,if=soul_shards>=1&!variable.haunt_pool&variable.dots_up&(debuff.haunt.down|(debuff.haunt.remains<5|variable.ds_soon&debuff.haunt.remains<8))&target.time_to_die>debuff.haunt.remains+5
+
+# Summons with enhanced timing
+actions.st+=/summon_doomguard,if=active_enemies<3&((variable.cds_active&soul_shards>=1)|target.time_to_die<35)
+actions.st+=/summon_infernal,if=active_enemies>=3&((variable.cds_active&soul_shards>=1)|target.time_to_die<35)
+
+actions.st+=/dark_soul_misery,if=variable.dots_up&(buff.bloodlust.up|buff.berserking.up|buff.blood_fury.up|target.time_to_die<25|soul_shards>=3&variable.execute_phase)
+
+# Soul Swap sequences - Enhanced with better conditions
+actions.st+=/soulburn,if=!buff.soul_burn.up&soul_shards>=1&variable.cds_active&variable.dots_up&target.time_to_die>10
+actions.st+=/soul_swap,if=buff.soul_burn.up&variable.cds_active&variable.dots_up
+
+# If dots are missing, hard-apply them to start the engine
+actions.st+=/agony,if=!dot.agony.ticking
+actions.st+=/corruption,if=!dot.corruption.ticking
+actions.st+=/unstable_affliction,if=!dot.unstable_affliction.ticking
+
+# Emergency Soul Swap when no DOTs active
+actions.st+=/soulburn,if=!buff.soul_burn.up&soul_shards>=1&!variable.dots_up&!variable.haunt_pool&target.time_to_die>10
+actions.st+=/soul_swap,if=buff.soul_burn.up&!variable.dots_up&!variable.haunt_pool&target.time_to_die>10
+
+# DS-aware DoT refresh (moved from global)
+actions.st+=/agony,if=dot.agony.percent_increase>=15|dot.agony.remains<=12&dot.agony.percent_increase>=5
+actions.st+=/corruption,if=dot.corruption.percent_increase>=15|dot.corruption.remains<=9&dot.corruption.percent_increase>=5
+actions.st+=/unstable_affliction,if=dot.unstable_affliction.percent_increase>=15|dot.unstable_affliction.remains<=7&dot.unstable_affliction.percent_increase>=5
+
+# Curse application when not cursed
+actions.st+=/curse_of_elements,if=!debuff.curse_of_elements.up&target.time_to_die>30&mana.pct>20
+
+# Enhanced resource management
+actions.st+=/drain_soul,interrupt=1,if=mana.pct<=20&target.time_to_die>3&!variable.execute_phase
+actions.st+=/life_tap,if=variable.need_tap&!variable.execute_phase
+
+# Execute phase with smart Drain Soul
+actions.st+=/drain_soul,interrupt=1,if=variable.execute_phase&target.time_to_die>6&variable.dots_up&soul_shards<4&mana.pct>20
+
+# Enhanced DOT refresh using half-duration rule
+
+# Additional Haunt usage with better conditions
+actions.st+=/haunt,if=variable.cds_active&soul_shards>=1&debuff.haunt.remains<6&target.time_to_die>8
+actions.st+=/haunt,if=soul_shards>=4&cooldown.dark_soul_misery.remains>15&target.time_to_die>8
+actions.st+=/haunt,if=variable.execute_phase&soul_shards>=2&debuff.haunt.remains<4&target.time_to_die>4
+actions.st+=/haunt,if=buff.nightfall.up&debuff.haunt.remains<6&target.time_to_die>8
+actions.st+=/haunt,if=soul_shards>=3&!variable.haunt_pool&debuff.haunt.remains<6&target.time_to_die>8
+
+# Channel spells with improved conditions
+actions.st+=/malefic_grasp,interrupt=1,if=variable.dots_up&!moving&target.time_to_die>4&mana.pct>30
+actions.st+=/life_tap,if=mana.pct<95
+
+
+# Cleave rotation (2 targets or funnel mode) - Enhanced logic
+actions.cleave+=/variable,name=min_agony,op=min,default=0,value=dot.agony.remains
+actions.cleave+=/dark_soul_misery,if=variable.dots_up&(buff.bloodlust.up|buff.berserking.up|buff.blood_fury.up|target.time_to_die<25|soul_shards>=3&variable.execute_phase)
+actions.cleave+=/soulburn,if=!buff.soul_burn.up&soul_shards>=1&variable.dots_up
+actions.cleave+=/soul_swap,if=buff.soul_burn.up&variable.dots_up
+actions.cleave+=/malefic_grasp,interrupt=1,if=buff.soul_swap.up
+actions.cleave+=/soul_swap_exhale,cycle_targets=1,if=buff.soul_swap.up
+actions.cleave+=/life_tap,if=mana.pct<=15
+actions.cleave+=/haunt,if=soul_shards>=1&!variable.haunt_pool&debuff.haunt.remains<3&target.time_to_die>8
+actions.cleave+=/agony,cycle_targets=1,if=(!dot.agony.ticking|dot.agony.refreshable&variable.min_agony<1.5)&target.time_to_die>dot.agony.remains+5
+actions.cleave+=/corruption,cycle_targets=1,if=(!dot.corruption.ticking|dot.corruption.refreshable)&target.time_to_die>dot.corruption.remains+5
+actions.cleave+=/unstable_affliction,cycle_targets=1,if=(!dot.unstable_affliction.ticking|dot.unstable_affliction.refreshable)&target.time_to_die>dot.unstable_affliction.remains+5
+actions.cleave+=/soulburn,if=!buff.soul_burn.up&soul_shards>=1&variable.dots_up&active_enemies<=5&!variable.haunt_pool
+actions.cleave+=/soul_swap,cycle_targets=1,if=buff.soul_burn.up&!dot.corruption.ticking
+actions.cleave+=/curse_of_elements,cycle_targets=1,if=!debuff.curse_of_elements.up&target.time_to_die>20&mana.pct>30
+actions.cleave+=/haunt,if=soul_shards>=1&!variable.haunt_pool&!debuff.haunt.up&target.time_to_die>10
+actions.cleave+=/malefic_grasp,interrupt=1,if=variable.dots_up&!moving&mana.pct>30
+
+
+# AoE rotation (3+ targets without funnel) - Enhanced with smart targeting
+actions.aoe+=/variable,name=min_agony,op=min,default=0,value=dot.agony.remains
+actions.aoe+=/life_tap,if=mana.pct<=15
+actions.aoe+=/haunt,if=soul_shards>=1&!variable.haunt_pool&debuff.haunt.remains<3&target.time_to_die>8
+actions.aoe+=/soulburn,if=!buff.soul_burn.up&soul_shards>=2&settings.soc_spread&active_enemies>=6&!variable.haunt_pool
+actions.aoe+=/cast_seed_of_corruption,cycle_targets=1,if=settings.soc_spread&active_enemies>=6&buff.soul_burn.up&!dot.corruption.ticking&target.time_to_die>8
+actions.aoe+=/soul_swap,cycle_targets=1,if=buff.soul_burn.up&!dot.corruption.ticking
+actions.aoe+=/agony,cycle_targets=1,max_cycle_targets=5,if=!dot.agony.ticking&target.time_to_die>12&active_dot.agony<5
+actions.aoe+=/agony,cycle_targets=1,if=refreshable&variable.min_agony<duration*0.5&active_dot.agony<6&target.time_to_die>12
+actions.aoe+=/soulburn,if=!buff.soul_burn.up&soul_shards>=2&!variable.haunt_pool
+actions.aoe+=/corruption,cycle_targets=1,if=!ticking&(active_enemies>=3|buff.soul_burn.up)&target.time_to_die>8
+actions.aoe+=/corruption,cycle_targets=1,max_cycle_targets=8,if=!dot.corruption.ticking&target.time_to_die>10
+actions.aoe+=/curse_of_elements,cycle_targets=1,if=!debuff.curse_of_elements.up&target.time_to_die>15&mana.pct>40
+actions.aoe+=/haunt,if=soul_shards>=2&!variable.haunt_pool&!debuff.haunt.up&target.time_to_die>8
+actions.aoe+=/unstable_affliction,if=dot.unstable_affliction.refreshable&target.time_to_die>dot.unstable_affliction.remains+5
+actions.aoe+=/malefic_grasp,interrupt=1,if=variable.dots_up&!moving&mana.pct>30
+
+# Movement rotation
+actions.move+=/life_tap,if=mana.pct<=20
+actions.move+=/haunt,if=soul_shards>=2&!variable.haunt_pool&debuff.haunt.remains<4&target.time_to_die>8
+actions.move+=/agony,if=!dot.agony.ticking|dot.agony.remains<=gcd
+actions.move+=/corruption,if=!dot.corruption.ticking|dot.corruption.remains<=gcd
+actions.move+=/unstable_affliction,if=!dot.unstable_affliction.ticking|dot.unstable_affliction.remains<=gcd
+actions.move+=/curse_of_elements,if=!debuff.curse_of_elements.up&target.time_to_die>20&mana.pct>30
+actions.move+=/malefic_grasp,interrupt=1,if=talent.kiljaedens_cunning.enabled&variable.dots_up
+actions.move+=/fel_flame,if=talent.kiljaedens_cunning.enabled
+actions.move+=/drain_life,if=talent.kiljaedens_cunning.enabled&health.pct<70
+actions.move+=/fel_flame
+
+# Variables - Smart state tracking
+actions.variables+=/variable,name=ds_up,op=set,value=buff.dark_soul_misery.up
+actions.variables+=/variable,name=ds_soon,op=set,value=cooldown.dark_soul_misery.remains<5
+actions.variables+=/variable,name=cds_active,op=set,value=variable.ds_up|(buff.bloodlust.up|buff.berserking.up|buff.blood_fury.up)
+actions.variables+=/variable,name=execute_phase,op=set,value=target.health.pct<20
+actions.variables+=/variable,name=dots_up,op=set,value=dot.agony.ticking&dot.corruption.ticking&dot.unstable_affliction.ticking
+actions.variables+=/variable,name=min_agony,op=min,default=0,value=dot.agony.remains
+actions.variables+=/variable,name=haunt_pool,op=set,value=(variable.ds_soon&soul_shards<=2)|(variable.execute_phase&soul_shards<=2)
+actions.variables+=/variable,name=need_tap,op=set,value=mana.pct<15|(movement.remains>0&mana.pct<20)
+## Moved from precombat: trinket handling and cleave_apl
+actions.variables+=/variable,name=cleave_apl,op=set,value=active_enemies>=2
+
+# OGCD Actions - Off Global Cooldown actions  
+actions.ogcd+=/potion,name=jade_serpent_potion,if=variable.cds_active|target.time_to_die<32
+actions.ogcd+=/berserking,if=variable.cds_active|target.time_to_die<14
+actions.ogcd+=/blood_fury,if=variable.cds_active|target.time_to_die<17
+actions.ogcd+=/arcane_torrent,if=mana.pct<80&soul_shards<4
+actions.ogcd+=/lifeblood,if=variable.cds_active|target.time_to_die<20
+actions.ogcd+=/use_item,slot=hands,if=cooldown.synapse_springs.ready&(variable.cds_active|target.time_to_die<20)
+
+# End of Fight Optimization
+actions.end_of_fight+=/drain_soul,if=active_enemies<4&(target.time_to_die<5&buff.nightfall.up|soul_shards>=3&target.time_to_die<8)
+actions.end_of_fight+=/haunt,if=soul_shards>1&target.time_to_die<soul_shards*gcd.max+execute_time&debuff.haunt.remains<4
+actions.end_of_fight+=/unstable_affliction,if=target.time_to_die<4&!dot.unstable_affliction.ticking
+
+# Items - On-Use trinkets (moved from main list)
+actions.items+=/use_item,slot=trinket1,if=variable.trinket_priority=1&variable.trinket_1_buffs&!variable.trinket_1_exclude&(buff.dark_soul_misery.up|cooldown.dark_soul_misery.remains<5|target.time_to_die<30)&!variable.trinket_1_manual
+actions.items+=/use_item,slot=trinket2,if=variable.trinket_priority=2&variable.trinket_2_buffs&!variable.trinket_2_exclude&(buff.dark_soul_misery.up|cooldown.dark_soul_misery.remains<5|target.time_to_die<30)&!variable.trinket_2_manual
+actions.items+=/use_item,slot=trinket2,if=variable.trinket_priority=1&variable.trinket_2_buffs&!variable.trinket_2_exclude&(buff.dark_soul_misery.up|cooldown.dark_soul_misery.remains<5|target.time_to_die<30)&!variable.trinket_2_manual
+actions.items+=/use_item,slot=trinket1,if=variable.trinket_priority=2&variable.trinket_1_buffs&!variable.trinket_1_exclude&(buff.dark_soul_misery.up|cooldown.dark_soul_misery.remains<5|target.time_to_die<30)&!variable.trinket_1_manual
+actions.items+=/use_item,slot=trinket1,if=!variable.trinket_1_buffs&!variable.trinket_1_exclude&!variable.trinket_1_manual
+actions.items+=/use_item,slot=trinket2,if=!variable.trinket_2_buffs&!variable.trinket_2_exclude&!variable.trinket_2_manual
+
+# Opener sequence (from WoWSims)
+actions.opener+=/soulburn,if=!buff.soul_burn.up&soul_shards>=1
+actions.opener+=/soul_swap,if=buff.soul_burn.up

@@ -3,6 +3,7 @@
 
 local addon, ns = ...
 local Hekili = _G[ addon ]
+local ACD = rawget( _G, "ACD" ) or ( LibStub and LibStub( "AceConfigDialog-3.0", true ) )
 
 local class = Hekili.Class
 local scripts = Hekili.Scripts
@@ -12,6 +13,9 @@ local format, lower, match = string.format, string.lower, string.match
 local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
 
 local tableCopy =  ns.tableCopy
+
+-- Color constants (fallbacks for chat output)
+local BlizzBlue = "|cFF00B4FF"
 
 function Hekili:countPriorities()
     local priorities = {}
@@ -85,6 +89,7 @@ function Hekili:CmdLine( input )
         lock     = function () self:HandleMoveCommand( args ) end,
         stress   = function () self:RunStressTest() end,
         dotinfo  = function () self:DumpDotInfo( args[2] ) end,
+    dump     = function () self:DumpSpecInfo( args[2], args[3] ) end,
         recover  = function () self:HandleRecoverCommand() end,
         fix      = function () self:HandleFixCommand( args ) end,
         snapshot = function () 
@@ -210,6 +215,109 @@ function Hekili:CmdLine( input )
     else
         self:Print( "Invalid command. Type '/hekili help' to see the available commands." )
         return true
+    end
+end
+
+-- Simple spec dump: /hekili dump [filter] [detail]
+--   filter: 'abilities', 'auras', or a specific ability/aura key to show detail.
+--   detail: if provided with 'abilities' or 'auras', limits to entries containing the substring.
+function Hekili:DumpSpecInfo( filter, detail )
+    local specID = state and state.spec and state.spec.id
+    if not specID or not class.specs[ specID ] then
+        -- Try to force spec detection once if not initialized yet.
+        if self.SpecializationChanged then
+            self:SpecializationChanged()
+            specID = state and state.spec and state.spec.id
+        end
+        if not specID or not class.specs[ specID ] then
+            -- Fallback: attempt manual Monk spec activation (Windwalker detection) if player is a Monk.
+            local _, playerClass = UnitClass("player")
+            if playerClass == "MONK" then
+                local fallbackID
+                -- Rising Sun Kick (107428) is Windwalker-only; if known, pick 269.
+                if IsPlayerSpell and IsPlayerSpell(107428) then
+                    fallbackID = 269
+                else
+                    -- Default to Brewmaster (268) if uncertain.
+                    fallbackID = 268
+                end
+                if class.specs[ fallbackID ] then
+                    -- Manually activate minimal spec state (subset of SpecializationChanged logic) so we can inspect tables.
+                    local specData = class.specs[ fallbackID ]
+                    state.spec.id = fallbackID
+                    state.spec.key = specData.key
+                    state.spec.name = specData.key
+                    state.spec[ specData.key ] = true
+                    -- Resources
+                    for res, model in pairs( specData.resources ) do
+                        class.resources[ res ] = model
+                        state[ res ] = model.state
+                    end
+                    for k,v in pairs( specData.resourceAuras ) do
+                        class.resourceAuras[ k ] = v
+                    end
+                    class.primaryResource = specData.primaryResource
+                    -- Auras / Abilities / Etc.
+                    for k,v in pairs( specData.auras ) do class.auras[k] = v end
+                    for k,v in pairs( specData.abilities ) do class.abilities[k] = v end
+                    for k,v in pairs( specData.talents ) do class.talents[k] = v end
+                    for name, func in pairs( specData.stateExprs ) do class.stateExprs[name] = func end
+                    for name, func in pairs( specData.stateFuncs ) do class.stateFuncs[name] = func; rawset(state,name,func) end
+                    for name, tbl in pairs( specData.stateTables ) do class.stateTables[name] = tbl; rawset(state,name,tbl) end
+                    specID = fallbackID
+                    self:Print("(Fallback) Activated %s spec for inspection (ID %d).", specData.key, fallbackID )
+                end
+            end
+            if not specID or not class.specs[ specID ] then
+                self:Print("No active spec to dump.")
+                local known = {}
+                for id,_ in pairs( class.specs ) do if type(id)=="number" and id>0 then known[#known+1]=id end end
+                table.sort( known )
+                if #known > 0 then self:Print("Known spec IDs: " .. table.concat( known, ", " ) ) end
+                return
+            end
+        end
+    end
+    local spec = class.specs[ specID ]
+    filter = filter and filter:lower() or ""
+    detail = detail and detail:lower() or nil
+
+    local function listTable(tbl, label)
+        local names = {}
+        for k, v in pairs(tbl) do
+            if type(k) == 'string' and type(v) == 'table' then
+                if not detail or k:lower():find(detail, 1, true) then
+                    names[#names+1] = k
+                end
+            end
+        end
+        table.sort(names)
+        self:Print("%s (%d): %s", label, #names, table.concat(names, ", "))
+    end
+
+    if filter == "abilities" or filter == "" then
+        if filter == "abilities" or filter == "" then
+            listTable(spec.abilities, "Abilities")
+        end
+    end
+    if filter == "auras" or filter == "" then
+        listTable(spec.auras, "Auras")
+    end
+
+    -- Specific key detail dump.
+    if filter ~= "" and filter ~= "abilities" and filter ~= "auras" then
+        local key = filter
+        local obj = spec.abilities[key] or spec.auras[key]
+        if not obj then
+            self:Print("No ability or aura named '%s' in spec %d.", key, specID )
+            return
+        end
+        self:Print("Detail for %s:", key)
+        for k,v in pairs(obj) do
+            if type(v) ~= 'function' then
+                self:Print("  %s = %s", tostring(k), tostring(v))
+            end
+        end
     end
 end
 
@@ -609,7 +717,8 @@ function Hekili:DisplayChatCommandList( list )
             " - |cFFFFD100/hekili priority|r - View or change priority settings\n" ..
             " - |cFFFFD100/hekili profile|r - View or change profiles\n" ..
             " - |cFFFFD100/hekili move|r - Unlock or lock the UI for positioning\n" ..
-            " - |cFFFFD100/hekili enable|r or |cFFFFD100/hekili disable|r - Enable or disable the addon\n"
+            " - |cFFFFD100/hekili enable|r or |cFFFFD100/hekili disable|r - Enable or disable the addon\n" ..
+            " - |cFFFFD100/hekili dump [abilities|auras|<key>] [filter]|r - Dump current spec data or a specific entry\n"
     end
 
     -- Determine which sections to print based on the input

@@ -533,6 +533,12 @@ spec:RegisterAuras( {
         duration = 10,
         max_stack = 1,
     },
+    solar_beam = {
+        id = 78675,
+        duration = 5,
+        max_stack = 1,
+        mechanic = "silence",
+    },
     incarnation_chosen_of_elune = {
         id = 102560,
         duration = 30,
@@ -1024,6 +1030,24 @@ spec:RegisterAbilities( {    starfire = {
         end,
     },
     
+    solar_beam = {
+        id = 78675,
+        cast = 0,
+        cooldown = 60,
+        gcd = "off",
+        
+        startsCombat = true,
+        texture = 252188,
+        
+        toggle = "interrupts",
+        debuff = "casting",
+        readyTime = state.timeToInterrupt,
+        
+        handler = function()
+            applyDebuff( "target", "solar_beam" )
+        end,
+    },
+    
     starsurge = {
         id = 78674,
         cast = function()
@@ -1289,109 +1313,6 @@ do
 end
 
 -- Register default pack for MoP Balance Druid with authentic Eclipse rotation
-spec:RegisterPack( "Balance", 20250613, [[
-## Balance Druid MoP Rotation
-## Eclipse-based priority system for Mists of Pandaria
-## Updated for authentic MoP mechanics
+spec:RegisterPack( "Balance", 20250812, [[Hekili:nJvBVTTTt8plbfWnbRXtw2jnTZoVOTd4FdwlkGtXEXqLfTeTn)BjrpsQ45Ha9zFhPEIuHu2bODyVOfou397EK3D8cgfCFW8yKah8zFp)R8UzK)qVrEJVACWCXHD4G57qrBrRHFKHsH)FjkbLfPo)qcffl5NtZzYJGVMtseFmlyPDqhb0Udhf85rE(bZ3qIJXL0I5rbZVFdHxek)hQiSsSfH0vWFhji0SIWecxaFEfLve()WBjjKHbZvhQmd8kuEIa(5NvMfodTmbhh8UG5rmIaZiOG5NveUmF1QHPuA2ws2caR0H57cMxkJG56FiqawGeQ6pY3MNKSyjIVrhEGQXof4gmkrSz4Uirr40IWjEfHdkcfOeCMyidNH3JsgwZzJGQ(Ge6jNk0J90ScY6nIf0vlYzCAKeMRovyUsdMLi2wo4nKaC9PcW1xPBh))8haMu)faYRDcsLhjMHrPsfpcOIrY51(gLBRo69eQweJsH0fisQOtr0oggscPSdl47jRezyo3islvBs26fcAE0gPYDJtLtHxeobZfeuYcGV1zPs1vhVLyghZaV1AjyV5ywk4uYzy(IhiRjjgw55vgGDbwe(4JkpreLMet3NzLogofrYGllx0QGgsuQJJ8oMssYIqSYW3)kQOM8ukO7lY4OeYooEbCrHT(qr4SIqpJCKJfUS8DLi9pMpbQmeHLjFL(ZNTF50Ck3kVqB4B6ixLY6UUJsn2tsIxKMZ3WO00HCbuuTSurlQgKOW0Dbh3yoZnMlIXcAMSBGeC3LHKm)GkEMsWshGeZ2BZCAcITOkQBEpoNXirOSsb4Um1reqsEMdbG4cgeK4IQwcJCxfRuv3qPczLfW5W4qifasRhI8WC26s11DnNUj43wNG39dtb7W37u8uMI2DfQNibxIw6cV0u6UDJgs33DPNZTihLyUXH9R(41YllLxWSdW1o5(MswP7eKuYFJJHlAqapJtQc)w1F3vMob3WkuIQaSV7InnfcMQYsRSlRbyxH(oqOvkHNNTIuwcX3DjKEuHUMNR4VBvqoNvJo4UKJTlTtoLCDJQc(pVYotoL05Uvf8Dx5Xsc50zDVtfTbLjh4f(WOJKkB2xypdjuZV47UUKnC6tdU8ikX0UkHkRUmCc16GrVIOPlrwhgxoTpJSRKVpWYjXVTi8D1VRO35WX9mZD9OYnaaZUk7wk2GxiBi1Hw3zeFVMeTNjnDNQCQtVOxms5Y3dZnbYGlFhfedjP7GQyvVv6Lvpn6LfHm8FMdHjWi40uGouUGMcnNHdkd)8Hf39BKm4tJGWYxZ457KijjOu2aC6XMx2q)yN0x9AMwsN4gAJhU0YX19aE7tmAPFKBT3IRvJp3wHXunAC42ySphKgRx5K1MYxAu72hOxlsJHx7KHM0hnQV5zr9BEou779SO2DSRU5PgX(UjUSlNgTUdU1TJ0i2DC1sWX3DO0EWX3D0uvqxJY(dJ1AT6A)kAscDpuhqEZMHG(z7Xm48CUKpcWJqswnaYDNil4iQPlJQQzKNzqDCSKy4X0OLio(Tf3PAqy5Eu1xmAAwDMLxJx9fZXLRpuVXE1zgxNGZUZsLUMop)yR11tbSoTDoLsyg3b(psC8UY1XTJrxrsWL7LlLW5kDQYiQC6RLtfqIaPWizBXcWTgwe(rrjtQacaASuZfBqWX4hWSdsSjuOX3bPkgLKhlh)ctavLvRA)XxHGpGeoL)Txb22gs0gDQrzhALALvJ)RDjKiIiPfxDNqTq)fyGFwTyUVecip4BsqJ1pYxtYqanrZIQGuutQYBOoklpDjUm1lHkGO6htRJ6(MHnzoi0wpxSHYcMppnFfJSvobLYVhm)ffHDMrQ4Uxah(L6e9I7kHJpSj3)NM9Z6PT2PyvcIV1XNO0yhW2j72ovgZ78kYQzhBKQbNDSHPSlOMlosHCwFBE5UsV2hkheQbToEQwy6SFyDgAxcS(PvZ4irODFOtN4nW(QEn0aJzE6GWypDsRxiBhIUYZuvANiQdHxFLoH)aItd6z1R1bH3xTamUHL1S9uPI0BOSLjJnAQzaw3T6GZ7b1hF8StzVCxOlDTLvQjBlRm97UKTqNudmFL2mVb9FLOfVoRwuZACSSZJyrNIbD7yVlQZi(DzPKWpv1AhQKF(NOFb63GL9PjrMgVXyanjlwwl50XozRzy8(4F24A97tqndYLqXM1yJAhndckHrEC7MeUD24b23wJg)6Jg2depzBlvQ1VwnEu49nRRc0vugCvSSlUwrl9kLo3sPtomZSU1BG5btN57DCRTheN2fXBNDznKp16Da55DG4YBEIEE51Ex84JDj86Nq3nqUz4l02jyDZ9whDhTq(QKgFBVQC5RsK0wDty6yqLS69S5tBy6IUDXCcBx1XMF1oS9MGp54H8JLGp5etWF)HizNkJ7ZYxjzjSpDwB0SCm)zJSeZ9U4jrWk3xxkFkExAbWPExOwetW)a]] )
 
-# Executed before combat begins. Accepts non-harmful actions only.
-actions.precombat=cat_form,if=!buff.moonkin_form.up&!buff.cat_form.up&!buff.bear_form.up&!buff.travel_form.up
-actions.precombat+=/moonkin_form,if=!buff.moonkin_form.up
-actions.precombat+=/mark_of_the_wild,if=!buff.mark_of_the_wild.up
-actions.precombat+=/moonfire,if=!debuff.moonfire.up&!debuff.sunfire.up
 
-# Executed every time the actor is available.
-actions=cat_form,if=buff.cat_form.up&talent.feral_charge_cat.enabled&target.distance>8
-actions+=/moonkin_form,if=!buff.moonkin_form.up&!buff.cat_form.up&!buff.bear_form.up
-actions+=/rebirth,if=!combat
-actions+=/innervate,if=mana.pct<30&target.time_to_die>30
-actions+=/force_of_nature,if=target.time_to_die>30
-actions+=/wild_mushroom_detonate,if=buff.wild_mushroom.stack>=1&target.distance<40
-
-# Cooldowns
-actions+=/celestial_alignment,if=eclipse.energy<0|eclipse.energy>0
-actions+=/incarnation,if=eclipse.energy<0|eclipse.energy>0
-actions+=/berserking,if=buff.celestial_alignment.up|buff.incarnation.up
-actions+=/potion,if=buff.celestial_alignment.up|buff.incarnation.up
-
-# DoT Management - Solar/Lunar specific
-actions+=/sunfire,if=!debuff.sunfire.up&(buff.solar_eclipse.up|eclipse.energy>0)&target.time_to_die>18
-actions+=/moonfire,if=!debuff.moonfire.up&(buff.lunar_eclipse.up|eclipse.energy<0)&target.time_to_die>18
-
-# Eclipse Phase Management
-actions+=/starsurge,if=buff.shooting_stars.react|charges>=2
-actions+=/starfall,if=buff.lunar_eclipse.up&!buff.starfall.up&spell_targets.starfall>=2
-
-# Primary Eclipse Builders
-actions+=/wrath,if=eclipse.energy<0&!buff.solar_eclipse.up&eclipse.energy>-80
-actions+=/starfire,if=eclipse.energy>0&!buff.lunar_eclipse.up&eclipse.energy<80
-
-# Eclipse Phase Spells
-actions+=/wrath,if=buff.solar_eclipse.up|buff.celestial_alignment.up
-actions+=/starfire,if=buff.lunar_eclipse.up|buff.celestial_alignment.up
-
-# Movement/Emergency
-actions+=/moonfire,moving=1
-actions+=/sunfire,moving=1
-
-# Default Eclipse Direction
-actions+=/wrath,if=eclipse.energy<=0
-actions+=/starfire,if=eclipse.energy>0
-]] )
-
--- Register pack selector for Balance
-
--- MoP Balance Druid Debuffs
-spec:RegisterDebuffs( {
-    moonfire = {
-        id = 8921,
-        duration = 20,
-        tick_time = 2,
-        max_stack = 1,
-        copy = "moonfire_debuff"
-    },
-    
-    sunfire = {
-        id = 93402,
-        duration = 20,
-        tick_time = 2,
-        max_stack = 1,
-        copy = "sunfire_debuff"
-    },
-    
-    entangling_roots = {
-        id = 339,
-        duration = 30,
-        max_stack = 1,
-    },
-    
-    mass_entanglement = {
-        id = 102359,
-        duration = 30,
-        max_stack = 1,
-    },
-    
-    mighty_bash = {
-        id = 5211,
-        duration = 5,
-        max_stack = 1,
-    },
-    
-    cyclone = {
-        id = 33786,
-        duration = 6,
-        max_stack = 1,
-    },
-    
-    solar_beam = {
-        id = 78675,
-        duration = 8,
-        max_stack = 1,
-    },
-    
-    faerie_fire = {
-        id = 770,
-        duration = 300,
-        max_stack = 1,
-    },
-} )

@@ -286,6 +286,14 @@ local function SimcWithResources( str )
         str = extendExpression( str, "gcd", "execute" )
     end
 
+    -- MoP Demo: Some imported APLs reference bare 'demonic_fury' as a numeric.
+    -- Convert bare tokens to the aura stack which mirrors the resource (0..1000) when Demo spec isn't active.
+    -- Handle boundaries: start, end, and non-word/dot separators.
+    str = str:gsub( "^demonic_fury$", "buff.demonic_fury.stack" )
+             :gsub( "^demonic_fury([^%w_%.])", "buff.demonic_fury.stack%1" )
+             :gsub( "([^%w_%.])demonic_fury$", "%1buff.demonic_fury.stack" )
+             :gsub( "([^%w_%.])demonic_fury([^%w_%.])", "%1buff.demonic_fury.stack%2" )
+
     return str
 end
 
@@ -377,6 +385,10 @@ local function SimToLua( str, modifier )
 
     -- Condense bracketed expressions.
     str = str:gsub("%b[]", space_killer)
+
+    -- Global shorthand: some APLs use 'remaining_time' as fight duration shorthand.
+    -- Replace any standalone token occurrences (including within functions) with fight_remains.
+    str = str:gsub("%f[%w_]remaining_time%f[^%w_]", "fight_remains")
 
     return HandleLanguageIncompatibilities( str )
 end
@@ -485,8 +497,6 @@ do
 
         { "^(.-)%.time_to_(.-)<=?(.-)$", "%1.time_to_%2-%3" },
 
-        { "^debuff%.festering_wound%.stack[>=]=?(.-)$" , "time_to_wounds(%1)" },
-        { "^dot%.festering_wound%.stack[>=]=?(.-)$"    , "time_to_wounds(%1)" },
         { "^rune<=?(.-)$"                              , "rune.timeTo(%1)"    },
         { "^rune>=?(.-)$"                              , "rune.timeTo(1+%1)"  },
         { "^rune.current<=?(.-)$"                      , "rune.timeTo(%1)"    },
@@ -549,7 +559,20 @@ do
         { "^!?(pet%.[a-z0-9_]+)%.up$", "%1.remains"                                   },
         { "^!?(pet%.[a-z0-9_]+)%.active$", "%1.remains"                               },
 
-        { "^(action%.[a-z0-9_]+)%.ready$", "%1.ready_time" }
+    { "^(action%.[a-z0-9_]+)%.ready$", "%1.ready_time" },
+
+    -- MoP Demo: tolerate bare 'demonic_fury' tokens from imported APLs by mapping
+    -- them to a numeric value even if the demo resource isn't fully initialized yet.
+    -- Prefer state.demonic_fury.current if available, else use the demonic_fury buff stack, else 0.
+    { "^demonic_fury$", "( (demonic_fury and demonic_fury.current) or buff.demonic_fury.stack or 0 )" },
+
+    -- MoP Warlock: tolerate bare 'soul_shards' and 'burning_embers' tokens (some APLs expect numeric).
+    { "^soul_shards$", "( (soul_shards and soul_shards.current) or 0 )" },
+    { "^burning_embers$", "( (burning_embers and burning_embers.current) or 0 )" },
+    { "^burning_embers\\.deficit$", "( (burning_embers and burning_embers.max - burning_embers.current) or 0 )" },
+
+    -- Some APLs use 'remaining_time' as fight_remaining shorthand.
+    { "^remaining_time$", "fight_remains" }
     }
 
 
@@ -985,7 +1008,7 @@ do
                     end
 
                     local isNumber = numeric and prev == nil and next == nil or prev and math_ops[ prev.a ] or next and math_ops[ next.a ]
-                    piece.s = scripts:EmulateSyntax( piece.s, isNumber, squawk )
+                    piece.s = scripts:EmulateSyntax( piece.s, isNumber )
                 end
 
                 if ( prev and prev.t == "op" and math_ops[ prev.a ] and not equality[ prev.a ] ) or ( next and next.t == "op" and math_ops[ next.a ] and not equality[ next.a ] ) then
@@ -1054,7 +1077,7 @@ do
             i = i + 1
         end
 
-        if bracketed then output = "(" .. output .. ")" end
+    if bracketed then output = "(" .. output .. ")" end
         if ands then output = output:gsub( "&", " and " ) end
         if ors then output = output:gsub( "|", " or " ) end
         if nots then output = output:gsub( "!", " not " ) end
@@ -1067,6 +1090,17 @@ do
         output = output:gsub( "@safebool", "@safenum" )
         output = output:gsub( "!%(%s*(%b())%s*%)", "!%1" )
         output = output:gsub( "%(%s*(%b())%s*%)", "%1" )
+        -- Safety: remove any trailing unmatched ')' that can sneak in after transformations.
+        local open = select(2, output:gsub('%(', ''))
+        local close = select(2, output:gsub('%)', ''))
+        if close > open then
+            local excess = close - open
+            -- Trim from the end only; avoid stripping meaningful content inside.
+            while excess > 0 and output:sub(-1) == ')' do
+                output = output:sub(1, -2)
+                excess = excess - 1
+            end
+        end
 
         esDepth = esDepth - 1
         return output

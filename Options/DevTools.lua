@@ -270,7 +270,10 @@ function SkeletonGen:GetBuffTooltip( unit, index, filter )
     return tooltipText
 end
 
-function SkeletonGen:CleanTooltip( tooltip )
+--- @param self table
+--- @param tooltip string
+--- @return string|nil
+SkeletonGen.CleanTooltip = function(self, tooltip)
     if not tooltip or tooltip == "" then return nil end
 
     -- Strip Blizzard formatting
@@ -694,14 +697,18 @@ function SkeletonGen:EmbedSpellData( spellID, token, ability )
     local helpful = IsHelpfulSpell( name )
     local _, charges, _, recharge = GetSpellCharges( spellID )
 
-    local cooldown, gcd, icd = GetSpellBaseCooldown( spellID )
+    local cooldown, gcd_num, icd = GetSpellBaseCooldown( spellID )
     if cooldown then cooldown = cooldown / 1000 end
 
-    if gcd == 1000 then gcd = "totem"
-    elseif gcd == 1500 then gcd = "spell"
-    elseif gcd == 0 then gcd = "off"
+    local gcd
+    if gcd_num == 1000 then
+        gcd = "totem"
+    elseif gcd_num == 1500 then
+        gcd = "spell"
+    elseif gcd_num == 0 then
+        gcd = "off"
     else
-        icd = gcd / 1000
+        icd = gcd_num / 1000
         gcd = "off"
     end
 

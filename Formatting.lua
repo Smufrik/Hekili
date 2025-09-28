@@ -137,10 +137,10 @@ do
     end
   end
 
-  --- @return True if successfully disabled for this editbox.
+  --- @return boolean True if successfully disabled for this editbox.
   function lib:Disable ()
     if ( not Enabled[ self ] ) then
-      return;
+      return false;
     end    Enabled[ self ] = false;
     self.GetText, self.SetText, self.Insert = nil, nil, nil;
     self.GetCursorPosition, self.SetCursorPosition, self.HighlightText = nil, nil, nil;
@@ -162,7 +162,9 @@ do
     if ( Enabled[ self ] ) then
       CodeCache[ self ] = nil;
       local Updater = Updaters[ self ];
+      ---@diagnostic disable-next-line: undefined-field
       Updater:Stop();
+      ---@diagnostic disable-next-line: undefined-field
       Updater:Play();
     end
     if ( self.faiap_OnTextChanged ) then
@@ -178,7 +180,7 @@ do
     return lib.Update( self, true );
   end
 
-  --- @return Cached plain text contents.
+  --- @return string The plain text contents.
   local function GetCodeCached ( self )
     local Code = CodeCache[ self ];
     if ( not Code ) then
@@ -188,7 +190,7 @@ do
     return Code;
   end
 
-  --- @return Un-colored text as if FAIAP wasn't there.
+  --- @return string Un-colored text as if FAIAP wasn't there.
   -- @param Raw  True to return fully formatted contents.
   local function GetText( self, Raw )
     if ( Raw ) then
@@ -211,7 +213,7 @@ do
     return InsertBackup( self, ... );
   end
 
-  --- @return Cursor position within un-colored text.
+  --- @return integer Cursor position within un-colored text.
   local function GetCursorPosition ( self, ... )
     local _, Cursor = lib.StripColors( GetTextBackup( self ),
       GetCursorPositionBackup( self, ... ) );
@@ -285,9 +287,13 @@ do
       if ( Enabled[ self ] == nil ) then -- Never hooked before
         -- Note: Animation must not be parented to EditBox, or else lots of
         -- text will cause huge framerate drops after Updater:Play().
+        ---@diagnostic disable-next-line: undefined-global
         local Updater = CreateFrame( "Frame", nil, self ):CreateAnimationGroup();
+        ---@diagnostic disable-next-line: inject-field
         Updaters[ self ], Updater.EditBox = Updater, self;
+        ---@diagnostic disable-next-line: undefined-field
         Updater:CreateAnimation( "Animation" ):SetDuration( UPDATE_INTERVAL );
+        ---@diagnostic disable-next-line: undefined-field
         Updater:SetScript( "OnFinished", UpdaterOnFinished );
         HookHandler( self, "OnTextChanged", OnTextChanged );
         HookHandler( self, "OnTabPressed", OnTabPressed );
@@ -306,7 +312,7 @@ lib.Tokens = {}; --- Token names to TokenTypeIDs, used to define custom ColorTab
 local NewToken;
 do
   local Count = 0;
-  --- @return A new token ID assigned to Name.
+  --- Returns a new token ID assigned to Name.
   function NewToken ( Name )
     Count = Count + 1;
     lib.Tokens[ Name ] = Count;
@@ -488,7 +494,7 @@ local function NextNumber ( Text, Pos )
   end
 end
 
---- @return PosNext, EqualsCount if next token is a long string.
+-- Returns PosNext and EqualsCount if next token is a long string.
 local function NextLongStringStart ( Text, Pos )
   local Start, End = strfind( Text, "^%[=*%[", Pos );
   if ( End ) then
@@ -518,7 +524,8 @@ local strchar = string.char;
 --- Reads the next single/double quoted string beginning at its opening quote.
 -- Note: Strings with unescaped newlines aren't properly terminated.
 local function NextString ( Text, Pos, QuoteByte )
-  local Pattern, Start = [[\*]]..strchar( QuoteByte );
+  local Pattern = [[\*]]..strchar( QuoteByte );
+  local Start
   while ( Pos ) do
     Start, Pos = strfind( Text, Pattern, Pos + 1 );
     if ( Pos and ( Pos - Start ) % 2 == 0 ) then -- Not escaped
@@ -528,7 +535,7 @@ local function NextString ( Text, Pos, QuoteByte )
   return TK_STRING, #Text + 1;
 end
 
---- @return Token type or nil if end of string, position of char after token.
+-- Returns Token type (or nil if end), and next position after the token.
 local function NextToken ( Text, Pos )
   if not Text or type(Text) ~= "string" then
     return;

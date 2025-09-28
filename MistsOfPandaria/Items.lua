@@ -117,6 +117,22 @@ class.items.flask_of_winter_bite = {
     end,
 }
 
--- Add more item handlers as needed for specific trinkets and consumables
+-- TODO: Other trinkets probably need to be added here.
+-- Register on-use trinket abilities so UseItems can reference them by name.
+if class and class.specs and class.specs[0] then
+    local all = class.specs[0]
+
+    all:RegisterAbilities({
+        -- Add to prevent error (not usable)
+        bottle_of_infinite_stars = {
+            item = 86791,
+            items = { 86132, 87057 },
+
+            gcd = "off",
+            cooldown = 55,
+            toggle = "cooldowns",
+        },
+    })
+end
 
 Hekili:Debug( "MoP Items module loaded." )

@@ -1,297 +1,755 @@
--- MoP Brewmaster Monk (Data-Driven Rework V6.0)
--- Hekili Specialization File
--- FINAL VERSION 4: July 23, 2025 - Added manual Energy Regen override.
-
--- Boilerplate and Class Check
-if not Hekili or not Hekili.NewSpecialization then return end
-if select(2, UnitClass('player')) ~= 'MONK' then return end
+-- MonkBrewmaster.lua July 2025
+-- by Smufrik, Tacodilla , Uilyam
 
 local addon, ns = ...
-local Hekili = _G[ "Hekili" ]
-local class = Hekili.Class
-local state = Hekili.State
+local _, playerClass = UnitClass('player')
+if playerClass ~= 'MONK' then return end
 
--- Helper functions
+local Hekili = _G["Hekili"]
+local class, state = Hekili.Class, Hekili.State
+
+local floor = math.floor
 local strformat = string.format
 
--- Brewmaster specific combat log tracking
-local bm_combat_log_events = {}
 
-local function RegisterBMCombatLogEvent(event, callback)
-    if not bm_combat_log_events[event] then
-        bm_combat_log_events[event] = {}
-    end
-    table.insert(bm_combat_log_events[event], callback)
-end
+-- Define FindUnitBuffByID and FindUnitDebuffByID from the namespace
+local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
 
--- Declare the frame here, but do not create it yet.
-local bmCombatLogFrame
+-- Create frame for deferred loading and combat log events
+local bmCombatLogFrame = CreateFrame("Frame")
 
+-- Define Brewmaster specialization registration
 local function RegisterBrewmasterSpec()
-    if not class or not state or not Hekili.NewSpecialization then return end
+    -- Create the Brewmaster spec (268 is Brewmaster in MoP)
+    local spec = Hekili:NewSpecialization(268, true)
 
-    local spec = Hekili:NewSpecialization( 268 ) -- Brewmaster spec ID for MoP
-    if not spec then return end -- Not ready yet
-    
-    -- Create and register the combat log frame ONLY when the Brewmaster spec is being initialized.
-    if not bmCombatLogFrame then
-        bmCombatLogFrame = CreateFrame("Frame")
-        bmCombatLogFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-        bmCombatLogFrame:SetScript("OnEvent", function(self, event)
-            -- Add a spec check as a final safeguard.
-            if not state or not state.spec or state.spec.id ~= 268 then return end
-            
-            local timestamp, subevent, _, sourceGUID, _, _, _, destGUID, _, _, _, spellID, _, _, amount, _, _, _, _, _, critical = CombatLogGetCurrentEventInfo()
-            if sourceGUID ~= state.GUID and destGUID ~= state.GUID then return end
+    spec.name = "Brewmaster"
+    spec.role = "TANK"
+    spec.primaryStat = 2 -- Agility
 
-            if bm_combat_log_events[subevent] then
-                for _, callback in ipairs(bm_combat_log_events[subevent]) do
-                    callback(timestamp, subevent, sourceGUID, destGUID, spellID, amount, critical)
-                end
-            end
-        end)
+    -- Ensure state is properly initialized
+    if not state then
+        state = Hekili.State
     end
 
-    -- Enhanced resource registration for Brewmaster Monk
-    spec:RegisterResource(3, { -- Energy with Brewmaster-specific mechanics
-        -- Energizing Brew energy restoration (Brewmaster signature cooldown)
-        energizing_brew = {
-            aura = "energizing_brew",
-            last = function ()
-                local app = state.buff.energizing_brew.applied
-                local t = state.query_time
-                return app + floor( ( t - app ) / 1 ) * 1
-            end,
-            interval = 1,
-            value = function()
-                -- Energizing Brew provides massive energy boost
-                return state.buff.energizing_brew.up and 20 or 0 -- +20 energy per second during Energizing Brew
-            end,
-        },
-        
-        -- Chi Brew energy boost (if talented)
-        chi_brew = {
-            aura = "chi_brew_energy",
-            last = function ()
-                local app = state.buff.chi_brew_energy.applied
-                local t = state.query_time
-                return app + floor( ( t - app ) / 1 ) * 1
-            end,
-            interval = 1,
-            value = function()
-                -- Chi Brew provides energy alongside Chi
-                return state.buff.chi_brew_energy.up and 15 or 0 -- +15 energy per second briefly after Chi Brew
-            end,
-        },
-        
-        -- Tiger Palm energy refund mechanics
-        tiger_palm_efficiency = {
-            last = function ()
-                return state.query_time -- Continuous tracking
-            end,
-            interval = 1,
-            value = function()
-                -- Tiger Palm reduces energy costs of other abilities
-                return state.buff.tiger_power.up and 1 or 0 -- +1 energy per second with Tiger Power active
-            end,
-        },
-        
-        -- Ascension talent bonus (if talented)
-        ascension = {
-            last = function ()
-                return state.query_time -- Continuous passive
-            end,
-            interval = 1,
-            value = function()
-                -- Ascension provides passive energy bonus
-                return state.talent.ascension.enabled and 2 or 0 -- +2 energy per second with Ascension
-            end,
-        },
+    -- Register Chi resource (ID 12 in MoP)
+    spec:RegisterResource(12, {}, {
+        max = function() return state.talent.ascension.enabled and 5 or 4 end
+    })
+
+    -- Register Energy resource (ID 3 in MoP)
+    spec:RegisterResource(3, {
+        -- No special energy regeneration mechanics for Brewmaster in MoP
     }, {
-        -- Enhanced base energy regeneration for MoP Brewmaster
-        base_regen = 10, -- Base 10 energy per second in MoP
-        haste_scaling = true, -- Energy doesn't scale with haste in MoP
-        
-        regenerates = function()
-            local base = 10 -- Standard energy regen
-            local bonus = 0
-            
-            -- Stance-specific bonuses
-            if state.buff.stance_of_the_sturdy_ox.up then
-                bonus = bonus + 1 -- +1 energy per second in Ox Stance
-            end
-            
-            -- Combat efficiency
-            if state.combat then
-                bonus = bonus + 1 -- +1 energy per second in combat (Monk training)
-            end
-            
-            return base + bonus
-        end,
-    } )
-    
-    spec:RegisterResource(12, -- Chi (secondary resource for Brewmaster)
-        {},
-        {
-            max = function() return state.talent.ascension.enabled and 5 or 4 end
-        }
-    )
-
-    -- This hook runs on every update and manually sets the correct energy regen.
-    spec:RegisterHook("reset_precast", function()
-        if state.energy then
-            local base = 10
-            if state.talent.ascension.enabled then base = base * 1.15 end
-            if state.buff.energizing_brew.up then base = base + 20 end
-            
-            -- Hekili stores the per-second regen rate in 'active_regen'.
-            state.energy.active_regen = base * state.haste
+        max = function() return 100 end,
+        base_regen = function()
+            local base = 10 -- Base energy regen (10 energy per second)
+            local haste_bonus = 1.0 + ((state.stat.haste_rating or 0) / 42500) -- Approximate haste scaling
+            return base * haste_bonus
         end
-    end)
+    })
 
-    --[[
-        Comprehensive Gear, Talent, and Glyph Registration
-    ]]
-    spec:RegisterGear( "tier14", 85468, 85471, 85474, 85477, 85480 )
-    spec:RegisterGear( "tier15", 95094, 95097, 95100, 95103, 95106 )
-    spec:RegisterGear( "tier16", 99250, 99253, 99256, 99259, 99262 )
-    spec:RegisterGear( "tier14_2pc", function() return state.set_bonus.tier14_2pc end)
-    spec:RegisterGear( "tier14_4pc", function() return state.set_bonus.tier14_4pc end)
-    spec:RegisterGear( "tier15_2pc", function() return state.set_bonus.tier15_2pc end)
-    spec:RegisterGear( "tier15_4pc", function() return state.set_bonus.tier15_4pc end)
-    spec:RegisterGear( "tier16_2pc", function() return state.set_bonus.tier16_2pc end)
-    spec:RegisterGear( "tier16_4pc", function() return state.set_bonus.tier16_4pc end)
-    spec:RegisterGear( "legendary_cloak_tank", 102246 )
-    spec:RegisterGear( "steadfast_talisman", 102305 )
-    spec:RegisterGear( "thoks_tail_tip", 102300 )
-    spec:RegisterGear( "haromms_talisman", 102298 )
+    -- --- Compatibility wrappers for group/raid checks (MoP-era safe) ---
+            -- MoP-safe wrappers
+        local function BM_IsInGroup()
+            if IsInGroup then return IsInGroup() end
+            local raid  = (GetNumGroupMembers and GetNumGroupMembers()) or (GetNumRaidMembers and GetNumRaidMembers()) or 0
+            local party = (GetNumSubgroupMembers and GetNumSubgroupMembers()) or (GetNumPartyMembers and GetNumPartyMembers()) or 0
+            return (raid > 0) or (party > 0)
+        end
 
-    -- Talents
+        local function BM_IsInRaid()
+            if IsInRaid then return IsInRaid() end
+            local raid = (GetNumGroupMembers and GetNumGroupMembers()) or (GetNumRaidMembers and GetNumRaidMembers()) or 0
+            return raid > 0
+        end
+
+        local function BM_IsInInstance()
+            if IsInInstance then
+                local inInstance, instanceType = IsInInstance()
+                return inInstance, instanceType
+            end
+            -- Fallback: derive from GetInstanceInfo()
+            local _, instanceType = GetInstanceInfo()
+            local inInstance = instanceType and instanceType ~= "none"
+            return inInstance or false, instanceType or "none"
+        end
+
+
+    -- Talents for MoP Brewmaster Monk
     spec:RegisterTalents({
-        celerity        = { 1, 1, 115173 },
-        tigers_lust     = { 1, 2, 116841 },
-        momentum        = { 1, 3, 115174 },
-        chi_wave        = { 2, 1, 115098 },
-        zen_sphere      = { 2, 2, 124081 },
-        chi_burst       = { 2, 3, 123986 },
-        power_strikes   = { 3, 1, 121817 },
-        ascension       = { 3, 2, 115396 },
-        chi_brew        = { 3, 3, 115399 },
-        ring_of_peace   = { 4, 1, 116844 },
-        charging_ox_wave= { 4, 2, 119392 },
-        leg_sweep       = { 4, 3, 119381 },
+        celerity = { 1, 1, 115173 },
+        tigers_lust = { 1, 2, 116841 },
+        momentum = { 1, 3, 115174 },
+        chi_wave = { 2, 1, 115098 },
+        zen_sphere = { 2, 2, 124081 },
+        chi_burst = { 2, 3, 123986 },
+        power_strikes = { 3, 1, 121817 },
+        ascension = { 3, 2, 115396 },
+        chi_brew = { 3, 3, 115399 },
+        deadly_reach = { 4, 1, 115176 },
+        charging_ox_wave = { 4, 2, 119392 },
+        leg_sweep = { 4, 3, 119381 },
         healing_elixirs = { 5, 1, 122280 },
-        dampen_harm     = { 5, 2, 122278 },
-        diffuse_magic   = { 5, 3, 122783 },
+        dampen_harm = { 5, 2, 122278 },
+        diffuse_magic = { 5, 3, 122783 },
         rushing_jade_wind = { 6, 1, 116847 },
-        invoke_xuen     = { 6, 2, 123904 },
-        chi_torpedo     = { 6, 3, 115008 },
+        invoke_xuen = { 6, 2, 123904 },
+        chi_torpedo = { 6, 3, 115008 }
     })
 
-    -- Glyphs
-    spec:RegisterGlyphs( {
-        [146961] = "clash",
-        [125672] = "expel_harm",
-        [125687] = "fortifying_brew",
-        [125677] = "guard",
-        [146958] = "stoneskin",
-        [125679] = "touch_of_death",
-    })
-
-    -- Auras and Debuffs
+    -- Auras for Brewmaster Monk
     spec:RegisterAuras({
-        shuffle = { id = 115307, duration = 6, dr_type = "parry" },
-        guard = { id = 115295, duration = 30, absorb = true },
-        elusive_brew_stack = { id = 128938, duration = 30, max_stack = 15 },
-        elusive_brew = { id = 128939, dr_type = "dodge" },
-        stance_of_the_sturdy_ox = { id = 115069 },
-        energizing_brew = { id = 115288, duration = 20 },
-        fortifying_brew = { id = 115203, duration = 20, dr = 0.2 },
-        dampen_harm = { id = 122278, duration = 45, max_stack = 3 },
-        diffuse_magic = { id = 122783, duration = 6, dr_type = "magic" },
-        zen_meditation = { id = 115176, duration = 8, dr = 0.9 },
-        heavy_stagger = { id = 124273, duration = 10, debuff = true },
-        moderate_stagger = { id = 124274, duration = 10, debuff = true },
-        light_stagger = { id = 124275, duration = 10, debuff = true },
-        breath_of_fire_dot = { id = 123725, duration = 8, debuff = true, dot = true },
-        weakened_blows = { id = 115798, duration = 30, debuff = true },
-        tier14_4pc = { id = 124473, duration = 12 },
-        tier16_2pc = { id = 144634, duration = 10 },
-    })
+        -- Vengeance buff for Brewmaster Monk
+        vengeance = {
+            id = 132365,
+            duration = 20,
+            max_stack = 1,
+            generate = function(t)
+                local name, icon, count, debuffType, duration, expirationTime, caster = FindUnitBuffByID("player", 132365)
+                
+                if name then
+                    t.name = name
+                    t.count = count or 1
+                    t.expires = expirationTime
+                    t.applied = expirationTime - duration
+                    t.caster = caster
+                    return
+                end
+                
+                t.count = 0
+                t.expires = 0
+                t.applied = 0
+                t.caster = "nobody"
+            end,
+        },
 
-    -- Abilities
-    spec:RegisterAbilities({
-        keg_smash = { id = 121253, cooldown = 8, spend = 40, spendType = "energy", handler = function() state.gain(2, "chi"); state.applyDebuff("target", "weakened_blows", 30) end },
-        blackout_kick = { id = 100784, spend = 2, spendType = "chi", handler = function() state.applyBuff("player", "shuffle", 6) end },
-        jab = { id = 100780, spend = 40, spendType = "energy", handler = function() state.gain(1, "chi") end },
-        tiger_palm = { id = 100787, spend = 25, spendType = "energy" },
-        expel_harm = { id = 115072, cooldown = 15, spend = 40, spendType = "energy", handler = function() state.gain(1, "chi") end },
-        breath_of_fire = { id = 115181, spend = 2, spendType = "chi", handler = function() state.applyDebuff("target", "breath_of_fire_dot", 8) end },
-        spinning_crane_kick = { id = 101546, spend = 40, spendType = "energy", aoe = true, usable = function() return state.active_enemies >= 3 end },
-        rushing_jade_wind = { id = 116847, cooldown = 6, spend = 1, spendType = "chi", talent = "rushing_jade_wind", aoe = true },
-        purifying_brew = { id = 119582, cooldown = 1, spend = 1, spendType = "chi", toggle = "defensives", usable = function() local level = spec:GetStaggerLevel(); return level == "heavy" or level == "moderate" end },
-        guard = { id = 115295, cooldown = 30, spend = 2, spendType = "chi", toggle = "defensives", handler = function() state.applyBuff("player", "guard", 30) end },
-        elusive_brew = { id = 115308, cooldown = 1, toggle = "defensives", usable = function() return state.buff.elusive_brew_stack.stack >= state.settings.elusive_brew_threshold end, handler = function() local s = state.buff.elusive_brew_stack.stack or 0; state.removeBuff("player", "elusive_brew_stack"); state.applyBuff("player", "elusive_brew", s) end },
-        fortifying_brew = { id = 115203, cooldown = 180, toggle = "cooldowns", handler = function() state.applyBuff("player", "fortifying_brew", 20) end },
-        energizing_brew = { id = 115288, cooldown = 60, toggle = "cooldowns", handler = function() state.applyBuff("player", "energizing_brew", 20); state.gain(state.chi.max, "chi") end },
-        invoke_xuen = { id = 123904, cooldown = 180, toggle = "cooldowns", talent = "invoke_xuen" },
-        summon_black_ox_statue = { id = 115315, cooldown = 30 },
-        chi_brew = { id = 115399, cooldown = 45, charges = 2, talent = "chi_brew", handler = function() state.gain(2, "chi"); state.addStack("elusive_brew_stack", nil, 2) end },
-        chi_wave = { id = 115098, cooldown = 15, talent = "chi_wave" },
-        zen_meditation = { id = 115176, cooldown = 180, toggle = "defensives" },
-        dampen_harm = { id = 122278, cooldown = 90, toggle = "defensives", talent = "dampen_harm" },
-        diffuse_magic = { id = 122783, cooldown = 90, toggle = "defensives", talent = "diffuse_magic" },
-        provoke = { id = 115546, cooldown = 8 },
-        spear_hand_strike = { id = 116705, cooldown = 15, interrupt = true },
-        stance_of_the_sturdy_ox = { id = 115069, handler = function() state.applyBuff("player", "stance_of_the_sturdy_ox") end },
+         death_note = { 
+            id = 121125, -- This is the Spell ID for the buff
+            duration = 1, 
+            max_stack = 1, 
+            emulated = true,
+        },
+         power_strikes = { 
+            id = 129914, -- This is the Spell ID for the Tiger Power buff
+            duration = 1, 
+            max_stack = 1, 
+            emulated = true,
+        },    
+        tiger_power = { 
+            id = 125359, -- This is the Spell ID for the Tiger Power buff
+            duration = 20, 
+            max_stack = 1, 
+            emulated = true,
+        },
+        elusive_brew_stacks = {
+            id = 128939, -- This is the Spell ID for the stacks buff itself
+            duration = 30,
+            max_stack = 15,
+            emulated = true,
+        },
+        legacy_of_the_emperor = { 
+            id = 115921, 
+            duration = 3600, 
+            max_stack = 1, 
+            emulated = true,
+        },
+        shuffle = { 
+            id = 115307, 
+            duration = 6, 
+            max_stack = 1, 
+            emulated = true,
+        },
+        elusive_brew = { 
+            id = 115308, 
+            duration = 6, 
+            max_stack = 1, 
+            emulated = true,
+        },
+        fortifying_brew = { 
+            id = 120954, 
+            duration = 15, 
+            max_stack = 1, 
+            emulated = true,
+        },
+        guard = { 
+            id = 115295, 
+            duration = 30, 
+            max_stack = 1, 
+            emulated = true,
+        },
+        dampen_harm = { 
+            id = 122278, 
+            duration = 10, 
+            max_stack = 1, 
+            emulated = true,
+        },
+        diffuse_magic = { 
+            id = 122783, 
+            duration = 6, 
+            max_stack = 1, 
+            emulated = true,
+        },
+        dizzying_haze_dot = { 
+            id = 116330, 
+            duration = 15, 
+            max_stack = 1,
+            type = "debuff",
+            unit = "target", 
+        },
+        breath_of_fire_dot = { 
+            id = 123725, 
+            duration = 8, 
+            tick_time = 2, 
+            max_stack = 1,
+            type = "debuff",
+            unit = "target", 
+        },
+        heavy_stagger = {
+            id = 124273,
+            duration = 10,
+            type = "debuff",      -- important
+            unit = "player",      -- debuff on you
+            max_stack = 1,
+        },
+        moderate_stagger = { 
+            id = 124274, 
+            duration = 10,
+            type = "debuff",      -- important
+            unit = "player",      -- debuff on you
+            max_stack = 1,
+        },
+        light_stagger = { 
+            id = 124275, 
+            duration = 10,
+            type = "debuff",      -- important
+            unit = "player",      -- debuff on you
+            max_stack = 1,
+        },
+        zen_sphere = { 
+            id = 124081, 
+            duration = 16, 
+            max_stack = 1, 
+            emulated = true,
+        },
+        rushing_jade_wind = { 
+            id = 116847, 
+            duration = 6, 
+            max_stack = 1, 
+            emulated = true,
+        }
     })
-
-    -- Advanced State Tracking
-    ns.stagger_tick_amount = 0
-    ns.last_stagger_tick_time = 0
-    spec.GetStaggerLevel = function()
-        if state.buff.heavy_stagger.up then return "heavy" end
-        if state.buff.moderate_stagger.up then return "moderate" end
-        if state.buff.light_stagger.up then return "light" end
-        return "none"
-    end
 
     -- State Expressions
-    spec:RegisterStateExpr("stagger_dtps", function()
-        if state.query_time - (ns.last_stagger_tick_time or 0) > 1.5 then return 0 end
-        return ns.stagger_tick_amount or 0
+    spec:RegisterStateExpr("boss", function()
+        -- ENCOUNTER_START triggered (works for raids & dungeons)
+        if state.encounterID and state.encounterID ~= 0 then return true end
+
+        -- Boss frames active
+        for i = 1, 5 do
+            local u = "boss" .. i
+            if UnitExists(u) and UnitCanAttack("player", u) then return true end
+        end
+
+        -- World boss check
+        if UnitExists("target") and UnitClassification("target") == "worldboss" then return true end
+
+        -- Blizzard's internal boss flag (works for dungeon bosses)
+        if UnitExists("target") and UnitCanAttack("player", "target") and UnitIsBossMob and UnitIsBossMob("target") then
+            return true
+        end
+
+        return false
     end)
+
+        spec:RegisterStateExpr("ingroup", function()
+            return BM_IsInGroup()
+        end)
+
+        spec:RegisterStateExpr("inraid", function()
+            return BM_IsInRaid()
+        end)
+
+        spec:RegisterStateExpr("ininstance", function()
+            local inInst = BM_IsInInstance()
+            return inInst
+        end)
+
+        spec:RegisterStateExpr("indungeon", function()
+            local _, t = BM_IsInInstance()
+            return t == "party" or t == "scenario"
+        end)
+
+        spec:RegisterStateExpr("inraidinstance", function()
+            local _, t = BM_IsInInstance()
+            return t == "raid"
+        end)
+
+
+
+
+    spec:RegisterStateExpr("elusive_brew_stacks", function()
+        -- This now points directly to the stack count of our new aura
+        return state.buff.elusive_brew_stacks.count
+    end)
+
+
     spec:RegisterStateExpr("stagger_level", function()
-        local level = spec:GetStaggerLevel(); if level == "heavy" then return 3 end; if level == "moderate" then return 2 end; if level == "light" then return 1 end; return 0
-    end)
-    spec:RegisterStateExpr("shuffle_gap", function()
-        if state.buff.shuffle.up then return 0 end; local time_to_keg = state.cooldown.keg_smash.remains; if not state.energy or not state.energy.regen or state.energy.regen == 0 then return time_to_keg end; local energy_for_kick = 2 * (40 / state.energy.regen); return math.min(time_to_keg, energy_for_kick)
-    end)
-    spec:RegisterStateExpr("time_to_die", function()
-        if state.stagger_dtps == 0 then return 999 end; local total_dtps = state.stagger_dtps + (state.unmitigated_dtps or 0); if total_dtps == 0 then return 999 end; return state.health.current / total_dtps
-    end)
-
-    -- Combat Log Event Processing
-    RegisterBMCombatLogEvent("SPELL_PERIODIC_DAMAGE", function(timestamp, subevent, sourceGUID, destGUID, spellID, amount, critical)
-        if destGUID == state.GUID and (spellID == 124273 or spellID == 124274 or spellID == 124275) then ns.stagger_tick_amount = amount; ns.last_stagger_tick_time = GetTime() end
-    end)
-    RegisterBMCombatLogEvent("SPELL_DAMAGE", function(timestamp, subevent, sourceGUID, destGUID, spellID, amount, critical)
-        if sourceGUID == state.GUID and critical and (spellID == 100780 or spellID == 115072 or spellID == 121253) then state.addStack(128938, nil, 1) end
+    if state.debuff.heavy_stagger and state.debuff.heavy_stagger.up then
+        return 3
+    elseif state.debuff.moderate_stagger and state.debuff.moderate_stagger.up then
+        return 2
+    elseif state.debuff.light_stagger and state.debuff.light_stagger.up then
+        return 1
+    end
+    return 0
     end)
 
-    -- Addon Options
-    spec:RegisterOptions({ enabled = true, aoe = 3, package = "Brewmaster" })
+    -- Vengeance state expressions
+    spec:RegisterStateExpr("vengeance_stacks", function()
+        if not state.vengeance then
+            return 0
+        end
+        return state.vengeance:get_stacks()
+    end)
 
-    -- User Settings
-    spec:RegisterSetting("proactive_shuffle", true, { name = "Proactive Shuffle Management", type = "toggle" })
-    spec:RegisterSetting("purify_level", 2, { name = "Purify at Stagger Level", desc="1=Light, 2=Moderate, 3=Heavy", type = "range", min = 1, max = 3, step = 1 })
-    spec:RegisterSetting("elusive_brew_threshold", 8, { name = "Elusive Brew Stack Threshold", type = "range", min = 1, max = 15, step = 1 })
-    spec:RegisterSetting("guard_health_threshold", 65, { name = "Reactive Guard Health %", type = "range", min = 30, max = 90, step = 5 })
-    spec:RegisterSetting("fortify_health_pct", 35, { name = function() return strformat("Use %s Below Health %%", Hekili:GetSpellLinkWithTexture(115203)) end, desc = "The health percentage at which Fortifying Brew will be recommended.", type = "range", min = 0, max = 100, step = 5, width = "full" })
+    spec:RegisterStateExpr("vengeance_attack_power", function()
+        if not state.vengeance then
+            return 0
+        end
+        return state.vengeance:get_attack_power()
+    end)
 
-    -- Default APL Pack
-spec:RegisterPack("Brewmaster", 20250724, [[Hekili:nEvBtUPnq4)n(AstC8zF(Y12Z3mn9ln30MjZ40(LobqgwmkwGOsIZN7Cd)27UcWimGD(qCoKw9Sp7Q9fTEx79fV1rmd49P5ZMVC27NVy68Rx((536T2Cih8wNZc3X2I)rglf)LPJO1oiKSi6SAzHkex3B9McUW8XmVndd4su2Ciex(278wNWJIGkzbDO36VKW1Lb0)yLb1QSmqgJFhA4YSYabxBWTJLQYGFh2Xf8PERTls0iukfrY9z0hFYAuqgBJaI8(aUPIBafNHMetazMP8SNK7a)NlGSPnYTUsrERD20ZG0DuWGmqT9W0WcLcbTm4(vLb3mRmyszqycV76x3IV9y8)JNT1FJc2t6yXLimINv4g2oSsOfszpxg82YG5TkS5WOMmK)oMvimh9tnsTd26Rtz6exMCw7hXTm4buVZT05hkd2uehpvNG)kGPkiLXZ0vuBrzWlVugObJbnC90CLKu8tGFT4wig)8BdJQmTxBX6vT8EJaJwKfg)D8WDN3zMamHjzAoGrSn(S7w24lXVp6cDUTEohe(jmvkH9nFVoJiWAlOBNzs8LX(XCf4hjntPOuRi12pgoKYbD9HDSRohLu(YlfLOk0juy13yrG)EEw0PHlvk56wFD)tq0RLe92N4XTJYJHmPfwTnkdJ46tY)058SmsOqfldoET((Z76pn(3jH7BSnea3Dj3hLNSN9e0VKqZoem)03D9aY6VBwlkg(wq5NZePhZeHmn6WUqrlTHTLoPaEcevW2MhvO4XhA2QZTCRIReYTGZ4j1dLJCuBBlyQi)kr8njkqNGLD7QxNqyR4NpL0gfcIcYnyzNpATH7MA)9eBTJyh1UtQQZ(Npz9Sgj2HXq(0AZmp00QI69CDLxmRmILMdz2siDYhhIelDcxCo35Z6A0dpoUqd(PST8WlQPBD1K7jRInZvqOmDdRFFc8MjleO6sMeS6TPqfDWx(C3Ugwm2ZuuESM6UJ135P5O3RUd(v1THUQmqb)BbwHdPQwMIYXkmYu8beruqflBlONw(OfHyPqiXQgBjHumSaZEqHRJChfMJLvnKyUVyGQZzAKltAvFrwhPJIiHXNSW2W0Wpx(OT(rVkv46pw9kfS3vmN6yrFKY1AlJ0f5o23wQyape1HINTdmOneug8rt1HSo3uilI4TjHHlJjWQde2CjEXEGiyOOiIQIcCKOQgI9p)LgiKGu9xFdAzj8WexPzzhA1ATnJnXe8qUr0IRRlOrP)c(IlvJA(sfeyHKVsGg5U0ChnVNleowunKMgrTEd7szfPBGQ7zb2hS8XpAdiOfU5KN5HBIbCfMePcdEyHsBY26AhV363Ie8pLFUm4d464BwWebAHmSIXV(5)aFkYVjtZzg(g8vIKV8VbLgr)vLpsNS(l0mMoJUvP1SXxxDmQ)QtJIuf0lrKyKpgrbOrH)FLOO5yyklNRoc94MAywnsYsxT22hONAtOG8naGlOX8hbpMBdzK2GEYTl4uwxtooLYaH7Cjtl6R62h4n84vDAT8WQbBRmblT)WQRhcXFC17S14jO6wK5(vxOPrfQZhbv3s5e4NTnHdVhUfXik5KI5N1i63uyeqDQAtaoEpGjNQRLZgds3YZUGoub)EWE7jX4hNuQxWgVz8Qd4mDyLn23OpKX1u5DfM60PJq4eMDCTvoZp5q2bg5AGdtx9DhpIGO7dRUF1nZM4m7Z9UXMUi1m3JdloDoQU4u)(X3oVx(zDRQ((RgxfvlvjnmAFMOTKA3ercMvhh0Q3wiN7mndr8Q0Kj)WqJgD)QfV8Y4Junz4ZGJs96fVAiL3oRZq5c3TK8w338i7HiFNrwCy)5NgAsnTRhB40Qc1G3RHSZ16Od(ux7AYzg2ziDnWiiK2oLNlMCXXAgcDCEKAFtBi31djyZyhNea7oJYqhRDoJ(jppScNiHEDM3))]])
+    spec:RegisterStateExpr("vengeance_value", function()
+        if not state.vengeance then
+            return 0
+        end
+        return state.vengeance:get_stacks()
+    end)
 
+    spec:RegisterStateExpr("high_vengeance", function()
+        if not state.vengeance or not state.settings then
+            return false
+        end
+        return state.vengeance:is_high_vengeance(state.settings.vengeance_stack_threshold)
+    end)
+
+    spec:RegisterStateExpr("should_prioritize_damage", function()
+        if not state.vengeance or not state.settings or not state.settings.vengeance_optimization or not state.settings.vengeance_stack_threshold then
+            return false
+        end
+        return state.settings.vengeance_optimization and state.vengeance:is_high_vengeance(state.settings.vengeance_stack_threshold)
+    end)
+
+    -- Abilities for Brewmaster Monk
+    spec:RegisterAbilities({
+        auto_attack = {
+                id  = 6603,
+                cast     = 0,
+                cooldown = 0,
+                gcd      = "spell",
+                handler  = function()
+            end,
+         },
+        touch_of_death = {
+            id = 115080,
+            cast = 0,
+            cooldown = 90,
+            gcd = "on",
+            toggle = "cooldowns",
+            startsCombat = true,
+            handler = function() end
+        },
+        spear_hand_strike = {
+            id = 116705,
+            cast = 0,
+            cooldown = 10,
+            gcd = "off",
+            toggle = "interrupts",
+            startsCombat = true,
+            debuff = "casting",
+            readyTime = state.timeToInterrupt,
+            handler = function() interrupt() end
+        },
+        legacy_of_the_emperor = {
+            id = 115921,
+            cast = 0,
+            cooldown = 0,
+            gcd = "spell",
+            toggle = "buffs",
+            startsCombat = false,
+            handler = function() applyBuff("legacy_of_the_emperor", 3600) end,
+            generate = function(t) end
+        },
+        chi_burst = {
+            id = 123986,
+            cast = 1,
+            cooldown = 30,
+            gcd = "spell",
+            spend = 2,
+            spendType = "chi",
+            talent = "chi_burst",
+            startsCombat = true,
+            handler = function() spend(2, "chi") end,
+            generate = function(t) end
+        },
+        zen_sphere = {
+            id = 124081,
+            cast = 0,
+            cooldown = 10,
+            gcd = "spell",
+            talent = "zen_sphere",
+            startsCombat = true,
+            handler = function() applyBuff("zen_sphere", 16) end,
+            generate = function(t) end
+        },
+        invoke_xuen = {
+            id = 123904,
+            cast = 0,
+            cooldown = 180,
+            gcd = "off",
+            talent = "invoke_xuen",
+            toggle = "cooldowns",
+            startsCombat = true,
+            handler = function() end,
+            generate = function(t) end
+        },
+        dampen_harm = {
+            id = 122278,
+            cast = 0,
+            cooldown = 90,
+            gcd = "off",
+            talent = "dampen_harm",
+            toggle = "defensives",
+            startsCombat = false,
+            handler = function() applyBuff("dampen_harm", 10) end,
+            generate = function(t) end
+        },
+        diffuse_magic = {
+            id = 122783,
+            cast = 0,
+            cooldown = 90,
+            gcd = "off",
+            talent = "diffuse_magic",
+            toggle = "defensives",
+            startsCombat = false,
+            handler = function() applyBuff("diffuse_magic", 6) end,
+            generate = function(t) end
+        },
+        chi_wave = {
+            id = 115098,
+            cast = 0,
+            cooldown = 15,
+            gcd = "spell",
+            talent = "chi_wave",
+            startsCombat = true,
+            handler = function() end,
+            generate = function(t) end
+        },
+        elusive_brew = {
+            id = 115308,
+            cast = 0,
+            cooldown = 0,
+            gcd = "off",
+            startsCombat = false,
+            handler = function()
+                applyBuff("elusive_brew", 6)
+            end,
+            generate = function(t) end
+        },
+        jab = {
+            id = 100780,
+            cast = 0,
+            cooldown = 0,
+            gcd = "spell",
+            spend = 40,
+            spendType = "energy",
+            startsCombat = true,
+            handler = function()
+                gain(1, "chi")
+                if state.talent.power_strikes.enabled and math.random() <= 0.2 then
+                    gain(1, "chi")
+                end
+            end,
+            generate = function(t) end
+        },
+        keg_smash = {
+            id = 121253,
+            cast = 0,
+            cooldown = 8,
+            gcd = "spell",
+            spend = 40,
+            spendType = "energy",
+            startsCombat = true,
+            handler = function()
+                gain(2, "chi")
+                applyDebuff("target", "breath_of_fire_dot", 8)
+            end,
+            generate = function(t) end
+        },
+        tiger_palm = {
+            id = 100787,
+            cast = 0,
+            cooldown = 0,
+            gcd = "spell",
+            spend = 25,
+            spendType = "energy",
+            startsCombat = true,
+            handler = function()
+                applyBuff("tiger_power", 20)
+            end,
+            generate = function(t) end
+        },
+        blackout_kick = {
+            id = 100784,
+            cast = 0,
+            cooldown = 0,
+            gcd = "spell",
+            spend = 2,
+            spendType = "chi",
+            startsCombat = true,
+            handler = function()
+                applyBuff("shuffle", 6)
+            end,
+            generate = function(t) end
+        },
+        purifying_brew = {
+            id = 119582,
+            cast = 0,
+            cooldown = 1,
+            gcd = "off",
+            spend = 1,
+            spendType = "chi",
+            startsCombat = false,
+            handler = function()
+                removeDebuff("heavy_stagger")
+                removeDebuff("moderate_stagger")
+                removeDebuff("light_stagger")
+            end,
+            generate = function(t) end
+        },
+        guard = {
+            id = 115295,
+            cast = 0,
+            cooldown = 30,
+            gcd = "off",
+            spend = 2,
+            spendType = "chi",
+            startsCombat = false,
+            handler = function()
+                applyBuff("guard", 30)
+            end,
+            generate = function(t) end
+        },
+        breath_of_fire = {
+            id = 115181,
+            cast = 0,
+            cooldown = 0,
+            gcd = "spell",
+            spend = 2,
+            spendType = "chi",
+            startsCombat = true,
+            handler = function()
+                applyDebuff("target", "breath_of_fire_dot", 8)
+            end,
+            generate = function(t) end
+        },
+        rushing_jade_wind = {
+            id = 116847,
+            cast = 0,
+            cooldown = 6,
+            gcd = "spell",
+            spend = 1,
+            spendType = "chi",
+            talent = "rushing_jade_wind",
+            startsCombat = true,
+            handler = function()
+                spend(1, "chi")
+                applyBuff("rushing_jade_wind", 6)
+            end,
+            generate = function(t) end
+        },
+        fortifying_brew = {
+            id = 115203,
+            cast = 0,
+            cooldown = 180,
+            gcd = "off",
+            toggle = "defensives",
+            startsCombat = false,
+            handler = function()
+                applyBuff("fortifying_brew", 15)
+            end,
+            generate = function(t) end
+        },
+        chi_brew = {
+            id = 115399,
+            cast = 0,
+            cooldown = 45,
+            charges = 2,
+            gcd = "off",
+            talent = "chi_brew",
+            startsCombat = false,
+            handler = function()
+                gain(2, "chi") -- This is the correct function call
+            end,
+            generate = function(t) end
+        },
+       spinning_crane_kick = {
+            id = 101546,
+            cast = 0,
+            cooldown = 0,
+            gcd = "spell",
+            spend = 2, 
+            spendType = "chi",
+            startsCombat = true,
+            handler = function()
+                spend(2, "chi") 
+            end,
+            generate = function(t) end
+        },
+        expel_harm = {
+            id = 115072,
+            cast = 0,
+            cooldown = 15,
+            gcd = "spell",
+            spend = 40,
+            spendType = "energy",
+            startsCombat = true,
+            handler = function()
+                gain(1, "chi")
+            end,
+            generate = function(t) end
+        },
+        energizing_brew = {
+            id = 115288,
+            cast = 0,
+            cooldown = 60,
+            gcd = "off",
+            startsCombat = false,
+            handler = function() end,
+            generate = function(t) end
+        }
+    })
+
+bmCombatLogFrame:RegisterEvent("UNIT_POWER_UPDATE")
+
+bmCombatLogFrame:SetScript("OnEvent", function(self, event, ...)
+    if event == "UNIT_POWER_UPDATE" then
+        local unit, powerTypeString = ...
+
+        -- Only update for the player and if the Brewmaster spec is active
+        if unit == "player" and state.spec.id == 268 then
+            if powerTypeString == "CHI" then
+                local currentChi = UnitPower(unit, 12)
+                if state.chi.current ~= currentChi then
+                    state.chi.current = currentChi
+                    state.chi.actual = currentChi
+                    Hekili:ForceUpdate(event) -- Force a display refresh
+                end
+            elseif powerTypeString == "ENERGY" then
+                local currentEnergy = UnitPower(unit, 3)
+                if state.energy.current ~= currentEnergy then
+                    state.energy.current = currentEnergy
+                    state.energy.actual = currentEnergy
+                    Hekili:ForceUpdate(event) -- Force a display refresh
+                end
+            end
+        end
+    end
+end)
+
+    -- Options
+    spec:RegisterOptions({
+        enabled = true,
+        aoe = 2,
+        cycle = false,
+        nameplates = true,
+        nameplateRange = 8,
+        damage = true,
+        damageExpiration = 8,
+        package = "Brewmaster"
+    })
+
+    spec:RegisterSetting("use_purifying_brew", true, {
+        name = strformat("Use %s", Hekili:GetSpellLinkWithTexture(119582)), -- Purifying Brew
+        desc = "If checked, Purifying Brew will be recommended based on stagger level.",
+        type = "toggle",
+        width = "full"
+    })
+
+    spec:RegisterSetting("proactive_shuffle", true, {
+        name = "Proactive Shuffle",
+        desc = "If checked, Blackout Kick will be recommended to maintain Shuffle proactively.",
+        type = "toggle",
+        width = "full"
+    })
+    -- Settings for Defensive Thresholds
+    spec:RegisterSetting("purify_level", 2, {
+        name = "Purify Stagger At",
+        desc = "The stagger level at which Purifying Brew will be recommended.",
+        type = "select",
+        values = { [1] = "Light", [2] = "Moderate", [3] = "Heavy" },
+        width = "full"
+    })
+
+    spec:RegisterSetting("guard_health_threshold", 50, {
+        name = "Guard Health Threshold (%)",
+        desc = "Guard will be recommended when your health drops below this percentage.",
+        type = "range", min = 10, max = 90, step = 5,
+        width = "full"
+    })
+
+    spec:RegisterSetting("elusive_brew_threshold", 8, {
+        name = "Elusive Brew Stacks Threshold",
+        desc = "Elusive Brew will be recommended when you have at least this many stacks.",
+        type = "range", min = 1, max = 15, step = 1,
+        width = "full"
+    })
+
+    spec:RegisterSetting("fortify_health_pct", 30, {
+        name = "Fortifying Brew Health Threshold (%)",
+        desc = "Fortifying Brew will be recommended when your health drops below this percentage.",
+        type = "range", min = 10, max = 50, step = 5,
+        width = "full"
+    })
+
+    -- Vengeance system variables and settings (Lua-based calculations)
+    spec:RegisterVariable( "vengeance_stacks", function()
+        return state.vengeance:get_stacks()
+    end )
+
+    spec:RegisterVariable( "vengeance_attack_power", function()
+        return state.vengeance:get_attack_power()
+    end )
+
+    spec:RegisterVariable( "high_vengeance", function()
+        return state.vengeance:is_high_vengeance(state.settings.vengeance_stack_threshold)
+    end )
+
+    spec:RegisterVariable( "vengeance_active", function()
+        return state.vengeance:is_active()
+    end )
+
+    -- Vengeance-based ability conditions (using RegisterStateExpr instead of RegisterVariable)
+
+    spec:RegisterSetting( "vengeance_optimization", true, {
+        name = strformat( "Optimize for %s", Hekili:GetSpellLinkWithTexture( 132365 ) ),
+        desc = "If checked, the rotation will prioritize damage abilities when Vengeance stacks are high.",
+        type = "toggle",
+        width = "full",
+    } )
+
+    spec:RegisterSetting( "vengeance_stack_threshold", 5, {
+        name = "Vengeance Stack Threshold",
+        desc = "Minimum Vengeance stacks before prioritizing damage abilities over pure threat abilities.",
+        type = "range",
+        min = 1,
+        max = 10,
+        step = 1,
+        width = "full",
+    } )
+
+    spec:RegisterPack("Brewmaster", 20250728, [[Hekili:T3vwpUTrs4FldcIgP4XY6AUYoJbsI9UXoxgrtqEyXkPwKTgrpuKA5HNmgcc5188(0(E(L5FjBv9bp7MKI6ygeSbij28O7Q(Q7Q7MAu3r3mAOjjGo6h71P3PDUOZLT7E5Px078rddEyjD0WLeJ7i3c)bhYc4)(vMKLbwFGUEYx7rVFbXpG6TEY3sVZY2A9e3zZSmSi24R9GTlXehEF3qpd4vhnCAOLDWBCgnv9CoaE2Lud4YNDXOHZTmnP8NL6BmA4nZT8xpb)xY6jcQcNr4VBey56SEITLFaC7zUruuBGq8CNzzdt)NTEY1Q)N1VfU378OgUlMscwpXNgeUKDrTVaFk9BVu(wx7hqCmOJDNnoyoDSFqON5dJD)T1VT4bcU3ROZOo(aM6x8JkgQFXhy7xBh6hjfwp5(5uG)bsW4oeF8GBm3625Na4W74yMJlWyZcTTHR9pcjEM8lB6EVdCfId83FWneVGZN(9)l8SeBpkX8byGi48amfEtteZNgoBwmeygr(p7AkNSgpfOQtSMDn(KTtEXXCASn7)9YR72PXCkXoyE7LuqhXj4QUD60G9w3IezBK(AKFuyxbVxeQ8UqpRzpy5CResEoQdq(Wdmy52BrT0Md685pRLGBtacmSbzhGrvYwVyPC0J4mJ5wTnc98aAgyJgGktaCB)2H(0XPF6ghz46AJeRGNy4Adbvn2M(bQ9lVUFb8Xp4As9a7LKSsFoRybQ)2U3ZLZOEFc2cnjKtTGPJEFplFCo2dCBZmc0Rh0z1kLqqRSyqVKA4cgbmF5sg7hew2OIDcoHzSdm)N(J)C9KZ785Cm5V76fKghT8Doowmp5ERayucSyJXsI9IIuRFbJQZbe9uRPolAUzic)ontXRG58K(RwLfQoVtl(qWORXlDVN61gDfXGL880ZfyfYXzmQfcCkWMuVy3amDfeYIWp8QCi9EId6(mWfuBMtCqlDgXYVezHBOdaG2e0JVAykdNh5bibcLt94uq9iTEq)wcg(vKflr)AFlXBbJz)EiCd6M3r44Np5uP)p4T9EiyodGO2mGjnAaE4og9nAbxWe5qDmIjBMhphM4iMiX1ktyNLPZBsuHWc34gAasLFAggHGaARLeCa1qSqU7g3xbS4IfutlqwH2nO(bgyR)Zwp5BMBjqJfukkVN667)IapIpmzEH2yuijMe4AcGrasiyGntKmYzf0VrtCiwTkG4DlnOTKznqlKorYYWflftosngKLlPanmLcailKILTzkps85EQneNWnmy8Dwg3LBQp9lci2WFQnX3afEUoTPoKP2uZNn4los39eu03rb1KHly8DZN1JrCGh1p97)hmIaOGbAtazMLIUJE7yF8TYqnxvtQ559AKCu63G6q9U9H2WSgsaNIr6k)8B)vKq7Ec3agPyUtS3nScKTxOpAym(9et647TCyEZ4odhdZ4clQpkkfuzUNwsTnICKN)r4X1A2KP9Z8Dbr79SUJcXjw2yNavTwTQ5r7VXVBRwPfgcOF438DBb07V0YXbHkdpIdnstop4FuPOFoDJ)Ab3ChN(ZH)Rnf0NwqSC8Fz32xkKdV(3wIHJ4XdaBwP8O)gjpO4Oe5Bxr(NhwuU)EgL7PrP(TKPBHs97jtr07WcvhCfY8Xvj3sWShWOPSsIOyKu8kgewIiW)c(bnMJb36lc4nZZDHieh1BhgEno6Q20cG79ncp2LwDzuTLOm16JjZDwwLbwsbxKlYHa5Vi(rgBaZGIgnirPcMsxbtckTmRBsAGHBXtoxIHyA0SgLoRYPhg5O5viULxkouwIzVx(Im51OE1LrLyQf6(mbf9tGPYmgjvnGg4pmVowQSCvmKxFL1h)ipj)VL8rroSHlpbbbubiQsMPHEyufz17d5En5p)uIZDyIosOXvqzygvSjf13Mbtzg1TRRPLJAh3x0OPjLN7SGNaVUFKcwRRwP6gJnDdGB2QH4MPjv2DvKo9lHYMuu4iVKa0oLjBqxyCGYk4yFwNQG78Qtyvn4WrEwFauvBqc4tvLGBhQLT8X8Oy(Yef8lJZmzzwNmP6K93GXtqz6Augki966YvvZEHL1FZHquyKI)E3BTmAvMDd7()aakbmFWrA8Sc3ziWcl)091WaMhv8PSRldAKPI(JsjdIQ9M7ymz6hmtvQ)srNz(bkXp0Jk7qzMMjjiJ0zEWnaKdX4fIriBWS6jfuKeJ8zth6mDrrm(mzLryP)3IJfJlJQFJfnG3Hbh3qS7bIWczzzTLl1)zD1YyARbkw4FdVZnVd5fqrs0OI(dKnftQjWYTbWDlpv6fI(SqSxKwPOzUUWG2NRwL7YcJ0RUUNmu8x9tV(lffRHt9qrY)a2Hz)dGlObYjrSACUpD)tK9GHZ4NiSBLEUwM08vq6hSc6YRiTd0oRSUyoBolN3h6f5LRuyQ0K93bmZwyQDqzV(pFtm5ACuZmjIQmXBPE)ptNboVMNmrKzYGTKPGVxUVeMPiLBBS9ERBQkI5vx3F1QS(XBLl7YFLTUgjZU8erAbstItQQuatT8Ey4YKTjEP82zr3jIC39kHxDXPi)wU3URYIPDRHVVbTECYQvQUKlJ28UbZO3OUpdD3p5RgL6Yx7(DXCuPk9Pj5scaI55sCEq2X(ki53Q4CmArsbSfpzMLTn(3ylrtC04ezlKQUrWKkzF6d9rL4kt2P117FM6cj1Mjj2rpyYr1QBeAFVaYbfcaJ252uMJHMF6p(ZEmQg1Hkn3uzdvq2DgosmUB4nCpD28X2Gn25d2ZGKKzDLF57Ez329t06a)G4EWKwBherz9LFX5XEFIYhlr716xP4vha2t0aQLCDAbzS)y6nk(gJ9zA3sU2qOPev6yYqeYKJ568(HSngbmp1KBoCzDTR4ZDPSChX9BK8wRToMJV7RXLGxKfdRu2Q6N4WuJaX9XSeHZ2nIRYuwtZS7Vvzz3Wo6wAJY5Z9OctjgP7BK989mYwDd(NggohC)C8CHuRnnJyBpfYjDpQouya6l3lOdJN1WXkng2ECO2vwxfembGmisIYJHlPBrRWzEpWmVKL7Y7gU6nkMmGoEBvjVWHaLXVRKLXr1W0O52l9BbdIwDUwGs3GYDhdi8EdFRK)4hruFqvaWQPCxKQQnN)dMtG)YGZeyMPlvUznVZbROe3wgvfB4D7yWzvXMQiVsd2BEL0xtnhuYwavcTPsQMMdnPlMopcTjSnB1BBgvq(QvP7HuCSfTzcl6LbKAdJiXYV9dkl5zbdHDCd0ygZ)RJXT99j4Ut)AZe7K6YE2axZelcd23gafPSfFrcePxz(O930rau75cpO6n82QvnLpa8Ka8X2y4L)W4Q83Qv5eUr865x2JkxPpKrtAvw3L2RsuNhT8Nc()QQ7R8xeuLvQ9M4njHbUJjb4I3pAiaaideDsd62U7z9739IrdVNWA0OpEWcWIBxS01lqu57XixCmUto(3HwSUX77UaEiCOxqy7db(oK1V963YE9zU2aoZSbjHEeSvgupQyLxzRPmB3Iqek7idH96mq(C8TNVBOtQN200LTA0bKPeF6xcMa4UGn)sgI2gk4cWCGeAhuvg57z7R2bFjU6SoaWXUTlBQqKLtyhVt0JoMVyaPhS6owT1W(sT)nJ)7wc)Vdy)h7DlHe93EW)rNtIeB9ouIT6SDn21aETOHiOQ)(hQ2DmSwR74y9BM9Dz(3uTsr16eEu9Z3Hc0ARM6nyMFmIFL7KCPrchD262mbm6a)xC8dxIJfRd1cI(ynhrpPkgMuT40cYZWoApKigmbHX2omwgat6z5ChnaM6jRN8Ma(lXi6fuhtCQHkyceNlfCSTC9ScWQ(CmSdnXQz4NphjY8pzlG6BcOl8)xNG59BHNaK4NMTcFYzva60FBPnu9yGD84MugiN0)gRZHIP5g(qay1)subr8L6LyMVhkajbhjgYa5JYqd2LCcxmLYfp2G361V9nlKO)LP1Aq50OHS)eE2qHSWH)3pYogQcl(rF9OH83aVDYmW5NeupRL8BQRqH8NCgT1uSJoXmJgcuvaOuqG)uSr86jV8A2UaUX6jn5V26jRwjBqBIAb4pzVoRN0AuaKSQg4i1AeNbnQ4bSPqs901t(cz)luuK6eamgWEKJ0)ui93xd9hvzzgAVIhfhT0(v7iANzD0JjVsp(sPyQIG5y2GoihpqdhNRldz48n7q9KeasxcusvTYAWbN)kPtqsL2M8TxzU(3OaK2XcHwCBLMSh(XGg6YOHwQvhqH(PAe6k6mCgX(MDGIQMy)Okk5vQd))f3flUzxvvU2aacVA7lr9HZ0OpeVj9YOguVZZus1H055XO1UD68Kvo3)jGCUxzM1NRrm(EY0mYVn7iuLuU9uu48K3iefoxuNmf3PNFRDrYEX56faHlckkf48ADAtMDZ3uB6tmE)VBVkkQgQt1tNxSlopDgm5wVcHp5SHfvUIEfLUTgd(9kQOEjapCyvZm2DXk1ACh0QOe(1GGB)2lR2aIWlBwFl7ghyvtDtxTc7nWAhRtDaGWAPfIkfqTUf5mTOcO16ku9zvtVRZQCc1sc(IDlnJhhKhAFzKS4OmPGgUSiVxAZ6SwNLTKemVd(Qo4A7xfd96IvWQBt7jX2Es403ScMQ8Zy56uiUOJJlYhs8I8NHD2YtoxX6RYewZEqc4jaL7wrHEeUzAvuX0L1bL90wJSA1CxPcURuRwEC8ZwMrZgxrBDouBvSE29goSvUv0vS4tbeQVSKQA5MzRIfRToTIIax)JqyTcN2uxhDUIZHOVR8HCf83LA4pdXP7tLuFlp2HjzsH40iZPmmT)gJmN0qoNDyTMGH(ItraRBNmiwoj2v6fyD36Wmdq5MQWKiPPnDXuBebvI099HDSAHH0OGRVFLr4PM9PbhrlyVAi7rtX7ydg4wNfZk5jLSW(T0Jnf6YTBJZgk9XOC)N0t3nopUD(HUSyMmV1C)Zu4)anr5vGj2ZzQkcRAvBPyxHQRuReEDZSzb5RW8y(NS44DkIQYLYvwtITcAA3PQ2oOsnbEhtT4BLtrQH6xJ3OUSM8fyVVC7IwVHG30XwPC1vi0Gl)Eb1gv47gTpuvvpsmQMn9HR3vXAQkpk3gGfvKrjmk47xrYWL0(Kko6(bQsJSeV(vCSjU0OCXKVqQThB8mYmEJ2Xn138n3Nr7YnE1STCKD0rQLvqBDyEPI)yJvvAn(lJM(M5uNViAJ0VqpxPRUoHhuTDZXq81ltBELv6JLMMuit(zrtz2HjYNi)Nin2tCjxCfzSvut4kkRkTcI0FH1krGDitlB)4DRO03U4WK9g7rYwUj6(58ofPPY2XIQut3zFy2oCOF8UVSksKCLMhHv6cWwuoWBYh3T9nIeLBNmrQICgNWbrvnUt8tGqzUIFS)HpixgJA)5nqu6Ah16gXTTrRMM6FYdkY2l93I)mO)o6NiHcRhJxyzb)(ait1nkR6e)GaWF3KBLzz6ofycTXS8E7xtHDaW0uTtemJbr3OuJBT0bD9uLCEv9uFG)TxO4c9l2ur12IxIOzGLRJAUNA)1s0mxf88LBtxjezOGS7aLNo)2nKZbwg8uJo4PcDWSkz8n1LQ6JKitIF4eYGkhGFGhYxGFMFghQGoKkusTzkpojw2vbbilBfT0gaSOp7m6dB(x3fi7S9CRSRWY)OVBs6XKJQiS8iWX67yC7lReKexuVI9aDbrXlFltVNuJ389gZorqE(tabz9wyp9D67rYlWbyzYRbsvG3(csIOCZGs(y9un5rvvClDBdE5JGqzZAfBmtVJxK7ndiZGddk1r5gUj03dFmAQgQwj2)OT26oR8zhPljLJnlwxVLqDFqLIbQy3p80gjhuxyyZTAsRixW(OOI65v)lfu1ecXBfHbNTzw4L5Qu56PEaCvMBFxir4nBjMR33GOQb61d7UkLoDMLUgRuvvpy47tySgTWG5Uq1H)IL9dKfSRn6)9d]])
 end
 
 -- Deferred loading mechanism
@@ -304,6 +762,7 @@ local function TryRegister()
     return false
 end
 
+-- Attempt immediate registration or wait for ADDON_LOADED
 if not TryRegister() then
     bmCombatLogFrame:RegisterEvent("ADDON_LOADED")
     bmCombatLogFrame:SetScript("OnEvent", function(self, event, addonName)

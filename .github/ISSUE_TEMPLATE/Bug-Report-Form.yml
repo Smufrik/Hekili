@@ -1,0 +1,89 @@
+name: In-Game Error
+description: |
+  Use this ticket for in-game error messages or when the addon fails to load.
+  Install BugSack and BugGrabber to easily collect error messages.
+title: "[BUG] Provide a short, clear title for your Bug Report"
+labels: [bug, triage]
+assignees:
+  - Hekili
+body:
+  - type: checkboxes
+    id: precheck
+    attributes:
+      label: Before You Begin
+      description: Please confirm that you've taken these preliminary steps before submitting your issue report.
+      options:
+        - label: I confirm that I have downloaded the latest version of the addon.
+          required: true
+        - label: I am not playing on a private server.
+          required: true
+        - label: I checked for an [existing, open ticket](https://github.com/Smufrik/hekili-mop/issues?q=is%3Aissue%20state%3Aopen%20sort%3Aupdated-desc) for this issue and was not able to find one.
+          required: true
+        - label: I edited the title of this bug report (above) so that it describes the issue I am reporting.
+          required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the Issue
+      description: Please describe the issue in question.  Be specific and describe what you see.  You can CTRL+V to paste a screenshot (image) or supply links to screenshot images.
+      placeholder: "Example: The addon is not loading for my Beast Mastery Priest.  The following error message appears in my BugSack."
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: How to Reproduce
+      description: "Steps to reproduce the behavior"
+      placeholder: |
+        1. Enter game as a Shadow Priest.
+        2. Change specialization to Beast Mastery.
+        3. Realize Beast Mastery Priest don't exist.
+    validations:
+      required: true
+  - type: input
+    id: player-info
+    attributes:
+      label: Player Information (Link)
+      description: |        
+        Please supply your character information by completing the following steps.
+        * Log into your WoW character.
+        * Type `/hekili` and press Enter.
+        * Open the `Snapshots (Troubleshooting)` section (left panel).
+        * Copy all of the text from the text box.
+        * Paste the text to Pastebin.
+        * Provide the Pastebin link here.
+        
+        This step is essential, as most issues are related to specific classes, specializations, gear, talent choices, or other game systems.
+        If you do not provide this information, I cannot triage your problem.
+        **Note:** Some errors may prevent you from opening `/hekili`.  If that's true for you, please note that in this box instead of providing the link.
+      placeholder: http://pastebin.com/AbCdEfGh
+    validations:
+      required: true
+  - type: input
+    id: error-messages
+    attributes:
+      label: Error Messages (Link)
+      description: |
+        If there are error messages in-game, please install [BugSack](https://www.curseforge.com/wow/addons/bugsack) and [BugGrabber](https://www.curseforge.com/wow/addons/bug-grabber) -- both! -- in order to collect the error message.
+        * Install BugSack and BugGrabber if you don't already have them.
+        * Log into WoW, open BugSack and clear the sack.
+        * Reload WoW (/rl).
+        * When WoW finishes reloading, open BugSack and copy the **first** error message.
+          * If you need to do something to trigger the error message, do that and then open BugSack and copy the error message.
+        * Paste the message to Pastebin (it's free!).
+        * Provide the Pastebin link here.
+      placeholder: http://pastebin.com/aBcDeFgH
+    validations:
+      required: true      
+  - type: textarea
+    id: addl-info
+    attributes:
+      label: Additional Information
+      description: Please provide any additional information regarding this issue that was not included above.
+      placeholder: Leave blank, if all necessary details are included above.
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Information
+      description: I will contact you via this GitHub ticket with questions and updates.  If you do not regularly check your GitHub email, please provide an alternate contact method (i.e., Discord ID) so that I can reach you if needed.
+      placeholder: Hekili#0001

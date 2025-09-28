@@ -12,7 +12,7 @@ actions+=/divine_favor
 actions+=/blood_fury
 actions+=/berserking
 actions+=/arcane_torrent
-actions+=/potion
+actions+=/potion,name=jade_serpent_potion
 actions+=/use_items
 actions+=/call_action_list,name=spenders,strict=1,if=holy_power=3|buff.divine_purpose.up
 actions+=/divine_plea,if=mana.pct<85

@@ -1,0 +1,138 @@
+# Monk: Brewmaster
+#Uilyam
+
+# =======================
+# Precombat setup
+# =======================
+actions.precombat=stance_of_the_sturdy_ox
+
+# =======================
+# Defensives
+# =======================
+
+
+# Use Elusive Brew when stacks are high, HP is not full, Guard is down, and you don’t already have the dodge buff
+actions.defensives+=elusive_brew,if=buff.elusive_brew.stack>=10&health.percent<100&buff.guard.down&buff.elusive_brew_buff.down
+
+
+# Purifying Brew - Heavy stagger (40%+) and Guard is not active
+actions.defensives+=/purifying_brew,if=chi.current>=1&settings.use_purifying_brew&buff.guard.down&stagger_level>=3
+
+# Purifying Brew - Moderate stagger (30%+) if low HP or Guard is down and stagger rising
+actions.defensives+=/purifying_brew,if=chi.current>=1&settings.use_purifying_brew&(health.percent<=40|buff.guard.down)&stagger_level>=2
+
+# Use Guard proactively for high stagger or HP ≤ 70% if Fortifying Brew isn't active
+actions.defensives+=/guard,if=chi.current>=2&buff.guard.down&buff.fortifying_brew.down&(stagger_level== 3|health.percent<=70)
+
+# Fortifying Brew - Use if Guard is down and either HP is low or stagger is high wants to change level to amount later
+actions.defensives+=/fortifying_brew,if=buff.guard.down&(health.percent<=50|stagger_level>3)
+
+# Dampen Harm - Last line of defense when everything else is down and you're in danger
+actions.defensives+=/dampen_harm,if=buff.dampen_harm.down&buff.fortifying_brew.down&buff.guard.down&health.percent<=40
+
+# =======================
+# Cooldowns
+# =======================
+
+# Use Energizing Brew if low on energy and Chi
+actions.cooldowns+=/energizing_brew,if=energy.actual<=40&chi.current<=1
+
+# Use Chi Brew if talented and Chi is low
+actions.cooldowns+=/chi_brew,if=talent.chi_brew.enabled&chi.current<2&buff.elusive_brew.stack<9
+
+
+# =======================
+# Chi Overflow
+# =======================
+
+# Use Breath of Fire if Dizzying Haze is up, target isn't burning, and Shuffle is banked
+actions.overflow+=/breath_of_fire,if=chi.current==5*talent.ascension.enabled+4*!talent.ascension.enabled&buff.shuffle.remains>8&debuff.dizzying_haze.up&debuff.breath_of_fire.down
+
+# Use Guard when at Chi cap and it's off CD, even if not in danger
+actions.overflow+=/guard,if=chi.current==5*talent.ascension.enabled+4*!talent.ascension.enabled&buff.guard.down
+
+# Chi dump if capped and Guard not used
+actions.overflow+=/blackout_kick,if=chi.current==5*talent.ascension.enabled+4*!talent.ascension.enabled
+
+
+# =======================
+# Core (Shared Logic)
+# =======================
+
+
+# Maintain Shuffle buff if missing
+actions.core+=/blackout_kick,if=level>=34&chi.current>=2&!buff.shuffle.up
+
+# Use Expel Harm if Desperate Measures is active
+actions.core+=/expel_harm,if=buff.desperate_measures.up
+
+# Use Keg Smash to generate Chi if low and enough energy
+actions.core+=/keg_smash,if=chi.current<=3&energy.actual>=40
+
+# Maintain Tiger Power (level 34+) if missing or expiring
+actions.core+=/tiger_palm,if=level>=34&(buff.tiger_power.down|buff.tiger_power.remains<=2)
+
+# Use Expel Harm if injured and not Chi capped
+actions.core+=/expel_harm,if=health.percent<100&chi.current<5*talent.ascension.enabled+4*!talent.ascension.enabled&energy.actual>=40
+
+# Refresh Shuffle if it's about to expire or missing
+actions.core+=/blackout_kick,if=level>=34&chi.current>=2&(buff.shuffle.remains<=3|!buff.shuffle.up)
+
+# Use Chi Wave if talented, off cooldown, and not Chi capped
+actions.core+=/chi_wave,if=talent.chi_wave.enabled&cooldown.chi_wave.remains<=0&chi.current<5*talent.ascension.enabled+4*!talent.ascension.enabled&energy.actual<85
+
+actions.core+=/tiger_palm,if=level<34&chi.current>=1&(buff.tiger_power.down|buff.tiger_power.remains<=4)
+
+# BoK Shuffle
+actions.core+=/blackout_kick,if=chi.current>=2
+
+# Maintain Tiger Power at any level
+actions.core+=/tiger_palm,if=level>=34&(buff.tiger_power.down|buff.tiger_power.remains<=2)
+
+
+# Tiger Palm filler for level 34+ if low energy and nothing else usable
+actions.core+=/tiger_palm,if=level>=34&energy.actual<36&chi.current<=1
+
+# =======================
+# Single Target / Light Cleave (≤2 enemies)
+# =======================
+
+# Jab if fighting ST or light cleave, high energy, and Keg Smash is on cooldown >1.3s
+actions.st+=/jab,if=active_enemies<=2&energy.actual>=87&cooldown.keg_smash.remains>1.3
+
+# Jab for ST or cleave if not Chi capped and energy sufficient
+actions.st+=/jab,if=active_enemies<=2&energy.actual>=40&chi.current<5*talent.ascension.enabled+4*!talent.ascension.enabled
+
+# =======================
+# AoE (3 or more enemies)
+# =======================
+
+
+# AOE: RJW or Spinning Crane Kick if 3+ targets, high energy, not Chi capped
+actions.aoe+=/rushing_jade_wind,if=active_enemies>=3&talent.rushing_jade_wind.enabled&cooldown.rushing_jade_wind.ready&energy.actual>=60&chi.current<5*talent.ascension.enabled+4*!talent.ascension.enabled
+
+actions.aoe+=/spinning_crane_kick,if=active_enemies>=3&!talent.rushing_jade_wind.enabled&energy.actual>=60&chi.current<5*talent.ascension.enabled+4*!talent.ascension.enabled&buff.shuffle.remains>1.9
+
+# Spinning Crane Kick fallback
+actions.aoe+=/spinning_crane_kick,if=active_enemies>=3&!talent.rushing_jade_wind.enabled&cooldown.keg_smash.remains>1.9&energy.actual>=40&chi.current<5*talent.ascension.enabled+4*!talent.ascension.enabled
+
+
+# Jab fallback when RJW is talentedand is on cooldown and energy is sufficient
+actions.aoe+=/jab,if=active_enemies>=3&talent.rushing_jade_wind.enabled&!cooldown.rushing_jade_wind.ready&energy.actual>=40&(chi.current<5*talent.ascension.enabled+4*!talent.ascension.enabled)&(cooldown.keg_smash.remains)>1.4  
+
+
+# Tiger Palm filler when Keg Smash is down and nothing else usable
+actions.aoe+=/tiger_palm,if=active_enemies>=3&cooldown.keg_smash.remains>1.4&energy.actual<=40&(level>=34|chi.current>=1)
+
+
+# =======================
+# Main Action List
+# =======================
+
+actions+=/call_action_list,name=defensives
+actions+=/call_action_list,name=cooldowns
+actions+=/call_action_list,name=overflow,if=(chi.current==5*talent.ascension.enabled+4*!talent.ascension.enabled)
+actions+=/call_action_list,name=core
+actions+=/call_action_list,name=st,if=active_enemies<=2
+actions+=/call_action_list,name=aoe,if=active_enemies>=3
+actions+=auto_attack

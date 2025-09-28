@@ -1,4 +1,5 @@
 -- Classes.lua
+---@diagnostic disable: undefined-global, need-check-nil, assign-type-mismatch
 -- January 2025
 
 local addon, ns = ...
@@ -30,59 +31,141 @@ else
     GetActiveLossOfControlData = function() return {} end
     GetActiveLossOfControlDataCount = function() return 0 end
 end
-
 -- MoP compatible item and spell functions
-local GetItemCooldown = _G.GetItemCooldown or function(item)
-    if type(item) == "number" then
-        return _G.GetItemCooldown and _G.GetItemCooldown(item) or 0, 0
-    else
-        return 0, 0
+local function SafeGetItemCooldown( item )
+    -- Check for modern C_Item API first
+    if C_Item and C_Item.GetItemCooldown and type( item ) == "number" then
+        local cooldownInfo = C_Item.GetItemCooldown( item )
+        if cooldownInfo and type(cooldownInfo) == "table" then
+            -- Extract values safely - C_Item.GetItemCooldown returns a table with startTime and duration
+            local startTime = (cooldownInfo).startTime
+            local duration = (cooldownInfo).duration
+            return (startTime or 0), (duration or 0)
+        end
+    -- Fallback to legacy API if available
+    elseif rawget( _G, "GetItemCooldown" ) and type( item ) == "number" then
+        -- Use rawget to avoid directly referencing a deprecated global
+        local getter = rawget( _G, "GetItemCooldown" )
+        local start, duration = getter( item ) -- luacheck: ignore 113
+        return start or 0, duration or 0
     end
+    return 0, 0
 end
 
--- Use modern C_Spell.GetSpellDescription when available, fallback to deprecated GetSpellDescription for older versions
-local GetSpellDescription = (C_Spell and C_Spell.GetSpellDescription) or _G.GetSpellDescription or function(spellID)
+-- Safe local aliases for inventory-based APIs used by tinkers; avoid referencing _G inside setfenv'd functions.
+local GetInventoryItemCooldown = rawget( _G, "GetInventoryItemCooldown" ) or function(unit, slot)
+    return 0, 0, 0
+end
+-- Safe fallback for GetInventoryItemSpell - used for tinker detection
+-- Note: This API may not be available in all WoW versions
+---@diagnostic disable-next-line: undefined-field
+local GetInventoryItemSpell = rawget( _G, "GetInventoryItemSpell" ) or function(unit, slot)
+    return nil, nil
+end
+local INVSLOT_HAND = rawget( _G, "INVSLOT_HAND" ) or 10
+local GetInventoryItemID = _G.GetInventoryItemID or function(unit, slot)
+    local link = _G.GetInventoryItemLink and _G.GetInventoryItemLink(unit, slot)
+    if not link then return nil end
+    return tonumber( link:match("item:(%d+)") )
+end
+local GetInventoryItemLink = _G.GetInventoryItemLink or function(unit, slot)
+    return _G.GetInventoryItemLink and _G.GetInventoryItemLink(unit, slot) or nil
+end
+local GetInventoryItemTexture = _G.GetInventoryItemTexture or function(unit, slot)
+    return _G.GetInventoryItemTexture and _G.GetInventoryItemTexture(unit, slot) or nil
+end
+local CreateFrame = _G.CreateFrame
+
+-- Cataclysm-like tinker tracker for MoP
+local tinker = { hand = { spell = 0, name = nil, item = 0, texture = nil, enchant = 0 } }
+local function UpdateTinkerHand()
+    -- MoP clients can return either (name) or (name, spellID); be resilient.
+    local a, b = GetInventoryItemSpell("player", INVSLOT_HAND)
+    local spellName, spellID
+    if type(a) == "number" then
+        -- Some clients might (rarely) return spellID as first value.
+        spellID = a
+        spellName = b
+    else
+        spellName = a
+        spellID = b
+    end
+    tinker.hand.name = spellName or nil
+    tinker.hand.spell = spellID or 0
+    tinker.hand.item = GetInventoryItemID("player", INVSLOT_HAND) or 0
+    tinker.hand.texture = GetInventoryItemTexture("player", INVSLOT_HAND)
+    local link = GetInventoryItemLink("player", INVSLOT_HAND)
+    if link then
+        local enchant = link:match("item:%d+:(%d+)")
+        tinker.hand.enchant = tonumber(enchant) or 0
+    else
+        tinker.hand.enchant = 0
+    end
+end
+do
+    local f = CreateFrame and CreateFrame("Frame")
+    if f then
+        f:RegisterEvent("PLAYER_LOGIN")
+        f:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
+        f:SetScript("OnEvent", function(_, evt)
+            if evt == "PLAYER_LOGIN" or evt == "PLAYER_EQUIPMENT_CHANGED" then
+                UpdateTinkerHand()
+            end
+        end)
+    end
+end
+UpdateTinkerHand()
+-- Capture original GetSpellInfo early so downstream helpers can safely reference it.
+local OriginalGetSpellInfo = rawget(_G, "GetSpellInfo")
+local GetSpellInfo = OriginalGetSpellInfo
+local _GetSpellDescription = (C_Spell and rawget(C_Spell, "GetSpellDescription")) or rawget(_G, "GetSpellDescription")
+local function GetSpellDescription(spellID)
+    if type(_GetSpellDescription) == "function" then
+        return _GetSpellDescription(spellID)
+    end
     local tooltip = CreateFrame("GameTooltip", "HekiliTooltip", nil, "GameTooltipTemplate")
     tooltip:SetSpell(spellID)
     return _G[tooltip:GetName() .. "TextLeft2"]:GetText() or ""
 end
 
-local GetSpellTexture = _G.GetSpellTexture or function(spellID)
+local GetSpellTexture = rawget(_G, "GetSpellTexture") or function(spellID)
     local _, _, icon = GetSpellInfo(spellID)
     return icon or "Interface\\Icons\\INV_Misc_QuestionMark"
 end
 
-local GetSpellLink = _G.GetSpellLink or function(spellID)
-    local name = GetSpellInfo(spellID)
+local GetSpellLink = rawget(_G, "GetSpellLink") or function(spellID)
+    local name = GetSpellInfo and GetSpellInfo(spellID)
     if name then
         return "|cff71d5ff|Hspell:" .. spellID .. "|h[" .. name .. "]|h|r"
     end
     return nil
 end
 
--- Use original GetSpellInfo for MoP
-local GetSpellInfo = _G.GetSpellInfo
-
--- MoP compatible item functions
-local GetItemSpell = _G.GetItemSpell or function(item)
-    local spellName, spellID = _G.GetItemSpell and _G.GetItemSpell(item) or nil, nil
-    return spellName, spellID
+-- MoP compatible item functions (use rawget to avoid direct deprecated references)
+local _GetItemSpell = rawget( _G, "GetItemSpell" )
+local function GetItemSpell( item )
+    if type( _GetItemSpell ) == "function" then
+        return _GetItemSpell( item )
+    end
+    return nil, nil
 end
 
-local GetItemCount = _G.GetItemCount or function(item, includeBank, includeCharges)
-    return _G.GetItemCount and _G.GetItemCount(item, includeBank, includeCharges) or 0
+local _GetItemCount = rawget( _G, "GetItemCount" )
+local function GetItemCount( item, includeBank, includeCharges )
+    if type( _GetItemCount ) == "function" then
+        return _GetItemCount( item, includeBank, includeCharges ) or 0
+    end
+    return 0
 end
 
-local IsUsableItem = _G.IsUsableItem or function(item)
-    local usable, noMana = _G.IsUsableItem and _G.IsUsableItem(item) or false, false
-    return usable, noMana
+local _IsUsableItem = rawget( _G, "IsUsableItem" )
+local function IsUsableItem( item )
+    if type( _IsUsableItem ) == "function" then
+        local usable, noMana = _IsUsableItem( item )
+        return usable or false, noMana or false
+    end
+    return false, false
 end
-
--- Save the original GetSpellInfo before we override it
-local OriginalGetSpellInfo = _G.GetSpellInfo
-
--- Don't override GetSpellInfo globally, use it locally where needed
-local GetSpellInfo = OriginalGetSpellInfo
 
 local UnitBuff, UnitDebuff = ns.UnitBuff, ns.UnitDebuff
 
@@ -132,7 +215,7 @@ local specTemplate = {
         }
     },
 
-    placeboBar = 3,
+
 
     ranges = {},
     settings = {},
@@ -430,13 +513,26 @@ local HekiliSpecMixin = {
     end,
 
     RegisterGlyphs = function( self, glyphs )
-        -- Glyphs in MoP Classic are handled differently than in retail
-        -- For now, just store them for potential future use
+        -- Normalize glyph mappings so lookups work by name -> spellID.
+        -- Many specs register as [spellID] = "glyph_name". We store both
+        -- directions, but consumers (like state.glyph.<name>.enabled) rely on
+        -- name -> spellID being present.
         if not self.glyphs then
             self.glyphs = {}
         end
-        for glyphID, glyphName in pairs( glyphs ) do
-            self.glyphs[ glyphID ] = glyphName
+        for key, value in pairs( glyphs ) do
+            if type( key ) == "number" and type( value ) == "string" then
+                -- Registered as [id] = name
+                self.glyphs[ value ] = key   -- primary: name -> id
+                self.glyphs[ key ] = value   -- secondary: id -> name (for debugging/tools)
+            elseif type( key ) == "string" and type( value ) == "number" then
+                -- Registered as name -> id
+                self.glyphs[ key ] = value   -- primary: name -> id
+                self.glyphs[ value ] = key   -- secondary: id -> name
+            else
+                -- Fallback: keep whatever was provided
+                self.glyphs[ key ] = value
+            end
         end
     end,
 
@@ -926,7 +1022,15 @@ local HekiliSpecMixin = {
             end
         end
 
+        -- Store by ability key on the spec (existing behavior).
         self.abilities[ ability ] = a
+        -- Also store by ability key in the global class ability map so that import/parse
+        -- routines (which reference class.abilities[ key ]) can detect spec abilities.
+        -- Previously, only the localized spell name (a.name) was inserted which caused
+        -- "Unsupported action" warnings for valid spec ability keys during APL import.
+        if not class.abilities[ ability ] then
+            class.abilities[ ability ] = a
+        end
         self.abilities[ a.id ] = a
 
         if not a.unlisted then class.abilityList[ ability ] = class.abilityList[ ability ] or a.listName or a.name end
@@ -1547,13 +1651,6 @@ all:RegisterAuras({
         max_stack = 1,
     },
 
-    chaos_brand = {
-        id = 1490,
-        duration = 3600,
-        type = "Magic",
-        max_stack = 1,
-        shared = "target"
-    },
     power_infusion = {
         id = 10060,
         duration = 20,
@@ -1636,9 +1733,7 @@ all:RegisterAuras({
         duration = 3600,
     },
 
-    stamina = {
-        duration = 3600,
-    },
+    -- removed duplicate generic stamina; detailed MoP stamina aura defined later
 
     attack_power_multiplier = {
         duration = 3600,
@@ -2144,6 +2239,138 @@ all:RegisterAuras({
         end
     },
 
+    -- Spell Vulnerability family
+    magic_vulnerability = {
+        alias = {
+            "curse_of_elements",
+            "master_poisoner",
+            "fire_breath",
+            "lightning_breath"
+        },
+        aliasMode = "first",
+        aliasType = "debuff",
+        shared = "target",
+    },
+
+    curse_of_elements = {
+        id = 1490,
+        duration = 300,
+        max_stack = 1,
+        debuff = true,
+        shared = "target",
+        generate = function( t )
+            -- Try to find either 1490 or 104225
+            local name, icon, count, debuffType, duration, expirationTime, caster
+            name, icon, count, debuffType, duration, expirationTime, caster = FindUnitDebuffByID( "target", 1490 )
+            if not name then
+                name, icon, count, debuffType, duration, expirationTime, caster = FindUnitDebuffByID( "target", 104225 )
+            end
+
+            if name and caster == "player" then
+                t.name = name
+                t.count = 1
+                t.expires = expirationTime
+                t.applied = expirationTime - duration
+                t.caster = caster
+                t.duration = duration
+                return
+            end
+
+            t.count = 0
+            t.expires = 0
+            t.applied = 0
+            t.caster = "nobody"
+            t.duration = 300
+            return
+        end,
+
+        copy = { 104225 },
+    },
+
+    master_poisoner = {
+        id = 58410,
+        duration = 15,
+        max_stack = 1,
+        debuff = true,
+        shared = "target",
+        generate = function( t )
+            local name, icon, count, debuffType, duration, expirationTime, caster = FindUnitDebuffByID( "target", 58410 )
+
+            if name and caster == "player" then
+                t.name = name
+                t.count = 1
+                t.expires = expirationTime
+                t.applied = expirationTime - duration
+                t.caster = caster
+                t.duration = duration
+                return
+            end
+
+            t.count = 0
+            t.expires = 0
+            t.applied = 0
+            t.caster = "nobody"
+            t.duration = 15
+            return
+        end,
+    },
+
+    fire_breath = {
+        id = 34889,
+        duration = 15,
+        max_stack = 1,
+        debuff = true,
+        shared = "target",
+        generate = function( t )
+            local name, icon, count, debuffType, duration, expirationTime, caster = FindUnitDebuffByID( "target", 34889 )
+
+            if name and caster == "player" then
+                t.name = name
+                t.count = 1
+                t.expires = expirationTime
+                t.applied = expirationTime - duration
+                t.caster = caster
+                t.duration = duration
+                return
+            end
+
+            t.count = 0
+            t.expires = 0
+            t.applied = 0
+            t.caster = "nobody"
+            t.duration = 15
+            return
+        end,
+    },
+
+    lightning_breath = {
+        id = 24844,
+        duration = 12,
+        max_stack = 1,
+        debuff = true,
+        shared = "target",
+        generate = function( t )
+            local name, icon, count, debuffType, duration, expirationTime, caster = FindUnitDebuffByID( "target", 24844 )
+
+            if name and caster == "player" then
+                t.name = name
+                t.count = 1
+                t.expires = expirationTime
+                t.applied = expirationTime - duration
+                t.caster = caster
+                t.duration = duration
+                return
+            end
+
+            t.count = 0
+            t.expires = 0
+            t.applied = 0
+            t.caster = "nobody"
+            t.duration = 12
+            return
+        end,
+    },
+
     out_of_range = {
         generate = function ( oor )
             oor.rangeSpell = rawget( oor, "rangeSpell" ) or settings.spec.rangeChecker or class.specs[ state.spec.id ].ranges[ 1 ]
@@ -2170,7 +2397,7 @@ all:RegisterAuras({
             local max_events = GetActiveLossOfControlDataCount()
 
             if max_events > 0 then
-                local spell, start, duration, remains = "none", 0, 0, 0
+                local spell, start, duration, remains = 0, 0, 0, 0
 
                 for i = 1, max_events do
                     local event = GetActiveLossOfControlData( i )
@@ -2209,7 +2436,7 @@ all:RegisterAuras({
             local max_events = GetActiveLossOfControlDataCount()
 
             if max_events > 0 then
-                local spell, start, duration, remains = "none", 0, 0, 0
+                local spell, start, duration, remains = 0, 0, 0, 0
 
                 for i = 1, max_events do
                     local event = GetActiveLossOfControlData( i )
@@ -2251,7 +2478,7 @@ all:RegisterAuras({
             local max_events = GetActiveLossOfControlDataCount()
 
             if max_events > 0 then
-                local spell, start, duration, remains = "none", 0, 0, 0
+                local spell, start, duration, remains = 0, 0, 0, 0
 
                 for i = 1, max_events do
                     local event = GetActiveLossOfControlData( i )
@@ -2293,7 +2520,7 @@ all:RegisterAuras({
             local max_events = GetActiveLossOfControlDataCount()
 
             if max_events > 0 then
-                local spell, start, duration, remains = "none", 0, 0, 0
+                local spell, start, duration, remains = 0, 0, 0, 0
 
                 for i = 1, max_events do
                     local event = GetActiveLossOfControlData( i )
@@ -2336,7 +2563,7 @@ all:RegisterAuras({
             local max_events = GetActiveLossOfControlDataCount()
 
             if max_events > 0 then
-                local spell, start, duration, remains = "none", 0, 0, 0
+                local spell, start, duration, remains = 0, 0, 0, 0
 
                 for i = 1, max_events do
                     local event = GetActiveLossOfControlData( i )
@@ -2378,7 +2605,7 @@ all:RegisterAuras({
             local max_events = GetActiveLossOfControlDataCount()
 
             if max_events > 0 then
-                local spell, start, duration, remains = "none", 0, 0, 0
+                local spell, start, duration, remains = 0, 0, 0, 0
 
                 for i = 1, max_events do
                     local event = GetActiveLossOfControlData( i )
@@ -2421,7 +2648,7 @@ all:RegisterAuras({
             local max_events = GetActiveLossOfControlDataCount()
 
             if max_events > 0 then
-                local spell, start, duration, remains = "none", 0, 0, 0
+                local spell, start, duration, remains = 0, 0, 0, 0
 
                 for i = 1, max_events do
                     local event = GetActiveLossOfControlData( i )
@@ -2685,8 +2912,8 @@ all:RegisterAuras({
             if amount > 0 then
                 -- t.name = ABSORB
                 t.count = 1
-                t.expires = now + 10
-                t.applied = now - 5
+                t.expires = state.query_time + 10
+                t.applied = state.query_time - 5
                 t.caster = unit
                 return
             end
@@ -2802,7 +3029,7 @@ do
             end,
 
             readyTime = function ()
-                local start, duration = GetItemCooldown( potion.item )
+                local start, duration = SafeGetItemCooldown( potion.item )
                 return max( 0, start + duration - query_time )
             end,
 
@@ -2871,7 +3098,7 @@ local gotn_classes = {
     PRIEST = 59544,
     MAGE = 59548,
     PALADIN = 59542,
-    ROGUE = 370626
+    ROGUE = 59546
 }
 
 local baseClass = UnitClassBase( "player" ) or "WARRIOR"
@@ -2880,7 +3107,7 @@ all:RegisterAura( "gift_of_the_naaru", {
     id = gotn_classes[ baseClass ],
     duration = 5,
     max_stack = 1,
-    copy = { 28800, 121093, 59545, 59547, 59543, 59544, 59548, 59542, 370626 }
+    copy = { 28800, 121093, 59545, 59547, 59543, 59544, 59548, 59542, 59546 }
 } )
 
 all:RegisterAbility( "gift_of_the_naaru", {
@@ -3005,6 +3232,18 @@ all:RegisterAbilities( {
         end,
 
         copy = { 155145, 129597, 50613, 69179, 25046, 80483, 202719, 232633 }
+    },
+
+    -- Herbalist special ability
+    lifeblood = {
+        id = 121279,
+        cast = 0,
+        cooldown = 120,
+        gcd = "off",
+
+        toggle = "cooldowns",
+
+        copy = { 81708, 55428, 55480, 55500, 55501, 55502, 55503, 74497 },
     },
 
     will_to_survive = {
@@ -3180,7 +3419,7 @@ all:RegisterAbilities( {
         end,
 
         readyTime = function ()
-            local start, duration = GetItemCooldown( talent.pact_of_gluttony.enabled and 224464 or 5512 )
+            local start, duration = SafeGetItemCooldown( talent.pact_of_gluttony.enabled and 224464 or 5512 )
             return max( 0, start + duration - query_time )
         end,
 
@@ -3212,7 +3451,7 @@ all:RegisterAbilities( {
         end,
 
         readyTime = function ()
-            local start, duration = GetItemCooldown( 205146 )
+            local start, duration = SafeGetItemCooldown( 205146 )
             return max( 0, start + duration - query_time )
         end,
 
@@ -3310,6 +3549,46 @@ all:RegisterAbilities( {
 
         copy = "actual_main_hand",
     }
+} )
+
+-- Support 'use_item,slot=hands' by exposing a pseudo-ability that copies Synapse Springs.
+-- This lets APLs request slot-based glove usage while we still drive behavior from synapse_springs.
+all:RegisterAbility( "hands", {
+    -- Keep simple labels; behavior is inherited from synapse_springs.
+    name = "|cff00ccff[Hands]|r",
+    listName = "|T136243:0|t |cff00ccff[Hands]|r",
+
+    -- Copy all runtime behavior (cooldown, usable, item, handler, etc.).
+    copy = "synapse_springs",
+
+    -- Ensure the correct texture is always shown from the equipped gloves.
+    item = function() return (tinker and tinker.hand and tinker.hand.item) or 0 end,
+    texture = function()
+        -- 1) Try the equipped glove's actual texture from the inventory slot.
+        local tex = GetInventoryItemTexture("player", INVSLOT_HAND)
+        if tex then return tex end
+
+        -- 2) Try the cached texture from our tinker tracker.
+        if tinker and tinker.hand and tinker.hand.texture then
+            return tinker.hand.texture
+        end
+
+        -- 3) If we know the glove item, try its icon from item info (should be cached when equipped).
+        local itemID = (tinker and tinker.hand and tinker.hand.item) or 0
+        if itemID and itemID > 0 then
+            local _, _, _, _, _, _, _, _, _, invTex = GetItemInfo(itemID)
+            if invTex then return invTex end
+        end
+
+        -- 4) Fall back to Synapse Springs spell icon so it never shows a question mark.
+        if GetSpellTexture then
+            local sTex = GetSpellTexture(82174) or GetSpellTexture(96228) or GetSpellTexture(96229) or GetSpellTexture(96230)
+            if sTex then return sTex end
+        end
+
+        -- 5) Final fallback.
+        return "Interface\\Icons\\INV_Misc_QuestionMark"
+    end,
 } )
 
 
@@ -3649,6 +3928,27 @@ local function addStance( key, spellID )
 end
 ns.addStance = addStance
 
+-- Register Warrior stances so the generic stance metatable (state.stance)
+-- can resolve the player's current stance by comparing shapeshift form spellIDs.
+do
+    local playerClass = UnitClassBase and UnitClassBase("player") or select(2, UnitClass("player"))
+    if playerClass == "WARRIOR" then
+        -- Battle Stance (2457), Defensive Stance (71), Berserker Stance (2458) in MoP.
+        -- These IDs are returned from GetShapeshiftFormInfo(i) as the 5th return value (spellID).
+        addStance("battle", 2457)
+        addStance("defensive", 71)
+        addStance("berserker", 2458)
+
+        -- Register pseudo-auras so buff.battle_stance/defensive_stance/berserker_stance
+        -- can be toggled by detection logic without triggering unknown-buff warnings.
+        if all and all.RegisterAura then
+            all:RegisterAura( "battle_stance",    { id = 2457, duration = 3600, max_stack = 1 } )
+            all:RegisterAura( "defensive_stance", { id = 71,   duration = 3600, max_stack = 1 } )
+            all:RegisterAura( "berserker_stance", { id = 2458, duration = 3600, max_stack = 1 } )
+        end
+    end
+end
+
 
 local function setRole( key )
 
@@ -3821,6 +4121,7 @@ function Hekili:SpecializationChanged()
         class[ key ] = nil
     end
     if rawget( state, "rune" ) then state.rune = nil; class.rune = nil; end
+    if rawget( state, "runes" ) then state.runes = nil; class.runes = nil; end
 
     for k in pairs( class.resourceAuras ) do
         class.resourceAuras[ k ] = nil
@@ -3868,7 +4169,6 @@ if spec then
                     class.resources[ res ] = model
                     state[ res ] = model.state
                 end
-                if rawget( state, "runes" ) then state.rune = nil; class.rune = nil; end
 
                 for k,v in pairs( spec.resourceAuras ) do
                     class.resourceAuras[ k ] = v
@@ -3905,7 +4205,6 @@ if spec then
                 end
             end
 
-            if rawget( state, "runes" ) then state.rune = nil; class.rune = nil; end
 
             for k, v in pairs( spec.auras ) do
                 if not class.auras[ k ] then class.auras[ k ] = v end
@@ -4016,7 +4315,7 @@ if spec then
     state.threat.raw = 0
     state.threat.rawTarget = 0
 
-    HekiliEngine.activeThread = nil
+    if Hekili.Engine then Hekili.Engine.activeThread = nil end
     self:UpdateDisplayVisibility()
     self:UpdateDamageDetectionForCLEU()
 end
@@ -4045,16 +4344,87 @@ all:RegisterAura( "synapse_springs", {
     id = 96228,
     duration = 15,
     max_stack = 1,
-    copy = {96228, 96229, 96230}
+    copy = {96228, 96229, 96230, 82174, 126734, 141330}
 })
 all:RegisterAbility( "synapse_springs", {
-    id = 82174,
+    -- Equipment-based, not a learned spell; use a high positive ID to avoid conflicts.
+    id = 99982174,
     cast = 0,
     cooldown = 60,
     gcd = "off",
 
     startsCombat = true,
     toggle = "cooldowns",
+
+    -- Provide item/texture like Cata for UI parity.
+    -- Always provide the equipped glove item ID; gating is handled by known/usable.
+    item = function() return (tinker and tinker.hand and tinker.hand.item) or 0 end,
+    itemKey = "synapse_springs",
+    texture = function() return (tinker and tinker.hand) and tinker.hand.texture or nil end,
+
+    -- Always treat as known; 'usable()' below enforces having Synapse Springs equipped.
+    known = true,
+
+    usable = function()
+        -- Prefer robust slot-use detection: if the glove slot has any on-use spell, treat as Synapse Springs.
+        -- MoP clients may return only the spell name; rely on presence of a spell rather than exact IDs.
+        local hasUse = GetInventoryItemSpell("player", INVSLOT_HAND) ~= nil
+
+        -- Keep ID-based detection as a secondary signal when available.
+        local s = (tinker and tinker.hand) and tinker.hand.spell or 0
+        local knownByID = (s == 82174 or s == 96228 or s == 96229 or s == 96230 or s == 126734 or s == 141330)
+
+        if not (hasUse or knownByID) then
+            return false, "no synapse springs on gloves"
+        end
+        return true
+    end,
+
+    -- Drive cooldown timing from the glove slot rather than a spell.
+    meta = {
+        -- Ensure t.duration/t.expires are populated so downstream keys like 'remains' work.
+        duration = function(t)
+            local start, dur = GetInventoryItemCooldown("player", INVSLOT_HAND)
+            if start == nil or dur == nil then dur = 60; start = 0 end
+            t.duration = dur or 60
+            t.expires = (start and start > 0 and dur) and (start + dur) or 0
+            t.true_duration = t.duration
+            t.true_expires = t.expires
+            return t.duration
+        end,
+        expires = function(t)
+            local start, dur = GetInventoryItemCooldown("player", INVSLOT_HAND)
+            if start == nil or dur == nil then dur = 60; start = 0 end
+            t.duration = dur or 60
+            t.expires = (start and start > 0 and dur) and (start + dur) or 0
+            t.true_duration = t.duration
+            t.true_expires = t.expires
+            return t.expires
+        end,
+        remains = function(t)
+            local start, dur = GetInventoryItemCooldown("player", INVSLOT_HAND)
+            if start == nil or dur == nil then dur = 60; start = 0 end
+            local expires = (start and start > 0 and dur) and (start + dur) or 0
+            t.duration = dur or 60
+            t.expires = expires
+            t.true_duration = t.duration
+            t.true_expires = expires
+            local now = (state and state.query_time) or GetTime()
+            local remains = expires > 0 and max(0, expires - now) or 0
+            return remains
+        end,
+        ready = function(t)
+            local start, dur = GetInventoryItemCooldown("player", INVSLOT_HAND)
+            if start == nil or dur == nil then dur = 60; start = 0 end
+            local expires = (start and start > 0 and dur) and (start + dur) or 0
+            t.duration = dur or 60
+            t.expires = expires
+            t.true_duration = t.duration
+            t.true_expires = expires
+            local now = (state and state.query_time) or GetTime()
+            return expires == 0 or expires <= now
+        end,
+    },
 
     handler = function()
         applyBuff("synapse_springs")

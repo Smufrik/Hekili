@@ -1,7 +1,6 @@
 # Mage: Frost
 ## Precombat
-actions.precombat+=/arcane_brilliance
-actions.precombat+=/frost_armor
+actions.precombat+=/arcane_brilliance,if=!buff.arcane_brilliance.up
 actions.precombat+=/water_elemental
 actions.precombat+=/rune_of_power,if=talent.rune_of_power.enabled
 
@@ -20,7 +19,6 @@ actions+=/use_item,slot=trinket2,if=buff.icy_veins.up|cooldown.icy_veins.remains
 ## Tier 5/6 Talents
 actions+=/frost_bomb,if=talent.frost_bomb.enabled&!ticking
 actions+=/rune_of_power,if=talent.rune_of_power.enabled&!ticking&buff.rune_of_power.down
-actions+=/invocation,if=talent.invocation.enabled&buff.invocation.down
 actions+=/incanter_s_ward,if=talent.incanter_s_ward.enabled&!buff.incanter_s_ward.up
 
 ## Core Rotation

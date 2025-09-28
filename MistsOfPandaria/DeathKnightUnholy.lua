@@ -1,619 +1,953 @@
 -- DeathKnightUnholy.lua
--- January 2025
+-- Updated August 27, 2025
 
 -- MoP: Use UnitClass instead of UnitClassBase
-local _, playerClass = UnitClass('player')
-if playerClass ~= 'DEATHKNIGHT' then return end
+local _, playerClass = UnitClass("player")
+if playerClass ~= "DEATHKNIGHT" then
+	return
+end
 
 local addon, ns = ...
-local Hekili = _G[ addon ]
+local Hekili = _G[addon]
 local class, state = Hekili.Class, Hekili.State
 
-local FindUnitBuffByID = ns.FindUnitBuffByID
+-- Safe local references to WoW API (helps static analyzers and emulation)
+local GetRuneCooldown = rawget(_G, "GetRuneCooldown") or function()
+	return 0, 10, true
+end
+local GetRuneType = rawget(_G, "GetRuneType") or function()
+	return 1
+end
+
+local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
 local strformat = string.format
 
-local spec = Hekili:NewSpecialization( 252, true )
+local spec = Hekili:NewSpecialization(252, true)
 
 spec.name = "Unholy"
 spec.role = "DAMAGER"
 spec.primaryStat = 1 -- Strength
 
--- Register resources using MoP power types from Constants.lua
-spec:RegisterResource( 5 ) -- Runes = 5 in MoP
-spec:RegisterResource( 6 ) -- RunicPower = 6 in MoP
-
-spec:RegisterResource( 5, {
-    rune_regen = {
-        last = function () return state.query_time end,
-        stop = function( x ) return x == 6 end,
-
-        interval = function( time, val )
-            val = floor( val )
-            if val == 6 then return -1 end
-            return state.runes.expiry[ val + 1 ] - time
-        end,
-        value = 1,
-    }
-}, setmetatable( {
-    expiry = { 0, 0, 0, 0, 0, 0 },
-    cooldown = 10,
-    regen = 0,
-    max = 6,
-    forecast = {},
-    fcount = 0,
-    times = {},
-    values = {},
-    resource = "runes",
-
-    reset = function()
-        local t = state.runes
-        for i = 1, 6 do
-            local start, duration, ready = GetRuneCooldown( i )
-            start = start or 0
-            duration = duration or ( 10 * state.haste )
-            t.expiry[ i ] = ready and 0 or ( start + duration )
-            t.cooldown = duration
-        end
-        table.sort( t.expiry )
-        t.actual = nil -- Reset actual to force recalculation
-    end,
-
-    gain = function( amount )
-        local t = state.runes
-        for i = 1, amount do
-            table.insert( t.expiry, 0 )
-            t.expiry[ 7 ] = nil
-        end
-        table.sort( t.expiry )
-        t.actual = nil
-    end,
-
-    spend = function( amount )
-        local t = state.runes
-        for i = 1, amount do
-            local nextReady = ( t.expiry[ 4 ] > 0 and t.expiry[ 4 ] or state.query_time ) + t.cooldown
-            table.remove( t.expiry, 1 )
-            table.insert( t.expiry, nextReady )
-        end
-
-        state.gain( amount * 10, "runic_power" )
-        if state.set_bonus.tier20_4pc == 1 then
-            state.cooldown.army_of_the_dead.expires = max( 0, state.cooldown.army_of_the_dead.expires - 1 )
-        end
-
-        t.actual = nil
-    end,
-
-    timeTo = function( x )
-        return state:TimeToResource( state.runes, x )
-    end,
-}, {
-    __index = function( t, k )
-        if k == "actual" then
-            -- Calculate the number of runes available based on `expiry`.
-            local amount = 0
-            for i = 1, 6 do
-                if t.expiry[ i ] <= state.query_time then
-                    amount = amount + 1
-                end
-            end
-            return amount
-
-        elseif k == "current" then
-            -- If this is a modeled resource, use our lookup system.
-            if t.forecast and t.fcount > 0 then
-                local q = state.query_time
-                local index, slice
-
-                if t.values[ q ] then return t.values[ q ] end
-
-                for i = 1, t.fcount do
-                    local v = t.forecast[ i ]
-                    if v.t <= q and v.v ~= nil then
-                        index = i
-                        slice = v
-                    else
-                        break
-                    end
-                end
-
-                -- We have a slice.
-                if index and slice and slice.v then
-                    t.values[ q ] = max( 0, min( t.max, slice.v ) )
-                    return t.values[ q ]
-                end
-            end
-
-            return t.actual
-
-        elseif k == "current_fractional" then
-            local current = t.current
-            local fraction = t.cooldown and ( t.time_to_next / t.cooldown ) or 0
-
-            return current + fraction
-
-        elseif k == "deficit" then
-            return t.max - t.current
-
-        elseif k == "time_to_next" then
-            return t[ "time_to_" .. t.current + 1 ]
-
-        elseif k == "time_to_max" then
-            return t.current == t.max and 0 or max( 0, t.expiry[ 6 ] - state.query_time )
-
-        else
-            local amount = k:match( "time_to_(%d+)" )
-            amount = amount and tonumber( amount )
-            if amount then return t.timeTo( amount ) end
-        end
-    end
-}))
-
-spec:RegisterResource( 6, {
-    -- Frost Fever Tick RP (20% chance to generate 4 RP)
-    frost_fever_tick = {
-        aura = "frost_fever",
-
-        last = function ()
-            local app = state.dot.frost_fever.applied
-            return app + floor( state.query_time - app )
-        end,
-
-        interval = 1,
-        value = function ()
-            -- 20% chance * 4 RP = 0.8 RP per tick
-            -- We'll lowball to 0.6 RP for conservative estimate
-            return 0.6 * min( state.active_dot.frost_fever or 0, 5 )
-        end,
-    },
-
-    -- Runic Attenuation (mainhand swings 50% chance to generate 3 RP)
-    runic_attenuation = {
-        talent = "runic_attenuation",
-        swing = "mainhand",
-
-        last = function ()
-            local swing = state.swings.mainhand
-            local t = state.query_time
-            if state.mainhand_speed == 0 then
-                return 0
-            else
-                return swing + floor( ( t - swing ) / state.mainhand_speed ) * state.mainhand_speed
-            end
-        end,
-
-        interval = "mainhand_speed",
-
-        stop = function () return state.swings.mainhand == 0 end,
-
-        value = function ()
-            -- 50% chance * 3 RP = 1.5 RP per swing
-            -- We'll lowball to 1.0 RP
-            return state.talent.runic_attenuation.enabled and 1.0 or 0
-        end,
-    }
-} )
-
-
-local spendHook = function( amt, resource, noHook )
-    if amt > 0 and resource == "runes" and active_dot.shackle_the_unworthy > 0 then
-        reduceCooldown( "shackle_the_unworthy", 4 * amt )
-    end
+-- Local shim for resource changes to avoid global gain/spend errors and normalize names.
+local function _normalizeResource(res)
+	if res == "runicpower" or res == "rp" then
+		return "runic_power"
+	end
+	return res
 end
 
-spec:RegisterHook( "spend", spendHook )
+local function gain(amount, resource, overcap, noforecast)
+	local r = _normalizeResource(resource)
+	if r == "runes" and state.runes and state.runes.expiry then
+		local n = tonumber(amount) or 0
+		if n >= 6 then
+			for i = 1, 6 do
+				state.runes.expiry[i] = 0
+			end
+		else
+			for _ = 1, n do
+				local worstIdx, worstVal = 1, -math.huge
+				for i = 1, 6 do
+					local e = state.runes.expiry[i] or 0
+					if e > worstVal then
+						worstVal, worstIdx = e, i
+					end
+				end
+				state.runes.expiry[worstIdx] = 0
+			end
+		end
+		return
+	end
+	if state.gain then
+		return state.gain(amount, r, overcap, noforecast)
+	end
+end
+
+local function spend(amount, resource, noforecast)
+	local r = _normalizeResource(resource)
+	if state.spend then
+		return state.spend(amount, r, noforecast)
+	end
+end
+
+-- Local aliases for core state helpers and tables (improves static checks and readability).
+local applyBuff, removeBuff, applyDebuff, removeDebuff =
+	state.applyBuff, state.removeBuff, state.applyDebuff, state.removeDebuff
+local removeDebuffStack = state.removeDebuffStack
+local summonPet, dismissPet, setDistance, interrupt =
+	state.summonPet, state.dismissPet, state.setDistance, state.interrupt
+local buff, debuff, cooldown, active_dot, pet, totem, action =
+	state.buff, state.debuff, state.cooldown, state.active_dot, state.pet, state.totem, state.action
+
+-- Runes (unified model on the resource itself to avoid collision with a state table)
+do
+	local function buildTypeCounter(indices, typeId)
+		return setmetatable({}, {
+			__index = function(_, k)
+				if k == "count" then
+					local ready = 0
+					if typeId == 4 then
+						for i = 1, 6 do
+							local start, duration, isReady = GetRuneCooldown(i)
+							local rtype = GetRuneType(i)
+							if
+								(isReady or (start and duration and (start + duration) <= state.query_time))
+								and rtype == 4
+							then
+								ready = ready + 1
+							end
+						end
+					else
+						for _, i in ipairs(indices) do
+							local start, duration, isReady = GetRuneCooldown(i)
+							if isReady or (start and duration and (start + duration) <= state.query_time) then
+								ready = ready + 1
+							end
+						end
+					end
+					return ready
+				end
+				return 0
+			end,
+		})
+	end
+
+	spec:RegisterResource(
+		5,
+		{},
+		setmetatable({
+			expiry = { 0, 0, 0, 0, 0, 0 },
+			cooldown = 10,
+			max = 6,
+			reset = function()
+				local t = state.runes
+				for i = 1, 6 do
+					local start, duration, ready = GetRuneCooldown(i)
+					start = start or 0
+					duration = duration or (10 * state.haste)
+					t.expiry[i] = ready and 0 or (start + duration)
+					t.cooldown = duration
+				end
+			end,
+		}, {
+			__index = function(t, k)
+				-- runes.time_to_1 .. runes.time_to_6
+				local idx = tostring(k):match("time_to_(%d)")
+				if idx then
+					local i = tonumber(idx)
+					local e = t.expiry[i] or 0
+					return math.max(0, e - state.query_time)
+				end
+				if k == "blood" then
+					return buildTypeCounter({ 1, 2 }, 1)
+				end
+				if k == "frost" then
+					return buildTypeCounter({ 5, 6 }, 2)
+				end
+				if k == "unholy" then
+					return buildTypeCounter({ 3, 4 }, 3)
+				end
+				if k == "death" then
+					return buildTypeCounter({}, 4)
+				end
+				if k == "count" or k == "current" then
+					local c = 0
+					for i = 1, 6 do
+						if t.expiry[i] <= state.query_time then
+							c = c + 1
+						end
+					end
+					return c
+				end
+				return rawget(t, k)
+			end,
+		})
+	) -- Runes = 5 in MoP with unified state
+
+	-- Keep expiry fresh when we reset the simulation step
+	spec:RegisterHook("reset_precast", function()
+		if state.runes and state.runes.reset then
+			state.runes.reset()
+		end
+	end)
+end
+
+-- Register resources
+spec:RegisterResource(6) -- RunicPower = 6 in MoP
+
+-- Register individual rune types for MoP 5.5.0
+spec:RegisterResource(
+	20,
+	{ -- Blood Runes = 20 in MoP
+		rune_regen = {
+			last = function()
+				return state.query_time
+			end,
+			stop = function(x)
+				return x == 2
+			end,
+			interval = function(time, val)
+				local r = state.blood_runes
+				if val == 2 then
+					return -1
+				end
+				return r.expiry[val + 1] - time
+			end,
+			value = 1,
+		},
+	},
+	setmetatable({
+		expiry = { 0, 0 },
+		cooldown = 10,
+		regen = 0,
+		max = 2,
+		forecast = {},
+		fcount = 0,
+		times = {},
+		values = {},
+		resource = "blood_runes",
+
+		reset = function()
+			local t = state.blood_runes
+			for i = 1, 2 do
+				local start, duration, ready = GetRuneCooldown(i)
+				start = start or 0
+				duration = duration or (10 * state.haste)
+				t.expiry[i] = ready and 0 or (start + duration)
+				t.cooldown = duration
+			end
+			table.sort(t.expiry)
+			t.actual = nil
+		end,
+
+		gain = function(amount)
+			local t = state.blood_runes
+			for i = 1, amount do
+				table.insert(t.expiry, 0)
+				t.expiry[3] = nil
+			end
+			table.sort(t.expiry)
+			t.actual = nil
+		end,
+
+		spend = function(amount)
+			local t = state.blood_runes
+			for i = 1, amount do
+				local nextReady = (t.expiry[1] > 0 and t.expiry[1] or state.query_time) + t.cooldown
+				table.remove(t.expiry, 1)
+				table.insert(t.expiry, nextReady)
+			end
+			t.actual = nil
+		end,
+
+		timeTo = function(x)
+			return state:TimeToResource(state.blood_runes, x)
+		end,
+	}, {
+		__index = function(t, k)
+			if k == "actual" then
+				local amount = 0
+				for i = 1, 2 do
+					if t.expiry[i] <= state.query_time then
+						amount = amount + 1
+					end
+				end
+				return amount
+			elseif k == "current" then
+				return t.actual
+			end
+			return rawget(t, k)
+		end,
+	})
+)
+
+spec:RegisterResource(
+	21,
+	{ -- Frost Runes = 21 in MoP
+		rune_regen = {
+			last = function()
+				return state.query_time
+			end,
+			stop = function(x)
+				return x == 2
+			end,
+			interval = function(time, val)
+				local r = state.frost_runes
+				if val == 2 then
+					return -1
+				end
+				return r.expiry[val + 1] - time
+			end,
+			value = 1,
+		},
+	},
+	setmetatable({
+		expiry = { 0, 0 },
+		cooldown = 10,
+		regen = 0,
+		max = 2,
+		forecast = {},
+		fcount = 0,
+		times = {},
+		values = {},
+		resource = "frost_runes",
+
+		reset = function()
+			local t = state.frost_runes
+			for i = 5, 6 do -- Frost runes are at positions 5-6
+				local start, duration, ready = GetRuneCooldown(i)
+				start = start or 0
+				duration = duration or (10 * state.haste)
+				t.expiry[i - 4] = ready and 0 or (start + duration)
+				t.cooldown = duration
+			end
+			table.sort(t.expiry)
+			t.actual = nil
+		end,
+
+		gain = function(amount)
+			local t = state.frost_runes
+			for i = 1, amount do
+				table.insert(t.expiry, 0)
+				t.expiry[3] = nil
+			end
+			table.sort(t.expiry)
+			t.actual = nil
+		end,
+
+		spend = function(amount)
+			local t = state.frost_runes
+			for i = 1, amount do
+				local nextReady = (t.expiry[1] > 0 and t.expiry[1] or state.query_time) + t.cooldown
+				table.remove(t.expiry, 1)
+				table.insert(t.expiry, nextReady)
+			end
+			t.actual = nil
+		end,
+
+		timeTo = function(x)
+			return state:TimeToResource(state.frost_runes, x)
+		end,
+	}, {
+		__index = function(t, k)
+			if k == "actual" then
+				local amount = 0
+				for i = 1, 2 do
+					if t.expiry[i] <= state.query_time then
+						amount = amount + 1
+					end
+				end
+				return amount
+			elseif k == "current" then
+				return t.actual
+			end
+			return rawget(t, k)
+		end,
+	})
+)
+
+spec:RegisterResource(
+	22,
+	{ -- Unholy Runes = 22 in MoP
+		rune_regen = {
+			last = function()
+				return state.query_time
+			end,
+			stop = function(x)
+				return x == 2
+			end,
+			interval = function(time, val)
+				local r = state.unholy_runes
+				if val == 2 then
+					return -1
+				end
+				return r.expiry[val + 1] - time
+			end,
+			value = 1,
+		},
+	},
+	setmetatable({
+		expiry = { 0, 0 },
+		cooldown = 10,
+		regen = 0,
+		max = 2,
+		forecast = {},
+		fcount = 0,
+		times = {},
+		values = {},
+		resource = "unholy_runes",
+
+		reset = function()
+			local t = state.unholy_runes
+			for i = 3, 4 do -- Unholy runes are at positions 3-4
+				local start, duration, ready = GetRuneCooldown(i)
+				start = start or 0
+				duration = duration or (10 * state.haste)
+				t.expiry[i - 2] = ready and 0 or (start + duration)
+				t.cooldown = duration
+			end
+			table.sort(t.expiry)
+			t.actual = nil
+		end,
+
+		gain = function(amount)
+			local t = state.unholy_runes
+			for i = 1, amount do
+				table.insert(t.expiry, 0)
+				t.expiry[3] = nil
+			end
+			table.sort(t.expiry)
+			t.actual = nil
+		end,
+
+		spend = function(amount)
+			local t = state.unholy_runes
+			for i = 1, amount do
+				local nextReady = (t.expiry[1] > 0 and t.expiry[1] or state.query_time) + t.cooldown
+				table.remove(t.expiry, 1)
+				table.insert(t.expiry, nextReady)
+			end
+			t.actual = nil
+		end,
+
+		timeTo = function(x)
+			return state:TimeToResource(state.unholy_runes, x)
+		end,
+	}, {
+		__index = function(t, k)
+			if k == "actual" then
+				local amount = 0
+				for i = 1, 2 do
+					if t.expiry[i] <= state.query_time then
+						amount = amount + 1
+					end
+				end
+				return amount
+			elseif k == "current" then
+				return t.actual
+			end
+			return rawget(t, k)
+		end,
+	})
+)
+
+spec:RegisterResource(6, {
+	-- Frost Fever Tick RP (20% chance to generate 4 RP)
+	frost_fever_tick = {
+
+		aura = "frost_fever",
+
+		last = function()
+			local app = state.dot.frost_fever.applied
+
+			return app + floor(state.query_time - app)
+		end,
+
+		interval = 1,
+		value = function()
+			-- 20% chance * 4 RP = 0.8 RP per tick
+			-- We'll lowball to 0.6 RP for conservative estimate
+			return 0.6 * min(state.active_dot.frost_fever or 0, 5)
+		end,
+	},
+
+	-- Runic Attenuation (mainhand swings 50% chance to generate 3 RP)
+	runic_attenuation = {
+		talent = "runic_attenuation",
+		swing = "mainhand",
+
+		last = function()
+			local swing = state.swings.mainhand
+			local t = state.query_time
+			if state.mainhand_speed == 0 then
+				return 0
+			else
+				return swing + floor((t - swing) / state.mainhand_speed) * state.mainhand_speed
+			end
+		end,
+
+		interval = "mainhand_speed",
+
+		stop = function()
+			return state.swings.mainhand == 0
+		end,
+
+		value = function()
+			-- 50% chance * 3 RP = 1.5 RP per swing
+			-- We'll lowball to 1.0 RP
+			return state.talent.runic_attenuation.enabled and 1.0 or 0
+		end,
+	},
+})
+
+local spendHook = function(amt, resource, noHook)
+	if amt > 0 and resource == "runes" and active_dot.shackle_the_unworthy > 0 then
+		reduceCooldown("shackle_the_unworthy", 4 * amt)
+	end
+end
+
+spec:RegisterHook("spend", spendHook)
 
 -- Talents
-spec:RegisterTalents( {
-    -- Tier 1 (Level 56)
-    roiling_blood             = { 1, 1, 108170 }, -- Your Pestilence refreshes disease durations and spreads diseases from each diseased target to all other targets.
-    plague_leech              = { 1, 2, 123693 }, -- Extract diseases from an enemy target, consuming up to 2 diseases on the target to gain 1 Rune of each type that was removed.
-    unholy_blight             = { 1, 3, 115989 }, -- Causes you to spread your diseases to all enemy targets within 10 yards.
+spec:RegisterTalents({
+	-- Tier 1 (Level 56)
+	roiling_blood = { 1, 1, 108170 }, -- Your Blood Boil ability now also triggers Pestilence if it strikes a diseased target.
+	plague_leech = { 1, 2, 123693 }, -- Extract diseases from an enemy target, consuming up to 2 diseases on the target to gain 1 Rune of each type that was removed.
+	unholy_blight = { 1, 3, 115989 }, -- Causes you to spread your diseases to all enemy targets within 10 yards.
 
-    -- Tier 2 (Level 57)
-    lichborne                 = { 2, 1,  49039 }, -- Draw upon unholy energy to become undead for 10 sec. While undead, you are immune to Charm, Fear, and Sleep effects.
-    anti_magic_zone           = { 2, 2,  51052 }, -- Places a large, stationary Anti-Magic Zone that reduces spell damage taken by party or raid members by 40%. The Anti-Magic Zone lasts for 30 sec or until it absorbs a massive amount of spell damage.
-    purgatory                 = { 2, 3, 114556 }, -- An unholy pact that prevents fatal damage, instead absorbing incoming healing equal to the damage that would have been fatal for 3 sec.
+	-- Tier 2 (Level 57)
+	lichborne = { 2, 1, 49039 }, -- Draw upon unholy energy to become undead for 10 sec. While undead, you are immune to Charm, Fear, and Sleep effects.
+	anti_magic_zone = { 2, 2, 51052 }, -- Places a large, stationary Anti-Magic Zone that reduces spell damage taken by party or raid members by 40%. The Anti-Magic Zone lasts for 30 sec or until it absorbs a massive amount of spell damage.
+	purgatory = { 2, 3, 114556 }, -- An unholy pact that prevents fatal damage, instead absorbing incoming healing equal to the damage that would have been fatal for 3 sec.
 
-    -- Tier 3 (Level 58)
-    deaths_advance            = { 3, 1,  96268 }, -- For 8 sec, you are immune to movement impairing effects and your movement speed is increased by 50%.
-    chilblains                = { 3, 2,  50041 }, -- Victims of your Chains of Ice take 5% increased damage from your abilities for 8 sec.
-    asphyxiate                = { 3, 3, 108194 }, -- Lifts the enemy target off the ground, crushing their throat and stunning them for 5 sec.
+	-- Tier 3 (Level 58)
+	deaths_advance = { 3, 1, 96268 }, -- For 8 sec, you are immune to movement impairing effects and your movement speed is increased by 50%.
+	chilblains = { 3, 2, 50041 }, -- Victims of your Chains of Ice take 5% increased damage from your abilities for 8 sec.
+	asphyxiate = { 3, 3, 108194 }, -- Lifts the enemy target off the ground, crushing their throat and stunning them for 5 sec.
 
-    -- Tier 4 (Level 60)
-    death_pact                = { 4, 1,  48743 }, -- Drains 50% of your summoned minion's health to heal you for 25% of your maximum health.
-    death_siphon              = { 4, 2, 108196 }, -- Deals Shadow damage to the target and heals you for 150% of the damage dealt.
-    conversion                = { 4, 3, 119975 }, -- Continuously converts 2% of your maximum health per second into 20% of maximum health as healing.
+	-- Tier 4 (Level 60)
+	death_pact = { 4, 1, 48743 }, -- Drains 50% of your summoned minion's health to heal you for 25% of your maximum health.
+	death_siphon = { 4, 2, 108196 }, -- Deals Shadow damage to the target and heals you for 150% of the damage dealt.
+	conversion = { 4, 3, 119975 }, -- Continuously converts 2% of your maximum health per second into 20% of maximum health as healing.
 
-    -- Tier 5 (Level 75)
-    blood_tap                 = { 5, 1,  45529 }, -- Consume 5 charges from your Blood Charges to immediately activate a random depleted rune.
-    runic_empowerment         = { 5, 2,  81229 }, -- When you use a rune, you have a 45% chance to immediately regenerate that rune.
-    runic_corruption          = { 5, 3,  51462 }, -- When you hit with a Death Coil, Frost Strike, or Rune Strike, you have a 45% chance to regenerate a rune.
+	-- Tier 5 (Level 75)
+	blood_tap = { 5, 1, 45529 }, -- Consume 5 charges from your Blood Charges to immediately activate a random depleted rune.
+	runic_empowerment = { 5, 2, 81229 }, -- When you use a rune, you have a 45% chance to immediately regenerate that rune.
+	runic_corruption = { 5, 3, 51462 }, -- When you hit with a Death Coil, Frost Strike, or Rune Strike, you have a 45% chance to regenerate a rune.
 
-    -- Tier 6 (Level 90)
-    gorefiends_grasp          = { 6, 1, 108199 }, -- Shadowy tendrils coil around all enemies within 20 yards of a hostile target, pulling them to the target's location.
-    remorseless_winter        = { 6, 2, 108200 }, -- Surrounds the Death Knight with a swirling blizzard that grows over 8 sec, slowing enemies by up to 50% and reducing their melee and ranged attack speed by up to 20%.
-    desecrated_ground         = { 6, 3, 108201 }, -- Corrupts the ground beneath you, causing all nearby enemies to deal 10% less damage for 30 sec.
-} )
+	-- Tier 6 (Level 90)
+	gorefiends_grasp = { 6, 1, 108199 }, -- Shadowy tendrils coil around all enemies within 20 yards of a hostile target, pulling them to the target's location.
+	remorseless_winter = { 6, 2, 108200 }, -- Surrounds the Death Knight with a swirling blizzard that grows over 8 sec, slowing enemies by up to 50% and reducing their melee and ranged attack speed by up to 20%.
+	desecrated_ground = { 6, 3, 108201 }, -- Corrupts the ground beneath you, causing all nearby enemies to deal 10% less damage for 30 sec.
+})
 
--- Glyphs (Enhanced System - authentic MoP 5.4.8 glyph system)
-spec:RegisterGlyphs( {
-    -- Major glyphs - Unholy Combat
-    [58616] = "anti_magic_shell",    -- Reduces the cooldown on Anti-Magic Shell by 5 sec, but the amount it absorbs is reduced by 50%
-    [58617] = "army_of_the_dead",    -- Your Army of the Dead spell summons an additional skeleton, but the cast time is increased by 2 sec
-    [58618] = "bone_armor",          -- Your Bone Armor gains an additional charge but the duration is reduced by 30 sec
-    [58619] = "chains_of_ice",       -- Your Chains of Ice no longer reduces movement speed but increases the duration by 2 sec
-    [58620] = "dark_simulacrum",     -- Dark Simulacrum gains an additional charge but the duration is reduced by 4 sec
-    [58621] = "death_and_decay",     -- Your Death and Decay no longer slows enemies but lasts 50% longer
-    [58622] = "death_coil",          -- Your Death Coil refunds 20 runic power when used on friendly targets but heals for 30% less
-    [58623] = "death_grip",          -- Your Death Grip no longer moves the target but reduces its movement speed by 50% for 8 sec
-    [58624] = "death_pact",          -- Your Death Pact no longer requires a ghoul but heals for 50% less
-    [58625] = "death_strike",        -- Your Death Strike deals 25% additional damage but heals for 25% less
-    [58626] = "frost_strike",        -- Your Frost Strike has no runic power cost but deals 20% less damage
-    [58627] = "heart_strike",        -- Your Heart Strike generates 10 additional runic power but affects 1 fewer target
-    [58628] = "icebound_fortitude",  -- Your Icebound Fortitude grants immunity to stun effects but the damage reduction is lowered by 20%
-    [58629] = "icy_touch",           -- Your Icy Touch dispels 1 beneficial magic effect but no longer applies Frost Fever
-    [58630] = "mind_freeze",         -- Your Mind Freeze has its cooldown reduced by 2 sec but its range is reduced by 5 yards
-    [58631] = "outbreak",            -- Your Outbreak no longer costs a Blood rune but deals 50% less damage
-    [58632] = "plague_strike",       -- Your Plague Strike does additional disease damage but no longer applies Blood Plague
-    [58633] = "raise_dead",          -- Your Raise Dead spell no longer requires a corpse but the ghoul has 20% less health
-    [58634] = "rune_strike",         -- Your Rune Strike generates 10% more threat but costs 10 additional runic power
-    [58635] = "rune_tap",            -- Your Rune Tap heals nearby allies for 5% of their maximum health but heals you for 50% less
-    [58636] = "scourge_strike",      -- Your Scourge Strike deals additional Shadow damage for each disease on the target but consumes all diseases
-    [58637] = "strangulate",         -- Your Strangulate has its cooldown reduced by 10 sec but the duration is reduced by 2 sec
-    [58638] = "vampiric_blood",      -- Your Vampiric Blood generates 5 runic power per second but increases damage taken by 10%
-    [58639] = "blood_boil",          -- Your Blood Boil deals 20% additional damage but no longer spreads diseases
-    [58640] = "dancing_rune_weapon", -- Your Dancing Rune Weapon lasts 5 sec longer but generates 20% less runic power
-    [58641] = "vampiric_aura",       -- Your Vampiric Aura affects 2 additional party members but the healing is reduced by 25%
-    [58642] = "unholy_frenzy",       -- Your Unholy Frenzy grants an additional 10% attack speed but lasts 50% shorter
-    [58643] = "corpse_explosion",    -- Your corpses explode when they expire, dealing damage to nearby enemies
-    [58644] = "disease",             -- Your diseases last 50% longer but deal 25% less damage
-    [58645] = "resilient_grip",      -- Your Death Grip removes one movement impairing effect from yourself
-    [58646] = "shifting_presences",  -- Reduces the rune cost to change presences by 1, but you cannot change presences while in combat
-    
-    -- Minor glyphs - Cosmetic and convenience
-    [58647] = "corpse_walker",       -- Your undead minions appear to be spectral
-    [58648] = "the_geist",           -- Your ghoul appears as a geist
-    [58649] = "deaths_embrace",      -- Your death grip has enhanced visual effects
-    [58650] = "bone_spikes",         -- Your abilities create bone spike visual effects
-    [58651] = "unholy_vigor",        -- Your character emanates an unholy aura
-    [58652] = "the_bloodied",        -- Your weapons appear to be constantly dripping blood
-    [58653] = "runic_mastery",       -- Your runes glow with enhanced energy when available
-    [58654] = "the_forsaken",        -- Your character appears more skeletal and undead
-    [58655] = "shadow_walk",         -- Your movement leaves shadowy footprints
-    [58656] = "deaths_door",         -- Your abilities create portal-like visual effects
-} )
+-- Glyphs
+spec:RegisterGlyphs({
+	-- Major Glyphs (affecting tanking and mechanics)
+	[58623] = "antimagic_shell", -- Causes your Anti-Magic Shell to absorb all incoming magical damage, up to the absorption limit.
+	[58620] = "chains_of_ice", -- Your Chains of Ice also causes 144 to 156 Frost damage, with additional damage depending on your attack power.
+	[63330] = "dancing_rune_weapon", -- Increases your threat generation by 100% while your Dancing Rune Weapon is active, but reduces its damage dealt by 25%.
+	[63331] = "dark_simulacrum", -- Reduces the cooldown of Dark Simulacrum by 30 sec and increases its duration by 4 sec.
+	[96279] = "dark_succor", -- When you kill an enemy that yields experience or honor, while in Frost or Unholy Presence, your next Death Strike within 15 sec is free and will restore at least 20% of your maximum health.
+	[58629] = "death_and_decay", -- Your Death and Decay also reduces the movement speed of enemies within its radius by 50%.
+	[63333] = "death_coil", -- Your Death Coil spell is now usable on all allies.  When cast on a non-undead ally, Death Coil shrouds them with a protective barrier that absorbs up to [(1133 + 0.514 * Attack Power) * 1] damage.
+	[62259] = "death_grip", -- Increases the range of your Death Grip ability by 5 yards.
+	[58671] = "enduring_infection", -- Your diseases are undispellable, but their damage dealt is reduced by 15%.
+	[146650] = "festering_blood", -- Blood Boil will now treat all targets as though they have Blood Plague or Frost Fever applied.
+	[58673] = "icebound_fortitude", -- Reduces the cooldown of your Icebound Fortitude by 50%, but also reduces its duration by 75%.
+	[58631] = "icy_touch", -- Your Icy Touch dispels one helpful Magic effect from the target.
+	[58686] = "mind_freeze", -- Reduces the cooldown of your Mind Freeze ability by 1 sec, but also raises its cost by 10 Runic Power.
+	[59332] = "outbreak", -- Your Outbreak spell no longer has a cooldown, but now costs 30 Runic Power.
+	[58657] = "pestilence", -- Increases the radius of your Pestilence effect by 5 yards.
+	[58635] = "pillar_of_frost", -- Empowers your Pillar of Frost, making you immune to all effects that cause loss of control of your character, but also reduces your movement speed by 70% while the ability is active.
+	[146648] = "regenerative_magic", -- If Anti-Magic Shell expires after its full duration, the cooldown is reduced by up to 50%, based on the amount of damage absorbtion remaining.
+	[58647] = "shifting_presences", -- You retain 70% of your Runic Power when switching Presences.
+	[58618] = "strangulate", -- Increases the Silence duration of your Strangulate ability by 2 sec when used on a target who is casting a spell.
+	[146645] = "swift_death", -- The haste effect granted by Soul Reaper now also increases your movement speed by 30% for the duration.
+	[146646] = "loud_horn", -- Your Horn of Winter now generates an additional 10 Runic Power, but the cooldown is increased by 100%.
+	[59327] = "unholy_command", -- Immediately finishes the cooldown of your Death Grip upon dealing a killing blow to a target that grants experience or honor.
+	[58616] = "unholy_frenzy", -- Causes your Unholy Frenzy to no longer deal damage to the affected target.
+	[58676] = "vampiric_blood", -- Increases the bonus healing received while your Vampiric Blood is active by an additional 15%, but your Vampiric Blood no longer grants you health.
+
+	-- Minor Glyphs (convenience and visual)
+	[58669] = "army_of_the_dead", -- The ghouls summoned by your Army of the Dead no longer taunt their target.
+	[59336] = "corpse_explosion", -- Teaches you the ability Corpse Explosion.
+	[60200] = "death_gate", -- Reduces the cast time of your Death Gate spell by 60%.
+	[58677] = "deaths_embrace", -- Your Death Coil refunds 20 Runic Power when used to heal an allied minion, but will no longer trigger Blood Tap when used this way.
+	[58642] = "foul_menagerie", -- Causes your Army of the Dead spell to summon an assortment of undead minions.
+	[58680] = "horn_of_winter", -- When used outside of combat, your Horn of Winter ability causes a brief, localized snow flurry.
+	[59307] = "path_of_frost", -- Your Path of Frost ability allows you to fall from a greater distance without suffering damage.
+	[59309] = "resilient_grip", -- When your Death Grip ability fails because its target is immune, its cooldown is reset.
+	[58640] = "geist", -- Your Raise Dead spell summons a geist instead of a ghoul.
+	[146653] = "long_winter", -- The effect of your Horn of Winter now lasts for 1 hour.
+	[146652] = "skeleton", -- Your Raise Dead spell summons a skeleton instead of a ghoul.
+	[63335] = "tranquil_grip", -- Your Death Grip spell no longer taunts the target.
+})
 
 -- Auras
-spec:RegisterAuras( {
-    -- Talent: Absorbing up to $w1 magic damage. Immune to harmful magic effects.
-    -- https://wowhead.com/spell=48707
-    antimagic_shell = {
-        id = 48707,
-        duration = 5,
-        max_stack = 1
-    },
-    -- Talent: Stunned.
-    -- https://wowhead.com/spell=108194
-    asphyxiate = {
-        id = 108194,
-        duration = 5.0,
-        mechanic = "stun",
-        type = "Magic",
-        max_stack = 1
-    },
-    -- Talent: Movement slowed $w1% $?$w5!=0[and Haste reduced $w5% ][]by frozen chains.
-    -- https://wowhead.com/spell=45524
-    chains_of_ice = {
-        id = 45524,
-        duration = 8,
-        mechanic = "snare",
-        type = "Magic",
-        max_stack = 1
-    },
-    -- Taunted.
-    -- https://wowhead.com/spell=56222
-    dark_command = {
-        id = 56222,
-        duration = 3,
-        mechanic = "taunt",
-        max_stack = 1
-    },
-    -- Your next Death Strike is free and heals for an additional $s1% of maximum health.
-    -- https://wowhead.com/spell=101568
-    dark_succor = {
-        id = 101568,
-        duration = 20,
-        max_stack = 1
-    },
-    -- Talent: $?$w2>0[Transformed into an undead monstrosity.][Gassy.] Damage dealt increased by $w1%.
-    -- https://wowhead.com/spell=63560
-    dark_transformation = {
-        id = 63560,
-        duration = 30,
-        type = "Magic",
-        max_stack = 1,
-        generate = function( t )
-            local name, _, count, _, duration, expires, caster, _, _, spellID, _, _, _, _, timeMod, v1, v2, v3 = FindUnitBuffByID( "pet", 63560 )
+spec:RegisterAuras({
+	-- Talent: Absorbing up to $w1 magic damage. Immune to harmful magic effects.
+	-- https://wowhead.com/spell=48707
+	antimagic_shell = {
+		id = 48707,
+		duration = 5,
+		max_stack = 1,
+	},
+	-- Talent: Stunned.
+	-- https://wowhead.com/spell=108194
+	asphyxiate = {
+		id = 108194,
+		duration = 5.0,
+		mechanic = "stun",
+		type = "Magic",
+		max_stack = 1,
+	},
+	-- Talent: Movement slowed $w1% $?$w5!=0[and Haste reduced $w5% ][]by frozen chains.
+	-- https://wowhead.com/spell=45524
+	chains_of_ice = {
+		id = 45524,
+		duration = 8,
+		mechanic = "snare",
+		type = "Magic",
+		max_stack = 1,
+	},
+	-- Taunted.
+	-- https://wowhead.com/spell=56222
+	dark_command = {
+		id = 56222,
+		duration = 3,
+		mechanic = "taunt",
+		max_stack = 1,
+	},
+	-- Your next Death Strike is free and heals for an additional $s1% of maximum health.
+	-- https://wowhead.com/spell=101568
+	dark_succor = {
+		id = 101568,
+		duration = 15,
+		max_stack = 1,
+	},
+	-- Talent: $?$w2>0[Transformed into an undead monstrosity.][Gassy.] Damage dealt increased by $w1%.
+	-- https://wowhead.com/spell=63560
+	dark_transformation = {
+		id = 63560,
+		duration = 30,
+		max_stack = 1,
+		generate = function(t)
+			local name, _, count, _, duration, expires, caster = FindUnitBuffByID("pet", 63560)
 
-            if name then
-                t.name = t.name or name or class.abilities.dark_transformation.name
-                t.count = count > 0 and count or 1
-                t.expires = expires
-                t.duration = duration
-                t.applied = expires - duration
-                t.caster = "player"
-                return
-            end
+			if name then
+				t.name = name
+				t.count = 1
+				t.expires = expires
+				t.applied = expires - duration
+				t.caster = caster
+				return
+			end
 
-            t.name = t.name or class.abilities.dark_transformation.name
-            t.count = 0
-            t.expires = 0
-            t.duration = class.auras.dark_transformation.duration
-            t.applied = 0
-            t.caster = "nobody"
-        end
-    },
-    -- Inflicts $s1 Shadow damage every sec.
-    death_and_decay = {
-        id = 43265,
-        duration = 10,
-        tick_time = 1.0,
-        max_stack = 1
-    },
-    -- Your movement speed is increased by $w1%, you cannot be slowed below $s2% of normal speed, and you are immune to forced movement effects and knockbacks.
-    deaths_advance = {
-        id = 96268,
-        duration = 8,
-        type = "Magic",
-        max_stack = 1
-    },
-    -- Defile the targeted ground, dealing Shadow damage to all enemies over $d. While you remain within your Defile, your Scourge Strike will hit multiple enemies near the target. If any enemies are standing in the Defile, it grows in size and deals increasing damage every sec.
-    defile = {
-        id = 152280,
-        duration = 30,
-        tick_time = 1,
-        max_stack = 1
-    },
-    -- Suffering $w1 Frost damage every $t1 sec.
-    -- https://wowhead.com/spell=55095
-    frost_fever = {
-        id = 55095,
-        duration = 30,
-        tick_time = 3,
-        max_stack = 1,
-        type = "Disease"
-    },
-    -- Talent: Damage taken reduced by $w3%. Immune to Stun effects.
-    -- https://wowhead.com/spell=48792
-    icebound_fortitude = {
-        id = 48792,
-        duration = 8,
-        max_stack = 1
-    },
-    -- Leech increased by $s1%$?a389682[, damage taken reduced by $s8%][] and immune to Charm, Fear and Sleep. Undead.
-    -- https://wowhead.com/spell=49039
-    lichborne = {
-        id = 49039,
-        duration = 10,
-        tick_time = 1,
-        max_stack = 1
-    },
-    -- A necrotic strike shield that absorbs the next $w1 healing received.
-    necrotic_strike = {
-        id = 73975,
-        duration = 15,
-        max_stack = 1
-    },
-    -- Grants the ability to walk across water.
-    -- https://wowhead.com/spell=3714
-    path_of_frost = {
-        id = 3714,
-        duration = 600,
-        tick_time = 0.5,
-        max_stack = 1
-    },
-    -- Inflicted with a plague that spreads to nearby enemies when dispelled.
-    plague_leech = {
-        id = 123693,
-        duration = 3,
-        max_stack = 1
-    },
-    -- An unholy pact that prevents fatal damage.
-    purgatory = {
-        id = 114556,
-        duration = 3,
-        max_stack = 1
-    },
-    -- TODO: Is a pet.
-    raise_dead = {
-        id = 46585,
-        duration = 60,
-        max_stack = 1
-    },
-    -- Frost damage taken from the Death Knight's abilities increased by $s1%.
-    -- https://wowhead.com/spell=51714
-    razorice = {
-        id = 51714,
-        duration = 20,
-        tick_time = 1,
-        type = "Magic",
-        max_stack = 5
-    },
-    -- Increases your rune regeneration rate for 3 sec.
-    runic_corruption = {
-        id = 51460,
-        duration = function () return 3 * haste end,
-        max_stack = 1
-    },
-    -- Talent: Afflicted by Soul Reaper, if the target is below $s3% health this effect will explode dealing additional Shadowfrost damage.
-    -- https://wowhead.com/spell=130736
-    soul_reaper = {
-        id = 130736,
-        duration = 5,
-        tick_time = 5,
-        type = "Magic",
-        max_stack = 1
-    },
-    -- Your next Death Coil cost no Runic Power and is guaranteed to critically strike.
-    sudden_doom = {
-        id = 49530,
-        duration = 10,
-        max_stack = 1
-    },
-    -- Shadow Infusion stacks that empower your ghoul.
-    shadow_infusion = {
-        id = 91342,
-        duration = 30,
-        max_stack = 5
-    },
-    -- Dark Empowerment increases ghoul damage by 50%.
-    dark_empowerment = {
-        id = 91342, -- Reusing shadow_infusion ID as it's related
-        duration = 30,
-        max_stack = 1
-    },
-    -- Silenced.
-    strangulate = {
-        id = 47476,
-        duration = 5,
-        max_stack = 1
-    },
-    -- The presence of the Unholy, increasing attack speed by 15% and movement speed by 15%.
-    unholy_presence = {
-        id = 48265,
-        duration = 3600,
-        max_stack = 1
-    },
-    -- Suffering $w1 Shadow damage every $t1 sec. Erupts for damage split among all nearby enemies when the infected dies.
-    -- https://wowhead.com/spell=191587  
-    virulent_plague = {
-        id = 191587,
-        duration = 21,
-        tick_time = 3,
-        type = "Disease",
-        max_stack = 1
-    },
-    -- The touch of the spirit realm lingers....
-    -- https://wowhead.com/spell=97821
-    voidtouched = {
-        id = 97821,
-        duration = 300,
-        max_stack = 1
-    },
-    -- Talent: Movement speed increased by $w1%. Cannot be slowed below $s2% of normal movement speed. Cannot attack.
-    -- https://wowhead.com/spell=212552
-    wraith_walk = {
-        id = 212552,
-        duration = 4,
-        max_stack = 1
-    },
+			t.count = 0
+			t.expires = 0
+			t.applied = 0
+			t.caster = "nobody"
+		end,
+	},
+	-- Inflicts $s1 Shadow damage every sec.
+	death_and_decay = {
+		id = 43265,
+		duration = 10,
+		tick_time = 1.0,
+		max_stack = 1,
+	},
+	-- Your movement speed is increased by $w1%, you cannot be slowed below $s2% of normal speed, and you are immune to forced movement effects and knockbacks.
+	deaths_advance = {
+		id = 96268,
+		duration = 8,
+		type = "Magic",
+		max_stack = 1,
+	},
+	-- Defile the targeted ground, dealing Shadow damage to all enemies over $d. While you remain within your Defile, your Scourge Strike will hit multiple enemies near the target. If any enemies are standing in the Defile, it grows in size and deals increasing damage every sec.
+	defile = {
+		id = 43265, -- In MoP, Defile uses the same spell ID as Death and Decay
+		duration = 30,
+		tick_time = 1,
+		max_stack = 1,
+	},
+	-- Suffering $w1 Frost damage every $t1 sec.
+	-- https://wowhead.com/spell=55095
+	frost_fever = {
+		id = 55095,
+		duration = 30,
+		tick_time = 3,
+		max_stack = 1,
+		type = "Disease",
+	},
+	-- Talent: Damage taken reduced by $w3%. Immune to Stun effects.
+	-- https://wowhead.com/spell=48792
+	icebound_fortitude = {
+		id = 48792,
+		duration = 8,
+		max_stack = 1,
+	},
+	-- Leech increased by $s1%$?a389682[, damage taken reduced by $s8%][] and immune to Charm, Fear and Sleep. Undead.
+	-- https://wowhead.com/spell=49039
+	lichborne = {
+		id = 49039,
+		duration = 10,
+		tick_time = 1,
+		max_stack = 1,
+	},
+	-- A necrotic strike shield that absorbs the next $w1 healing received.
+	necrotic_strike = {
+		id = 73975,
+		duration = 10,
+		max_stack = 1,
+	},
+	-- Grants the ability to walk across water.
+	-- https://wowhead.com/spell=3714
+	path_of_frost = {
+		id = 3714,
+		duration = 600,
+		tick_time = 0.5,
+		max_stack = 1,
+	},
+	-- Inflicted with a plague that spreads to nearby enemies when dispelled.
+	plague_leech = {
+		id = 123693,
+		duration = 3,
+		max_stack = 1,
+	},
+	-- An unholy pact that prevents fatal damage.
+	purgatory = {
+		id = 114556,
+		duration = 3,
+		max_stack = 1,
+	},
+	-- TODO: Is a pet.
+	raise_dead = {
+		id = 46584,
+		max_stack = 1,
+	},
+	-- Frost damage taken from the Death Knight's abilities increased by $s1%.
+	-- https://wowhead.com/spell=51714
+	razorice = {
+		id = 51714,
+		duration = 20,
+		tick_time = 1,
+		type = "Magic",
+		max_stack = 5,
+	},
+	-- Increases your rune regeneration rate for 3 sec.
+	runic_corruption = {
+		id = 51460,
+		duration = function()
+			return 3 * haste
+		end,
+		max_stack = 1,
+	},
+	-- Talent: Afflicted by Soul Reaper, if the target is below $s3% health this effect will explode dealing additional Shadowfrost damage.
+	-- https://wowhead.com/spell=130736
+	soul_reaper = {
+		id = 130736,
+		duration = 5,
+		tick_time = 5,
+		type = "Magic",
+		max_stack = 1,
+	},
+	-- Your next Death Coil cost no Runic Power and is guaranteed to critically strike.
+	sudden_doom = {
+		id = 81340,
+		duration = 10,
+		max_stack = 1,
+	},
 
-    -- PvP Talents
-    -- Your next spell with a mana cost will be copied by the Death Knight's runeblade.
-    dark_simulacrum = {
-        id = 77606,
-        duration = 12,
-        max_stack = 1
-    },
-    -- Your runeblade contains trapped magical energies, ready to be unleashed.
-    dark_simulacrum_buff = {
-        id = 77616,
-        duration = 12,
-        max_stack = 1
-    },
+	-- Grants your successful Death Coils a chance to empower your active Ghoul, increasing its damage dealt by 10% for 30 sec.  Stacks up to 5 times.
+	shadow_infusion = {
+		id = 91342,
+		duration = 30,
+		max_stack = 5,
+		generate = function(t)
+			local name, _, count, _, duration, expires, caster = FindUnitBuffByID("pet", 91342)
 
-    -- Blood Tap charges for converting runes to Death Runes
-    blood_charge = {
-        id = 114851,
-        duration = 60,
-        max_stack = 10
-    },
+			if name then
+				t.name = name
+				t.count = count
+				t.expires = expires
+				t.applied = expires - duration
+				t.caster = caster
+				return
+			end
 
-    -- Horn of Winter buff - increases Attack Power and Strength
-    horn_of_winter = {
-        id = 57330,
-        duration = 120,
-        max_stack = 1
-    },
+			t.count = 0
+			t.expires = 0
+			t.applied = 0
+			t.caster = "nobody"
+		end,
+	},
+	-- Silenced.
+	strangulate = {
+		id = 47476,
+		duration = 5,
+		max_stack = 1,
+	},
+	-- Presence Tracking
+	blood_presence = {
+		id = 48263,
+		duration = 3600,
+		max_stack = 1,
+	},
 
-    -- Festering Wounds that burst when consumed by abilities
-    festering_wound = {
-        id = 194310,
-        duration = 30,
-        max_stack = 6,
-        type = "Disease"
-    },
+	unholy_presence = {
+		id = 48265,
+		duration = 3600,
+		max_stack = 1,
+	},
 
-    -- Unholy Blight area effect
-    unholy_blight = {
-        id = 115989,
-        duration = 10,
-        max_stack = 1
-    },
+	frost_presence = {
+		id = 48266,
+		duration = 3600,
+		max_stack = 1,
+	},
+	-- Suffering $w1 Shadow damage every $t1 sec. Erupts for damage split among all nearby enemies when the infected dies.
+	-- https://wowhead.com/spell=191587
+	virulent_plague = {
+		id = 191587,
+		duration = 21,
+		tick_time = 3,
+		type = "Disease",
+		max_stack = 1,
+	},
+	-- The touch of the spirit realm lingers....
+	-- https://wowhead.com/spell=97821
+	voidtouched = {
+		id = 97821,
+		duration = 300,
+		max_stack = 1,
+	},
+	-- Talent: Movement speed increased by $w1%. Cannot be slowed below $s2% of normal movement speed. Cannot attack.
+	-- https://wowhead.com/spell=212552
+	wraith_walk = {
+		id = 212552,
+		duration = 4,
+		max_stack = 1,
+	},
 
-    -- Inflicted with a disease that deals Shadow damage over time.
-    blood_plague = {
-        id = 55078,
-        duration = 21,
-        tick_time = 3,
-        type = "Disease",
-        max_stack = 1
-    }
-} )
+	-- PvP Talents
+	-- Your next spell with a mana cost will be copied by the Death Knight's runeblade.
+	dark_simulacrum = {
+		id = 77606,
+		duration = 12,
+		max_stack = 1,
+	},
+	-- Your runeblade contains trapped magical energies, ready to be unleashed.
+	dark_simulacrum_buff = {
+		id = 77616,
+		duration = 12,
+		max_stack = 1,
+	},
+
+	-- Blood Tap charges for converting runes to Death Runes
+	blood_charge = {
+		id = 114851,
+		duration = 25,
+		max_stack = 12,
+	},
+
+	-- Horn of Winter buff - increases Attack Power
+	horn_of_winter = {
+		id = 57330,
+		duration = 300,
+		max_stack = 1,
+	},
+
+	-- Unholy Frenzy buff - increase Attack Speed
+	unholy_frenzy = {
+		id = 49016,
+		duration = 30,
+		max_stack = 1,
+	},
+
+	-- Orc Racial: Blood Fury (AP/Haste variant used in MoP APL windows)
+	blood_fury = {
+		id = 33697,
+		duration = 15,
+		max_stack = 1,
+	},
+
+	-- Troll Racial: Berserking (used in MoP APL windows)
+	berserking = {
+		id = 26297,
+		duration = 10,
+		max_stack = 1,
+	},
+
+	-- Engineering: Synapse Springs (on-use gloves)
+	synapse_springs = {
+		id = 126734,
+		duration = 10,
+		max_stack = 1,
+	},
+
+	-- Unholy Blight area effect
+	unholy_blight = {
+		id = 115989,
+		duration = 10,
+		max_stack = 1,
+	},
+
+	-- Inflicted with a disease that deals Shadow damage over time.
+	blood_plague = {
+		id = 55078,
+		duration = 30,
+		tick_time = 3,
+		type = "Disease",
+		max_stack = 1,
+	},
+	fallen_crusader = {
+		id = 53344,
+		duration = 15,
+		max_stack = 1,
+		type = "Physical",
+	},
+	-- Unholy Strength buff - increases Strength by 15% for 15 seconds, procs from Fallen Crusader
+	-- Used for snapshotting other abilities
+	unholy_strength = {
+		id = 53365,
+		duration = 15,
+		max_stack = 1,
+		type = "Physical",
+	},
+})
 
 -- Pets
 spec:RegisterPets({
-    ghoul = {
-        id = 26125,
-        spell = "raise_dead",
-        duration = function() return talent.raise_dead_2.enabled and 3600 or 60 end
-    },
-    risen_skulker = {
-        id = 99541,
-        spell = "raise_dead",
-        duration = function() return talent.raise_dead_2.enabled and 3600 or 60 end,
-    },
+	ghoul = {
+		id = 26125,
+		spell = "raise_dead",
+		duration = 3600,
+	},
+	risen_skulker = {
+		id = 99541,
+		spell = "raise_dead",
+		duration = function()
+			return talent.raise_dead_2.enabled and 3600 or 60
+		end,
+	},
 })
 
 -- Totems (which are sometimes pets in MoP)
-spec:RegisterTotems( {
-    gargoyle = {
-        id = 49206,
-        duration = 30,
-    },
-    ghoul = {
-        id = 26125,
-        duration = function() return talent.raise_dead_2.enabled and 3600 or 60 end,
-    },
-    army_ghoul = {
-        id = 24207,
-        duration = 40,
-    }
-} )
-
-
+spec:RegisterTotems({
+	gargoyle = {
+		id = 49206,
+		duration = 30,
+	},
+	ghoul = {
+		id = 26125,
+		duration = 3600,
+	},
+	army_ghoul = {
+		id = 24207,
+		duration = 40,
+	},
+})
 
 local dmg_events = {
-    SPELL_DAMAGE = 1,
-    SPELL_PERIODIC_DAMAGE = 1
+	SPELL_DAMAGE = 1,
+	SPELL_PERIODIC_DAMAGE = 1,
 }
 
 local aura_removals = {
-    SPELL_AURA_REMOVED = 1,
-    SPELL_AURA_REMOVED_DOSE = 1
+	SPELL_AURA_REMOVED = 1,
+	SPELL_AURA_REMOVED_DOSE = 1,
 }
 
 local dnd_damage_ids = {
-    [43265] = "death_and_decay",
-    [152280] = "defile"
+	[43265] = "death_and_decay",
 }
 
 local last_dnd_tick, dnd_spell = 0, "death_and_decay"
 
 local sd_consumers = {
-    death_coil = "doomed_bidding_magus_coil",
-    epidemic = "doomed_bidding_magus_epi"
+	death_coil = "doomed_bidding_magus_coil",
+	epidemic = "doomed_bidding_magus_epi",
 }
 
 local db_casts = {}
@@ -622,1112 +956,1787 @@ local doomed_biddings = {}
 local last_bb_summon = 0
 
 -- 20250426: Decouple Death and Decay *buff* from dot.death_and_decay.ticking
-spec:RegisterCombatLogEvent( function( _, subtype, _, sourceGUID, sourceName, sourceFlags, _, destGUID, destName, destFlags, _, spellID, spellName )
-    if sourceGUID ~= state.GUID then return end
+spec:RegisterCombatLogEvent(
+	function(
+		_,
+		subtype,
+		_,
+		sourceGUID,
+		sourceName,
+		sourceFlags,
+		_,
+		destGUID,
+		destName,
+		destFlags,
+		_,
+		spellID,
+		spellName
+	)
+		if sourceGUID ~= state.GUID then
+			return
+		end
 
-    if dnd_damage_ids[ spellID ] and dmg_events[ subtype ] then
-        last_dnd_tick = GetTime()
-        dnd_spell = dnd_damage_ids[ spellID ]
-        return
-    end
+		if dnd_damage_ids[spellID] and dmg_events[subtype] then
+			last_dnd_tick = GetTime()
+			dnd_spell = dnd_damage_ids[spellID]
+			return
+		end
 
-    if state.talent.doomed_bidding.enabled then
-        if subtype == "SPELL_CAST_SUCCESS" then
-            local consumer = class.abilities[ spellID ]
-            if not consumer then return end
-            consumer = consumer and consumer.key
+		if state.talent.doomed_bidding.enabled then
+			if subtype == "SPELL_CAST_SUCCESS" then
+				local consumer = class.abilities[spellID]
+				if not consumer then
+					return
+				end
+				consumer = consumer and consumer.key
 
-            if sd_consumers[ consumer ] then
-                db_casts[ GetTime() ] = consumer
+				if sd_consumers[consumer] then
+					db_casts[GetTime()] = consumer
+				end
+				return
+			end
 
-            end
-            return
-        end
+			if spellID == class.auras.sudden_doom.id and aura_removals[subtype] and #doomed_biddings > 0 then
+				local now = GetTime()
+				for time, consumer in pairs(db_casts) do
+					if now - time < 0.5 then
+						doomed_biddings[now + 6] = sd_consumers[consumer]
+						db_casts[time] = nil
+					end
+				end
+				return
+			end
+		end
 
-        if spellID == class.auras.sudden_doom.id and aura_removals[ subtype ] and #doomed_biddings > 0 then
-            local now = GetTime()
-            for time, consumer in pairs( db_casts ) do
-                if now - time < 0.5 then
-                    doomed_biddings[ now + 6 ] = sd_consumers[ consumer ]
-                    db_casts[ time ] = nil
-                end
-            end
-            return
-        end
-    end
+		if subtype == "SPELL_SUMMON" and spellID == 434237 then
+			last_bb_summon = GetTime()
+			return
+		end
+	end
+)
 
-    if subtype == "SPELL_SUMMON" and spellID == 434237 then
-        last_bb_summon = GetTime()
-        return
-    end
-end )
+local dnd_model = setmetatable({}, {
+	__index = function(t, k)
+		if k == "ticking" then
+			-- Disabled
+			-- if state.query_time - class.abilities.any_dnd.lastCast < 10 then return true end
+			return debuff.death_and_decay.up
+		elseif k == "remains" then
+			return debuff.death_and_decay.remains
+		end
 
+		return false
+	end,
+})
 
-local dnd_model = setmetatable( {}, {
-    __index = function( t, k )
-        if k == "ticking" then
-            -- Disabled
-            -- if state.query_time - class.abilities.any_dnd.lastCast < 10 then return true end
-            return debuff.death_and_decay.up
-
-        elseif k == "remains" then
-            return debuff.death_and_decay.remains
-
-        end
-
-        return false
-    end
-} )
-
-spec:RegisterStateTable( "death_and_decay", dnd_model )
-spec:RegisterStateTable( "defile", dnd_model )
+spec:RegisterStateTable("death_and_decay", dnd_model)
+spec:RegisterStateTable("defile", dnd_model)
 
 -- Death Knight state table with runeforge support
 local mt_runeforges = {
-    __index = function( t, k )
-        return false
-    end,
+	__index = function(t, k)
+		return false
+	end,
 }
 
-spec:RegisterStateTable( "death_knight", setmetatable( {
-    disable_aotd = false,
-    delay = 6,
-    runeforge = setmetatable( {}, mt_runeforges )
-}, {
-    __index = function( t, k )
-        if k == "fwounded_targets" then return state.active_dot.festering_wound end
-        if k == "disable_iqd_execute" then return state.settings.disable_iqd_execute and 1 or 0 end
-        return 0
-    end,
-} ) )
+spec:RegisterStateTable(
+	"death_knight",
+	setmetatable({
+		disable_aotd = false,
+		delay = 6,
+		runeforge = setmetatable({}, mt_runeforges),
+	}, {
+		__index = function(t, k)
+			if k == "disable_iqd_execute" then
+				return state.settings.disable_iqd_execute and 1 or 0
+			end
+			return 0
+		end,
+	})
+)
 
-spec:RegisterStateExpr( "dnd_ticking", function ()
-    return death_and_decay.ticking
-end )
+spec:RegisterStateExpr("dnd_ticking", function()
+	return state.debuff.death_and_decay.up
+end)
 
-spec:RegisterStateExpr( "dnd_remains", function ()
-    return death_and_decay.remains
-end )
+spec:RegisterStateExpr("unholy_frenzy_haste", function()
+	if buff.unholy_frenzy.up and buff.unholy_frenzy.on_self then
+		-- TODO: Add haste increase
+	end
+end)
 
-spec:RegisterStateExpr( "spreading_wounds", function ()
-    if talent.infected_claws.enabled and pet.ghoul.up then return false end -- Ghoul is dumping wounds for us, don't bother.
-    return azerite.festermight.enabled and settings.cycle and settings.festermight_cycle and cooldown.death_and_decay.remains < 9 and active_dot.festering_wound < spell_targets.festering_strike
-end )
+spec:RegisterStateExpr("fallen_crusader_up", function()
+	return buff.unholy_strength.up
+end)
 
-spec:RegisterStateFunction( "time_to_wounds", function( x )
-    if debuff.festering_wound.stack >= x then return 0 end
-    return 3600
-    --[[No timeable wounds mechanic in SL?
-    if buff.unholy_frenzy.down then return 3600 end
+spec:RegisterStateExpr("dnd_remains", function()
+	return state.debuff.death_and_decay.remains
+end)
 
-    local deficit = x - debuff.festering_wound.stack
-    local swing, speed = state.swings.mainhand, state.swings.mainhand_speed
-
-    local last = swing + ( speed * floor( query_time - swing ) / swing )
-    local fw = last + ( speed * deficit ) - query_time
-
-    if fw > buff.unholy_frenzy.remains then return 3600 end
-    return fw--]]
-end )
-
-spec:RegisterHook( "step", function ( time )
-    if Hekili.ActiveDebug then Hekili:Debug( "Rune Regeneration Time: 1=%.2f, 2=%.2f, 3=%.2f, 4=%.2f, 5=%.2f, 6=%.2f\n", runes.time_to_1, runes.time_to_2, runes.time_to_3, runes.time_to_4, runes.time_to_5, runes.time_to_6 ) end
-end )
+spec:RegisterHook("step", function(time)
+	if Hekili.ActiveDebug then
+		Hekili:Debug(
+			"Rune Regeneration Time: 1=%.2f, 2=%.2f, 3=%.2f, 4=%.2f, 5=%.2f, 6=%.2f\n",
+			runes.time_to_1,
+			runes.time_to_2,
+			runes.time_to_3,
+			runes.time_to_4,
+			runes.time_to_5,
+			runes.time_to_6
+		)
+	end
+end)
 
 local Glyphed = IsSpellKnownOrOverridesKnown
 
 spec:RegisterGear({
-    -- Mists of Pandaria Tier Sets
-    tier16 = {
-        items = { 99369, 99370, 99371, 99372, 99373 }, -- Death Knight T16
-        auras = {
-            death_shroud = {
-                id = 144901,
-                duration = 30,
-                max_stack = 5
-            }
-        }
-    },
-    tier15 = {
-        items = { 95339, 95340, 95341, 95342, 95343 }, -- Death Knight T15
-        auras = {
-            unholy_vigor = {
-                id = 138547,
-                duration = 15,
-                max_stack = 1
-            }
-        }
-    },
-    tier14 = {
-        items = { 84407, 84408, 84409, 84410, 84411 }, -- Death Knight T14
-        auras = {
-            shadow_clone = {
-                id = 123556,
-                duration = 8,
-                max_stack = 1
-            }
-        }
-    }
+	-- Mists of Pandaria Tier Sets
+	tier16 = {
+		items = { 99369, 99370, 99371, 99372, 99373 }, -- Death Knight T16
+		auras = {
+			death_shroud = {
+				id = 144901,
+				duration = 30,
+				max_stack = 5,
+			},
+		},
+	},
+	tier15 = {
+		items = { 95339, 95340, 95341, 95342, 95343 }, -- Death Knight T15
+		auras = {
+			unholy_vigor = {
+				id = 138547,
+				duration = 15,
+				max_stack = 1,
+			},
+		},
+	},
+	tier14 = {
+		items = { 84407, 84408, 84409, 84410, 84411 }, -- Death Knight T14
+		auras = {
+			shadow_clone = {
+				id = 123556,
+				duration = 8,
+				max_stack = 1,
+			},
+		},
+	},
 })
 
-local wound_spender_set = false
+spec:RegisterHook("TALENTS_UPDATED", function()
+	class.abilityList.any_dnd = "|T136144:0|t |cff00ccff[Any " .. class.abilities.death_and_decay.name .. "]|r"
+	local dnd = talent.defile.enabled and "defile" or "death_and_decay"
 
-local TriggerInflictionOfSorrow = setfenv( function ()
-    applyBuff( "infliction_of_sorrow" )
-end, state )
+	class.abilities.any_dnd = class.abilities[dnd]
+	rawset(cooldown, "any_dnd", nil)
+	rawset(cooldown, "death_and_decay", nil)
+	rawset(cooldown, "defile", nil)
 
-local ApplyFestermight = setfenv( function ( woundsPopped )
-    -- Festermight doesn't exist in MoP, removing this function but keeping structure for compatibility
-    return woundsPopped
-end, state )
-
-local PopWounds = setfenv( function ( attemptedPop, targetCount )
-    targetCount = targetCount or 1
-    local realPop = targetCount
-    realPop = ApplyFestermight( removeDebuffStack( "target", "festering_wound", attemptedPop ) * targetCount )
-    gain( realPop * 10, "runic_power" ) -- MoP gives 10 RP per rune spent, not 3 per wound
-
-    -- Festering Scythe doesn't exist in MoP
-end, state )
-
-spec:RegisterHook( "TALENTS_UPDATED", function()
-    class.abilityList.any_dnd = "|T136144:0|t |cff00ccff[Any " .. class.abilities.death_and_decay.name .. "]|r"
-    local dnd = talent.defile.enabled and "defile" or "death_and_decay"
-
-    class.abilities.any_dnd = class.abilities[ dnd ]
-    rawset( cooldown, "any_dnd", nil )
-    rawset( cooldown, "death_and_decay", nil )
-    rawset( cooldown, "defile", nil )
-
-    if dnd == "defile" then rawset( cooldown, "death_and_decay", cooldown.defile )
-    else rawset( cooldown, "defile", cooldown.death_and_decay ) end
-end )
+	if dnd == "defile" then
+		rawset(cooldown, "death_and_decay", cooldown.defile)
+	else
+		rawset(cooldown, "defile", cooldown.death_and_decay)
+	end
+end)
 
 -- MoP ghoul/pet summoning system - much simpler than later expansions
 local ghoul_applicators = {
-    army_of_the_dead = {
-        army_ghoul = { 40 },
-    },
-    summon_gargoyle = {
-        gargoyle = { 30 }
-    }
+	army_of_the_dead = {
+		army_ghoul = { 40 },
+	},
+	summon_gargoyle = {
+		gargoyle = { 30 },
+	},
 }
 
-spec:RegisterHook( "reset_precast", function ()
-    if totem.gargoyle.remains > 0 then
-        summonPet( "gargoyle", totem.gargoyle.remains )
-    end
+spec:RegisterHook("reset_precast", function()
+	if totem.gargoyle.remains > 0 then
+		summonPet("gargoyle", totem.gargoyle.remains)
+	end
 
-    local control_expires = action.control_undead.lastCast + 300
-    if control_expires > now and pet.up and not pet.ghoul.up then
-        summonPet( "controlled_undead", control_expires - now )
-    end
+	local control_expires = action.control_undead.lastCast + 300
+	if control_expires > state.query_time and pet.up and not pet.ghoul.up then
+		summonPet("controlled_undead", control_expires - state.query_time)
+	end
 
-    for spell, ghouls in pairs( ghoul_applicators ) do
-        local cast_time = action[ spell ].lastCast
+	for spell, ghouls in pairs(ghoul_applicators) do
+		local cast_time = action[spell].lastCast
 
-        for ghoul, info in pairs( ghouls ) do
-            dismissPet( ghoul )
+		for ghoul, info in pairs(ghouls) do
+			dismissPet(ghoul)
 
-            if cast_time > 0 then
-                local expires = cast_time + info[ 1 ]
+			if cast_time > 0 then
+				local expires = cast_time + info[1]
 
-                if expires > now then
-                    summonPet( ghoul, expires - now )
-                end
-            end
-        end
-    end
+				if expires > state.query_time then
+					summonPet(ghoul, expires - state.query_time)
+				end
+			end
+		end
+	end
 
-    if buff.death_and_decay.up then
-        local duration = buff.death_and_decay.duration
-        if duration > 4 then
-            if Hekili.ActiveDebug then Hekili:Debug( "Death and Decay buff extended by 4; %.2f to %.2f.", buff.death_and_decay.remains, buff.death_and_decay.remains + 4 ) end
-            buff.death_and_decay.expires = buff.death_and_decay.expires + 4
-        else
-            if Hekili.ActiveDebug then Hekili:Debug( "Death and Decay buff with duration of %.2f not extended; %.2f remains.", duration, buff.death_and_decay.remains ) end
-        end
-    end
+	if buff.death_and_decay.up then
+		local duration = buff.death_and_decay.duration
+		if duration > 4 then
+			if Hekili.ActiveDebug then
+				Hekili:Debug(
+					"Death and Decay buff extended by 4; %.2f to %.2f.",
+					buff.death_and_decay.remains,
+					buff.death_and_decay.remains + 4
+				)
+			end
+			buff.death_and_decay.expires = buff.death_and_decay.expires + 4
+		else
+			if Hekili.ActiveDebug then
+				Hekili:Debug(
+					"Death and Decay buff with duration of %.2f not extended; %.2f remains.",
+					duration,
+					buff.death_and_decay.remains
+				)
+			end
+		end
+	end
 
-    -- Death and Decay tick time is 1s; if we haven't seen a tick in 2 seconds, it's not ticking.
-    local last_dnd = action[ dnd_spell ].lastCast
-    local dnd_expires = last_dnd + 10
-    if now - last_dnd_tick < 2 and dnd_expires > now then
-        applyDebuff( "target", "death_and_decay", dnd_expires - now )
-        debuff.death_and_decay.duration = 10
-        debuff.death_and_decay.applied = debuff.death_and_decay.expires - 10
-    end
+	-- Death and Decay tick time is 1s; if we haven't seen a tick in 2 seconds, it's not ticking.
+	local last_dnd = action[dnd_spell].lastCast
+	local dnd_expires = last_dnd + 10
+	if state.query_time - last_dnd_tick < 2 and dnd_expires > state.query_time then
+		applyDebuff("target", "death_and_decay", dnd_expires - state.query_time)
+		debuff.death_and_decay.duration = 10
+		debuff.death_and_decay.applied = debuff.death_and_decay.expires - 10
+	end
 
-    -- MoP doesn't have vampiric strike or gift of the sanlayn
-
-    -- In MoP, scourge strike is the primary wound spender
-    class.abilities.wound_spender = class.abilities.scourge_strike
-    cooldown.wound_spender = cooldown.scourge_strike
-
-    if not wound_spender_set then
-        class.abilityList.wound_spender = "|T237530:0|t |cff00ccff[Wound Spender]|r"
-        wound_spender_set = true
-    end
-
-    -- MoP doesn't have infliction of sorrow
-
-    if Hekili.ActiveDebug then Hekili:Debug( "Pet is %s.", pet.alive and "alive" or "dead" ) end
-
-    -- MoP doesn't have festering scythe (spell ID 458128)
-end )
+	if Hekili.ActiveDebug then
+		Hekili:Debug("Pet is %s.", pet.alive and "alive" or "dead")
+	end
+end)
 
 -- MoP runeforges are different
 local runeforges = {
-    [3370] = "razorice",
-    [3368] = "fallen_crusader",
-    [3847] = "stoneskin_gargoyle"
+	[3370] = "razorice",
+	[3368] = "fallen_crusader",
+	[3847] = "stoneskin_gargoyle",
 }
 
 local function ResetRuneforges()
-    if not state.death_knight then
-        state.death_knight = {}
-    end
-    if not state.death_knight.runeforge then
-        state.death_knight.runeforge = {}
-    end
-    table.wipe( state.death_knight.runeforge )
+	if not state.death_knight then
+		state.death_knight = {}
+	end
+	if not state.death_knight.runeforge then
+		state.death_knight.runeforge = {}
+	end
+	table.wipe(state.death_knight.runeforge)
 end
 
-local function UpdateRuneforge( slot, item )
-    if ( slot == 16 or slot == 17 ) then
-        if not state.death_knight then
-            state.death_knight = {}
-        end
-        if not state.death_knight.runeforge then
-            state.death_knight.runeforge = {}
-        end
-        
-        local link = GetInventoryItemLink( "player", slot )
-        local enchant = link:match( "item:%d+:(%d+)" )
+local function UpdateRuneforge(slot, item)
+	if slot == 16 or slot == 17 then
+		if not state.death_knight then
+			state.death_knight = {}
+		end
+		if not state.death_knight.runeforge then
+			state.death_knight.runeforge = {}
+		end
 
-        if enchant then
-            enchant = tonumber( enchant )
-            local name = runeforges[ enchant ]
+		local link = GetInventoryItemLink("player", slot)
+		local enchant = link and link:match("item:%d+:(%d+)")
 
-            if name then
-                state.death_knight.runeforge[ name ] = true
+		if enchant then
+			enchant = tonumber(enchant)
+			local name = runeforges[enchant]
 
-                if name == "razorice" and slot == 16 then
-                    state.death_knight.runeforge.razorice_mh = true
-                elseif name == "razorice" and slot == 17 then
-                    state.death_knight.runeforge.razorice_oh = true
-                end
-            end
-        end
-    end
+			if name then
+				state.death_knight.runeforge[name] = true
+
+				if name == "razorice" and slot == 16 then
+					state.death_knight.runeforge.razorice_mh = true
+				elseif name == "razorice" and slot == 17 then
+					state.death_knight.runeforge.razorice_oh = true
+				elseif name == "fallen_crusader" and slot == 16 then
+					state.death_knight.runeforge.fallen_crusader_mh = true
+				elseif name == "fallen_crusader" and slot == 17 then
+					state.death_knight.runeforge.fallen_crusader_oh = true
+				end
+			end
+		end
+	end
 end
 
-Hekili:RegisterGearHook( ResetRuneforges, UpdateRuneforge )
+-- Keep runeforge state fresh using classic-safe events.
+do
+	local f = CreateFrame("Frame")
+	f:RegisterEvent("PLAYER_ENTERING_WORLD")
+	f:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
+	f:SetScript("OnEvent", function(_, evt, ...)
+		if evt == "PLAYER_ENTERING_WORLD" then
+			ResetRuneforges()
+			UpdateRuneforge(16)
+			UpdateRuneforge(17)
+		elseif evt == "PLAYER_EQUIPMENT_CHANGED" then
+			local slot = ...
+			if slot == 16 or slot == 17 then
+				ResetRuneforges()
+				UpdateRuneforge(16)
+				UpdateRuneforge(17)
+			end
+		end
+	end)
+end
+
+Hekili:RegisterGearHook(ResetRuneforges, UpdateRuneforge)
 
 -- Abilities
-spec:RegisterAbilities( {
-    -- Talent: Surrounds you in an Anti-Magic Shell for $d, absorbing up to $<shield> magic ...
-    antimagic_shell = {
-        id = 48707,
-        cast = 0,
-        cooldown = 45,
-        gcd = "off",
-
-        startsCombat = false,
-
-        toggle = function()
-            if settings.dps_shell then return end
-            return "defensives"
-        end,
-
-        handler = function ()
-            applyBuff( "antimagic_shell" )
-        end,
-    },
-
-    -- Talent: Places an Anti-Magic Zone that reduces spell damage taken by party or raid me...
-    antimagic_zone = {
-        id = 51052,
-        cast = 0,
-        cooldown = 120,
-        gcd = "spell",
-
-        talent = "antimagic_zone",
-        startsCombat = false,
-
-        toggle = "cooldowns",
-
-        handler = function ()
-            applyBuff( "antimagic_zone" )
-        end,
-    },
-
-    -- Talent: Summons a legion of ghouls who swarms your enemies, fighting anything they ca...
-    army_of_the_dead = {
-        id = 42650,
-        cast = 4,
-        cooldown = 600,
-        gcd = "spell",
-
-        spend = 3,
-        spendType = "runes",
-
-        talent = "army_of_the_dead",
-        startsCombat = false,
-        texture = 237511,
-
-        toggle = "cooldowns",
-
-        handler = function ()
-            applyBuff( "army_of_the_dead", 4 )
-            summonPet( "army_ghoul", 40 )
-        end,
-    },
-
-    -- Talent: Lifts the enemy target off the ground, crushing their throat with dark energy...
-    asphyxiate = {
-        id = 108194,
-        cast = 0,
-        cooldown = 30,
-        gcd = "spell",
-
-        talent = "asphyxiate",
-        startsCombat = true,
-
-        toggle = "interrupts",
-
-        debuff = "casting",
-        readyTime = state.timeToInterrupt,
-
-        handler = function ()
-            applyDebuff( "target", "asphyxiate" )
-        end,
-    },
-
-    -- Talent: Convert health to available runes
-    blood_tap = {
-        id = 45529,
-        cast = 0,
-        cooldown = 1,
-        gcd = "off",
-
-        talent = "blood_tap",
-        startsCombat = false,
-
-        usable = function () return buff.blood_charge.stack >= 5 end,
-
-        handler = function ()
-            removeBuff( "blood_charge", 5 )
-            gain( 1, "runes" )
-        end,
-    },
-
-    -- Empower Rune Weapon: Instantly activates all your runes and grants RP
-    empower_rune_weapon = {
-        id = 47568,
-        cast = 0,
-        cooldown = 300,
-        gcd = "off",
-
-        startsCombat = false,
-        toggle = "cooldowns",
-
-        handler = function ()
-            gain( 6, "runes" )
-            gain( 25, "runic_power" )
-        end,
-    },
-
-    -- Festering Strike: A vicious strike that deals weapon damage and infects the target with a disease
-    festering_strike = {
-        id = 85948,
-        cast = 0,
-        cooldown = 0,
-        gcd = "spell",
-
-        spend = 2,
-        spendType = "runes",
-
-        startsCombat = true,
-
-        handler = function ()
-            applyDebuff( "target", "festering_wound", nil, math.min( 6, debuff.festering_wound.stack + 2 ) )
-            gain( 10, "runic_power" )
-        end,
-    },
-
-    -- Outbreak: Instantly applies both Frost Fever and Blood Plague to the target
-    outbreak = {
-        id = 77575,
-        cast = 0,
-        cooldown = 0,
-        gcd = "spell",
-
-        spend = 1,
-        spendType = "runes",
-
-        startsCombat = true,
-
-        handler = function ()
-            applyDebuff( "target", "frost_fever" )
-            applyDebuff( "target", "blood_plague" )
-        end,
-    },
-
-    -- Pestilence: Spreads diseases from the target to nearby enemies
-    pestilence = {
-        id = 50842,
-        cast = 0,
-        cooldown = 0,
-        gcd = "spell",
-
-        spend = 1,
-        spendType = "runes",
-
-        startsCombat = true,
-
-        usable = function () return debuff.frost_fever.up or debuff.blood_plague.up end,
-
-        handler = function ()
-            if debuff.frost_fever.up then
-                active_dot.frost_fever = min( active_enemies, active_dot.frost_fever + active_enemies - 1 )
-            end
-            if debuff.blood_plague.up then
-                active_dot.blood_plague = min( active_enemies, active_dot.blood_plague + active_enemies - 1 )
-            end
-        end,
-    },
-
-    -- Talent: Extract diseases from target to gain runes
-    plague_leech = {
-        id = 123693,
-        cast = 0,
-        cooldown = 0,
-        gcd = "spell",
-
-        talent = "plague_leech",
-        startsCombat = true,
-
-        usable = function () return debuff.frost_fever.up or debuff.blood_plague.up end,
-
-        handler = function ()
-            local runes_gained = 0
-            if debuff.frost_fever.up then
-                removeDebuff( "target", "frost_fever" )
-                runes_gained = runes_gained + 1
-            end
-            if debuff.blood_plague.up then
-                removeDebuff( "target", "blood_plague" )
-                runes_gained = runes_gained + 1
-            end
-            gain( runes_gained, "runes" )
-        end,
-    },
-
-    -- Talent: Surrounds the caster with unholy energy that damages nearby enemies
-    unholy_blight = {
-        id = 115989,
-        cast = 0,
-        cooldown = 0,
-        gcd = "spell",
-
-        spend = 1,
-        spendType = "runes",
-
-        talent = "unholy_blight",
-        startsCombat = true,
-
-        handler = function ()
-            applyBuff( "unholy_blight" )
-            applyDebuff( "target", "frost_fever" )
-            applyDebuff( "target", "blood_plague" )
-        end,
-    },
-
-    -- Talent: Shackles the target $?a373930[and $373930s1 nearby enemy ][]with frozen chain...
-    chains_of_ice = {
-        id = 45524,
-        cast = 0,
-        cooldown = 0,
-        gcd = "spell",
-
-        spend = 1,
-        spendType = "runes",
-
-        startsCombat = true,
-
-        handler = function ()
-            applyDebuff( "target", "chains_of_ice" )
-        end,
-    },
-
-    -- Command the target to attack you.
-    dark_command = {
-        id = 56222,
-        cast = 0,
-        cooldown = 8,
-        gcd = "off",
-
-        startsCombat = true,
-
-        handler = function ()
-            applyDebuff( "target", "dark_command" )
-        end,
-    },
-
-    dark_simulacrum = {
-        id = 77606,
-        cast = 0,
-        cooldown = 20,
-        gcd = "off",
-
-        pvptalent = "dark_simulacrum",
-        startsCombat = false,
-        texture = 135888,
-
-        usable = function ()
-            if not target.is_player then return false, "target is not a player" end
-            return true
-        end,
-        handler = function ()
-            applyDebuff( "target", "dark_simulacrum" )
-        end,
-    },
-
-    -- Talent: Your $?s207313[abomination]?s58640[geist][ghoul] deals $344955s1 Shadow damag...
-    dark_transformation = {
-        id = 63560,
-        cast = 0,
-        cooldown = 60,
-        gcd = "spell",
-
-        talent = "dark_transformation",
-        startsCombat = false,
-
-        usable = function ()
-            if Hekili.ActiveDebug then Hekili:Debug( "Pet is %s.", pet.alive and "alive" or "dead" ) end
-            return pet.alive, "requires a living ghoul"
-        end,
-        handler = function ()
-            applyBuff( "dark_transformation" )
-
-            if talent.shadow_infusion.enabled then
-                applyBuff( "dark_empowerment" )
-            end
-        end,
-    },
-
-    -- Corrupts the targeted ground, causing ${$52212m1*11} Shadow damage over $d to...
-    death_and_decay = {
-        id = 43265,
-        cast = 0,
-        cooldown = 30,
-        gcd = "spell",
-
-        spend = 1,
-        spendType = "runes",
-
-        startsCombat = true,
-        notalent = "defile",
-
-        usable = function () return ( settings.dnd_while_moving or not moving ), "cannot cast while moving" end,
-
-        handler = function ()
-            applyBuff( "death_and_decay" )
-            applyDebuff( "target", "death_and_decay" )
-        end,
-
-        bind = { "defile", "any_dnd" },
-
-        copy = "any_dnd"
-    },
-
-    -- Fires a blast of unholy energy at the target$?a377580[ and $377580s2 addition...
-    death_coil = {
-        id = 47541,
-        cast = 0,
-        cooldown = 0,
-        gcd = "spell",
-
-        spend = function ()
-            return 40 - ( buff.sudden_doom.up and 40 or 0 )
-        end,
-        spendType = "runic_power",
-
-        startsCombat = true,
-
-        handler = function ()
-            if buff.sudden_doom.up then
-                removeBuff( "sudden_doom" )
-            end
-        end
-    },
-
-    -- Opens a gate which you can use to return to Ebon Hold.    Using a Death Gate ...
-    death_gate = {
-        id = 50977,
-        cast = 4,
-        cooldown = 60,
-        gcd = "spell",
-
-        spend = 1,
-        spendType = "runes",
-
-        startsCombat = false,
-
-        handler = function ()
-        end
-    },
-
-    -- Harnesses the energy that surrounds and binds all matter, drawing the target ...
-    death_grip = {
-        id = 49576,
-        cast = 0,
-        cooldown = 35,
-        gcd = "off",
-        icd = 0.5,
-
-        startsCombat = true,
-
-        handler = function ()
-            applyDebuff( "target", "death_grip" )
-            setDistance( 5 )
-        end
-    },
-
-    -- Talent: Create a death pact that heals you for $s1% of your maximum health, but absor...
-    death_pact = {
-        id = 48743,
-        cast = 0,
-        cooldown = 120,
-        gcd = "off",
-
-        talent = "death_pact",
-        startsCombat = false,
-
-        toggle = "defensives",
-
-        usable = function() return pet.alive, "requires an undead pet" end,
-
-        handler = function ()
-            gain( health.max * 0.25, "health" )
-            dismissPet( "ghoul" )
-        end
-    },
-
-    -- Talent: Focuses dark power into a strike$?s137006[ with both weapons, that deals a to...
-    death_strike = {
-        id = 49998,
-        cast = 0,
-        cooldown = 0,
-        gcd = "spell",
-
-        spend = function()
-            if buff.dark_succor.up then return 0 end
-            return 40
-        end,
-        spendType = "runic_power",
-
-        startsCombat = true,
-
-        handler = function ()
-            removeBuff( "dark_succor" )
-        end
-    },
-
-    -- For $d, your movement speed is increased by $s1%, you cannot be slowed below ...
-    deaths_advance = {
-        id = 96268,
-        cast = 0,
-        cooldown = 120,
-        gcd = "off",
-
-        talent = "deaths_advance",
-        startsCombat = false,
-
-        handler = function ()
-            applyBuff( "deaths_advance" )
-        end
-    },
-
-    -- Defile the targeted ground, dealing Shadow damage over time. While you remain within your Defile, your Scourge Strike will hit multiple enemies near the target. If any enemies are standing in the Defile, it grows in size and deals increasing damage every sec.
-    defile = {
-        id = 152280,
-        cast = 0,
-        cooldown = 30,
-        gcd = "spell",
-
-        spend = 1,
-        spendType = "runes",
-
-        talent = "defile",
-        startsCombat = true,
-
-        usable = function () return ( settings.dnd_while_moving or not moving ), "cannot cast while moving" end,
-
-        handler = function ()
-            applyDebuff( "target", "defile" )
-            applyBuff( "death_and_decay" )
-            applyDebuff( "target", "death_and_decay" )
-        end,
-
-        bind = { "death_and_decay", "any_dnd" }
-    },
-
-    -- Strike an enemy for Frost damage and infect them with Frost Fever
-    icy_touch = {
-        id = 45477,
-        cast = 0,
-        cooldown = 0,
-        gcd = "spell",
-
-        spend = 1,
-        spendType = "runes",
-
-        startsCombat = true,
-
-        handler = function ()
-            applyDebuff( "target", "frost_fever" )
-        end,
-    },
-
-    -- Talent: Your blood freezes, granting immunity to Stun effects and reducing all damage...
-    icebound_fortitude = {
-        id = 48792,
-        cast = 0,
-        cooldown = 180,
-        gcd = "off",
-
-        talent = "icebound_fortitude",
-        startsCombat = false,
-
-        toggle = "defensives",
-
-        handler = function ()
-            applyBuff( "icebound_fortitude" )
-        end
-    },
-
-    -- Draw upon unholy energy to become Undead for $d, increasing Leech by $s1%$?a3...
-    lichborne = {
-        id = 49039,
-        cast = 0,
-        cooldown = 120,
-        gcd = "off",
-
-        talent = "lichborne",
-        startsCombat = false,
-
-        toggle = "defensives",
-
-        handler = function ()
-            applyBuff( "lichborne" )
-        end
-    },
-
-    -- Talent: Smash the target's mind with cold, interrupting spellcasting and preventing a...
-    mind_freeze = {
-        id = 47528,
-        cast = 0,
-        cooldown = 15,
-        gcd = "off",
-
-        startsCombat = true,
-
-        toggle = "interrupts",
-
-        debuff = "casting",
-        readyTime = state.timeToInterrupt,
-
-        handler = function ()
-            interrupt()
-        end
-    },
-
-    -- A necrotic strike that deals weapon damage and applies a Necrotic Strike shield
-    necrotic_strike = {
-        id = 73975,
-        cast = 0,
-        cooldown = 0,
-        gcd = "spell",
-
-        spend = 1,
-        spendType = "runes",
-
-        talent = "necrotic_strike",
-        startsCombat = true,
-
-        handler = function ()
-            applyDebuff( "target", "necrotic_strike" )
-        end,
-    },
-
-    -- Activates a freezing aura for $d that creates ice beneath your feet, allowing...
-    path_of_frost = {
-        id = 3714,
-        cast = 0,
-        cooldown = 0,
-        gcd = "spell",
-
-        spend = 1,
-        spendType = "runes",
-
-        startsCombat = false,
-
-        handler = function ()
-            applyBuff( "path_of_frost" )
-        end
-    },
-
-    -- Strike an enemy for Unholy damage and infect them with Blood Plague
-    plague_strike = {
-        id = 45462,
-        cast = 0,
-        cooldown = 0,
-        gcd = "spell",
-
-        spend = 1,
-        spendType = "runes",
-
-        startsCombat = true,
-
-        handler = function ()
-            applyDebuff( "target", "blood_plague" )
-        end,
-    },
-
-    -- An unholy pact that prevents fatal damage, instead absorbing incoming healing
-    purgatory = {
-        id = 114556,
-        cast = 0,
-        cooldown = 240,
-        gcd = "off",
-
-        talent = "purgatory",
-        startsCombat = false,
-
-        toggle = "defensives",
-
-        handler = function ()
-            applyBuff( "purgatory" )
-        end,
-    },
-
-    raise_ally = {
-        id = 61999,
-        cast = 0,
-        cooldown = 600,
-        gcd = "spell",
-
-        spend = 30,
-        spendType = "runic_power",
-
-        startsCombat = false,
-        texture = 136143,
-
-        toggle = "cooldowns",
-
-        handler = function ()
-        end
-    },
-
-    -- Talent: Raises $?s207313[an abomination]?s58640[a geist][a ghoul] to fight by your si...
-    raise_dead = {
-        id = 46585,
-        cast = 0,
-        cooldown = function() return talent.raise_dead_2.enabled and 0 or 120 end,
-        gcd = function() return talent.raise_dead_2.enabled and "spell" or "off" end,
-
-        startsCombat = false,
-        texture = 1100170,
-
-        essential = true,
-        nomounted = true,
-
-        usable = function() return not pet.alive end,
-        handler = function ()
-            summonPet( "ghoul", talent.raise_dead_2.enabled and 3600 or 60 )
-        end,
-    },
-
-    -- An unholy strike that deals Physical damage and Shadow damage
-    scourge_strike = {
-        id = 55090,
-        cast = 0,
-        cooldown = 0,
-        gcd = "spell",
-
-        spend = 1,
-        spendType = "runes",
-
-        startsCombat = true,
-        
-        handler = function ()
-            -- Scourge Strike base functionality for MoP
-        end,
-
-        bind = { "wound_spender" }
-    },
-
-    -- Talent: Strike an enemy for Shadow damage and mark their soul. After 5 sec, if they are below 45% health, the mark will detonate for massive Shadow damage.
-    soul_reaper = {
-        id = 130736,
-        cast = 0,
-        cooldown = 0,
-        gcd = "spell",
-
-        spend = 1,
-        spendType = "runes",
-
-        talent = "soul_reaper",
-        startsCombat = true,
-
-        handler = function ()
-            applyDebuff( "target", "soul_reaper" )
-        end
-    },
-
-    strangulate = {
-        id = 47476,
-        cast = 0,
-        cooldown = 120,
-        gcd = "off",
-
-        startsCombat = false,
-        texture = 136214,
-
-        toggle = "interrupts",
-
-        debuff = "casting",
-        readyTime = state.timeToInterrupt,
-
-        handler = function ()
-            interrupt()
-            applyDebuff( "target", "strangulate" )
-        end
-    },
-
-
-
-    -- Talent: Summon a Gargoyle into the area to bombard the target for $61777d.    The Gar...
-    summon_gargoyle = {
-        id = 49206,
-        cast = 0,
-        cooldown = 180,
-        gcd = "off",
-
-        startsCombat = true,
-
-        toggle = "cooldowns",
-
-        handler = function ()
-            summonPet( "gargoyle", 30 )
-        end,
-    },
-
-
-
-    -- The presence of the Unholy, increasing attack speed by 15% and movement speed by 15%.
-    unholy_presence = {
-        id = 48265,
-        cast = 0,
-        cooldown = 0,
-        gcd = "spell",
-
-        talent = "unholy_presence",
-        startsCombat = false,
-
-        handler = function ()
-            applyBuff( "unholy_presence" )
-        end,
-    },
-
-    -- Stub.
-    any_dnd = {
-        name = function() return "|T136144:0|t |cff00ccff[Any " .. ( class.abilities.death_and_decay and class.abilities.death_and_decay.name or "Death and Decay" ) .. "]|r" end,
-        cast = 0,
-        cooldown = 0,
-        copy = "any_dnd_stub"
-    },
-
-    wound_spender = {
-        name = "|T237530:0|t |cff00ccff[Wound Spender]|r",
-        cast = 0,
-        cooldown = 0,
-        copy = "wound_spender_stub"
-    }
-} )
-
-spec:RegisterRanges( "festering_strike", "mind_freeze", "death_coil" )
-
-spec:RegisterOptions( {
-    enabled = true,
-
-    aoe = 2,
-
-    nameplates = true,
-    nameplateRange = 10,
-    rangeFilter = false,
-
-    damage = true,
-    damageExpiration = 8,
-
-    cycle = true,
-    cycleDebuff = "festering_wound",
-
-    potion = "tempered_potion",
-
-    package = "Unholy",
-} )
-
-spec:RegisterSetting( "dnd_while_moving", true, {
-    name = strformat( "Allow %s while moving", Hekili:GetSpellLinkWithTexture( spec.abilities.death_and_decay.id ) ),
-    desc = strformat( "If checked, then allow recommending %s while the player is moving otherwise only recommend it if the player is standing still.", Hekili:GetSpellLinkWithTexture( spec.abilities.death_and_decay.id ) ),
-    type = "toggle",
-    width = "full",
-} )
-
-spec:RegisterSetting( "dps_shell", false, {
-    name = strformat( "Use %s Offensively", Hekili:GetSpellLinkWithTexture( spec.abilities.antimagic_shell.id ) ),
-    desc = strformat( "If checked, %s will not be on the Defensives toggle by default.", Hekili:GetSpellLinkWithTexture( spec.abilities.antimagic_shell.id ) ),
-    type = "toggle",
-    width = "full",
-} )
-
-spec:RegisterSetting( "pl_macro", nil, {
-    name = function() 
-        local plague_strike = spec.abilities and spec.abilities.plague_strike
-        return plague_strike and strformat( "%s Macro", Hekili:GetSpellLinkWithTexture( plague_strike.id ) ) or "Plague Strike Macro"
-    end,
-    desc = function()
-        local plague_strike = spec.abilities and spec.abilities.plague_strike
-        local blood_plague = spec.auras and spec.auras.blood_plague
-        if plague_strike and blood_plague then
-            return strformat( "Using a mouseover macro makes it easier to apply %s and %s to other enemies without retargeting.",
-                Hekili:GetSpellLinkWithTexture( plague_strike.id ), Hekili:GetSpellLinkWithTexture( blood_plague.id ) )
-        else
-            return "Using a mouseover macro makes it easier to apply Plague Strike and Blood Plague to other enemies without retargeting."
-        end
-    end,
-    type = "input",
-    width = "full",
-    multiline = true,
-    get = function() 
-        local plague_strike = class.abilities and class.abilities.plague_strike
-        return plague_strike and "#showtooltip\n/use [@mouseover,harm,nodead][] " .. plague_strike.name or "#showtooltip\n/use [@mouseover,harm,nodead][] Plague Strike"
-    end,
-    set = function() end,
-} )
-
-spec:RegisterSetting( "it_macro", nil, {
-    name = strformat( "%s Macro", Hekili:GetSpellLinkWithTexture( spec.abilities.icy_touch.id ) ),
-    desc = strformat( "Using a mouseover macro makes it easier to apply %s and %s to other enemies without retargeting.",
-        Hekili:GetSpellLinkWithTexture( spec.abilities.icy_touch.id ), Hekili:GetSpellLinkWithTexture( spec.auras.frost_fever.id ) ),
-    type = "input",
-    width = "full",
-    multiline = true,
-    get = function() return "#showtooltip\n/use [@mouseover,harm,nodead][] " .. class.abilities.icy_touch.name end,
-    set = function() end,
-} )
-
-spec:RegisterPack( "Unholy", 20250715, [[Hekili:S3ZEVnoUX)zjO48gVpCSKtYT31ydS9A7V2dfTfnTO)rrJSITCS6kl5QhBUCiqF2)XHuIIuA4djBVpUUOO7TRf1WzgoVj5O7CU7VF3TR9ZdU7p7o19QPxoB6eNRH)3D3M)0(G7UDV)Q37)a5Ve7VJ8N)J4Tjrpb)8trj(RHxplPiDf5rBZZ3N99xCXdH5BlUFYQKDxKfURiYppmjEvQ)MC4FV6I7U9(IWO8)y8D3Jp3xsG5(GvKF(kxcydxVoGn2GSv3Dlm23m9Y3mB63xU82KIOYL)Ta)9bPL)y5pw)q3RGhgU7hkxM9u8QFD5YnH)u5Y39x(DIJY5sYO(THz5HXpueMTLmG7t2rgBk8NVlD3tsJ2vcM3DBe5nZOCa)yVnK3NagY)8ptzQbX(3hfS(UFZD3Uknmpin0hOa)8TEVpo8HT5t83L55FFws69EeSFvqCE5YfLlNwUCu5Y0I4WvE7tEKqxlVPC5LtV7w)vaNK8FJZd35)a55zBdIIUlNWPuoL3xSzZKW4nrH032lzJhzkttECsX(gq(ysr8ApcxpEDqkaWzkb4zLlPWKrl(KxBDWk)NiGJI41p(d(72hMc4yEA47dKMn)4N8whVgMNl1J4zfWIV36KKD1tqUFeHvnb(PG1E3tKoiS9jvGOC5ZptwEcY9UpjUiBs(Jp66D5(v03KcXGSSG4vbaFiFBG39rjjR9(VfbbXt8Z925)teeMiYNjoxBsdI)5qy2GrNVnmnlVzgTKOz8RvjH0fSRus35(PpeKpzBGFu(2j7xrKkUzE5YzxvHr0Nseac8Yt8whgqfAUQzEiQJrEPuncyIU24cP9i93QewNxUCDafABcYGFl(bpQm1ek3KGJajuU8nLl3tqFFIAwym1WWeyQ(qaL4wLKeTo5rYVTpzLF0t7ZcMKgSZpmoJsLFWNmzKjN(CpcpGmnLlhZw0nslDKXFRg9uD0Yn6jLMzS59zOdzsZjpnjWJiHsqnT2kAHbzREIiVkrqiGVJHaLJvsIJkL)HWOaYsDCoX0cHyeLV5lmTgdFXHWsUQwtqbZts7Im9pTIakM4CgWhqm6ydYlzsDdDQikQvWTC58AdQALTiO)dRwpHGF4iwBRu4IuDfGwTfGpyRjKyYjpnjk6E)yYYFuL9xSjRTPbeDrzTyUAXEcncCjjNheANjx6fehSlmGrU83jyF4AYpVQHLX8(eWC7GJIAnQyeD0m3GLU2yBl8PMDu)YygMA7OHg6qA4E2V(V(dbVpmk8FtCXt8UqKW34dRlGQDrgzEU3pd(1KyI5wIDwYFMuUKiBqeI2ciA2Rj)02qcQr))KHTYhEVNskkxU1hmMXiiINOh93tgdxx6(I8jtM4t8N8IQNUNAdJZaGPI8JrpvU83xl1xU8FcYzzt6HB4ZPQIvA23xKsJXb88hK12ZLb1FW2QbLmW4otmHVObV1MIiWteJP5XyLK1q3YLVKRVzn8FlBKTfoiEfCyIi(HR9c(aqj(Rj8QgDBYl7yymlOMVa4BGTwh8rWMqq(vGrYerxqDnmgZ7YNa14ZRiM2rrzblhrp0I3QAHAmUvJV7JSvJpHKpMrkNPFsLiWxtCuhaIbeqbroKaqmWwVHYvRdUOFRBkOAvrAO0HUYOlrapjgVvRj52LeGfHx9ujBV1(OpbHSlL1iaJzEmJz40RQfLcA28E(zz(fr5I4agSRvQmJFUwh14mUzxdUHuytrDEQ6OaJyMKdbRDq24UipC17PEUHhYNT2JQfJqWUXA)03tIx0poBts6oA2f6ZwEDcGGPfaM6TpY)HIaks0q58q0XgAAajh3STaG7g(qLuY9ruLoj6w)ieLbqOOg6FC3jL4RolWtm7kSjwZOeN8UdRzQBy6jf53tsC(96ccVj7bRK1QcCfs(TVrsJRDZXJgAXlkC39vMDIciHFQpVYZ0iTQWOsh1gSCOKvwegHOkC7aZ1w6kB8awnDH72NM8HaGGQ9LwpVQkMHAlh9VscQ1lTHgo7qidvcQ683IsGWcBn6iGY7zw3zruzSUiUc1IPtTli6wRYTtn4WPct57Jxlj10ialCCxDvXqyJQfIYz1rol)GuFLni)qkf37Vb5BKkPOvARh9cnRQaW0F)HWn511WLW2I8Fsa7zwRSOqX1ErsYZjtsEsXQTcMRyJHx7Hz1AhueGPeVIqHf0YkWZSqrXNLu6jHx82PcQkyuJi1EskATUQK)yyCCLwhXHOhtCczUe8Vzf2kgG1mvM0mSNaDTmRtVTEzrlFwqwaBiICnw1bq0DexVmPBXl2Os1IHU)aNzwI6iUfcgtgW6YVQT0(NB9QJjYxoifTqJhtQQcXxh5VwxIZP1NASgpAM2xf9XujLFrF32KrwMoN(nUrZMVir59y)xSjQPk0Mz6GybhtbJl(OYxIbJgCB)UYzNjzUsDzTmWzLkNDhUtNYfzn7rbIwvwcwocG8U(ane4UyvxwJm5OkzfqA7HTeBjsIkgYrOsEkjJ5GzdKrPN4sR70bxjy4LnMJTHiCout)oUF8OWwL3rZoSjLwBp2amEkZTCkyQedcoC3LKsInlm)PUUzvenPyuozfeNue7ne6x69bmytAswU3gcJkTtboGNZcmbd9qQhXPViiKL3R)KwkewrVuuOn1bKyYNRGBzrlW0SbBwRzgj3r5D6nol4A1LBsXegOrDZX1uzvGDSNUhAwyX8OTJ9k3vaDbb32KHnBr0zg3NqbPmnBLO5Q43g7g0l9ssiLtUSrWbB3Du5U3CwHnww2r(TvaLUJyFaNzGN3OquHgcoPDgMUIr82SN34EdAEct2E8WeamP4WrwAOStMwZhBPhTWg3FVSoqQ(vjFdY8)pNim9r(ehB(z5mhJfrzTtiXI4I7mYM645mTNsN6KbxCsKbhQayJfwX9T8ZIt4JPjtBTnW0o4pSBC89RoS4oJ6JXMbx7uKT7V7M8ITKQ6ayOFNOngYboH0ojqvlPQ2Ty9rwWzgz0WPP1MR2AGPkR8wBs7cnDJQAxyr(khqsvhcPXTl8sXqbhaz62ygsv(D9JnyoZltCGEmzcjV1Zu1uukq803AkUEp2S5EMmOQ05o3qgDu3zMsPBqz1XG19GXaYKYhXN200mVa8Y6tuGn(FmjlocpdUwrKGKbxNFVP0xDmljoSUS5wfusAJQSrZFCvOAgnVBuZZC6IW24r8Se)(GCu76ChrpL6hb(vHqEwt0n3L21ZpzLEhysIeHr94L2WVZrJ5)kf26ieOJrk8Y28Dff9L(S0DpPTiF6L3fw0aavf(hjAJ1TuEOhEuOaySkuWUmskzGAsRg2qRvBdstkYyM53fssIlTvbSqyCo4SuUtYr2wNhA411KGk0rtT6QeTCq1BREONJhiPNjPGEOLUezswxKshxvonF7S6jSZy3NgMqq3NQ5y0vv2ZMK7oPXWx9ewlg1mMT(zE1JR2GomkT4f4EVLi(iM0prrnkjxGFQX5z1yC1YZD)yWZDhkp3Tfp3XcEUJ98C3HWZD1LneMC(zOR2sSDrcesqMB6yQKJmt7qOgOmUddFT)oF4iUFQK1LnPMvSBhXHZdeF6jpff0BdQJS0(S9ZQntPTXkjAhTdafdcQEBs6hi1hyLBtDpSJYpM8BR9G0L41HICy2EqTHhdpbV68Hu7t3C2poxHzpvv9eWSNIPB7Qq329OOBJaL(PBFmSP(PrwZ(z1MP8R629bn)Yx32fR2D162W75T1hU2DTpilA9DRv)3OAMeDAjCWCfRhoodaFSz6KpSrhuqJl4vVVFkM2iT3Nu7mcSrAZG0Q5qx2PybelT8PxirR6als4ALIgbE(HSrXPRrxvsLVJQ36h)cWVv5YFOsMjZQ600SdNFkozodVuVhUC)nSZwJvO5xRtlDudVoTF9q7uXL7NzwRnSztinh)I72ZtWJQI8Eco(odPmSRd2qvQRTdZJpjmEThrUj4NdezuiMUs2tmXhK38Q1Cq4Vfve0DhqH89PdZJvEpbonMXL(pblAnbIxomeJkANaomAowWIIlM29TR0TkZYTrusw2uRu8kxvrUEbrWbqCkN6NHjqBMPzARdxO6mrBLxWkRLQ3sEBO6BAcpuYqu9afngGxYzaxRqcPZHKETVwNse93Xynh67k3SD1l1kvah7Gg5oHBffsPcmVmxX5ok9TM29BRztLX0UhYAKmGQq5Wn6LnfCvO8aKPDam7XQw8HxxarPnRIvH5CzoUiCtSIAU3H1dgri0vcvHxcSEVo4d(eXizxATplrvx7B08rPruH5RPs7KR62RlNyLinlUDbd0WjZWlDp2bgXWYjhe(XuoM3Uw3HEk6O5YqjIzYwaD4IlUyhUeZQge(7RSB19vIYb6VZyVuG3lr0u2QeG2waBxoSiGCXZQhJpjgsyyuPgyrUtSKTLaKw66CcJY1EPjQTw06ysvp2BH)9kaenSvI1)ip2)WdA2FSw(NWYEvMJSPw7D28yp7sZS6uUABwZL3DbRotFcbrLUco4A5Ka2jykfUQZfQoJnM48MI0NM0S9pVIQFdI1s63IzMORquNBv95GrAv1VUEA7TZUBbhg15jnEiMBMuRnLHKx9inhDblHCNqa5hyjLxeytjbBCMBelAgcvKq9DZKlsqsTlifWJF5lsOMupurc9q(uksOAMfej4dHksOoHtkaRcSfUjXXpKVf9uBJE2F4Xbi(uXi3WQkc)LApTMErHR3hTwazE)NI1pSR2uO27aRZB)fLSTZBpe5xhvDQTJImQZBf8yrIRcQIuKh4QKUmP(8eRaDQwbahInbkdpRtAbYpMYM748CFreR4EoQVBR12j3eMgqnU(lEZKQP0HlLzbGpncGAN4gbc(iOsdQVIWiPv5uZYvA(ulowFj(4wR9FGM8rku4xAvUu1h62NW(VYBebjmDqQbDBiWyXoDnVFKffP8fn7vWSPmmr544qMl)1Bb7ztpePxP3gP6kJ6(OoVVfYQZyBiJ6etoxi79D78HZoPY9QZU6HJDECndBfYrMirORxiAdwENgP0U6uJe3FWo7Ott5bf7cwif7xrcDC7XkKpKzqkk0OfKVWUl1zNcO0V2u4gm9t1SWxwfpNnN8LFxXMwIS5J7UTidQ6YgVhwTUARrC10)8eVeF9QZ8pttk1inQFDn2f9sukyuZ6FXdQ6oL0DPgWjTTZ5bIwUdgTOOK6a5ga(mC0rOzzayL6O6ggw5mmSQgD02qD)yIr092sDP3osRhSMBimvQ9OHQHi7)QQBMj5ZYHFKFueBOoCKriE11jgrbvGkA6()aHO29KAc5CnbWYt)T7f(u(D12dJjJQv78MEsZVIBsEaYwat(666VFe5LS(YaWlv7QtnV8mLSRJjssrp1(EWudPyxfB2IMELHGZ8x)Ke5Ea9BorTg7cjuoXiIFsRzM9Gr0P081FpEawVAFUMMXJw96RATJa2O2BRsSXO58bGqaYq(P9PbKa0U3V75KGfqjnsAb0nx9vRQta4naNEgRR2nR(FiiYLp70qGDGyALTOMhgMnr517QzFJADyabuQxhBczuYvhk52tuYTbLuCQhmTzKnexDLjKIsXgEfgBDdugcGijcHzydil8H4aUYj9qY)K8EAkmEGifWVURY6qUxYoaMVYakQAyyik7cKttwwXPqWw2URE2Uo5bmrhDSD3EY2DnX21JCi8tmuu1WmW275jPOR0(ws4mEvuupL31U17d8mb0ipyaXmzHOVNjaBrmhp23WUgu6d6oB(NRTwfJkrpl8n1g9BWpqwndyon7AHqlXIOyyZhgKApXJ7PReHZQ2KR4RlSpTeTtdQNlmUMxyAFPOSBHX1eJ6iVWyC(gYcJ9QlDxyAN0ypxyQV4xTsZwRAJXLUg6c)sH1iq25I4kvMofW)CtRhxy4M8oMAJg2IZjDSQlh3dFKiWdKO1pIgRKIZz9HksMmcJ(qe9SjkQUs)TXucYz606YNoMw3Uwqa1IbgJWXkgr7ysvtMogzeo9Gr4GWiCvYi06lPZbiYsvdfxnY(OHG9CrH4oKgKGDlEGoAlNLa(N8(2Oy)sdV6iC2WNdTiT(1G(mqCl(mJ4QxPog9)nfN)BD1GRYrQM2q4qo864RzFA)wsIJtd(Jhj(kNQRHQPvUb15(gspLZ09OaB1uOsUOgM6tlO7a63DkTfO8BzNjUUP7lHcjEP(wjfqQ(kqO4kVPsdjx4O0(1w10X4(b)1w1KifqfT6vRAQZZX6MmNzi3bSO(f1NQoh4NB6uimYWPTHlB17JaJ2OT18UlyNVjb5EJsLJSxiFyhgiROfK3T6Q6lKDTfy3aoUqwHFk6AgTqqfcjNazGxvVhD6LegOjSbkRRvVQkPCKdILPfGpgTJm92vCnxZHwvi7lf7kU)cYUcgT85KDfm87Zb7kUFXyxbtVQh2vCnAx5u0Y94p)R9bpZt55woRJ(AVYYu45Dj(pd7vwNI(GNvkCFT509vfU(t5F5RW9zyZPRxaaZXOcayF7OBKHjqUks9oIlhR(ktmYqKqCKW421rMYVBQA(wNb2r1Y6a60wRlBHNrGnsBj6SAoufeVU2ux9LaqtLpL7Ckwurx5(TXiX6Bl(HShRQYw064q(Q0RCVwawxNcUYo6VIFmpr6fFAkPxRogN18JBQt7qjPuTkRPD2yvh1AKDT9MRXxcuvXb1KTs65mBijT2d09Cjxak2Lc1N73p2DgVZmVjNChQN6EJNMTirwa1IV8smsxkcRtFp3JxQMr2hCN1MrTmEToxLbEBBut0(n(eTsbs4JRoU8TfF9SKS5YXJgIs8ZwIHpVLvDnbfF4Xv0Ikv)vfxTXEB3G2Aa35tNS6tQGSe4dPu7NykQQV)mkcqceWu5cU(zDJUvynHDRKWSbB9gKlR(w3ARWREeBNT4obL(IwRXUPjFCxkOvkGQnnQlA08k2x7stFO0vF0bqMlnciQvCmWHvXXS9tzEFByzQPbQklXrqg80)S7u3RMEPlXP(J(PW14Lq9)9TejSWD7tsjAQeZOLlFrvSYzVGyCj4)wesVz)zjWg26xKNqm0c)arXl(HGSjL)4FkeSan77HR)FmzYOpUgktKRohbM5jcpnVZJp35NgBbqBNCccGrgYje4NiW(XbNVubyD0V415Xs4QAGAexrhYje4NiW(XbNV6Okt0cNpUa3cWEawlU(OYFpPa3cWEaAEF7rfxpPa3iyhMGML48WaUrWomwHL48WaUrWomwHL48WaUrWIu1pD8cHXyfwpuWBeWifHuh)OV49qbpbWL)isaHInX0xCKckCiYdFCIf6Kei7X11)jf4wa2dW1Kkh)onFLTWqsHN9PaCdtK6KcCla7biVQkSexn8vx181psGByc8NuGBbypaTjl8C1dC9KcCJGDyQbwIZdd4gb7WyfwIZdd4gb7WyfwIZdd4Qc8G3zqEXrjQd5lHPcvnHhBv0g6Uf4itH2bBLxDx9urNhBjq7bvyyWw507KX20oHs9Hc8PP9qSh4yDVc85qXiTCQ2NMSI1FY2NPlXevJ7ipnGyMx)b)xx(1U8RoIPEW46JIQ2jupJdDi2dCRyC6gPLtLDc0Qh3rEA0Q381L)bU8RoyQEW46JbN3(XEL67mhUyVQw1jg8Nma)PhV7XcCFKOAnHj7dyOugj84ycqvDaphDUYtv5iDK638n8FcP7(mF6ZpxbxnD1hBNaDTZN5thtMkl5yu27rNtCQzehB(axMXzQ5eY6vTGBjtE0H)PdYFoG5MfDhKP)2ZOztdU9qHaHypUMg0pb2Rsyd)9OZjo1mIJnFOrOXrBHeQNxebtDvEujupO6zQbxhMY6Pg(2azGGPNHR6pplky1ThJTyUTWxvnH0aAOXzHzXI9Z2bfhCO40xOyEbYIOep6W3giBEbcFm2I52c)ElaCCw6oiXOoU4otzqFAm5JBt75NptHDjIvw1q7CDwe(gn326XV8CNjx9kfQLKNI8UqZae)jnnbqaUVscTao7BATEn(BCMoD84XlegjwmQi8xveGJrcWrjb4OHaCAraUseqTK0N5scx85RKWfwjj0La(SrsOIaeS(6Eum(OckwAiS8h)J09VcEx47yb7yzxUe6O(W2tb96(KnHq)X8x9RkxUnpFF23FXfpeMVT4EYcWUlYc3ver5WRs93Kd)7vxaFBKcZZUiFBWJ(PpsgDy8fVJc7)A1D5(pbZWf0JBo7J2Hh72lmbaq5pcZ2)ypd9x7NtivakLlVnC3pqi53TpnmQCPRlCtBDVI2UqV0D9QRNndikgzKnHVDCVA(fn99F8N3(wm(A5U8)Cx8xRw441q30AEl96xtfrM3SOikZ1exSUmM7ZS6IoRUkMvDbJ3NzTrh71j7Nt7VQDOB1Z0lDAuk7UFgDEkwfvFP70x30QufMv0cB)6vjXRdP5Myd(1Avsc7A9m0MbFpyKUgzK6wYezvDlWDNN2dgPIDiaHrQd)Aj4PGrQe36dJu0(CBwPRif60tHH(GeUhcsC80nbFyTNEhXPF6KReqGEuGYrnCSJAzySeUwx1HJ3c6HYlvxrNrnl8NgE5rQswhl5Y6o6I1kghsOZkJCEiboFyzqHu7JJwSZTcDwzouhwkuijVF0cEUvSZYjrzJ4LI(g0rqkR7tQfnKX2fZLjgHOrjy7UW41EBsdc(5aXFwMie(QLwH4vOT8DuFUJAqiC9O1bIf6aXEExBwgeZKm4jW8WSsvDE5U5QrkUvOWlmI)MYTJH63EXvQrZM7EQmwEUgSzbFTuGibZcTTkpE05k7VZMq6BCNos(AzxnGrTxgF(5QjjnHygn2lpPyf8bXwflRyp)nqVJTlMF5BWVY2elCs3xA1llf71XY7C)HL59OThJg(fE37GGlca8Mzt1OGuDdWBRwFE9kOiJK7Du8hhDgol)5Nr(Y4twjhdoayGjChjy4peaxG(6Bk9OZBTK6YNu4XqCSRd(GpzXHApLojb3m75NrU88p)mZ0AX61e8ADsYokA1y(PrGx1AxTqGGjZUSq)ykQ7rsEp3AZJ0PtZhrX6zw982U3BuBt5vQ5UVQMZtSBg)ZHKNrNY8THPz5VKZxKOOX8xABr8dmMd7fQ1j36NEFi8i6QdHnpcHVpMvhIFWpkQC57QkncTWfIuy7VhHnC4kxbzVM9vmKWld3W1oKB07MbikWotf0a8(V5Vk0pscx9txb9AI8KucZmhGGOshXKfv00v8vylWBksFcg(5u2uZVXdH4vZwmxsEUsVEeIqorfGRR2QjQ98ZC7ekAVAlUguhrBRuJW7CS3mxnsZuc704lgH3vW0dPwoxN7osXh0wc9dD(TrYgJ1aBP1JG0SGuamcRh8F7lP1dmKEyRh4q64SEGbBX1dA7(jZ7)uS(HDv6u0xSYRFDqYGdDotMzYEh8Mvg8f(foX1T3Zun42Gw9li5cWNy2gAbtrEGfgQ0JZB)mwkX5T9vAaEJdDv35Tigm3xq8fcCSoqNWuaBM1blSyUuCmn)mH(fH7MW0aQQEJsm)N(cshgdN77IMgaDORLkbTKbv)hObZKcnkTURXZDgDUcfA0j9kiQHYL3sIWa2vLFOI1l5gEFc83WKNCgDORIuCfV1ZnA20fZv(8kOuT8zTCWSP9DbN)gDsqzu7Fw4DuSedjkq3SOSGYL34xUCBAWM5VOENQE8XhN8yYJBH2sjD7Q2hefn3z60RNEbvd9nHXBkGUn0lw8xznBQ)y1pCZf(lkx(42WOEa5l)o3PxFbBb6n1lqVyX)x1FJbZWSYLf7FD5sFYF5Xai6s4Vz7C4(TxD939Dx0KN6lw8o(FNndWLrJTHz2c0RNDfHLaYfVrwU4fl(TKFSC5Fx6xRiKn2pbwI12coRy0evWYLXj5LvnjpIcjvyPrtmm(djVNO)9teVVXepJG2rDAUePbVAPdf6QigIhHzX(M5UUnvyOL(BDojT3bsEDI70Z(6ONyq9b8lEMEGzT(UZBhRMsotfPOXQKAOP)LW49Mmr(kNPl4JbBT3tEzN7YORVOzAn1cLOb3tvvsL)RBFknCZ)MUZ1nfjvO2FcvJwOCEJH7v6oif5Hekili:nRvBpUTns4Fllkoh7EjowAxNnPyTbAVEan7DxqrDUVkjAjABHvw0NevxShm0V9oKuVqsrklTXO31IKytY5foZ8mZqA6549vVnrik27lUlCxU4ENLZDDDCDx6TH(YjS3MtOWNq7HpKIoc)DXHYakoNYM4LeckIXGCsrwimP3MTfXj0pN6TTdxx46(XfFWBdQGEGK5TzZXIDzXp5T5qCuewqbop0BZxpeNxgW(dQmOs6LbKDW3dPXK0YGK4Ckm9oswzWVGFkojEoOozKDXjGs8DLb)mgrb98FKgV)a9hkd(3PhijVu(y5JFhm7VMHdjh3IOLb)iNJ5LpkyD(8t1Z9xx9Eqnt9j78FooLIZEB8Uv3STy3U5QJpV4KzYl4c1hgkhNgInVOmuCo2pcJImppk74lmzrpuVkXE4NX7qfjg2banhJtJ83LHX)xS8WOuA8r0(4q)8d4KK3gHGVHx5SG9FSDxiHKerEoDU2kNNHpIItZxTqMDfGEhtXhFllUyfnlo9jm1HXhUrkcL9KpndLMdUPJigvYwkBmWDemyBcHaB0ISxgdr4SCC2tXP7hbrOSquk2NsYYWPugHzfPG55e5zC2d3VyYa5Zjc7tJqWvXqBtybYm6OOeqdMRm(CCkABcoAY0icD(Umso1Fh(3HqZkh3d3E(mBkHb7ucAFbUDUznXuqOikhWAO0iaLGHOR)fkfIrocIuwRAdA5GIty689hifjZzl53vc6ecZpbJdpiP)Yd3Q(tTRKtSU1MD(80MixsbDBgg9uZ0oZMjRo1ZZuLP30rC04qwKX5Z3OlUQzMnPruMCE1s11GjihIWFcZny2KRmvXHVaXBfcRMn1rMGiwop)qsCIw856pT48zE8wEbltRFeHCeuvGuf67UFKNgsXN4deDsKjKIY2dU9dyuc9W8tH03D73pTZG)LQrG0jm0JFumE2dRUD5GSIRVRoW8hj)DJj6e2WTvBzrWNpofFmgNVEL7KUXtv2TortnU3P8LVYfcQeFYzcykXcUmVwT9BJ(M11haWhaCeIEXSwjWURCQ3DBabNGF3x5MQYGFJq7y8bvWx8nFwTprgtebBsa3DrcZ5c0x4B6YIhUBOA2CfozogQ3KDmBPDULhcTvSxg5uz6yENAR4eUnFLZm78zh0UcgkVSxItvU5j8GGvU2jwe(qrNKYE1mwtQl(oumC4bgPZZPqNlRxTS2DVOhRMcY9ci1byLAbxQHJnaRE0fR2Q1le2Q(i2EkO7hmvvMytrl1g7HK8aQy8kJ6m5noGaA8Jt3vKZya33kb0U6bn25C3Es16e5ITOQZr8roT(S0C(pdj4fy26W2jcKsL3NfglLtUBgbiPeRKhefb9IdD9YyL1SW92mtJxwD6g)7RuM2BXqNHQvxgBPeDUPHf1N2AUoNomQN60kY6v2kqNDV5zUgb3c(9Thsl4ZidK928mklf8u5SJCcD9gd0NrRow5BuGjVPmid)FkIZWqJX5KJSEKlOeW6Zga2FP7X5ZlF8FgNct5WpXzEXjg)ylqONatn47EtdzUwjtn4OLIBTsHEA8wAUZknn(W2fV0(oPjeRD1Fy0BG7FfBGpokD6tJA1olg3YT7PnymDS7GvJTLiXUh2q0oJoEK8ossc5zwsiimndLxgaReghoXnWIyGCkBz18I1zyzW2cA96sjCyqrQYQJIylocrrBHtj(dqHGG3bKjbXRgYygk(mQ7ZQb1QUwpABckwjhdiua1FTWLT1ogcC00QT7OAtKoeqOwzIHafTbUSdh7nnKDmPjiGD0OP9TD0Oj8IDWOv8IDx8)hJxmJkUy8FK4kaVwyaPBnCiGaT7iCi(yLg5gKFU9IMgKpw(wLguE36RdAqzCvUhhjkSdMBUdhPvpUsQoVsqSJDuS0f5OT()gjfAGLVAcmlNL5Ii638NY99aHYuYGf27)gfw7MFCjXCUupfkzV)tpbJ9QVxoLsZV8W1kPITe12HKA)QjdPcRPSe2bL6)Ik)pXj1jL)JF(yTMENQmyMzVn5NWHEFXDPR3g(GSF1nObi4F(c)NWR6yxE)K3MWSywRZiVnwVN5GjG61ZHV5lO)dGxg8a4taLGRQEBABkYJck6RtNSD48(f2TVEHz4G7TsPf8ZKYDCtE1uAaDzXdlDPvfsykldwbGMwUP2bhJdFqryDr0Ac8ERcu6O0LbRHQZlkdoFMf3A6sa03GHv79pkRosMfvT4tw1cB3sa3py5Mca1fSsl1Llqntwolg2wgIBUFbxm3ujPo3JqReuNIlg7GljxPqaC9t678ylX3BfHH2qb5agEL7BOFyDVxSz)Hn9cnL2rUIOKPq2pPiwbSr8BRl((S(cITJlBnvUAMk3wgQFfanGWRDigFjYUtlXC2H1Jdn9bR85s3CphcVOpBU9mbv281AHNQm0Kn)JddPTMH0STLVyQHEUVF1Ir90tNOkrRdFaqefLSNCk2)za4rm3zLL2rXFdbS2YjAhAFvZjAhxFLZjwDc3MSH1eiDuvTsq6wGAk0oTQrmNLx9sT2kEUmEBeVxgt53epqQ6xctRWBhza5WlozkpNcRD7WA3rW6lKfZcHArCShDt)PYggZAEmoJOlM2W3bjd13Ut)j0gedfpINbLvZEZ1t72)Pwwmw93(7hwP8RIOUq2ma2R)MDAzu7PPgwcmtpLN6T40lVfm0iU(MSPxeRpZh(sD4lvYKiRzxi)4uEUq7hxGPa3y9idCbpMIusi46TYfYS2J21zd3w62XE)s23nT8R5(R48YEIJRZHmCg5HECSNVOZDfXp0nel9984idt)(MrLUojUF9bi9)TlhH)DTs)asx3gxPTN8raeRFfoIs9UYjlg7jzRdlNkxhUTZ(2Xen23Z7CsckotVuq95JDSNn0(oZ85H1pDnRWU9SzM4UKdq7jqjU)eFrbv2nOWyU9KC6m)HbZB1d0X7NP5618698DJVRm(lNol(KysZV(5M2J0QyuFtBAORBLxQunb1vPCPi63SM6AR)FV)i]] )
+spec:RegisterAbilities({
+	-- Talent: Surrounds you in an Anti-Magic Shell for $d, absorbing up to $<shield> magic ...
+	antimagic_shell = {
+		id = 48707,
+		cast = 0,
+		cooldown = 45,
+		gcd = "off",
+
+		startsCombat = false,
+
+		toggle = function()
+			if settings.dps_shell then
+				return
+			end
+			return "defensives"
+		end,
+
+		handler = function()
+			applyBuff("antimagic_shell")
+		end,
+	},
+
+	-- Talent: Places an Anti-Magic Zone that reduces spell damage taken by party or raid me...
+	antimagic_zone = {
+		id = 51052,
+		cast = 0,
+		cooldown = 120,
+		gcd = "spell",
+
+		talent = "antimagic_zone",
+		startsCombat = false,
+
+		toggle = "cooldowns",
+
+		handler = function()
+			applyBuff("antimagic_zone")
+		end,
+	},
+
+	-- Talent: Summons a legion of ghouls who swarms your enemies, fighting anything they ca...
+	army_of_the_dead = {
+		id = 42650,
+		cast = 4,
+		cooldown = 600,
+		gcd = "spell",
+
+		spend_runes = { 1, 1, 1 }, -- 1 Blood, 1 Frost, 1 Unholy
+
+		startsCombat = false,
+		texture = 237511,
+
+		toggle = "cooldowns",
+
+		handler = function()
+			applyBuff("army_of_the_dead", 4)
+			summonPet("army_ghoul", 40)
+		end,
+	},
+
+	-- Talent: Lifts the enemy target off the ground, crushing their throat with dark energy...
+	asphyxiate = {
+		id = 108194,
+		cast = 0,
+		cooldown = 30,
+		gcd = "spell",
+
+		talent = "asphyxiate",
+		startsCombat = true,
+
+		toggle = "interrupts",
+
+		debuff = "casting",
+		readyTime = state.timeToInterrupt,
+
+		handler = function()
+			applyDebuff("target", "asphyxiate")
+		end,
+	},
+
+	-- Talent: Convert Blood Charges to Death Runes.
+	blood_tap = {
+		id = 45529,
+		cast = 0,
+		cooldown = 1,
+		gcd = "off",
+
+		talent = "blood_tap",
+		startsCombat = false,
+
+		usable = function()
+			return buff.blood_charge.stack >= 5
+		end,
+
+		handler = function()
+			removeBuff("blood_charge", 5)
+			--TODO: Add in generation of Death rune
+		end,
+	},
+
+	-- Empower Rune Weapon: Instantly activates all your runes and grants RP
+	empower_rune_weapon = {
+		id = 47568,
+		cast = 0,
+		cooldown = 300,
+		gcd = "off",
+
+		startsCombat = false,
+		toggle = "cooldowns",
+
+		handler = function()
+			gain(6, "runes")
+			gain(25, "runic_power")
+		end,
+	},
+
+	-- Festering Strike: A vicious strike that deals weapon damage and infects the target with a disease
+	festering_strike = {
+		id = 85948,
+		cast = 0,
+		cooldown = 0,
+		gcd = "spell",
+
+		spend_runes = { 1, 1, 0 }, -- 1 Blood, 1 Frost, 0 Unholy
+
+		startsCombat = true,
+
+		--handler = function()
+		--TODO: Increase the duration of Blood Plague, Frost Fever, and Chains of Ice effects on the target by up to 6 seconds
+		--end,
+	},
+
+	-- Outbreak: Instantly applies both Frost Fever and Blood Plague to the target
+	outbreak = {
+		id = 77575,
+		cast = 0,
+		cooldown = function()
+			return spec.blood and 30 or 60
+		end,
+		gcd = "spell",
+
+		startsCombat = true,
+
+		handler = function()
+			applyDebuff("target", "frost_fever")
+			applyDebuff("target", "blood_plague")
+		end,
+	},
+
+	-- Pestilence: Spreads diseases from the target to nearby enemies
+	pestilence = {
+		id = 50842,
+		cast = 0,
+		cooldown = 0,
+		gcd = "spell",
+
+		spend_runes = { 1, 0, 0 }, -- 1 Blood, 0 Frost, 0 Unholy
+
+		startsCombat = true,
+
+		usable = function()
+			return debuff.frost_fever.up or debuff.blood_plague.up
+		end,
+
+		handler = function()
+			gain(10, "runic_power")
+			if debuff.frost_fever.up then
+				active_dot.frost_fever = min(active_enemies, active_dot.frost_fever + active_enemies - 1)
+			end
+			if debuff.blood_plague.up then
+				active_dot.blood_plague = min(active_enemies, active_dot.blood_plague + active_enemies - 1)
+			end
+		end,
+	},
+
+	-- Talent: Extract diseases from target to gain runes (MoP 5.5.0)
+	plague_leech = {
+		id = 123693,
+		cast = 0,
+		cooldown = 0,
+		gcd = "spell",
+
+		talent = "plague_leech",
+		startsCombat = true,
+
+		usable = function()
+			-- MoP: Can only use when diseases are about to expire or for rune generation
+			local deficit = state.rune_deficit
+			return (debuff.frost_fever.up and debuff.frost_fever.remains < 3)
+				or (debuff.blood_plague.up and debuff.blood_plague.remains < 3)
+				or (deficit >= 2 and (debuff.frost_fever.up or debuff.blood_plague.up))
+		end,
+
+		handler = function()
+			local runes_gained = 0
+			if debuff.frost_fever.up then
+				removeDebuff("target", "frost_fever")
+				runes_gained = runes_gained + 1
+			end
+			if debuff.blood_plague.up then
+				removeDebuff("target", "blood_plague")
+				runes_gained = runes_gained + 1
+			end
+			gain(runes_gained, "runes")
+		end,
+	},
+
+	-- Talent: Surrounds the caster with unholy energy that damages nearby enemies
+	unholy_blight = {
+		id = 115989,
+		cast = 0,
+		cooldown = 90,
+		gcd = "spell",
+
+		talent = "unholy_blight",
+		startsCombat = true,
+
+		handler = function()
+			applyBuff("unholy_blight")
+			applyDebuff("target", "frost_fever")
+			applyDebuff("target", "blood_plague")
+		end,
+	},
+
+	-- Talent: Shackles the target $?a373930[and $373930s1 nearby enemy ][]with frozen chain...
+	chains_of_ice = {
+		id = 45524,
+		cast = 0,
+		cooldown = 0,
+		gcd = "spell",
+
+		spend_runes = { 0, 1, 0 }, -- 0 Blood, 1 Frost, 0 Unholy
+
+		startsCombat = true,
+
+		handler = function()
+			applyDebuff("target", "chains_of_ice")
+		end,
+	},
+
+	-- Command the target to attack you.
+	dark_command = {
+		id = 56222,
+		cast = 0,
+		cooldown = 8,
+		gcd = "off",
+
+		startsCombat = true,
+
+		handler = function()
+			applyDebuff("target", "dark_command")
+		end,
+	},
+
+	dark_simulacrum = {
+		id = 77606,
+		cast = 0,
+		cooldown = 60,
+		gcd = "off",
+
+		spend = 20,
+		spendType = "runic_power",
+
+		pvptalent = "dark_simulacrum",
+		startsCombat = false,
+		texture = 135888,
+
+		usable = function()
+			if not target.is_player then
+				return false, "target is not a player"
+			end
+			return true
+		end,
+		handler = function()
+			applyDebuff("target", "dark_simulacrum")
+		end,
+	},
+
+	-- Pet transformed into an undead monstrosity. Damage dealt increased by 100%.
+	dark_transformation = {
+		id = 63560,
+		cast = 0,
+		cooldown = 0,
+		gcd = "spell",
+
+		spend_runes = { 0, 0, 1 },
+
+		startsCombat = false,
+		texture = 342913,
+		usable = function()
+			if pet.ghoul.down then
+				return false, "requires a living ghoul"
+			end
+			if buff.shadow_infusion.stacks < 5 then
+				return false, "requires five stacks of shadow_infusion"
+			end
+			return true
+		end,
+
+		handler = function()
+			applyBuff("dark_transformation")
+			removeBuff("shadow_infusion")
+		end,
+	},
+
+	-- Corrupts the targeted ground, causing ${$52212m1*11} Shadow damage over $d to...
+	death_and_decay = {
+		id = 43265,
+		cast = 0,
+		cooldown = 30,
+		gcd = "spell",
+
+		spend_runes = { 0, 0, 1 }, -- 0 Blood, 0 Frost, 1 Unholy
+
+		startsCombat = true,
+		notalent = "defile",
+
+		usable = function()
+			return (settings.dnd_while_moving or not moving), "cannot cast while moving"
+		end,
+
+		handler = function()
+			applyBuff("death_and_decay")
+			applyDebuff("target", "death_and_decay")
+		end,
+
+		bind = { "defile", "any_dnd" },
+
+		copy = "any_dnd",
+	},
+
+	-- Fires a blast of unholy energy at the target$?a377580[ and $377580s2 addition...
+	death_coil = {
+		id = 47541,
+		cast = 0,
+		cooldown = 0,
+		gcd = "spell",
+
+		spend = function()
+			return buff.sudden_doom.up and 0 or 32
+		end,
+		spendType = "runic_power",
+
+		startsCombat = true,
+		texture = 136145,
+
+		handler = function()
+			removeBuff("sudden_doom")
+		end,
+	},
+
+	-- Opens a gate which you can use to return to Ebon Hold.    Using a Death Gate ...
+	death_gate = {
+		id = 50977,
+		cast = 4,
+		cooldown = 60,
+		gcd = "spell",
+
+		spend_runes = { 0, 0, 1 }, -- 0 Blood, 0 Frost, 1 Unholy
+
+		startsCombat = false,
+
+		handler = function() end,
+	},
+
+	-- Harnesses the energy that surrounds and binds all matter, drawing the target ...
+	death_grip = {
+		id = 49576,
+		cast = 0,
+		cooldown = 35,
+		gcd = "off",
+		icd = 0.5,
+
+		startsCombat = true,
+
+		handler = function()
+			applyDebuff("target", "death_grip")
+			setDistance(5)
+		end,
+	},
+
+	-- Talent: Create a death pact that heals you for $s1% of your maximum health, but absor...
+	death_pact = {
+		id = 48743,
+		cast = 0,
+		cooldown = 120,
+		gcd = "off",
+
+		talent = "death_pact",
+		startsCombat = false,
+
+		toggle = "defensives",
+
+		usable = function()
+			return pet.alive, "requires an undead pet"
+		end,
+
+		handler = function()
+			gain(health.max * 0.25, "health")
+		end,
+	},
+
+	-- Talent: Focuses dark power into a strike$?s137006[ with both weapons, that deals a to...
+	death_strike = {
+		id = 49998,
+		cast = 0,
+		cooldown = 0,
+		gcd = "spell",
+
+		spend_runes = function()
+			if buff.dark_succor.up then
+				return { 0, 0, 0 }
+			end
+			return { 0, 1, 1 }
+		end,
+
+		startsCombat = true,
+
+		handler = function()
+			removeBuff("dark_succor")
+		end,
+	},
+
+	-- For $d, your movement speed is increased by $s1%, you cannot be slowed below ...
+	deaths_advance = {
+		id = 96268,
+		cast = 0,
+		cooldown = 120,
+		gcd = "off",
+
+		talent = "deaths_advance",
+		startsCombat = false,
+
+		handler = function()
+			applyBuff("deaths_advance")
+		end,
+	},
+
+	-- Defile the targeted ground, dealing Shadow damage over time. While you remain within your Defile, your Scourge Strike will hit multiple enemies near the target. If any enemies are standing in the Defile, it grows in size and deals increasing damage every sec.
+	defile = {
+		id = 43265, -- In MoP, Defile uses the same spell ID as Death and Decay
+		cast = 0,
+		cooldown = 30,
+		gcd = "spell",
+
+		spend_runes = { 1, 0, 0 }, -- 1 Blood, 0 Frost, 0 Unholy
+
+		talent = "defile",
+		startsCombat = true,
+
+		usable = function()
+			return (settings.dnd_while_moving or not moving), "cannot cast while moving"
+		end,
+
+		handler = function()
+			applyDebuff("target", "defile")
+			applyBuff("death_and_decay")
+			applyDebuff("target", "death_and_decay")
+		end,
+
+		bind = { "death_and_decay", "any_dnd" },
+	},
+
+	-- Strike an enemy for Frost damage and infect them with Frost Fever
+	icy_touch = {
+		id = 45477,
+		cast = 0,
+		cooldown = 0,
+		gcd = "spell",
+
+		spend_runes = { 0, 1, 0 }, -- 0 Blood, 1 Frost, 0 Unholy
+
+		startsCombat = true,
+
+		handler = function()
+			applyDebuff("target", "frost_fever")
+		end,
+	},
+
+	-- Talent: Your blood freezes, granting immunity to Stun effects and reducing all damage...
+	icebound_fortitude = {
+		id = 48792,
+		cast = 0,
+		cooldown = 180,
+		gcd = "off",
+
+		talent = "icebound_fortitude",
+		startsCombat = false,
+
+		toggle = "defensives",
+
+		handler = function()
+			applyBuff("icebound_fortitude")
+		end,
+	},
+
+	-- Draw upon unholy energy to become Undead for $d, increasing Leech by $s1%$?a3...
+	lichborne = {
+		id = 49039,
+		cast = 0,
+		cooldown = 120,
+		gcd = "off",
+
+		talent = "lichborne",
+		startsCombat = false,
+
+		toggle = "defensives",
+
+		handler = function()
+			applyBuff("lichborne")
+		end,
+	},
+
+	-- Talent: Smash the target's mind with cold, interrupting spellcasting and preventing a...
+	mind_freeze = {
+		id = 47528,
+		cast = 0,
+		cooldown = 15,
+		gcd = "off",
+
+		startsCombat = true,
+
+		toggle = "interrupts",
+
+		debuff = "casting",
+		readyTime = state.timeToInterrupt,
+
+		handler = function()
+			interrupt()
+		end,
+	},
+
+	-- A necrotic strike that deals weapon damage and applies a Necrotic Strike shield
+	necrotic_strike = {
+		id = 73975,
+		cast = 0,
+		cooldown = 0,
+		gcd = "spell",
+
+		spend_runes = { 0, 0, 1 }, -- 0 Blood, 0 Frost, 1 Unholy
+
+		talent = "necrotic_strike",
+		startsCombat = true,
+
+		handler = function()
+			applyDebuff("target", "necrotic_strike")
+		end,
+	},
+
+	-- Activates a freezing aura for $d that creates ice beneath your feet, allowing...
+	path_of_frost = {
+		id = 3714,
+		cast = 0,
+		cooldown = 0,
+		gcd = "spell",
+
+		spend_runes = { 0, 1, 0 }, -- 0 Blood, 1 Frost, 0 Unholy
+
+		startsCombat = false,
+
+		handler = function()
+			applyBuff("path_of_frost")
+		end,
+	},
+
+	-- Strike an enemy for Unholy damage and infect them with Blood Plague
+	plague_strike = {
+		id = 45462,
+		cast = 0,
+		cooldown = 0,
+		gcd = "spell",
+
+		spend_runes = { 0, 0, 1 }, -- 0 Blood, 0 Frost, 1 Unholy
+
+		startsCombat = true,
+
+		handler = function()
+			applyDebuff("target", "blood_plague")
+		end,
+	},
+
+	-- An unholy pact that prevents fatal damage, instead absorbing incoming healing
+	purgatory = {
+		id = 114556,
+		cast = 0,
+		cooldown = 240,
+		gcd = "off",
+
+		talent = "purgatory",
+		startsCombat = false,
+
+		toggle = "defensives",
+
+		handler = function()
+			applyBuff("purgatory")
+		end,
+	},
+
+	raise_ally = {
+		id = 61999,
+		cast = 0,
+		cooldown = 600,
+		gcd = "spell",
+
+		spend = 30,
+		spendType = "runic_power",
+
+		startsCombat = false,
+		texture = 136143,
+
+		toggle = "cooldowns",
+
+		handler = function() end,
+	},
+
+	-- Talent: Raises $?s207313[an abomination]?s58640[a geist][a ghoul] to fight by your si...
+	raise_dead = {
+		id = 46584,
+		cast = 0,
+		cooldown = 120,
+		gcd = "spell",
+
+		startsCombat = false,
+
+		essential = true,
+		nomounted = true,
+
+		usable = function()
+			return not pet.alive
+		end,
+		handler = function()
+			summonPet("ghoul", 3600)
+		end,
+	},
+
+	-- An unholy strike that deals Physical damage and Shadow damage
+	scourge_strike = {
+		id = 55090,
+		cast = 0,
+		cooldown = 0,
+		gcd = "spell",
+
+		spend_runes = { 0, 0, 1 }, -- 0 Blood, 0 Frost, 1 Unholy
+
+		startsCombat = true,
+	},
+
+	-- Talent: Strike an enemy for Shadow damage and mark their soul. After 5 sec, if they are below 45% health, the mark will detonate for massive Shadow damage.
+	soul_reaper = {
+		id = 130736,
+		cast = 0,
+		cooldown = 6,
+		gcd = "spell",
+
+		spend_runes = { 0, 0, 1 }, -- 0 Blood, 0 Frost, 1 Unholy
+
+		startsCombat = true,
+        gain = 10,
+        gainType = "runic_power",
+        texture = 636333,
+
+		handler = function()
+			applyDebuff("target", "soul_reaper")
+		end,
+	},
+
+	strangulate = {
+		id = 47476,
+		cast = 0,
+		cooldown = 120,
+		gcd = "off",
+
+		startsCombat = false,
+		texture = 136214,
+
+		toggle = "interrupts",
+
+		debuff = "casting",
+		readyTime = state.timeToInterrupt,
+
+		handler = function()
+			interrupt()
+			applyDebuff("target", "strangulate")
+		end,
+	},
+
+	-- Blood Boil: Deals damage to nearby enemies and spreads diseases
+	blood_boil = {
+		id = 48721,
+		cast = 0,
+		cooldown = 0,
+		gcd = "spell",
+
+		spend_runes = { 1, 0, 0 }, -- 1 Blood, 0 Frost, 0 Unholy
+
+		startsCombat = true,
+		usable = function()
+			local bloodReady = (state.blood or 0) > 0 or (state.death or 0) > 0
+			if not bloodReady then
+				return false, "no blood/death rune"
+			end
+			local enemies = active_enemies or state.active_enemies or 1
+			if enemies > 1 then
+				if
+					(debuff.frost_fever.up and active_dot.frost_fever < enemies)
+					or (debuff.blood_plague.up and active_dot.blood_plague < enemies)
+				then
+					return true
+				end
+				if enemies >= 2 and debuff.frost_fever.up and debuff.blood_plague.up then
+					return true
+				end
+			end
+			return false, "single target / no spread need"
+		end,
+
+		handler = function()
+			-- Blood Boil base functionality for MoP
+			-- Spreads diseases to nearby enemies
+			if debuff.frost_fever.up then
+				active_dot.frost_fever = min(active_enemies, active_dot.frost_fever + active_enemies - 1)
+			end
+			if debuff.blood_plague.up then
+				active_dot.blood_plague = min(active_enemies, active_dot.blood_plague + active_enemies - 1)
+			end
+		end,
+	},
+
+	-- Horn of Winter: Increases Attack Power and generates 10 runic power
+	horn_of_winter = {
+		id = 57330,
+		cast = 0,
+		cooldown = 20,
+		gcd = "spell",
+
+		startsCombat = false,
+
+		handler = function()
+			applyBuff("horn_of_winter")
+			gain(10, "runic_power") -- MoP gives 10 RP on cast
+		end,
+	},
+
+	-- Racials and Engineering (for APL alignment)
+	blood_fury = {
+		id = 33697,
+		cast = 0,
+		cooldown = 120,
+		gcd = "off",
+
+		startsCombat = false,
+		toggle = "cooldowns",
+
+		handler = function()
+			applyBuff("blood_fury")
+		end,
+	},
+
+	berserking = {
+		id = 26297,
+		cast = 0,
+		cooldown = 180,
+		gcd = "off",
+
+		startsCombat = false,
+		toggle = "cooldowns",
+
+		handler = function()
+			applyBuff("berserking")
+		end,
+	},
+
+	synapse_springs = {
+		id = 126734,
+		cast = 0,
+		cooldown = 60,
+		gcd = "off",
+
+		startsCombat = false,
+		toggle = "cooldowns",
+
+		handler = function()
+			applyBuff("synapse_springs")
+		end,
+	},
+
+	-- Unholy Frenzy: Increases Attack Speed
+	unholy_frenzy = {
+		id = 49016,
+		cast = 0,
+		cooldown = 180,
+		gcd = "off",
+
+		startsCombat = false,
+
+		handler = function()
+			applyBuff("unholy_frenzy")
+			buff.unholy_frenzy.on_self = UnitIsUnit("target", "player") and true or false
+		end,
+	},
+
+	-- Talent: Summon a Gargoyle into the area to bombard the target for $61777d.    The Gar...
+	summon_gargoyle = {
+		id = 49206,
+		cast = 0,
+		cooldown = 180,
+		gcd = "off",
+
+		startsCombat = true,
+
+		toggle = "cooldowns",
+
+		handler = function()
+			summonPet("gargoyle", 30)
+		end,
+	},
+	-- Presence switching
+	blood_presence = {
+		id = 48263,
+		cast = 0,
+		cooldown = 1,
+		gcd = "off",
+
+		startsCombat = false,
+
+		handler = function()
+			if buff.frost_presence.up then
+				removeBuff("frost_presence")
+			end
+			if buff.unholy_presence.up then
+				removeBuff("unholy_presence")
+			end
+			applyBuff("blood_presence")
+		end,
+	},
+
+	frost_presence = {
+		id = 48266,
+		cast = 0,
+		cooldown = 1,
+		gcd = "off",
+
+		startsCombat = false,
+
+		handler = function()
+			if buff.blood_presence.up then
+				removeBuff("blood_presence")
+			end
+			if buff.unholy_presence.up then
+				removeBuff("unholy_presence")
+			end
+			applyBuff("frost_presence")
+		end,
+	},
+
+	unholy_presence = {
+		id = 48265,
+		cast = 0,
+		cooldown = 1,
+		gcd = "off",
+
+		startsCombat = false,
+
+		handler = function()
+			if buff.frost_presence.up then
+				removeBuff("frost_presence")
+			end
+			if buff.blood_presence.up then
+				removeBuff("blood_presence")
+			end
+			applyBuff("unholy_presence")
+		end,
+	},
+
+	-- Stub.
+	any_dnd = {
+		name = function()
+			return "|T136144:0|t |cff00ccff[Any "
+				.. (class.abilities.death_and_decay and class.abilities.death_and_decay.name or "Death and Decay")
+				.. "]|r"
+		end,
+		cast = 0,
+		cooldown = 0,
+		copy = "any_dnd_stub",
+	},
+
+	control_undead = {
+		id = 111673,
+		cast = 0,
+		cooldown = 0,
+		gcd = "spell",
+
+		startsCombat = true,
+
+		handler = function()
+			-- Control Undead: Take control of an undead target
+		end,
+	},
+})
+
+-- MoP-specific rune state expressions
+-- Note: Do not register state expressions named blood_runes/frost_runes/unholy_runes/death_runes,
+-- since they would shadow the resource/state tables registered above and break rune queries.
+
+-- Legacy rune type expressions for SimC compatibility
+-- Death Rune tracking system for MoP (based on Cataclysm implementation)
+local death_rune_tracker = { 0, 0, 0, 0, 0, 0 }
+spec:RegisterStateExpr("get_death_rune_tracker", function()
+	return death_rune_tracker
+end)
+
+spec:RegisterStateTable(
+	"death_runes",
+	setmetatable({
+		state = {},
+
+		reset = function()
+			for i = 1, 6 do
+				local start, duration, ready = GetRuneCooldown(i)
+				local type = GetRuneType(i)
+				local expiry = ready and 0 or start + duration
+				state.death_runes.state[i] = {
+					type = type,
+					start = start,
+					duration = duration,
+					ready = ready,
+					expiry = expiry,
+				}
+			end
+		end,
+
+		spend = function(neededRunes)
+			local usedRunes, err = state.death_runes.getRunesForRequirement(neededRunes)
+			if not usedRunes then
+				return
+			end
+
+			local runeMapping = {
+				blood = { 1, 2 },
+				frost = { 5, 6 },
+				unholy = { 3, 4 },
+			}
+
+			for _, runeIndex in ipairs(usedRunes) do
+				local rune = state.death_runes.state[runeIndex]
+				rune.ready = false
+
+				-- Determine other rune in the group
+				local otherRuneIndex
+				for type, runes in pairs(runeMapping) do
+					if runes[1] == runeIndex then
+						otherRuneIndex = runes[2]
+						break
+					elseif runes[2] == runeIndex then
+						otherRuneIndex = runes[1]
+						break
+					end
+				end
+
+				local otherRune = state.death_runes.state[otherRuneIndex]
+				local expiryTime = (otherRune.expiry > 0 and otherRune.expiry or state.query_time) + rune.duration
+				rune.expiry = expiryTime
+			end
+		end,
+
+		getActiveDeathRunes = function()
+			local activeRunes = {}
+			local state_array = state.death_runes.state
+			for i = 1, #state_array do
+				if state_array[i].type == 4 and state_array[i].expiry < state.query_time then
+					table.insert(activeRunes, i)
+				end
+			end
+			return activeRunes
+		end,
+
+		getLeftmostActiveDeathRune = function()
+			local activeRunes = state.death_runes.getActiveDeathRunes()
+			return #activeRunes > 0 and activeRunes[1] or nil
+		end,
+
+		getActiveRunes = function()
+			local activeRunes = {}
+			local state_array = state.death_runes.state
+			for i = 1, #state_array do
+				if state_array[i].expiry < state.query_time then
+					table.insert(activeRunes, i)
+				end
+			end
+			return activeRunes
+		end,
+
+		getRunesForRequirement = function(neededRunes)
+			local bloodNeeded, frostNeeded, unholyNeeded = unpack(neededRunes)
+			-- for rune mapping, see the following in game...
+			-- /run for i=1,6 do local t=GetRuneType(i); local s,d,r=GetRuneCooldown(i); print(i,"type",t,"ready",r) end
+			local runeMapping = {
+				blood = { 1, 2 },
+				frost = { 5, 6 },
+				unholy = { 3, 4 }, --
+				any = { 1, 2, 3, 4, 5, 6 },
+			}
+
+			local activeRunes = state.death_runes.getActiveRunes()
+			local usedRunes = {}
+			local usedDeathRunes = {}
+
+			local function useRunes(runetype, needed)
+				local runes = runeMapping[runetype]
+				for _, runeIndex in ipairs(runes) do
+					if needed == 0 then
+						break
+					end
+					if
+						state.death_runes.state[runeIndex].expiry < state.query_time
+						and state.death_runes.state[runeIndex].type ~= 4
+					then
+						table.insert(usedRunes, runeIndex)
+						needed = needed - 1
+					end
+				end
+				return needed
+			end
+
+			-- Use specific runes first
+			bloodNeeded = useRunes("blood", bloodNeeded)
+			frostNeeded = useRunes("frost", frostNeeded)
+			unholyNeeded = useRunes("unholy", unholyNeeded)
+
+			-- Use death runes if needed
+			for _, runeIndex in ipairs(activeRunes) do
+				if bloodNeeded == 0 and frostNeeded == 0 and unholyNeeded == 0 then
+					break
+				end
+				if state.death_runes.state[runeIndex].type == 4 and not usedDeathRunes[runeIndex] then
+					if bloodNeeded > 0 then
+						table.insert(usedRunes, runeIndex)
+						bloodNeeded = bloodNeeded - 1
+					elseif frostNeeded > 0 then
+						table.insert(usedRunes, runeIndex)
+						frostNeeded = frostNeeded - 1
+					elseif unholyNeeded > 0 then
+						table.insert(usedRunes, runeIndex)
+						unholyNeeded = unholyNeeded - 1
+					end
+					usedDeathRunes[runeIndex] = true
+				end
+			end
+
+			return usedRunes
+		end,
+	}, {
+		__index = function(t, k)
+			local countDeathRunes = function()
+				local state_array = t.state
+				local count = 0
+				for i = 1, #state_array do
+					if state_array[i].type == 4 and state_array[i].expiry < state.query_time then
+						count = count + 1
+					end
+				end
+				return count
+			end
+			local runeMapping = {
+				blood = { 1, 2 },
+				frost = { 5, 6 },
+				unholy = { 3, 4 },
+				any = { 1, 2, 3, 4, 5, 6 },
+			}
+			-- Function to access the mappings
+			local function getRuneSet(runeType)
+				return runeMapping[runeType]
+			end
+
+			local countDRForType = function(type)
+				local state_array = t.state
+				local count = 0
+				local runes = getRuneSet(type)
+				if runes then
+					for _, rune in ipairs(runes) do
+						if state_array[rune].type == 4 and state_array[rune].expiry < state.query_time then
+							count = count + 1
+						end
+					end
+				end
+				return count
+			end
+
+			if k == "state" then
+				return t.state
+			elseif k == "actual" then
+				return countDRForType("any")
+			elseif k == "current" then
+				return countDRForType("any")
+			elseif k == "current_frost" then
+				return countDRForType("frost")
+			elseif k == "current_blood" then
+				return countDRForType("blood")
+			elseif k == "current_unholy" then
+				return countDRForType("unholy")
+			elseif k == "current_non_frost" then
+				return countDRForType("blood") + countDRForType("unholy")
+			elseif k == "current_non_blood" then
+				return countDRForType("frost") + countDRForType("unholy")
+			elseif k == "current_non_unholy" then
+				return countDRForType("blood") + countDRForType("frost")
+			elseif k == "cooldown" then
+				return t.state[1].duration
+			elseif k == "active_death_runes" then
+				return t.getActiveDeathRunes()
+			elseif k == "leftmost_active_death_rune" then
+				return t.getLeftmostActiveDeathRune()
+			elseif k == "active_runes" then
+				return t.getActiveRunes()
+			elseif k == "runes_for_requirement" then
+				return t.getRunesForRequirement
+			end
+		end,
+	})
+)
+
+-- Legacy rune type expressions for SimC compatibility
+spec:RegisterStateExpr("blood", function()
+	if GetRuneCooldown then
+		local count = 0
+		for i = 1, 2 do
+			local start, duration, ready = GetRuneCooldown(i)
+			if ready then
+				count = count + 1
+			end
+		end
+		return count
+	else
+		return 2 -- Fallback for emulation
+	end
+end)
+spec:RegisterStateExpr("pure_blood", function()
+	if GetRuneCooldown then
+		local count = 0
+		for i = 1, 2 do
+			local start, duration, ready = GetRuneCooldown(i)
+			local type = GetRuneType(i)
+			if ready and type ~= 4 then
+				count = count + 1
+			end
+		end
+		return count
+	else
+		return 2 -- Fallback for emulation
+	end
+end)
+spec:RegisterStateExpr("frost", function()
+	if GetRuneCooldown then
+		local count = 0
+		for i = 5, 6 do
+			local start, duration, ready = GetRuneCooldown(i)
+			if ready then
+				count = count + 1
+			end
+		end
+		return count
+	else
+		return 2 -- Fallback for emulation
+	end
+end)
+spec:RegisterStateExpr("pure_frost", function()
+	if GetRuneCooldown then
+		local count = 0
+		for i = 5, 6 do
+			local start, duration, ready = GetRuneCooldown(i)
+			local type = GetRuneType(i)
+			if ready and type ~= 4 then
+				count = count + 1
+			end
+		end
+		return count
+	else
+		return 2 -- Fallback for emulation
+	end
+end)
+spec:RegisterStateExpr("unholy", function()
+	if GetRuneCooldown then
+		local count = 0
+		for i = 3, 4 do
+			local start, duration, ready = GetRuneCooldown(i)
+			if ready then
+				count = count + 1
+			end
+		end
+		return count
+	else
+		return 2 -- Fallback for emulation
+	end
+end)
+spec:RegisterStateExpr("death", function()
+	if GetRuneCooldown and GetRuneType then
+		local count = 0
+		for i = 1, 6 do
+			local start, duration, ready = GetRuneCooldown(i)
+			local type = GetRuneType(i)
+			if ready and type == 4 then
+				count = count + 1
+			end
+		end
+		return count
+	else
+		return 0 -- Fallback for emulation
+	end
+end)
+
+-- MoP rune regeneration tracking
+spec:RegisterStateExpr("rune_regeneration", function()
+	local total = 0
+	if state.blood_runes and state.blood_runes.current then
+		total = total + state.blood_runes.current
+	end
+	if state.frost_runes and state.frost_runes.current then
+		total = total + state.frost_runes.current
+	end
+	if state.unholy_runes and state.unholy_runes.current then
+		total = total + state.unholy_runes.current
+	end
+	if state.death_runes and state.death_runes.count then
+		total = total + state.death_runes.count
+	end
+	return 6 - total
+end)
+
+-- MoP Death Rune conversion tracking
+spec:RegisterStateExpr("death_rune_conversion_available", function()
+	local br = state.blood_runes and state.blood_runes.current or 0
+	local fr = state.frost_runes and state.frost_runes.current or 0
+	local ur = state.unholy_runes and state.unholy_runes.current or 0
+	return br > 0 or fr > 0 or ur > 0
+end)
+
+-- Rune state expressions for MoP 5.5.0
+spec:RegisterStateExpr("rune", function()
+	local total = 0
+	for i = 1, 6 do
+		local start, duration, ready = GetRuneCooldown(i)
+		if ready then
+			total = total + 1
+		end
+	end
+	return total
+end)
+
+spec:RegisterStateExpr("rune_deficit", function()
+	local total = 0
+	if state.blood_runes and state.blood_runes.current then
+		total = total + state.blood_runes.current
+	end
+	if state.frost_runes and state.frost_runes.current then
+		total = total + state.frost_runes.current
+	end
+	if state.unholy_runes and state.unholy_runes.current then
+		total = total + state.unholy_runes.current
+	end
+	if state.death_runes and state.death_runes.count then
+		total = total + state.death_runes.count
+	end
+	return 6 - total
+end)
+
+spec:RegisterStateExpr("rune_current", function()
+	if state.runes and state.runes.ready then
+		return state.runes.ready
+	end
+	local total = 0
+	for i = 1, 6 do
+		local _, _, ready = GetRuneCooldown(i)
+		if ready then
+			total = total + 1
+		end
+	end
+	return total
+end)
+
+-- Alias for APL compatibility
+spec:RegisterStateExpr("runes_current", function()
+	return state.rune_current
+end)
+
+spec:RegisterStateExpr("rune_max", function()
+	return 6
+end)
+
+-- MoP Unholy DK-specific state expressions
+spec:RegisterStateExpr("sudden_doom_proc", function()
+	return buff.sudden_doom.up
+end)
+
+spec:RegisterStateExpr("dark_transformation_available", function()
+	return pet.alive and cooldown.dark_transformation.ready
+end)
+
+spec:RegisterStateExpr("ghoul_empowered", function()
+	return buff.dark_transformation.up or buff.dark_empowerment.up
+end)
+
+spec:RegisterStateExpr("diseases_maintained", function()
+	return (debuff.frost_fever.up and debuff.frost_fever.remains > 3)
+		and (debuff.blood_plague.up and debuff.blood_plague.remains > 3)
+end)
+
+spec:RegisterStateExpr("diseases_refresh_needed", function()
+	return (debuff.frost_fever.up and debuff.frost_fever.remains < 3)
+		or (debuff.blood_plague.up and debuff.blood_plague.remains < 3)
+end)
+
+-- MoP Unholy rotation tracking
+spec:RegisterStateExpr("unholy_rotation_phase", function()
+	if not state.diseases_maintained then
+		return "disease_setup"
+	end
+	if state.sudden_doom_proc then
+		return "sudden_doom"
+	end
+	if (state.runic_power and state.runic_power.current or 0) >= 80 then
+		return "runic_power_spend"
+	end
+	return "standard_rotation"
+end)
+
+-- Expose disease state for APL compatibility
+spec:RegisterStateExpr("disease", function()
+	local frost_fever_remains = debuff.frost_fever.remains or 0
+	local blood_plague_remains = debuff.blood_plague.remains or 0
+
+	local min_remains = 0
+	if frost_fever_remains > 0 and blood_plague_remains > 0 then
+		min_remains = math.min(frost_fever_remains, blood_plague_remains)
+	elseif frost_fever_remains > 0 then
+		min_remains = frost_fever_remains
+	elseif blood_plague_remains > 0 then
+		min_remains = blood_plague_remains
+	end
+
+	return {
+		min_remains = min_remains,
+	}
+end)
+
+-- Expose disease min remains (legacy)
+spec:RegisterStateExpr("disease_min_remains", function()
+	local frost_fever_remains = debuff.frost_fever.remains or 0
+	local blood_plague_remains = debuff.blood_plague.remains or 0
+
+	if frost_fever_remains > 0 and blood_plague_remains > 0 then
+		return math.min(frost_fever_remains, blood_plague_remains)
+	elseif frost_fever_remains > 0 then
+		return frost_fever_remains
+	elseif blood_plague_remains > 0 then
+		return blood_plague_remains
+	else
+		return 0
+	end
+end)
+
+spec:RegisterRanges("festering_strike", "mind_freeze", "death_coil")
+
+spec:RegisterSetting("dnd_while_moving", true, {
+	name = strformat("Allow %s while moving", Hekili:GetSpellLinkWithTexture(43265)),
+	desc = strformat(
+		"If checked, then allow recommending %s while the player is moving otherwise only recommend it if the player is standing still.",
+		Hekili:GetSpellLinkWithTexture(43265)
+	),
+	type = "toggle",
+	width = "full",
+})
+
+spec:RegisterSetting("dps_shell", false, {
+	name = strformat("Use %s Offensively", Hekili:GetSpellLinkWithTexture(48707)),
+	desc = strformat(
+		"If checked, %s will not be on the Defensives toggle by default.",
+		Hekili:GetSpellLinkWithTexture(48707)
+	),
+	type = "toggle",
+	width = "full",
+})
+
+spec:RegisterSetting("pl_macro", nil, {
+	name = function()
+		local plague_strike = spec.abilities and spec.abilities.plague_strike
+		return plague_strike and strformat("%s Macro", Hekili:GetSpellLinkWithTexture(plague_strike.id))
+			or "Plague Strike Macro"
+	end,
+	desc = function()
+		local plague_strike = spec.abilities and spec.abilities.plague_strike
+		local blood_plague = spec.auras and spec.auras.blood_plague
+		if plague_strike and blood_plague then
+			return strformat(
+				"Using a mouseover macro makes it easier to apply %s and %s to other enemies without retargeting.",
+				Hekili:GetSpellLinkWithTexture(plague_strike.id),
+				Hekili:GetSpellLinkWithTexture(blood_plague.id)
+			)
+		else
+			return "Using a mouseover macro makes it easier to apply Plague Strike and Blood Plague to other enemies without retargeting."
+		end
+	end,
+	type = "input",
+	width = "full",
+	multiline = true,
+	get = function()
+		local plague_strike = class.abilities and class.abilities.plague_strike
+		return plague_strike and "#showtooltip\n/use [@mouseover,harm,nodead][] " .. plague_strike.name
+			or "#showtooltip\n/use [@mouseover,harm,nodead][] Plague Strike"
+	end,
+	set = function() end,
+})
+
+spec:RegisterSetting("it_macro", nil, {
+	name = strformat("%s Macro", Hekili:GetSpellLinkWithTexture(45477)),
+	desc = strformat(
+		"Using a mouseover macro makes it easier to apply %s and %s to other enemies without retargeting.",
+		Hekili:GetSpellLinkWithTexture(45477),
+		Hekili:GetSpellLinkWithTexture(59921)
+	),
+	type = "input",
+	width = "full",
+	multiline = true,
+	get = function()
+		return "#showtooltip\n/use [@mouseover,harm,nodead][] Icy Touch"
+	end,
+	set = function() end,
+})
+
+-- MoP Unholy DK-specific settings
+spec:RegisterSetting("plague_leech_priority", "expire", {
+	name = "Plague Leech Priority",
+	desc = "When to use Plague Leech: 'expire' = only when diseases are about to expire, 'rune_generation' = for rune generation when needed",
+	type = "select",
+	values = {
+		expire = "Disease Expiration Only",
+		rune_generation = "Rune Generation Priority",
+	},
+	width = "full",
+})
+
+spec:RegisterSetting("sudden_doom_priority", true, {
+	name = "Sudden Doom Priority",
+	desc = "Prioritize Sudden Doom procs over other abilities",
+	type = "toggle",
+	width = "full",
+})
+
+spec:RegisterSetting("dark_transformation_auto", true, {
+	name = "Auto Dark Transformation",
+	desc = "Automatically use Dark Transformation when available",
+	type = "toggle",
+	width = "full",
+})
+
+spec:RegisterPack(	"Unholy",	20250918,	[[Hekili:vRvBpUnUr4FllkGHnAQJ8B7LuyVajnbTj96Ha4KVkjAzABIvsuqIk75dc63Eh(IKiLeL9I9L27WLSRnjN5HdN5HpJuCN5(D3T7rmS7Vn3z(kN3p7DtNpB5Yv)I7w25eS72euW9OJWVeJIG)(hXNOHN5F95qkApF5z080ayi3T7YjHSVe7URJnN9(5VBoytuo7en1D72O8dPK7D3EISFpwUcCwG72VFIKv6Z)dQ0x57sF6b4ZbmcnU0pKKXGHpqtl9)x47jHKPUBfFjhmikg(XVj2x4y0Uq8E3pcFTyXaSXzmsioMJxUdtjjYb(a9ZUBHpYWPeemgLnDxiLU3ljeDmhpLrcUNeFS0FuP)yjy(j2R90k9xxpgoghrWasN4YGirlaDLUIp4HuAgZ7a(N40NcmkkmMVMvTG66GM007OKq(ozH1DsgMXaWLnDF8EVhobXzVi6pfWL78Bk9LFSXY7Xi2jpem994a0zU5xA18meCWvTrzOKPQzjcg7YpCqnuWju6r80mgK9u6F3Ms)zovbS08yCMCEtdO5XSsFyChjaLdkcm2gmxK(BoANifGn(ozL1DI0kkS1S6mWSaY9YyqPbMBIBTAcX(Dpk9EpwkkodQgIqCRmDp9HyXUnbZME8enpCQ8OvlQ3DzCN9lwDgS3jbEj0h45kCqFRkOiqrwoVegsQOrttXGt0gBqekx9je8fEK4d5z8rvhBqg5kXK647LoTZFcuzMV762aRvBazgHaeaNuSh9G3dKyyfkewVjAnAkocrIZey8wJJFZjYH07VyoGmhIhn45oAFwKhQ9zZ9aFl04yCK4794jPEpGrjYt0zoxxeHhwxylSYGetOOfkMz86k2q0R9LzzYZUvyQs)VlT1tlJEqE1)SrxyNx9QPlSZDEvLAx(e4rumAN9RJrwz1i25)(FwfTDwYxHkAgpaDaLh2BvOrH2paDoe253kaEAEcRX2re4c3dPy8F0Bju10qXmse6iaXSt4WW(VPpjRA09OiHoXzo8)RVm6kdNIizGiemiF0eZ)dknKFsXv)fdroA8FlpJlgzCejnLMc)2h(2Vw6FeXeQkqPqHfmV)jubtphIF7N((BHIH47XSSj649M(jpe1ldYD1G(btPhpqXtEImXlqT56Ds1zG3jPF0sbZohJsG4vwskpKpCzXljqKSvhYtppCDWlkgWPz4uUe4(UWVAwQCGzx11lpAin3PQzOA)0Zn9TWY8xjSmV379Ratcv(ZxwOerpMlP18uoKJP2SvnyODPPbr(Ze2mlPYJIOXEhv0gc4nxNlayD8a0fL1IbyMnknj3V3UqYXtSwSAFcy7qcAmbP23uTO9RyCWPEeSyykdrlJ72pO(nxlKbLo9t2AoI2rNDX2SKl2lKJY2Oy8L9sp9U2ghs4QuzbxhCGeqysfbZTTFR7)T3DA9OtK)VwIV2UrS)TZLFZqgw1hRfy14pAoBh0l09cFzNUEaF1b7nY8MzN79AWgj4ShJMRce24q1eI1sbVODVs)pb9793l9ZsW8SAsueEpbXW8houBDNTBqu4yBeMzarGhmTeqVLPN)8VJdYzyZKvEBetpHrHSttt49EYfdUyLqyJnAqThOrNNceSJWS8eDNizLAE0iDYqF8p(Mj6cef66FvEKo8GIDE4b3Nx7d3XOSRNNVZ82Ynnoa(iWHZzfRLkMh7j)Dp(J47sODP8jb6jVhI)Sa5E0ENvTTXAHjS6CnBB2sSqzEskoGgTdDzT5FIhwk9)3XCkEOg6hQohg)FOFBsNlva7MjEILvA1RghLgDM3Cc7uLAAJlRSVTFIDi5oq7rTVxXMIG2ssuXqi1L3AA9toEL72hqPXcHVB)c0tukJFn0Ywpo4PLFfossWbWcxnNFuqpazOUB)lap1qb7YVw(vPLYMwF(9x382wH((Nu74F)ZYmg9gYHn2c)ffde6xFB)Mxg)EdpoVPtyMV9GqqNEbRnfyaTUb1)6wD)9gz7DBKD3X3fD7bu5TN1U40HutFJC)FthzJAtThbH6d3QNkU5gpGAZIIRrP5DZCmGBt)sVq2VUxOxg7xjcwMBv1RtDc8tYvGG8l5P5VeEAWQLxch2QvdUlAN3o6z4OBE)hDzQsYHAbXyD69EWX6q9KmASff(RxuuyR)G1lmaQUUCn)1xZhJgp2UrhzfktkkgR3GXDBM3f4kDz9aB1itMya7k59cEiBRPO4gB6)6gbKQ7h0E6RQwdF9k61nId)lky3G4Sw2FD1q33VJ0Uk54gz7nA3LNMTuNVEZIvQv3i1UlN5oL7L1hvYZQp56l40jbO6GBKy23Tz2OXkZ12eRnDtrH280SyRPnPBuRwNRfSBvcnKPi)LjQGJugSXDFMArLmyGa3(C1YlUqd1RDnX6LvPoe93wtJaeJ13)1TdsMY5Zgz9(7oMV(9KOrr0596mYY70bo6DgnUZBYzJtrrN3GtZxQ)MB2OrU2bBMVfgoaLlfC7aXREQY67LZSE1OHJHAVcb4C35A9OXYwnWY6kEvBPR3CRJ6YRhVA2bcP98UpAIRBCKv0WpfhCWp1H0ToA8l1Eaku4uT1)J)GBoRmjxjpXK2M3K76XsuDTU9rtpPqxpuuxMpQ)T4)Fuikr0vv(PIapVKu6H1ERRU1rvc05cu13B1PdsiyTKxcOxLkwPREQ1PxDKCHJ4Pd4(Fd]]
+)

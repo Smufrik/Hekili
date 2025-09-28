@@ -917,6 +917,22 @@ spec:RegisterAuras( {
     },
 } )
 
+-- Register totem models for icon-based detection
+spec:RegisterTotems( {
+    searing_totem = { id = 135825 },
+    magma_totem = { id = 135826 },
+    fire_elemental = { id = 135790 },
+    earth_elemental = { id = 136024 },
+    healing_stream_totem = { id = 135127 },
+    mana_tide_totem = { id = 135861 },
+    stormlash_totem = { id = 237579 },
+    earthbind_totem = { id = 136102 },
+    grounding_totem = { id = 136039 },
+    stoneclaw_totem = { id = 136097 },
+    stoneskin_totem = { id = 136098 },
+    tremor_totem = { id = 136108 },
+} )
+
 -- Restoration Shaman abilities
 spec:RegisterAbilities( {
     -- Core healing abilities

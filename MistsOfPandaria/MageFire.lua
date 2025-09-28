@@ -1331,8 +1331,8 @@ spec:RegisterAbilities( {
         texture = 135856,
         
         toggle = "interrupts",
-        
-        usable = function() return target.casting end,
+        debuff = "casting",
+        readyTime = state.timeToInterrupt,
         
         handler = function()
             interrupt()

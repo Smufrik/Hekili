@@ -8,7 +8,6 @@
         "DevTools_Dump",
         "UIParent",
         "GameTooltip",
-        "Mixin",
         "BackdropTemplateMixin",
         "SetCVar",
         "SlashCmdList",
@@ -125,15 +124,26 @@
         "health",
         "ranged_speed",
         "cooldown",
-        "UnitBuff",
         "enemies",
         "target",
-        "GetSpellInfo",
         "mana",
         "shadow_orb",
         "combo_points",
         "reduceCooldown",
-        "UnitDebuff"
+        "GetPlayerAuraBySpellID",
+        "GetUnitAura",
+        "removeStack",
+        "active_dot",
+        "runes",
+        "spend",
+        "check_swd_reset",
+        "removeDebuff",
+        "ITEM_HEROIC",
+        "BEST",
+        "callHook",
+        "RED_FONT_COLOR",
+        "GREEN_FONT_COLOR",
+        "coroutine"
     ],
     "Lua.runtime.version": "Lua 5.1",
     "Lua.runtime.builtin": {
@@ -150,5 +160,13 @@
     "Lua.workspace.library": [
         "c:\\Users\\fredd\\.cursor\\extensions\\ketho.wow-api-0.20.8\\Annotations\\Core"
     ],
-    "Lua.type.weakUnionCheck": true
+    "Lua.type.weakUnionCheck": true,
+    "github.copilot.chat.codesearch.enabled": true,
+    "github.copilot.nextEditSuggestions.enabled": true,
+    "github.copilot.chat.agent.thinkingTool": true,
+    "github.copilot.chat.editor.temporalContext.enabled": true,
+    "github.copilot.chat.enableRetryAfterFilteredResponse": true,
+    "github.copilot.chat.edits.temporalContext.enabled": true,
+    "github.copilot.chat.languageContext.fix.typescript.enabled": true,
+    "github.copilot.chat.languageContext.inline.typescript.enabled": true
 }

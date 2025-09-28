@@ -8,10 +8,12 @@ actions.precombat+=/flask,type=winters_bite
 actions.precombat+=/food,type=black_pepper_ribs_and_shrimp
 
 ## Default actions
+actions+=/run_action_list,name=opener,if=time<8
 actions+=/charge,if=time=0|movement.distance>8
 actions+=/pummel,if=target.debuff.casting.react
 actions+=/run_action_list,name=movement,if=movement.distance>5
 actions+=/berserker_rage,if=!buff.enrage.up
+actions+=/use_item,slot=hands,if=(debuff.colossus_smash.up|cooldown.colossus_smash.remains<2)&(buff.recklessness.up|cooldown.recklessness.remains>20)
 actions+=/use_item,name=trinket1,if=(debuff.colossus_smash.up|cooldown.colossus_smash.remains<2)&(buff.recklessness.up|cooldown.recklessness.remains>20)
 actions+=/use_item,name=trinket2,if=(debuff.colossus_smash.up|cooldown.colossus_smash.remains<2)&(buff.recklessness.up|cooldown.recklessness.remains>20)
 actions+=/blood_fury,if=debuff.colossus_smash.up
@@ -19,9 +21,22 @@ actions+=/berserking,if=debuff.colossus_smash.up
 actions+=/arcane_torrent,if=rage<rage.max-40
 actions+=/lights_judgment,if=debuff.colossus_smash.down&cooldown.bloodthirst.remains
 actions+=/bag_of_tricks,if=debuff.colossus_smash.down&cooldown.bloodthirst.remains
-actions+=/potion,if=buff.recklessness.up|target.time_to_die<25
+actions+=/potion,name=mogu_power_potion,if=buff.recklessness.up|target.time_to_die<25
 actions+=/run_action_list,name=single_target,if=active_enemies=1
 actions+=/run_action_list,name=aoe,if=active_enemies>=2
+
+## Opener (first few seconds)
+actions.opener+=/charge,if=time=0
+actions.opener+=/colossus_smash,if=debuff.colossus_smash.down
+actions.opener+=/recklessness,if=debuff.colossus_smash.up|(target.time_to_die<20&debuff.colossus_smash.up)
+actions.opener+=/avatar,if=debuff.colossus_smash.up|(target.time_to_die<20&debuff.colossus_smash.up)
+actions.opener+=/bloodbath,if=debuff.colossus_smash.up|(target.time_to_die<20&debuff.colossus_smash.up)
+actions.opener+=/use_item,slot=hands,if=debuff.colossus_smash.up&(buff.recklessness.up|cooldown.recklessness.remains>20)
+actions.opener+=/use_item,name=trinket1,if=debuff.colossus_smash.up&(buff.recklessness.up|cooldown.recklessness.remains>20)
+actions.opener+=/use_item,name=trinket2,if=debuff.colossus_smash.up&(buff.recklessness.up|cooldown.recklessness.remains>20)
+actions.opener+=/bloodthirst
+actions.opener+=/raging_blow,if=buff.raging_blow.stack=2
+actions.opener+=/wild_strike,if=buff.bloodsurge.up
 
 ## Single-target rotation
 actions.single_target+=/recklessness,if=debuff.colossus_smash.remains>4|(target.time_to_die<20&debuff.colossus_smash.up)
@@ -46,6 +61,9 @@ actions.single_target+=/heroic_throw
 actions.aoe+=/recklessness,if=debuff.colossus_smash.up
 actions.aoe+=/avatar,if=debuff.colossus_smash.up
 actions.aoe+=/bloodbath,if=debuff.colossus_smash.up
+actions.aoe+=/use_item,slot=hands,if=debuff.colossus_smash.up
+actions.aoe+=/use_item,name=trinket1,if=debuff.colossus_smash.up
+actions.aoe+=/use_item,name=trinket2,if=debuff.colossus_smash.up
 actions.aoe+=/berserker_rage,if=!buff.enrage.up
 actions.aoe+=/colossus_smash,if=debuff.colossus_smash.remains<1
 actions.aoe+=/bladestorm

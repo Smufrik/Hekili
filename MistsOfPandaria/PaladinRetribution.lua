@@ -1,5 +1,5 @@
 -- PaladinRetribution.lua
--- Updated July 15, 2025 - Modern Structure
+-- Updated Sep 28, 2025 - Modern Structure
 -- Mists of Pandaria module for Paladin: Retribution spec
 
 -- MoP: Use UnitClass instead of UnitClassBase
@@ -97,43 +97,6 @@ end)
 
 -- Enhanced resource systems
 spec:RegisterResource( 0, { -- Mana = 0 in MoP
-    -- divine_plea = {
-    --     last = function ()
-    --         return state.buff.divine_plea.applied
-    --     end,
-
-    --     interval = 3.0,
-
-    --     stop = function ()
-    --         return state.buff.divine_plea.down
-    --     end,
-
-    --     value = function ()
-    --         return 0.12 * state.mana.max -- 12% mana per tick
-    --     end,
-    -- },
-
-    -- guarded_by_the_light = {
-    --     last = function ()
-    --         return state.combat
-    --     end,
-
-    --     interval = 2.0,
-
-    --     stop = function ()
-    --         return false
-    --     end,
-
-    --     value = function ()
-    --         local regen = 0.02 * state.mana.max -- 2% base
-    --         -- Enhanced by Word of Glory usage
-    --         if state.buff.guarded_by_the_light.up then
-    --             regen = regen * 2
-    --         end
-    --         return regen
-    --     end,
-    -- },
-
     seal_of_insight = {
         last = function ()
             return state.swing.last_taken
@@ -372,55 +335,26 @@ local function GetTargetDebuffByID(spellID, caster)
     return nil
 end
 
--- Create custom Blessings aura
-spec:RegisterAuras({
-    blessing = {
-        id = 20217, -- Use Blessing of Kings as primary ID
-        duration = 3600,
-        max_stack = 1,
-        generate = function( t )
-            -- Blessing of Kings
-            local nameKings, iconKings, countKings, debuffTypeKings, durationKings, expirationTimeKings, casterKings = FindUnitBuffByID("player", 20217)
-            if nameKings then
-                t.name = nameKings
-                t.count = 1
-                t.expires = expirationTimeKings or 0
-                t.applied = (expirationTimeKings and durationKings) and (expirationTimeKings - durationKings) or 0
-                t.caster = casterKings
-                t.up = true
-                t.down = false
-                t.remains = expirationTimeKings and (expirationTimeKings - GetTime()) or 0
-                return
-            end
-
-            -- Blessing of Might
-            local nameMight, iconMight, countMight, debuffTypeMight, durationMight, expirationTimeMight, casterMight = FindUnitBuffByID("player", 19740)
-            if nameMight then
-                t.name = nameMight
-                t.count = 1
-                t.expires = expirationTimeMight or 0
-                t.applied = (expirationTimeMight and durationMight) and (expirationTimeMight - durationMight) or 0
-                t.caster = casterMight
-                t.up = true
-                t.down = false
-                t.remains = expirationTimeMight and (expirationTimeMight - GetTime()) or 0
-                return
-            end
-
-            -- No blessing found
-            t.count = 0
-            t.expires = 0
-            t.applied = 0
-            t.caster = "nobody"
-            t.up = false
-            t.down = true
-            t.remains = 0
-        end
-    }
-})
-
 -- Advanced Retribution Paladin Auras with Enhanced Generate Functions
 spec:RegisterAuras({
+    blessing_of_kings = {
+        id = 20217,
+        duration = 3600,
+        max_stack = 1,
+    },
+
+    blessing_of_might = {
+        id = 19740,
+        duration = 3600,
+        max_stack = 1,
+    },
+
+    -- Alias aura that represents any blessing being active
+    blessing = {
+        alias = { "blessing_of_kings", "blessing_of_might" },
+        aliasMode = "first",
+        aliasType = "buff",
+    },
 
     -- Inquisition: Key damage buff with enhanced tracking
     inquisition = {
@@ -1473,30 +1407,6 @@ spec:RegisterAbilities( {
             t.caster = "nobody"
         end
     },
-
-    -- Art of War: Proc for instant and free Exorcism
-    art_of_war = {
-        id = 87138,
-        duration = 15,
-        max_stack = 1,
-        generate = function( t )
-            local name, icon, count, debuffType, duration, expirationTime, caster = FindUnitBuffByID( "player", 87138 )
-
-            if name then
-                t.name = name
-                t.count = count
-                t.expires = expirationTime
-                t.applied = expirationTime - duration
-                t.caster = caster
-                return
-            end
-
-            t.count = 0
-            t.expires = 0
-            t.applied = 0
-            t.caster = "nobody"
-        end
-    },
 } )
 
 -- Retribution Paladin abilities
@@ -1522,11 +1432,6 @@ spec:RegisterAbilities( {
             if state.buff.divine_purpose.up then
                 removeBuff("divine_purpose")
             end
-
-            -- Divine Purpose talent proc chance
-            if state.talent.divine_purpose.enabled and not state.buff.divine_purpose.up and math.random() < 0.15 then
-                applyBuff("divine_purpose")
-            end
         end
     },
 
@@ -1550,16 +1455,17 @@ spec:RegisterAbilities( {
             if state.buff.divine_purpose.up then
                 removeBuff("divine_purpose")
             end
-
-            -- Divine Purpose talent proc chance
-            if state.talent.divine_purpose.enabled and not state.buff.divine_purpose.up and math.random() < 0.15 then
-                applyBuff("divine_purpose")
-            end
         end
     },
 
     exorcism = {
-        id = function() return state.glyph.mass_exorcism.enabled and 122032 or 879 end,
+        id = function()
+            -- Use Mass Exorcism spell ID when glyph is active
+            if state.glyph.mass_exorcism.enabled then
+                return 122032
+            end
+            return 879
+        end,
         cast = 0,
 		cooldown = 15,
         gcd = "spell",
@@ -1573,6 +1479,18 @@ spec:RegisterAbilities( {
         startsCombat = true,
         texture = 135903,
 
+        copy = { 122032, 879 },
+
+        usable = function()
+            -- Debug glyph detection
+            if Hekili.ActiveDebug then
+                Hekili:Debug("Exorcism usability check - Glyph enabled: %s, Current spell ID: %s",
+                    tostring(state.glyph.mass_exorcism.enabled),
+                    tostring(state.glyph.mass_exorcism.enabled and 122032 or 879))
+            end
+            return true
+        end,
+
         handler = function()
             -- Exorcism mechanic
             if state.buff.art_of_war.up then
@@ -1580,7 +1498,7 @@ spec:RegisterAbilities( {
             end
 
             gain(1, "holy_power")
-        end
+        end,
     },
 
     inquisition = {
@@ -1614,11 +1532,6 @@ spec:RegisterAbilities( {
             end
 
             applyBuff("inquisition", duration)
-
-            -- Divine Purpose talent proc chance
-            if state.talent.divine_purpose.enabled and not state.buff.divine_purpose.up and math.random() < 0.15 then
-                applyBuff("divine_purpose")
-            end
         end
     },
 
@@ -1683,7 +1596,7 @@ spec:RegisterAbilities( {
 
         talent = "holy_prism",
 
-        startsCombat = function() return not state.option.holy_prism_heal end,
+        startsCombat = function() return not (state.settings and state.settings.holy_prism_heal) end,
         texture = 613407,
 
         handler = function()
@@ -1723,7 +1636,7 @@ spec:RegisterAbilities( {
 
         talent = "execution_sentence",
 
-        startsCombat = function() return not state.option.execution_sentence_heal end,
+        startsCombat = function() return not (state.settings and state.settings.execution_sentence_heal) end,
         texture = 613954,
 
         handler = function()
@@ -2055,11 +1968,6 @@ spec:RegisterAbilities( {
             if state.talent.eternal_flame.enabled then
                 applyBuff("eternal_flame")
             end
-
-            -- Divine Purpose talent proc chance
-            if state.talent.divine_purpose.enabled and not state.buff.divine_purpose.up and math.random() < 0.15 then
-                applyBuff("divine_purpose")
-            end
         end
     },
 
@@ -2150,6 +2058,7 @@ spec:RegisterAbilities( {
 
         handler = function()
             applyBuff("blessing_of_kings")
+            removeBuff("blessing_of_might")
         end
     },
 
@@ -2167,6 +2076,7 @@ spec:RegisterAbilities( {
 
         handler = function()
             applyBuff("blessing_of_might")
+            removeBuff("blessing_of_kings")
         end
     },
 
@@ -2180,6 +2090,9 @@ spec:RegisterAbilities( {
         texture = 135969,
 
         handler = function()
+            removeBuff("seal_of_righteousness")
+            removeBuff("seal_of_justice")
+            removeBuff("seal_of_insight")
             applyBuff("seal_of_truth")
         end
     },
@@ -2194,6 +2107,9 @@ spec:RegisterAbilities( {
         texture = 135960,
 
         handler = function()
+            removeBuff("seal_of_truth")
+            removeBuff("seal_of_justice")
+            removeBuff("seal_of_insight")
             applyBuff("seal_of_righteousness")
         end
     },
@@ -2208,6 +2124,9 @@ spec:RegisterAbilities( {
         texture = 135971,
 
         handler = function()
+            removeBuff("seal_of_truth")
+            removeBuff("seal_of_righteousness")
+            removeBuff("seal_of_insight")
             applyBuff("seal_of_justice")
         end
     },
@@ -2222,6 +2141,9 @@ spec:RegisterAbilities( {
         texture = 135917,
 
         handler = function()
+            removeBuff("seal_of_truth")
+            removeBuff("seal_of_righteousness")
+            removeBuff("seal_of_justice")
             applyBuff("seal_of_insight")
         end
     }
@@ -2241,6 +2163,23 @@ spec:RegisterAbilities( {
 
 -- Range
 spec:RegisterRanges( "judgment", "hammer_of_justice", "rebuke", "crusader_strike" )
+
+spec:RegisterAbilities({
+    rebuke = {
+        id = 96231,
+        cast = 0,
+        cooldown = 15,
+        gcd = "off",
+
+        toggle = "interrupts",
+        startsCombat = true,
+
+        debuff = "casting",
+        readyTime = state.timeToInterrupt,
+
+        handler = function() interrupt() end,
+    },
+})
 
 -- Options
 spec:RegisterOptions( {
@@ -2262,5 +2201,20 @@ spec:RegisterOptions( {
     execution_sentence_heal = false,
 } )
 
+spec:RegisterSetting("recommend_seals", true, {
+    name = "Recommend Seals",
+    desc = "If checked, the addon will recommend the best seal to use based on the current number of targets.",
+    type = "toggle",
+    width = "full"
+} )
+-- Slider option to set number of targets to recommend Seal of Righteousness, default is 4
+spec:RegisterSetting("seal_of_righteousness_threshold", 4, {
+    name = "Seal of Righteousness Threshold",
+    desc = "The number of targets to recommend Seal of Righteousness (recommended: 4). " ..
+        "This setting will be disregarded if 'Recommend Seals' is unchecked.",
+    type = "range", min = 1, max = 6, step = 1,
+    width = "full"
+} )
+
 -- Register default pack for MoP Retribution Paladin
-spec:RegisterPack( "Retribution", 20250720, [[Hekili:9M1xVTTnq8plfdWOPRttw2ojDiYpS9sBEOyyQpljgjABoR)nsQKAad9zFKuwwKuKsQPOfdRnL3X7(D)L3ffUm8lHbPakm8ZEUEBCVZZ1z5TEBwVkmGEQcggubsoc2Z(Hcqo7p)hifJEQMIkl40oLvcs5YGuwJty0dq5)fgSJ2eVz99)29HbpvJYOFQi8PH6zZ6nRVJD1kys4NVZnm4aknf2YkKKeg8Ldistm))bnXxastC5o2)oHJGM4meHYiVRe3e)r4rugYHblC5ougdm)st8FdYaPOI)Ojwc5np2EFItfgMuM)eG(R()(tzqcbvSpQCx0r2FtEpAN)BEQE3ohcfqjo1vlA)NDCYozArLJ2FG2lQCaHcXN(gegbcY4cIIRPhKWK8XCXXV7ZWiybmhbjpSECPH5WcwwtkyQFOuvipu6B9Ti(Qs7o4)ToDFoSG28i))UWX17WXWBV4rkltZQjuhmKX15ZThdksqSBhvv(ceZHu7Ppdl2ZD1VGbc)WnNptb49qQdfLdJOLrPi4d(RDVrwNOI)RgrqQkw6qN0YxkoFEWXyyoavqEW37MfV9qz2Pw4S1FLr12ZX78CViUu0ZOcyuvnUQKaBTrfSPAsC4nags5kSlSVgGtrGcEGRZlDndEI7kqOqJqmNDkiJDDh5JDGfawwA6IHEjwuO3e5ofzrxtGrikm)98wh(SQVIJq6sUsEgGrCr6C5WiYPIKiswj1F5ctkXugGuesLaRAn5O)YzagVjaJ3piWiYWJ2vJpPCketGyEGtjBaNak4juySO2PNc8RWer)SicJcSibkfahsC8W4RZOuSQmEpds0bqEUsUKY5)WrXLYlcZHLZbHEJlp56w)nJuu214rPwqjJNv2pUYLLDcUMaszIqi8fYGqweSC0QmaMe9mKvuNiE6WaGhfutjpRM8cZuA75TwPVHiAY74i6sjt6faI(EcmXpPSmJh9C0yUtICOmfpBDxmflp47649kJcMFdzw(VrVvpuPhG9VMAkHuXT29g580sNXWmvm6iC8GGgZgdcw4roiyHLbbb4xlXjiILAq1typp3gjWS2VueeVCtKxvYI9zNQoWhzIe1jUU(hMCAJB)DCz0W1jkBX60(oY3MvILPcttE2Xn3RomtMRorzZvN2aZ1kWLIERRsgDM0z1O220xBxpl4m5nB7zIVKKkp5J4WUuTWaMKjS70T8YYnHbVaWf8rScd(uEvjMYYiJ90wmXP5XWaXpjwZcUduNrz)4NfRD1j9)mmibZgnHnfsyWBBIfyxBg4M4ZNBI7iQpjCt8Iokd6weFt7DhoCAt8d(nXRDzSeg0IB2UtIzXdPmtDsmQpUCRIS56BvNNaqle2s)twnXBz0wncsv5(Dmb5kPoJvmYMLeE422kR2MHHs6LIQ3LlO1VobzDGDUm3yvMJmBENp1GAfKK9EDXHE8ilroeU1keSpSCtmtSl7tfnacZ5VAPogMXRv0TqU9xdr3Ye9MW1tyW)Uxl89(5cFVbW3Jd)75WVJq)QcYMeJRpOW11vh04APRmBQ7sOZQ9UstUtXuPFF)UoL81Harya2Bzn2Mi)KXUcgeW2E3i1NeB7s6zQ9j78nt2pu(jeT1hg0J4s)yvOl)ITa5t0(Z8iq6QIJ9r0H92HJ4aML5jv9PncHqX2BcoIpEHTiq3BGSxCNqV3jxXQTYJEj79AyKnbidOtSVuV05tnkBytDtMJRj2vyLtZk)zg2KJcC(Hz5lnKOyEQg7PlEUJRPreLPGHN9EIMQnxBkWPSaOqO27tnfg7wfriMvYjkARLPLO4PxPQMOyzNUzKOy5MMsuSYQuIIN9QD79c1PigRTp7rDNsX5JSxP8JmTue46wzF91OGMtwFUdvNS(AKZW7QFftU1H8i7p1BqmNcVrQUMxDSspXXlWwPmFYvxUQJDLEvOQJvFH1z4y1VIjh7qEKCSRMOgEWQWMZuN81GvVMHdSVc2wffQhEx9nSoJfrA0gM3gnA7CFTr6vAHCPfC9lkfAyrA(3neJQAVPXV9NS2FZfxv3N3t48EZ1nWV(D5KMZw)BekQkSAEDYQ)J(9TPcX3ou4cNuf6FoWzKVPCfUwSh(11I(Nh0O20Er04D5QDJClGl)ciuBamJUVICdaZqkXHbFeLdbIJc))]] )
+spec:RegisterPack( "Retribution", 20250720, [[Hekili:9M1xVTTnq8plfdWOPRZZw2EnBikpS9sBEOyyQpljAjABUilPrsLudyOp77iLLfjfPKskArrBt4D8UF3F1DsHld)syqkIJd)S3cVnlUDP38fl9wUCtya)ujomOeL8iAp8d5OJW)(pyoLSTItkYf0oLvGsfYGvurta6bKJ)ffTJxhVz9T)YTHbBRiz8pLhU1UEwdxTeNe(5pSim4ajnf3WkMLeg8LdewDS4VO64laPoUyh87jceuhNryCG8UcAD8hXpsYiZbyrl2rYaW8t1X)nkdLsY)J6yfKx)aqXaP1pu)qJuzZlP4KIJBr8F2)x3MHzms((OIDrpc)p79KD(BR2TBoJJ4S5PfpNpt(7TCkpACHDKS)a)QWoIyCm90ltCLfnwJnA)Bv6(J4CUWUUYbCodJYeQNtR4h6Sf1tBaH4kpHJW54Jem7UwoOcyJlQy5a8I4hOy2HIS0znk(n(lMjbbO60iXDy(GmX2qGMK6HenQ2q09(JbPXasJ7tO53EXJxuKMvX4ZPyGRZNBogLNqahzuzXZy68QYMWd6jC(ErO8zkcCzvL3C(mhr3J5Z5KJ4iErukbFN)6f3OQts()vryeDfRCO0spFU3Xu8rejNDNV3nZElyDNAGZ9(RSQ2ooEN3IlIlL8ejhhvwrlly4gBudB6M01iIkmQkvVW(kenLGYfbHwVKEnI77krOuJyQGDokdU(C1JNJZrqvq6S(Ejik0zIcNIQORy4ichF89IwwquNK)iMVuOKNquIqKZVCye7uEselRG7VCMnLyldqjcPtaAiK8O)YjagVraJ33jWiZWJ2vrpPDkMYWurGtlBGMGYfjuuQSnshf8xXjY(OqDvohNNGvcG9joCy81zuAwvMO(NfDabf7Q5sAN)DhfxkVyGd7OaeMDR8uRB93mqrzBJhTAbTmEOSFyLRk7eAfdLcIqk8zQGqveqoAzgIYIEcdf1jYhnzbWdcQXKNttEMDkn98wR13qgnfDCKDPuj9mIWFpdN4NuaT)HO3CdMBLOakJXZ9lMngl35VyU3Rmky)zitY)n4T6Gk)aU7jJ2si1CRTJlmnT0AmGPsjpIhoiyWS1GGdEudcoyPxqa)1cAcH5Ogu)e4XZnrck0(LtW0LBI8kte517ZovEqmwglQvITTqS53g2f0YLvB3KOQrBs7BiLBs5w2QnT5Ch2CV6WSzUMevnxtA9mxNaxjaUUjaAePx)Y6v7AaS7xpj4m6nBABsVKNQo8J8W2uTWaqYm4ox2B6dEWAspJO5IPScd(0XYckhYiJ9m2jAE9dHbiyy(cAyWhHjdrHbscYf(W7qvzC4h)SCbWwL9NHbjuyyfyUeXIB7STxqD8Sgv15VQJVRoEKHXLxRzhH6434xhVqEIXi61XafXy6a2LwdSDOkcc5GFyAiU)(dwr(9(td6thOAsra4vob8BRJLy2yXJ64ZNRJBjAU(HeooArhFtZD7VraeJaeVg8630b5MfGeyC9Oy0ChLgf5kzVrDEsantAlDZj040xnas15(DGGwOOoR9Ounlf8iSTndNWOpjyNu09Ucb9BVob5CljHm)GtzoWcrT(ulQvss171gh6WJQefq4wdi0Yx7ItQGY9olYkILDjNwGL9mAJKjlJA3i6gJO5TqDfAa8)9HHV3la(E)yHVNa(lxiWFlO7wqt1MeSTuJTRBSzYMNkB6RWzYQ7(sJUk3yjGF7UkTm2(arAaUBAn0cG)GXUggKW2D)iBpCYZwdu48nJ2ru9HigBT1RlXLoY6qxDkjjYhPbO9XonvLa7dOd3nehWbmjZtP1GXyBsfB2g0UXz4JN5kc0(uq4zUJO3FxTI1yttJswVfgyeM6ga6iRP2jDXK6Qg2y3eCCTdQnoRIh0atRlX5itv6orX(CnUtx8gzAWbeLTGHN7EI2QnxBlWPT3TuOU7tnggBx)tkMnQjkgBdBMOywPQNO4yv6jKO44M2suCYQAII7QD39cnPihSTl7P3Q8ssdSoV6ZzAOiH2TQU7Rbcd)S5Wh6(zZT3NGd28k28S95rXLUYShXuQ9CxGTAALYATfhUgBL2ikxD56o2vMfI6owZ3tWeCSMxXMJTppQo2rkJ79giCTP8ipqy1Rz(a37HDVMc7fEFb704qKwTHPTwJXR64AV0R0cfsl46N1m0YlSO9sBn)oTnFezkPSHU9peS5xbUNdO7J825N3Q(LzLTbg2jQ(TDDjfR2H8tel9NQLmx2AxVGz94DRA)t4)p]] )

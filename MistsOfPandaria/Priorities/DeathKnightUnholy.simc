@@ -1,64 +1,64 @@
-# Death Knight: Unholy
+# Death Knight: Unholy (MoP)
 
-## Precombat Actions
-actions.precombat+=/horn_of_winter,if=!buff.horn_of_winter.up
 actions.precombat+=/unholy_presence
-actions.precombat+=/raise_dead
 actions.precombat+=/army_of_the_dead
+actions.precombat+=/horn_of_winter,if=buff.horn_of_winter.down|buff.horn_of_winter.remains<6
+actions.precombat+=/potion,name=mogu_power_potion
 
-## Default Actions
+# Utility/interrupt
 actions+=/mind_freeze
-actions+=/antimagic_shell,damage=100000,if=cooldown.antimagic_shell.remains=0
-actions+=/use_item,name=trinket1,if=buff.dark_transformation.up
-actions+=/use_item,name=trinket2,if=buff.dark_transformation.up
-actions+=/blood_fury,if=buff.dark_transformation.up
-actions+=/berserking,if=buff.dark_transformation.up
-actions+=/arcane_torrent,if=runic_power<70&buff.dark_transformation.up
-actions+=/potion,if=buff.dark_transformation.up
-actions+=/unholy_blight,if=talent.unholy_blight.enabled&(dot.frost_fever.remains<3|dot.blood_plague.remains<3)
+actions+=/antimagic_shell,damage=100000,if=settings.dps_shell
 
-## Disease and Pet Management
+# Cooldowns and on-uses (mirrors APL gating around Gargoyle/DT/trinkets)
 actions+=/raise_dead,if=!pet.ghoul.active
-actions+=/plague_leech,if=talent.plague_leech.enabled&((dot.blood_plague.remains<3&dot.frost_fever.remains<3)|(cooldown.outbreak.remains<1))
-actions+=/outbreak,if=(!dot.blood_plague.ticking|!dot.frost_fever.ticking)&cooldown.dark_transformation.remains<2
+actions+=/dark_transformation
+actions+=/synapse_springs,if=(buff.dark_transformation.up|cooldown.dark_transformation.remains>10)
+actions+=/blood_fury,if=(buff.dark_transformation.up|cooldown.dark_transformation.remains>10)
+actions+=/berserking,if=(buff.dark_transformation.up|cooldown.dark_transformation.remains>10)
+actions+=/use_item,name=trinket1,if=buff.dark_transformation.up|cooldown.dark_transformation.remains>20
+actions+=/use_item,name=trinket2,if=buff.dark_transformation.up|cooldown.dark_transformation.remains>20
+actions+=/potion,name=mogu_power_potion,if=buff.dark_transformation.up|cooldown.dark_transformation.remains>20
+actions+=/summon_gargoyle,if=pet.ghoul.active&(buff.dark_transformation.up|cooldown.dark_transformation.remains>20)
+actions+=/use_items
+
+# Diseases and Plague Leech
+actions+=/unholy_blight,if=talent.unholy_blight.enabled&(dot.frost_fever.remains<3|dot.blood_plague.remains<3)
+actions+=/plague_leech,if=talent.plague_leech.enabled&((dot.blood_plague.remains<3&dot.frost_fever.remains<3)|(rune_deficit>=2&(dot.frost_fever.ticking|dot.blood_plague.ticking)))
+actions+=/outbreak,if=!dot.blood_plague.ticking|!dot.frost_fever.ticking
 actions+=/plague_strike,if=!dot.blood_plague.ticking
 actions+=/icy_touch,if=!dot.frost_fever.ticking
-actions+=/death_coil,if=runic_power>90|buff.sudden_doom.react
-actions+=/dark_transformation
-actions+=/soul_reaper,if=target.health.pct-3*(target.health.pct%target.time_to_die)<=35&cooldown.dark_transformation.remains>4
 
-## AoE Actions
-actions+=/blood_boil,if=active_enemies>=2&(dot.blood_plague.ticking&dot.frost_fever.ticking)&(blood=2|(blood=1&rune.blood.cooldown_remains<3))
-actions+=/death_and_decay,if=active_enemies>=2&unholy=1
+# Sudden Doom: spend immediately
+actions+=/death_coil,if=buff.sudden_doom.react
 
-## Single-Target Rotation
+# Execute
+actions+=/soul_reaper,if=target.health.pct<=35
+
+# AoE setup
+actions+=/blood_boil,if=active_enemies>=2&(dot.blood_plague.ticking&dot.frost_fever.ticking)&blood>=1&(active_dot.blood_plague<active_enemies|active_dot.frost_fever<active_enemies)
+actions+=/death_and_decay,if=active_enemies>=2&(settings.dnd_while_moving|!moving)
+
+# Branch
 actions+=/run_action_list,name=aoe,if=active_enemies>=4
 actions+=/run_action_list,name=single_target,if=active_enemies<4
 
-## Single-Target Rotation
-actions.single_target+=/dark_transformation,if=buff.dark_transformation.down
-actions.single_target+=/scourge_strike,if=unholy=2|(unholy=1&death=1)
-actions.single_target+=/festering_strike,if=blood=2&frost=2
-actions.single_target+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.stack>=5&unholy=0
-actions.single_target+=/death_coil,if=buff.sudden_doom.react
-actions.single_target+=/scourge_strike,if=cooldown.death_and_decay.remains>0
-actions.single_target+=/festering_strike,if=blood>0&frost>0
-actions.single_target+=/death_coil,if=runic_power>70
-actions.single_target+=/death_coil,if=talent.dark_transformation.enabled&cooldown.dark_transformation.remains<3&buff.dark_transformation.down
-actions.single_target+=/death_coil,if=buff.shadow_infusion.stack=4
-actions.single_target+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.stack>=5
-actions.single_target+=/horn_of_winter,if=runic_power<70&!buff.horn_of_winter.up
-actions.single_target+=/empower_rune_weapon,if=unholy=0&blood=0&frost=0
+# Single Target
+actions.single_target+=/dark_transformation,if=buff.dark_transformation.down&pet.ghoul.active
+actions.single_target+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.stack>=10&(runes.blood.count=0|runes.frost.count=0|runes.unholy.count=0)
+actions.single_target+=/scourge_strike,if=unholy>=1
+actions.single_target+=/death_coil,if=buff.shadow_infusion.stack<5&buff.dark_transformation.down&runic_power>=40
+actions.single_target+=/death_coil,if=runic_power>=50
+actions.single_target+=/horn_of_winter,if=runic_power<=60&(buff.horn_of_winter.down|buff.horn_of_winter.remains<6)
+actions.single_target+=/empower_rune_weapon,if=unholy=0&blood=0&frost=0&runic_power<60
 
-## AoE Rotation
-actions.aoe+=/pestilence,if=dot.blood_plague.ticking&talent.unholy_blight.enabled&cooldown.unholy_blight.remains<3
-actions.aoe+=/pestilence,if=dot.blood_plague.ticking&dot.blood_plague.remains<3
-actions.aoe+=/blood_boil,if=dot.blood_plague.ticking&dot.frost_fever.ticking
-actions.aoe+=/death_and_decay
-actions.aoe+=/scourge_strike,if=unholy=1
-actions.aoe+=/dark_transformation
-actions.aoe+=/death_coil,if=runic_power>90|buff.sudden_doom.react
-actions.aoe+=/blood_boil
-actions.aoe+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.stack>=5
-actions.aoe+=/horn_of_winter,if=runic_power<70&!buff.horn_of_winter.up
-actions.aoe+=/empower_rune_weapon,if=unholy=0&blood=0&frost=0
+# AoE
+actions.aoe+=/pestilence,if=dot.blood_plague.ticking&(active_dot.blood_plague<active_enemies)
+actions.aoe+=/blood_boil,if=dot.blood_plague.ticking&dot.frost_fever.ticking&(active_dot.blood_plague<active_enemies|active_dot.frost_fever<active_enemies)
+actions.aoe+=/death_and_decay,if=settings.dnd_while_moving|!moving
+actions.aoe+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.stack>=10&(runes.blood.count=0|runes.frost.count=0|runes.unholy.count=0)
+actions.aoe+=/scourge_strike,if=unholy>=1
+actions.aoe+=/dark_transformation,if=buff.dark_transformation.down&pet.ghoul.active
+actions.aoe+=/death_coil,if=runic_power>=60|buff.sudden_doom.react|buff.dark_transformation.down&buff.shadow_infusion.stack<5&runic_power>=40
+actions.aoe+=/horn_of_winter,if=runic_power<=60&(buff.horn_of_winter.down|buff.horn_of_winter.remains<6)
+actions.aoe+=/empower_rune_weapon,if=unholy=0&blood=0&frost=0&runic_power<60
+actions.aoe+=/death_coil,if=runic_power>=30

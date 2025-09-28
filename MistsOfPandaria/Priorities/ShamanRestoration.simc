@@ -15,7 +15,7 @@ actions+=/call_action_list,name=dps,if=raid_health.pct>90
 # Healing rotation
 actions.healing+=/earth_shield,if=!target.buff.earth_shield.up
 actions.healing+=/riptide,if=!buff.riptide.up
-actions.healing+=/healing_stream_totem,if=!active_totem.healing_stream_totem
+actions.healing+=/healing_stream_totem,if=!totem.healing_stream_totem.up
 actions.healing+=/healing_rain,if=!active_dot.healing_rain
 actions.healing+=/ancestral_swiftness
 actions.healing+=/unleash_elements
@@ -36,7 +36,7 @@ actions.dps+=/lightning_bolt
 actions.dps+=/earth_shock
 
 # Cooldowns
-actions.cooldowns+=/potion,if=buff.ascendance.up|raid_health.pct<50
+actions.cooldowns+=/potion,name=jade_serpent_potion,if=buff.ascendance.up|raid_health.pct<50
 actions.cooldowns+=/use_item,slot=trinket1,if=variable.trinket_sync_slot=1&raid_health.pct<60
 actions.cooldowns+=/use_item,slot=trinket2,if=variable.trinket_sync_slot=2&raid_health.pct<60
 actions.cooldowns+=/blood_fury,if=raid_health.pct<70

@@ -57,7 +57,7 @@ spec:RegisterResource( 3, { -- Energy with enhanced regeneration mechanics
     },
     
     -- Vendetta energy efficiency (Assassination signature)
-    vendetta = {
+    vendetta_energy = {
         aura = "vendetta",
         last = function ()
             local app = state.buff.vendetta.applied
@@ -136,10 +136,9 @@ spec:RegisterResource( 4, { -- Combo Points = 4 in MoP
         interval = 1,
         value = function()
             -- Seal Fate: Critical strikes with abilities that generate combo points have a 50% chance to generate an extra combo point
-            if state.last_ability_crit and (state.last_ability == "mutilate" or state.last_ability == "backstab" or state.last_ability == "dispatch") then
-                return math.random() <= 0.5 and 1 or 0 -- 50% chance for extra combo point
-            end
-            return 0
+            -- Completely rewritten to avoid state variable issues - use a simple random proc system
+            -- This simulates the Seal Fate proc without relying on problematic state variables
+            return math.random() <= 0.05 and 1 or 0 -- 5% chance per second (simplified proc system)
         end,
     },
     
@@ -152,7 +151,7 @@ spec:RegisterResource( 4, { -- Combo Points = 4 in MoP
         interval = 1,
         value = function()
             -- Anticipation allows storing combo points beyond the 5-point limit
-            if state.talent.anticipation.enabled and state.combo_points.current >= 5 then
+            if state.talent.anticipation.enabled and (state.combo_points.current or 0) >= 5 then
                 return 1 -- Store excess combo points as Anticipation stacks
             end
             return 0
@@ -242,10 +241,10 @@ spec:RegisterTalents({
     dirty_deeds = { 5, 2, 108216 }, -- Cheap Shot and Kidney Shot have 20% increased critical strike chance
     paralytic_poison = { 5, 3, 108215 }, -- Coats weapons with poison that reduces target's movement speed
     
-    -- Tier 6 (Level 90)
-    vendetta = { 6, 1, 79140 }, -- Marks an enemy for death, increasing all damage you deal to the target
-    -- shadow_clone = { 6, 2, 159621 }, -- Not available in MoP Classic
-    venom_rush = { 6, 3, 152152 }, -- Vendetta also increases your Energy regeneration
+    -- Tier 6 (Level 90) - Correct MoP Classic talents
+    shuriken_toss = { 6, 1, 114014 }, -- Throw a shuriken at target
+    marked_for_death = { 6, 2, 137619 }, -- Instantly generates 5 combo points
+    anticipation = { 6, 3, 114015 }, -- Allows combo points to exceed 5, up to 10
 })
 
 -- Auras for Assassination Rogue
@@ -332,7 +331,7 @@ spec:RegisterAuras({
     -- Bleed effects
     rupture = {
         id = 1943,
-        duration = function() return 8 + (4 * combo_points.current) end, -- MoP Classic: 8s base + 4s per combo point
+        duration = function() return 8 + (4 * (combo_points.current or 0)) end, -- MoP Classic: 8s base + 4s per combo point
         tick_time = 2, -- Ticks every 2 seconds
         max_stack = 1
     },
@@ -346,7 +345,7 @@ spec:RegisterAuras({
     -- Buffs
     slice_and_dice = {
         id = 5171,
-        duration = function() return 6 + (6 * combo_points.current) end, -- MoP Classic: 6s base + 6s per combo point
+        duration = function() return 6 + (6 * (combo_points.current or 0)) end, -- MoP Classic: 6s base + 6s per combo point
         max_stack = 1
     },
     stealth = {
@@ -360,22 +359,37 @@ spec:RegisterAuras({
         max_stack = 1
     },
     cold_blood = {
-        id = 14177,
-        duration = 60,
-        max_stack = 1
-    },
+    id = 14177,
+    duration = 60, -- Correct 1 minute duration for MoP
+    max_stack = 1
+},
     vendetta = {
         id = 79140,
         duration = 30,
         max_stack = 1
     },
     
-    -- Missing debuff tracking for Vendetta on target
-    vendetta_debuff = {
+    -- Vendetta debuff tracking for target (different from player buff)
+    vendetta_target = {
         id = 79140,
         duration = 30,
+        max_stack = 1
+    },
+    
+    -- Revealing Strike (Combat spec debuff on target, referenced in imported rotations)
+    revealing_strike = {
+        id = 84617,
+        duration = 15,
         max_stack = 1,
-        copy = "vendetta" -- Allows both buff and debuff tracking
+        debuff = true -- Mark as target debuff
+    },
+    
+    -- Deep Insight (Combat spec debuff on target, referenced in imported rotations)
+    deep_insight = {
+        id = 84747,
+        duration = 15,
+        max_stack = 1,
+        debuff = true -- Mark as target debuff
     },
     
     -- Venom Rush talent buff
@@ -387,14 +401,14 @@ spec:RegisterAuras({
     -- shadow_clone removed - not available in MoP Classic
     envenom = {
         id = 32645,
-        duration = function() return combo_points.current end,
+        duration = function() return combo_points.current or 0 end,
         max_stack = 1
     },
     
     -- Stun effects
     kidney_shot = {
         id = 408,
-        duration = function() return 1 + combo_points.current end, -- MoP Classic: 1s base + 1s per combo point
+        duration = function() return 1 + (combo_points.current or 0) end, -- MoP Classic: 1s base + 1s per combo point
         max_stack = 1
     },
     cheap_shot = {
@@ -420,11 +434,6 @@ spec:RegisterAuras({
     evasion = {
         id = 5277,
         duration = 15,
-        max_stack = 1
-    },
-    cloak_of_shadows = {
-        id = 31224,
-        duration = 5,
         max_stack = 1
     },
     feint = {
@@ -475,27 +484,69 @@ spec:RegisterAuras({
         max_stack = 1
     },
     
-
+    -- MoP Trinket auras
+    vial_of_shadows = {
+        id = 79734, -- Vial of Shadows proc aura
+        duration = 15,
+        max_stack = 1
+    },
     
-    -- Missing auras for MoP abilities
+    -- Shadow Dance (for compatibility with imported rotations)
+    shadow_dance = {
+        id = 185313, -- Shadow Dance spell ID
+        duration = 8,
+        max_stack = 1
+    },
+    
+    -- Anticipation (Level 90 talent)
+    anticipation = {
+        id = 114015,
+        duration = 3600,
+        max_stack = 5
+    },
+    
+    -- Virmen's Bite (MoP agility potion, formerly called Jade Serpent Potion)
+jade_serpent_potion = {
+    id = 105697, -- Correct MoP agility potion buff ID
+    duration = 25,
+    max_stack = 1,
+    copy = "virmen_bite" -- Alternative name
+},
+    
+    -- Tricks of the Trade
+    tricks_of_the_trade = {
+        id = 57934,
+        duration = 6,
+        max_stack = 1
+    },
+    
+    -- Blindside - Proc buff that allows Dispatch usage
+    blindside = {
+        id = 121153, -- MoP Blindside proc ID
+        duration = 10,
+        max_stack = 1
+    },
+    
+    -- Shadow Blades - Major DPS cooldown buff
     shadow_blades = {
         id = 121471,
         duration = 12,
         max_stack = 1
     },
     
-    crimson_tempest = {
-        id = 121411,
-        duration = function() return 2 + (2 * combo_points.current) end,
-        tick_time = 2,
+    -- Cloak of Shadows - Defensive buff
+    cloak_of_shadows = {
+        id = 31224,
+        duration = 5,
         max_stack = 1
     },
     
-    -- MoP Trinket auras
-    vial_of_shadows = {
-        id = 79734, -- Vial of Shadows proc aura
-        duration = 15,
-        max_stack = 1
+    -- Crimson Tempest debuff
+    crimson_tempest = {
+        id = 121411,
+        duration = function() return 2 + (2 * (combo_points.current or 0)) end, -- 2s base + 2s per combo point
+        max_stack = 1,
+        tick_time = 2 -- Ticks every 2 seconds
     },
 })
 
@@ -519,8 +570,26 @@ spec:RegisterStateExpr("effective_combo_points", function()
 end)
 
 spec:RegisterStateExpr("behind_target", function()
-    -- Simplified positional check - in real game this would check actual positioning
-    return true -- Assume behind target for simulation purposes
+    -- Intelligent positioning logic for Assassination
+    -- Stealth abilities work regardless of positioning
+    if buff.stealth.up or buff.vanish.up or buff.subterfuge.up then
+        return true -- Stealth negates positioning requirements
+    end
+    
+    -- In group content, assume tank has aggro and we can be behind
+    if group then
+        return true -- Tank should have aggro in groups
+    end
+    
+    -- Solo PvE: assume we can position behind mobs
+    if target.exists and not target.is_player then
+        return true -- PvE mobs, can usually get behind
+    end
+    
+    -- PvP or uncertain cases: use time-based deterministic positioning
+    -- This prevents blocking abilities while being somewhat realistic
+    local time_factor = (query_time % 10) / 10 -- 0-1 based on time
+    return time_factor > 0.3 -- 70% of time cycles we're "behind"
 end)
 
 -- Stealth-breaking hook for proper MoP mechanics
@@ -557,7 +626,7 @@ spec:RegisterHook("runHandler", function(action, pool)
     
     -- Handle Overkill buff from stealth abilities
     if action == "ambush" or action == "garrote" or action == "cheap_shot" then
-        if stealthed.all then
+        if stealthed_all then
             applyBuff("overkill", 20) -- 20-second energy regeneration bonus
         end
     end
@@ -606,13 +675,13 @@ spec:RegisterAbilities({
             gain(2, "combo_points")
             
             -- Seal Fate proc chance on crit (50% chance for extra combo point)
-            if crit_chance > math.random() then
-                state.last_ability_crit = true
+            if (state.crit_chance or 0) > math.random() then
+                -- state.last_ability_crit removed for Hekili compatibility
                 if math.random() <= 0.5 then
                     gain(1, "combo_points")
                 end
             else
-                state.last_ability_crit = false
+                -- state.last_ability_crit removed for Hekili compatibility
             end
             
             -- Apply/refresh poisons
@@ -624,8 +693,13 @@ spec:RegisterAbilities({
                 applyDebuff("target", "instant_poison_dot", 8)
             end
             
+            -- Blindside proc chance (MoP: 30% chance on poison application)
+            if (buff.deadly_poison.up or buff.instant_poison.up) and math.random() <= 0.30 then
+                applyBuff("blindside", 10) -- 10 second duration
+            end
+            
             -- Track last ability for Seal Fate
-            state.last_ability = "mutilate"
+            -- state.last_ability removed for Hekili compatibility
         end,
     },
     
@@ -673,13 +747,13 @@ spec:RegisterAbilities({
             gain(1, "combo_points")
             
             -- Seal Fate proc chance on crit (50% chance for extra combo point)
-            if crit_chance > math.random() then
-                state.last_ability_crit = true
+            if (state.crit_chance or 0) > math.random() then
+                -- state.last_ability_crit removed for Hekili compatibility
                 if math.random() <= 0.5 then
                     gain(1, "combo_points")
                 end
             else
-                state.last_ability_crit = false
+                -- state.last_ability_crit removed for Hekili compatibility
             end
             
             -- Apply poisons
@@ -688,7 +762,7 @@ spec:RegisterAbilities({
             end
             
             -- Track last ability for Seal Fate
-            state.last_ability = "backstab"
+            -- state.last_ability removed for Hekili compatibility
         end,
     },
     
@@ -714,28 +788,28 @@ spec:RegisterAbilities({
         
         startsCombat = true,
         
-        usable = function() 
-            return combo_points.current > 0 or target.health.pct < 35, "requires combo points or target below 35% health"
+                usable = function()
+            return (combo_points.current or 0) > 0 or target.health.pct < 35, "requires combo points or target below 35% health"
         end,
         
         handler = function()
-            local cp = combo_points.current
+            local cp = combo_points.current or 0
             
             -- Dispatch can be used as a combo point generator when target is below 35% health
             if target.health.pct < 35 and cp == 0 then
                 gain(1, "combo_points")
                 
                 -- Seal Fate proc chance on crit
-                if crit_chance > math.random() then
-                    state.last_ability_crit = true
+                if (state.crit_chance or 0) > math.random() then
+                    -- state.last_ability_crit removed for Hekili compatibility
                     if math.random() <= 0.5 then
                         gain(1, "combo_points")
                     end
                 else
-                    state.last_ability_crit = false
+                    -- state.last_ability_crit removed for Hekili compatibility
                 end
                 
-                state.last_ability = "dispatch"
+                -- state.last_ability removed for Hekili compatibility
             else
                 -- Used as finisher - consume combo points
                 spend(cp, "combo_points")
@@ -781,7 +855,7 @@ spec:RegisterAbilities({
             end
             
             -- Track for Seal Fate (though FoK doesn't typically crit for extra CPs in MoP)
-            state.last_ability = "fan_of_knives"
+            -- state.last_ability removed for Hekili compatibility
         end,
     },
     
@@ -797,10 +871,10 @@ spec:RegisterAbilities({
         
         startsCombat = true,
         
-        usable = function() return combo_points.current > 0 end,
+        usable = function() return (combo_points.current or 0) > 0 end,
         
         handler = function()
-            local cp = combo_points.current
+            local cp = combo_points.current or 0
             -- Envenom duration = combo points spent
             applyBuff("envenom", cp)
             spend(cp, "combo_points")
@@ -821,10 +895,10 @@ spec:RegisterAbilities({
         
         startsCombat = true,
         
-        usable = function() return combo_points.current > 0 end,
+        usable = function() return (combo_points.current or 0) > 0 end,
         
         handler = function()
-            local cp = combo_points.current
+            local cp = combo_points.current or 0
             -- MoP Classic: 8 seconds base + 4 seconds per combo point
             applyDebuff("target", "rupture", 8 + (4 * cp))
             spend(cp, "combo_points")
@@ -845,10 +919,10 @@ spec:RegisterAbilities({
         
         startsCombat = false,
         
-        usable = function() return combo_points.current > 0 end,
+        usable = function() return (combo_points.current or 0) > 0 end,
         
         handler = function()
-            local cp = combo_points.current
+            local cp = combo_points.current or 0
             -- MoP Classic: 6 seconds base + 6 seconds per combo point
             applyBuff("slice_and_dice", 6 + (6 * cp))
             spend(cp, "combo_points")
@@ -870,10 +944,10 @@ eviscerate = {
     
     startsCombat = true,
     
-    usable = function() return combo_points.current > 0 end,
+    usable = function() return (combo_points.current or 0) > 0 end,
     
     handler = function()
-        local cp = combo_points.current
+        local cp = combo_points.current or 0
         -- Eviscerate: Damage scales with combo points
         spend(cp, "combo_points")
         
@@ -893,10 +967,10 @@ kidney_shot = {
     
     startsCombat = true,
     
-    usable = function() return combo_points.current > 0 end,
+    usable = function() return (combo_points.current or 0) > 0 end,
     
     handler = function()
-        local cp = combo_points.current
+        local cp = combo_points.current or 0
         -- MoP Classic: 1 second base + 1 second per combo point (max 6 seconds)
         applyDebuff("target", "kidney_shot", 1 + cp)
         spend(cp, "combo_points")
@@ -993,7 +1067,7 @@ kidney_shot = {
         
         startsCombat = true,
         
-        usable = function() return stealthed.all, "requires stealth" end,
+        usable = function() return stealthed_all, "requires stealth" end,
         
         handler = function()
             -- Cheap Shot generates 2 combo points and stuns for 4 seconds
@@ -1043,7 +1117,7 @@ kidney_shot = {
         
         startsCombat = true,
         
-        usable = function() return stealthed.all and behind_target end,
+        usable = function() return stealthed_all and behind_target end,
         
         handler = function()
             applyDebuff("target", "garrote")
@@ -1073,20 +1147,20 @@ kidney_shot = {
         
         startsCombat = true,
         
-        usable = function() return stealthed.all, "requires stealth" end,
+        usable = function() return stealthed_all, "requires stealth" end,
         
         handler = function()
             -- Ambush generates 2 combo points
             gain(2, "combo_points")
             
             -- Seal Fate proc chance on crit (50% chance for extra combo point)
-            if crit_chance > math.random() then
-                state.last_ability_crit = true
+            if (state.crit_chance or 0) > math.random() then
+                -- state.last_ability_crit removed for Hekili compatibility
                 if math.random() <= 0.5 then
                     gain(1, "combo_points")
                 end
             else
-                state.last_ability_crit = false
+                -- state.last_ability_crit removed for Hekili compatibility
             end
             
             -- Apply poisons from stealth
@@ -1095,7 +1169,7 @@ kidney_shot = {
             end
             
             -- Track last ability for Seal Fate
-            state.last_ability = "ambush"
+            -- state.last_ability removed for Hekili compatibility
             
             -- Remove stealth (unless Subterfuge talent extends it)
             if not talent.subterfuge.enabled then
@@ -1112,12 +1186,17 @@ kidney_shot = {
     kick = {
         id = 1766,
         cast = 0,
-        cooldown = 24,
+        cooldown = 10,
         gcd = "off",
+        
+        toggle = "interrupts",
         
         startsCombat = true,
         interrupt = true,
-        
+
+        debuff = "casting",
+        readyTime = state.timeToInterrupt,
+
         handler = function()
             interrupt()
         end,
@@ -1166,29 +1245,27 @@ kidney_shot = {
         end,
     },
     
-    -- Talents
+    -- Baseline Abilities (not talents)
     vendetta = {
         id = 79140,
         cast = 0,
         cooldown = 120,
         gcd = "off",
         
-        talent = "vendetta",
+        -- Vendetta is baseline Assassination ability in MoP Classic, not a talent
         toggle = "cooldowns",
         
         startsCombat = true,
         
         handler = function()
             -- Vendetta: Marks target for death with significant damage bonus
-            applyDebuff("target", "vendetta", 30) -- 30 second duration
+            applyDebuff("target", "vendetta_target", 30) -- 30 second duration
             
             -- Vendetta also provides energy efficiency buff to the player
             applyBuff("vendetta", 30) -- Player buff for enhanced energy regeneration
             
-            -- Venom Rush talent extends Vendetta's energy benefits
-            if talent.venom_rush.enabled then
-                applyBuff("venom_rush", 30) -- Additional energy regeneration
-            end
+            -- Note: Vendetta is a baseline ability in MoP Classic Assassination
+            -- No talent requirements
         end,
     },
     
@@ -1322,6 +1399,58 @@ kidney_shot = {
         end,
     },
     
+    -- Jade Serpent Potion
+    jade_serpent_potion = {
+        id = 76089,
+        cast = 0,
+        cooldown = 0,
+        gcd = "off",
+        
+        startsCombat = false,
+        
+        usable = function() return not combat and not buff.jade_serpent_potion.up end,
+        
+        handler = function()
+            applyBuff("jade_serpent_potion", 25)
+        end,
+    },
+    
+    -- Tricks of the Trade
+    tricks_of_the_trade = {
+        id = 57934,
+        cast = 0,
+        cooldown = 30,
+        gcd = "off",
+        
+        startsCombat = false,
+        
+        handler = function()
+            applyBuff("tricks_of_the_trade")
+        end,
+    },
+    
+    -- Apply Poison (generic poison application)
+    apply_poison = {
+        id = 2823, -- Deadly Poison spell ID (updated for MoP)
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        
+        startsCombat = false,
+        
+        usable = function()
+            -- Check if deadly poison is missing (for SimC lethal=deadly,nonlethal=crippling)
+            return not buff.deadly_poison.up, "deadly poison already applied"
+        end,
+        
+        handler = function()
+            -- Apply deadly poison as lethal and crippling poison as nonlethal
+            -- This matches the SimC priority: apply_poison,lethal=deadly,nonlethal=crippling
+            applyBuff("deadly_poison", 3600)
+            applyBuff("crippling_poison", 3600)
+        end,
+    },
+    
     -- Shiv - applies poison and removes buff
     shiv = {
         id = 5938,
@@ -1380,27 +1509,124 @@ kidney_shot = {
             removeDebuff("target", "magic")
         end,
     },
+    
+    -- Crimson Tempest - AoE finisher
+    crimson_tempest = {
+        id = 121411, -- MoP Crimson Tempest spell ID
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        school = "physical",
+        
+        spend = function() 
+            local cost = 35 -- Base energy cost
+            
+            -- Shadow Focus reduces cost while stealthed
+            if talent.shadow_focus.enabled and (buff.stealth.up or buff.vanish.up) then
+                cost = cost * 0.25
+            end
+            
+            return cost
+        end,
+        spendType = "energy",
+        
+        startsCombat = true,
+        
+        usable = function() return combo_points.current and combo_points.current > 0, "requires combo points" end,
+        
+        handler = function()
+            local cp = combo_points.current or 0
+            -- Crimson Tempest duration: 2s base + 2s per combo point
+            applyDebuff("target", "crimson_tempest", 2 + (2 * cp))
+            spend(cp, "combo_points")
+        end,
+    },
+    
+    -- Shadow Blades - Major DPS cooldown
+    shadow_blades = {
+        id = 121471, -- MoP Shadow Blades spell ID
+        cast = 0,
+        cooldown = 180, -- 3 minute cooldown
+        gcd = "off",
+        school = "shadow",
+        
+        startsCombat = false,
+        
+        handler = function()
+            applyBuff("shadow_blades", 12) -- 12 second duration
+        end,
+    },
+    
+    -- Cloak of Shadows - Defensive cooldown
+    cloak_of_shadows = {
+        id = 31224,
+        cast = 0,
+        cooldown = 120, -- 2 minute cooldown in MoP
+        gcd = "off",
+        school = "physical",
+        
+        startsCombat = false,
+        
+        handler = function()
+            applyBuff("cloak_of_shadows", 5) -- 5 second duration
+            -- Removes all magical debuffs
+            removeDebuff("player", "magic")
+        end,
+    },
+    
+    -- Marked for Death - Combo point generator
+    marked_for_death = {
+        id = 137619, -- MoP Marked for Death spell ID
+        cast = 0,
+        cooldown = 60, -- 1 minute cooldown
+        gcd = "off",
+        school = "physical",
+        
+        startsCombat = false,
+        
+        usable = function() return combo_points.current == 0, "only usable at 0 combo points" end,
+        
+        handler = function()
+            gain(5, "combo_points") -- Instantly grants 5 combo points
+        end,
+    },
+    
+    -- Preparation - Resets cooldowns
+    preparation = {
+        id = 14185,
+        cast = 0,
+        cooldown = 300, -- 5 minute cooldown in MoP
+        gcd = "off",
+        school = "physical",
+        
+        startsCombat = false,
+        
+        handler = function()
+            -- Reset specific cooldowns
+            setCooldown("vanish", 0)
+            setCooldown("sprint", 0)
+            setCooldown("evasion", 0)
+            setCooldown("kidney_shot", 0)
+            setCooldown("blind", 0)
+            setCooldown("dismantle", 0)
+        end,
+    },
 })
 
--- State expressions
-spec:RegisterStateExpr("behind_target", function()
-    return true -- Assume we can get behind target
-end)
+-- Duplicate behind_target removed - using the intelligent one above
 
 spec:RegisterStateExpr("poisoned", function()
     return debuff.deadly_poison_dot.up or debuff.wound_poison.up
 end)
 
--- Proper stealthed state table for MoP compatibility
-spec:RegisterStateTable("stealthed", {
-    rogue = function() return buff.stealth.up end,
-    mantle = function() return false end, -- Not available in MoP
-    all = function() return buff.stealth.up or buff.vanish.up or buff.shadow_dance.up end,
-})
+-- Proper stealthed state expressions for MoP compatibility
+spec:RegisterStateExpr("stealthed_rogue", function() return buff.stealth.up end)
+spec:RegisterStateExpr("stealthed_mantle", function() return false end) -- Not available in MoP
+spec:RegisterStateExpr("stealthed_all", function() return buff.stealth.up or buff.vanish.up or buff.shadow_dance.up end)
 
 -- Add anticipation_charges for compatibility (not used in MoP but referenced in imported rotations)
 spec:RegisterStateExpr("anticipation_charges", function()
-    return 0 -- Always 0 in MoP since Anticipation works differently
+    return buff.anticipation.stack or 0 -- Return anticipation buff stacks
 end)
 
 -- Hooks
@@ -1452,5 +1678,12 @@ spec:RegisterSetting( "allow_shadowstep", true, {
     type = "toggle",
     width = "full"
 } )
+
+spec:RegisterSetting( "use_tricks_of_the_trade", true, {
+    name = strformat( "Use %s", Hekili:GetSpellLinkWithTexture( 57934 ) ), -- Tricks of the Trade
+    desc = "If checked, Tricks of the Trade will be recommended based on the Assassination Rogue priority. If unchecked, it will not be recommended automatically.",
+    type = "toggle",
+    width = "full"
+} )
 -- Pack (rotation logic would go here)
-spec:RegisterPack("Assassination", 20250710, [[Hekili:nJX(pUnn4)wonPQBJJqV0R3yJ2kbmqStIjeD8tiAIBIBJP5LID6Osv5VD((SZl78O9gieAANsT)8373BUFZh3S2NiOB(G9u75tF99tTSV)HP2Z2SwCkLUzDkX7azp8rmjc(lHZbO5c8ItHjeFeb8K8mp4YnR3MZcfVpEZ2EX605aSPup445VzZ6aMVpvblL7Tz9hdy8cx8)Kc3s6w4MSd(TNGLex4gY4c46DjzfU)e9alKzTzT8qKnqIJ8ZhKsfnMSnK6V57aMw(CGmmEkr4fOiyglvD83HVRWnlrquhaxjOzmcaxIWYNstDyXC2(aHvgnIaFx4UQWDAH7KcxeKm6rkjKfV3HlYyhO6GTracSbl1qcVKOTjoPjSyu0wu4(qH75ZfU3w4kiH0yHfjwW8yPsMZQehss35PZLh3gEhVas2EQ66zfUVSrBeLlyHOrcyVz))J9Qnwa79WGS3nfUBZ3TZ6ijMXdSYtlPCsOFYNIRoUT54XPn0inJMsYuwDb8pWVyhjpumMtejABo30f6Nb03VhexaEgIaQVfjmCCpbFQuuqbNggIa4qJZGGaqSAOppGDCCtMavPOFReDEeUa8m1WXbM3HX1RcwevQUM1sDb(2Eh4oj7CabYrKr8LopZhqt5bsSJ6hoyqQku1rLiXZNJV9XR0XBP075ZYXB1sPt7GEE496UEz5XdY37yOhfY6VEqwxA)CuMbU1osmQYoeZowro7RJwKeP(9R)C0VQKHWRFZNZRH4akKXdyyvCbeOGkvsVrgArc)AY(C6BlC)wOqbNZIjQm3)sfcQsMZb6rfbKq89e)WtTIWstdpHMpo(R4K4karQKIPzRJJgZZSflwfUub(Fc37WPzPGBeqi1HAGpAgh9y6Mit1X9fs08CzmjpK5rDiX(o(WhwyQQwOr7sL(h9egjNeG(iqz5iOrPYIZAMKVn5h6p30qXjx0)DMeSBuf)miUfeJDOTn6Qvd1zPRlv0LbThrp9CQInVbpAY342()HkS(0wTfA7HTOsVamN5iEbhPX(uHGyy()(YIH8EZVF)0kBPYKO8HXQfJA)U871poGaSGJpj2JwDhnMMT)uzn5(ByywlHJuL3DyRSKuBdts8dZLQw4XQIgLLerU2rKaomuvVmtvx3Mh3gcjh4YysjtDBvhgLAxj7JpQPjJQBA3MXSPALu0qEFoz1YjJeIEpQhW7iEDyJbenSUTkxUjgVC6Pw0OHXK6vND5zNgVU9iyGMb5CRYnmC5ZkhJf6nRrY8iXOmMLbPT7RWy3wGGkAOlNkiS0vTS7Hs1HGMw17GP1cVRUTWQYHJLfgMh6GMTtlo8DniPfNgOIxsrp1fyco94jtCEXatt8nBUg(OhjCGB0SlLNnESflgIoXjC8jrqlPoZvU5LKlI8xfUVcM1XQvoSDuMYonCcvnUvf00yHcPuVaKKQwb6AMmaqzRkBqBe7KrHdDR0pkFE)1lVurl7blAnQjdSnL1mlL(Ub0yoY29mMkYZUqjVUm2ZcXp)IGJQDq60mUSImA3EFl)Xyi9rs04jQgLlkXGMXzQ18ULD6LOx7mjst7LfD9c7n0r6T(jswmy45vB)inlzhlKQwdsed7Gg8k45PPjzIYnFShfbMhyqZyXhWookClCFVq9izJ2ry(xyyiOVz4y6rA2je3SequGVGG5WCFS5ekd6Jn7Tfpv4(LfU)(VXPiMOr8)4Uc3pfW8cAdnj(udvlCJtqK)xql5EmrydE9XVqItBi63u4c8Ejz(OcfGv)pqK63(i7wu(tSWWwsujkfvGk1gYJIZJGQliH5HGdwXtVpcvy4bV2y9rWL48ms18M1VOWT)jwE6f9n0sXtLFyvpr0xS8RApWYDQHvwQgQ5U6Pxw6vn8s)4ONjy6hWEMDPFalBf7o2UL3OnXYaGR5(IVAOrvaRiQD035rnsr9HCfjik6NUi1cyhragBNhTHh3ybc)q72OnS9OkLpfY7TcQW0csZzGVd7yAj0MDBGmMqxbJQkdI225ewo)85Bhz7etAd8QLpmPVnsSA5SxEr6ddek1Vdp4XQL2xwuLBj4YG10)tPTxBKYg)jGRqCOp7IPscL7r57ztUzK5knP2153wMnEXCdtGTj604ftwFX8)9L1rgkCHDP62yd1nmH0(bSr1YsLHudSZ6vtNm2UQxnTlARwrCh9Wdpd)CqN3NB(IwE59kh)NqWwBawMOuFzYtgyrYRGbwvwgZ2fBOGkdXZ2b1Eyh0Amw2)KKHlJkM0T5Uvpo(tBO4v(2Ywx6ZhFejA1Jt6PNVv3)zqaJ26waT0nr1oN0GC94ZEmgUoQREXjnOgkna4TA626Qk3pDYnMR)W8nKQcgd9IQd0xvsJaQ7JpZKaAByO2lZyBiNp31wV4HPNppWgqMCR548Npp4EpGIRV0KRY5uhO75ivDeJvruZLA4VhoSvv7s82SnI(qshOR38W1aT(IgWxOSblESdB0SOG2nNuU1HvlbR8GBBO0j7DTkTwH7MYTyfgJnaGeQzS5flTR8K6zvbdGYYb(nX0S5LyQzjbdGa5K94Z7UvGvnBe4vtTShabgtUBWjZQvBdVcGCrqsgmUEYEFASA0)n)9]])
+spec:RegisterPack("Assassination", 20250812, [[Hekili:TIv2UnUnx4NLGcymzMavfVKM5h2byM2(Jobywq9CTKOLOTzTSOajvsdqarFi6tyFs6HlAxIjonxKalU8Do87SWZHbxg89G1jibo4lt9NUW)6lN557p1F(8G1IhYXbRZrXhq7GFKHoc))dCoIZjzibHMPM9HukkrHcNwWIHveSEtbjv8PSGnda9LxnFkS2CCmm8I3hSEpjjbBwlMhhS(77jCzK6pKmYkCzeDl8DSsMYOucxatVLYKr)g(ajL4bkcJULKcI)hKr)oDxb()jJAPRYO38z63oxg9p)1FlJyyTscOWOhLr3tVxSj2B3oz070FXjhbrC76V(f5TYBbm)gdhtpUbjK3A0dUxE5qVB1pIYZtFimNs40SlsXI9O0vjyus6dxKrZSdeZiWYiz7ggdbJeFGhs3gk2Jdfmuc(cY2vCSqa7H7vWvJ2Bnt2XOf5dd5FaZhYXSCCMa0onpm4c5cmkvSxjVZS)gN4HstTh)VciGb(((9ajlJQwsnA2HaS2HymQqR7NLqfE2V9eGQdhKjceBhwaFEeob0Wec(MRhchEkjghIYsGLeRHBtX2TETh2lHEF2e15GQO)mb)MvxoeAhleKuWB0EG(mIutfW0haLtjcRYfJ4IMgkL6SNCNAfjyTAKqaN40u0MuCioJbEPEnSc)xnNtuSZnZ8BcymyocnFgQIbUqfrUkoH3CrSIS(RPH1TJX9j24wsgHR3xBgEXJp(gbkf8Q8qzGDLKRJX8Wzk(iPJ9y(enJ1ALCbeAFZQzN)K6aIQ5n143POA8rcgaD2ttnQq8KNEzj4T4moao36B8b6Vw7bbIxTtgKqa2LaFmhdBShJmFspfCI27VZolJc6kGTOmLBWHmLE0f(LlEv0NHuhg(iejWxo1E2)OIZWSAFkpnlQcGqSd4KqiTBiKzt0ZRyLF)9OcsqI49nIS2R9)8YJflNPCJ0UgBGSIjCsIkgQLZZY5NpGMydL7rtZpb3YLlgZRCPYPutg)FT7Fl2Wer8kLDQcmwrUOGzsz6kn5PbvLT9LIfo7oCg94aX)NYITH)DygWqR8hTQBPF4nxAP(FMstvKxdQhY0bIbescKcf1lxA5etAFb2Zr49IjnIIVhbQq4MuiTmVYcVjLstsl0XoW6F8X(K7Y5(GNyS9i4vQzvhYzW0ASQMPi)8UsxDMiqyATKBS6bLAJRlSyO11WTfShgcKERg80Xmft8CwnIfJYuYMXGao1ouLiS7HLx1tnmejywYBz1aRdqV1toXg7wpsvKR90c5teOSym4UwMW6xAK9UuQ1z0vPkHcupOYTAHvPcnscTAQ)KZ0N1UlS1zUfK47qCy0UinBHfj78JdWwmXqzKmiwbiJWe0rOeIWf8BSiEe9NV13dQv(oWQaiuwfTpm09iwMIbdw)PJ5uMaQdl66ofi7jVnyT(xQIZnrPWV(IUIFlTg8XG1MnbLK3kcXunouVQzYQeHbRHbfygbPkZF48DYOjYOMPaKr3SsgDzGaodDKEnANjJkddv7VV7nGI(uoc4vheBqTsAZgvA2irz0sz00xpboFub2hHf1iytDQqyXjGWCTUnC(n9udKGvFOUCirlaFatItxUj2I574Fmw7bDmWd0nGtU3ThZj7)nMVEPNs50L1x0uUA(bIHrfPcx8JQpIoKJQvJM6D7wmCFgD1SrJZd0AIB)9NQRdnNzAKuBqalH2emZVwkdSTH85lxE3ITnzJcnpJaCVGBV9w3H3mwlBuml9EbCV6eIIwiJE8rz0BuUHJw64i(unIa7xhPzjZKrN)80FBoAq9)PrvF1ERlQ3kHNh8qJdkSV(LyU0vER297Fj7U(Qptyu1dpmuGuRqNx3xYP(rCa1t)KmkXPEKM6dsZhYjyD1B3OTbMhVXDa7Zpq7jdSALtAGxYPD6jh39CwJmYTdNQdzeghehz2605yhlf0Z8Z5YQb9F1ZyVEyK2LDt6TL2Yw3T2QXA3jjpDL2rh1MslgN(0uUknOdkVS67oCDvVrJ64vUXsMT9R(Ccvn8SO)HAlYKuDOl2bAzUFvo3rBsYE9JzH96fPzo1wTP52c3hhhAzZ7(QAgZDKwx8RbOUtm3375aHQUZCFdNPlm9j4QgNG2TR5(wMr7qZwT2iDP1SwUYo1S1EnTR5sTVQIQkVDWv2NonN1jKOUlWMNJ6MZa6auJP(LbeJ1WNBh9U4nBrl8QB7RwVTJ52TSFxGAV)6obLrVvgP7gSkTMQdsdbAUC2b319L76WDLp534PcHJQVBMP3J7zIGQRTQ3Z8nqfvl1jCBezx(8HNsABdiVOk6wQlg0vbDl7wpxvRcwBbQqSNYcwdtSLroOhm4F)d]])

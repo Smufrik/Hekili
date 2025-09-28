@@ -1,33 +1,35 @@
-# Death Knight: Frost
+# Death Knight: Frost (MoP)
+# Aligned with WoWSims Frost APLs:
 
 ## Two-Handed Priority Variables
 actions.precombat+=/variable,name=two_handed,value=spell_targets.howling_blast=1&main_hand.2h
 
 ## Precombat Actions
-actions.precombat+=/horn_of_winter,if=!buff.horn_of_winter.up
 actions.precombat+=/frost_presence
-actions.precombat+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.stack<10
 actions.precombat+=/raise_dead
 actions.precombat+=/army_of_the_dead
+actions.precombat+=/horn_of_winter,if=!buff.horn_of_winter.up|buff.horn_of_winter.remains<6
+actions.precombat+=/potion
 
 ## Default Actions
 actions+=/mind_freeze
 actions+=/antimagic_shell,damage=100000,if=cooldown.antimagic_shell.remains=0
 actions+=/pillar_of_frost
+actions+=/synapse_springs
 actions+=/blood_fury,if=buff.pillar_of_frost.up
 actions+=/berserking,if=buff.pillar_of_frost.up
-actions+=/arcane_torrent,if=runic_power<100&buff.pillar_of_frost.up
 actions+=/use_item,name=trinket1,if=buff.pillar_of_frost.up
 actions+=/use_item,name=trinket2,if=buff.pillar_of_frost.up
+actions+=/use_items
 actions+=/raise_dead,if=!pet.ghoul.active
-actions+=/unholy_blight,if=talent.unholy_blight.enabled&(dot.frost_fever.remains<3|dot.blood_plague.remains<3)
 
-## Disease Management and Resource Pooling
+# Disease Management and Resource Pooling
+actions+=/unholy_blight,if=talent.unholy_blight.enabled&(dot.frost_fever.remains<3|dot.blood_plague.remains<3)
 actions+=/outbreak,if=(!dot.blood_plague.ticking|!dot.frost_fever.ticking)
 actions+=/plague_strike,if=!dot.blood_plague.ticking
 actions+=/icy_touch,if=!dot.frost_fever.ticking
-actions+=/plague_leech,if=talent.plague_leech.enabled&((dot.blood_plague.remains<3&dot.frost_fever.remains<3)|(cooldown.outbreak.remains<1))
-actions+=/empower_rune_weapon,if=target.time_to_die<=60&buff.pillar_of_frost.up
+actions+=/plague_leech,if=talent.plague_leech.enabled&((dot.blood_plague.remains<3&dot.frost_fever.remains<3)|(rune_current<=2&(dot.frost_fever.ticking|dot.blood_plague.ticking)))
+actions+=/empower_rune_weapon,if=((runes.blood.count=0&runes.frost.count=0&runes.unholy.count=0)|(target.time_to_die<=60&buff.pillar_of_frost.up))
 
 ## DPS Priority
 actions+=/run_action_list,name=2h,if=variable.two_handed
@@ -35,36 +37,44 @@ actions+=/run_action_list,name=1h,if=!variable.two_handed
 
 ## Two-Handed Frost
 actions.2h+=/soul_reaper,if=target.health.pct-3*(target.health.pct%target.time_to_die)<=35
-actions.2h+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.stack>=5&(blood=0|frost=0|unholy=0)
+actions.2h+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.stack>=5&(runes.blood.count=0|runes.frost.count=0|runes.unholy.count=0)
+
+# Killing Machine and Rime Priority
 actions.2h+=/frost_strike,if=buff.killing_machine.react&runic_power>=20
 actions.2h+=/obliterate,if=buff.killing_machine.react
 actions.2h+=/frost_strike,if=runic_power>=80
-actions.2h+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.stack>=5&runic_power>=20
-actions.2h+=/howling_blast,if=buff.rime.react&disease.min_remains>5
+
+# Rime Proc Management
+actions.2h+=/howling_blast,if=buff.rime.react&(dot.frost_fever.remains>5&dot.blood_plague.remains>5)
 actions.2h+=/death_and_decay,if=active_enemies>=2
-actions.2h+=/obliterate,if=blood=2&frost=2&unholy=2
-actions.2h+=/obliterate,if=blood=2&frost=2&unholy=1
-actions.2h+=/obliterate,if=blood=2&frost=1&unholy=2
-actions.2h+=/obliterate,if=blood=1&frost=2&unholy=2
+
+# Rune Management for Obliterate
+actions.2h+=/obliterate,if=(runes.frost.count>0&runes.unholy.count>0)|runes.death.count>=2
 actions.2h+=/frost_strike,if=runic_power>=40
 actions.2h+=/howling_blast,if=buff.rime.react
 actions.2h+=/obliterate
 actions.2h+=/horn_of_winter,if=runic_power<40
 actions.2h+=/frost_strike,if=runic_power>=20
-actions.2h+=/empower_rune_weapon,if=blood=0&frost=0&unholy=0
+actions.2h+=/empower_rune_weapon,if=runes.blood.count=0&runes.frost.count=0&runes.unholy.count=0
 
 ## Dual-Wield Frost
 actions.1h+=/soul_reaper,if=target.health.pct-3*(target.health.pct%target.time_to_die)<=35
-actions.1h+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.stack>=5&(blood=0|frost=0|unholy=0)
+actions.1h+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.stack>=5&(runes.blood.count=0|runes.frost.count=0|runes.unholy.count=0)
+
+# Killing Machine Priority
 actions.1h+=/frost_strike,if=buff.killing_machine.react&runic_power>=20
 actions.1h+=/howling_blast,if=buff.rime.react
 actions.1h+=/frost_strike,if=runic_power>=80
-actions.1h+=/howling_blast,if=!buff.rime.react&disease.min_remains>5
+
+# Disease Management for Howling Blast
+actions.1h+=/howling_blast,if=!buff.rime.react&(dot.frost_fever.remains>5&dot.blood_plague.remains>5)
 actions.1h+=/death_and_decay,if=active_enemies>=2
-actions.1h+=/obliterate,if=blood=2&frost=2&unholy=2
+
+# Rune Management
+actions.1h+=/obliterate,if=(runes.frost.count>0&runes.unholy.count>0)|runes.death.count>=2
 actions.1h+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.stack>=5&runic_power>=20
 actions.1h+=/frost_strike,if=runic_power>=40
 actions.1h+=/obliterate
 actions.1h+=/horn_of_winter,if=runic_power<40
 actions.1h+=/frost_strike,if=runic_power>=20
-actions.1h+=/empower_rune_weapon,if=blood=0&frost=0&unholy=0
+actions.1h+=/empower_rune_weapon,if=runes.blood.count=0&runes.frost.count=0&runes.unholy.count=0

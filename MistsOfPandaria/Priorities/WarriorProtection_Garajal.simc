@@ -1,0 +1,104 @@
+# Warrior: Protection – Garajal (wowsims-inspired)
+## Notes
+# Fight-specific variant approximating wowsims behaviors for Garajal:
+# - Pre-pull timings, defensive windows tightened
+# - Strict SB-aware spending, Weakened Blows/Armor upkeep
+# - Bladestorm channel respect (simple gating)
+
+## Precombat
+actions.precombat+=/battle_shout,if=settings.maintain_buffs&!buff.str_agi_int.up&!buff.battle_shout.up
+actions.precombat+=/commanding_shout,if=settings.maintain_buffs&!buff.stamina.up&!buff.commanding_shout.up
+actions.precombat+=/stance,choose=defensive
+actions.precombat+=/snapshot_stats
+actions.precombat+=/flask,type=earth
+actions.precombat+=/food,type=chun_tian_spring_rolls
+
+## Default actions
+actions+=/charge,if=time=0|movement.distance>8
+actions+=/pummel,if=target.debuff.casting.react
+actions+=/run_action_list,name=movement,if=movement.distance>5
+# Keep Enrage handy but avoid overlapping fear breaks needlessly
+actions+=/berserker_rage,if=settings.use_berserker_rage&buff.enrage.down
+
+# On-use items/racials during SB windows
+actions+=/use_item,slot=hands,if=buff.shield_block.up
+actions+=/use_item,name=trinket1,if=cooldown.shield_wall.remains>90
+actions+=/use_item,name=trinket2,if=cooldown.shield_wall.remains>90
+actions+=/blood_fury,if=buff.shield_block.up
+actions+=/berserking,if=buff.shield_block.up
+actions+=/arcane_torrent,if=rage<rage.max-40
+
+# Potion when Shield Wall up or execute burn
+actions+=/potion,name=mogu_power_potion,if=buff.shield_wall.up|target.time_to_die<25
+
+# Defensives prioritized for Garajal burst windows
+actions+=/call_action_list,name=defensives
+
+# Threat/rotation
+actions+=/taunt,if=settings.auto_taunt&!threat.exists
+actions+=/run_action_list,name=single_target,if=active_enemies=1
+actions+=/run_action_list,name=aoe,if=active_enemies>=settings.aoe_enemy_threshold
+
+## Defensive cooldowns (Garajal tuned)
+# Wall early for large hits; Last Stand as a bridge; Barrier as filler if SB not soon
+actions.defensives+=/shield_wall,if=settings.use_shield_wall&(health.pct<40|incoming_damage_2500ms>health.max*0.45)
+actions.defensives+=/last_stand,if=settings.use_last_stand&(health.pct<55|incoming_damage_2500ms>health.max*0.3)&cooldown.shield_wall.remains>10
+actions.defensives+=/demoralizing_shout,if=incoming_damage_2500ms>health.max*0.2
+actions.defensives+=/enraged_regeneration,if=health.pct<50&buff.enrage.up
+actions.defensives+=/shield_block,if=settings.shield_block_priority!='never'&(buff.shield_block.down|(settings.shield_block_priority='always'&buff.shield_block.remains<2))
+actions.defensives+=/shield_barrier,if=buff.shield_barrier.down&((rage>=settings.shield_barrier_rage_threshold&cooldown.shield_block.remains>3)|health.pct<60|incoming_damage_2500ms>health.max*0.2)
+actions.defensives+=/spell_reflection,if=settings.use_spell_reflection&incoming_magic_damage_5s>health.max*0.15
+actions.defensives+=/healthstone,if=health.pct<35
+actions.defensives+=/impending_victory,if=health.pct<40&talent.impending_victory.enabled
+actions.defensives+=/victory_rush,if=health.pct<40&!talent.impending_victory.enabled
+
+## Single-target rotation (Garajal)
+# Use DPS CDs during SB when allowed
+actions.single_target+=/avatar,if=settings.cooldown_usage!='never'&talent.avatar.enabled&(buff.shield_block.up|cooldown.shield_block.remains>8)
+actions.single_target+=/dragon_roar,if=settings.cooldown_usage!='never'&buff.shield_block.up
+
+# Maintain Weakened Blows via Thunder Clap
+actions.single_target+=/thunder_clap,if=debuff.weakened_blows.down|debuff.weakened_blows.remains<2
+
+# Core priority
+actions.single_target+=/shield_slam
+
+# Revenge rage windows (avoid overcap before SB; otherwise free to press)
+actions.single_target+=/revenge,if=(rage<=85&(cooldown.shield_block.remains>3|buff.shield_block.up))|rage<60
+
+# Sunder/Weakened Armor
+actions.single_target+=/sunder_armor,if=settings.maintain_sunder_armor&(debuff.sunder_armor.down|debuff.sunder_armor.stack<3)
+
+# Devastate for upkeep/filler
+actions.single_target+=/devastate,if=debuff.sunder_armor.stack<3|(rage<90&dot.deep_wounds.remains<4)
+
+# Execute and stuns
+actions.single_target+=/storm_bolt,if=settings.cooldown_usage!='never'
+actions.single_target+=/execute,if=target.health.pct<20
+
+# Heroic Strike rage dump with SB-awareness and low incoming damage
+actions.single_target+=/heroic_strike,if=settings.use_heroic_strike&((rage>=90&target.health.pct>20)|(rage>=65&cooldown.shield_block.remains>6&incoming_damage_2500ms<health.max*0.12))
+
+# Fillers
+actions.single_target+=/devastate
+actions.single_target+=/battle_shout,if=settings.maintain_buffs&rage<rage.max-20
+actions.single_target+=/heroic_throw
+
+## AoE rotation
+actions.aoe+=/avatar,if=settings.cooldown_usage!='never'&talent.avatar.enabled
+actions.aoe+=/thunder_clap
+actions.aoe+=/bladestorm,if=settings.cooldown_usage!='never'&!buff.bladestorm.up
+actions.aoe+=/dragon_roar,if=settings.cooldown_usage!='never'
+actions.aoe+=/shockwave,if=settings.cooldown_usage!='never'
+actions.aoe+=/use_item,slot=hands,if=buff.shield_block.up
+actions.aoe+=/shield_slam
+actions.aoe+=/revenge
+actions.aoe+=/cleave,if=rage>60
+actions.aoe+=/sunder_armor,if=settings.maintain_sunder_armor&debuff.sunder_armor.stack<3
+actions.aoe+=/devastate,if=debuff.sunder_armor.stack<3
+actions.aoe+=/battle_shout,if=settings.maintain_buffs&rage<rage.max-20
+
+## Movement actions
+actions.movement+=/heroic_leap
+actions.movement+=/charge
+actions.movement+=/heroic_throw

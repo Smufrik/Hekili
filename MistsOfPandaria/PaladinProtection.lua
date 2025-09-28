@@ -1,5 +1,5 @@
 -- PaladinProtection.lua
--- Updated May 28, 2025 - Modern Structure
+-- Updated Sep 28, 2025 - Modern Structure
 -- Mists of Pandaria module for Paladin: Protection spec
 
 -- MoP: Use UnitClass instead of UnitClassBase
@@ -11,11 +11,6 @@ local Hekili = _G[ "Hekili" ]
 local class = Hekili.Class
 local state = Hekili.State
 local spec = Hekili:NewSpecialization( 66 )
-
-local function getReferences()
-    -- Legacy function for compatibility
-    return class, state
-end
 
 local strformat = string.format
 local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
@@ -66,7 +61,7 @@ spec:RegisterResource( 9, { -- Holy Power with Protection-specific mechanics
         end,
         interval = 1,
         value = function()
-            if state.talent.shield_of_vengeance.enabled and state.last_ability == "word_of_glory" then
+            if state.talent.shield_of_vengeance.enabled and (state.last_ability and state.last_ability == "word_of_glory") then
                 return 0 -- Shield of Vengeance procs from Holy Power consumption
             end
             return 0
@@ -80,7 +75,7 @@ spec:RegisterResource( 9, { -- Holy Power with Protection-specific mechanics
         end,
         interval = 1,
         value = function()
-            if state.talent.eternal_flame.enabled and state.last_ability == "word_of_glory" then
+            if state.talent.eternal_flame.enabled and (state.last_ability and state.last_ability == "word_of_glory") then
                 return 0 -- Eternal Flame effectiveness scales with Holy Power spent
             end
             return 0
@@ -158,9 +153,63 @@ spec:RegisterGlyphs( {
 
 -- Protection Paladin specific auras
 spec:RegisterAuras( {
-    -- Grand Crusader: Chance for free Avenger's Shield after Crusader Strike or Hammer of the Righteous
+    -- Vengeance buff for Protection Paladin
+    vengeance = {
+        id = 132365,
+        duration = 20,
+        max_stack = 1,
+        generate = function(t)
+            local name, icon, count, debuffType, duration, expirationTime, caster = FindUnitBuffByID("player", 132365)
+            
+            if name then
+                t.name = name
+                t.count = count or 1
+                t.expires = expirationTime
+                t.applied = expirationTime - duration
+                t.caster = caster
+                return
+            end
+            
+            t.count = 0
+            t.expires = 0
+            t.applied = 0
+            t.caster = "nobody"
+        end,
+    },
+    
+blessing_of_kings = {
+    id = 20217,
+    duration = 3600,
+    max_stack = 1,
+    texture = GetSpellTexture(20217),
+
+generate = function( t )
+    local name, icon, count, debuffType, duration, expirationTime, caster = FindUnitBuffByID( "player", 20217 )
+    if name then
+        t.name = name
+        t.count = count and count > 0 and count or 1
+        t.expires = expirationTime
+        t.applied = expirationTime - (duration or 3600)
+        t.caster = caster or "any"
+        return
+    end
+    t.count = 0
+    t.expires = 0
+    t.applied = 0
+    t.caster = "nobody"
+end,
+},
+
+blessing_of_might = {
+    id = 19740,
+    duration = 3600,
+    max_stack = 1,
+    texture = GetSpellTexture(19740),
+},
+-- Grand Crusader: Chance for free Avenger's Shield after Crusader Strike or Hammer of the Righteous
     grand_crusader = {
         id = 85416,
+            texture = GetSpellTexture(85416),
         duration = 6,
         max_stack = 1,
         generate = function( t )
@@ -185,6 +234,7 @@ spec:RegisterAuras( {
     -- Shield of the Righteous: Active mitigation ability
     shield_of_the_righteous = {
         id = 132403,
+            texture = GetSpellTexture(132403),
         duration = 3,
         max_stack = 1,
         generate = function( t )
@@ -209,6 +259,7 @@ spec:RegisterAuras( {
     -- Bastion of Glory: Increases healing of Word of Glory on self
     bastion_of_glory = {
         id = 114637,
+            texture = GetSpellTexture(114637),
         duration = 20,
         max_stack = 5,
         generate = function( t )
@@ -233,6 +284,7 @@ spec:RegisterAuras( {
     -- Divine Plea: Restore mana over time, but reduce healing done
     divine_plea = {
         id = 54428,
+            texture = GetSpellTexture(54428),
         duration = 15,
         max_stack = 1,
         generate = function( t )
@@ -257,6 +309,7 @@ spec:RegisterAuras( {
     -- Sacred Shield: Absorbs damage periodically
     sacred_shield = {
         id = 65148,
+            texture = GetSpellTexture(65148),
         duration = 30,
         tick_time = 6,
         max_stack = 1,
@@ -282,6 +335,7 @@ spec:RegisterAuras( {
     -- Holy Avenger: Holy Power abilities more effective
     holy_avenger = {
         id = 105809,
+            texture = GetSpellTexture(105809),
         duration = 18,
         max_stack = 1,
         generate = function( t )
@@ -306,6 +360,7 @@ spec:RegisterAuras( {
     -- Avenging Wrath: Increased damage and healing
     avenging_wrath = {
         id = 31884,
+            texture = GetSpellTexture(31884),
         duration = function() 
             return state.talent.sanctified_wrath.enabled and 25 or 20
         end,
@@ -332,6 +387,7 @@ spec:RegisterAuras( {
     -- Divine Protection: Reduces damage taken
     divine_protection = {
         id = 498,
+            texture = GetSpellTexture(498),
         duration = 10,
         max_stack = 1,
         generate = function( t )
@@ -356,6 +412,7 @@ spec:RegisterAuras( {
     -- Divine Shield: Complete immunity
     divine_shield = {
         id = 642,
+            texture = GetSpellTexture(642),
         duration = 8,
         max_stack = 1,
         generate = function( t )
@@ -380,6 +437,7 @@ spec:RegisterAuras( {
     -- Forbearance: Cannot receive certain immunities again
     forbearance = {
         id = 25771,
+            texture = GetSpellTexture(25771),
         duration = 60,
         max_stack = 1,
         generate = function( t )
@@ -404,6 +462,7 @@ spec:RegisterAuras( {
     -- Speed of Light: Increased movement speed
     speed_of_light = {
         id = 85499,
+            texture = GetSpellTexture(85499),
         duration = 8,
         max_stack = 1,
         generate = function( t )
@@ -428,6 +487,7 @@ spec:RegisterAuras( {
     -- Long Arm of the Law: Increased movement speed after Judgment
     long_arm_of_the_law = {
         id = 114158,
+            texture = GetSpellTexture(114158),
         duration = 3,
         max_stack = 1,
         generate = function( t )
@@ -452,6 +512,7 @@ spec:RegisterAuras( {
     -- Pursuit of Justice: Increased movement speed from Holy Power
     pursuit_of_justice = {
         id = 26023,
+            texture = GetSpellTexture(26023),
         duration = 3600,
         max_stack = 3,
         generate = function( t )
@@ -465,6 +526,7 @@ spec:RegisterAuras( {
     -- Divine Purpose: Free and enhanced Holy Power ability
     divine_purpose = {
         id = 86172,
+            texture = GetSpellTexture(86172),
         duration = 8,
         max_stack = 1,
         generate = function( t )
@@ -489,6 +551,7 @@ spec:RegisterAuras( {
     -- Eternal Flame: HoT from talent
     eternal_flame = {
         id = 114163,
+            texture = GetSpellTexture(114163),
         duration = function() return 30 + (3 * state.holy_power.current) end,
         tick_time = 3,
         max_stack = 1,
@@ -514,6 +577,7 @@ spec:RegisterAuras( {
     -- Guardian of Ancient Kings: Major defensive cooldown
     guardian_of_ancient_kings = {
         id = 86659,
+            texture = GetSpellTexture(86659),
         duration = 12,
         max_stack = 1,
         generate = function( t )
@@ -538,6 +602,7 @@ spec:RegisterAuras( {
     -- Ardent Defender: Emergency defensive cooldown
     ardent_defender = {
         id = 31850,
+            texture = GetSpellTexture(31850),
         duration = 10,
         max_stack = 1,
         generate = function( t )
@@ -562,6 +627,7 @@ spec:RegisterAuras( {
     -- Hand of Freedom: Immunity to movement impairing effects
     hand_of_freedom = {
         id = 1044,
+            texture = GetSpellTexture(1044),
         duration = 6,
         max_stack = 1,
         generate = function( t )
@@ -586,6 +652,7 @@ spec:RegisterAuras( {
     -- Hand of Protection: Immunity to physical damage
     hand_of_protection = {
         id = 1022,
+            texture = GetSpellTexture(1022),
         duration = 10,
         max_stack = 1,
         generate = function( t )
@@ -610,6 +677,7 @@ spec:RegisterAuras( {
     -- Hand of Sacrifice: Redirects damage to Paladin
     hand_of_sacrifice = {
         id = 6940,
+            texture = GetSpellTexture(6940),
         duration = 12,
         max_stack = 1,
         generate = function( t )
@@ -634,7 +702,33 @@ spec:RegisterAuras( {
 
 -- Protection Paladin abilities
 spec:RegisterAbilities( {
-    -- Core Protection abilities
+    
+    blessing_of_might_cast = {
+        id = 19740,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        startsCombat = false,
+        texture = GetSpellTexture(19740),
+        usable = function()
+            return state.buff.blessing_of_might.down and state.buff.blessing_of_kings.down
+        end,
+        handler = function() end
+    },
+
+    blessing_of_kings_cast = {
+        id = 20217,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        startsCombat = false,
+        texture = GetSpellTexture(20217),
+        usable = function()
+            return state.buff.blessing_of_kings.down and state.buff.blessing_of_might.down
+        end,
+        handler = function() end
+    },
+-- Core Protection abilities
     shield_of_the_righteous = {
         id = 53600,
         cast = 0,
@@ -648,7 +742,7 @@ spec:RegisterAbilities( {
         spendType = "holy_power",
         
         startsCombat = true,
-        texture = 236265,
+            texture = GetSpellTexture(53600),
         
         handler = function()
             -- Shield of the Righteous mechanic
@@ -675,7 +769,7 @@ spec:RegisterAbilities( {
         spendType = "mana",
         
         startsCombat = true,
-        texture = 135874,
+            texture = GetSpellTexture(31935),
         
         usable = function()
             if state.buff.grand_crusader.up then return true end
@@ -698,7 +792,7 @@ spec:RegisterAbilities( {
         toggle = "defensives",
         
         startsCombat = false,
-        texture = 409594,
+            texture = GetSpellTexture(86659),
         
         handler = function()
             applyBuff("guardian_of_ancient_kings")
@@ -714,7 +808,7 @@ spec:RegisterAbilities( {
         toggle = "defensives",
         
         startsCombat = false,
-        texture = 135870,
+            texture = GetSpellTexture(31850),
         
         handler = function()
             applyBuff("ardent_defender")
@@ -734,7 +828,7 @@ spec:RegisterAbilities( {
         spendType = "holy_power",
         
         startsCombat = false,
-        texture = 646176,
+            texture = GetSpellTexture(85673),
         
         handler = function()
             -- Word of Glory mechanic - consumes all Holy Power and Bastion of Glory
@@ -778,7 +872,7 @@ spec:RegisterAbilities( {
         spendType = "mana",
         
         startsCombat = true,
-        texture = 236157,
+            texture = GetSpellTexture(53595),
         
         range = 8,
         
@@ -807,8 +901,8 @@ spec:RegisterAbilities( {
         
         talent = "holy_prism",
         
-        startsCombat = function() return not state.option.holy_prism_heal end,
-        texture = 613407,
+        startsCombat = function() return not (state.settings and state.settings.holy_prism_heal) end,
+            texture = GetSpellTexture(114165),
         
         handler = function()
             -- Holy Prism mechanic
@@ -829,7 +923,7 @@ spec:RegisterAbilities( {
         talent = "lights_hammer",
         
         startsCombat = true,
-        texture = 613952,
+            texture = GetSpellTexture(114158),
         
         handler = function()
             -- Light's Hammer mechanic - ground target AoE that heals allies and damages enemies
@@ -847,8 +941,8 @@ spec:RegisterAbilities( {
         
         talent = "execution_sentence",
         
-        startsCombat = function() return not state.option.execution_sentence_heal end,
-        texture = 613954,
+        startsCombat = function() return not (state.settings and state.settings.execution_sentence_heal) end,
+            texture = GetSpellTexture(114157),
         
         handler = function()
             -- Execution Sentence mechanic
@@ -866,7 +960,7 @@ spec:RegisterAbilities( {
         toggle = "cooldowns",
         
         startsCombat = false,
-        texture = 237537,
+            texture = GetSpellTexture(54428),
         
         handler = function()
             applyBuff("divine_plea")
@@ -882,8 +976,8 @@ spec:RegisterAbilities( {
         toggle = "cooldowns",
         
         startsCombat = false,
-        texture = 135875,
-        
+        --texture = 135875,  my test on getspelltexture below. better solution than using static id in case of typo
+            texture = GetSpellTexture(31884),
         handler = function()
             applyBuff("avenging_wrath")
         end
@@ -900,7 +994,7 @@ spec:RegisterAbilities( {
         talent = "holy_avenger",
         
         startsCombat = false,
-        texture = 571555,
+            texture = GetSpellTexture(105809),
         
         handler = function()
             applyBuff("holy_avenger")
@@ -918,7 +1012,7 @@ spec:RegisterAbilities( {
         toggle = "defensives",
         
         startsCombat = false,
-        texture = 524354,
+            texture = GetSpellTexture(642),
         
         handler = function()
             applyBuff("divine_shield")
@@ -937,7 +1031,7 @@ spec:RegisterAbilities( {
         toggle = "defensives",
         
         startsCombat = false,
-        texture = 524353,
+            texture = GetSpellTexture(498),
         
         handler = function()
             applyBuff("divine_protection")
@@ -955,7 +1049,7 @@ spec:RegisterAbilities( {
         toggle = "defensives",
         
         startsCombat = false,
-        texture = 135928,
+            texture = GetSpellTexture(633),
         
         handler = function()
             -- Heals target for Paladin's maximum health
@@ -976,7 +1070,7 @@ spec:RegisterAbilities( {
         gcd = "spell",
         
         startsCombat = false,
-        texture = 135968,
+            texture = GetSpellTexture(1044),
         
         handler = function()
             applyBuff("hand_of_freedom")
@@ -997,7 +1091,7 @@ spec:RegisterAbilities( {
         toggle = "defensives",
         
         startsCombat = false,
-        texture = 135964,
+            texture = GetSpellTexture(1022),
         
         handler = function()
             applyBuff("hand_of_protection")
@@ -1019,7 +1113,7 @@ spec:RegisterAbilities( {
         toggle = "defensives",
         
         startsCombat = false,
-        texture = 135966,
+            texture = GetSpellTexture(6940),
         
         handler = function()
             applyBuff("hand_of_sacrifice", "target")
@@ -1035,7 +1129,7 @@ spec:RegisterAbilities( {
         talent = "hand_of_purity",
         
         startsCombat = false,
-        texture = 458726,
+            texture = GetSpellTexture(114039),
         
         handler = function()
             -- Applies Hand of Purity effect
@@ -1053,7 +1147,7 @@ spec:RegisterAbilities( {
         spendType = "mana",
         
         startsCombat = true,
-        texture = 135891,
+            texture = GetSpellTexture(35395),
         
         handler = function()
             gain(1, "holy_power")
@@ -1079,7 +1173,7 @@ spec:RegisterAbilities( {
         spendType = "mana",
         
         startsCombat = true,
-        texture = 135959,
+            texture = GetSpellTexture(20271),
         
         handler = function()
             gain(1, "holy_power")
@@ -1101,7 +1195,7 @@ spec:RegisterAbilities( {
         spendType = "mana",
         
         startsCombat = false,
-        texture = 135949,
+            texture = GetSpellTexture(4987),
         
         handler = function()
             -- Removes 1 Poison effect, 1 Disease effect, and 1 Magic effect from a friendly target
@@ -1120,7 +1214,7 @@ spec:RegisterAbilities( {
         gcd = "spell",
         
         startsCombat = true,
-        texture = 135963,
+            texture = GetSpellTexture(853),
         
         handler = function()
             -- Stuns target for 6 seconds
@@ -1141,7 +1235,7 @@ spec:RegisterAbilities( {
         end,
         
         startsCombat = true,
-        texture = 138168,
+            texture = GetSpellTexture(24275),
         
         handler = function()
             gain(1, "holy_power")
@@ -1158,12 +1252,37 @@ spec:RegisterAbilities( {
         spendType = "mana",
         
         startsCombat = true,
-        texture = 135926,
+            texture = GetSpellTexture(26573),
         
         handler = function()
             -- Creates consecrated ground that deals Holy damage over time
         end
     },
+
+    holy_wrath = {
+        -- MoP Holy Wrath (AoE burst; stuns Demons/Undead). 
+        id = 119072,
+            texture = GetSpellTexture(119072),
+        cast = 0,
+        cooldown = 15,
+        gcd = "spell",
+
+        spend = 0.12,
+        spendType = "mana",
+
+        startsCombat = true,
+        range = 10,
+
+        usable = function()
+            -- Add any “don’t break CC / don’t use in single-target” guards here if you want.
+            return true
+        end,
+
+        handler = function()
+            -- No special states to track for Prot; damage/CC handled by the game.
+        end
+    },
+
     
     repentance = {
         id = 20066,
@@ -1177,7 +1296,7 @@ spec:RegisterAbilities( {
         spendType = "mana",
         
         startsCombat = false,
-        texture = 135942,
+            texture = GetSpellTexture(20066),
         
         handler = function()
             -- Incapacitates target for up to 1 minute
@@ -1196,7 +1315,7 @@ spec:RegisterAbilities( {
         spendType = "mana",
         
         startsCombat = true,
-        texture = 571553,
+            texture = GetSpellTexture(115750),
         
         handler = function()
             -- Disorients all nearby enemies
@@ -1212,7 +1331,7 @@ spec:RegisterAbilities( {
         talent = "speed_of_light",
         
         startsCombat = false,
-        texture = 538056,
+            texture = GetSpellTexture(85499),
         
         handler = function()
             applyBuff("speed_of_light")
@@ -1231,7 +1350,7 @@ spec:RegisterAbilities( {
         spendType = "mana",
         
         startsCombat = false,
-        texture = 612316,
+            texture = GetSpellTexture(20925),
         
         handler = function()
             applyBuff("sacred_shield")
@@ -1266,7 +1385,60 @@ end
 -- } )
 
 -- Range
-spec:RegisterRanges( "judgment", "avengers_shield", "hammer_of_justice", "rebuke", "crusader_strike", "hammer_of_the_righteous" )
+spec:RegisterRanges( "judgment", "avengers_shield", "hammer_of_justice", "rebuke", "crusader_strike", "hammer_of_the_righteous", "holy_wrath" )
+
+spec:RegisterAbilities({
+    rebuke = {
+        id = 96231,
+        cast = 0,
+        cooldown = 15,
+        gcd = "off",
+
+        toggle = "interrupts",
+        startsCombat = true,
+
+        debuff = "casting",
+        readyTime = state.timeToInterrupt,
+
+        handler = function() interrupt() end,
+    },
+})
+
+-- Vengeance state expressions
+spec:RegisterStateExpr("vengeance_stacks", function()
+    if not state.vengeance then
+        return 0
+    end
+    return state.vengeance:get_stacks()
+end)
+
+spec:RegisterStateExpr("vengeance_attack_power", function()
+    if not state.vengeance then
+        return 0
+    end
+    return state.vengeance:get_attack_power()
+end)
+
+spec:RegisterStateExpr("vengeance_value", function()
+    if not state.vengeance then
+        return 0
+    end
+    return state.vengeance:get_stacks()
+end)
+
+spec:RegisterStateExpr("high_vengeance", function()
+    if not state.vengeance or not state.settings then
+        return false
+    end
+    return state.vengeance:is_high_vengeance(state.settings.vengeance_stack_threshold)
+end)
+
+spec:RegisterStateExpr("should_prioritize_damage", function()
+    if not state.vengeance or not state.settings or not state.settings.vengeance_optimization or not state.settings.vengeance_stack_threshold then
+        return false
+    end
+    return state.settings.vengeance_optimization and state.vengeance:is_high_vengeance(state.settings.vengeance_stack_threshold)
+end)
 
 -- Options
 spec:RegisterOptions( {
@@ -1288,5 +1460,42 @@ spec:RegisterOptions( {
     execution_sentence_heal = false,
 } )
 
+-- Vengeance system variables and settings (Lua-based calculations)
+spec:RegisterVariable( "vengeance_stacks", function()
+    return state.vengeance:get_stacks()
+end )
+
+spec:RegisterVariable( "vengeance_attack_power", function()
+    return state.vengeance:get_attack_power()
+end )
+
+spec:RegisterVariable( "high_vengeance", function()
+    return state.vengeance:is_high_vengeance(state.settings.vengeance_stack_threshold)
+end )
+
+spec:RegisterVariable( "vengeance_active", function()
+    return state.vengeance:is_active()
+end )
+
+-- Vengeance-based ability conditions (using RegisterStateExpr instead of RegisterVariable)
+
+spec:RegisterSetting( "vengeance_optimization", true, {
+    name = strformat( "Optimize for %s", Hekili:GetSpellLinkWithTexture( 132365 ) ),
+    desc = "If checked, the rotation will prioritize damage abilities when Vengeance stacks are high.",
+    type = "toggle",
+    width = "full",
+} )
+
+spec:RegisterSetting( "vengeance_stack_threshold", 5, {
+    name = "Vengeance Stack Threshold",
+    desc = "Minimum Vengeance stacks before prioritizing damage abilities over pure threat abilities.",
+    type = "range",
+    min = 1,
+    max = 10,
+    step = 1,
+    width = "full",
+} )
+
 -- Register default pack for MoP Protection Paladin
-spec:RegisterPack( "Protection", 20250515, [[Hekili:T1PBVTTn04FlXjHj0OfnrQ97Lvv9n0KxkzPORkyzyV1ikA2JC7fSOhtkfLjjRKKGtkLQfifs4YC7O3MF11Fw859fNZXPb72TQWN3yiOtto8jREEP(D)CaaR7oXR]hYdVp)NhS4(SZdhFpzmYBPn2qGdjcw5Jt8jc((52Lbb6W0P)MM]] )
+spec:RegisterPack( "Protection", 20250916, [[Hekili:fJ16UTTnu4NLIbeK0146lrzTdXbyRnTiDizfvfO)tI0s02SrwuGKkPbWGype7jCpj7qkllsQlUTBd7pX2IhEoF87CHFkrtI(yuykwsIUD64PbJF54Zhnz2zZMeefkFSGefwGtUdVc(soEd833ZzssIKYY1l9ygdNQDHGvYtGLdV(MxPqbN9ItFru4IsAM868OfTdX0GZcMgfIlLRz8OWFBng83AAAkPYCIijk82F)Jx9ZkuibNjuiWK0mIc9iekbjB5if66CbD1APcrH1tjlXLzWpwY4kubGtaHC2sAgGRFqHUH9EfQb(W3Xz4uk8L)6p(tfsdbDSkKGJpxUwH0OvHuVd27TWU(NGe17mU59CscBZcm8BSbeIrf1p6hN)8fzeHGMVkMTm(o4trCcw0JTFUmD1gsETNNp38XR3f56hz(YBj5eonrHKCA(De5UdaeG9UgCyPGetLKnINrxoFr5YLJW3tYxPHZdCSC9OYITBL0nKlMmENJ)aoHQjelVSiJXsJxwYF05PeGN435frmpbNtILmoV5GCd(ZAs7vVwOPElJDaJ9kRzzpgBwMW1yxIZa3nY(XJi5yGCt3fJxX4etwIazT7johGu69uaufn1jwlUQeZtP4CDccNNqH4uLO2ZzornL9q(rMhlwtjzP6TjxtI56sfcRuyzrR4AwZLUs1XZa70QJ6)fHSATEpP7GLHhVss454mf6nzWSbfQuadkuOJV6nkeNuKHtaUf9j2BpXnx(aJBa2Qmg)rRugPYFXl1URoND0Xga5UgNSbtZfxmTcTlG2eW3795iHeMAD50Jo2qofShi8lNpB7wNZDjVGjiqD9jN89JUHI)8GDevit(H90JzAdq66iEp8BD5ozdHVIKN4010tgudj7JvqFhRTBP5W8cDttkEde74jbJhVrC581WCmOJEd(lpD8Oz1GeYZs6sk0MG(KPjdjEeMCSYbu1ZDSigX(nUBsHd30AkIdxJPYNjijZtySmDL1OA)xNI)AItVB(YX9V2fZhpkWEcjggebLRhlkYO1ZU)f2vo1gjCijcnFXcyw6Den4QsJXGh2qjIlM5mAcVbsSDMbD3guComT4fyB25q2ytc9yInxCJz44klg55azqZYGz4Dvi8TNo)(txhD8HojN2Rdo5YQdP3vkWPkUQrR1Dk7UPzxZrcx3yewzkQS4ocPqxTa3)FQUq3PorymFNJDkHTEUBFI7s1N66SYhn7xJGfLsjee7Or(cjP0masOnkpHyp2Q1In3g24ImDTPiUQG1A3opVRn2uIBtxVLZkZtn9pUJ(tGpijGLWV1H5jsAsLUGw0FbNk24FHU5H14ik8Ei9b7Pwz5KZJcFaZZ1xuffE9Mcg3WztvOkNRqzuHums9UOqZ3mYFRenbF9wJC4AV)RrHjCqseNI1Az7CwgA7wqxfvF73fk0KXGKwtGIc3RNQsnlNwu9Cqw2EzAAnAdiplschmpe54RDcWAcAJ8l9ENP37(L2RbZ2FGvNzBLRMmpldgcl2c3S8NdJPDY59sXdiCRXH2RQD3pneM8f614MwAF0(6fdN9Bj0sHos3pEaXwnw1TGRgq1ROln4E5)lGRz9HveAxb5itvdDOT4a58o1wzI9X7cFN6)mnDtBWy36WuOlRTc8wJ0j45q73SQE4ULqPqG01tAoCoAd9k2(wudByL(h2Cqwz4tlCQc6dZ6a7ptPjW(KtWWKJETU1ywT9gDMk0tviqRzdS6PQ0Ju)6voBozZoeL2NgYgwT1m(gixlPWhJ9kC2GPZ8WeC)haS(KPyL3aXuFRNGEDRPhy8HS5I56KuGb2(d7BaIR0vtpOvE1tyMhxnOsBtC7)(b)4A6ETUzOBX2gN6FlHBoOhTK9Nko0o7IT71uBs3)gi3ByhqzEhfPA)5FPX3BT3)o1v1JGpmNC6GU7KQC)osB6yhbmUI69uWmDITTnQ89nR)jKdjK36k3UeZB6uSgm7yuRzkh89nma9Gd86x(FdqABJhAA92hMy7pyRvS78LhAcRZYgpg4KDCFZc)uu)ZjEIwrEsLs39tLSEVd)rs2VRIX1(tl6wIQ3RI4uuzwls3dgU)FABxVFrJU9U(p)Ux)F7lGS5ctyefqR9TNFU5xr)9d]] )
+

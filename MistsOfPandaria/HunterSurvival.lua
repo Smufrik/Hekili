@@ -19,6 +19,19 @@ local strformat = string.format
 
     local spec = Hekili:NewSpecialization( 255, true )
 
+    -- Lock and Load: implement an internal cooldown (ICD) using local state and expressions.
+    -- MoP behavior: LnL primarily procs from Black Arrow ticks and trap triggers; gate with ~10s ICD.
+    local lnl_icd_duration = 10
+    local lnl_last_proc = 0
+    local function lnl_icd_remains(now)
+        local t = now or GetTime()
+        local rem = (lnl_last_proc + lnl_icd_duration) - t
+        return rem > 0 and rem or 0
+    end
+    local function lnl_icd_ready(now)
+        return lnl_icd_remains(now) == 0
+    end
+
 
 
     -- Use MoP power type numbers instead of Enum
@@ -73,8 +86,9 @@ local strformat = string.format
                 return state.buff.fervor.applied
             end,
 
-            interval = 0.1,
-            value = 50,
+            interval = 1,
+            value = 5,
+            duration = 10,
         },
     } )
 
@@ -205,8 +219,23 @@ spec:RegisterAuras( {
 
         thrill_of_the_hunt = {
             id = 34720,
-            duration = 8,
-            max_stack = 1
+            duration = 12,
+            max_stack = 3,
+            generate = function( t )
+                local name, _, _, count = FindUnitBuffByID( "player", 34720 )
+                if name then
+                    t.name = name
+                    t.count = count and count > 0 and count or 1
+                    t.applied = state.query_time
+                    t.expires = state.query_time + 12
+                    t.caster = "player"
+                    return
+                end
+                t.count = 0
+                t.applied = 0
+                t.expires = 0
+                t.caster = "nobody"
+            end,
         },
 
         hunters_mark = {
@@ -216,19 +245,15 @@ spec:RegisterAuras( {
         max_stack = 1
     },
 
-        black_arrow_debuff = {
-            id = 3674,
-            duration = 15,
-            max_stack = 1,
-            type = "Magic"
-        },
 
-    serpent_sting = {
+
+    serpent_sting = { --- Debuff
         id = 118253,    
         duration = 15,
         tick_time = 3,
         type = "Ranged",
-        max_stack = 1
+        max_stack = 1,
+        debuff = true
     },
 
         concussive_shot = {
@@ -300,12 +325,13 @@ spec:RegisterAuras( {
             id = 3674,
             duration = 15,
             max_stack = 1,
+            debuff = true
         },
 
         lock_and_load = {
             id = 56453,
             duration = 8,
-            max_stack = 1
+        max_stack = 3,
         },
 
         piercing_shots = {
@@ -361,6 +387,13 @@ spec:RegisterAuras( {
 
 
 
+        counter_shot = {
+            id = 147362,
+            duration = 3,
+            mechanic = "interrupt",
+            max_stack = 1
+        },
+
         silencing_shot = {
             id = 34490,
             duration = 3,
@@ -369,7 +402,8 @@ spec:RegisterAuras( {
 
         explosive_shot = {
             id = 53301,
-            duration = 4, -- DoT duration
+            duration = 2, -- 2 ticks @ 1s in MoP
+            tick_time = 1,
             max_stack = 1
         },
 
@@ -432,7 +466,17 @@ spec:RegisterAuras( {
             duration = 3,
             max_stack = 1,
             type = "Taunt",
+            debuff = true
         },
+
+        widow_venom = {
+            id = 82654,
+            duration = 12,
+            max_stack = 1,
+            debuff = true
+        },
+
+
 
         
     } )
@@ -446,13 +490,7 @@ spec:RegisterAuras( {
         if name then applyBuff( name ) end
     end )
 
-    -- Lock and Load state tracking
-    spec:RegisterStateExpr( "lock_and_load_shots", function()
-        if buff.lock_and_load.up then
-            return 3
-        end
-        return 0
-    end )
+
 
     -- Abilities
     spec:RegisterAbilities( {
@@ -462,15 +500,13 @@ spec:RegisterAuras( {
             cooldown = 0,
             gcd = "spell",
             
-            spend = function () return buff.thrill_of_the_hunt.up and 0 or 30 end,
+            spend = function () return buff.thrill_of_the_hunt.up and 10 or 30 end,
             spendType = "focus",
             
             startsCombat = true,
             
             handler = function ()
-                if buff.thrill_of_the_hunt.up then
-                    removeBuff( "thrill_of_the_hunt" )
-                end
+                -- Cost reduction / stack handling occurs via buff system
             end,
         },
         
@@ -491,7 +527,7 @@ spec:RegisterAuras( {
         black_arrow = {
             id = 3674,
             cast = 0,
-            cooldown = 30,
+            cooldown = 24,
             gcd = "spell",
 
             startsCombat = true,
@@ -507,26 +543,18 @@ spec:RegisterAuras( {
             cooldown = 0,
             gcd = "spell",
             school = "nature",
-            spend = function () return buff.thrill_of_the_hunt.up and 0 or -14 end,
+            spend = -14,
             spendType = "focus",
             startsCombat = true,
             
             handler = function ()
-                if buff.thrill_of_the_hunt.up then
-                    removeBuff( "thrill_of_the_hunt" )
-                end
                 
-                -- Cobra Shot maintains Serpent Sting in MoP (key Survival mechanic)
+                -- Cobra Shot maintains Serpent Sting
                 if debuff.serpent_sting.up then
                     debuff.serpent_sting.expires = debuff.serpent_sting.expires + 6
                     if debuff.serpent_sting.expires > query_time + 15 then
-                        debuff.serpent_sting.expires = query_time + 15 -- Cap at max duration
+                        debuff.serpent_sting.expires = query_time + 15
                     end
-                end
-                
-                -- Thrill of the Hunt proc chance (30% on focus-costing shots)
-                if talent.thrill_of_the_hunt.enabled and math.random() <= 0.3 then
-                    applyBuff( "thrill_of_the_hunt", 20 )
                 end
             end,
         },
@@ -578,17 +606,9 @@ spec:RegisterAuras( {
                 -- Apply Multi-Shot buff for tracking
                 applyBuff( "multi_shot" )
                 
-                -- Serpent Spread: Multi-Shot spreads Serpent Sting to all targets hit (Survival passive)
-                if debuff.serpent_sting.up then
-                    -- In MoP, Multi-Shot spreads Serpent Sting to all enemies within range
+                -- Serpent Spread: spread/maintain Serpent Sting on primary target
+                -- Always apply/refresh Serpent Sting when Multi-Shot hits (Improved Serpent Sting / Serpent Spread behavior)
                     applyDebuff( "target", "serpent_sting" )
-                    -- Note: In a real implementation, this would spread to all targets in AoE range
-                end
-                
-                -- Thrill of the Hunt proc chance (30% chance for Multi-Shot to proc in MoP)
-                if talent.thrill_of_the_hunt.enabled and math.random() <= 0.3 then
-                    applyBuff( "thrill_of_the_hunt", 20 )
-                end
             end,
         },
 
@@ -600,6 +620,9 @@ spec:RegisterAuras( {
 
             startsCombat = false,
             toggle = "cooldowns",
+
+            -- Extra guard: do not recommend if the Cooldowns toggle is off (Primary/Auto cleanliness).
+            usable = function() return state.toggle and state.toggle.cooldowns, "cooldowns off" end,
 
             handler = function ()
                 applyBuff( "rapid_fire" )
@@ -613,32 +636,23 @@ spec:RegisterAuras( {
             gcd = "spell",
             school = "physical",
 
-            spend = function () return buff.thrill_of_the_hunt.up and 0 or -14 end,
+            spend = -14,
             spendType = "focus",
 
             startsCombat = true,
             texture = 132213,
 
-            handler = function ()
-                if buff.thrill_of_the_hunt.up then
-                    removeBuff( "thrill_of_the_hunt" )
-                end
-                
-                -- Thrill of the Hunt proc chance (30% on focus-costing shots)
-                if talent.thrill_of_the_hunt.enabled and math.random() <= 0.3 then
-                    applyBuff( "thrill_of_the_hunt", 20 )
-                end
-            end,
+            handler = function () end,
         },
 
         serpent_sting = {
-            id = 118253,
+            id = 1978,
             cast = 0,
             cooldown = 0,
             gcd = "spell",
             school = "nature",
             
-            spend = 25,
+            spend = 15,
             spendType = "focus",
             
             startsCombat = true,
@@ -665,13 +679,8 @@ spec:RegisterAuras( {
                 
                 -- Handle Lock and Load charge consumption
                 if buff.lock_and_load.up then
-                    -- In MoP, Lock and Load gives 3 free Explosive Shots
-                    -- The buff should be consumed when all charges are used
-                    -- Note: This is simplified - real implementation would track charges
-                    local remaining = lock_and_load_shots - 1
-                    if remaining <= 0 then
-                        removeBuff( "lock_and_load" )
-                    end
+                    -- Consume one charge when Explosive Shot is cast during Lock and Load
+                    removeBuff( "lock_and_load", 1 )
                 end
                 
                 -- Explosive Shot is the signature Survival ability
@@ -688,6 +697,9 @@ spec:RegisterAuras( {
             startsCombat = true,
             toggle = "cooldowns",
 
+            -- Extra guard: do not recommend if the Cooldowns toggle is off (Primary/Auto cleanliness).
+            usable = function() return state.toggle and state.toggle.cooldowns, "cooldowns off" end,
+
             handler = function ()
                 applyBuff( "stampede" )
             end,
@@ -702,8 +714,34 @@ spec:RegisterAuras( {
 
             startsCombat = true,
 
+            toggle = "interrupts",
+
+            usable = function ()
+                if buff.dispellable_magic.up or buff.dispellable_enrage.up then return true end
+                return false, "requires dispellable (magic/enrage)"
+            end,
+
             handler = function ()
                 -- Dispel magic effect
+            end,
+        },
+
+        counter_shot = {
+            id = 147362,
+            cast = 0,
+            cooldown = 24,
+            gcd = "spell",
+            school = "physical",
+
+            startsCombat = true,
+            toggle = "interrupts",
+
+            debuff = "casting",
+            readyTime = state.timeToInterrupt,
+
+            handler = function ()
+                applyDebuff( "target", "counter_shot" )
+                -- interrupt() handled by the system
             end,
         },
 
@@ -1068,14 +1106,17 @@ spec:RegisterAuras( {
         a_murder_of_crows = {
             id = 131894,
             cast = 0,
-            cooldown = 60,
+            cooldown = 120,
             gcd = "spell",
 
-            spend = 30,
+            spend = 60,
             spendType = "focus",
 
             startsCombat = true,
             toggle = "cooldowns",
+
+            -- Extra guard: do not recommend if the Cooldowns toggle is off (Primary/Auto cleanliness).
+            usable = function() return state.toggle and state.toggle.cooldowns, "cooldowns off" end,
 
             handler = function ()
                 applyDebuff( "target", "a_murder_of_crows" )
@@ -1090,6 +1131,9 @@ spec:RegisterAuras( {
 
             startsCombat = true,
             toggle = "cooldowns",
+
+            -- Extra guard: do not recommend if the Cooldowns toggle is off (Primary/Auto cleanliness).
+            usable = function() return state.toggle and state.toggle.cooldowns, "cooldowns off" end,
 
             handler = function ()
                 applyDebuff( "target", "lynx_rush" )
@@ -1275,11 +1319,14 @@ spec:RegisterAuras( {
         fervor = {
             id = 82726,
             cast = 0,
-            cooldown = 90,
+            cooldown = 30,
             gcd = "off",
             
             startsCombat = false,
             toggle = "cooldowns",
+
+            -- Extra guard: do not recommend if the Cooldowns toggle is off (Primary/Auto cleanliness).
+            usable = function() return state.toggle and state.toggle.cooldowns, "cooldowns off" end,
 
             handler = function ()
                 applyBuff( "fervor" )
@@ -1295,10 +1342,31 @@ spec:RegisterAuras( {
             startsCombat = true,
             toggle = "cooldowns",
 
+            -- Extra guard: do not recommend if the Cooldowns toggle is off (Primary/Auto cleanliness).
+            usable = function() return state.toggle and state.toggle.cooldowns, "cooldowns off" end,
+
             handler = function ()
                 applyBuff( "dire_beast" )
             end,
         },
+
+        widow_venom = {
+            id = 82654,
+            cast = 0,
+            cooldown = 0,
+            gcd = "spell",
+            
+            spend = 15,
+            spendType = "focus",
+            
+            startsCombat = true,
+            
+            handler = function ()
+                applyDebuff( "target", "widow_venom" )
+            end,
+        },
+
+    -- Duplicate ability definitions removed: exhilaration, tranquilizing_shot
     } )
 
     -- Pet Registration
@@ -1311,35 +1379,7 @@ spec:RegisterAuras( {
     spec:RegisterGear( "tier15", 95307, 95308, 95309, 95310, 95311 )
     spec:RegisterGear( "tier14", 84242, 84243, 84244, 84245, 84246 )
 
--- Combat log event handlers for Survival mechanics
-spec:RegisterCombatLogEvent( function( _, subtype, _, sourceGUID, sourceName, sourceFlags, _, destGUID, destName, destFlags, _, spellID, spellName )
-    if sourceGUID ~= state.GUID then return end
-    
-    -- Track auto shot for Thrill of the Hunt procs
-    if ( subtype == "SPELL_CAST_SUCCESS" or subtype == "SPELL_DAMAGE" ) and spellID == 75 then -- Auto Shot
-        if state.talent.thrill_of_the_hunt.enabled and math.random() <= 0.3 then -- 30% chance
-            state.applyBuff( "thrill_of_the_hunt", 8 )
-        end
-    end
-    
-    -- Lock and Load procs from Auto Shot crits and other ranged abilities
-    if subtype == "SPELL_DAMAGE" and ( spellID == 75 or spellID == 2643 or spellID == 3044 ) then -- Auto Shot, Multi-Shot, Arcane Shot
-        if state.talent.lock_and_load.enabled then
-            local crit_chance = math.random()
-            -- 15% chance for Lock and Load to proc on ranged crits in MoP
-            if crit_chance <= 0.15 then
-                state.applyBuff( "lock_and_load", 8 ) -- 8-second duration, 3 charges
-            end
-        end
-    end
-    
-    -- Lock and Load procs from trap activation (important Survival mechanic)
-    if subtype == "SPELL_CAST_SUCCESS" and ( spellID == 1499 or spellID == 13813 or spellID == 13809 ) then -- Freezing, Explosive, Ice Trap
-        if state.talent.lock_and_load.enabled and math.random() <= 0.25 then -- 25% chance from traps
-            state.applyBuff( "lock_and_load", 8 )
-        end
-    end
-end )
+-- Real Lock and Load aura detection is sufficient; no RNG proc simulation here.
 
     -- State Expressions
     spec:RegisterStateExpr( "focus_time_to_max", function()
@@ -1368,6 +1408,16 @@ end )
     spec:RegisterStateExpr( "bloodlust", function()
         return buff.bloodlust
     end )
+
+    -- Publish Lock and Load ICD helpers for APL/visibility
+    spec:RegisterStateExpr( "lock_and_load_icd_remains", function()
+        return lnl_icd_remains( state.query_time )
+    end )
+    spec:RegisterStateExpr( "lock_and_load_icd_up", function()
+        return lnl_icd_remains( state.query_time ) > 0
+    end )
+
+    -- Threat is managed by the engine; no spec-level override
 
     -- === SHOT ROTATION STATE EXPRESSIONS ===
     
@@ -1416,6 +1466,8 @@ end )
         
         return true
     end )
+    
+
 
     -- Options
     spec:RegisterOptions( {
@@ -1431,7 +1483,7 @@ end )
         damage = true,
         damageExpiration = 3,
 
-        potion = "tempered_potion",
+    potion = "virmens_bite_potion",
         package = "Survival",
     } )
 
@@ -1447,6 +1499,13 @@ end )
         width = 1.5
     } )
 
+    spec:RegisterSetting( "use_opener", true, {
+        name = "Use Opener Sequence",
+        desc = "If checked, the 'opener' action list will be used at the start of combat.",
+        type = "toggle",
+        width = "full"
+    } )
+
     spec:RegisterSetting( "mark_any", false, {
         name = strformat( "%s Any Target", Hekili:GetSpellLinkWithTexture( spec.abilities.hunters_mark.id ) ),
         desc = strformat( "If checked, %s may be recommended for any target rather than only bosses.", Hekili:GetSpellLinkWithTexture( spec.abilities.hunters_mark.id ) ),
@@ -1454,4 +1513,6 @@ end )
         width = "full"
     } )
 
-    spec:RegisterPack( "Survival", 20250724, [[Hekili:9Q1EVTnos8plfhUGeS751pI7dG6a4MMRB61ghe59oC)JKOTOJfISKpsQKMdb6Z(nKuIIKIs2o17HGKAtoCEqoZVz4W6pWFUVxeIH9Vzy)HJ7)UHN3BW7hmE0h89ypVf77TfT8b09WhsrBG)6LtEm(rucFINtYqrCgqZYjlHj99wKhNWUo1FHBUEoq7w8sy4XJ99whhfHL0IPl99MVoMweY)fvewk3IWSvW3xYIZslctIPmy6vzKIWFh)qCsCpqrizRItaX)xGbZtzyyYk1Si8Vve(9SBl(AXxHPV9URUC23)005IpE707Mo)6z3u8vj)P92sWlZ2SaX(Lj)gIRPSGSvbS14GLRXygA9VgVAYBwKVAvpNt3lF7jVztgxjIozt2JXP3VpmFn6PhAJZ85eSLHsWPmRzJjzPssWPOfj4O9rCQfTtz6yUAjkT12TXLOKKGTywWaHC4FcLe)i2n1RfNC0GniIqVoLIzmG30E8rcqPp)Ylme5EmRxmnyrgLE2jC(8ioikJ1tF5t6FsjLS4n4awwqum(IbJlDc((0RVPi8UzZLh(GNW1ZU765)7IWVDT3CL2vzbYVgWD9(vEmWKLzzjrzpLs5QjxcxmzKGXd6veoD2vaVZyiPd7PJ(LIqPYqpt4moF2TAICNcdLH5IP0sXP4nXy6fJknLHGe)uoHYawUgrHOLtFAngK7v)yBsgLVzh6ToJjJQiyu0ZqWuAurOYiGV)ikoH78C2UvNfCHXviHNrs2s(jtuahia8hk1Qr9AUjdw(LiUEkK(guCkd(f0omzl4wdFGP7ibkavotaLpHWdkclKQXeCVWUoSpVNJnJt)gO4LQY3avhqBiXzKy2ZcfDPurta0JraydbdlKclKASbHR4AaFUw3toXyabT0l6xQDJDQDPzKnCORCkaaUdzUkBzo9IjNxXX3cC8FeZv9YZDypg)d8YCgWFckLJOE6W()1IW1yucBTb7ba1efNl3vLK1B7s2hNmSskVJ7PdhY5KioAlhI(ss2tGZ0PXR4o8COkCKbZrbBeKZbswYjwkejOM9CvWzNu5N6GeH78jLBaJQuT3Zdjsq8Z3PeGoqLQ82muNfCAcqCs0DU0gMF4vX9XUCYM8(sz(bqMFjbjodNditDTnCVGoGfu9naTrBA66tAy0kV8b95hiKLO0AVijqGGYIWlMaoBJHtk40A(AIWbHFQbi6YKML5DfWmMhBcUQ8koTu0Jh)YlInmMGBQmhaRG9TZCTD92kLLJtoBlmf3jNk0wIcXmNYXbcPW3XCxxihbLY1fdWPSfeKsNG)npjkOEq1(Z5gakm(EN9Q0gvFzv6khl7Z4v4uzeQaY4pyqHhLyfFA285Z((HGOhP4wPi4qutf5yHikukeZVrGi(Q4UmznTK3F6pUZJxRZVp17QJvUHEICa)8aG2SdoX3Sfhjs3PC9Rgu633Cre024OGvXeZLvpCBlCFG6SxZrcYWMTh1imBMF4rkAhihu8c4Un172RUCop5)nt)YvF)QBQRMQSks6)FQ9TnHD0Q8T0G)8v)9RUX76)jeCn9MpdidZV(B6HP9ub7I4L1qSerGZPb9RpSc7xZvCCF3StscLLLk891wX5TSInX0iiKyPsbwdbhSE0ywUq6xmzO7fYGch(pWn7I)Va2SDutumSlLiajCVAkC5S0LMRuy5MtOS9s(YRcZ4Uf688PNFetsRRnSKJ6d3mpQXSgjsho2TyG6gI3ehzFKPpCtXymBdXi8BUC2SV95z)RBChQOWF3FaUshwTHfoXjzzrj5uMWJ1f71bDpTjlkrG05ZzNStWzDbK8C6pci501ABFQXAU3vpvRNp6CN7ohSaJO6Uv1d2K)AZTxcyfM8ygrJ5YbAY4YX1yQiWvCApNeN(aMrDlICkaTWWB(vAsgBcts7GdG2HLI5o0YyEfvOf8YtGRj6MhLPByzecyqQ7q8XrTSfSaUwnM8GrOOX8CNJGv5KNRYcCFz5rBZ4uxegLte10TgtYIPB(nL7KBgkxMSCMhJjqXqW99bRwvHHPBTuMIRDRUTP4A3ZNE3xUAUNwLlWLPpE1Tiz2p9Tu3LUPDbpts3KNWITjBCdYEffauAz7F6FFpayLxKUQFFJ89Ecrs59VX376nBZiW9GG7nA1kVEfF13dLZwNr8982KVIe)GVNykEFfltJdF8grJklJ68)emLGnvKON(w2nrs8wjbnRjX3dMLHjXiFV3ue2EvafHNue(MQ7XTRQp8zG1BPLhOG2rrhTz1kAavGXn)viW3W1UMXot39bRwy2x0q3S4EZYBxosEUfiBtSkE21UIHwC4nnB)0m(W1Dmd0rBve8Y5k3OUuUJC)12pn3jAKHQlQqNR8N3suHb4JLn967oNL)ClaDcN5MGDItGbJ5A94w0AtWpl1(42iVDUFlSchzaeMrFUv82xJvSpn8tx30AFZ5cP(UwKQ6(Swc8G7hOr0T99Ilc)iOjdfAY7Bdr2UrDwA0(27qtfP72ekoT2vRcfePTHosygFOfZq7w9wgqxDy0DiIzhcAOhJBpKbM(9CTCq)wutTEdAPM7QPKo2FD0fsZD2gDI02wKb4dAnBDDRoStdCC7GPUXDAdE8YlL5AD2ALIWZ6cd7Tcl0oNMcyxvzLTb(666PUH0O4Tg7(Nl0n7uAn4GwrCoyrDwKAYe81oBJP9DODkTRKHA56uxhxOc2PomvHdOtQ7P0RQavuyL65k3)cslFxylfT1xPULhOE3fsw)(Zv1sw(k0IVkFL2JqbQ7zLWDvDUJsUoqLyxTMtTbim69OM5gLrzOqQ3T2YLr8Y2UkNXa5PXRylrFmFj7keNYAwTFp7IqiWS)oQRsPC6Ru63wxmEh(T199XYz1vVQ0nY2B6U(5LrBLuZODr(U9op1nBua5gTeOC3SL(uPJVjhVBFY2AALPmSACLnS6qTdifPD761A3SmfSDhT6sY102TFRZEDzkw9(DPlYpczy7xlrjzDvUCvdVS86Q6zgCkLWZLQiRJAGR6hM1Ag2z1QgDdZsjA0rnhLM)rEbCQcjvvpQAAMUuvfYvxKzvVZSjRZBUV)DyR6)2w69rRXDFmcdv6MK3see5fo7a9OZl9CeFfYJW92AhK5iby0kGOtW2DGb02fWCCXVodPpAxgX5fKCeF)Ny93oVoHdCHdRYzxLW7a444umntVW2oJRQFCqROQwE7rh44UEHrHQA4xjaU7m(WI8Z18c1EmYDKn16nhltsvZj9hPCVco0E)r9ub2Vy5ELXZ9lsQ7nw(QKANRglP7iHoELsZSRnFPYUsRRtD3XbD8(LMkqZ3WSlfqNAPZnV5QV20fD9wo)PI))Q7PzTZGrFx7mqWSZETTZ0zaGoQQglQFyOU95)jafB3f)Nduu(J))7d]] )
+    spec:RegisterPack( "Survival", 20250914, [[Hekili:vZv)YTTns8NLmDoFYtDvLTLss7fNzKDusCQTLhtL25(hjrrczXXue84h2134r)zFaUhX7j52faKeae8dzR0B60jPseelwSy)43UyvME40jtTCTtitV6OEhnO3pDy)UhD8H9h8MPwjpgsMAfA7CN9TWhcSxd)TvA09E3B7Jd8Op12fjqmnnYbgCQ1Iup)KZdMUWmvhm1Yonzfnci060LrE3n1ALNRlHpdsSZuRjR8I3mh)J9M5IvFZC6s47ojE0GnZ99ItGHxsJ2m)ZK78896cSteDPNpWeFh8W0GecmygZUz(pSz(L0R38LnFbg(6BgD24lpD4e2hVE4ndNC(4R28fo9J7ggrCORxyN89N8J2XHeNKz0LZswrM5SIqsSxDG3YtE1I0Ll7AC4UPH79Q1uKjC3Bn9EVGBBdXxz)WDvrzCmgztS9jbjAJ6frd4VcjWEHpXTnlx(KACnnmwXkY3RvVhDS99NfssMDiBDWpz77DpX8BVIDYfpBTDeJV6etssaAh3fFYm7GhF6Pe7OBjjD9INTGghV)EiDUNmZLM0vE6N0BpXBM4TMmlHoZ1J8(dhyEHj)EOpngPtsKDiJvDjSnU6iW(1mbcP4ZoaTso5EVO1KaG)8sicDUF1oYdpAa12i66nZ)n6Vz5Tg0IhE9f)8M5UehpxyWhwraf8ek8K01HW39swbVtKJDamQ1kAs(QdR59cIYxvy0uF3HwhaA8PKt6SK6Kg)(tg0Bphk13L(qq3f(G90m7Oi6dDJiRT9cGxO)(p9K4DFtpb7E5WZVAZ8BgpHBAa2jNp(MZN8p3m)IZTMiZdSZx(xNHgMCEHgscirOym)amnMmJ)49WdK3D4rntMmgpgPeoR3FYXco8WUGCz8iGjPj2C)cDo(7bzh7mpEFMn)KXxlX7nUC2ucUqcfkGvx7rIFF2kEeSIxqDUdCef4IF0g(7fPrXjGFQv2XWbuNpF(N(8iRjYcm(rkNM7lZdrPbLzbFkEaf4od9ToJrDKLyAIkJXuez81XDlFEb79tbocyquWqxU0ZXd9dEBkQMHZAyyO)JITcQiKa)b0WirWreSHSWdnyd9GNpmTfWElISmIeVcP5cyINrxezZvjv2vXCkmlgjGSDKYaOBJkSozC3z2OuDuMPNq1NTzY0jaMR0PbeeWbSPwbpc9copMeAhbXH8FuHhlmPJbYImPq)VVKTI6lbMl2UpQWD)ct0WzSocdx2wIh9AbXN(aO107VbmeX2pzLcpaHT8ZxEHOG)ADdDsE3jh1tzXofTCrpbrir1KdEllwA(bgZdlpc5Yu8bUPrmRefEqYDG8jLSxc4CsiBoEGPtStElYMmg9ROfGIRQ52SW0W0Z9NXetpqWZiKdJtzQMmvoXlYooxsEi3uwMJTzKpxUL5aSBMVV9uTDbXO8SxN6N4PFMd(h1m4Xjjj6L00bzTGlVfDKjKOs7kxAWFpjBZrcOP3UkFJXonqXGYoYbPEopfZ2hZkEOIPvcQdQ)UspnZ1i6r4dKLqiiMAatI(1eaNuYJCxdJNmz8LBJNr3CQjwI(O7xgKaW5JDaGrBn7q8zrDo2IybThF9ORgDJS3SoF0J5LDZtqqdWO2Hg4gV)bWoZ372a0qNhNmpOknYLeXGKa07IGlGZc0AgJW6TEnX1J5ta(cy4KgceIcGAIEWd1GpD4M5)3)4)aBVlPNj(4hjr3JNESVuYRe7PN9HyXNS5EwZDLEVhO9CjQ69dsVphiNUcrxEesJ(OQigqPzULw1gOG9S1POeer75aVpp8Ra5P(yzyol8Cw(vyopZwYx3ZWsUKjHLwh(dktCXZ5uKBn(Ux37PN6SJ4pGy7VFRopQnsXE5ruy6Gwj2RdjO(harz09KOhtwXcWUifdvH(WdC8tHmGa9E7qpqLg05ZSDtaD57yGAkZxXckRWrzpmlQvPzfHRXSLWsOmVIhl2fCS)sp2OghcTdG6U(GyFAYjy03yv25Xa7q4DIdJyqbRIRuPJyxFyBFXJmAlqPaNNg9Ocdv84k5LfqEeKO7eGykMz(JRCMvLjWm(aYOVQ2hb6zkGahHUG3Peb4I69yym62R7TxvaWmPm9sbVvII36BZsDcYutY4w6PLnpLhuXw6Wbc9X24eeC0bbLKwtXtkVEzdu955dWHEosngXYFwzYvmKmKXlgF2Vah7x9b8JdH)(0VEdlpHpp0AuBWRxcR7TGqc8wCmMrjHyiSKJnRmjDcO5qqCOqixqXIwaFCFg15oB0ibgifXYzVKvnfqlueOmdXdc3wuQggcQcHNH0y2MyAFNk66e77WTk49GgXWWqUhxEatlZhQUOPbUOniVbg4CSItjyYr)UeiwJR4bCHTo6xmn(WiKxzNgHHkfjXmZPbW1O8jZE4TzPim066rNnbZc8QHFA0LJUQidDrDByyN)2xTPQwSDwTMeB4pm6JJUY68FDKWK6Rto)czKMDZXRY06w55BZbRlzcl)4CRyj9Gb9mto(ReNaMgi1KMr)kMXAVyxW(YjNbwbEgs6g7LKYw93lLLIYetISd(xPaU9)nO5ORY66bsjFFwrLmo7ypyF6Oot2oxDG89UGUOMSIIQmnF4ra7sqr8bbfLFCzpIkJQ4r)ObMxgVaiWINR(rM8JlVmkJwAz4j0nE8fFy8VDLIPslC(kbj7GSSbGpmeJzJij51N(mguzHFHceF8804frjLTmyAXRTdahzy8Zy(dcH4DEkhM5v)AxbytMGppa3CiYYMgY08pV8gKx1wHaMDm(jgYInZNaIAtNlkLvX4ATBHZiyRt5aq2m)hb8azOhqEI9WoLlymM0kE9kYjeiZLVCWpYuBNG)XINca8bEoaz1bFuWTEaoxEy1B9PaMM)b74idJrnm2ZmTdHfn3g3Ebwwep0i8hYwxwTeeaDYxpr9Ba0aERtbgNSCjw8dZY)2L1XEDkBS(0tSNjm6sdR6eUDzN0YvGjrMisYSnY6YPM147MvtTXC5Auj5VzpkC4qj0OiqTlpVM3jx2cZYLmOr3kk7Li5RCiCaxq9IxZpR8tJR4OSHK5YXOLtgMe2iQYNEsKmvz)C5aB43OrrHVWB0yYWB(0Ojw73Mavz1C7NnKWqokAId4ymWbrZFpEwmKosXqqvr31En6hcPEPum4MOgldVsEbgUyejfBBkzlto4JJp7RwLcIZ2hmrMOsU7xuxA5CRBSQ0s3JKqAqdHi1OOMTgzIe1nqBRU8XLYVbV5fYVtCstiOLrqzA3YCw(iYR9lea)S6gpo0ETCAuDObyvi4B)Gmor74KR39zVBz2TftMxoBWEGWVM(4NR8OFLz1RQYnbCJjUSdXCbUetBfI17GM81OsLDPUgw7QUMxtL4qiMR5Yy04GTSwSvDdlFN2TqWpX8cmC9jSJfPdDngQHRBihBsF9j24Lpum1PwGBLyyUI2)4ThF4uRhSJcWOWtToFDinkb9I9wTE6O7MVm1cZ9dMi2RiShInyIiVs4JxX6yfbOJPNcdXiq2RiNpjVHsI8c5Vq5KKNAbJMaypSNA9kSuSvLw6M57Tz(RYQaxtPdpnbyFnUClxOgYcUQDD(7aSqYulEfSQtOP6ZvtGTlVhM)kCjmYNsgDi14bRrRB2zQW489Nabxgui)LEtK4hxjXBkjk2I0uIu6CYR7jPiPpfKF63e)OMZOktiN3iBKo5l(7W1EZ8NEI9WD(EtqEiW1(fBqo7G7QbvURYxeJ39VM0RFVkTJGf51vyXLLxQMT2o6(HmUzutfgzU30SeqVWckEMuYNOyVv8yCrEBfsawEAMzut5RbImF01eFAaD)PkOBwojzti)7WCoSx9t6iTjDeBs6EnnWY6P0jBANncJwv73OYK3KOv(imAP7MG3zMgYoPGcIVJZw3Oo7vkGRPh4SjxPnDxvY7wf3pzkvvCjtm2TAR1QNiJULHsbl7M5hk5(vzESvt3STKhpdL6r1)uPY9O734Wbk2sLcYKZDsuIXBvB1AUipQ8LsHEKuT4pMTa6wSLwGsv9rDj0Q8JS2NyaoUexYsBq9XeWeAiEQKum1So8b)KFk8)6Oimh0tBxwUbhfERzXdWiosZ(n90u13zDPjJXNjAzArVjzc(GYQxFtxwit0BIg5tkdTBj3AamdyrgbprmC1cMtGrSEWhS5YWUuhtir18kOycfHYEE7BJZ2jhut0Jz5FSclcz1ycmGcZTl64tPWJQ97zZWnLzxd3wyTWmu8SPUR2((fDN2SO7ex4gaX0QCA299vAfb36R5yYeIY6qjLxWhJBGTV1tv9MRv)iWXWj4Rxh8k5uvmXs7Sgu95Ltv16lWWVTwmGsx5U2o7BvhTkVfl1cRSDIU7l25tdGslhwSKtqgvmH4Zee1C3S5vhY4b)UV9yvINPxHkJiGl9(s1Lso3RIhAcjSAGPTTjABzOX8R52i6wvwylAY2wU6zfsJHdl)NVIjKy5whM(foPXOv(7TQIFQvtBSEyf)sQYall(9uX(k)3BKj8unr3Nxb9QqyiQ0wniNAft0ulVKlayB6k4f5s)vtDBa6K)lWstLH9B0YeKOIz3bJ8P97XIdQw93KfdRDH)h9FzwBMd(H612K0KNPjipMIwuQy(MGhGdzcir50PNwop6ezqU1y(ivtenNNpJwr5p1(qz6lSSq1AD(CQFyr19giv6TI669xNQNwvP5KIujQsObZXS3rU8aQQwBtBUyqmTlkXrD5MKvYbvM(f0emg2dBrPqm4bOe52ff(OPcIkxMtJ6kMRoQAzKBFx2Cq5USPE4)5LZuDj3rnsJXTCP20hL6Dm5THhfsTXwWY)Bc3VPfsVR(36fQqqPwR2QIluuTAfPzwt4ySi2vbqV2IyR7vulRhrN1OF1Fv0Kogs34DSB0khoTbXG0Q3iK323Uo1w2Bh1kRi3Cok4vkNcmF4AAuhZybmvEMN79U(I(Pc8n83jWo6hjqPtN2CnRzcUQklYZ)xlW02wyKgmKmWuFB(fe0O8tpA8B7nnRS7ImpRvZSOR412ov009gcxAQ16zCLIKLHJRwuIAVU8nUk1f(nG9tRz7lxfePUZVEyBLB8EzFW6TQF9PsvBR4lNAKOD8LWgQmL6ZiQM2Zxfbt5w0xxl6iPuYKF7wHFYuJ7RYaLBE)6ya53MRCJLZ)56W9L00LFd74YDB7w2OBJ6C7w5Dd36gX8BwxyAassdva9468M3MamLBxZwhezRV89)V2rNBVSTVsbbmPIvv6SA1LrvkSvDbQmxxlpw5)a)utLP4hJvMABLxss1xpYuJvW6LFFhvD)yvxo)NxhMkZ)LQwFPkd03uMWLiG8)MwuMcsLjrUG(z)30)3p]] )
+
+   

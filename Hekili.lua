@@ -1,6 +1,10 @@
 -- Hekili.lua
 -- July 2024
 
+-- MoP Classic API globals that may not be in annotations
+---@diagnostic disable: undefined-global
+---@diagnostic disable: lowercase-global
+
 local addon, ns = ...
 
 -- Initialize MoP compatibility tables
@@ -13,7 +17,7 @@ ns.TargetDummies = ns.TargetDummies or {}
 Hekili = LibStub("AceAddon-3.0"):NewAddon( "Hekili", "AceConsole-3.0", "AceSerializer-3.0", "AceTimer-3.0" )
 
 -- MoP compatibility - simple version detection
-Hekili.Version = "v5.5.0-1.0.0-MoP"
+Hekili.Version = "v5.5.0-1.0.0d"
 Hekili.Flavor = "MoP"
 
 local format = string.format
@@ -82,9 +86,10 @@ local UnpackAuraData = function(auraData)
 end
 
 -- MoP AuraUtil compatibility - avoid conflicts with ElvUI
-if _G.ElvUI then
+local ElvUI = _G.ElvUI
+if ElvUI then
     -- ElvUI detected - don't create global AuraUtil to avoid conflicts
-    print("DEBUG: ElvUI detected - skipping global AuraUtil creation to prevent conflicts")
+    -- print("DEBUG: ElvUI detected - skipping global AuraUtil creation to prevent conflicts")
 
     -- Create internal AuraUtil for Hekili's own use only
     if not ns.AuraUtil then
@@ -133,17 +138,28 @@ if _G.ElvUI then
                 if maxCount and i > maxCount then break end
             end
         end
-        print("DEBUG: Created internal ns.AuraUtil for Hekili (ElvUI compatibility mode)")
+        -- print("DEBUG: Created internal ns.AuraUtil for Hekili (ElvUI compatibility mode)")
     end
 else
     -- No ElvUI detected - safe to create global AuraUtil
     if not AuraUtil then
         AuraUtil = {}
-        print("DEBUG: Created global AuraUtil (no ElvUI detected)")
+        -- print("DEBUG: Created global AuraUtil (no ElvUI detected)")
     end
 
-    if not AuraUtil.ForEachAura then
-        AuraUtil.ForEachAura = function(unit, filter, maxCount, func)
+    -- Only create ForEachAura if it doesn't exist or isn't functional
+    local needsCustomImplementation = not AuraUtil.ForEachAura
+    if not needsCustomImplementation then
+        -- Test if the existing implementation works for MoP
+        local testWorked = pcall(function()
+            AuraUtil.ForEachAura("player", "HELPFUL", 1, function() end)
+        end)
+        needsCustomImplementation = not testWorked
+    end
+
+    if needsCustomImplementation then
+        -- Create MoP-compatible ForEachAura function
+        local customForEachAura = function(unit, filter, maxCount, func)
             local i = 1
             while true do
                 local name, icon, count, dispelType, duration, expirationTime, source, isStealable,
@@ -186,9 +202,9 @@ else
                 if maxCount and i > maxCount then break end
             end
         end
-        print("DEBUG: Created global AuraUtil.ForEachAura (no ElvUI detected)")
+        -- print("DEBUG: Created global AuraUtil.ForEachAura (no ElvUI detected)")
     else
-        print("DEBUG: AuraUtil.ForEachAura already exists")
+        -- print("DEBUG: AuraUtil.ForEachAura already exists")
     end
 end
 
@@ -627,16 +643,6 @@ function Hekili:OnEnable()
         ns.UI:StartUpdates()
     end
 
-    -- MoP Classic: Force spec detection on enable with delay to ensure LibClassicSpecs is loaded
-    C_Timer.After(2, function()
-        -- Check if LibClassicSpecs is available now
-        if LibClassicSpecs then
-            print("DEBUG: LibClassicSpecs loaded, attempting spec detection...")
-        else
-            print("DEBUG: LibClassicSpecs still not loaded, using fallback detection...")
-        end
-        self:ForceSpecDetection()
-    end)
 
     self:Print("Hekili Enabled!")
 end
@@ -656,7 +662,7 @@ end
 Hekili.ClassName = select( 2, UnitClass( "player" ) )
 Hekili.ClassIndex = select( 3, UnitClass( "player" ) )
 
--- Placeholder for callHook
+-- Placeholder for callHook (defined in Classes.lua)
 local callHook = callHook
 if not callHook then
     function callHook(hookName, ...)
@@ -674,18 +680,6 @@ function Hekili:GetMoPSpecialization()
         return nil, nil
     end
 
-    -- Try LibClassicSpecs first if available
-    if LibClassicSpecs and LibClassicSpecs.GetSpecialization and LibClassicSpecs.GetSpecializationInfo then
-        local currentSpec = LibClassicSpecs.GetSpecialization()
-        if currentSpec and currentSpec > 0 then
-            local specID, specName, description, icon, role, className = LibClassicSpecs.GetSpecializationInfo(currentSpec)
-            if specID and specID > 0 and specName then
-                print("DEBUG: LibClassicSpecs detection - specID:", specID, "specName:", specName, "role:", role)
-                return specID, specName
-            end
-        end
-    end
-
     -- Use the proper mapping from Constants.lua
     local selectedSpec = GetSpecialization and GetSpecialization() or GetActiveTalentGroup and GetActiveTalentGroup() or 1
     
@@ -695,7 +689,7 @@ function Hekili:GetMoPSpecialization()
         DEATHKNIGHT = { [1] = 250, [2] = 251, [3] = 252 },  -- Blood, Frost, Unholy
         DRUID = { [1] = 102, [2] = 103, [3] = 104, [4] = 105 }, -- Balance, Feral, Guardian, Restoration
         MAGE = { [1] = 62, [2] = 63, [3] = 64 },            -- Arcane, Fire, Frost
-        MONK = { [1] = 268, [2] = 269, [3] = 270 },         -- Brewmaster, Windwalker, Mistweaver
+        MONK = { [1] = 268, [2] = 270, [3] = 269 },         -- Brewmaster, Mistweaver, Windwalker
         PALADIN = { [1] = 65, [2] = 66, [3] = 70 },         -- Holy, Protection, Retribution
         PRIEST = { [1] = 256, [2] = 257, [3] = 258 },       -- Discipline, Holy, Shadow
         ROGUE = { [1] = 259, [2] = 260, [3] = 261 },        -- Assassination, Combat, Subtlety
@@ -741,16 +735,6 @@ function Hekili:ForceSpecDetection()
             self.State.spec.key = specName and specName:lower():gsub("%s+", "_") or "unknown"
         end
 
-        -- Try to get role from LibClassicSpecs if available
-        if LibClassicSpecs and LibClassicSpecs.GetSpecializationRole then
-            local currentSpec = LibClassicSpecs.GetSpecialization and LibClassicSpecs.GetSpecialization()
-            if currentSpec and currentSpec > 0 then
-                local role = LibClassicSpecs.GetSpecializationRole(currentSpec)
-                if role then
-                    self.State.role = role
-                end
-            end
-        end
 
 
 

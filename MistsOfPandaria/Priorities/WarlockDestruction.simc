@@ -1,25 +1,60 @@
-# Warlock: Destruction
-## Precombat
-actions.precombat+=/dark_intent
-actions.precombat+=/summon_pet,pet_type=imp
-actions.precombat+=/snapshot_stats
-actions.precombat+=/grimoire_of_sacrifice,if=talent.grimoire_of_sacrifice.enabled
-actions.precombat+=/soul_fire
-actions.precombat+=/incinerate,if=buff.ember_master.down&time>0
-actions.precombat+=/potion
+# Warlock: Destruction - WoWSims Enhanced
+## Prepull
+actions.precombat+=/incinerate,if=time=-1.75
 
 ## Default
-actions+=/fel_flame,moving=1,if=movement.remains>gcd
-actions+=/immolate,if=remains<cast_time
-actions+=/conflagrate,if=ember_react
-actions+=/havoc,target=2,if=active_enemies>1
-actions+=/shadowburn,if=ember_react&target.health.pct<20
-actions+=/immolate,if=remains<5|!ticking
-actions+=/chaos_bolt,if=ember_react&buff.dark_soul.up&!target.health.pct<20
-actions+=/chaos_bolt,if=ember_react&(ember_master>3|burning_ember>=3.5|target.time_to_die<20)&!target.health.pct<20
-actions+=/fire_and_brimstone,if=active_enemies>3&burning_ember>=2.5
-actions+=/rain_of_fire,if=active_enemies>2&burning_ember>0
-actions+=/fel_flame,if=buff.fire_and_brimstone.up
-actions+=/incinerate,if=buff.fire_and_brimstone.up
-actions+=/conflagrate
-actions+=/incinerate
+actions+=/call_action_list,name=variables
+actions+=/call_action_list,name=cooldowns
+actions+=/run_action_list,name=opener,strict=1,if=time<=5
+actions+=/run_action_list,name=move,if=moving
+actions+=/call_action_list,name=cleave,if=active_enemies=2
+actions+=/call_action_list,name=aoe,if=active_enemies>=3
+actions+=/call_action_list,name=st
+
+## Multidot Immolate (for efficient DoT spreading)
+actions+=/immolate,cycle_targets=1,max_cycle_targets=3,if=should_refresh_immolate&active_enemies>=2
+
+## Variables
+actions.variables+=/variable,name=execute_phase,op=set,value=target.health.pct<20
+actions.variables+=/variable,name=cds_active,op=set,value=buff.dark_soul.up|trinket.stat.any.up
+
+## Cooldowns
+actions.cooldowns+=/dark_soul,if=should_use_dark_soul
+actions.cooldowns+=/berserking,if=variable.cds_active
+actions.cooldowns+=/blood_fury,if=variable.cds_active
+actions.cooldowns+=/arcane_torrent,if=mana.pct<80
+actions.cooldowns+=/lifeblood,if=variable.cds_active
+actions.cooldowns+=/use_item,slot=hands,if=cooldown.synapse_springs.ready&variable.cds_active
+actions.cooldowns+=/summon_doomguard,if=!talent.grimoire_of_supremacy.enabled&fight_remains<=61
+actions.cooldowns+=/summon_terrorguard,if=talent.grimoire_of_supremacy.enabled&fight_remains<=61
+
+## Opener
+actions.opener+=/immolate,if=should_refresh_immolate
+actions.opener+=/conflagrate,if=charges=2
+
+## Movement
+actions.move+=/fel_flame,if=!talent.kiljaedens_cunning.enabled
+actions.move+=/incinerate,if=talent.kiljaedens_cunning.enabled
+
+## Cleave (2 targets)
+actions.cleave+=/havoc,target=2,if=should_cast_havoc
+actions.cleave+=/shadowburn,if=should_cast_shadowburn
+actions.cleave+=/chaos_bolt,if=should_cast_chaos_bolt
+actions.cleave+=/immolate,cycle_targets=1,if=should_refresh_immolate
+actions.cleave+=/conflagrate
+actions.cleave+=/incinerate
+
+## AoE (3+ targets)
+actions.aoe+=/rain_of_fire,if=should_cast_rain_of_fire
+actions.aoe+=/fire_and_brimstone,if=should_toggle_fnb
+actions.aoe+=/immolate,cycle_targets=1,max_cycle_targets=5,if=should_refresh_immolate
+actions.aoe+=/conflagrate
+actions.aoe+=/incinerate
+
+## Single Target
+actions.st+=/immolate,if=should_refresh_immolate
+actions.st+=/shadowburn,if=should_cast_shadowburn
+actions.st+=/chaos_bolt,if=should_cast_chaos_bolt
+actions.st+=/conflagrate,if=charges=2
+actions.st+=/conflagrate
+actions.st+=/incinerate,if=should_incinerate

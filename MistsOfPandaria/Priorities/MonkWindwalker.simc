@@ -1,49 +1,58 @@
-## Monk: Windwalker
+# Monk: Windwalker
+# SimCraft 548-8
 
-actions.precombat+=/stance_of_the_fierce_tiger
-actions.precombat+=/chi_burst,if=talent.chi_burst.enabled
-actions.precombat+=/chi_brew,if=talent.chi_brew.enabled
-actions.precombat+=/legacy_of_the_white_tiger
-actions.precombat+=/variable,name=trinket_sync_active,value=0
-actions.precombat+=/variable,name=energy_regen_pooling,value=energy.regen*1.5
 
-actions+=/spear_hand_strike
+# =======================
+# Pre-Combat Setup
+# =======================
+actions.precombat+=/legacy_of_the_emperor,if=buff.stats.down&buff.legacy_of_the_emperor.down
+actions.precombat+=/legacy_of_the_white_tiger,if=buff.crit.down&buff.legacy_of_the_white_tiger.down
+actions.precombat+=/potion
+
+# =======================
+# Defensives List
+# =======================
+actions.defensives+=/dampen_harm,if=talent.dampen_harm.enabled&buff.touch_of_karma.down&health.pct<=60
+actions.defensives+=/diffuse_magic,if=talent.diffuse_magic.enabled&buff.touch_of_karma.down&health.pct<=60
+
+# =======================
+# Core
+# =======================
+actions+=/potion,if=buff.bloodlust.up|target.time_to_die<=60
 actions+=/use_items
-actions+=/blood_fury
 actions+=/berserking
-actions+=/arcane_torrent
+actions+=/chi_brew,if=talent.chi_brew.enabled&chi<=2&(trinket.proc.agility.up|(charges=1&recharge_time<=10)|charges=2|target.time_to_die<charges*10)
+actions+=/tiger_palm,if=buff.tiger_power.remains<=3&chi>=1
+actions+=/tigereye_brew,if=buff.tigereye_brew_use.down&buff.tigereye_brew.stack=20
+actions+=/tigereye_brew,if=buff.tigereye_brew_use.down&chi>=2&(buff.tigereye_brew.stack>=15|target.time_to_die<40)&debuff.rising_sun_kick.up&buff.tiger_power.up
+actions+=/energizing_brew,if=time_to_max_energy>5
+actions+=/rising_sun_kick,if=debuff.rising_sun_kick.down&chi>=2
+actions+=/tiger_palm,if=buff.tiger_power.down&debuff.rising_sun_kick.remains>1&time_to_max_energy>1&chi>=1
 actions+=/invoke_xuen,if=talent.invoke_xuen.enabled
-actions+=/touch_of_death,if=target.health.pct<10
-actions+=/touch_of_karma,if=!buff.touch_of_karma.up
-actions+=/chi_brew,if=talent.chi_brew.enabled&chi<=1&(trinket.proc.agility.react|trinket.proc.strength.react|buff.tiger_strikes.react)
-actions+=/tigereye_brew,if=buff.tigereye_brew.stack>=10|(trinket.proc.agility.react|trinket.proc.strength.react)&buff.tigereye_brew.stack>=8
-actions+=/variable,name=trinket_sync_active,value=1,if=trinket.proc.agility.react|trinket.proc.strength.react
+actions+=/run_action_list,name=aoe,if=active_enemies>=3
+actions+=/run_action_list,name=single_target,if=active_enemies<3
 
-actions+=/call_action_list,name=st,if=active_enemies<3
-actions+=/call_action_list,name=aoe,if=active_enemies>=3
+# =======================
+# Single-Target (ST)
+# =======================
+actions.single_target+=/touch_of_death,if=buff.death_note.up&chi>=3
+actions.single_target+=/rising_sun_kick,if=chi>=2
+actions.single_target+=/fists_of_fury,if=buff.energizing_brew.down&time_to_max_energy>4&buff.tiger_power.remains>4&chi>=3
+actions.single_target+=/chi_wave,if=talent.chi_wave.enabled&time_to_max_energy>2
+actions.single_target+=/chi_burst,if=talent.chi_burst.enabled&time_to_max_energy>2
+actions.single_target+=/zen_sphere,cycle_targets=1,if=talent.zen_sphere.enabled&time_to_max_energy>2&!dot.zen_sphere.ticking
+actions.single_target+=/blackout_kick,if=buff.combo_breaker_bok.up&chi>=2
+actions.single_target+=/tiger_palm,if=buff.combo_breaker_tp.up&buff.combo_breaker_tp.remains<=2&chi>=1
+actions.single_target+=/jab,if=chi.max-chi>=2
+actions.single_target+=/blackout_kick,if=energy+energy.active_regen*cooldown.rising_sun_kick.remains>=40&chi>=2
 
-actions.st+=/rushing_jade_wind,if=talent.rushing_jade_wind.enabled&chi>=2&!buff.rushing_jade_wind.up
-actions.st+=/chi_wave,if=talent.chi_wave.enabled
-actions.st+=/zen_sphere,if=talent.zen_sphere.enabled&!ticking
-actions.st+=/energizing_brew,if=energy.time_to_max>5&(chi<=1|energy<40)
-actions.st+=/rising_sun_kick,if=!debuff.rising_sun_kick.up|debuff.rising_sun_kick.remains<3
-actions.st+=/tiger_palm,if=buff.tiger_power.stack<3|buff.tiger_power.remains<3
-actions.st+=/fists_of_fury,if=buff.tiger_power.stack=3&debuff.rising_sun_kick.up&energy.time_to_max>2&chi>=3
-actions.st+=/chi_sphere,if=talent.power_strikes.enabled&chi.max-chi>=1
-actions.st+=/expel_harm,if=chi.max-chi>=1&health.pct<80
-actions.st+=/jab,if=chi.max-chi>=1&energy>=40
-actions.st+=/chi_brew,if=talent.chi_brew.enabled&chi=0
-actions.st+=/blackout_kick,if=buff.combo_breaker_bok.up
-actions.st+=/tiger_palm,if=buff.combo_breaker_tp.up&buff.tiger_power.remains<=9
-actions.st+=/blackout_kick,if=chi>=2&energy.time_to_max<=2&buff.combo_breaker_bok.down
-actions.st+=/rising_sun_kick
-actions.st+=/blackout_kick,if=chi>=2&buff.combo_breaker_bok.down
-
+# =======================
+# Area-of-Effect (AoE)
+# =======================
+actions.aoe+=/rushing_jade_wind,if=talent.rushing_jade_wind.enabled&cooldown.rushing_jade_wind.up
+actions.aoe+=/zen_sphere,cycle_targets=1,if=talent.zen_sphere.enabled&!dot.zen_sphere.ticking
+actions.aoe+=/chi_wave,if=talent.chi_wave.enabled
 actions.aoe+=/chi_burst,if=talent.chi_burst.enabled
-actions.aoe+=/rushing_jade_wind,if=talent.rushing_jade_wind.enabled
-actions.aoe+=/rising_sun_kick,if=!debuff.rising_sun_kick.up
-actions.aoe+=/tiger_palm,if=buff.tiger_power.stack<3
-actions.aoe+=/spinning_crane_kick,if=chi>=2
-actions.aoe+=/jab,if=chi.max-chi>=1
-actions.aoe+=/expel_harm,if=chi.max-chi>=1
-actions.aoe+=/blackout_kick
+actions.aoe+=/rising_sun_kick,if=chi=chi.max
+actions.aoe+=/spinning_crane_kick,if=!talent.rushing_jade_wind.enabled
+actions.aoe+=/run_action_list,name=single_target,if=energy>=60

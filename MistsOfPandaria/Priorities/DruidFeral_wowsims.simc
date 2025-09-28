@@ -1,0 +1,120 @@
+# Feral Druid (MoP) WoWSims-aligned APL
+# Source reference: https://github.com/wowsims/mop/tree/master/ui/druid/feral/apls
+# Notes:
+# - Mirrors the intent of WoWSims weaving options (bear/snek/wrath/use_ns) using common MoP priorities.
+# - Snapshot nuances are simplified to be robust in-game.
+
+# Global defaults for optional behaviors (can be overridden by presets)
+# Read from state expressions (settings-driven); presets below may override
+actions+=/variable,name=maintain_ff,value=maintain_ff
+actions+=/variable,name=opt_bear_weave,value=opt_bear_weave
+actions+=/variable,name=opt_wrath_weave,value=opt_wrath_weave
+actions+=/variable,name=opt_snek_weave,value=opt_snek_weave
+actions+=/variable,name=opt_use_ns,value=opt_use_ns
+actions+=/variable,name=opt_melee_weave,value=opt_melee_weave
+actions+=/variable,name=use_trees,value=use_trees
+actions+=/variable,name=use_hotw,value=use_hotw
+
+# Precombat
+actions.precombat+=/mark_of_the_wild,if=!buff.mark_of_the_wild.up
+actions.precombat+=/cat_form
+actions.precombat+=/savage_roar,if=!buff.savage_roar.up
+actions.precombat+=/potion,name=virmens_bite_potion
+
+# Cooldowns
+actions.cooldowns+=/use_item,slot=hands
+actions.cooldowns+=/use_item,slot=trinket1
+actions.cooldowns+=/use_item,slot=trinket2
+actions.cooldowns+=/blood_fury
+actions.cooldowns+=/berserking
+actions.cooldowns+=/potion,name=virmens_bite_potion,if=buff.berserk.up|target.time_to_die<=26
+actions.cooldowns+=/incarnation,if=talent.incarnation.enabled&buff.tigers_fury.up
+actions.cooldowns+=/berserk,if=buff.tigers_fury.up
+actions.cooldowns+=/force_of_nature,if=variable.use_trees&talent.force_of_nature.enabled
+actions.cooldowns+=/heart_of_the_wild,if=variable.use_hotw&talent.heart_of_the_wild.enabled
+
+# Utility and maintenance
+actions.maint+=/faerie_fire,if=variable.maintain_ff&debuff.faerie_fire.down
+actions.maint+=/skull_bash,if=target.casting
+
+# Snek weave (snapshot HT/Regrowth)
+actions.snek+=/natures_swiftness,if=variable.opt_use_ns&(talent.dream_of_cenarius.enabled)&buff.predatory_swiftness.down
+actions.snek+=/healing_touch,if=variable.opt_use_ns&(buff.natures_swiftness.up|buff.predatory_swiftness.up)
+actions.snek+=/regrowth,if=variable.opt_snek_weave&buff.predatory_swiftness.up&energy.current<=40
+
+actions.bear+=/thrash
+actions.bear+=/cat_form,if=buff.clearcasting.up
+actions.bear+=/cat_form,if=buff.bear_form.up&(energy.deficit<=10|(dot.rake.remains<=3|dot.rip.remains<=2|cooldown.tigers_fury.remains<=2))
+actions.bear+=/maul,if=!buff.clearcasting.up&rage.current>=30
+actions.bear+=/mangle_bear
+actions.bear+=/lacerate,if=variable.opt_bear_weave&buff.bear_form.up&dot.lacerate.remains<=3
+# Wrath weave during Heart of the Wild
+actions.wrath+=/wrath,if=variable.opt_wrath_weave&should_wrath_weave
+
+# Single-target core
+actions.st+=/tigers_fury,if=energy.current<=35+variable.tf_bonus&buff.berserk.down
+actions.st+=/savage_roar,if=!buff.savage_roar.up&combo_points.current>0
+actions.st+=/rip,if=combo_points.current>=5&(dot.rip.down|dot.rip.remains<=2|rip_stronger)
+actions.st+=/rake,if=dot.rake.down|dot.rake.remains<=3|rake_stronger
+actions.st+=/thrash,if=buff.clearcasting.up&(dot.thrash.down|dot.thrash.remains<=3)
+actions.st+=/shred,if=(buff.berserk.up|buff.clearcasting.up&(dot.thrash.up|combo_points.current>=5))&!(disable_shred_when_solo&active_enemies=1)
+actions.st+=/mangle_cat,if=combo_points.current<5&buff.berserk.down&buff.clearcasting.down
+actions.st+=/shred,if=(energy.deficit<=10|!(dot.rip.remains<=2|buff.savage_roar.remains<=4|dot.rake.remains<=3))&!(disable_shred_when_solo&active_enemies=1)
+
+# AOE core
+actions.aoe+=/tigers_fury,if=energy.current<=35+variable.tf_bonus&buff.berserk.down
+actions.aoe+=/thrash_cat,if=dot.thrash_cat.remains<4.5
+actions.aoe+=/swipe_cat
+actions.aoe+=/rake,cycle_targets=1,if=active_enemies<=6&dot.rake.remains<4.5
+actions.aoe+=/rip,cycle_targets=1,if=active_enemies<=4&combo_points.current>=5&dot.rip.remains<7.2
+
+# Unified Cat Optimal Rotation (translation of WoWSims catOptimalRotationAction)
+actions.cat_optimal+=/variable,name=tf_bonus,value=0
+actions.cat_optimal+=/call_action_list,name=maint
+actions.cat_optimal+=/call_action_list,name=cooldowns
+actions.cat_optimal+=/call_action_list,name=snek
+actions.cat_optimal+=/call_action_list,name=wrath,if=variable.opt_wrath_weave&should_wrath_weave
+actions.cat_optimal+=/call_action_list,name=bear,if=variable.opt_bear_weave&(should_bear_weave|buff.bear_form.up)
+actions.cat_optimal+=/call_action_list,name=aoe,if=active_enemies>=3
+actions.cat_optimal+=/call_action_list,name=st
+
+# Monocat: prefer pure cat (disable weaving)
+actions.monocat+=/variable,name=opt_bear_weave,value=0
+actions.monocat+=/variable,name=opt_wrath_weave,value=0
+actions.monocat+=/variable,name=opt_snek_weave,value=0
+
+# Tendon burn: align cooldowns tightly
+actions.tendon+=/cat_form
+actions.tendon+=/savage_roar,if=!buff.savage_roar.up
+actions.tendon+=/tigers_fury
+actions.tendon+=/berserk
+actions.tendon+=/potion,name=virmens_bite_potion
+actions.tendon+=/rake
+actions.tendon+=/rip,if=combo_points.current>=5
+actions.tendon+=/ferocious_bite,if=combo_points.current>=5
+
+# Master action list (Default preset)
+actions+=/call_action_list,name=cat_optimal
+
+# AOE preset top-level (disable FF; enable bear+snek weave)
+actions.AOE+=/variable,name=maintain_ff,value=0
+actions.AOE+=/variable,name=opt_bear_weave,value=1
+actions.AOE+=/variable,name=opt_snek_weave,value=1
+actions.AOE+=/call_action_list,name=cat_optimal
+
+# Monocat preset top-level (disable weaving, keep FF)
+actions.MONOCAT+=/call_action_list,name=monocat
+actions.MONOCAT+=/variable,name=opt_melee_weave,value=1
+actions.MONOCAT+=/call_action_list,name=cat_optimal
+
+# Tendon preset top-level: short opener then fall back to cat_optimal; enable all weaves
+actions.TENDON+=/variable,name=maintain_ff,value=1
+actions.TENDON+=/variable,name=opt_bear_weave,value=1
+actions.TENDON+=/variable,name=opt_snek_weave,value=1
+actions.TENDON+=/variable,name=opt_wrath_weave,value=0
+actions.TENDON+=/variable,name=tf_bonus,value=15
+actions.TENDON+=/call_action_list,name=tendon
+actions.TENDON+=/call_action_list,name=cat_optimal
+
+
+

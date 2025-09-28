@@ -21,83 +21,58 @@ local spec = Hekili:NewSpecialization( 253, true )
     -- Use MoP power type numbers instead of Enum
     -- Focus = 2 in MoP Classic
     spec:RegisterResource( 2, {
-                -- Steady Shot focus generation (MoP standard: generates 14 focus)
         steady_shot = {
             resource = "focus",
+            cast = function(x) return x > 0 and x or nil end,
+            aura = function(x) return x > 0 and "casting" or nil end,
+
             last = function()
-                local app = (state.last_cast_time and state.last_cast_time.steady_shot) or 0
-                local t = state.query_time
-                return app + floor( ( t - app ) / 2.0 ) * 2.0
+                return state.buff.casting.applied
             end,
-            interval = function() return 2.0 / state.haste end, -- Standard 2.0s cast time in MoP
-            value = 14, -- Steady Shot generates 14 focus in MoP
+
+            interval = function() return state.buff.casting.duration end,
+            value = 9,
         },
 
-        -- Cobra Shot focus generation (MoP standard: generates 14 focus)
         cobra_shot = {
             resource = "focus",
+            cast = function(x) return x > 0 and x or nil end,
+            aura = function(x) return x > 0 and "casting" or nil end,
+
             last = function()
-                local app = (state.last_cast_time and state.last_cast_time.cobra_shot) or 0
-                local t = state.query_time
-                return app + floor( ( t - app ) / 2.0 ) * 2.0
+                return state.buff.casting.applied
             end,
-            interval = function() return 2.0 / state.haste end, -- Cast time
-            value = 14, -- Cobra Shot generates 14 focus in MoP
+
+            interval = function() return state.buff.casting.duration end,
+            value = 14,
         },
-        
-        -- Dire Beast focus generation (BM signature talent)
+
         dire_beast = {
             resource = "focus",
             aura = "dire_beast",
+
             last = function()
                 local app = state.buff.dire_beast.applied
                 local t = state.query_time
+
                 return app + floor( ( t - app ) / 2 ) * 2
             end,
+
             interval = 2,
-            value = 5, -- Dire Beast generates 5 focus every 2 seconds (BM gets more than other specs)
+            value = 5,
         },
-        
-        -- Fervor talent focus restoration
+
         fervor = {
             resource = "focus",
             aura = "fervor",
+
             last = function()
-                local app = state.buff.fervor.applied
-                local t = state.query_time
-                return app + floor( ( t - app ) / 1 ) * 1
+                return state.buff.fervor.applied
             end,
-            interval = 1,
-            value = function() return state.buff.fervor.up and 50 or 0 end, -- Instant 50 focus
+
+            interval = 0.1,
+            value = 50,
         },
-    }, {
-        -- Enhanced base focus regeneration for MoP
-        base_regen = 6, -- Base 6 focus per second in MoP
-        haste_scaling = true,
-        
-        regenerates = function()
-            local base = 6 * state.haste
-            local bonus = 0
-            
-            -- Aspect bonuses
-            if state.buff.aspect_of_the_iron_hawk.up then
-                bonus = bonus + 0.3 -- 30% increased focus regen
-            elseif state.buff.aspect_of_the_hawk.up then
-                bonus = bonus + 0.15 -- 15% increased focus regen
-            end
-            
-            -- Rapid Fire bonus
-            if state.buff.rapid_fire.up then
-                bonus = bonus + 0.5 -- 50% increased focus regen during Rapid Fire
-            end
-            
-            -- Bestial Wrath focus efficiency (BM specific)
-            if state.buff.bestial_wrath.up then
-                bonus = bonus + 0.25 -- 25% increased focus regen during Bestial Wrath
-            end
-            
-            return base * (1 + bonus)
-        end,
     } )
 
     -- Talents
@@ -220,9 +195,17 @@ spec:RegisterGlyphs( {
         -- https://wowhead.com/beta/spell=19574
         bestial_wrath = {
             id = 19574,
-            duration = 10,
+            duration = function() return 10 + ((state.set_bonus.tier14_4pc or 0) > 0 and 6 or 0) end,
             type = "Ranged",
             max_stack = 1
+        },
+        -- Alias used by some APLs/imports for Bestial Wrath
+        the_beast_within = {
+            id = 19574,
+            duration = function() return 10 + ((state.set_bonus.tier14_4pc or 0) > 0 and 6 or 0) end,
+            type = "Ranged",
+            max_stack = 1,
+            copy = "bestial_wrath"
         },
         -- Stunned.
         binding_shot_stun = {
@@ -267,6 +250,13 @@ spec:RegisterGlyphs( {
         posthaste = {
             id = 118922,
             duration = 4,
+            max_stack = 1
+        },
+        -- Interrupted.
+        counter_shot = {
+            id = 147362,
+            duration = 3,
+            mechanic = "interrupt",
             max_stack = 1
         },
         -- Silenced.
@@ -315,11 +305,26 @@ spec:RegisterGlyphs( {
             tick_time = 1,
             max_stack = 9
         },
-        -- Talent: Next Steady Shot or Cobra Shot costs no Focus and deals additional damage.
+        -- Talent: Thrill of the Hunt - next 3 Arcane/Multi-Shots cost 20 less Focus (tracked from game aura)
         thrill_of_the_hunt = {
             id = 34720,
-            duration = 20,
-            max_stack = 1
+            duration = 12,
+            max_stack = 3,
+            generate = function( t )
+                local name, _, _, count = FindUnitBuffByID( "player", 34720 )
+                if name then
+                    t.name = name
+                    t.count = count and count > 0 and count or 1
+                    t.applied = state.query_time
+                    t.expires = state.query_time + 12
+                    t.caster = "player"
+                    return
+                end
+                t.count = 0
+                t.applied = 0
+                t.expires = 0
+                t.caster = "nobody"
+            end,
         },
         -- Talent: Movement speed reduced by $s1%.
         glaive_toss = {
@@ -339,6 +344,12 @@ spec:RegisterGlyphs( {
             id = 120360,
             duration = 3,
             tick_time = 0.2,
+            max_stack = 1
+        },
+        -- Summons a herd of stampeding animals from the wild to fight for you for 12 sec.
+        stampede = {
+            id = 121818,
+            duration = 12,
             max_stack = 1
         },
         -- Movement speed reduced by $s1%.
@@ -502,6 +513,11 @@ spec:RegisterGlyphs( {
             duration = 3600,
             max_stack = 1
         },
+        aspect_of_the_pack = {
+            id = 13159,
+            duration = 3600,
+            max_stack = 1
+        },
 
         -- === PET ABILITY AURAS ===
         -- Pet basic abilities
@@ -551,6 +567,13 @@ spec:RegisterGlyphs( {
             type = "Taunt",
         },
 
+        widow_venom = {
+            id = 82654,
+            duration = 12,
+            max_stack = 1,
+            debuff = true
+        },
+
     } )
 
     spec:RegisterStateFunction( "apply_aspect", function( name )
@@ -590,11 +613,11 @@ spec:RegisterGlyphs( {
 
     -- State Expressions for MoP Beast Mastery Hunter
     spec:RegisterStateExpr( "current_focus", function()
-    return focus.current or 0
+    return state.focus.current or 0
 end )
 
     spec:RegisterStateExpr( "focus_deficit", function()
-    return (focus.max or 100) - (focus.current or 0)
+    return (state.focus.max or 100) - (state.focus.current or 0)
 end )
 
 spec:RegisterStateExpr( "should_focus_fire", function()
@@ -616,11 +639,27 @@ spec:RegisterStateExpr( "should_focus_fire", function()
     return false
 end )
 
-spec:RegisterStateExpr( "threat", function()
-    -- Threat situation for misdirection logic
-    return {
-        situation = 0 -- Default to no threat situation
-    }
+-- Threat is handled by engine; no spec override
+
+spec:RegisterStateExpr( "should_maintain_beast_cleave", function()
+    -- Beast Cleave is a passive buff that needs to be refreshed every 4 seconds
+    -- Track when Multi-Shot was last cast to maintain Beast Cleave uptime
+    local last_multi_shot = state.history.casts.multi_shot or 0
+    local current_time = state.query_time or 0
+    
+    -- Return true if it's been more than 3.5 seconds since last Multi-Shot
+    -- This ensures we refresh Beast Cleave before it expires (4 second duration)
+    return (current_time - last_multi_shot) >= 3.5
+end )
+
+spec:RegisterStateExpr( "beast_cleave_remains", function()
+    -- Calculate remaining time on Beast Cleave based on last Multi-Shot cast
+    local last_multi_shot = state.history.casts.multi_shot or 0
+    local current_time = state.query_time or 0
+    local time_since_cast = current_time - last_multi_shot
+    
+    -- Beast Cleave lasts 4 seconds, return remaining time
+    return math.max(0, 4 - time_since_cast)
 end )
 
     spec:RegisterStateExpr( "focus_time_to_max", function()
@@ -649,18 +688,13 @@ end )
     -- Determines if we should use Cobra Shot over Steady Shot
     spec:RegisterStateExpr( "should_cobra_shot", function()
         -- Cobra Shot is preferred for Beast Mastery when:
-        -- 1. We have Serpent Sting and need to maintain it
-        -- 2. We're in combat and need faster focus generation
-        -- 3. We have enough focus room to cast without capping
+        -- 1. We need focus and aren't at cap
+        -- 2. We need to maintain Serpent Sting
+        -- 3. General focus generation
         
-        if focus.current > 86 then return false end -- Don't cast if we'll cap focus
+        if (state.focus.current or 0) > 86 then return false end -- Don't cast if we'll cap focus
         
-        -- Prefer Cobra Shot if Serpent Sting is up or about to expire
-        if debuff.serpent_sting.up and debuff.serpent_sting.remains < 6 then
-            return true
-        end
-        
-        -- Use Cobra Shot for general focus generation in BM
+        -- Always prioritize Cobra Shot for Beast Mastery (pulled from Survival logic)
         return true
     end )
     
@@ -694,7 +728,7 @@ end )
         -- 3. When cooldowns aren't ready
         
         if buff.bestial_wrath.up then return false end
-        if focus.current < 30 then return false end
+        if (state.focus.current or 0) < 30 then return false end
         if cooldown.kill_command.ready and pet.alive then return false end
         
         return true
@@ -731,14 +765,7 @@ end )
             startsCombat = true,
 
             handler = function ()
-                if buff.thrill_of_the_hunt.up then
-                    removeBuff( "thrill_of_the_hunt" )
-                end
-                
-                -- 30% chance to proc Thrill of the Hunt
-                if talent.thrill_of_the_hunt.enabled and math.random() <= 0.3 then
-                    applyBuff( "thrill_of_the_hunt", 20 )
-                end
+                -- Cost reduction/stack usage is handled by the real aura; no manual consume/proc here.
             end,
         },
 
@@ -752,7 +779,7 @@ end )
             startsCombat = false,
 
             handler = function ()
-                spec:apply_aspect( "aspect_of_the_cheetah" )
+                apply_aspect( "aspect_of_the_cheetah" )
             end,
         },
 
@@ -804,6 +831,20 @@ end )
             end,
         },
 
+        stampede = {
+            id = 121818,
+            cast = 0,
+            cooldown = 300,
+            gcd = "off",
+
+            startsCombat = true,
+            toggle = "cooldowns",
+
+            handler = function ()
+                applyBuff( "stampede" )
+            end,
+        },
+
         bestial_wrath = {
             id = 19574,
             cast = 0,
@@ -847,7 +888,7 @@ end )
             usable = function () return not pet.exists, "requires no active pet" end,
 
             handler = function ()
-                summonPet( "hunter_pet", 3600 )
+                -- spec:summonPet( "hunter_pet" ) handled by the system
             end,
         },
 
@@ -862,7 +903,7 @@ end )
             usable = function () return not pet.exists, "requires no active pet" end,
 
             handler = function ()
-                summonPet( "hunter_pet", 3600 )
+                -- summonPet( "hunter_pet", 3600 ) handled by the system
             end,
         },
 
@@ -891,10 +932,7 @@ end )
                     end
                 end
                 
-                -- Thrill of the Hunt proc chance (30% on focus-costing shots)
-                if talent.thrill_of_the_hunt.enabled and math.random() <= 0.3 then
-                    applyBuff( "thrill_of_the_hunt", 20 )
-                end
+                -- ToTH procs are handled by the game; don't simulate.
             end,
         },
 
@@ -941,7 +979,7 @@ end )
 
             handler = function ()
                 applyBuff( "dire_beast" )
-                summonPet( "dire_beast", 15 )
+                -- summonPet( "dire_beast", 15 ) handled by the system
             end,
         },
 
@@ -973,7 +1011,7 @@ end )
             usable = function () return pet.exists, "requires an active pet" end,
 
             handler = function ()
-                dismissPet()
+                -- dismissPet() handled by the system
             end,
         },
 
@@ -1017,7 +1055,7 @@ end )
             startsCombat = false,
 
             usable = function () 
-                return should_focus_fire, "requires pet with frenzy stacks" 
+                return state.should_focus_fire and true or false, "requires pet with frenzy stacks" 
             end,
 
             handler = function ()
@@ -1166,7 +1204,7 @@ end )
 
             handler = function ()
                 -- Basic cat attack with frenzy generation (10% chance)
-                if can_generate_frenzy and math.random() <= 0.1 then
+                if state.can_generate_frenzy and math.random() <= 0.1 then
                     applyBuff( "frenzy", 8, min( 5, buff.frenzy.stack + 1 ) )
                 end
             end,
@@ -1185,7 +1223,7 @@ end )
 
             handler = function ()
                 -- Basic canine attack with frenzy generation (10% chance)
-                if can_generate_frenzy and math.random() <= 0.1 then
+                if state.can_generate_frenzy and math.random() <= 0.1 then
                     applyBuff( "frenzy", 8, min( 5, buff.frenzy.stack + 1 ) )
                 end
             end,
@@ -1318,19 +1356,18 @@ end )
             gcd = "spell",
             school = "physical",
 
-            spend = 40, -- Standard MoP Multi-Shot cost
+            spend = function () return buff.thrill_of_the_hunt.up and 20 or 40 end, -- ToTH reduces by 20
             spendType = "focus",
 
             startsCombat = true,
 
             handler = function ()
-                -- Thrill of the Hunt proc chance (30% chance in MoP)
-                if talent.thrill_of_the_hunt.enabled and math.random() <= 0.3 then
-                    applyBuff( "thrill_of_the_hunt", 20 )
-                end
+                -- ToTH procs are handled by the game; don't simulate.
                 
-                -- Multi-Shot benefits from Beast Mastery's pet synergy
-                -- In MoP, Multi-Shot can trigger pet abilities and synergies
+                -- Apply Beast Cleave buff when Multi-Shot is used
+                if pet.alive then
+                    applyBuff( "beast_cleave", 4 )
+                end
             end,
         },
 
@@ -1419,6 +1456,25 @@ end )
             end,
         },
 
+        counter_shot = {
+            id = 147362,
+            cast = 0,
+            cooldown = 24,
+            gcd = "spell",
+            school = "physical",
+
+            startsCombat = true,
+            toggle = "interrupts",
+
+            debuff = "casting",
+            readyTime = state.timeToInterrupt,
+
+            handler = function ()
+                applyDebuff( "target", "counter_shot" )
+                -- interrupt() handled by the system
+            end,
+        },
+
         silencing_shot = {
             id = 34490,
             cast = 0,
@@ -1435,7 +1491,7 @@ end )
 
             handler = function ()
                 applyDebuff( "target", "silencing_shot" )
-                interrupt()
+                -- interrupt() handled by the system
             end,
         },
 
@@ -1446,33 +1502,17 @@ end )
             gcd = "spell",
             school = "physical",
 
-            spend = function () return buff.thrill_of_the_hunt.up and 0 or -14 end,
+            spend = -14,
             spendType = "focus",
 
             startsCombat = true,
 
             handler = function ()
-                if buff.thrill_of_the_hunt.up then
-                    removeBuff( "thrill_of_the_hunt" )
-                end
-                
-                -- Thrill of the Hunt proc chance (30% on focus-costing shots)
-                if talent.thrill_of_the_hunt.enabled and math.random() <= 0.3 then
-                    applyBuff( "thrill_of_the_hunt", 20 )
-                end
+                -- No Thrill of the Hunt consumption/proc simulation on generators.
             end,
         },
 
-        -- === AUTO SHOT (PASSIVE) ===
-        auto_shot = {
-            id = 75,
-            cast = 0,
-            cooldown = function() return ranged_speed or 2.8 end,
-            gcd = "off",
-            school = "physical",
-            
-            startsCombat = true,
-        },
+
 
         thrill_of_the_hunt_active = {
             id = 34720, -- Corrected ID to match talent
@@ -1519,6 +1559,23 @@ end )
 
             handler = function ()
                 applyDebuff( "target", "wyvern_sting" )
+            end,
+        },
+
+        widow_venom = {
+            id = 82654,
+            cast = 0,
+            cooldown = 0,
+            gcd = "spell",
+            school = "nature",
+            
+            spend = 15,
+            spendType = "focus",
+            
+            startsCombat = true,
+            
+            handler = function ()
+                applyDebuff( "target", "widow_venom" )
             end,
         },
     } )
@@ -1612,4 +1669,4 @@ end )
         width = 1.5
     } )
 
-    spec:RegisterPack( "Beast Mastery", 20250722, [[Hekili:vZvBVTnos4FlfloFPBt9jBhNKUxCa2UVGT5UTOaUlUpCyTmJeDSUilzijhxxeOF73mKuIVisjz3CF4WIDrSe5ZmC4WHpZqQDXOfFEX8qsbDXhh7nEQ3vJhpC01Ex6D5I5fh2sxmFlj4rYdWFKq2a)3cAEbjhF8H4usi2980DzbWRwm)(DrXfFizX9nX8QjtrmZ3sdGhpDYI5RJcdP82sZdwm)ZRJYlxI)lPCPqQLltxb)oOiknPCzCuEb86vPzLl)n6JrXrdxmN9qunwffhtZG)6JSbfnHCFmnCX7xmpilQGMfrqjD)UvRgMtZ2stk8ZlIsEy4UTlMZfb0007Zi(5Rtl4Qvw0w(l(NP7F7Q0GDO8zcc0XSOua5ik8SZiHKTf0q4TzPBGHrciXvKaADZoW1)xVOag)ovqHiUzw5Yl8kxoOC5Rkx2PwNxqjHh4Qn(pWerwEr7MIT0IHK4ONOmPiK7TGCN6jb(Ey2oIe7VpJuS2WI8EugWWBnjhNNGNUj6Re27ADiwqIHrXqI)MDzH0m)0v(bzP7ZhkAntFydynPRnGB0zuKt6sKXhs(IF2U81AIs3q0HGRHaf4f9042bMGJCSFq6MnKKqe2PoHLb0QmAYxpmewgg8iFgBsFKcBg2FvugfLXLTldtym9rUqXhHKfqsOvoFF8Qta5oDWvwwY8VdstJdt3NK3UpUdj(8ZLllizpatsGtl1Vi1pmIYx1DPQ3FCAAO)QDzhmC9)XDfPVnGGU)PfRXyb1k0lxOGVrLp)qczBomVacn5HowG8kH7tgzBuiZjPAQ5mhowTRiJMwU81sDrcB7lB6vOHttJU0ttJSgaX9cVJiaYPPEggmTWmUxRkuRqWW6Fpf8hnnu8f9H0vrbrfvlD5AIdLurjKW2(6AHwSIM9uAMMgOSB2KRucfXAjFLm9l0GDavHJyVkHnCnLexS2FBqbxcJ9CesvFT7VWfy9gxNXHdmi0409im)LYLCS7ybQt94iIw22EwTHUJiMMsEIN7yOGr1hSpalRnae9J3eyHOH1oZINMLMwWEQuwBaNgAwUFajo2W()j0wVRaiVHXbH5NYLkArFyoabubQgHmQgAUBctggygmhQpsB92TahhPQQIwNbj1DebhS7jfkwyy06JM1rClmSUJMKdTUDJBucaeOW(HKnGDWFAoth5Z8d3q(s5YVVCP3WluwAsH(c8aqA3Aw3FUsKQ0tB3QAk(joe)LQlGJEibcRGKcB1KPBVWFvSod6g4lJqETyok5rq(kEpr5ySNaXusrf5LJ1BTp0j0nF)kFPJuq6eBF52C)fINpjTdFlSNpr9Pj0nS8uybfuS07IlISzi(X0FrDerc)p7YlqdshotTfxYMUm26ByMfhrU6MM)9KSmy6tl0Gnzp1mAPg3poi9IVYdXee8I088of6ytHosjwKcqTZhXgYxy4gr)Y240CgEa)ln)i9xXDLGafz(3NMSlN2bR6CichRHdX(m6c)l2giZar(ml7hn1XoH6oFFocPuNJBuW2FyBwAWXKHPHco1FCdfK9SkfSokLdceT601qynTgtvTgDUi3CFA(wy(57JkcwBBMPQJR3LW20Ddj7raMdbXW8lRZ5yNmSXcwpCyzBxYS1qNipzMpFZf4QYAiM4tB72cSqAD(YDOV2qDKxFIDOHOfRsRZTwJEkNCzCJ95wmMrWAGvozly7moBbltG8cTXtuZhs6mppDtUX81VXm4)q5Y3tz5D(7mgwqO5)ylwQnyM7UDXWphp(CKK4yi4w5Y50cCyNZCX9XD0HFndSBVTCjJhM4rGng2wg02yaNZ8E7ippafODHr5OwM)AWo)ukKd3979tFIMft2oBfjg5pdq9J4RqnJLmr5Y)fMnb4cXBiUDA2J(KKdkDHpC(R54aj7r037q1en4dUMg8iJivgj5bQs3(j8nSrt5s27evd8FalxH3YxVYgn46xi3oi7CF0x1VAVSzfz74y9jb)OVc)8ZSoWR2i0fU(b0uZjCrWYIA3MT(12PzxZnJcgd4l1TItbZ4yVxJYH(w(CplMg6uZJQHdcfknYaJ7aV8QD7mx1i8vOqcSald)SOaQFsAAymTNP4tWsWwuzBIYst8xt2)OE510Ad(6ETpOlOR6Jd8RBy7759kRbQ14CZtv2E8qjMTMmBVOHPftbG7Ad44LkpmJqtIc8jpWs2r2)TPMmBXsJ0B6TwkUyZAcoTInG7QUvvZkJ3Mr3qIsYnZtsP(Hw5m)RWBuPm(sXu2YCUEvPB1RVJIIAPizU9Y7alLQf2QFCFgqhz5zBDaDKfK1XacCv3ab07278vv5fR5aQVIhcWtliRBjMJOfgUA)UqderqfvrOD)hb7byNmipt077wr520ilhKMaEXmkXyKxdczAVRRCqmehYh5AjyWlOjp0zMfv2A76DNrOAwVCi(swAbNoxRZF9T6Aw4T)tPyiGkX8)MdiZALQLQMELM7rHjCt5V7T7CvMAfN6tQmZNqLu7UiXDu7AjMA1EUZQ(UnDpShlUKPXGV(v22ISbqnlIT6Ig1kr)Ux2nVh55epRGvV)i7yfCSM7JJABfMRQgibZOsaJo6JjYOoWkBKBub6rUxKOaWvVZnaUxOCAfJ4JJMQsJtTyDsPuvGvcKOLTaAoOGPVDcmpk3Tsggk)aKB1MEyK77zXvt4R9aB6e7YfjVnez3ciJmDlxIBcSWg7xJt5ydfuRKGdnZZOFXfRJoOTrawbNwjwkvnqwHOQzluQM6Z)Hpg738OcYIaU7Wq4N)0C5(k8R8HpFcwEqWwcS6wmkiyNaULiQ9cn9nATeaTxO0OC3wcG2pG43jglbn1m0ZJk2X0ym7DowIBBtpLdwhABHsD35oP6mvta1CpTfATpsPVhYYenXkpbhBbH7LPX4y2SfXTp6p(4g1swtq61j0wG5EPVA1bUoyCVqPZmlued)gkjONUNKLWsxrCjW2MLcEUu(TbBteW9gRrv(UTBtZkeL8bIUbYkacadz68iTiFiwXRpuW7eRCByiikRCqy8D6tS6LjdZdUeX7crJjncVfh)q5DSs68V)dSAtFa2ci)ppVC5(1rbRvBnVwvcPwUmjfbh2edpJ9yjUH4FjkNuLq)7LlbDxiMpZHacO)NIeAKpASIK3Zknv9isazrvtzwd2Js2T5EAgk48yGqw5DFydAWWhGjoOTWgE7cSstRb6JZZ3SBvw0Jyzkzg(fZ)UQs01SIJ39DTw0X7ynOUYJ4p(Ml(icYPx)rS3hzjiXU8TwfseJx2crIi(nvls(Ctpliz5DChgGasvXRFZS)2Qys(JNJvHCMrbRD0(00qrZTvZs7DQz9hppA1Sx1r9l7dw1ThbSFLT0oSsMxmvtYBYARvlfP9wOLJbdsxhjI1UZzyEogBDMbPxXSE7KDRrTDSqfZAS9NFUjp4BMDPNq4UPJQkyx20b2OcpBKAxRyBIDu2pD(R3m1BWRSZKVAHHn(Mn0qL984gj5L)RZMALTz3DtJwz3n3K)yp6b)onlcE7Koy3abmbX5aD6k3oBs39SIIh29gCcVD20UrOMTgcrtcF3kj799arVUXtN6w3TxJbMnRW4EGHc9RUBnJfLZfLIPZxOBRQmWtD3b9swK4ti2GnanQG9leQY6ck3jrReIdo7iKYOPoSgnQ3N62mUkx4rj6l9Ci66Y2PiYg18BGm24XiuNJxzH5uKAZk5n4mTlI6TZUW75NTkFhYHxNtfzOxI0bm4Vz2KReU8FZNjLunSgXMrSP656750484Gqxo22zq7Na3Tt7wl06OMI0DF77kTUrQhbb6bi))ZqH5J9YCAhQ(7k7XdAs9PSWD7novMBMn2ZDF7mCxhIvCmioMfm7Yjf1ZnChXIDxqCKbdDdu9zyOauJJ8WD37z8r3aCcPfycHS(5y)B7inGDxCdJYjsOmwSD1hD7Nip4aNlU4ZUaHXP9ghrpU6DU7H(zmOAhBCWe9XqIvWHtTY51KvcdWig6S8cHzJy4eZM3JjnWwzcZyJNCZSlmbwCVwvMcnUUSnaDA1uIk3koy92NWIMkaD0utqBoxz25lg0YShpzxRxuaPKQYV4nM1hqCVdyEi8CLhyRSdYlWGvmnUXakbWL5ZmAA9OO5LpWkQ1xDal4DZSRDOjQ(rwsRcudNruyMsRFrbszvNZfQG1FvcOW6kbSlSdIY3wGnuMyGYL2rr9tiqNFg(x8pcHB8gE9aXhFqvfaA7Jtrkj9edNP(1UOUCT6RL55Nn)szCbfO5QFpkklQS9rVmq)dEzqtQ7QuiBijNLBruKinQ0VeFseMSV01M(eXRveu(6iQ3waIa6nW9EMSr4XCvOLkGwY(VrVeFNRDnJNnsze14ItBBwBINB5OZiWIGCnATjOrETTJHPO7ypSbIn0nUu0vw5oVu)kcwPiin3V323Fax2AF7bv7Wm1ZjWMCDT9HdOGC1hnGnIJgiR7nB7BeqdxHg3UFQ7p4EPAWki0BAlzkBMLQEDse5h0rMwvGFKCY7lSoZxPVaONiVL03N0xKog(TxyX8R70yV7T7I8I9)Lkuc0YW5ecqx1VtnS8X8H6kfR47jUvhJosMwcHXeQ1(zBcvIGUrZoaUIxxLjKh7qYx8F)]] )
+    spec:RegisterPack( "Beast Mastery", 20250914, [[Hekili:D31EZTTTY(plz6CvSpnrvpSCsAT8mUjU9KCZJoXUZzU)JKGjHS41uK6Wh2XD8Op73DXdcasaqkBN0CptN0etrSyxGf7(BFa5zdND(SZcjf0zFC0Grtg8QHh0F04rhmy8SZkUDdD2zBibxrUe(hjK1W))xPK8ITl(a8)Pz3IF8TXPKqKm5PLzbWRm7SlkJIlEBYSlSt7rW7UHgapEcmnRIcdP83LMhm7SZxfLVDb(hY2fIzF7I0LWphueLMSDrCuEb8XltZ2U4FsVkkoQ)SZypezJ0n0eAg8V(it4OjKlIPHZ(1zNXhpmJLjaZNpFnj7k(SMfTH)rF6po9JN(5Tl(8No)KZF7N(42f79BrzOepCW2f50G0KW893U4KnBIVfMDgLEAoUGKD1Z2UOyffyWFLMxerI3U4FLrkwTDXZpE7I)7Oy4bVoD9Assi)rFMSjc(NWeq5p4ScY6n0q5pDBczto8dNTjlk5Y8FQa(RROf5)ugjaiF(pTjLVGGV9ByurS9Gp43Jjrxdp6808CbbPzWAtbopa94p7KSascohRslMDgSqaYtez2z7HsBb(E59X1P5KeqEV7oqejzxsl6hLp)cgLHvJE89MRPZdtl6RV8UDX0TlgWEdX4kIwtNxKopmcMvGbgozwbOjuBRsXiBGXqIzsspCppOeMZJbQozGAh9c(c(8BW1BKEJ7i9UOC5Y(gJUF5gfDbDR45b89mKSh4KSOyXKNjQrNH7VZxcBm4yNStJnxOkGJ8qx6XaxLRtOG004W0Bs6NZvDMNZ1C6NrjHWH18yCtMpmGUVWbDf6zdLdO6NHX8s)JzuTXmchZRWXuTvfNMclkLOXdfDG3A4aJxd0GOzxbCF9xR(PAUDPRJYwttaDsyTyo)CHIyIFghTBfTcsmC4OFiSDn)c8yuF5Rvrh1NXOLBLmbTUKDee02ZZLeRUw8qT9CTxNrF3ABpz7Iqkt3nNFMEEoEu1q314ty0ZTgO1Jb1z1XASkHz2yEoA1a)pGcGvsFgDnokzA09xlzwy3SIGw7sHNUo6VictBBx8NBqNiWkxr62fRjfbRWZTSHCtucOVJlgvKB7I)hWpuJ3aopLHoniWFYtXxd)x3MwUDXkY10M2Szhz4ZzjYwmR2XeMNhWaxuSXOHxb(4OcX7fvG(eOFzdOWe2hT8(VlPjb0Fg8aWmqBoB9Lp2WjboUnK1M2ObANG8un3j3W87W4zheBxTb61OCh1xypPYOKUgayrAnjkjN7cWLELhZ4ItyK5RlZcPzZtxopil9gZZzTyDVXGBXepFkJVn5lZZkZxzmvDzjTAIRiHn)cYxki9ImcFLW84YVXxI5WgaTbGPGNtIraj0VeexgI80YS01vNcqWrpd1vtczm8f3k2PyENap1jaiR1mSbOYf56ueyszodMqyzg7Vn1z1xzaMSmoCUghZSjq)cnOeG)D)SkCkF0v2f2JdGayEAmEIE0G)lqIOK4Iv77w5wG6G)EZ3eaJ)OP4G9RG7Cy1vYpyqhvYh0)W7HAEZvwB6hSv7Iiqt(I0eWuuUVLC952Cf)CGcmyFcRyBYsdmTh3WgaoPdpy(bBcSyayYUS20U9g2Cnz(i1CvTv7gXM7LwDAQX)T6xT(6EiDja8azcpl6HuywZqxa1wZFJC04YDukWDrudmDrjG0a8W8qYA4q68j8LmUMjan)lBx8pWvWd8VcwNmJDqgnL0L0OltMhs3ri14pvScCfHNzqs(sXbXeoAoj5xhLJ4PceqZkuWx9Q(Ac1V2I5PNFYBF)PVb869Pp9(38P)fe)2FE2j)(PG1sdJM5A2cJsCAlenBAyrmA9M0Sc8ucei4Y4OaenqJO92U40K8sCIehgyNMQh9fywLDMcSldlExMGyvWHB42UJrc5wZ1WpBNopc7zJTPlzjQgZvFZWzHvEgSPCm29cQaW1gaBBeqXNXqKfCLuOrtnQaC7audms0kbX8Jne5jgbTAe85rtLrFwx1UrqyMcQwy6cPS4MOa8emQzSm6YvOZ2CgWqwskmWIMBXpt9GIhZ3P2ZbscdzsCeM7JIp09TbKXsqm2m)FW2fNZa6KxpNcczfXolx5bXmcmqWGECbfK1gaP7uewsHLFmemOgfGqPL(x7YEni5tecUlavlPzxNMvhmf7HkPJdKwC4cj6aqgVeczTl4GeciFISkCCTUjcHYXMltkCf0Vh33RYyMoWuLvSIYZoftY(dso3fZf0eyXf1o)FlX9uHznbRfq2SHzIUUtsgHruYazNJP3PMZEuMEzNmUOC27k5dnbLBtlDIMw6jBx8b2q4I(RXb1fdqjGD9eQmWYBiOkh74kZy0ohSrNoS2Wa0HYJRUsSIkwbZ1H3dpF7IpdFGZJM8D7aMUk3mBDxvxucYCyAYtX)IgtU9EgVJFzVTZUc70SLHx5yzqp3i1YEqm40a9QMfDfnxxFxShZjbFVg5EUg0HAAq1svQ9vtqZjItiMsY6Y4IONZ3wV3P(PkTx2a6qYYyjE3uA5pTDZX8nCnypwysXu4Ibp00lKcKu1olYRGuc6zRJOIrnwSt2irDQSXDdnZI9R)q(8hPTGQ5XL8DaFdWfqh9mvwdOd)mf5IOygEDbcVDe(IBtcZ8NDX7hnTLAvBzzu(AQSaRM5hGnoEqaYmDJP9SzYLBKHYA8YOVn8YiE4igeEoewmefOVq8CHR6mmGAKVYO8sKj1xaBO5cv56gMLPTKHO8gWvt0A4vVSmkKWIHSRGQQm9Q95ImB2RDdZSfS2suIlipDI4QJKMW(0lUJa3M3qq9h7dGJdoLBpcEpj8Z0hxBYJzImRNhc35ExZGuDmuDAMAKkEGT1II1NkBucMANqrQDmngZuAlqdC3kux1Jm(Z01PxtzpeleC(8acc9CVsiW3nSyKfrwlJyEF90pEDerJ404Cka72QhkDo0q7sC(oGKZJMUNZcm2s9fFsDSmWM2fe98Sbs2CCnDyv(EiGJhBRRgRGFGeLiPwvYDaXn)wyfBTT6w1bB89Kg9qFtXag(ozWRx9Q2Q7mM93EI3xt(RLG21uGMjb3Ywb11p8U(wvwzKMaNY1Cq8q7AwMmYoBvAqEsRPFhyXquISD638qqw0AsgiFV5podmFNwioPyS0W)H5yUImuGzUxqlpd4nNWC(gUO9e8AsOndaktNTlSn5rnMXMlopXE6LwQS35j6oVuWAw4SfBulht640XlzPLyom9EhvuY22zi(eHsWB2KoPhydI8id(GKsTgiGBACeJeDsidsHvZknxBWYvtdAsFnhmrEbIZq4lUJtLC4wbvRMLUMq7XDCAv5F3gQ5orIAEm9Hk2lDmkbd3xCgv4pXxfzWUHQqMFLGvuAbPE4(8on6NRYgNObS0Qo(7kXW(g9INHLPAeepnehCg95shqSd3kGNEmxZotzLNKUGGxADkYqCFXWgViycVUzTq3vKBUsJOY8Sy8orzWsn7fLe2Xch(o(DH0jMWYBOyb9fGRnkNHJr4hHj3548A1WYaXHh3eFl7rRkMZO55S4RWq4eWYPFztCAolFizKngwOn)iBUoSHtso6k0lfCZOTvPzlzD4d)57p)Tp)8t(8VF65g993jPNUplteVnHvt9C5YdSQFturWkgUZj)iwThMD5FgZdjMrcEFAKZ6DJvyshxfD5kAUbkW9yjJeJUddQJcZ0ONFGoPaeWjHKSqfUdvs8ywaEDmLvHbetqbiWnIl8Ev4BtuwUGxORoP7vAYmNba5SglgTPKv1N61I1RQ6aR8g3PBWTbXWBZgzoQQ02HtFmGnh7JTVWG5AYLeB5eU8fz53YMo7htlWwjswW4)sQfa)ruHcdneEnnop98)PK3q)h83V2l)ZywkwMrZxj120vP5eIvBbCDHxi11r58(ebZJb5I0srjtxs4fJyz)ga2CxqbvsDaMAEaJNmJJVVOIEpX2BYQEsJ08nWVDQ9SRUWNglFylB0moy)VIsdFen7bfB85eRAtwSY2iY7oLa7UmV16Qr3y53PKs3YKktEUf09(HMprA3ZLRlFgFgnWNJnpa81KVx8kNgxzFq3kWMcwIzNg5b9FJwnYdF4k3)6HkyKKnpXdiMxaolj82hHjwJqEJiW8wa0W1Gghkuf0hqFClWNQW4b1RBzDSdEdZ4BJxrHJjlUflCfnUhewQbuVg769EJoeOqYMcvVkIWyYwscmEjm6kpT3hVWuz0K)62(IgkX4uSB0l71P8SorRq9IPPH979THOQslB36r)AUnE0QSrvp)VJvvsZIQQAyIM1spXc3dG3VM1TikWTQ2FZzxFJ4mIPpxcdxnwJ()wRzRfxtN6TEv0sSYWfk0qKyFToT5tfDH9sv4aikOMnLAFmc83U0YSNBhNeSXhtXO1kGDlwc(e33i4uaDzX(Igr)1OHvoBuXz16qCGubLy7gwuvbygsn2koN6V4vvdwNGFZIGO7bk0fBFEax7gFFR1m6qxEZ6uXCeoYFy(RDJATTEsrJK2AZ9wX)zPIEAD7Z4xOz3VQ(CTITRLEjrrtJoK3ncoxv6xpdbYMnWpcSD)2)4gjLBe0orf7SjeCElaovIVe77aYgwcPKMlpj9uS3jqtFFc7EBm11CGvktMIM7hCAI9ypGwfc6lh(KCVycTIOYhwox4Yk0Yx8dm1OFqqhrYnf1vSMHdzAq75khFQuC638MWQOzkYhwpSbWUnCwHb)NPxA2a5gFMFBEnMowV2PRuMttUueQJBBDosTVGVB1QATEEh28UgovHFe)Q9(YXaG5Bizy6hYXorKkR8RO)gEkVSxpftVW)UeVvu41WcHPqklsxZ90haEMUKM3F77EFe6nBe4b)p1lOmNDaQz4n5PWayZ4Y0yWjmtTMuMHjydo7tRUCwYuxiPcV7UzTah)9yqcwMwMy82HHmegKcYfKCauX7yWtm4a4zVZImZkWuxf5VlLa9cA8DRGOUdk6pGDrrmFa)nSjNIA6)DRi2L9kRXR1vjIFGBOZdCkI)DXPn8z8WXCSyqsPDv0)Bqyu54Bh2Fnc467yHRlsIOtb6Qu0M253HUdE7Ajxo8aZ5afiWZAzXk8YiC26YLzrxHvkoDzumab(hKFTs0SyVV7h8wV33H)3p05Y(U9DC2kVFvvQ)XP)KvurplA50N4f0uVNiQiCpEHr7cXX6J6IYIQT27jDRMWDz6QguRZzlLagLv3YOQ6TS5PQ(U2FB9KkIV)EnQO7D3zwn397H0XsDCNoOxZCdDmaXZ6eBMFAgR6mL3wjaV2Rpdlp7u9QZkuc93(BvK0dHqEYAUd6XFQwlWvTgPj5hn9WQfezHW5SM7gxtNTAUpYdsTNTgyB6q9HkBWmCGQXz2YAhnzGqrRrA(KNIT18zn4q(pY6ff(sihPno14IXrdh0(qS0gy449NFuy91Pa02ew5bO9x1(vZS1HXWE7udsSe7U3UAFcaegi5fNffPu)4PJAFKgoYBsJJ6ajKHZHJUrODhpDs7uOQRPqs0SLSow1ow)Jb9h3o9mBHQ2FF9ile7gD87Ej8v)pYV(LuMz5hH)w7DOAwnoTyAdJDAeuWgyzy6j40Cu(TsOOG6QflnFDSn(tETC9(sGI1CWjY6NHfazkR(hg20Sx(L2OJ82Q01xCKTL3QkPyDTxE5CS8HU8uk(cpYYiu5SKTy58UI0CKAjOuBOwYPPuNWQQKrkL0bz0O6LnhRwQWDdfqm5JNimI4(Raa8t)69TaaF2)A(vbGAfQY7zhpR2ZxLooE4GEERrXrJfc3J3973UOyE63629D35htcypZouWHs9Jh4D33oNByqQPr2Xd6TNdXXOgB4D4)OXd2xWQnUp(m97Oh8vY3Um0rlf92Z42AD80dg02MYrtKs0d(Y2BN15fGsJTnRDLGLpcojC3Dw3hQwXFKUb92ztB2ZS2jC9e87lB5K5Xd6FOHUYetDLVoxmEhcx9ImQTD4SgLTDSOw0CYTPVox9D7YvvHi1KNgvXSNYORljQv7wsHBxVo767)hAU))qVw72xrUxad4I29(UR7W3hNEACrTEhuYbhknaBCf2V7obu5QG3gl3eEqxfD7mBvHO1y3g1TwYWhmPYNR)RAUJfMkeME8KA)mMlugsuPpse0oQAwio7e13VhlaaDSNTonJEqtttCK3NoAtXUwbDIo1QEULyP074naHNJ8W0BVwS6mr4p0SZ2oAy)jDGbVxbyTRw8BU96ID6GoVec4J(9XxXDwYK2oGTQATR(T1VxRPIRnwOnmsTob9QH7tpfa2NsvtdGtRVyqoA4O2iM7Kl0MN12OCnyzclW6yVCsyM60xR(yKRQ(DtRmISZ)FRBg1DkOLZvP6KYBCTgD8OPJg0YyTQk2s6WBqP7r2rQtID4q2HUPI9ZaV4vDj(dN08(erGBY1MbmrmtJFHBsSJy5DtOoHLZ9W7O7a3eOZqW5L7QtDkild87CZc2vfZgnsONdfQ(euBK6xperbgFqxCtKcpA3DtKypcxFt1AcjLUJgP0gXoyAQNzeqhnPobnTqzCrrMo0NflRfByqT5tRAzwNpF03KsqSB1LLPhW2xE43vsMY23WRlz91e1f3RczR90gjXw38YgIq6V7UN08Zl3SFvmNn0MmN49QV3D3D71HnH93)bZx3Dx1)SX2Edn2oBBuLEI2j6UKPHwjwZoVOXq65SxmSDUQPDaN(ZRFEFxCWZjDl21BmdnZYcli6Ah7BZMF3ilMiSMw6nNkJsQAXGMRl7NTf(Xnw4)6AVKztJBpYApVR4gztb8J(AOlEZ5yTDN0(c)WgnR1c7A(NunHWqLwCZUH3kvR6LDl07OPV0bNORoAPxia2WjOAEfvS9nWUAUQAucKbR(wChNS26AIdSteTVw1TrLX1OYH2PI(3E6ME6X)f)7F9Jg0)L9eFVRltSP3Vw3yzCCN)MD7xA)B2nLmy2NiGGO)n8MM9vBFXVjpJi(sFZ2rMjEMjNn0LOj10ZKUVFjiOMc9MyPPvxUNA9FbjOvs2DWUBTzPogp10i)DJGTqyQreZJn6KqWP(pZ84(BShKIF)9lTNA5F5VRFV9O2czloEb53s6hKey3ASIwuvhAH(3Ni)7kZVJbX7IS1tIF3)9OZV84(7rNMsyRrolIQV7)6XrnhIFL84vlQLinvKOMEK1XPqXVlM8uZrllgSlJ2S)V]] )

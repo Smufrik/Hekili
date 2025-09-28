@@ -1,146 +1,90 @@
-# ===================
-# ROGUE: SUBTLETY - ADVANCED MISTS OF PANDARIA ROTATION
-# Enhanced for optimal DPS, resource management, and situational awareness
-# ===================
+# ===============================================================================
+# SUBTLETY ROGUE - MISTS OF PANDARIA CLASSIC ROTATION
+# Sources:
+#  - WOWTBC.GG MoP Subtlety Rogue guide (opener/rotation heuristics)
+#  - wowsims/mop Subtlety APL JSON (timings/conditions)
+# ===============================================================================
 
-# ===================
-# PRECOMBAT SETUP WITH ADVANCED PREPARATION
-# ===================
-actions.precombat+=/apply_poison,lethal=deadly,nonlethal=crippling
-actions.precombat+=/apply_poison,lethal=wound,nonlethal=mind_numbing,if=pvp
-actions.precombat+=/tricks_of_the_trade,if=group&!solo
-actions.precombat+=/jade_serpent_potion
-actions.precombat+=/stealth,if=!stealthed.all&!in_combat
+# ===============================================================================
+# PRE-COMBAT SETUP
+# ===============================================================================
+actions.precombat+=/apply_poison,lethal=deadly,nonlethal=crippling,if=settings.auto_poison_apply
+actions.precombat+=/tricks_of_the_trade,if=settings.use_tricks_of_the_trade&group
+actions.precombat+=/stealth,if=!stealthed.all
 actions.precombat+=/premeditation,if=stealthed.all&talent.premeditation.enabled
-actions.precombat+=/pick_pocket,if=target.pickpocketable&!in_combat
-actions.precombat+=/slice_and_dice,if=buff.slice_and_dice.down&combo_points>=2&energy>=25
+actions.precombat+=/slice_and_dice,if=combo_points>=1
 
-# ===================
-# MAIN ROTATION WITH INTELLIGENT PRIORITY SYSTEM
-# ===================
-actions+=/kick,if=target.debuff.casting.up&target.debuff.casting.interruptible
-actions+=/gouge,if=target.debuff.casting.up&target.debuff.casting.interruptible&!cooldown.kick.ready
-actions+=/blind,if=target.debuff.casting.up&target.debuff.casting.interruptible&!cooldown.kick.ready&!cooldown.gouge.ready
+# ===============================================================================
+# MAIN ROTATION
+# ===============================================================================
+# Interrupts and Defensives
+actions+=/kick,if=target.casting
+actions+=/evasion,if=health.pct<=25&incoming_damage_3s>health.max*0.4
+actions+=/cloak_of_shadows,if=debuff.magic.up&health.pct<=30
+actions+=/tricks_of_the_trade,if=settings.use_tricks_of_the_trade&group&time>30
 
-# Emergency Situations
-actions+=/vanish,if=health.pct<=15&!buff.vanish.up&!buff.stealth.up&!buff.shadow_dance.up&cooldown.vanish.ready
-actions+=/evasion,if=health.pct<=25&incoming_damage_3s>health.max*0.4&!buff.evasion.up
-actions+=/cloak_of_shadows,if=health.pct<=30&debuff.magic.up&!buff.cloak_of_shadows.up
-
-# Trick Management
-actions+=/tricks_of_the_trade,if=group&!solo&(time>30|threat.pct>80)
-
-# Execute Sophisticated Action Lists
-actions+=/call_action_list,name=cooldowns
+# Primary Action Lists
 actions+=/call_action_list,name=stealth_sequence,if=stealthed.all
-actions+=/run_action_list,name=shadow_dance_rotation,if=buff.shadow_dance.up
-actions+=/run_action_list,name=burst_sequence,if=time<20|target.time_to_die<30|buff.bloodlust.up
-actions+=/run_action_list,name=finisher_priority,if=combo_points>=4|(talent.anticipation.enabled&combo_points>=3&anticipation_charges>=4)
-actions+=/run_action_list,name=aoe_rotation,if=spell_targets.fan_of_knives>=3
-actions+=/run_action_list,name=combo_point_generation
-actions+=/call_action_list,name=maintenance
-actions+=/call_action_list,name=defensive_utility
+actions+=/call_action_list,name=cooldowns
+actions+=/call_action_list,name=finishers,if=combo_points>=5
+actions+=/call_action_list,name=aoe,if=active_enemies>=3
+actions+=/call_action_list,name=generators
 
-# ===================
-# ADVANCED STEALTH SEQUENCE (OPENERS AND STEALTH WINDOWS)
-# ===================
-actions.stealth_sequence+=/garrote,if=!dot.garrote.ticking&target.time_to_die>12&combo_points<5
-actions.stealth_sequence+=/ambush,if=talent.shadow_focus.enabled&energy.deficit<=20&combo_points<5
-actions.stealth_sequence+=/ambush,if=!talent.shadow_focus.enabled&energy>=60&combo_points<5
-actions.stealth_sequence+=/ambush,if=combo_points<=3&buff.find_weakness.down
-actions.stealth_sequence+=/cheap_shot,if=combo_points<5&target.time_to_die>6&!dot.garrote.ticking&target.debuff.stun.down
-actions.stealth_sequence+=/premeditation,if=combo_points<=2&energy>=40&talent.premeditation.enabled
-actions.stealth_sequence+=/backstab,if=energy>80&combo_points<5&position.behind
+# ===============================================================================
+# STEALTH SEQUENCE (Openers)
+# ===============================================================================
+# Follow guide: premed -> SnD (if needed) -> Ambush -> Hemo -> Backstab -> Rupture
+actions.stealth_sequence+=/premeditation,if=talent.premeditation.enabled&combo_points<=2
+actions.stealth_sequence+=/slice_and_dice,if=buff.slice_and_dice.down&combo_points>=1
+actions.stealth_sequence+=/garrote,if=!dot.garrote.ticking&target.time_to_die>8
+actions.stealth_sequence+=/ambush,if=combo_points<5
+actions.stealth_sequence+=/hemorrhage,if=!dot.hemorrhage.ticking
 
-# ===================
-# SHADOW DANCE OPTIMIZATION SEQUENCE
-# ===================
-actions.shadow_dance_rotation+=/garrote,if=!dot.garrote.ticking&target.time_to_die>8&combo_points<5
-actions.shadow_dance_rotation+=/ambush,if=combo_points<5&energy>=40&(buff.find_weakness.down|buff.find_weakness.remains<3)
-actions.shadow_dance_rotation+=/eviscerate,if=combo_points>=5&dot.find_weakness.up&dot.find_weakness.remains>2
-actions.shadow_dance_rotation+=/ambush,if=combo_points<4&energy>=60
-actions.shadow_dance_rotation+=/backstab,if=combo_points<5&energy>=60&position.behind
-actions.shadow_dance_rotation+=/hemorrhage,if=combo_points<5&(!position.behind|energy<40)
+# ===============================================================================
+# COOLDOWNS
+# ===============================================================================
+# SD at 75+ energy, ensure builders/bleeds up; Vanish at 45+ energy if no SD soon.
+actions.cooldowns+=/shadow_dance,if=settings.use_shadow_dance&energy>=75&!stealthed.all&buff.slice_and_dice.up&dot.rupture.remains>=10&dot.hemorrhage.remains>=6
+actions.cooldowns+=/vanish,if=energy>=45&combo_points<=2&!stealthed.all&cooldown.shadow_dance.remains>10
+actions.cooldowns+=/preparation,if=energy<30&cooldown.vanish.remains>45
+actions.cooldowns+=/shadow_blades,if=settings.use_shadow_blades&buff.slice_and_dice.up&(buff.find_weakness.down|time<20|target.time_to_die<40)
+actions.cooldowns+=/shadowstep,if=settings.allow_shadowstep&talent.shadowstep.enabled&target.distance>=12
 
-# ===================
-# BURST SEQUENCE FOR HIGH DAMAGE WINDOWS
-# ===================
-actions.burst_sequence+=/shadow_blades,if=cooldown.shadow_blades.ready&(buff.shadow_dance.up|cooldown.shadow_dance.remains>20)
-actions.burst_sequence+=/shadow_dance,if=cooldown.shadow_dance.ready&energy>=75&buff.slice_and_dice.up&!buff.shadow_dance.up
-actions.burst_sequence+=/vanish,if=cooldown.vanish.ready&energy>=60&combo_points<=2&cooldown.shadow_dance.remains>10&!buff.stealth.up
-actions.burst_sequence+=/cold_blood,if=cooldown.cold_blood.ready&combo_points>=4&buff.slice_and_dice.up
-actions.burst_sequence+=/preparation,if=cooldown.preparation.ready&(cooldown.vanish.remains>45|cooldown.shadow_dance.remains>30)
+# Use items and racials during Dance or short TTD
+actions.cooldowns+=/use_item,slot=trinket1,if=buff.shadow_dance.up|target.time_to_die<30
+actions.cooldowns+=/use_item,slot=trinket2,if=buff.shadow_dance.up|target.time_to_die<30
+actions.cooldowns+=/use_item,slot=hands,if=buff.shadow_dance.up|target.time_to_die<30
+actions.cooldowns+=/blood_fury,if=buff.shadow_dance.up
+actions.cooldowns+=/berserking,if=buff.shadow_dance.up
 
-# ===================
-# INTELLIGENT FINISHER PRIORITY SYSTEM
-# ===================
-actions.finisher_priority+=/slice_and_dice,if=buff.slice_and_dice.remains<=6&combo_points>=2&target.time_to_die>8
-actions.finisher_priority+=/slice_and_dice,if=buff.slice_and_dice.down&combo_points>=1&target.time_to_die>6
-actions.finisher_priority+=/rupture,if=!dot.rupture.ticking&combo_points>=4&target.time_to_die>12&buff.slice_and_dice.up
-actions.finisher_priority+=/rupture,if=dot.rupture.remains<=4&combo_points>=4&target.time_to_die>8&buff.slice_and_dice.up
-actions.finisher_priority+=/crimson_tempest,if=spell_targets.fan_of_knives>=4&combo_points>=4&!dot.crimson_tempest.ticking
-actions.finisher_priority+=/eviscerate,if=combo_points>=5&buff.slice_and_dice.up&(dot.rupture.up|target.time_to_die<8)
-actions.finisher_priority+=/eviscerate,if=combo_points>=4&buff.slice_and_dice.up&dot.rupture.up&(buff.find_weakness.up|target.health.pct<35)
-actions.finisher_priority+=/eviscerate,if=combo_points>=3&target.health.pct<20&buff.slice_and_dice.up
-actions.finisher_priority+=/recuperate,if=health.pct<60&combo_points>=2&buff.slice_and_dice.up&energy<40
+# ===============================================================================
+# FINISHERS
+# ===============================================================================
+# Maintain SnD/Rupture at 5 CP; Eviscerate at 5 CP otherwise.
+actions.finishers+=/slice_and_dice,if=buff.slice_and_dice.remains<6&combo_points>=1
+actions.finishers+=/rupture,if=!dot.rupture.ticking&combo_points>=5&target.time_to_die>10
+actions.finishers+=/rupture,if=dot.rupture.remains<4&combo_points>=5&target.time_to_die>8
+actions.finishers+=/eviscerate,if=combo_points>=5
+actions.finishers+=/recuperate,if=health.pct<60&combo_points>=2&!buff.recuperate.up
 
-# ===================
-# ADVANCED AOE ROTATION FOR MULTIPLE TARGETS
-# ===================
-actions.aoe_rotation+=/crimson_tempest,if=combo_points>=4&spell_targets.fan_of_knives>=4&(!dot.crimson_tempest.ticking|dot.crimson_tempest.remains<4)
-actions.aoe_rotation+=/slice_and_dice,if=buff.slice_and_dice.remains<8&combo_points>=2&spell_targets.fan_of_knives>=3
-actions.aoe_rotation+=/fan_of_knives,if=combo_points<5&spell_targets.fan_of_knives>=3&energy>=35
-actions.aoe_rotation+=/crimson_tempest,if=combo_points>=3&spell_targets.fan_of_knives>=6&dot.crimson_tempest.remains<2
-actions.aoe_rotation+=/eviscerate,if=combo_points>=5&buff.slice_and_dice.up
-actions.aoe_rotation+=/shuriken_toss,if=talent.shuriken_toss.enabled&combo_points<5&energy<35&spell_targets.fan_of_knives=3
+# ===============================================================================
+# AOE ROTATION
+# ===============================================================================
+actions.aoe+=/crimson_tempest,if=combo_points>=4&active_enemies>=4&!dot.crimson_tempest.ticking
+actions.aoe+=/fan_of_knives,if=combo_points<5&active_enemies>=3
+actions.aoe+=/eviscerate,if=combo_points>=5
 
-# ===================
-# OPTIMIZED COMBO POINT GENERATION
-# ===================
-actions.combo_point_generation+=/marked_for_death,if=talent.marked_for_death.enabled&combo_points<=2&target.time_to_die>15
-actions.combo_point_generation+=/backstab,if=position.behind&combo_points<5&energy>=40&(!dot.hemorrhage.ticking|dot.hemorrhage.remains>4)
-actions.combo_point_generation+=/hemorrhage,if=combo_points<5&(!dot.hemorrhage.ticking|dot.hemorrhage.remains<4)&target.time_to_die>8
-actions.combo_point_generation+=/hemorrhage,if=combo_points<5&!position.behind&energy>=30
-actions.combo_point_generation+=/shuriken_toss,if=talent.shuriken_toss.enabled&combo_points<5&energy<30&target.distance>8
-actions.combo_point_generation+=/ghostly_strike,if=talent.ghostly_strike.enabled&combo_points<5&energy>=40
+# ===============================================================================
+# COMBO POINT GENERATORS
+# ===============================================================================
+# Maintain Hemorrhage; then Backstab (pooling not required at 35 energy in MoP)
+actions.generators+=/hemorrhage,if=combo_points<5&(!dot.hemorrhage.ticking|dot.hemorrhage.remains<4)
+actions.generators+=/backstab,if=behind_target&combo_points<5&energy>=35
+actions.generators+=/hemorrhage,if=combo_points<5
+actions.generators+=/shuriken_toss,if=talent.shuriken_toss.enabled&combo_points<5&energy<40
 
-# ===================
-# SOPHISTICATED COOLDOWN MANAGEMENT
-# ===================
-actions.cooldowns+=/shadow_dance,if=energy>=75&!buff.stealthed.all&!buff.shadow_blades.up&buff.slice_and_dice.up&(cooldown.cold_blood.ready|cooldown.cold_blood.remains>20)
-actions.cooldowns+=/vanish,if=time>15&energy>=60&combo_points<=2&!buff.stealthed.all&cooldown.shadow_dance.remains>15&target.time_to_die>25
-actions.cooldowns+=/shadow_blades,if=buff.bloodlust.react|target.time_to_die<40|(buff.shadow_dance.up&combo_points>=3)|cooldown.shadow_dance.remains>45
-actions.cooldowns+=/cold_blood,if=combo_points>=4&buff.slice_and_dice.up&(buff.shadow_dance.up|buff.find_weakness.up)
-actions.cooldowns+=/preparation,if=cooldown.vanish.remains>60&cooldown.shadow_dance.remains>40&energy<30
-actions.cooldowns+=/shadowstep,if=talent.shadowstep.enabled&target.distance>=12&!position.behind
-actions.cooldowns+=/burst_of_speed,if=talent.burst_of_speed.enabled&movement.distance>20&!buff.burst_of_speed.up
-
-# Trinkets and Consumables
-actions.cooldowns+=/use_item,name=vial_of_shadows,if=buff.shadow_dance.up|target.time_to_die<35
-actions.cooldowns+=/use_item,slot=trinket1,if=buff.shadow_dance.up|target.time_to_die<30|buff.bloodlust.up
-actions.cooldowns+=/use_item,slot=trinket2,if=buff.shadow_dance.up|target.time_to_die<30|buff.bloodlust.up
-
-# Racial Abilities
-actions.cooldowns+=/blood_fury,if=buff.shadow_dance.up|target.time_to_die<30
-actions.cooldowns+=/berserking,if=buff.shadow_dance.up|target.time_to_die<30
-actions.cooldowns+=/arcane_torrent,if=energy<=30&combo_points<5
-
-# ===================
-# MAINTENANCE AND UTILITY ACTIONS
-# ===================
-actions.maintenance+=/slice_and_dice,if=buff.slice_and_dice.remains<3&combo_points>=1&target.time_to_die>4
-actions.maintenance+=/expose_armor,if=!target.debuff.expose_armor.up&!target.debuff.sunder_armor.up&target.time_to_die>20&combo_points>=2
-actions.maintenance+=/apply_poison,if=poison.lethal.down|poison.nonlethal.down
-
-# ===================
-# ADVANCED DEFENSIVE AND UTILITY RESPONSES
-# ===================
-actions.defensive_utility+=/cloak_of_shadows,if=health.pct<=35&debuff.magic.up&!buff.cloak_of_shadows.up
-actions.defensive_utility+=/evasion,if=health.pct<=40&incoming_damage_5s>health.max*0.3&!buff.evasion.up
-actions.defensive_utility+=/feint,if=incoming_damage_3s>health.max*0.25&energy>=20&!buff.feint.up
-actions.defensive_utility+=/combat_readiness,if=talent.combat_readiness.enabled&incoming_damage_2s>health.max*0.2&stacks<5
-actions.defensive_utility+=/recuperate,if=health.pct<50&combo_points>=1&energy<50&!buff.recuperate.up
-actions.defensive_utility+=/smoke_bomb,if=health.pct<30&enemies>1&!buff.smoke_bomb.up
-actions.defensive_utility+=/blind,if=enemies>=2&!target.debuff.blind.up&target.debuff.stun.down&health.pct<60
-actions.defensive_utility+=/gouge,if=target.casting&target.cast.interruptible&!cooldown.kick.ready&energy>=45
-actions.defensive_utility+=/distract,if=target.threat.pct>90&!target.debuff.distract.up
+# ===============================================================================
+# MAINTENANCE
+# ===============================================================================
+actions.generators+=/slice_and_dice,if=buff.slice_and_dice.remains<3&combo_points>=1
+actions.generators+=/apply_poison,if=settings.auto_poison_apply&(!buff.deadly_poison.up|!buff.crippling_poison.up)

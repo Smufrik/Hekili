@@ -1,95 +1,59 @@
-# Druid: Guardian
-## Settings
-variable,name=defensive_health_threshold,value=80
-variable,name=savage_defense_rage_threshold,value=80
-variable,name=lacerate_stacks,value=3
-variable,name=use_symbiosis,value=1
-variable,name=use_savage_defense,value=1
-variable,name=maintain_faerie_fire,value=1
+# Druid: Guardian (MoP)
+# Enhanced APL based on WoWSims MoP Guardian Druid rotations
+# References: https://github.com/wowsims/mop/blob/master/ui/druid/guardian/apls/
 
-## Precombat Actions
-actions.precombat+=/bear_form
-actions.precombat+=/mark_of_the_wild,if=!buff.mark_of_the_wild.up&group
-actions.precombat+=/symbiosis,if=!buff.symbiosis.up&target.exists&variable.use_symbiosis
-actions.precombat+=/healing_touch,if=talent.dream_of_cenarius.enabled&!buff.dream_of_cenarius_damage.up
-actions.precombat+=/savage_defense,if=!buff.savage_defense.up&variable.use_savage_defense
+## Precombat
+actions.precombat+=/bear_form,if=!buff.bear_form.up
+actions.precombat+=/mark_of_the_wild,if=!buff.mark_of_the_wild.up
+actions.precombat+=/potion,name=mogu_power_potion
 
-## Main Action Priority List
-actions+=/auto_attack
-actions+=/bear_form,if=!buff.bear_form.up
-actions+=/call_action_list,name=emergency
+## Main Rotation
+actions+=/skull_bash,if=target.casting&target.cast_interruptible
+actions+=/call_action_list,name=defensives
 actions+=/call_action_list,name=cooldowns
-actions+=/call_action_list,name=defensives,if=health.pct<80|incoming_damage_5s>health.max*0.25
-actions+=/call_action_list,name=maintain_dots
-actions+=/call_action_list,name=rage_management
+actions+=/call_action_list,name=threat_generation
+actions+=/call_action_list,name=vengeance_rotation
+actions+=/call_action_list,name=standard
 
-## Emergency Actions (Interrupts and Immediate Threats)
-actions.emergency+=/skull_bash,if=target.casting
-actions.emergency+=/mighty_bash,if=talent.mighty_bash.enabled&target.casting&!target.debuff.mighty_bash.up
-actions.emergency+=/wild_charge,if=talent.wild_charge.enabled&target.distance>8&target.distance<25
-actions.emergency+=/growl,if=!target.debuff.growl.up&target.target!=player
+## Trinkets
+actions+=/use_items
 
-## Threat Management
-actions.emergency+=/growl,if=!target.debuff.growl.up&(target.target!=player|threat_situation<3)
-actions.emergency+=/challenging_roar,if=active_enemies>1&!target.debuff.challenging_roar.up&(threat_situation<3|losing_aggro)
-actions.emergency+=/faerie_fire,if=!debuff.faerie_fire.up&threat_situation<3&target.time_to_die>15
+## Defensive Abilities (Priority based on WoWSims)
+actions.defensives+=/survival_instincts,if=health.pct<30
+actions.defensives+=/barkskin,if=health.pct<50
+actions.defensives+=/frenzied_regeneration,if=health.pct<60&buff.frenzied_regeneration.down
+actions.defensives+=/ironfur,if=buff.ironfur.down&rage>=45
+actions.defensives+=/pulverize,if=debuff.lacerate.up&debuff.lacerate.stack>=3
 
-## Major Cooldowns
-actions.cooldowns+=/berserk,if=!buff.berserk.up&(rage<40|target.time_to_die<20|buff.incarnation_son_of_ursoc.up|threat_situation>=3)
-actions.cooldowns+=/incarnation_son_of_ursoc,if=talent.incarnation.enabled&!buff.incarnation_son_of_ursoc.up&(health.pct<60|incoming_damage_10s>health.max*0.5|target.time_to_die<35|threat_situation>=3)
-actions.cooldowns+=/enrage,if=!buff.enrage.up&rage<60&target.time_to_die>15
-actions.cooldowns+=/heart_of_the_wild,if=talent.heart_of_the_wild.enabled&(health.pct<40|target.time_to_die<50|buff.berserk.up|threat_situation>=3)
-actions.cooldowns+=/natures_vigil,if=talent.natures_vigil.enabled&health.pct<70
-actions.cooldowns+=/force_of_nature,if=talent.force_of_nature.enabled&(active_enemies>=3|incoming_damage_10s>health.max*0.4|threat_situation>=3)
+## Cooldowns (Enhanced from WoWSims)
+actions.cooldowns+=/berserk,if=buff.berserk.down
+actions.cooldowns+=/incarnation,if=talent.incarnation.enabled&buff.incarnation.down
+actions.cooldowns+=/heart_of_the_wild,if=talent.heart_of_the_wild.enabled&buff.heart_of_the_wild.down
+actions.cooldowns+=/nature_swiftness,if=talent.nature_swiftness.enabled&health.pct<40
 
-## Defensive Cooldowns
-actions.defensives+=/survival_instincts,if=health.pct<variable.defensive_health_threshold&!buff.survival_instincts.up&!buff.frenzied_regeneration.up&incoming_damage_5s>health.max*0.3
-actions.defensives+=/frenzied_regeneration,if=health.pct<variable.defensive_health_threshold&!buff.frenzied_regeneration.up&(rage>60|glyph.frenzied_regeneration.enabled)
-actions.defensives+=/barkskin,if=health.pct<variable.defensive_health_threshold&!buff.barkskin.up&(incoming_damage_5s>health.max*0.25|active_enemies>=3|threat_situation>=3)
-actions.defensives+=/renewal,if=talent.renewal.enabled&health.pct<variable.defensive_health_threshold&cooldown.renewal.ready
-actions.defensives+=/cenarion_ward,if=talent.cenarion_ward.enabled&health.pct<variable.defensive_health_threshold&!buff.cenarion_ward.up
-actions.defensives+=/savage_defense,if=!buff.savage_defense.up&rage>variable.savage_defense_rage_threshold&(incoming_damage_5s>health.max*0.2|buff.tooth_and_claw.up|threat_situation>=3)&variable.use_savage_defense
-actions.defensives+=/healing_touch,if=health.pct<variable.defensive_health_threshold&(buff.natures_swiftness.up|!buff.bear_form.up)&buff.dream_of_cenarius_healing.stack<2
+## Threat Generation (Based on WoWSims priority)
+actions.threat_generation+=/faerie_fire,if=debuff.faerie_fire.down&faerie_fire_auto
+actions.threat_generation+=/mangle,if=buff.mangle.down
+actions.threat_generation+=/thrash,if=active_enemies>=2
+actions.threat_generation+=/swipe_bear,if=active_enemies>=3
+actions.threat_generation+=/lacerate,if=dot.lacerate.remains<3
+actions.threat_generation+=/mangle
 
-## DoT and Debuff Maintenance
-actions.maintain_dots+=/pulverize,if=debuff.lacerate.stack=variable.lacerate_stacks&(!buff.pulverize.up|buff.pulverize.remains<8)
-actions.maintain_dots+=/lacerate,if=debuff.lacerate.stack<variable.lacerate_stacks|(debuff.lacerate.remains<4.5&debuff.lacerate.stack=variable.lacerate_stacks)
-actions.maintain_dots+=/thrash_bear,if=!debuff.thrash_bear.up|debuff.thrash_bear.remains<3|(active_enemies>1&debuff.thrash_bear.remains<6)
-actions.maintain_dots+=/mangle,if=!debuff.mangle.up|debuff.mangle.remains<10
-actions.maintain_dots+=/faerie_fire,if=debuff.weakened_armor.stack<3&target.armor>0&variable.maintain_faerie_fire
+## Vengeance-optimized rotation (when vengeance stacks are high)
+actions.vengeance_rotation+=/mangle,if=should_prioritize_damage
+actions.vengeance_rotation+=/thrash,if=should_prioritize_damage&active_enemies>=2
+actions.vengeance_rotation+=/swipe_bear,if=should_prioritize_damage&active_enemies>=3
+actions.vengeance_rotation+=/lacerate,if=should_prioritize_damage&dot.lacerate.remains<3
 
-## Rage Management and Spending
-actions.rage_management+=/call_action_list,name=generate_rage,if=rage<60&target.time_to_die>8
-actions.rage_management+=/call_action_list,name=spend_rage,if=rage>60
-actions.rage_management+=/call_action_list,name=filler_actions
+## Standard rotation (fallback)
+actions.standard+=/faerie_fire,if=debuff.faerie_fire.down&faerie_fire_auto
+actions.standard+=/mangle,if=buff.mangle.down
+actions.standard+=/thrash,if=active_enemies>=2
+actions.standard+=/swipe_bear,if=active_enemies>=3
+actions.standard+=/lacerate,if=dot.lacerate.remains<3
+actions.standard+=/mangle
+actions.standard+=/lacerate
 
-## Rage Generation Priority
-actions.generate_rage+=/mangle,if=cooldown.mangle.ready
-actions.generate_rage+=/thrash_bear,if=cooldown.thrash_bear.ready&(active_enemies>1|!debuff.thrash_bear.up)
-actions.generate_rage+=/lacerate,if=debuff.lacerate.stack<variable.lacerate_stacks&rage<85
-actions.generate_rage+=/swipe_bear,if=active_enemies>3&rage<85
-
-## Threat-Based Rage Generation
-actions.generate_rage+=/mangle,if=cooldown.mangle.ready&threat_situation<3
-actions.generate_rage+=/thrash_bear,if=cooldown.thrash_bear.ready&threat_situation<3
-actions.generate_rage+=/lacerate,if=debuff.lacerate.stack<variable.lacerate_stacks&rage<85&threat_situation<3
-
-## Rage Spending Priority
-actions.spend_rage+=/maul,if=buff.tooth_and_claw.up&rage>30
-actions.spend_rage+=/maul,if=rage>85&active_enemies=1&(!buff.tooth_and_claw.up|buff.savage_defense.up)
-actions.spend_rage+=/swipe_bear,if=active_enemies>2&rage>50
-actions.spend_rage+=/maul,if=rage>90
-
-## Threat-Based Rage Spending
-actions.spend_rage+=/maul,if=rage>60&threat_situation>=3&active_enemies=1
-actions.spend_rage+=/swipe_bear,if=active_enemies>2&rage>40&threat_situation>=3
-
-## Filler Actions
-actions.filler_actions+=/challenging_roar,if=active_enemies>1&!target.debuff.challenging_roar.up&rage>15
-actions.filler_actions+=/demoralizing_roar,if=!target.debuff.demoralizing_roar.up&target.armor>0&rage>10
-actions.filler_actions+=/lacerate,if=debuff.lacerate.stack<variable.lacerate_stacks&rage>15
-actions.filler_actions+=/swipe_bear,if=active_enemies>1&rage>15
-
-## Threat-Based Filler Actions
-actions.filler_actions+=/faerie_fire,if=!debuff.faerie_fire.up&threat_situation<3&target.time_to_die>15
-actions.filler_actions+=/demoralizing_roar,if=!target.debuff.demoralizing_roar.up&target.armor>0&rage>10&threat_situation<3
+## Settings
+# Faerie Fire setting - enables/disables automatic Faerie Fire usage
+faerie_fire_auto=1

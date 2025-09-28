@@ -34,7 +34,8 @@ spec:RegisterResource( 0, { -- Mana = 0 in MoP
         interval = 1.5, -- Life Tap GCD
         value = function()
             -- Life Tap converts health to mana (30% max mana in MoP)
-            return state.last_ability == "life_tap" and state.mana.max * 0.30 or 0
+            local last = state.prev and state.prev[1] and state.prev[1].actName
+            return ( last == "life_tap" ) and state.mana.max * 0.30 or 0
         end,
     },
     
@@ -61,7 +62,8 @@ spec:RegisterResource( 0, { -- Mana = 0 in MoP
         interval = 1.5, -- Dark Pact GCD
         value = function()
             -- Dark Pact converts demon health to mana
-            return state.last_ability == "dark_pact" and state.mana.max * 0.25 or 0
+            local last = state.prev and state.prev[1] and state.prev[1].actName
+            return ( last == "dark_pact" ) and state.mana.max * 0.25 or 0
         end,
     },
 }, {
@@ -94,24 +96,11 @@ spec:RegisterResource( 7, { -- Soul Shards = 7 in MoP
         interval = 1,
         value = function()
             -- Soul Burn converts shard for enhanced abilities
-            return state.last_ability == "soul_burn" and -1 or 0 -- Consumes 1 shard
+            local last = state.prev and state.prev[1] and state.prev[1].actName
+            return ( last == "soul_burn" ) and -1 or 0 -- Consumes 1 shard
         end,
     },
     
-    -- Shadowburn shard generation
-    shadowburn_shard = {
-        last = function ()
-            return state.last_cast_time.shadowburn or 0
-        end,
-        interval = 1,
-        value = function()
-            -- Shadowburn generates shard if target dies within 5 seconds
-            if state.last_ability == "shadowburn" and state.target.time_to_die < 5 then
-                return 1 -- Generates 1 shard
-            end
-            return 0
-        end,
-    },
 }, {
     -- Base soul shard mechanics
     base_generation = function ()
@@ -127,6 +116,8 @@ spec:RegisterResource( 7, { -- Soul Shards = 7 in MoP
 
 -- Demonic Fury resource system (Demonology signature mechanic)
 spec:RegisterResource( 15, { -- Demonic Fury = 15 in MoP
+    max = 1000, -- Explicit cap for Demonic Fury in MoP.
+    modmax = 1000, -- Initialize modmax equal to max so cost scaling works before any adjustments.
     -- Demonic Fury generation from Shadow Bolt
     shadow_bolt_generation = {
         last = function ()
@@ -134,32 +125,22 @@ spec:RegisterResource( 15, { -- Demonic Fury = 15 in MoP
         end,
         interval = 1,
         value = function()
-            -- Shadow Bolt generates 40 Demonic Fury
-            return state.last_ability == "shadow_bolt" and 40 or 0
+            -- Shadow Bolt generates 30 Demonic Fury
+            local last = state.prev and state.prev[1] and state.prev[1].actName
+            return ( last == "shadow_bolt" ) and 30 or 0
         end,
     },
     
-    -- Demonic Fury generation from Soul Fire
+    -- Demonic Fury generation from Soul Fire (higher than Shadow Bolt)
     soul_fire_generation = {
         last = function ()
             return state.last_cast_time.soul_fire or 0
         end,
         interval = 1,
         value = function()
-            -- Soul Fire generates 25 Demonic Fury
-            return state.last_ability == "soul_fire" and 25 or 0
-        end,
-    },
-    
-    -- Demonic Fury generation from Life Tap
-    life_tap_generation = {
-        last = function ()
-            return state.last_cast_time.life_tap or 0
-        end,
-        interval = 1,
-        value = function()
-            -- Life Tap generates 50 Demonic Fury
-            return state.last_ability == "life_tap" and 50 or 0
+            -- Soul Fire generates 50 Demonic Fury
+            local last = state.prev and state.prev[1] and state.prev[1].actName
+            return ( last == "soul_fire" ) and 50 or 0
         end,
     },
     
@@ -170,44 +151,48 @@ spec:RegisterResource( 15, { -- Demonic Fury = 15 in MoP
         end,
         interval = 1,
         value = function()
-            -- Hand of Gul'dan generates 60 Demonic Fury
-            return state.last_ability == "hand_of_guldan" and 60 or 0
+            -- Hand of Gul'dan generates 30 Demonic Fury
+            local last = state.prev and state.prev[1] and state.prev[1].actName
+            return ( last == "hand_of_guldan" ) and 30 or 0
         end,
     },
     
-    -- Demonic Fury consumption for Metamorphosis
-    metamorphosis_consumption = {
+    -- Demonic Fury drain while Metamorphosis is active (continuous)
+    metamorphosis_drain = {
         last = function ()
-            return state.last_cast_time.metamorphosis or 0
+            -- use last tick each second while buff up
+            return state.buff.metamorphosis.up and (state.query_time - (state.query_time % 1)) or 0
         end,
         interval = 1,
         value = function()
-            -- Metamorphosis consumes 1000 Demonic Fury
-            return state.last_ability == "metamorphosis" and -1000 or 0
+            -- Drain 6 fury per second while in Metamorphosis
+            return state.buff.metamorphosis.up and -6 or 0
         end,
     },
     
-    -- Demonic Fury consumption for Hand of Gul'dan (Metamorphosis)
+    -- Demonic Fury consumption for Hand of Gul'dan (Metamorphosis) reduced
     meta_hand_consumption = {
         last = function ()
             return state.last_cast_time.meta_hand_of_guldan or 0
         end,
         interval = 1,
         value = function()
-            -- Hand of Gul'dan in Metamorphosis consumes 200 Demonic Fury
-            return state.last_ability == "meta_hand_of_guldan" and -200 or 0
+            -- Hand of Gul'dan in Metamorphosis consumes 50 Demonic Fury
+            local last = state.prev and state.prev[1] and state.prev[1].actName
+            return ( last == "meta_hand_of_guldan" ) and -50 or 0
         end,
     },
     
-    -- Demonic Fury consumption for Touch of Chaos
+    -- Demonic Fury consumption for Touch of Chaos (reduced)
     touch_of_chaos_consumption = {
         last = function ()
             return state.last_cast_time.touch_of_chaos or 0
         end,
         interval = 1,
         value = function()
-            -- Touch of Chaos consumes 100 Demonic Fury
-            return state.last_ability == "touch_of_chaos" and -100 or 0
+            -- Touch of Chaos consumes 30 Demonic Fury
+            local last = state.prev and state.prev[1] and state.prev[1].actName
+            return ( last == "touch_of_chaos" ) and -30 or 0
         end,
     },
 }, {
@@ -451,6 +436,18 @@ spec:RegisterAuras( {
         duration = 20,
         max_stack = 1,
     },
+    dark_soul = { -- generic alias so APL conditions using buff.dark_soul work across specs
+        id = 113861, -- same as dark_soul_knowledge for Demonology
+        duration = 20,
+        max_stack = 1,
+        generate = function( t )
+            local a = state and state.buff.dark_soul_knowledge
+            if a and a.up then
+                t.count = 1; t.expires = a.expires; t.applied = a.applied; t.caster = 'player'; return
+            end
+            t.count = 0; t.expires = 0; t.applied = 0; t.caster = 'nobody'
+        end,
+    },
     molten_core = {
         id = 122355,
         duration = 14,
@@ -474,6 +471,7 @@ spec:RegisterAuras( {
         tick_time = 2,
         max_stack = 1,
     },
+    -- Doom already defined; add placeholder aura for shadowflame provided below.
     doom = {
         id = 603,
         duration = 60,
@@ -728,6 +726,15 @@ spec:RegisterAuras( {
     },
 } )
 
+-- Provide numeric state expressions for demonic_fury to support bare-token usage in APLs.
+spec:RegisterStateExpr( "demonic_fury", function ()
+    -- Prefer explicit resource table if initialized, else fall back to aura stack, else 0.
+    if state.demonic_fury and state.demonic_fury.current ~= nil then
+        return state.demonic_fury.current
+    end
+    return ( state.buff.demonic_fury and state.buff.demonic_fury.stack ) or 0
+end )
+
 
 
 
@@ -852,7 +859,7 @@ end )
 
 spec:RegisterStateTable( "warlock", setmetatable( {},{
     __index = function( t, k )
-        if k == "no_cds" then return not toggle.cooldowns
+    if k == "no_cds" then return not ( state.toggle and state.toggle.cooldowns )
         elseif k == "metamorphosis_active" then return buff.metamorphosis.up
         elseif k == "in_metamorphosis" then return buff.metamorphosis.up
         elseif k == "pet_active" then 
@@ -889,7 +896,7 @@ spec:RegisterStateExpr( "mana_time_to_max", function ()
 end )
 
 spec:RegisterStateExpr( "soul_shards_deficit", function ()
-    return soul_shards.max - soul_shards.current
+    return state.soul_shards and ( state.soul_shards.max - state.soul_shards.current ) or 0
 end )
 
 spec:RegisterStateExpr( "time_to_pool", function ()
@@ -909,7 +916,7 @@ spec:RegisterStateExpr( "current_mana", function ()
 end )
 
 spec:RegisterStateExpr( "current_soul_shards", function ()
-    return soul_shards.current or 0
+    return state.soul_shards and state.soul_shards.current or 0
 end )
 
 spec:RegisterStateExpr( "max_mana", function ()
@@ -921,7 +928,7 @@ spec:RegisterStateExpr( "mana_regen", function ()
 end )
 
 spec:RegisterStateExpr( "in_combat", function ()
-    return combat > 0
+    return state.combat and state.combat > 0 or 0
 end )
 
 spec:RegisterStateExpr( "player_level", function ()
@@ -943,11 +950,13 @@ end )
 
 -- Demonic Fury tracking for Metamorphosis
 spec:RegisterStateExpr( "demonic_fury_current", function ()
-    return buff.demonic_fury.stack or 0
+    return state.demonic_fury and state.demonic_fury.current or ( buff.demonic_fury.stack or 0 )
 end )
 
 spec:RegisterStateExpr( "demonic_fury_deficit", function ()
-    return 1000 - ( buff.demonic_fury.stack or 0 )
+    local cur = state.demonic_fury and state.demonic_fury.current or ( buff.demonic_fury.stack or 0 )
+    local max = state.demonic_fury and state.demonic_fury.max or 1000
+    return max - cur
 end )
 
 -- Pet type checking
@@ -1042,14 +1051,19 @@ local function calculate_demonic_fury_generation( ability )
 end
 
 -- Soul Shard generation tracking for MoP
-spec:RegisterStateFunction( "generate_soul_shard", function()
-    if not buff.metamorphosis.up then
-        -- Base 15% chance to generate soul shard on damaging spells
-        if math.random() < 0.15 then
+-- Deterministic Soul Shard generation model (remove RNG): generate 1 shard every N qualifying casts.
+do
+    local casts_since_shard = 0
+    local SHARD_INTERVAL = 7  -- adjustable: average out former 15% proc (~1 per 6-7 casts).
+    spec:RegisterStateFunction( "generate_soul_shard", function()
+        if buff.metamorphosis.up then return end -- no shard generation in meta
+        casts_since_shard = casts_since_shard + 1
+        if casts_since_shard >= SHARD_INTERVAL then
+            casts_since_shard = 0
             gain( 1, "soul_shards" )
         end
-    end
-end )
+    end )
+end
 
 -- Abilities specific to MoP Demonology
 spec:RegisterAbilities( {
@@ -1065,12 +1079,69 @@ spec:RegisterAbilities( {
         startsCombat = true,
         velocity = 20,
         handler = function()
-            generate_soul_shard()
+            if state.soul_shards and state.soul_shards.generate then state.soul_shards.generate( 1 ) end
             if buff.metamorphosis.up then
                 gain( calculate_demonic_fury_generation("shadow_bolt"), "demonic_fury" )
             end
         end,
     },
+
+    -- Core DoTs / Metamorphosis
+    corruption = {
+        id = 146739,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        startsCombat = true,
+        texture = 136118,
+        handler = function()
+            applyDebuff( "target", "corruption" )
+        end,
+    },
+    doom = {
+        id = 603,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        startsCombat = true,
+        texture = 136122,
+        handler = function()
+            applyDebuff( "target", "doom" )
+        end,
+    },
+
+    -- Curse of the Elements: Magic vulnerability debuff (utility/raid-assigned)
+    curse_of_elements = {
+        id = 1490,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        school = "shadow",
+        startsCombat = true,
+        handler = function()
+            applyDebuff( "target", "curse_of_elements" )
+        end,
+    },
+
+    -- metamorphosis ability likely already defined later; only add cancel helper.
+    cancel_metamorphosis = {
+        id = 103958, -- reuse spell id for icon
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        texture = 136243,
+        handler = function()
+            state:exit_metamorphosis()
+        end,
+        usable = function() return buff.metamorphosis.up end,
+    },
+
+    -- hand_of_guldan already exists; do not redefine.
+
+    -- touch_of_chaos defined elsewhere (with resource consumption); skip duplicate.
+
+    -- hellfire / immolation_aura not previously defined: re-add minimal versions below if missing.
+    -- (Removed duplicate placeholder ability entries; full detailed definitions appear later.)
 
     -- Soul Fire: High damage nuke, enhanced in metamorphosis
     soul_fire = {
@@ -1090,7 +1161,7 @@ spec:RegisterAbilities( {
             if buff.decimation.up then
                 removeBuff("decimation")
             end
-            generate_soul_shard()
+            if state.soul_shards and state.soul_shards.generate then state.soul_shards.generate( 1 ) end
             if buff.metamorphosis.up then
                 gain( calculate_demonic_fury_generation("soul_fire"), "demonic_fury" )
             end
@@ -1128,7 +1199,8 @@ spec:RegisterAbilities( {
         handler = function()
             applyBuff("metamorphosis")
             applyBuff("demonic_fury")
-            enter_metamorphosis()
+            -- Enter Metamorphosis if enough fury; just apply buff via handler
+            if not state.buff.metamorphosis.up then applyBuff( "metamorphosis" ) end
         end,
     },
 
@@ -1149,6 +1221,11 @@ spec:RegisterAbilities( {
                 gain( calculate_demonic_fury_generation("hand_of_guldan"), "demonic_fury" )
             end
         end,
+    },
+    -- Alias to satisfy import naming with apostrophe; no separate spellID, just call main handler.
+    ["hand_of_gul'dan"] = {
+        id = 71521,
+        alias = "hand_of_guldan"
     },
 
     -- Carrion Swarm: Metamorphosis AoE ability
@@ -1199,6 +1276,11 @@ spec:RegisterAbilities( {
             end
         end,
     },
+    -- Generic dark_soul alias used by imported APLs (maps to spec-specific buff/action).
+    dark_soul = {
+        id = 113861, -- reuse Knowledge ID
+        alias = "dark_soul_knowledge"
+    },
 
     -- Life Tap: Convert health to mana, generates demonic fury in meta
     life_tap = {
@@ -1214,6 +1296,32 @@ spec:RegisterAbilities( {
                 gain( calculate_demonic_fury_generation("life_tap"), "demonic_fury" )
             end
         end,
+    },
+
+    -- Grimoire of Service: Summon a second demon temporarily.
+    grimoire_of_service = {
+        id = 108501,
+        cast = 0,
+        cooldown = 120,
+        gcd = "spell",
+        school = "shadow",
+        startsCombat = false,
+        toggle = "cooldowns",
+        handler = function()
+            -- Simplified: no separate pet modeling, assume immediate damage gain.
+        end,
+    },
+
+    -- Imp Swarm (via glyph): converts Wild Imps into a burst (CD ability).
+    imp_swarm = {
+        id = 104316,
+        cast = 0,
+        cooldown = 120,
+        gcd = "spell",
+        school = "shadow",
+        startsCombat = true,
+        toggle = "cooldowns",
+        handler = function() end,
     },
 
     -- Summon abilities using soul shards
@@ -1245,6 +1353,36 @@ spec:RegisterAbilities( {
         handler = function()
             summon_demon("felguard")
         end,
+    },
+
+    -- Summon Infernal (AoE guardian alternative to Doomguard)
+    summon_infernal = {
+        id = 1122,
+        cast = 6.0,
+        cooldown = 600,
+        gcd = "spell",
+        school = "shadow",
+        spend = 1,
+        spendType = "soul_shards",
+        startsCombat = false,
+        toggle = "cooldowns",
+        handler = function()
+            -- Placeholder aura to reflect active guardian if needed
+        end,
+    },
+
+    felstorm = {
+        id = 89751,
+        cast = 0,
+        cooldown = 45,
+        gcd = "spell",
+        startsCombat = true,
+        handler = function() end,
+    },
+    -- Namespaced pet ability reference sometimes produced by imports (felguard:felstorm)
+    ["felguard:felstorm"] = {
+        id = 89751,
+        alias = "felstorm"
     },
 
     summon_voidwalker = {
@@ -1304,8 +1442,43 @@ spec:RegisterAbilities( {
         startsCombat = true,
         velocity = 25,
         handler = function()
-            generate_soul_shard()
+            if state.soul_shards and state.soul_shards.generate then state.soul_shards.generate( 1 ) end
         end,
+    },
+
+    -- Hellfire: Channeled AoE (mana drain); simplified modeling.
+    hellfire = {
+        id = 1949,
+        channeled = true,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        school = "fire",
+        spend = 0.02,
+        spendType = "mana",
+        startsCombat = true,
+        aoe = 8,
+        handler = function()
+            -- Periodic AoE handled externally; treat each tick as damage event.
+        end,
+    },
+
+    -- Immolation Aura: Metamorphosis AoE Fury spender (high cost, short duration aura).
+    immolation_aura = {
+        id = 104025, -- MoP-era spellID (may differ; adjust if necessary)
+        cast = 0,
+        cooldown = 15,
+        gcd = "spell",
+        school = "fire",
+        spend = 100,
+        spendType = "demonic_fury",
+        startsCombat = true,
+        form = "metamorphosis",
+        aoe = 8,
+        handler = function()
+            applyBuff( "immolation_aura" )
+        end,
+        usable = function() return buff.metamorphosis.up end,
     },
 
     -- Void Ray: Metamorphosis channeled ability
@@ -1340,6 +1513,76 @@ spec:RegisterAbilities( {
         end,
     },
 
+    -- Dark Intent precombat buff.
+    dark_intent = {
+        id = 109773,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        startsCombat = false,
+        handler = function()
+            applyBuff( "dark_intent" )
+        end,
+        usable = function()
+            if buff.dark_intent.up then return false, "dark_intent active" end
+            return true
+        end,
+    },
+
+    -- Grimoire of Sacrifice (active cast) – applies base aura and pet-specific aura.
+    grimoire_of_sacrifice = {
+        id = 108503,
+        cast = 0,
+        cooldown = 30,
+        gcd = "spell",
+        school = "shadow",
+        startsCombat = false,
+        handler = function()
+            -- Remove any previous pet sacrifice buffs then apply one depending on last active demon (simplified: imp).
+            removeBuff( "grimoire_of_sacrifice_imp" )
+            removeBuff( "grimoire_of_sacrifice_voidwalker" )
+            removeBuff( "grimoire_of_sacrifice_succubus" )
+            removeBuff( "grimoire_of_sacrifice_felhunter" )
+            removeBuff( "grimoire_of_sacrifice_felguard" )
+            applyBuff( "grimoire_of_sacrifice" )
+            -- Default to imp variant unless we track last demon (future improvement: detect via state.last_pet).
+            applyBuff( "grimoire_of_sacrifice_imp" )
+        end,
+    },
+
+    -- Summon Doomguard: Long cooldown guardian.
+    summon_doomguard = {
+        id = 18540,
+        cast = 6.0,
+        cooldown = 600,
+        gcd = "spell",
+        school = "shadow",
+        spend = 1,
+        spendType = "soul_shards",
+        startsCombat = false,
+        toggle = "cooldowns",
+        handler = function()
+            applyBuff( "doomguard" ) -- placeholder aura to reflect active guardian.
+        end,
+    },
+
+    -- Command Demon: Utility; model as off-GCD placeholder if needed by APL.
+    command_demon = {
+        id = 119898,
+        cast = 0,
+        cooldown = 24,
+        gcd = "off",
+        school = "shadow",
+        startsCombat = false,
+        handler = function() end,
+    },
+
+    -- Generic summon_pet used by some imports – alias to summon_felguard (dominant demon for demo) if none active.
+    summon_pet = {
+        id = 30146,
+        alias = "summon_felguard",
+    },
+
     -- Drain Soul: Channel to finish low health enemies
     drain_soul = {
         id = 1120,
@@ -1359,6 +1602,17 @@ spec:RegisterAbilities( {
 } )
 
 spec:RegisterRanges( "shadow_bolt", "corruption", "fear", "curse_of_elements" )
+
+-- Add missing auras for new abilities if not previously declared.
+if not spec.auras.immolation_aura then
+    spec:RegisterAura( "immolation_aura", { id = 104025, duration = 10, max_stack = 1 } )
+end
+if not spec.auras.doomguard then
+    spec:RegisterAura( "doomguard", { id = 18540, duration = 45, max_stack = 1 } )
+end
+if not spec.auras.dark_intent then
+    spec:RegisterAura( "dark_intent", { id = 109773, duration = 3600, max_stack = 1 } )
+end
 
 spec:RegisterOptions( {
     enabled = true,
@@ -1411,17 +1665,6 @@ spec:RegisterStateExpr( "should_refresh_corruption", function()
     return debuff.corruption.remains_percent <= refresh_pct
 end )
 
-spec:RegisterStateExpr( "demonic_fury", function()
-    return demonic_fury.current
-end )
-
-spec:RegisterStateExpr( "demonic_fury_deficit", function()
-    return demonic_fury.max - demonic_fury.current
-end )
-
-spec:RegisterStateExpr( "current_demonic_fury", function()
-    return demonic_fury.current or 0
-end )
 
 spec:RegisterStateExpr( "metamorphosis_active", function()
     return buff.metamorphosis.up and 1 or 0
@@ -1448,8 +1691,10 @@ spec:RegisterStateExpr( "spell_power", function()
 end )
 
 spec:RegisterStateExpr( "metamorphosis_ready", function()
-    return demonic_fury.current >= 1000 and 1 or 0
+    local fury = state.demonic_fury and state.demonic_fury.current or 0
+    return fury >= 300 and 1 or 0
 end )
 
 
-spec:RegisterPack( "Demonology", 20250713, [[Hekili:fRvBpUTns4FllcGZDOP6K9(AdwBGMlnxtqBqq9EOFZs0s0RfwjrFsuzVfyH(TFZqkkjsrkPTnhkcsIT0WzgoCMN5f6Dl3D3UTXeoD3Nx5V6s)RxEUN)YlUy1QDB5pDIUB7js0dK7HpKtYG)990mwolLD)tCAjhF9tPmsmYMswvreqYUT7Rss5FmF3EdEVYB15(xC(5aTNOrWJV6QDBpMehtL0slJ2T9UJjL1H4Fj1HnsVoKDa(EepHLxhMMuYHxFGvuh(Z0hsst82Tv8qHAWdYOCc8Xpl2D0CY(uA8U3jfqrYjKlWoHDxDygjhyFgnNdIey9VIRClqeNwKaFkMX9IzSmVc6HcA5rKv72kve8TSSDCyFyiNU1FwDyll4jrpKKF)WLF(yQ5xksYifpjvnWgSh2U8N6ycNvfDmGDii6iHvIS7IXy3wGzWEnIKhrtH)NLhNGVPSVwxEKvLghijsynZyfNoYktk7eS13YH)ac8aPkLp5jWDfj5pqbTPQuCg)yc)yDyPudlFkpcoQz3NeP894s6x2xvBEwasEWJj5XShRd3SUo8g)E2i1ch9SYjRUYVoCbARyPWZY9uSdCkYij5GR4M6Wv(gQ5QbYF10h2mPhojpUoSGeLqsvh5juTJO9vho4ftkEiac7s9Qovh(8Z1H0)lnQItdoDKusdq5)1E(RNeS3MpshJzGQKrsdA5Da8DWTvY)bITJ57PfL0cHhoiGl))GaszS4GdvfpHc4Qz4L)EGp1HBbg14Jnh9Ox8P6nO8UEm59XmW(V9rsrwNZ8rkCq2iKHNCimAseeILMcYuC(bUyaXuPp3sPphGF0em6ikmj7uqjkyuhVzC8ow29vKIyvGwsoNcs)Eb4NAVpQhgQHKI7PCpurd4SG4eQkgPtNkRYGDxqSsGOQ9dJPA)ypGDWVNvXf(dA4b9rQucQOkpq(5aCP91EPRFanNMbron6O0fJWObhHiSGVssRAn3(YuibYyyGguRx670nwyE0ou0CwhOA9yUkdfkatasTuh)PKHG9c0Um2xXZwamUrsbnp5DD86aaLFivS0oTrGMFQGgXY2tMgp)3jfPSOhEle41wLGr0e6ZLZBXHpbWTYYma5l9vm9Ias0vjte0rrZ4KuqEE3djrzjfumpzjbE9HKiQNAfTI0kzTOzgOO6QWv9POd4W0yI(vtzg)cMs8hz)KdKFWG4PSwEMi8Wlk5ScRvLOhYH8hQclnT0iqBaqPT4LRVStMI3bwS7byksUTCCD8cR3Y7ueiMBRdVOfJB80wPjhaWgYjBh1TvJWkkQA2BrpfLIlarQkfU96f01rB)Y6e6IjSXTyLe2kCSecliXos2PrUSUn3NNwdYBWAfoVGnlNvW4hlfj)g62MabkPeboaPQGyl74Ce3zZxIhb)MdqGYKjg)ml)7ZugG5GUnJnUGevcu8fdZazXIyMBCMQYKgfhAZL(2TwJMh8Na0XcvL(I2BeUnjqVp7bxsankrVwcB1gy1pgvPl60iZI2hMOttV(qsAkTOh08rcuiCWEwkxcRvoDYHbLF0a3mSWJot(OW2spL5u(VT6rgfCuGa3gSATEPbOKZgw2n4OfwO34HInAnES0VpkywgIgl8hTbxowhWZdM0kK7CWa75G2VRBPTLe)vSDY42o(g3hFepz3iF)z6QDCuUFw0VgoII)vv6RHKGM(4IurgU5TNQ65p9G(4bQbqMcPoHTaIE0(E3mwox34B60QYlkz6klWx3IyP(JjRrbX(nQCqq6hZFtlcyC0kz)EFaWnuhd)kauHDJ9pz4Z6IJJ0IGZeufaU1GouKWGx0aMFDFWeStrfA(iLVltP0XsigIGB5fs7IC)Jm)CPbWT0V0P0hfeBRaKUo8DaJHSjtaHdr)qxK5GpAjoco0mLDIHoVI8qVUPNLxdTNr)pvGcao8LmSBvsfNLr44dax3CW11R(t)sso8QLqRa)78YQtiNqcKshyhIf)6w6wnt6o3jD6tbRBfx4Cf2c0X1v)jl7(MjA9Y29x5ExP6pOtrV2jXTD43r8noj2mvx3Aw62i327hsTy3FGLMYEu0eow)eMcKIHovL4cXbLYrYuCq23((kUIUCMW0vLRrDCmsCmHt2dr4VfS1HFp(9gJH676JgP5P6L4y)uQTt1x250iEPDTSohN1UowNJdO1IBE9l17XQHa6y7BLjqvYXC2)6jkMtyRcuFo2RUYn6O(YrIA06ayo2vvz6ZlO0b7DhAoK9)GtAhGk1Cm5723Rdp)VKO45eFw(nlW0nm3OOCgEYU9l1QJ(BVZPJJx3UMUswnLBQRiYr8sDSc3(QdJHhZnvv)spQh5y2c1Ja)(xDiqxfCyaWhZuA4L6caDWXXQYGAYGcqFvDOTbNw)PxbV5lQuA1FsYIsV2SCF36)rVeu2jOlL0BuZADTQfthRiNCc6ucAPMtGUeSsJ1uxVj5W6z13UvwkhQ6i7YMkeewL3llhd(sD4CVeXwwdmeo9dG60ZEdoR81QRZtSbgopHnRVXFYfVY5IVYFHZloCZkFXwcoNh9I)6lEPHcf3GlO55NT1cv)f3DhDidCDdyp)8W7(PptAVhUxmte7vxxoxFz0USXerd)M6Y36Z32IP7mGdUjUf4LBTz9s)fNzD(AsPoNRtRVKntzz9eCXWRxd9GAe5l7AY6lCJBks66cvjIkH0lrnQqqCp)S(e)rtH)KCRPbX2T1GPPondW1E2KlUTBL3iVfR1lvWcBHVHZX)oHrSo8Zq2Emo6dW)B)mtBgKDGpLChhyNnhaUfobrKH6ZC4IgQJQ8funSnOqDQ1kGXXsw4CUIBw636LR)JKXukQQEqrmYvRiz2lDkGgstZPafO9OtDn0sHt9wQTx3OSZEMEgsuVakuwZFqFBw77DZK8Z(882SE1I(ZX72R8vhI2NiNHCuLXHsqnGQBVaWaTNtrIK)cM0Mz0LQ0oH8Sm7RnRV2FS1yF(AluQ(M1N7VWoFVuzxSnHmtr2vtPlug5T1iWycrRQLOM2FAz95UWRdt1bamQWhZFQzJr)zM)WYu4lw)bJzJt6dntp78WFGy24WF0WRx1CZw)gJtK50(Bx9DQyQY)EhoP(1M2PcqgQ5GjktBo(vDBY0HbCMPdV(sZ18hj4r)AKn5ypOvTRZE9YXHAxq0sNF76B6b(oL90yQgoZLVyIRe10I2m5d387SPyOylODzYZq3TxlXekVgiQS4l37ghsyITJHiAXJM11)AQoZkROHxXM1x0iYpya6j5z)lhylPIFKvSB7VaDOcbb0CXTfS7)9]])
+-- TODO: Re-export / update pack after ability additions if needed.
+spec:RegisterPack( "Demonology", 20250812, [[Hekili:TI16koUnu4NLHcPjmBtTNmjD2LKb62wO7a7fil0)zBfB5e1yBfKLNHbcM(q0NW(K0JKVljBNz2LLDij(OVJo3)o2X25RoBdqCSZNUX6MLw3zVyULT9cRvoB5pFc7S9eY)iAp8Heum83FhhttOr09plE0ZruuGaIuAgZhESZ2DzKi(hsC2zg3foBrz8duMZ2TXzHmYrNThibb4ItGt9D2(1dK0CpX)r5EL6p3JgcF3NtOj5ErKuo84qkl37pXhjrK5oBL)O4YqpHtWm4tFsAE4e0UiCGZ7lWNrojaXz7NLIL7nDFgja)tOiY(eCWm4c6xiWbusGln0DFw0pgGsC4GXiaS65bi2rxWYJARdqOfkAfujhZiiH(3Lfgo3NYyzYBX8a6tjni28abo32loCueoHpFpJetjmS4sMIzps8XZRKVgtdcjaFzBljehTpdXcEh8HuoLfRyrRAlmj(KB6tinH(L2cLMfdjkUbuASezfzVRTSQ(5UI(22IgJ5Oyk70bAkjvrqBRX87IBJIhx8tYdRMQy(WmCmIKaPERZ927h089RZ9S1qLloCiklIpAY4hbyAopllXT4ZUIS6oHEsmwQEWCLP8UffMLj9v5OgTebKpIDbbJjy4sF)MCVvdO1wWJO4HtTL(OoHN5zNUmSfNYu((LC2uEDYCm9rsYEHFUee3YF59Ds0DdJKNupb3GQZsXUGfgNQeU(nknsKiboXPPhqmzFdfNrD7bHJOQ(WGoorll(h44LDF)BuawuedXAUB55QQM6pQ0fPk1UlIsdCdZypxxL9IHaZGlZrHpwMSFIH9PX7qJNU)xiwe1)47Y9AgOaUYps)YSCV)7F(3CpgwojbAYZOX5EprFIVZF((9Ysn4BPKyW5)W2p)PCVVuR3U9MjjCWrnCnXvWigmFo09)rSw7l4jMY6)(f5UTtpZdiiNYDhf6x0j9KxwJyWR2PJJslL2fJGZvaHCMz8SH6nM7D(miDUxF99SxM7nj3tZuZ9MPnIKtZ8pi6T7FarvBypwZeWpGtCHzIyj6texjiQq8LzTLTVSA5)G7HBimQB4HNt1U7fMTg(Rb8VZcmRAxI29kLd0tY9abT6baBlbcTgXJs8HMqDhKjdXPglBQpxguRj8K4iCmKeP2rAlufgbtg4i2Emu2m1hLYf0B6lGRbyXKXx0aeHbUyGH(dgK1MgzclssiMLGIgHpeDpy8aVQYUYMiRunM4vsOsgE7xp9WYQdXPXyzPoGyiEJTli5e)JUcEbTYw6qKS)5dqzjKUusf4MI88sLv0nsoSSJ2w0pXTx2CKEQOHTf6JV3WK86RPHP622g0YcZUVABXD6TDkH70NzaIJtRQgNFaJI4hMFYNl14nlLnvMyqPThV2vp9xvQ7dV1AqFy)1KL3xrYKlN6gqW1xyZbRHvu)vSXOeuT)42wGercbvJKmMSxEPJhf0thJZXVs)dizy11vrL0zdvAoyFWoLn2dwq0VV(ICb9XjUvb(RPpH)Z(rcDi9dc)2GDh1J7let1QRA(MRQvPFpYAff9IlAzdEXekJYpivM(6Veymses8zxugdnCF2(12vxScpGJIQkAV7cZFHF4rGlTqSQ3xYnoBHXwjWuDykZhIprzCXqOvkVeK55paiFc7dhC1kbfCAijcIW)qU33vs2pK)Wp0IPD(dfxJ051K(VEZp3I1TzbA4v)gs4MRQzEBw6cEYVrWGEJbc0ci0Z)mR3gFFPLiw4UwwqcLLmluAXs1c9ikBwBBn6jGgrcX7YT5(nRg9GISUAdslfCStNYBls9wUVPyd4n2LgDpVYRgFwHbdqO0jZGe1oDdpRPbKWKm)wVmCmdKOK((XjNPJLwhDdYuto0WZu5Y(Q8rDIJM8Ha6T8qn7GDzIw2CFDR3e11vHAdVHI2Pi1VyJHlI(wlcHZ38Eggx063NqpIkTSH30PX1Lkk812YPDcPXnGuaqnpqV6E9MfMpt1UlgAiOEI6mrz(UYwgkY(QRsMmcWduYu4lhPQUkDSMNHY5vQxeGusK6(n3C(C)7DSw1D1PUYyUYK2uqa4xAPgJQix300Tdn8jt7BPH1lpF28Yc3V5TQ5FDuZuT1bwFZYztmT4Yi2BxRdO7p2b0j2dQw1jPbtftubcv0vxFRMRuF4A)V6PMZk(Xb6bE(8ut96SxorlyRdA337K2Jhn431XSYsdbtVghziw5YjSKoOTEZDwZaBZCg0glfHTTSMv6u13FP5wb0ogUaUqGHQaTvfE0GFHyT6k0zRIn2V4UefaosYoS6rz93LwVxaRYIa9Y1AYG8818OLS97hUREr41EjbX)C()p]])

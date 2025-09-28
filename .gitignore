@@ -11,3 +11,8 @@ Libs/LibItemBuffs-1.0/tests/wowmock/tests/wowlua_tests.lua
 
 # Documentation and planning files
 Documentation/
+.vscode/settings.json
+.gitignore
+
+syntaxcheck.bat
+.vscode/settings.json
