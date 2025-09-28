@@ -1651,13 +1651,6 @@ all:RegisterAuras({
         max_stack = 1,
     },
 
-    chaos_brand = {
-        id = 1490,
-        duration = 3600,
-        type = "Magic",
-        max_stack = 1,
-        shared = "target"
-    },
     power_infusion = {
         id = 10060,
         duration = 20,
@@ -2244,6 +2237,138 @@ all:RegisterAuras({
             t.down = true
             t.remains = 0
         end
+    },
+
+    -- Spell Vulnerability family
+    magic_vulnerability = {
+        alias = {
+            "curse_of_elements",
+            "master_poisoner",
+            "fire_breath",
+            "lightning_breath"
+        },
+        aliasMode = "first",
+        aliasType = "debuff",
+        shared = "target",
+    },
+
+    curse_of_elements = {
+        id = 1490,
+        duration = 300,
+        max_stack = 1,
+        debuff = true,
+        shared = "target",
+        generate = function( t )
+            -- Try to find either 1490 or 104225
+            local name, icon, count, debuffType, duration, expirationTime, caster
+            name, icon, count, debuffType, duration, expirationTime, caster = FindUnitDebuffByID( "target", 1490 )
+            if not name then
+                name, icon, count, debuffType, duration, expirationTime, caster = FindUnitDebuffByID( "target", 104225 )
+            end
+
+            if name and caster == "player" then
+                t.name = name
+                t.count = 1
+                t.expires = expirationTime
+                t.applied = expirationTime - duration
+                t.caster = caster
+                t.duration = duration
+                return
+            end
+
+            t.count = 0
+            t.expires = 0
+            t.applied = 0
+            t.caster = "nobody"
+            t.duration = 300
+            return
+        end,
+
+        copy = { 104225 },
+    },
+
+    master_poisoner = {
+        id = 58410,
+        duration = 15,
+        max_stack = 1,
+        debuff = true,
+        shared = "target",
+        generate = function( t )
+            local name, icon, count, debuffType, duration, expirationTime, caster = FindUnitDebuffByID( "target", 58410 )
+
+            if name and caster == "player" then
+                t.name = name
+                t.count = 1
+                t.expires = expirationTime
+                t.applied = expirationTime - duration
+                t.caster = caster
+                t.duration = duration
+                return
+            end
+
+            t.count = 0
+            t.expires = 0
+            t.applied = 0
+            t.caster = "nobody"
+            t.duration = 15
+            return
+        end,
+    },
+
+    fire_breath = {
+        id = 34889,
+        duration = 15,
+        max_stack = 1,
+        debuff = true,
+        shared = "target",
+        generate = function( t )
+            local name, icon, count, debuffType, duration, expirationTime, caster = FindUnitDebuffByID( "target", 34889 )
+
+            if name and caster == "player" then
+                t.name = name
+                t.count = 1
+                t.expires = expirationTime
+                t.applied = expirationTime - duration
+                t.caster = caster
+                t.duration = duration
+                return
+            end
+
+            t.count = 0
+            t.expires = 0
+            t.applied = 0
+            t.caster = "nobody"
+            t.duration = 15
+            return
+        end,
+    },
+
+    lightning_breath = {
+        id = 24844,
+        duration = 12,
+        max_stack = 1,
+        debuff = true,
+        shared = "target",
+        generate = function( t )
+            local name, icon, count, debuffType, duration, expirationTime, caster = FindUnitDebuffByID( "target", 24844 )
+
+            if name and caster == "player" then
+                t.name = name
+                t.count = 1
+                t.expires = expirationTime
+                t.applied = expirationTime - duration
+                t.caster = caster
+                t.duration = duration
+                return
+            end
+
+            t.count = 0
+            t.expires = 0
+            t.applied = 0
+            t.caster = "nobody"
+            t.duration = 12
+            return
+        end,
     },
 
     out_of_range = {

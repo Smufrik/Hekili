@@ -1,5 +1,5 @@
 -- PaladinProtection.lua
--- Updated September 6, 2025 - Modern Structure
+-- Updated Sep 28, 2025 - Modern Structure
 -- Mists of Pandaria module for Paladin: Protection spec
 
 -- MoP: Use UnitClass instead of UnitClassBase
@@ -901,7 +901,7 @@ spec:RegisterAbilities( {
         
         talent = "holy_prism",
         
-        startsCombat = function() return not state.option.holy_prism_heal end,
+        startsCombat = function() return not (state.settings and state.settings.holy_prism_heal) end,
             texture = GetSpellTexture(114165),
         
         handler = function()
@@ -941,7 +941,7 @@ spec:RegisterAbilities( {
         
         talent = "execution_sentence",
         
-        startsCombat = function() return not state.option.execution_sentence_heal end,
+        startsCombat = function() return not (state.settings and state.settings.execution_sentence_heal) end,
             texture = GetSpellTexture(114157),
         
         handler = function()

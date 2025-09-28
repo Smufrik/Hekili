@@ -1,5 +1,5 @@
 -- PaladinHoly.lua
--- Updated May 28, 2025 - Modern Structure
+-- Updated Sep 28, 2025 - Modern Structure
 -- Mists of Pandaria module for Paladin: Holy spec
 
 -- MoP: Use UnitClass instead of UnitClassBase
@@ -546,11 +546,11 @@ spec:RegisterAbilities( {
         spend = 0.22,
         spendType = "mana",
         
-        startsCombat = function() return not state.option.holy_shock_heal end,
+        startsCombat = function() return not (state.settings and state.settings.holy_shock_heal) end,
         texture = 135972,
         
         handler = function()
-            if not state.option.holy_shock_heal then
+            if not (state.settings and state.settings.holy_shock_heal) then
                 -- Damage
                 -- Cast on enemy for damage
             else
@@ -753,7 +753,7 @@ spec:RegisterAbilities( {
         
         talent = "holy_prism",
         
-        startsCombat = function() return not state.option.holy_prism_heal end,
+        startsCombat = function() return not (state.settings and state.settings.holy_prism_heal) end,
         texture = 613407,
         
         handler = function()
@@ -793,7 +793,7 @@ spec:RegisterAbilities( {
         
         talent = "execution_sentence",
         
-        startsCombat = function() return not state.option.execution_sentence_heal end,
+        startsCombat = function() return not (state.settings and state.settings.execution_sentence_heal) end,
         texture = 613954,
         
         handler = function()

@@ -251,6 +251,7 @@ local function RegisterWindwalkerSpec()
                 removeBuff("death_note")
             end
         },
+
         jab = {
             id = 100780,
             cast = 0,
@@ -268,9 +269,12 @@ local function RegisterWindwalkerSpec()
                 if talent.power_strikes.enabled and buff.power_strikes.up then
                     removeBuff("power_strikes")
                 end
-            end
+            end,
+
+            copy = { 108561, 115697, 120267, 121278, 124146, 108557, 115693 },
         },
-       tiger_palm = {
+
+        tiger_palm = {
             id = 100787,
             cast = 0,
             cooldown = 0,
@@ -595,7 +599,7 @@ local function RegisterWindwalkerSpec()
             end
         elseif event == "ADDON_LOADED" then
             local addonName = ...
-            if addonName == "Hekili" or TryRegister() then
+            if addonName == "Hekili" or TryRegister() thenf
                 self:UnregisterEvent("ADDON_LOADED")
             end
         end
