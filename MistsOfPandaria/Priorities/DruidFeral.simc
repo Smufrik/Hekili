@@ -1,6 +1,4 @@
-# Feral Druid (MoP) SimulationCraft APL
 
-# Global settings mapped from Lua state (can be overridden by presets)
 actions+=/variable,name=maintain_ff,value=maintain_ff
 actions+=/variable,name=opt_bear_weave,value=opt_bear_weave
 actions+=/variable,name=opt_wrath_weave,value=opt_wrath_weave
@@ -12,13 +10,11 @@ actions+=/variable,name=use_hotw,value=use_hotw
 actions+=/variable,name=disable_shred_when_solo,value=disable_shred_when_solo
 actions+=/variable,name=solo_prowl,value=solo_prowl
 
-# Precombat
 actions.precombat+=/mark_of_the_wild,if=!buff.mark_of_the_wild.up
 actions.precombat+=/cat_form
 actions.precombat+=/prowl,if=variable.solo_prowl|in_combat=0
 actions.precombat+=/savage_roar,if=!buff.savage_roar.up
 
-# Cooldowns
 actions.cooldowns+=/use_item,slot=hands,if=cooldown.synapse_springs.ready
 actions.cooldowns+=/use_item,slot=trinket1
 actions.cooldowns+=/use_item,slot=trinket2
@@ -26,89 +22,59 @@ actions.cooldowns+=/blood_fury
 actions.cooldowns+=/berserking
 actions.cooldowns+=/potion,name=virmens_bite_potion,if=buff.berserk.up|target.time_to_die<=26
 actions.cooldowns+=/incarnation,if=talent.incarnation.enabled&buff.tigers_fury.up
-# Berserk: high energy, TF up, not clearcasting, SR up, <=2 targets, in Cat
 actions.cooldowns+=/berserk,if=energy.current>90&buff.tigers_fury.up&buff.clearcasting.down&buff.savage_roar.up&active_enemies<=2&buff.cat_form.up
-# Force of Nature during Tiger's Fury (simplified; avoid equip table indexing issues)
 actions.cooldowns+=/force_of_nature,if=variable.use_trees&talent.force_of_nature.enabled&buff.tigers_fury.up
-# Heart of the Wild toggle
-actions.cooldowns+=/heart_of_the_wild,if=variable.use_hotw&talent.heart_of_the_wild.enabled
+actions.cooldowns+=/heart_of_the_wild,if=variable.use_hotw&talent.heart_of_the_wild.enabled&(buff.berserk.down|berserk_clip_for_hotw)
 
-# Utility and maintenance
-# FF only ST (<=2)
 actions.maint+=/faerie_fire,if=variable.maintain_ff&debuff.faerie_fire.down&active_enemies<=2&buff.cat_form.up
 actions.maint+=/skull_bash,if=target.casting
 
-# Snek/HT weave and Dream of Cenarius support (toggled)
-# Healing Touch usage
 actions.doc+=/healing_touch,if=talent.dream_of_cenarius.enabled&(variable.opt_snek_weave|variable.opt_use_ns)&(energy.current<=40)&((buff.predatory_swiftness.up&buff.predatory_swiftness.remains<=2)|((buff.predatory_swiftness.up|buff.natures_swiftness.up)&buff.clearcasting.down&((combo_points.current>=4&(dot.rip.down|dot.rip.remains<4))|(dot.rake.down|dot.rake.remains<3))))&buff.cat_form.up
-# Nature's Swiftness setup
 actions.doc+=/natures_swiftness,if=talent.dream_of_cenarius.enabled&variable.opt_use_ns&combo_points.current=5&cooldown.natures_swiftness.remains=0&!buff.natures_swiftness.up&active_enemies<=2&buff.cat_form.up
-# DoC sequences (approximate strict sequences)
-# CP <= 3: Rake then Mangle
 actions.doc+=/rake,if=buff.dream_of_cenarius_damage.up&combo_points.current<=3&active_enemies<3&buff.cat_form.up
 actions.doc+=/mangle_cat,if=buff.dream_of_cenarius_damage.up&combo_points.current<=3&active_enemies<3&buff.cat_form.up
-# CP = 4: Rake then Rip
 actions.doc+=/rake,if=buff.dream_of_cenarius_damage.up&combo_points.current=4&active_enemies<3&buff.cat_form.up
 actions.doc+=/rip,if=buff.dream_of_cenarius_damage.up&combo_points.current=4&active_enemies<3&buff.cat_form.up
-# CP = 5: Rip then Rake
 actions.doc+=/rip,if=buff.dream_of_cenarius_damage.up&combo_points.current=5&active_enemies<3&buff.cat_form.up
 actions.doc+=/rake,if=buff.dream_of_cenarius_damage.up&combo_points.current=5&active_enemies<3&buff.cat_form.up
-# DoC AoE: Swipe then Thrash at >=4 targets
 actions.doc+=/swipe_cat,if=buff.dream_of_cenarius_damage.up&active_enemies>=4&buff.cat_form.up
 actions.doc+=/thrash_cat,if=buff.dream_of_cenarius_damage.up&active_enemies>=4&buff.cat_form.up
 
-# Bear Weave: triggers and sequences
-# Trigger Cat -> Bear (delegate deeper logic to Lua state via bearweave_trigger_ok)
 actions.bearweave+=/bear_form,if=variable.opt_bear_weave&bearweave_trigger_ok
-actions.bearweave+=/mangle_bear,if=buff.bear_form.up&rage.current<25
-actions.bearweave+=/thrash_bear,if=buff.bear_form.up&rage.current>=25
-actions.bearweave+=/maul,if=buff.bear_form.up&rage.current>=30&buff.clearcasting.down&!prev_off_gcd.maul
+actions.bearweave+=/thrash_bear,if=buff.bear_form.up&rage.current>=25&!prev.thrash_bear
+actions.bearweave+=/thrash_bear,if=buff.bear_form.up&thrash_aoe_efficient&rage.current>=25
+actions.bearweave+=/mangle_bear,if=buff.bear_form.up&active_enemies<3&rage.current<25
+actions.bearweave+=/thrash_bear,if=buff.bear_form.up&active_enemies<3&rage.current>=25
+actions.bearweave+=/maul,if=buff.bear_form.up&rage.current>=30&buff.clearcasting.down&!prev_off_gcd.maul&active_enemies<3
 actions.bearweave+=/cat_form,if=buff.bear_form.up&buff.clearcasting.up&prev.thrash_bear
-actions.bearweave+=/mangle_bear,if=buff.bear_form.up
-actions.bearweave+=/lacerate,if=buff.bear_form.up
-# Exit: Return to Cat when about to cap energy or mono-Cat timers need attention
+actions.bearweave+=/mangle_bear,if=buff.bear_form.up&active_enemies<3
+actions.bearweave+=/lacerate,if=buff.bear_form.up&active_enemies<3
 actions.bearweave+=/cat_form,if=buff.bear_form.up&(energy_time_to_max<=gcd.execute|dot.rake.remains<=3|dot.rip.remains<=5|cooldown.tigers_fury.remains<=2)
 
-# Wrath weave placeholder (off by default)
-actions.wrath+=/wrath,if=variable.opt_wrath_weave&buff.heart_of_the_wild.up&!buff.cat_form.up&!buff.bear_form.up
+actions.wrath+=/wrath,if=variable.opt_wrath_weave&should_wrath_weave
 
-# Single-target core
-# Tiger's Fury (<35 energy), not clearcasting, not berserk
-actions.st+=/tigers_fury,if=energy.current<=35&buff.berserk.down&buff.clearcasting.down&buff.cat_form.up
-# Savage Roar: cast if missing or <=1s remaining (needs CP)
-actions.st+=/savage_roar,if=(buff.savage_roar.down|buff.savage_roar.remains<=1)&combo_points.current>=1&buff.cat_form.up
-# Faerie Fire catch while in combat (<=2 targets)
+actions.st+=/tigers_fury,if=(tf_timing|cat_excess_energy>15)&buff.berserk.down&buff.clearcasting.down&buff.cat_form.up
+actions.st+=/savage_roar,if=((buff.savage_roar.down|buff.savage_roar.remains<=1)|should_clip_roar|should_clip_roar_pandemic)&combo_points.current>=1&buff.cat_form.up
 actions.st+=/faerie_fire,if=variable.maintain_ff&debuff.faerie_fire.down&time>0&active_enemies<=2&buff.cat_form.up
-# DoTs refresh with SR >= 1s - PRIORITIZE COMBO POINT BUILDERS FIRST
-# Build combo points before trying to spend them
-actions.st+=/rake,if=combo_points.current<5&(dot.rake.down|dot.rake.remains<4.5|rake_damage_increase_pct>0.05)&buff.savage_roar.remains>=1&active_enemies<=3&buff.cat_form.up
-# Rake as a builder when initial-hit/snapshot is favorable, without overwriting a stronger Rake
-actions.st+=/rake,if=combo_points.current<5&buff.savage_roar.remains>=1&active_enemies<=3&buff.cat_form.up&rake_damage_increase_pct>0
-# Only cast Rip when we have combo points to spend
-actions.st+=/rip,if=combo_points.current>=5&(dot.rip.down|dot.rip.remains<4|rip_damage_increase_pct>0.05)&buff.savage_roar.remains>=1&active_enemies<=3&buff.cat_form.up
-# Thrash ST with Clearcasting (SR >=1s, Rip >=5s, Rake >=4s)
+actions.st+=/rake,if=combo_points.current<5&(dot.rake.down|rake_refresh_time<=0|rake_damage_increase_pct>0.05)&buff.savage_roar.remains>=1&active_enemies<=3&buff.cat_form.up&(energy.current>=35|!should_pool_energy|combo_points.current<=2)&rake_vs_shred_dpe&!delay_rake_for_tf&!clip_rake_with_snapshot
+actions.st+=/rake,if=combo_points.current<5&buff.savage_roar.remains>=1&active_enemies<=3&buff.cat_form.up&rake_damage_increase_pct>0&!delay_rake_for_tf&!clip_rake_with_snapshot
+actions.st+=/rip,if=combo_points_for_rip&(dot.rip.down|rip_refresh_time<=0|rip_damage_increase_pct>0.05)&buff.savage_roar.remains>=1&active_enemies<=3&buff.cat_form.up&(dot.rip.remains<rip_end_threshold|dot.rip.down)&!delay_rip_for_tf&!clip_rip_with_snapshot
 actions.st+=/thrash_cat,if=(dot.thrash_cat.down|dot.thrash_cat.remains<3)&buff.clearcasting.up&buff.savage_roar.remains>=1&dot.rip.remains>=5&dot.rake.remains>=4&active_enemies<=3&buff.cat_form.up
-# Ferocious Bite: execute (<=25% target)
 actions.st+=/ferocious_bite,if=target.health.pct<=25&dot.rip.ticking&dot.rip.remains>=3&combo_points.current>=5&buff.savage_roar.remains>=1&active_enemies<=3&buff.cat_form.up
-# Ferocious Bite: other conditions (grouped)
-actions.st+=/ferocious_bite,if=((buff.berserk.up&energy.current>25&combo_points.current>=5&dot.rip.remains>=6&dot.rake.remains>=4)|(dot.rip.remains>=7&buff.savage_roar.remains>=1&dot.rake.remains>=2&energy.current>=25&combo_points.current>=5)|(target.time_to_die<2&combo_points.current>=3))&active_enemies<=3&buff.savage_roar.remains>=1&buff.cat_form.up
-# Builders - PRIORITIZE COMBO POINT GENERATION
-# If SR is down and we have 0 CP, build immediately
+actions.st+=/ferocious_bite,if=should_bite_emergency&active_enemies<=3&buff.savage_roar.remains>=1&buff.cat_form.up
+actions.st+=/ferocious_bite,if=should_bite&!should_bear_weave&active_enemies<=3&buff.savage_roar.remains>=1&buff.cat_form.up
 actions.st+=/mangle_cat,if=buff.savage_roar.down&combo_points.current=0&buff.cat_form.up
-# Shred instead of Mangle if: (a) Omen and Thrash(Cat) is active, (b) already at 5 CP (dump), or (c) during Berserk
 actions.st+=/shred,if=((buff.clearcasting.up&dot.thrash_cat.ticking)|(combo_points.current>=5)|buff.berserk.up)&active_enemies<=3&buff.cat_form.up&!(variable.disable_shred_when_solo&active_enemies=1&!in_group)
-# Default builder: Mangle when below 5 CP (ensure we always have a builder available)
-actions.st+=/mangle_cat,if=combo_points.current<5&buff.berserk.down&active_enemies<=3&buff.cat_form.up
+actions.st+=/mangle_cat,if=combo_points.current<5&buff.berserk.down&active_enemies<=3&buff.cat_form.up&!bear_weave_ready
+actions.st+=/pool_resource,if=should_pool_energy&combo_points.current=0&buff.cat_form.up
 
-# AOE core (>=4 targets)
-actions.aoe+=/tigers_fury,if=energy.current<=35&buff.berserk.down&buff.clearcasting.down&buff.cat_form.up
+actions.aoe+=/tigers_fury,if=(tf_timing|cat_excess_energy>15)&buff.berserk.down&buff.clearcasting.down&buff.cat_form.up
+actions.aoe+=/savage_roar,if=active_enemies>=4&buff.savage_roar.down&combo_points.current>=1&buff.cat_form.up&roar_vs_swipe_dpe
 actions.aoe+=/thrash_cat,if=dot.thrash_cat.down&active_enemies>=4&buff.savage_roar.remains>=1&buff.cat_form.up
-actions.aoe+=/swipe_cat,if=active_enemies>=4&buff.savage_roar.remains>=1&buff.cat_form.up
-# Refresh SR in AoE
-actions.aoe+=/savage_roar,if=active_enemies>3&buff.savage_roar.remains<2&combo_points.current>=1&buff.cat_form.up
-# Also consider applying FF in AoE only if toggled off; default leave off in AoE
+actions.aoe+=/swipe_cat,if=active_enemies>=4&buff.savage_roar.remains>=1&buff.cat_form.up&(!roar_vs_swipe_dpe|combo_points.current<1)
+actions.aoe+=/savage_roar,if=active_enemies>=4&buff.savage_roar.remains<2&combo_points.current>=1&buff.cat_form.up
+actions.aoe+=/rip,cycle_targets=1,if=active_enemies<=4&combo_points_for_rip&dot.rip.remains<7.2&!delay_rip_for_tf&!clip_rip_with_snapshot
 
-# Unified Cat Optimal Rotation
 actions.cat_optimal+=/variable,name=tf_bonus,value=0
 actions.cat_optimal+=/call_action_list,name=maint
 actions.cat_optimal+=/call_action_list,name=cooldowns
@@ -118,12 +84,10 @@ actions.cat_optimal+=/call_action_list,name=doc,if=talent.dream_of_cenarius.enab
 actions.cat_optimal+=/call_action_list,name=aoe,if=active_enemies>=4
 actions.cat_optimal+=/call_action_list,name=st
 
-# Monocat: prefer pure cat (disable weaving)
 actions.monocat+=/variable,name=opt_bear_weave,value=0
 actions.monocat+=/variable,name=opt_wrath_weave,value=0
 actions.monocat+=/variable,name=opt_snek_weave,value=0
 
-# Tendon burn (kept generic)
 actions.tendon+=/cat_form
 actions.tendon+=/savage_roar,if=!buff.savage_roar.up
 actions.tendon+=/tigers_fury
@@ -133,20 +97,16 @@ actions.tendon+=/rake
 actions.tendon+=/rip,if=combo_points.current>=5
 actions.tendon+=/ferocious_bite,if=combo_points.current>=5
 
-# Master action list (Default preset)
 actions+=/call_action_list,name=cat_optimal
 
-# AOE preset top-level (disable FF; enable bear weave)
 actions.AOE+=/variable,name=maintain_ff,value=0
 actions.AOE+=/variable,name=opt_bear_weave,value=1
 actions.AOE+=/call_action_list,name=cat_optimal
 
-# Monocat preset top-level (disable weaving, keep FF)
 actions.MONOCAT+=/call_action_list,name=monocat
 actions.MONOCAT+=/variable,name=opt_melee_weave,value=1
 actions.MONOCAT+=/call_action_list,name=cat_optimal
 
-# Tendon preset top-level
 actions.TENDON+=/variable,name=maintain_ff,value=1
 actions.TENDON+=/variable,name=opt_bear_weave,value=1
 actions.TENDON+=/variable,name=opt_wrath_weave,value=0

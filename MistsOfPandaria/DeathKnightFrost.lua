@@ -1,102 +1,191 @@
-if not Hekili or not Hekili.NewSpecialization then return end
 -- DeathKnightFrost.lua
 -- Updated june 1, 2025 - Mists of Pandaria Frost Death Knight Module
+-- MoP API Compatibility: Uses UnitClass, GetRuneCooldown, GetRuneType instead of retail APIs
+
 -- MoP: Use UnitClass instead of UnitClassBase
-local _, playerClass = UnitClass('player')
-if playerClass ~= 'DEATHKNIGHT' then return end
+local _, playerClass = UnitClass("player")
+if playerClass ~= "DEATHKNIGHT" then
+	return
+end
 
 local addon, ns = ...
-local Hekili = _G[ "Hekili" ]
-local class = Hekili.Class
-local state = Hekili.State
+local Hekili = _G[addon]
+local class, state = Hekili.Class, Hekili.State
 
--- Safe local references to WoW API (helps static analyzers)
-local GetRuneCooldown = rawget( _G, "GetRuneCooldown" ) or function() return 0, 10, true end
-local GetRuneType = rawget( _G, "GetRuneType" ) or function() return 1 end
+-- Initialize state.runes early to prevent nil reference errors
+if not state.runes then
+    state.runes = { expiry = { 0, 0, 0, 0, 0, 0 }, cooldown = 10, max = 6 }
+end
 
+-- Ensure state.runes.expiry is always available
+if not state.runes.expiry then
+    state.runes.expiry = { 0, 0, 0, 0, 0, 0 }
+end
+
+-- Ensure state.runes.expiry[6] exists to prevent State.lua errors
+if not state.runes.expiry[6] then
+    state.runes.expiry[6] = 0
+end
+
+local spec = Hekili:NewSpecialization(251)
+
+-- Local function declarations for increased performance
+-- Strings
+local strformat = string.format
+
+-- Tables
+local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
+
+-- Math
+local abs, ceil, floor, max, min, sqrt = math.abs, math.ceil, math.floor, math.max, math.min, math.sqrt
+
+-- Common WoW APIs (MoP compatible)
+local GetRuneCooldown = GetRuneCooldown
+local GetRuneType = GetRuneType
 local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
 
-local function getReferences()
-    -- Legacy function for compatibility
-    return class, state
-end
 
-local spec = Hekili:NewSpecialization( 251, true ) -- Frost spec ID for MoP
-spec.name = "Frost"
-spec.role = "DAMAGER"
-spec.primaryStat = 1 -- Strength
+-- Runes (unified model matching retail structure)
+spec:RegisterResource( 5, { -- Runes = 5 in MoP (Total rune count for UI display)
+    rune_regen = {
+        last = function () return state.query_time end,
+        stop = function( x ) return x == 6 end,
 
--- Runes (unified model on the resource itself to avoid collision with a state table)
-do
-    local function buildTypeCounter(indices, typeId)
-        return setmetatable({}, {
-            __index = function(_, k)
-                if k == "count" then
-                    local ready = 0
-                    if typeId == 4 then
-                        for i = 1, 6 do
-                            local start, duration, isReady = GetRuneCooldown(i)
-                            local rtype = GetRuneType(i)
-                            if (isReady or (start and duration and (start + duration) <= state.query_time)) and rtype == 4 then
-                                ready = ready + 1
-                            end
-                        end
-                    else
-                        for _, i in ipairs(indices) do
-                            local start, duration, isReady = GetRuneCooldown(i)
-                            if isReady or (start and duration and (start + duration) <= state.query_time) then
-                                ready = ready + 1
-                            end
-                        end
-                    end
-                    return ready
-                end
-                return 0
-            end
-        })
-    end
-
-    spec:RegisterResource( 5, {}, setmetatable({
-        expiry = { 0, 0, 0, 0, 0, 0 },
-        cooldown = 10,
-        max = 6,
-        reset = function()
-            local t = state.runes
-            for i = 1, 6 do
-                local start, duration, ready = GetRuneCooldown(i)
-                start = start or 0
-                duration = duration or (10 * state.haste)
-                t.expiry[i] = ready and 0 or (start + duration)
-                t.cooldown = duration
-            end
+        interval = function( time, val )
+            val = floor( val )
+            if val == 6 then return -1 end
+            return state.runes.expiry[ val + 1 ] - time
         end,
-    }, {
-        __index = function(t, k)
-            local idx = tostring(k):match("time_to_(%d)")
-            if idx then
-                local i = tonumber(idx)
-                local e = t.expiry[i] or 0
-                return math.max(0, e - state.query_time)
-            end
-            if k == "blood" then return buildTypeCounter({1,2}, 1) end
-            if k == "frost" then return buildTypeCounter({3,4}, 2) end
-            if k == "unholy" then return buildTypeCounter({5,6}, 3) end
-            if k == "death" then return buildTypeCounter({}, 4) end
-            if k == "count" or k == "current" then
-                local c = 0
-                for i = 1, 6 do
-                    if t.expiry[i] <= state.query_time then c = c + 1 end
-                end
-                return c
-            end
-            return rawget(t, k)
-        end
-    }) ) -- Runes = 5 in MoP with unified state
+        value = 1,
+    },
+}, setmetatable( {
+    expiry = { 0, 0, 0, 0, 0, 0 },
+    cooldown = 10,
+    regen = 0,
+    max = 6,
+    forecast = {},
+    fcount = 0,
+    times = {},
+    values = {},
+    resource = "runes_total",
 
-    spec:RegisterHook("reset_precast", function()
-        if state.runes and state.runes.reset then state.runes.reset() end
-    end)
-end
+    reset = function()
+        if not state.runes then
+            state.runes = { expiry = { 0, 0, 0, 0, 0, 0 }, cooldown = 10, max = 6 }
+        end
+        if not state.runes.expiry then
+            state.runes.expiry = { 0, 0, 0, 0, 0, 0 }
+        end
+        -- Ensure all expiry slots exist
+        for i = 1, 6 do
+            if not state.runes.expiry[i] then
+                state.runes.expiry[i] = 0
+            end
+        end
+        local t = state.runes
+        for i = 1, 6 do
+            local start, duration, ready = GetRuneCooldown( i )
+            start = start or 0
+            duration = duration or ( 10 * state.haste )
+            t.expiry[ i ] = ready and 0 or ( start + duration )
+            t.cooldown = duration
+        end
+        table.sort( t.expiry )
+        t.actual = nil -- Reset actual to force recalculation
+    end,
+
+    gain = function( amount )
+        local t = state.runes
+        for i = 1, amount do
+            table.insert( t.expiry, 0 )
+            t.expiry[ 7 ] = nil
+        end
+        table.sort( t.expiry )
+        t.actual = nil
+    end,
+
+    spend = function( amount )
+        local t = state.runes
+        for i = 1, amount do
+            local nextReady = ( t.expiry[ 4 ] > 0 and t.expiry[ 4 ] or state.query_time ) + t.cooldown
+            table.remove( t.expiry, 1 )
+            table.insert( t.expiry, nextReady )
+        end
+
+        state.gain( amount * 10, "runic_power" )
+
+        if state.talent.gathering_storm and state.talent.gathering_storm.enabled and state.buff.remorseless_winter and state.buff.remorseless_winter.up then
+            state.buff.remorseless_winter.expires = state.buff.remorseless_winter.expires + ( 0.5 * amount )
+        end
+
+        t.actual = nil
+    end,
+
+    timeTo = function( x )
+        return state:TimeToResource( state.runes, x )
+    end,
+}, {
+    __index = function( t, k )
+        if k == "actual" then
+            -- Calculate the number of runes available based on `expiry`.
+            local amount = 0
+            for i = 1, 6 do
+                if t.expiry[ i ] <= state.query_time then
+                    amount = amount + 1
+                end
+            end
+            return amount
+
+        elseif k == "current" then
+            -- If this is a modeled resource, use our lookup system.
+            if t.forecast and t.fcount > 0 then
+                local q = state.query_time
+                local index, slice
+
+                if t.values[ q ] then return t.values[ q ] end
+
+                for i = 1, t.fcount do
+                    local v = t.forecast[ i ]
+                    if v.t <= q and v.v ~= nil then
+                        index = i
+                        slice = v
+                    else
+                        break
+                    end
+                end
+
+                -- We have a slice.
+                if index and slice and slice.v then
+                    t.values[ q ] = max( 0, min( t.max, slice.v ) )
+                    return t.values[ q ]
+                end
+            end
+
+            return t.actual
+
+        elseif k == "deficit" then
+            return t.max - t.current
+
+        elseif k == "time_to_next" then
+            return t[ "time_to_" .. t.current + 1 ]
+
+        elseif k == "time_to_max" then
+            return t.current == t.max and 0 or max( 0, t.expiry[ 6 ] - state.query_time )
+
+        else
+            local amount = k:match( "time_to_(%d+)" )
+            amount = amount and tonumber( amount )
+            if amount then return t.timeTo( amount ) end
+        end
+    end
+} ))
+
+-- Keep expiry fresh when we reset the simulation step
+spec:RegisterHook("reset_precast", function()
+    if state.runes and state.runes.reset then
+        state.runes.reset()
+    end
+end)
 spec:RegisterResource(6) -- RunicPower = 6 in MoP
 
 local strformat = string.format
@@ -826,278 +915,176 @@ spec:RegisterGlyphs( {
     [58685] = "death_grip_visual",      -- Death Grip has enhanced chain visual
 } )
 
--- Advanced Aura System with Sophisticated Generate Functions for Frost Death Knight
+-- Add missing abilities that were defined outside RegisterAbilities
+spec:RegisterAbilities( {
+    outbreak = {
+        id = 77575,
+        cast = 0,
+        cooldown = 60,
+        gcd = "spell",
+        
+        startsCombat = true,
+        
+        handler = function ()
+            applyDebuff("target", "frost_fever", 30)
+            applyDebuff("target", "blood_plague", 30)
+        end,
+    },
+    
+    soul_reaper = {
+        id = 114867,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        
+        spend_runes = {0, 0, 1}, -- 0 Blood, 0 Frost, 1 Unholy
+        
+        gain = 10,
+        gainType = "runic_power",
+        
+        startsCombat = true,
+        
+        handler = function ()
+            applyDebuff("target", "soul_reaper", 5)
+        end,
+    },
+} )
+
+
 spec:RegisterAuras( {
-    -- Core Frost Presence: Enhanced with combat state tracking
-    frost_presence = {
-        id = 48266,
-        duration = 3600,
+    antimagic_shell = {
+        id = 48707,
+        duration = 5,
         max_stack = 1,
-        copy = "frost_presence_enhanced"
+        copy = "magic_immunity"
     },
 
-    -- Pillar of Frost: Main DPS cooldown with advanced tracking
-    pillar_of_frost = {
-        id = 51271,
-        duration = 20,
+    army_of_the_dead = {
+        id = 42650,
+        duration = 40,
         max_stack = 1,
-        generate = function( aura )
-            local name, _, count, _, duration, expires, caster = UA_GetPlayerAuraBySpellID( 51271 )
-            if name then
-                aura.name = name
-                aura.count = count > 0 and count or 1
-                aura.expires = expires
-                aura.applied = expires - duration
-                aura.caster = caster
-                
-                -- Track optimal usage timing
-                local time_remaining = expires - GetTime()
-                if time_remaining > 15 then
-                    -- Still have significant time left, track usage efficiency
-                    frostEventData.pillar_usage.optimal_timing_count = frostEventData.pillar_usage.optimal_timing_count + 1
-                end
-                return
-            end
-            aura.count = 0
-            aura.expires = 0
-            aura.applied = 0
-            aura.caster = "nobody"
-        end,
-        copy = { "pillar_of_frost_enhanced", "strength_boost" }
     },
 
-    -- Killing Machine: Critical strike guarantee with advanced proc tracking
-    killing_machine = {
-        id = 51124,
-        duration = 10,
-        max_stack = 1,
-        generate = function( aura )
-            local name, _, count, _, duration, expires, caster = UA_GetPlayerAuraBySpellID( 51124 )
-            if name then
-                aura.name = name
-                aura.count = count > 0 and count or 1
-                aura.expires = expires
-                aura.applied = expires - duration
-                aura.caster = caster
-                
-                -- Track KM consumption efficiency
-                local time_since_proc = GetTime() - frostEventData.last_km_proc
-                if time_since_proc < 2 then
-                    -- Fast consumption - good gameplay
-                    frostEventData.km_consumption_efficiency = (frostEventData.km_consumption_efficiency or 0) + 1
-                end
-                return
-            end
-            aura.count = 0
-            aura.expires = 0
-            aura.applied = 0
-            aura.caster = "nobody"
-        end,
-        copy = { "km", "guaranteed_crit" }
-    },
-
-    -- Rime: Free Howling Blast with advanced proc mechanics
-    rime = {
-        id = 59052,
-        duration = 15,
-        max_stack = 1,
-        generate = function( aura )
-            local name, _, count, _, duration, expires, caster = UA_GetPlayerAuraBySpellID( 59052 )
-            if name then
-                aura.name = name
-                aura.count = count > 0 and count or 1
-                aura.expires = expires
-                aura.applied = expires - duration
-                aura.caster = caster
-                
-                -- Track Rime usage efficiency for AoE optimization
-                if active_enemies and active_enemies > 1 then
-                    frostEventData.rime_aoe_efficiency = (frostEventData.rime_aoe_efficiency or 0) + 1
-                end
-                return
-            end
-            aura.count = 0
-            aura.expires = 0
-            aura.applied = 0
-            aura.caster = "nobody"
-        end,
-        copy = { "freezing_fog", "free_howling_blast" }
-    },    -- Frost Fever: Disease with pandemic mechanics
-    frost_fever = {
-        id = 59921,
-        duration = 30,
-        tick_time = 3,
-        max_stack = 1,
-        type = "Disease",
-        generate = function( aura, t )
-            local name, _, count, _, duration, expires, caster = FindUnitDebuffByID( t or "target", 59921 )
-            if name then
-                aura.name = name
-                aura.count = count > 0 and count or 1
-                aura.expires = expires
-                aura.applied = expires - duration
-                aura.caster = caster
-                
-                -- Pandemic mechanic: can refresh up to 30% early
-                local pandemic_window = duration * 0.3
-                aura.pandemic_window = expires - pandemic_window
-                
-                -- Track disease management efficiency
-                if aura.applied > GetTime() - 27 then -- Refreshed with >3 sec remaining
-                    frostEventData.disease_management.pandemic_extensions = frostEventData.disease_management.pandemic_extensions + 1
-                end
-                return
-            end
-            aura.count = 0
-            aura.expires = 0
-            aura.applied = 0
-            aura.caster = "nobody"
-        end,
-        copy = "frost_fever_enhanced"
-    },    -- Blood Plague: Cross-spec disease tracking
-    blood_plague = {
-        id = 59879,
-        duration = 30,
-        tick_time = 3,
-        max_stack = 1,
-        type = "Disease",
-        generate = function( aura, t )
-            local name, _, count, _, duration, expires, caster = FindUnitDebuffByID( t or "target", 59879 )
-            if name then
-                aura.name = name
-                aura.count = count > 0 and count or 1
-                aura.expires = expires
-                aura.applied = expires - duration
-                aura.caster = caster
-                
-                -- Blood Strike damage bonus tracking
-                local disease_count = 1
-                if state.debuff.frost_fever.up then disease_count = disease_count + 1 end
-                aura.disease_damage_bonus = disease_count * 0.125 -- 12.5% per disease
-                return
-            end
-            aura.count = 0
-            aura.expires = 0
-            aura.applied = 0
-            aura.caster = "nobody"
-        end,
-        copy = "blood_plague_enhanced"
-    },
-
-    -- Blood Tap charges (used by Frost APLs)
     blood_charge = {
         id = 114851,
         duration = 25,
         max_stack = 12,
     },
 
-    -- Runic Corruption: Enhanced rune regeneration
+    blood_fury = {
+        id = 33697,
+        duration = 15,
+        max_stack = 1,
+    },
+
+    blood_plague = {
+        id = 59879,
+        duration = 30,
+        tick_time = 3,
+        max_stack = 1,
+        type = "Disease",
+        copy = "blood_plague_enhanced"
+    },
+
+    blood_tap = {
+        id = 45529,
+        duration = 20,
+        max_stack = 1,
+    },
+
+    chains_of_ice = {
+        id = 45524,
+        duration = 8,
+        max_stack = 1,
+        type = "Magic",
+        copy = "frost_slow"
+    },
+
+    death_and_decay = {
+        id = 43265,
+        duration = 10,
+        max_stack = 1,
+        tick_time = 1,
+    },
+
+    death_grip = {
+        id = 49560,
+        duration = 3,
+        max_stack = 1,
+        type = "Magic",
+    },
+
+    frost_fever = {
+        id = 59921,
+        duration = 30,
+        tick_time = 3,
+        max_stack = 1,
+        type = "Disease",
+        copy = "frost_fever_enhanced"
+    },
+
+    horn_of_winter = {
+        id = 57330,
+        duration = 120,
+        max_stack = 1,
+        copy = "strength_agility_buff"
+    },
+
+    icebound_fortitude = {
+        id = 48792,
+        duration = 12,
+        max_stack = 1,
+    },
+
+    killing_machine = {
+        id = 51124,
+        duration = 10,
+        max_stack = 1,
+        copy = { "km", "guaranteed_crit" }
+    },
+
+    path_of_frost = {
+        id = 3714,
+        duration = 3600,
+        max_stack = 1,
+    },
+
+    pillar_of_frost = {
+        id = 51271,
+        duration = 20,
+        max_stack = 1,
+        copy = { "pillar_of_frost_enhanced", "strength_boost" }
+    },
+
+    rime = {
+        id = 59052,
+        duration = 15,
+        max_stack = 1,
+        copy = "rime_proc"
+    },
+
     runic_corruption = {
         id = 51460,
         duration = 3,
         max_stack = 1,
-        generate = function( aura )
-            local name, _, count, _, duration, expires, caster = UA_GetPlayerAuraBySpellID( 51460 )
-            if name then
-                aura.name = name
-                aura.count = count > 0 and count or 1
-                aura.expires = expires
-                aura.applied = expires - duration
-                aura.caster = caster
-                
-                -- Track rune regeneration efficiency
-                aura.regen_bonus = 2.0 -- 100% faster rune regeneration
-                return
-            end
-            aura.count = 0
-            aura.expires = 0
-            aura.applied = 0
-            aura.caster = "nobody"
-        end,
         copy = "enhanced_rune_regen"
     },
 
-    -- Runic Empowerment: Instant rune refresh
     runic_empowerment = {
         id = 81229,
         duration = 5,
         max_stack = 1,
-        generate = function( aura )
-            local name, _, count, _, duration, expires, caster = UA_GetPlayerAuraBySpellID( 81229 )
-            if name then
-                aura.name = name
-                aura.count = count > 0 and count or 1
-                aura.expires = expires
-                aura.applied = expires - duration
-                aura.caster = caster
-                
-                -- Track which rune type was refreshed for optimization
-                aura.refresh_efficiency = frostEventData.rune_events.empower_uses or 0
-                return
-            end
-            aura.count = 0
-            aura.expires = 0
-            aura.applied = 0
-            aura.caster = "nobody"
-        end,
         copy = "instant_rune_refresh"
     },
 
-    -- Anti-Magic Shell: Magic immunity with glyph tracking
-    anti_magic_shell = {
-        id = 48707,
-        duration = function() return spec.glyph.anti_magic_shell.enabled and 7 or 5 end,
+    soul_reaper = {
+        id = 114867,
+        duration = 5,
         max_stack = 1,
-        generate = function( aura )
-            local duration_bonus = spec.glyph.anti_magic_shell.enabled and 2 or 0
-            local name, _, count, _, duration, expires, caster = UA_GetPlayerAuraBySpellID( 48707 )
-            if name then
-                aura.name = name
-                aura.count = count > 0 and count or 1
-                aura.expires = expires
-                aura.applied = expires - duration
-                aura.caster = caster
-                aura.glyph_enhanced = duration_bonus > 0
-                return
-            end
-            aura.count = 0
-            aura.expires = 0
-            aura.applied = 0
-            aura.caster = "nobody"
-        end,
-        copy = "magic_immunity"
     },
 
-    -- Horn of Winter: Stat buff with glyph variants
-    horn_of_winter = {
-        id = 57330,
-        duration = function() return glyph.horn_of_winter.enabled and 3600 or 120 end,
-        max_stack = 1,
-        generate = function( aura )
-            local extended_duration = glyph.horn_of_winter.enabled
-            local name, _, count, _, duration, expires, caster = GetPlayerAuraBySpellID( 57330 )
-            if name then
-                aura.name = name
-                aura.count = count > 0 and count or 1
-                aura.expires = expires
-                aura.applied = expires - duration
-                aura.caster = caster
-                aura.glyph_extended = extended_duration
-                aura.rp_generation = not extended_duration -- Only generates RP if not glyphed
-                return
-            end
-            aura.count = 0
-            aura.expires = 0
-            aura.applied = 0
-            aura.caster = "nobody"
-        end,
-        copy = "strength_agility_buff"
-    },
-
-    -- Tier Set Bonuses with Advanced Tracking
-    -- T14 2pc: Icy Touch spreads diseases
     tier14_2pc = {
-        id = 123456, -- Placeholder ID
+        id = 123456,
         duration = 3600,
         max_stack = 1,
         generate = function( aura )
@@ -1106,8 +1093,6 @@ spec:RegisterAuras( {
                 aura.expires = GetTime() + 3600
                 aura.applied = GetTime()
                 aura.caster = "player"
-                
-                -- Track disease spreading efficiency
                 aura.spread_count = frostEventData.disease_management.disease_refreshes or 0
                 return
             end
@@ -1118,10 +1103,9 @@ spec:RegisterAuras( {
         end,
     },
 
-    -- T15 2pc: Pillar of Frost grants 5% crit
     tier15_2pc = {
-        id = 123457, -- Placeholder ID
-        duration = 20, -- Duration of Pillar of Frost
+        id = 123457,
+        duration = 20,
         max_stack = 1,
         generate = function( aura )
             if state.set_bonus.tier15_2pc > 0 and state.buff.pillar_of_frost.up then
@@ -1129,7 +1113,7 @@ spec:RegisterAuras( {
                 aura.expires = state.buff.pillar_of_frost.expires
                 aura.applied = state.buff.pillar_of_frost.applied
                 aura.caster = "player"
-                aura.crit_bonus = 0.05 -- 5% critical strike chance
+                aura.crit_bonus = 0.05
                 return
             end
             aura.count = 0
@@ -1139,94 +1123,16 @@ spec:RegisterAuras( {
         end,
     },
 
-    -- Additional presence tracking
-    blood_presence = {
-        id = 48263,
-        duration = 3600,
-        max_stack = 1,
-        copy = "blood_presence_active"
-    },
-
-    unholy_presence = {
-        id = 48265,
-        duration = 3600,
-        max_stack = 1,
-        copy = "unholy_presence_active"
-    },
-
-    -- Chains of Ice slow effect
-    chains_of_ice = {
-        id = 45524,
-        duration = 8,
-        max_stack = 1,
-        type = "Magic",
-        copy = "frost_slow"
-    },
-
-    -- Racials / Engineering (used in APL cooldown windows)
-    blood_fury = {
-        id = 33697,
-        duration = 15,
-        max_stack = 1,
-    },
-    berserking = {
-        id = 26297,
+    unholy_blight = {
+        id = 115989,
         duration = 10,
         max_stack = 1,
+        type = "Disease",
     },
-    synapse_springs = {
-        id = 126734,
-        duration = 10,
-        max_stack = 1,
-    },
+
 } )
 
 -- Register auxiliary cooldown abilities used by APL windows (racials/engineering)
-spec:RegisterAbilities( {
-    blood_fury = {
-        id = 33697,
-        cast = 0,
-        cooldown = 120,
-        gcd = "off",
-
-        startsCombat = false,
-        toggle = "cooldowns",
-
-        handler = function ()
-            applyBuff("blood_fury")
-        end,
-    },
-
-    berserking = {
-        id = 26297,
-        cast = 0,
-        cooldown = 180,
-        gcd = "off",
-
-        startsCombat = false,
-        toggle = "cooldowns",
-
-        handler = function ()
-            applyBuff("berserking")
-        end,
-    },
-
-    synapse_springs = {
-        id = 126734,
-        cast = 0,
-        cooldown = 60,
-        gcd = "off",
-
-        startsCombat = false,
-        toggle = "cooldowns",
-
-        handler = function ()
-            applyBuff("synapse_springs")
-        end,
-    },
-} )
-
--- Frost DK core abilities
 spec:RegisterAbilities( {
     obliterate = {
         id = 49020,
@@ -1236,15 +1142,14 @@ spec:RegisterAbilities( {
         
         spend_runes = {0, 1, 1}, -- 0 Blood, 1 Frost, 1 Unholy
         
-        gain = 15,
+        gain = 20,
         gainType = "runic_power",
         
         startsCombat = true,
         
         handler = function ()
-            -- Rime proc chance (15% base, increased by talent)
-            local rime_chance = talent.rime.enabled and 0.45 or 0.15
-            if math.random() < rime_chance then
+            -- Rime proc chance (45% base in MoP)
+            if math.random() < 0.45 then
                 applyBuff("rime")
             end
             
@@ -1263,13 +1168,13 @@ spec:RegisterAbilities( {
             end
         end,
     },
-      frost_strike = {
+    frost_strike = {
         id = 49143,
         cast = 0,
         cooldown = 0,
         gcd = "spell",
         
-        spend = 40,
+        spend = 35,
         spendType = "runic_power",
         
         startsCombat = true,
@@ -1298,6 +1203,7 @@ spec:RegisterAbilities( {
             end
         end,
     },
+
       howling_blast = {
         id = 49184,
         cast = 0,
@@ -1312,29 +1218,13 @@ spec:RegisterAbilities( {
         startsCombat = true,
         
         handler = function ()
-                removeBuff("freezing_fog")
             removeStack("killing_machine")
             
-            if glyph.howling_blast.enabled then
             applyDebuff("target", "frost_fever")
-                active_dot.frost_fever = active_enemies
-            end
-        end,
-      pillar_of_frost = {
-        id = 51271,
-        cast = 0,
-        cooldown = function() return glyph.pillar_of_frost.enabled and 60 or 120 end,
-        gcd = "spell",
-        
-        toggle = "cooldowns",
-        
-        startsCombat = false,
-        
-        handler = function ()
-            applyBuff("pillar_of_frost")
+            active_dot.frost_fever = active_enemies
         end,
     },
-    
+
     icy_touch = {
         id = 45477,
         cast = 0,
@@ -1362,9 +1252,7 @@ spec:RegisterAbilities( {
             gain(rp_gain, "runic_power")
             
             -- Glyph of Icy Touch: increased Frost Fever damage
-            if glyph.icy_touch.enabled then
-                -- Frost Fever will deal 20% more damage
-            end
+            -- Frost Fever will deal 20% more damage if glyphed
         end,
     },
     
@@ -1386,9 +1274,7 @@ spec:RegisterAbilities( {
             gain(10, "runic_power")
             
             -- Glyph of Chains of Ice: additional damage
-            if glyph.chains_of_ice.enabled then
-                -- Deal additional frost damage scaled by attack power
-            end
+            -- Deal additional frost damage scaled by attack power if glyphed
         end,
     },
     
@@ -1422,7 +1308,7 @@ spec:RegisterAbilities( {
     anti_magic_shell = {
         id = 48707,
         cast = 0,
-        cooldown = function() return glyph.anti_magic_shell.enabled and 60 or 45 end,
+        cooldown = 45,
         gcd = "off",
         
         toggle = "defensives",
@@ -1430,14 +1316,14 @@ spec:RegisterAbilities( {
         startsCombat = false,
         
         handler = function ()
-            applyBuff("anti_magic_shell")
+            applyBuff("antimagic_shell")
         end,
     },
     
     icebound_fortitude = {
         id = 48792,
         cast = 0,
-        cooldown = function() return glyph.icebound_fortitude.enabled and 120 or 180 end,
+        cooldown = 180,
         gcd = "off",
         
         toggle = "defensives",
@@ -1501,9 +1387,7 @@ spec:RegisterAbilities( {
             gain(rp_gain, "runic_power")
             
             -- Glyph of Death and Decay: 15% more damage
-            if glyph.death_and_decay.enabled then
-                -- Increased damage from glyph
-            end
+            -- Increased damage from glyph if glyphed
         end,
     },
     
@@ -1538,9 +1422,7 @@ spec:RegisterAbilities( {
         
         handler = function ()
             applyBuff("horn_of_winter")
-            if not glyph.horn_of_winter.enabled then
-                gain(10, "runic_power")
-            end
+            gain(10, "runic_power")
         end,
     },
     
@@ -1556,26 +1438,6 @@ spec:RegisterAbilities( {
         
         handler = function ()
             -- Summon ghoul/geist pet based on glyphs
-        end,
-    },
-      army_of_the_dead = {
-        id = 42650,
-        cast = function() return 4 end, -- 4 second channel (8 ghouls @ 0.5s intervals)
-        cooldown = 600, -- 10 minute cooldown
-        gcd = "spell",
-        
-        spend = function() return 1, 1, 1 end, -- 1 Blood + 1 Frost + 1 Unholy
-        spendType = "runes",
-        
-        toggle = "cooldowns",
-        
-        startsCombat = false,
-        texture = 237302,
-        
-        handler = function ()
-            -- Summon 8 ghouls over 4 seconds, each lasting 40 seconds
-            -- Generates 30 Runic Power
-            gain( 30, "runic_power" )
         end,
     },
     
@@ -1639,23 +1501,141 @@ spec:RegisterAbilities( {
     },
     
     -- Rune management
-    blood_tap = {
-        id = 45529,
+    -- Howling Blast - Core AoE ability
+    howling_blast = {
+        id = 49184,
         cast = 0,
-        cooldown = 30,
+        cooldown = 0,
+        gcd = "spell",
+        
+        spend_runes = {0, 1, 0}, -- 0 Blood, 1 Frost, 0 Unholy
+        
+        gain = 10,
+        gainType = "runic_power",
+        
+        startsCombat = true,
+        
+        handler = function ()
+            -- Apply Frost Fever to all targets hit
+            applyDebuff("target", "frost_fever")
+            
+            -- Rime proc chance (45% base in MoP)
+            if math.random() < 0.45 then
+                applyBuff("rime")
+            end
+        end,
+    },
+
+    -- Pillar of Frost - Major cooldown
+    pillar_of_frost = {
+        id = 51271,
+        cast = 0,
+        cooldown = 60,
         gcd = "off",
         
-        spend = function() return glyph.blood_tap.enabled and 15 or 0 end,
-        spendType = function() return glyph.blood_tap.enabled and "runic_power" or nil end,
+        spend_runes = {1, 0, 0}, -- 1 Blood, 0 Frost, 0 Unholy
+        
+        gain = 10,
+        gainType = "runic_power",
+        
+        startsCombat = false,
+        toggle = "cooldowns",
+        
+        handler = function ()
+            applyBuff("pillar_of_frost")
+        end,
+    },
+
+    -- Army of the Dead - Major cooldown
+    army_of_the_dead = {
+        id = 42650,
+        cast = 0,
+        cooldown = 600,
+        gcd = "spell",
+        
+        startsCombat = false,
+        toggle = "cooldowns",
+        
+        handler = function ()
+            -- Summon ghouls and generate runic power
+            gain(30, "runic_power")
+        end,
+    },
+
+    -- Death and Decay - AoE ability
+    death_and_decay = {
+        id = 43265,
+        cast = 0,
+        cooldown = 30,
+        gcd = "spell",
+        
+        spend_runes = {1, 0, 1}, -- 1 Blood, 0 Frost, 1 Unholy
+        
+        gain = 10,
+        gainType = "runic_power",
+        
+        startsCombat = true,
+        
+        handler = function ()
+            applyDebuff("target", "death_and_decay")
+        end,
+    },
+
+    
+    -- Additional abilities for APL compatibility (alphabetical order)
+    antimagic_shell = {
+        id = 48707,
+        cast = 0,
+        cooldown = 45,
+        gcd = "off",
         
         startsCombat = false,
         
-        handler = function ()
-            if not glyph.blood_tap.enabled then
-                -- Original functionality: costs health
-                spend(0.05, "health")
+        toggle = function()
+            if settings.dps_shell then
+                return
             end
-            -- Convert a blood rune to a death rune
+            return "defensives"
+        end,
+        
+        handler = function ()
+            applyBuff("antimagic_shell")
+        end,
+    },
+    
+    blood_tap = {
+        id = 45529,
+        cast = 0,
+        cooldown = 1,
+        gcd = "off",
+        
+        startsCombat = false,
+        
+        usable = function ()
+            return buff.blood_charge.stack >= 5
+        end,
+        
+        handler = function ()
+            removeBuff("blood_charge", 5)
+            gain(1, "runes")
+        end,
+    },
+    
+    death_and_decay = {
+        id = 43265,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        
+        spend_runes = {0, 0, 1}, -- 0 Blood, 0 Frost, 1 Unholy
+        
+        gain = 10,
+        gainType = "runic_power",
+        
+        startsCombat = true,
+        
+        handler = function ()
+            applyDebuff("target", "death_and_decay", 10)
         end,
     },
     
@@ -1663,18 +1643,120 @@ spec:RegisterAbilities( {
         id = 47568,
         cast = 0,
         cooldown = 300,
-        gcd = "off",
-        
-        toggle = "cooldowns",
+        gcd = "spell",
         
         startsCombat = false,
         
+        toggle = "cooldowns",
+        
         handler = function ()
-            -- Refresh all rune cooldowns and generate 25 runic power
+            gain(6, "runes")
             gain(25, "runic_power")
         end,
     },
-    }
+    
+    icy_touch = {
+        id = 45477,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        
+        spend_runes = {0, 1, 0}, -- 0 Blood, 1 Frost, 0 Unholy
+        
+        gain = 10,
+        gainType = "runic_power",
+        
+        startsCombat = true,
+        
+        handler = function ()
+            applyDebuff("target", "frost_fever", 30)
+        end,
+    },
+    
+    mind_freeze = {
+        id = 47528,
+        cast = 0,
+        cooldown = 15,
+        gcd = "off",
+        
+        startsCombat = true,
+        
+        toggle = "interrupts",
+        
+        debuff = "casting",
+        readyTime = state.timeToInterrupt,
+        
+        handler = function ()
+            interrupt()
+        end,
+    },
+    
+    pillar_of_frost = {
+        id = 51271,
+        cast = 0,
+        cooldown = 60,
+        gcd = "spell",
+        
+        startsCombat = false,
+        
+        toggle = "cooldowns",
+        
+        handler = function ()
+            applyBuff("pillar_of_frost", 20)
+        end,
+    },
+    
+    plague_leech = {
+        id = 123693,
+        cast = 0,
+        cooldown = 25,
+        gcd = "spell",
+        
+        talent = "plague_leech",
+        startsCombat = true,
+        
+        usable = function ()
+            return debuff.frost_fever.up and debuff.blood_plague.up
+        end,
+        
+        handler = function ()
+            removeDebuff("target", "frost_fever")
+            removeDebuff("target", "blood_plague")
+            gain(1, "runes")
+        end,
+    },
+    
+    plague_strike = {
+        id = 45462,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        
+        spend_runes = {1, 0, 0}, -- 1 Blood, 0 Frost, 0 Unholy
+        
+        gain = 10,
+        gainType = "runic_power",
+        
+        startsCombat = true,
+        
+        handler = function ()
+            applyDebuff("target", "blood_plague", 30)
+        end,
+    },
+    
+    unholy_blight = {
+        id = 115989,
+        cast = 0,
+        cooldown = 60,
+        gcd = "spell",
+        
+        talent = "unholy_blight",
+        startsCombat = true,
+        
+        handler = function ()
+            applyDebuff("target", "unholy_blight", 10)
+        end,
+    },
 } )
 
 
@@ -1881,7 +1963,61 @@ spec:RegisterStateExpr( "rune", function()
         local start, duration, ready = GetRuneCooldown( i )
         if ready then total = total + 1 end
     end
+    
+    -- Return simple object with timeTo method for APL compatibility
+    return {
+        count = total,
+        timeTo = function(amount)
+            if amount <= total then return 0 end
+            -- Calculate time to get 'amount' runes
+            local needed = amount - total
+            if needed <= 0 then return 0 end
+            
+            -- Find the next rune that will be ready
+            local nextReady = math.huge
+            for i = 1, 6 do
+                local start, duration, ready = GetRuneCooldown(i)
+                if not ready and start and duration then
+                    local readyTime = start + duration
+                    if readyTime < nextReady then
+                        nextReady = readyTime
+                    end
+                end
+            end
+            
+            if nextReady == math.huge then return 0 end
+            return max(0, nextReady - state.query_time)
+        end
+    }
+end )
+
+-- Individual rune type counts for APL compatibility
+spec:RegisterStateExpr( "runes_total", function()
+    -- Return total rune count for resource display
+    local total = 0
+    if state.blood_runes and state.blood_runes.current then total = total + state.blood_runes.current end
+    if state.frost_runes and state.frost_runes.current then total = total + state.frost_runes.current end
+    if state.unholy_runes and state.unholy_runes.current then total = total + state.unholy_runes.current end
+    if state.death_runes and state.death_runes.count then total = total + state.death_runes.count end
     return total
+end )
+
+spec:RegisterStateExpr( "runes", function()
+    return {
+        blood = { count = state.blood_runes and state.blood_runes.current or 0 },
+        frost = { count = state.frost_runes and state.frost_runes.current or 0 },
+        unholy = { count = state.unholy_runes and state.unholy_runes.current or 0 },
+        death = { count = state.death_runes and state.death_runes.count or 0 }
+    }
+end )
+
+spec:RegisterStateExpr( "runes_by_type", function()
+    return {
+        blood = { count = state.blood_runes and state.blood_runes.current or 0 },
+        frost = { count = state.frost_runes and state.frost_runes.current or 0 },
+        unholy = { count = state.unholy_runes and state.unholy_runes.current or 0 },
+        death = { count = state.death_runes and state.death_runes.count or 0 }
+    }
 end )
 
 spec:RegisterStateExpr( "rune_deficit", function()
@@ -1938,8 +2074,17 @@ spec:RegisterStateExpr( "rune_max", function()
 end )
 
 
+-- Soul Reaper execute check normalized to importer's math
+-- Equivalent to: target.health.pct - 3 * ( target.health.pct / target.time_to_die ) <= 35
+spec:RegisterStateExpr( "sr_exec_window_3s", function()
+    if not target or not target.time_to_die or target.time_to_die <= 0 then return false end
+    local hp = target.health and target.health.pct or 100
+    return ( hp - 3 * ( hp / target.time_to_die ) ) <= 35
+end )
+
+
     
-spec:RegisterRanges( "obliterate", "frost_strike", "howling_blast" )
+spec:RegisterRanges( "mind_freeze", "howling_blast", "obliterate", "frost_strike" )
 
 spec:RegisterOptions( {
     enabled = true,
@@ -1979,7 +2124,42 @@ spec:RegisterSetting( "it_macro", nil, {
     set = function() end,
 } )
 
+-- Frost Death Knight specific settings
+spec:RegisterSetting( "frost_runic_power_threshold", 80, {
+    name = "Runic Power Threshold for Frost Strike",
+    desc = "Minimum runic power to spend on Frost Strike",
+    type = "range",
+    min = 20,
+    max = 100,
+    step = 5,
+    width = "full",
+} )
+
+spec:RegisterSetting( "frost_km_priority", true, {
+    name = "Prioritize Killing Machine",
+    desc = "Always use Killing Machine procs immediately",
+    type = "toggle",
+    width = "full",
+} )
+
+spec:RegisterSetting( "frost_rime_priority", true, {
+    name = "Prioritize Rime Procs",
+    desc = "Always use Rime procs for free Howling Blast",
+    type = "toggle",
+    width = "full",
+} )
+
+spec:RegisterSetting( "frost_execute_threshold", 35, {
+    name = "Execute Threshold for Soul Reaper",
+    desc = "Target health percentage to use Soul Reaper",
+    type = "range",
+    min = 20,
+    max = 50,
+    step = 5,
+    width = "full",
+} )
+
 -- Register default pack for MoP Frost Death Knight
 spec:RegisterPack(
-	"Frost", 20250918, [[Hekili:TRvBpUTns4Fllcoh7Ejkw2R3KTW2aTxqr72MElQZD5BsIwM2IyLf1jrfdFWq)2VHKwsKsIYAXUPPaxcsw7vC4mdNxEMrdJJTZhDwTbXWo)(KXtMn(w73znXEYn2ZCwXogJDwfJ8FaTd(seAp8ZFkHMY4p9yifTHV7uAwIpSIZQ1zKq2Ve5SUblTV96BNCRZkuglGM4SA1(STjKhCwfq2Sbl3bo13z1hdiP5E8)HY9ol6Cp6w439zeAuUxijLblVLMK79Z4hiHelNvIhkok4TOSqg81FxC0K7Yz1Es0g3Tjy8)f0uCeADiEJZp6WaDKtw1tw5Nqy4ecc(gLgUHEiYcfXi7r7i(UPb4WqRe8EejcuIf5EJRKrnY4gH9clN9y(F4cBQQoftcdrjU0TGIjmQA611QKMEmcfNIDtJtir7sRr6mJhH1zB3AvtowzXvmEDiLcgMSKJCgDZtGr4KuCYdG2Xz0BF8msgEXGZ3dyMDfJlFcW239ez7KgSDcNT3AKTxbbHyM1UaAwOfFRFgxXIeebCjBWqAaWe7X14cpGoHelP99aPOuiu(dOiiMypoIbH0rBY9(dSmbk37EiEJB)uKpdfcuALffqdp6UoKSlGzDwg5EdY9gM7THYSeNx3T4pJtQIoNN7nn370jjjspDCiAxgUonJQouAIsCUSnADaHFvlmNr85XbsrFvtfSCDfXsZyRtWOhes0CkzhItjVs8C3uWf)awWWPxIHTOEv8J4F0LrZ8de86AJ86SZ6S4dXy)G6(QHx2xm4IE0rsllWRKSiSRFwsIiCAoahnXuuHMtXSlBK8VnmMItJ48BgSzyPoLk5ULpnJRyCysHEjxtMC2(AYWp9fRoVmuYoiDeGzXGhXDdblp13izHbqG6hj8(y6bCIRW6DaJIHhYpz1r)kZZZICLF3LxNr9i)ze8bqVf7a1naYNHDkkg5kXDMiTz1Hd7bNHaZlXCBoZzIplk3ziUuy1cWOqwGvSpyyFTiq67unQQl)M2n1JKw7PZukmbaJUqIBmoP7IPNtoKrDmuSwMHWXjxYpGlyRugu7p3BjiUzfH0gJS4rhgdTQwS1yR6LcbvRSqTjW8FfcXezlFa5hqI4q3jekCup2OK0dssD3lPesLrCdSmEh6uqejkpNtuALqM5wHGzg0riLeWljzDflcOhesEDikL1DxcnuL31HQupl5YL5KTQjvNCVFuOp6r61oexSY2YIOcZGPssg1H9WCpkYc9U4i8Eco9S3PItqfFwGlKpc1(9rhBRXenJYFKfPzrQHz2sK7YUafxQckkjqOrLRRRTuOuoimE)4D2QZtnbTZ4zTCRgDk1rK41DejAR1HVY5uV74oANqtCZ1Lg8Ekr8Qihirmj4whTr8OsM7OfIN7INxQOhtuI6Bvp(6w9q(EaGT6REHKwLIjSK)mkOuyvO(Mqq))RAhNRM(pva7(RyXKhhoU56b9V7MVvm45OyqCc2NUFnI1wnbAmGyJvCcfVGc)BHzWhPX4Wqxj4FQLMpsOc2c9JNLjEFglO2dNjNFFg1xZrVRsEezU3VgXNjX3N7jMbjKL)b69qK7pes2fXlfCGWP6t0pTISpTKQF4(Fl97lRUO7gGJBkoYVEqI2u6uMYJovAdOdLS)ipaHf0kTMHkl6(vpct8wR8uY2wtDCa30vm6nQAym9SVxrVe(CaDmLVsX0AFRZQdOKi5Cg)yaa)qGWLKcONxoj4Lqmg()Krs4w9ukhHgLXO7H0n4bqn4ODqay(D)MO6Mn4X(xrPzXCMWjqQraNuk))snY)h0iqReetJ5PXa98XcZ3uJgoE90VByJh(3A2bYO5lModuDgT3C5nM4sP2oX4HRSHGkIFRrIRvwqXAywa6(BLTCTXT0sEpFF531IB2(BU5)8CZ3(y4)xVyIZ3UYZvGHYLY0htDT7xPAltnULAddSpg8k8EfZ3yJKRnVCLDy(uxmQ7E5q1MLTYomFKlNwDV8(QJ3vzdZEwcxk7M4XfWy2AOx1UpbaT5nnBnQxfVApMnint5YV7x2xq211U4syzrBs(q52z28gUOBj8oOErUxNT5C3l6xNoCX)cG2pEG(6Fw0mv1lvM79Vp3XwA(Ds1k1Q0j93x8MIg6EfVHSfv9J9kr)Dl6O9Uf2duBRRqlUVG5G2jLx7cw3X2onvUY2xVUZRDQ0DxVISDXvT3)1PtD0718BAN7YMSko9Vxcx28SduQG9P(4AyCVsEfYlK3GmxBV0LsVySk7QH)PUuTRuwDPQlfMlrt3QI6gkV83EUHmqWqhW7phOD(kEFkBEsp3CvuKW3x)2DfUoWZ1)RRvtZulgW5Fx3F7GHgMrX8PNozA4eZNosvGf1s4YA4vMUwVtNUYW1bQXmTAncRJX7juzxL1Bk3rBx7ytXik5OyJA7AthmCOzdXaJMVrNonmr5QrNVystJDPTX0HC0inRtlf(ew9HnEn9fJh041ZlFM6RLVymxtB2858f3mEGHyzUsDgD5(vkq7QH463QOmnzIWw3YvkEXDAl9STU1M1A(jnCgOuahQP6faKo8(0uUPw7RX7Y(JvcLAmM4bggr8YfZg0M)70PwCGfpSMh8mIrVMQBnDxDwqLWxToc2bkZuA5IjJRXOQXD1nBUG81eY7gF(K1(iyRXkTMbkvIQj3zeSB5SbMsXxoBunPu79N4YrcBxmVvW2uO1xAWPDAch2W)VSTe4L8e4gtnvOe93qFDDV5LSLg18g8PERokYDEdX2Ps2iKZaC4tbmSeyldf(6prWHnHtS)ccNy)xB4KMyi2pxyi2pUOUwLB7yh99)paxsxU65goX(PcNOZPVuOhppXKD747n4KTj0g7hhAZLLAdD8laAJy43o)V]]
+	"Frost", 20250928, [[Hekili:TRvApUTnq0FlgfWWgnr1Y7rtcwBGeeeKSPjDrvqZ3KeTm9AcllAqjTUUWq)27qsDqjrk59iibOb5a7YJzECMhFdLOCTD)IRZsuc29ZtNm9IjVC6lSMoDYztp31j5WoSRZouWg0TWpeH2c))7y04eERhcPOL8zhttzbqpUolsjHjFiYDrBtApXEYlDDqPjRPmxhNTPRyKnUoRjlxILZahh468L1K4mF()qz(5UoZNUc(9GecnkZpKeNaDVIYY8FpEdjKybWHrxrcbq8lz(VfJswN5)XiYTRtEvMVaXz(J(e9MXzxdd41HKBJWlZ83t4d8R0V6q2gxoWxFZFe)QSRHHcJ9l7Pp)9OOL8HFdJqzKKdz()nIrqlcXXzxlHvS1ogoGUDbk5xN9B3L39Z4HSzj7PERfM4z3HctXZI3Hdd9sqSBXjXwRP7djr36TiefNmZE4wejsmERPRlqXnfghqN0F6D8k(kWdAjghfG1pggIeJ9wIrlFgz1SaknCjDFKvvZwmmhdXZT1BaeB7bp6kVK1YXRFuqAoIpQ9KOemJ7QblsxTYQE7wP7oEux75y4Ql1B9Dubzip88w8kuAOMGdmYTKOLERyy8)IvBEhjmeX4oueZu7k(qeAhelI3XG8snJTiKsbRLYoWxqcC3WqWcQ2eWSymBdyNtCcPGJjj4T5uhabBWj2pMjp9eNCDEXGEigInsVf6bfd7p)ekc2NUfhb5aG5M5)xyPQaqDb7al)AWmAnn8aq45Bq5olbfct1Qw7w4i(wOLdhTKMyjj2RW3Pqno74rExYCYUq0TP4Q(gR6qAAYcggTH7RrdAnPesapdD84GMUkVNAgtojVyi8UblcvMmO6Sibh8sOPbRlNHg)OXnHySCo5Xi1MRcrJmhigAm8n(4XrS0iSxqkJb2(QztBhSlJnMwKJhxl6G3UJUhZ8egEpgTJgjI6cpflTGvannkz2KHY2KKX6TjPcfnYrQuUe86wmei9wsWxn7YjdnqShpEyfdwdMAqL5C5BCuu4v3xKg5j)npEPh5ERPICsHoVvLeFVZ0wYa0o12LCExnXjOIaxFIMg6b05Dsz1yMh(FWbCHty16DwCJHltAjODkSOY2kPqI4OS5G18qTvCcu9D(SlgQl1D8OMCxrJnsE5IfFessCooiweSMeHlukGeQMaVe7sMy1wnbk3inK3wPDGujmhoVHe4js0ZNnDsddrbrfOScCOKUntp(VMtEXK8vwXsGgutjSUPQvMVeemyQ5lat6CZVyOPD3ZVyCdVSKF2hpiWcc2birvkE)3H9Wr4TeCmeBkqDAudLBXrQ(ZYivNHWrTY)Z1T3DoFVRSzb0YBLdItpqFEZSzFXsJiVLDAEgff)Evl32jiBr5mOe(y0bV3AAPOWN)vcoSTsI99tjX(hBLK2Yh2pvYh23pcNw)Qx2q7PNKpwJ0Dz(VH7V(WYGNALe7hRssDl9Ts44PHt2DI)K1LSnj0yF)eA63RTW43rHgxhGEfdqP6r9DD2Jyr8hCY15dWCzj8ZXCEJNF3k7Axh45GdGjEbygrJ8xMW01W))zXBLip55(gxNagpUsqWCAQr56inS49quOM5Ma21OnmrtY8hM5BGQK5pFwM)fIHmkZVvWnZh6EsM)XJfDQeLB3PA4UO3XvlLsOXxiNzCH0X5y44uH2iH)0jvUqLJjF5lmYozxN0j14i78haYQqq1UfUTUWOTATmEHPLbyMl7gsks25zsdALGNks3M0mlgIsERM2CJOQ(tjYX8VBeZ1vCZtIvURHgn3wVWOTgPLyoxq9gQNxk7CSkXvrmUfCusOnw69DutoYF5PtaoVdcG9KtLbykTXnIqas36QYW8HzwJPgMVQoKRxnqyiZ7Xp9nXC7yEhPrfRHDiyzGxu25Gm)tPqHGjzxbBnd1Lh3DS)P6)pGQ)3dj)tA313CP(b5jYVJQ9N6H7)FP(F3Y9p2nODs8RT3QJAf3VAo)SCX3LYflL37tznJIjOCNpnsbnZafZOXBqwnsuI4MVL5C0oBsPmDzTO63Gudm0JeA7xMDt2l)(N6whTFdvEVu6usL30BXLpvnRQw63vA01Qz2PTm70t0SML4u5xTV2QM0QQrCs6rAVDQERRa7LptQFAUWICmkfwQ5QtPWI(7CRhjUrInKgV8kbOh0EPv2VcGlUGTkXqt5htUtzRO69R1JSPz4vzVYBERhLZoUGTIS8O(ZId7LlKxonVCCXLVb9YfRnXNQLumNYgl)BRGPy10JI)OUpA7dw3VA92(k8KR6lNuvAxZDuNVQEQRF8zBZ6NAUDofDJ6xRN8Lx5jf3MkJYDE00hSXTxll7v(HqO7HLOGkFmw543fUJ)tHPyXRDZ0NFIiNzlI1QFgknLG66dS5K(6AeOkFvPef6OaTCZqXx2sTiQG3uV)8kfM3S)GltCUAD(MFjmnk0BMFv8akT(yyK7v01NQkYLDD4WlvrO87KPoUk(J7)9]]
 )

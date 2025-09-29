@@ -13,8 +13,8 @@ Unholy⚠️
 
 Druid: ⁠https://discordapp.com/channels/307520968895627264/1391068538621661316
 Balance ❌
-Feral  ⚠️
-Guardian ❌
+Feral  ✅
+Guardian ⚠️
 
 Hunter: https://discordapp.com/channels/307520968895627264/1391065726038839326
 BM ✅
@@ -50,12 +50,12 @@ Warlock:
 https://discordapp.com/channels/307520968895627264/1391067646941728858
 Affliction ✅
 Demonology ⚠️
-Destruction ❌
+Destruction ⚠️
 
 Warrior: https://discordapp.com/channels/307520968895627264/1391065861204217897
 Arms✅
 Fury ❌
-Protection ❌
+Protection ⚠️
 
 I will switch status after receiving confirmation from the respective thread.
 

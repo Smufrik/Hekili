@@ -478,6 +478,363 @@ spec:RegisterResource(6, {
 			return state.talent.runic_attenuation.enabled and 1.0 or 0
 		end,
 	},
+
+	-- Scourge Strike - Core Unholy ability
+	scourge_strike = {
+		id = 55090,
+		cast = 0,
+		cooldown = 0,
+		gcd = "spell",
+		
+		spend_runes = {0, 0, 1}, -- 0 Blood, 0 Frost, 1 Unholy
+		
+		gain = 10,
+		gainType = "runic_power",
+		
+		startsCombat = true,
+		
+		handler = function ()
+			-- Shadow damage component scales with diseases
+			local disease_count = 0
+			if debuff.frost_fever.up then disease_count = disease_count + 1 end
+			if debuff.blood_plague.up then disease_count = disease_count + 1 end
+			
+			-- Shadow damage is 50% of physical damage per disease
+			-- This is handled by the simulation engine
+		end,
+	},
+
+	-- Death Coil - Core Unholy ability
+	death_coil = {
+		id = 47541,
+		cast = 0,
+		cooldown = 0,
+		gcd = "spell",
+		
+		spend = 40,
+		spendType = "runic_power",
+		
+		startsCombat = true,
+		
+		handler = function ()
+			-- Shadow Infusion proc chance (100% when active)
+			if buff.shadow_infusion.up then
+				removeBuff("shadow_infusion")
+				-- Empower ghoul
+			end
+			
+			-- Sudden Doom consumption
+			if buff.sudden_doom.up then
+				removeBuff("sudden_doom")
+				-- Free cast
+			end
+		end,
+	},
+
+	-- Festering Strike - Disease application
+	festering_strike = {
+		id = 85948,
+		cast = 0,
+		cooldown = 0,
+		gcd = "spell",
+		
+		spend_runes = {1, 1, 0}, -- 1 Blood, 1 Frost, 0 Unholy
+		
+		gain = 15,
+		gainType = "runic_power",
+		
+		startsCombat = true,
+		
+		handler = function ()
+			-- Apply both diseases
+			applyDebuff("target", "frost_fever", 30)
+			applyDebuff("target", "blood_plague", 30)
+		end,
+	},
+
+	-- Summon Gargoyle - Major cooldown
+	summon_gargoyle = {
+		id = 49206,
+		cast = 0,
+		cooldown = 180,
+		gcd = "spell",
+		
+		startsCombat = false,
+		
+		toggle = "cooldowns",
+		
+		handler = function ()
+			summonPet("gargoyle", 30)
+		end,
+	},
+
+	-- Dark Transformation - Pet enhancement
+	dark_transformation = {
+		id = 63560,
+		cast = 0,
+		cooldown = 60,
+		gcd = "spell",
+		
+		startsCombat = false,
+		
+		usable = function ()
+			return pet.ghoul.active
+		end,
+		
+		handler = function ()
+			applyBuff("dark_transformation")
+			-- Enhance pet abilities
+		end,
+	},
+
+	-- Blood Strike - Basic strike
+	blood_strike = {
+		id = 45529,
+		cast = 0,
+		cooldown = 0,
+		gcd = "spell",
+		
+		spend_runes = {1, 0, 0}, -- 1 Blood, 0 Frost, 0 Unholy
+		
+		gain = 10,
+		gainType = "runic_power",
+		
+		startsCombat = true,
+		
+		handler = function ()
+			-- Basic damage ability
+		end,
+	},
+
+	-- Death and Decay - AoE ground effect
+	death_and_decay = {
+		id = 43265,
+		cast = 0,
+		cooldown = 0,
+		gcd = "spell",
+		
+		spend_runes = {0, 0, 1}, -- 0 Blood, 0 Frost, 1 Unholy
+		
+		gain = 10,
+		gainType = "runic_power",
+		
+		startsCombat = true,
+		
+		handler = function ()
+			applyDebuff("target", "death_and_decay", 10)
+		end,
+	},
+
+	-- Soul Reaper - Execute ability
+	soul_reaper = {
+		id = 114867,
+		cast = 0,
+		cooldown = 0,
+		gcd = "spell",
+		
+		spend_runes = {0, 0, 1}, -- 0 Blood, 0 Frost, 1 Unholy
+		
+		gain = 10,
+		gainType = "runic_power",
+		
+		startsCombat = true,
+		
+		handler = function ()
+			applyDebuff("target", "soul_reaper", 5)
+		end,
+	},
+
+	-- Additional missing abilities for APL compatibility
+	-- Pillar of Frost - Major cooldown
+	pillar_of_frost = {
+		id = 51271,
+		cast = 0,
+		cooldown = 60,
+		gcd = "spell",
+		
+		startsCombat = false,
+		
+		toggle = "cooldowns",
+		
+		handler = function ()
+			applyBuff("pillar_of_frost", 20)
+		end,
+	},
+
+	-- Raise Dead - Pet summon
+	raise_dead = {
+		id = 46584,
+		cast = 0,
+		cooldown = 180,
+		gcd = "spell",
+		
+		startsCombat = false,
+		
+		handler = function ()
+			summonPet("ghoul", 60)
+		end,
+	},
+
+	-- Outbreak - Disease application
+	outbreak = {
+		id = 77575,
+		cast = 0,
+		cooldown = 60,
+		gcd = "spell",
+		
+		startsCombat = true,
+		
+		handler = function ()
+			applyDebuff("target", "frost_fever", 30)
+			applyDebuff("target", "blood_plague", 30)
+		end,
+	},
+
+	-- Plague Strike - Blood Plague application
+	plague_strike = {
+		id = 45462,
+		cast = 0,
+		cooldown = 0,
+		gcd = "spell",
+		
+		spend_runes = {1, 0, 0}, -- 1 Blood, 0 Frost, 0 Unholy
+		
+		gain = 10,
+		gainType = "runic_power",
+		
+		startsCombat = true,
+		
+		handler = function ()
+			applyDebuff("target", "blood_plague", 30)
+		end,
+	},
+
+	-- Icy Touch - Frost Fever application
+	icy_touch = {
+		id = 45477,
+		cast = 0,
+		cooldown = 0,
+		gcd = "spell",
+		
+		spend_runes = {0, 1, 0}, -- 0 Blood, 1 Frost, 0 Unholy
+		
+		gain = 10,
+		gainType = "runic_power",
+		
+		startsCombat = true,
+		
+		handler = function ()
+			applyDebuff("target", "frost_fever", 30)
+		end,
+	},
+
+	-- Empower Rune Weapon - Rune refresh
+	empower_rune_weapon = {
+		id = 47568,
+		cast = 0,
+		cooldown = 300,
+		gcd = "spell",
+		
+		startsCombat = false,
+		
+		toggle = "cooldowns",
+		
+		handler = function ()
+			gain(6, "runes")
+			gain(25, "runic_power")
+		end,
+	},
+
+	-- Horn of Winter - Runic power generation
+	horn_of_winter = {
+		id = 57330,
+		cast = 0,
+		cooldown = 20,
+		gcd = "spell",
+		
+		startsCombat = false,
+		
+		handler = function ()
+			gain(25, "runic_power")
+			applyBuff("horn_of_winter", 10)
+		end,
+	},
+
+	-- Mind Freeze - Interrupt
+	mind_freeze = {
+		id = 47528,
+		cast = 0,
+		cooldown = 15,
+		gcd = "off",
+		
+		startsCombat = true,
+		
+		toggle = "interrupts",
+		
+		debuff = "casting",
+		readyTime = state.timeToInterrupt,
+		
+		handler = function ()
+			interrupt()
+		end,
+	},
+
+	-- Anti-Magic Shell - Defensive
+	antimagic_shell = {
+		id = 48707,
+		cast = 0,
+		cooldown = 45,
+		gcd = "off",
+		
+		startsCombat = false,
+		
+		toggle = function()
+			if settings.dps_shell then
+				return
+			end
+			return "defensives"
+		end,
+		
+		handler = function ()
+			applyBuff("antimagic_shell")
+		end,
+	},
+
+	-- Unholy Blight - Disease spread
+	unholy_blight = {
+		id = 115989,
+		cast = 0,
+		cooldown = 60,
+		gcd = "spell",
+		
+		talent = "unholy_blight",
+		startsCombat = true,
+		
+		handler = function ()
+			applyDebuff("target", "unholy_blight", 10)
+		end,
+	},
+
+	-- Plague Leech - Rune recovery
+	plague_leech = {
+		id = 123693,
+		cast = 0,
+		cooldown = 25,
+		gcd = "spell",
+		
+		talent = "plague_leech",
+		startsCombat = true,
+		
+		usable = function ()
+			return debuff.frost_fever.up and debuff.blood_plague.up
+		end,
+		
+		handler = function ()
+			removeDebuff("target", "frost_fever")
+			removeDebuff("target", "blood_plague")
+			gain(1, "runes")
+		end,
+	},
 })
 
 local spendHook = function(amt, resource, noHook)
@@ -894,6 +1251,73 @@ spec:RegisterAuras({
 		duration = 15,
 		max_stack = 1,
 		type = "Physical",
+	},
+
+	-- Shadow Infusion - Empowers ghoul
+	shadow_infusion = {
+		id = 91342,
+		duration = 30,
+		max_stack = 5,
+	},
+
+	-- Sudden Doom - Free Death Coil
+	sudden_doom = {
+		id = 81340,
+		duration = 10,
+		max_stack = 1,
+	},
+
+	-- Dark Transformation - Enhanced pet
+	dark_transformation = {
+		id = 63560,
+		duration = 20,
+		max_stack = 1,
+	},
+
+	-- Frost Fever - Disease
+	frost_fever = {
+		id = 55095,
+		duration = 30,
+		max_stack = 1,
+		tick_time = 3,
+		type = "Disease",
+	},
+
+	-- Death and Decay - Ground effect
+	death_and_decay = {
+		id = 43265,
+		duration = 10,
+		max_stack = 1,
+		tick_time = 1,
+	},
+
+	-- Soul Reaper - Execute debuff
+	soul_reaper = {
+		id = 114867,
+		duration = 5,
+		max_stack = 1,
+		tick_time = 1,
+	},
+
+	-- Blood Charge - Blood Tap resource
+	blood_charge = {
+		id = 114851,
+		duration = 30,
+		max_stack = 5,
+	},
+
+	-- Ebon Plaguebringer - Disease enhancement
+	ebon_plaguebringer = {
+		id = 51160,
+		duration = 30,
+		max_stack = 1,
+	},
+
+	-- Unholy Might - Mastery buff
+	unholy_might = {
+		id = 53365,
+		duration = 15,
+		max_stack = 1,
 	},
 })
 
@@ -2737,6 +3161,71 @@ spec:RegisterSetting("dark_transformation_auto", true, {
 	type = "toggle",
 	width = "full",
 })
+
+-- Unholy Death Knight specific settings
+spec:RegisterSetting( "unholy_runic_power_threshold", 50, {
+	name = "Runic Power Threshold for Death Coil",
+	desc = "Minimum runic power to spend on Death Coil",
+	type = "range",
+	min = 20,
+	max = 100,
+	step = 5,
+	width = "full",
+} )
+
+spec:RegisterSetting( "unholy_shadow_infusion_priority", true, {
+	name = "Prioritize Shadow Infusion",
+	desc = "Always use Shadow Infusion procs to empower ghoul",
+	type = "toggle",
+	width = "full",
+} )
+
+spec:RegisterSetting( "unholy_sudden_doom_priority", true, {
+	name = "Prioritize Sudden Doom",
+	desc = "Always use Sudden Doom procs for free Death Coil",
+	type = "toggle",
+	width = "full",
+} )
+
+spec:RegisterSetting( "unholy_execute_threshold", 35, {
+	name = "Execute Threshold for Soul Reaper",
+	desc = "Target health percentage to use Soul Reaper",
+	type = "range",
+	min = 20,
+	max = 50,
+	step = 5,
+	width = "full",
+} )
+
+spec:RegisterSetting( "unholy_dnd_while_moving", false, {
+	name = "Use Death and Decay While Moving",
+	desc = "Cast Death and Decay even when moving",
+	type = "toggle",
+	width = "full",
+} )
+
+spec:RegisterSetting( "unholy_blood_tap_threshold", 5, {
+	name = "Blood Tap Threshold",
+	desc = "Minimum Blood Charge stacks to use Blood Tap",
+	type = "range",
+	min = 1,
+	max = 10,
+	step = 1,
+	width = "full",
+} )
+
+spec:RegisterOptions( {
+	enabled = true,
+	aoe = 4,
+	cycle = false,
+	nameplates = true,
+	nameplateRange = 8,
+	rangeFilter = false,
+	damage = true,
+	damageExpiration = 6,
+	potion = "mogu_power_potion",
+	package = "Unholy",
+} )
 
 spec:RegisterPack(	"Unholy",	20250918,	[[Hekili:vRvBpUnUr4FllkGHnAQJ8B7LuyVajnbTj96Ha4KVkjAzABIvsuqIk75dc63Eh(IKiLeL9I9L27WLSRnjN5HdN5HpJuCN5(D3T7rmS7Vn3z(kN3p7DtNpB5Yv)I7w25eS72euW9OJWVeJIG)(hXNOHN5F95qkApF5z080ayi3T7YjHSVe7URJnN9(5VBoytuo7en1D72O8dPK7D3EISFpwUcCwG72VFIKv6Z)dQ0x57sF6b4ZbmcnU0pKKXGHpqtl9)x47jHKPUBfFjhmikg(XVj2x4y0Uq8E3pcFTyXaSXzmsioMJxUdtjjYb(a9ZUBHpYWPeemgLnDxiLU3ljeDmhpLrcUNeFS0FuP)yjy(j2R90k9xxpgoghrWasN4YGirlaDLUIp4HuAgZ7a(N40NcmkkmMVMvTG66GM007OKq(ozH1DsgMXaWLnDF8EVhobXzVi6pfWL78Bk9LFSXY7Xi2jpem994a0zU5xA18meCWvTrzOKPQzjcg7YpCqnuWju6r80mgK9u6F3Ms)zovbS08yCMCEtdO5XSsFyChjaLdkcm2gmxK(BoANifGn(ozL1DI0kkS1S6mWSaY9YyqPbMBIBTAcX(Dpk9EpwkkodQgIqCRmDp9HyXUnbZME8enpCQ8OvlQ3DzCN9lwDgS3jbEj0h45kCqFRkOiqrwoVegsQOrttXGt0gBqekx9je8fEK4d5z8rvhBqg5kXK647LoTZFcuzMV762aRvBazgHaeaNuSh9G3dKyyfkewVjAnAkocrIZey8wJJFZjYH07VyoGmhIhn45oAFwKhQ9zZ9aFl04yCK4794jPEpGrjYt0zoxxeHhwxylSYGetOOfkMz86k2q0R9LzzYZUvyQs)VlT1tlJEqE1)SrxyNx9QPlSZDEvLAx(e4rumAN9RJrwz1i25)(FwfTDwYxHkAgpaDaLh2BvOrH2paDoe253kaEAEcRX2re4c3dPy8F0Bju10qXmse6iaXSt4WW(VPpjRA09OiHoXzo8)RVm6kdNIizGiemiF0eZ)dknKFsXv)fdroA8FlpJlgzCejnLMc)2h(2Vw6FeXeQkqPqHfmV)jubtphIF7N((BHIH47XSSj649M(jpe1ldYD1G(btPhpqXtEImXlqT56Ds1zG3jPF0sbZohJsG4vwskpKpCzXljqKSvhYtppCDWlkgWPz4uUe4(UWVAwQCGzx11lpAin3PQzOA)0Zn9TWY8xjSmV379Ratcv(ZxwOerpMlP18uoKJP2SvnyODPPbr(Ze2mlPYJIOXEhv0gc4nxNlayD8a0fL1IbyMnknj3V3UqYXtSwSAFcy7qcAmbP23uTO9RyCWPEeSyykdrlJ72pO(nxlKbLo9t2AoI2rNDX2SKl2lKJY2Oy8L9sp9U2ghs4QuzbxhCGeqysfbZTTFR7)T3DA9OtK)VwIV2UrS)TZLFZqgw1hRfy14pAoBh0l09cFzNUEaF1b7nY8MzN79AWgj4ShJMRce24q1eI1sbVODVs)pb9793l9ZsW8SAsueEpbXW8houBDNTBqu4yBeMzarGhmTeqVLPN)8VJdYzyZKvEBetpHrHSttt49EYfdUyLqyJnAqThOrNNceSJWS8eDNizLAE0iDYqF8p(Mj6cef66FvEKo8GIDE4b3Nx7d3XOSRNNVZ82Ynnoa(iWHZzfRLkMh7j)Dp(J47sODP8jb6jVhI)Sa5E0ENvTTXAHjS6CnBB2sSqzEskoGgTdDzT5FIhwk9)3XCkEOg6hQohg)FOFBsNlva7MjEILvA1RghLgDM3Cc7uLAAJlRSVTFIDi5oq7rTVxXMIG2ssuXqi1L3AA9toEL72hqPXcHVB)c0tukJFn0Ywpo4PLFfossWbWcxnNFuqpazOUB)lap1qb7YVw(vPLYMwF(9x382wH((Nu74F)ZYmg9gYHn2c)ffde6xFB)Mxg)EdpoVPtyMV9GqqNEbRnfyaTUb1)6wD)9gz7DBKD3X3fD7bu5TN1U40HutFJC)FthzJAtThbH6d3QNkU5gpGAZIIRrP5DZCmGBt)sVq2VUxOxg7xjcwMBv1RtDc8tYvGG8l5P5VeEAWQLxch2QvdUlAN3o6z4OBE)hDzQsYHAbXyD69EWX6q9KmASff(RxuuyR)G1lmaQUUCn)1xZhJgp2UrhzfktkkgR3GXDBM3f4kDz9aB1itMya7k59cEiBRPO4gB6)6gbKQ7h0E6RQwdF9k61nId)lky3G4Sw2FD1q33VJ0Uk54gz7nA3LNMTuNVEZIvQv3i1UlN5oL7L1hvYZQp56l40jbO6GBKy23Tz2OXkZ12eRnDtrH280SyRPnPBuRwNRfSBvcnKPi)LjQGJugSXDFMArLmyGa3(C1YlUqd1RDnX6LvPoe93wtJaeJ13)1TdsMY5Zgz9(7oMV(9KOrr0596mYY70bo6DgnUZBYzJtrrN3GtZxQ)MB2OrU2bBMVfgoaLlfC7aXREQY67LZSE1OHJHAVcb4C35A9OXYwnWY6kEvBPR3CRJ6YRhVA2bcP98UpAIRBCKv0WpfhCWp1H0ToA8l1Eaku4uT1)J)GBoRmjxjpXK2M3K76XsuDTU9rtpPqxpuuxMpQ)T4)Fuikr0vv(PIapVKu6H1ERRU1rvc05cu13B1PdsiyTKxcOxLkwPREQ1PxDKCHJ4Pd4(Fd]]
 )

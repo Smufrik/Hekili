@@ -29,9 +29,9 @@ actions.cooldowns+=/blood_fury
 actions.cooldowns+=/berserking
 actions.cooldowns+=/potion,name=virmens_bite_potion,if=buff.berserk.up|target.time_to_die<=26
 actions.cooldowns+=/incarnation,if=talent.incarnation.enabled&buff.tigers_fury.up
-actions.cooldowns+=/berserk,if=buff.tigers_fury.up
+actions.cooldowns+=/berserk,if=buff.tigers_fury.up|berserk_clip_for_hotw
 actions.cooldowns+=/force_of_nature,if=variable.use_trees&talent.force_of_nature.enabled
-actions.cooldowns+=/heart_of_the_wild,if=variable.use_hotw&talent.heart_of_the_wild.enabled
+actions.cooldowns+=/heart_of_the_wild,if=variable.use_hotw&talent.heart_of_the_wild.enabled&(buff.berserk.down|berserk_clip_for_hotw)
 
 # Utility and maintenance
 actions.maint+=/faerie_fire,if=variable.maintain_ff&debuff.faerie_fire.down
@@ -54,8 +54,8 @@ actions.wrath+=/wrath,if=variable.opt_wrath_weave&should_wrath_weave
 # Single-target core
 actions.st+=/tigers_fury,if=energy.current<=35+variable.tf_bonus&buff.berserk.down
 actions.st+=/savage_roar,if=!buff.savage_roar.up&combo_points.current>0
-actions.st+=/rip,if=combo_points.current>=5&(dot.rip.down|dot.rip.remains<=2|rip_stronger)
-actions.st+=/rake,if=dot.rake.down|dot.rake.remains<=3|rake_stronger
+actions.st+=/rip,if=combo_points_for_rip&(dot.rip.down|dot.rip.remains<=2|rip_stronger)&!delay_rip_for_tf&!clip_rip_with_snapshot
+actions.st+=/rake,if=(dot.rake.down|dot.rake.remains<=3|rake_stronger)&!delay_rake_for_tf&!clip_rake_with_snapshot
 actions.st+=/thrash,if=buff.clearcasting.up&(dot.thrash.down|dot.thrash.remains<=3)
 actions.st+=/shred,if=(buff.berserk.up|buff.clearcasting.up&(dot.thrash.up|combo_points.current>=5))&!(disable_shred_when_solo&active_enemies=1)
 actions.st+=/mangle_cat,if=combo_points.current<5&buff.berserk.down&buff.clearcasting.down
@@ -66,7 +66,7 @@ actions.aoe+=/tigers_fury,if=energy.current<=35+variable.tf_bonus&buff.berserk.d
 actions.aoe+=/thrash_cat,if=dot.thrash_cat.remains<4.5
 actions.aoe+=/swipe_cat
 actions.aoe+=/rake,cycle_targets=1,if=active_enemies<=6&dot.rake.remains<4.5
-actions.aoe+=/rip,cycle_targets=1,if=active_enemies<=4&combo_points.current>=5&dot.rip.remains<7.2
+actions.aoe+=/rip,cycle_targets=1,if=active_enemies<=4&combo_points_for_rip&dot.rip.remains<7.2&!delay_rip_for_tf&!clip_rip_with_snapshot
 
 # Unified Cat Optimal Rotation (translation of WoWSims catOptimalRotationAction)
 actions.cat_optimal+=/variable,name=tf_bonus,value=0

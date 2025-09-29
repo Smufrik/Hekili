@@ -1,7 +1,7 @@
 ## Interface: 50501
-## Version: v5.5.1-1.0.0-MoP
+## Version: v5.5.1
 ## Title: Hekili
-## Author: Hekili
+## Author: Hekili, modified to mop by Smufrik
 ## X-Flavor: MoP
 ## IconTexture: Interface\AddOns\Hekili\Textures\LOGO-ORANGE.blp
 ## Notes: Priority helper based on SimulationCraft action lists.

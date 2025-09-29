@@ -32,8 +32,16 @@ function BigLibTimer.OnUpdate(handler)
 			for Name in pairs(TIMER) do
 				if TIMER and TIMER[Name] and not TIMER[Name].Running and TIMER[Name].Seconds <= GetTime() then
 					if TIMER[Name].Function then
-						TIMER[Name].Function(unpack(TIMER[Name].Args))
-						if TIMER and TIMER[Name] and TIMER[Name].Seconds <= GetTime() then
+						local success, err = pcall(function()
+							TIMER[Name].Function(unpack(TIMER[Name].Args))
+						end)
+						
+						if not success then
+							-- Timer function failed, likely due to deprecated 'this' reference
+							-- Clean up the timer to prevent repeated errors
+							TIMER[Name].Args = handler:RecycleTable(TIMER[Name].Args)
+							TIMER[Name] = handler:RecycleTable(TIMER[Name])
+						elseif TIMER and TIMER[Name] and TIMER[Name].Seconds <= GetTime() then
 							if TIMER[Name].RepeatSeconds > 0 then
 								TIMER[Name].Seconds = GetTime() + TIMER[Name].RepeatSeconds
 							else
