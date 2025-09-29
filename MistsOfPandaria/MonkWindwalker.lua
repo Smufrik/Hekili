@@ -599,7 +599,7 @@ local function RegisterWindwalkerSpec()
             end
         elseif event == "ADDON_LOADED" then
             local addonName = ...
-            if addonName == "Hekili" or TryRegister() then
+            if addonName == "Hekili" or TryRegister() thenf
                 self:UnregisterEvent("ADDON_LOADED")
             end
         end
