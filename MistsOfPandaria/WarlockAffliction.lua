@@ -40,6 +40,13 @@ local afflictionCombatLogFrame = CreateFrame("Frame")
 local afflictionCombatLogEvents = {}
 local hauntFlight = { active = false, destGUID = nil, expires = 0 }
 
+-- Initialize DoT snapshot tracking
+local dot_snapshot = {
+    agony = { value = 0, crit = 0 },
+    corruption = { value = 0, crit = 0 },
+    unstable_affliction = { value = 0, crit = 0 },
+}
+
 local function RegisterAfflictionCombatLogEvent(event, handler)
     if not afflictionCombatLogEvents[event] then
         afflictionCombatLogEvents[event] = {}
@@ -125,13 +132,6 @@ spec:RegisterStateExpr( "haunt_in_flight", function()
     local now = state.query_time or GetTime()
     return (hauntFlight.expires > now) and 1 or 0
 end )
-
--- DoT snapshot tracking for percent_increase logic
-local dot_snapshot = {
-    agony = { value = 0, crit = 0 },
-    corruption = { value = 0, crit = 0 },
-    unstable_affliction = { value = 0, crit = 0 },
-}
 
 -- Helper to get current snapshot value (spell power + haste + mastery)
 local function get_dot_snapshot_value()
