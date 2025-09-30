@@ -340,11 +340,6 @@ RegisterShadowCombatLogEvent("SPELL_AURA_REMOVED", function(timestamp, subevent,
     end
 end)
 
--- Hook into state reset to manage SW:D reset tracking
-spec:RegisterHook( "reset_precast", function()
-    check_swd_reset()
-end )
-
 -- ============================================================================
 -- ADVANCED RESOURCE SYSTEMS - Enhanced MoP Shadow Priest Resource Management
 -- ============================================================================
@@ -474,57 +469,26 @@ end )
 -- } )
 
 spec:RegisterResource( 0 ) -- Mana = 0 in MoP (primary resource)
-
--- ============================================================================
--- SHADOW ORB DETECTION
--- ============================================================================
-spec:RegisterResource( 28, { -- Shadow Orbs = 28 in MoP
-    mind_blast = {
-        last = function ()
-            return state.abilities.mind_blast.lastCast
-        end,
-
-        interval = function ()
-            return state.abilities.mind_blast.cooldown
-        end,
-
-        stop = function ()
-            return state.abilities.mind_blast.lastCast == 0
-        end,
-
-        value = 1, -- Mind Blast generates 1 Shadow Orb
-    },
-
-    shadow_word_death = {
-        last = function ()
-            return state.abilities.shadow_word_death.lastCast
-        end,
-
-        interval = function ()
-            return state.abilities.shadow_word_death.cooldown
-        end,
-
-        stop = function ()
-            return state.abilities.shadow_word_death.lastCast == 0 or not state.talent.shadow_word_death.enabled
-        end,
-
-        value = 1, -- Shadow Word: Death generates 1 Shadow Orb on first cast
-    },
-})
+spec:RegisterResource( 28 ) -- Shadow Orbs = 28 in MoP (enable gain/spend simulation)
 
 -- Shadow Orbs resource system
 spec:RegisterStateTable( "shadow_orb", setmetatable({}, {
     __index = function( t, k )
         if k == "count" then
-            return UnitPower("player", 28) or 0 -- Read Shadow Orb resource
+            return ( state.shadow_orbs and state.shadow_orbs.current ) or ( UnitPower("player", 28) or 0 )
         elseif k == "max" then
-            return UnitPowerMax("player", 28) or 3 -- Maximum Shadow Orbs
+            return ( state.shadow_orbs and state.shadow_orbs.max ) or ( UnitPowerMax("player", 28) or 3 )
         elseif k == "deficit" then
             return t.max - t.count
         end
         return 0
     end,
 }))
+
+-- Optional alias: allow APLs to use shadow_orbs.* as well as shadow_orb.*
+spec:RegisterStateExpr( "shadow_orbs.count", function() return shadow_orb.count end )
+spec:RegisterStateExpr( "shadow_orbs.max", function() return shadow_orb.max end )
+spec:RegisterStateExpr( "shadow_orbs.deficit", function() return shadow_orb.deficit end )
 
 -- Base mana regeneration with comprehensive bonus calculations
 -- spec:RegisterResource( 0, {}, { -- Mana = 0 in MoP
@@ -1504,6 +1468,25 @@ spec:RegisterAuras( {
         end,
     },
 
+    -- Glyph of Mind Spike added when Mind Spike is cast and glyph is enabled
+    glyph_of_mind_spike = {
+        id = 81292,
+        duration = 9,
+        max_stack = 2,
+        generate = function( aura )
+            if glyph.mind_spike.enabled and action.mind_spike.lastCast then
+                aura.count = 1
+                aura.applied = query_time
+                aura.expires = query_time + 9
+                aura.caster = "player"
+            end
+            aura.count = 0
+            aura.applied = 0
+            aura.expires = 0
+            aura.caster = "nobody"
+        end,
+    },
+
     -- Shadow Word: Death Reset Available
     -- Tracks when SW:D reset is available after target survives below 20% health
     -- Only usable if 9-second internal cooldown has elapsed since last reset
@@ -1529,54 +1512,6 @@ spec:RegisterStateTable( "threat", setmetatable({}, {
         return 0
     end,
 }))
-
--- State Functions for SW:D Reset Management
-spec:RegisterStateFunction( "check_swd_reset", function()
-    -- Initialize tracking variables if they don't exist
-    ns.shadow_priest_swd_reset_available = ns.shadow_priest_swd_reset_available or false
-    ns.shadow_priest_swd_reset_available_time = ns.shadow_priest_swd_reset_available_time or 0
-    ns.shadow_priest_last_reset_time = ns.shadow_priest_last_reset_time or 0
-
-    local current_time = GetTime()
-    local reset_available = ns.shadow_priest_swd_reset_available
-    local reset_time = ns.shadow_priest_swd_reset_available_time
-    local last_reset_used = ns.shadow_priest_last_reset_time
-
-    -- Clean up stale awaiting result flags (safety fallback)
-    if ns.shadow_priest_swd_awaiting_result and
-       (current_time - (ns.shadow_priest_swd_cast_timestamp or 0)) > 2 then
-        ns.shadow_priest_swd_awaiting_result = false
-
-        if Hekili.ActiveDebug then
-            Hekili:Debug("SW:D awaiting result timeout - assuming target survived")
-        end
-
-        -- Assume target survived after 2 seconds
-        if current_time - last_reset_used >= 9 then
-            ns.shadow_priest_swd_reset_available = true
-            ns.shadow_priest_swd_reset_available_time = current_time
-        end
-    end
-
-    -- Check if we have a reset available and it hasn't been consumed
-    if reset_available and current_time - reset_time < 3600 then
-        -- Check if we're not within the 9 second internal cooldown
-        if current_time - last_reset_used >= 9 then
-            if not state.buff.shadow_word_death_reset_cooldown.up then
-                applyBuff( "shadow_word_death_reset_cooldown" )
-            end
-        else
-            if state.buff.shadow_word_death_reset_cooldown.up then
-                removeBuff( "shadow_word_death_reset_cooldown" )
-            end
-        end
-    else
-        if state.buff.shadow_word_death_reset_cooldown.up then
-            removeBuff( "shadow_word_death_reset_cooldown" )
-        end
-    end
-end )
-
 
 -- Abilities
 spec:RegisterAbilities( {
@@ -1606,6 +1541,14 @@ spec:RegisterAbilities( {
         spend = 0.22,
         spendType = "mana",
 
+        usable = function ()
+            -- Avoid immediate repeat recommendation
+            if state.prev_gcd and state.prev_gcd[1] and state.prev_gcd[1].shadow_word_pain then
+                return false, "shadow_word_pain was last gcd"
+            end
+            return true
+        end,
+
         handler = function ()
             applyDebuff( "target", "shadow_word_pain" )
         end,
@@ -1620,6 +1563,14 @@ spec:RegisterAbilities( {
 
         spend = 0.20,
         spendType = "mana",
+
+        usable = function ()
+            -- Avoid immediate repeat recommendation
+            if state.prev_gcd and state.prev_gcd[1] and state.prev_gcd[1].vampiric_touch then
+                return false, "vampiric_touch was last gcd"
+            end
+            return true
+        end,
 
         handler = function ()
             applyDebuff( "target", "vampiric_touch" )
@@ -1636,9 +1587,16 @@ spec:RegisterAbilities( {
         spend = function() return shadow_orb.count end,
         spendType = "shadow_orbs",
 
+        usable = function ()
+            -- Avoid immediate repeat recommendation
+            if state.prev_gcd and state.prev_gcd[1] and state.prev_gcd[1].devouring_plague then
+                return false, "devouring_plague was last gcd"
+            end
+            return true
+        end,
+
         handler = function ()
             applyDebuff( "target", "devouring_plague" )
-            -- Consumes all Shadow Orbs to empower the DoT
         end,
     },
 
@@ -1653,7 +1611,7 @@ spec:RegisterAbilities( {
         spendType = "mana",
 
         handler = function ()
-            -- Shadow Orb generation handled by resource system
+            gain( 1, "shadow_orbs" )
         end,
     },
 
@@ -1671,27 +1629,52 @@ spec:RegisterAbilities( {
         start = function ()
             applyDebuff( "target", "mind_flay" )
         end,
+
+        finish = function ()
+            removeDebuff( "target", "mind_flay" )
+        end,
     },
 
     -- Mind Spike
     mind_spike = {
         id = 73510,
-        cast = function () return buff.surge_of_darkness.up and 0 or 1.5 end,
+        cast = function ()
+            if buff.surge_of_darkness.up then
+                return 0
+            end
+            local base = 1.5
+            if glyph.mind_spike.enabled then
+                -- Each stack of glyph_of_mind_spike reduces cast time by 50%, up to 2 stacks, 50% per stack
+                local stacks = buff.glyph_of_mind_spike.stack or 0
+                local reduction = min(stacks, 2) * 0.5
+                return max(0, base * (1 - reduction))
+            end
+            return base
+        end,
         cooldown = 0,
         gcd = "spell",
 
-        spend = function () return buff.surge_of_darkness.up and 0 or 0.18 end,
+        spend = function ()
+            return buff.surge_of_darkness.up and 0 or 0.18
+        end,
         spendType = "mana",
+
+        usable = function ()
+            -- Stop precombat spam and immediate repeats
+            if state.prev_gcd and state.prev_gcd[1] and state.prev_gcd[1].mind_spike then
+                return false, "mind_spike was last gcd"
+            end
+            return true
+        end,
 
         handler = function ()
             if buff.surge_of_darkness.up then
                 removeBuff( "surge_of_darkness" )
             end
 
-            if buff.mind_melt.up then
-                applyBuff( "mind_melt", nil, min( 3, buff.mind_melt.stack + 1 ) )
-            else
-                applyBuff( "mind_melt" )
+            if glyph.mind_spike.enabled then
+                local stacks = buff.glyph_of_mind_spike.stack or 0
+                applyBuff("glyph_of_mind_spike", nil, min(2, stacks + 1))
             end
 
             -- Remove DoTs
@@ -1718,7 +1701,7 @@ spec:RegisterAbilities( {
 
         usable = function()
             -- Can only be used on targets below 20% health
-            if state.target.health.pct >= 20 then
+            if state.target.health.pct > 20 then
                 return false
             end
 
@@ -1727,27 +1710,30 @@ spec:RegisterAbilities( {
         end,
 
         handler = function ()
-            -- Shadow Orb resource tracked by resource system
-
-            -- Shadow Word: Death Reset Cooldown
+            local now = GetTime()
             local using_reset = state.buff.shadow_word_death_reset_cooldown.up
 
-            if Hekili.ActiveDebug then
-                Hekili:Debug("SW:D Cast - Using reset: %s Target Health: %.1f%% Awaiting result set to true at: %.3f",
-                    tostring(using_reset), state.target.health.pct, GetTime())
+            -- Only the non-reset SW:D grants an orb.
+            if not using_reset then
+                gain( 1, "shadow_orbs" )
             end
 
-            -- If we used a reset, consume it and set the 9 second internal cooldown
+            -- Reset behavior: If this cast is the second (reset) one, consume the reset and start ICD.
             if using_reset then
                 removeBuff( "shadow_word_death_reset_cooldown" )
-                -- Clear the reset availability and set internal cooldown
                 ns.shadow_priest_swd_reset_available = false
-                ns.shadow_priest_last_reset_time = GetTime()
+                ns.shadow_priest_last_reset_time = now
             else
-                -- Set up tracking for potential reset (only if target < 20% health)
-                if state.target.health.pct < 20 then
-                    ns.shadow_priest_swd_cast_timestamp = GetTime()
-                    ns.shadow_priest_swd_awaiting_result = true
+                -- First SW:D at sub-20%: assume target survives and reset becomes available if ICD allows.
+                if state.target.health.pct <= 20 then
+                    local last = ns.shadow_priest_last_reset_time or 0
+                    if ( now - last ) >= 9 then
+                        applyBuff( "shadow_word_death_reset_cooldown" )
+                        -- Make the next SW:D immediately available in the planner.
+                        state.setCooldown( "shadow_word_death", 0 )
+                        ns.shadow_priest_swd_reset_available = true
+                        ns.shadow_priest_swd_reset_available_time = now
+                    end
                 end
             end
         end,
@@ -1862,6 +1848,10 @@ spec:RegisterAbilities( {
         start = function()
             applyDebuff( "target", "mind_sear" )
         end,
+
+        finish = function()
+            removeDebuff( "target", "mind_sear" )
+        end,
     },
 
     -- Power Word: Fortitude
@@ -1929,4 +1919,4 @@ spec:RegisterAbilities( {
 } )
 
 -- Register default pack for MoP Shadow Priest
-spec:RegisterPack( "Shadow", 20250729, [[Hekili:LMv3Urkot0hMvQvIswwGUzspFQjxS7nZKlgTsmxd4gmPTA(tgtYxlfXZ(w2qd2M)6jZften2(uNQCvLpEW3Y)N(EXig2)h2M2oMpz)vdlRTp58fFp2LsSVxjk6m6v4HCug8xVtO4I35V(sAbkMV8QIAAeFis2)qrjSMqND7)Z9(EhRjPSVN7FCAt447HQzNkO(EFJKHr(ENiXX425JRI89(5jsvti)FOMWoI0ewKa)oIrkYBctjvmy4KcAt43WNjPedGB0IeskWO)Oj8FPeCf7)1e2s8MxG3Pr0MxAEPfVkJskoQi7iI9G7Fvw8oMg8EbnoaWNry1X4hjjUhRtsmMAqdWa5tJfjphMEcHoGWWRwyDvcwdwiRFDdVAH1vwiIpVi5B)AOXN9LCuzfoOQKsYFTsEOA41ego7rEsHldg)mMzT6mSLNrlf7jYX0II406kMbfdt6Jpyi6RyMbdsncyfbXe8b3DMt4oeCESkW8TgsEsDvNbyOuCoZqDadCo6ykwzPcseKutVO8wmTctpdbb53IOrOCo1Oua8X8Qn5igJyN0I2sJeqXvywqurrkp8BuxUHJZB4aCoodsDp46idDm(nOAdysqzk61Ar2uhOf0Jgrf15m3TBURhWmsECWXuKiUMHi5vhSmC6JUNWOu2jJYi2bBZn9RAepLx89YeAaFovwK7)gHf(FwoWi4rsk6ch0ySaw9GfKlfDUkO1vo4ATzU5b7cDPmvfPOiCacah8EuoHD5AEZJrNayCTMZflHrFm6sukKJic2vUwpMH()bQVZrKGkrmxRp(OJy6WnQe9nuwjHsIGSW6Ot3Q16qxDX97WrWEzaVQ7boRep1tiTLmlDWzhPqCJBmPmmTY3BmxwBtB0MEvj5mEYKVnTbXAW1dkscIr0Z54QQoKvAgDcLwi1PG)ZR7ZB6kvIHJAq5rqxOTM6V7zxRNKHdIHrO2tl6qS7n9GENkBFg20VBeO2oBGhzgzWwcMEjGIyq46GLJPP5991WsZF)9Jz7UPyRsymM8gb6KbdsLyS0BxI1trWTabNGj27KT67ic7XkCK76DDAz1NRHLPHZOohwlZJX9m5eyPwQRAe1m1zYlfh8DdT5QW8nQCiItRlzbA9poynUy4z3TZ0SCEuwT1DwXBAhjQEyqBV12SiiirE9u3z7BgVs5uWvYbhNwTFcaxVcCQcLX4mQJ(Kooasjisa(LV3BDpCvT7oFV3r0CUekFVVNvcQfbrhH2AIynAEX3t8KqsoobvNYGh)HqIEhP9)BFVikORIsqC91JfWbAQfOcYY7hWNbKHJs)qQk7KHhM6wnd2k8)QiVbu6FdSMDlTg7rRXMVgNLDmnbHnHF8rt4yrHnHhCBc3zoyJwHLCl8ffNEqTOMd)0SezrHJYwuECoK7LT8GQsnd)vLz1RYuBwwMYttv2P(uVPKLf1F2eUPnZCO7rBi2rpukbJW22ZAB9t1Bcb82kS0DnHl0yfSCtii5uzZF4iaXW2McGw)OGbWUFWv0fHi8e9kGbpzLaZGhiWrVQ4xD3qOV6tVFOxFPqsE3FGqCjS(EwYu7wep3Yalb3MxeTy41fsli7xMHS69FbMklOL3E0BKmxFphLQyfM3sCE(0sQSfKsVXWvsPkd(ZqPfLGlsu7LH3e(aefVkfxH5tihxW79ZM3Pu7O13ux9UaQV(zkQNivz5koBZFTkoHvwsDVGm2A58c9xcZnFBYjUaqxASIAHwES1C6XEM7XpnyDoAc7oFlYPfPCTfPEq45(C47MX82TXOjuN32gKFfcOrOsJvne2lgFoFF3s(U02DNhjC)57RoVEV1dbZ5J8BHSOlWLM1Nvoyzbv1BDdxqa47QNXmai)AfQE4V)HxMgoZECGqgMTEpFvAp(a2557ANkVox0BPRF6303)5woVtRAEE9BJsA4fT64a3MY3t(IqQNyCO1Be9uxCwtDaRI6m75BM2ELIvorF78DjN9UwIWPo6QYu2UA3W5klNUQA)K2uRaB7NQv4sDI0nOuJNTZ34zPaVqVbF57KfGlFxp5Txg)dp09)aV)e3B766N6lh0(bpOKY2PO)rl0)IfJ25N9Rris7woRr77qmq0HbebHBrl7Qxdvjs2DrnTOiehHaCeVz2EXp9)Vd]] )
+spec:RegisterPack( "Shadow", 20250729, [[Hekili:nN1sVnUnq4FmfWWbBQQLFSjPWYhAV0nhwuaTa9MKOLOJzTEbkQKAad9BVdjLLOOOKCs3fOhsII4Wz(M3Za5z79np3ied791LlwUzXtlFYY(b712R9CzNZXEU5OWtOxGhsrjWVDpIIYEJ)6ZXzOi(1lYkPH8Jij)ofDGvfSz9J)8JEU7ljXSVK6T3SiwbxnhhcVEdq8rsuewslUi0Z9Bhjfvb8Fqvb1GOki7a8)HmswAvqmPGbhFiJwf8h4tKyIfGlA2bsmGMFQk4pPeCb7xRcKGU6z4DAGS65QNL8RWkNIdZs2JyFY5xYZEdt9FlJg5d8NryLr47jhC2xE4GLPdTabKAMxK0uG8deAlhAF1i3RqGAqcjn3R9vJCV8m(7UN7VC(Bue2VatZXPmF5bMVucjnYViNCcZnjn08(Gbq9ROKCcLe6Jt2trHcv(igfZoALhY26SEHk1LfyFcdNCFrCgZ5iknQGFHWSSyoJTkoNIYbAkYPK0xkSOyu0zJmqOTmGQtyM9KuSuLIjSxnA9(4SSO4YcghgHSlxyi6lyMfJKG9zz(reSU(vBOi40OUsKharspuwulagkgKOv3dSWPO9X4oxvac)dL0oMH9yka6tGns9TiAikLdnkfyEFCjdHJWi2rnxRYj(uCbM534skZNX5ZRyFCkobsW26SrL1r4xH6bas8ZJrVukcaQzAgDFHZQzr4EskhrsbRAc8NIDnu0elXYkdpQC(8g0icB3hJeof5XoF(YfZNdXo3Pc12d5GCuTsq6Hy0zoL1WtxtHaHWtf(sCS1XE2q0bMWA)DrwmKJ4dX9GtVaLsyNV60Vp8iWgh7VtUn(Vg3XP7pUp8Cyme9icYlCSVpb9p(DF3grORIw7yF5YqU3bRui8U3Q0gn0yBi4l955JFIJkXtnas7k6W5JQ(ZFp6)DZ6xZyN9I)7ML5FxTl3amNonVt2GDVKjrVgJ5DZK2Vsab(zh8Jq0tP4IcRWSYuMtNs3hrXzkLp5)718NRQqemLakneknVAH(725y)Gk7aZuis2OVMJ1VPHPZ7I2DG)EEpMUCZm4rMvcy1X0Z(uedmuBT3SyXI7AABOq)J31hTRnH2oMXiYReO8oCivbXkVDmuBcGRaaAajlxpSZBaxLOb54LBK8bZXEkacAzodcVBE2xRYYw7(Xk7Cwnqn6H44G9fuAz0Ru6vk(4Pyd1QB7lHrtwFpj7vT(6D7Bj7Xi96apjVCSEaLz9V5ThY0pk4rd8B6egtX195tVIVg1BGj5WGoW)55(A9dYDkEy5tEUVHOP8Pe9C)ssomxom4uWsT1fSQE2Zv8KyXh8buzmdE8RIfHQbT3V55gsHHgPeeFlM(t865k5kSbtZbEmamdYL2zGRc26ufSErlp0NzMZPvAC6kTIzKvz84ZkdaeMS(61a(UwJVYT6Uo4CRCAEdCNnJDNL9UZs(D(8a4xotDp7R2S1vbxUuf0VjuRTtIbdJRZf(dCHR5H4ZGRIiGShh0Bn644QkJ65Cw(KQKBNvxtW2l6qwZW76KzRsw3P51jD4iVBB(WY8QGzYKL2cSsZ9gDBPcBeYwpwTv2kteufaSALqituvSkyNgLMl5Qq38QGrwjaieK9NLbvd2cOk4UwfvF8gHEQN70QNty2AfLGp65tDiJ3adynF4FpxBvHClRDifTTQXZW6hIJNEfeby1tKFVbwI5S)WHwpmGPsp2bWL6qX865U9gv2ZDtNK8o2nPzJhHm2a8cqPx3OxDCry6hbsteVVfcFVoMrvWNaF41rn6GCdt0lW9t)anMZLG59ApHKU6GX(L6HSBOqjVR6IFyg85twJ5JBZVnDB4bpmx8ulBh4Z4vTwoCNbJzKcHm2gycSSuRQLyHaH4gUzGHL0uTpxhruIJvlmFgVsouvqzEO4mHChU4S5jtV23q3iSRjUD(aIFP0gzydkP)GVMNW3RmdJghEul2ORUVEmDxXDxRrc1xVNsp13Wq(tBcgsh5BkoQkaUJ2OYwjlG6uDumVn5T0drluCOMhnRE65QUDy3ocBThlvH7kwPCDERAUi1Bn0L))pC9tJtF0tT07C0AyKBPnrB8v6fW1C5M2Ev4V15E3bPwnCTZjc6nhZ(OrzQf(UA46PJuOzS8CDbQKwVA4QPJz4fnX5xFT6ceQRpRU8aJ)vZQ)sqEgwf(69n9zVKFTokjxsI(xCt)ZT1ZZp4Nste2nEuJ2hrRfOThimc3YaStUzV59MnT)PI9s8xw9c0gksP5gahbQKDmdQl9xhX44cX78(3p]] )

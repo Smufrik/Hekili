@@ -28,6 +28,21 @@ local function UA_GetPlayerAuraBySpellID(spellID)
     return nil
 end
 
+-- Planned seals within a single recommendation build (prevents duplicate seal spam in queue)
+spec:RegisterStateTable( "planned_seal", setmetatable( {}, { __index = function() return false end } ) )
+
+-- Clear planned seals at the beginning of each recommendation build
+spec:RegisterHook( "reset_precast", function ()
+    if state.planned_seal then
+        for k in pairs( state.planned_seal ) do
+            state.planned_seal[ k ] = nil
+        end
+    end
+end )
+
+-- Register Mana resource (0) so costs like spendType = "mana" work in emulation
+spec:RegisterResource( 0 )
+
 spec:RegisterResource( 9, { -- Holy Power with Protection-specific mechanics
     -- Grand Crusader reset proc (Protection signature)
     grand_crusader = {
@@ -329,6 +344,24 @@ blessing_of_might = {
             t.expires = 0
             t.applied = 0
             t.caster = "nobody"
+        end
+    },
+
+    -- Consecration tracker so APL keys like 'ticking'/'remains' resolve in emulator
+    consecration = {
+        id = 26573,
+            texture = GetSpellTexture(26573),
+        duration = 9,
+        tick_time = 1,
+        max_stack = 1,
+        generate = function( t )
+            -- Emulate a ground effect that we just cast — treat as up briefly for planning
+            local now = state.query_time or GetTime()
+            t.name = GetSpellInfo(26573) or "Consecration"
+            t.count = 1
+            t.expires = now + 9
+            t.applied = now
+            t.caster = "player"
         end
     },
     

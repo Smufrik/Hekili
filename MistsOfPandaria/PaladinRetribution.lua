@@ -53,6 +53,18 @@ local function GetActiveSeal()
     return nil, nil
 end
 
+-- Planned seals within a single recommendation build (prevents duplicate seal spam in queue)
+spec:RegisterStateTable( "planned_seal", setmetatable( {}, { __index = function() return false end } ) )
+
+-- Clear planned seals at the beginning of each recommendation build
+spec:RegisterHook( "reset_precast", function ()
+    if state.planned_seal then
+        for k in pairs( state.planned_seal ) do
+            state.planned_seal[ k ] = nil
+        end
+    end
+end )
+
 -- Combat Log Event Frame for advanced tracking
 local retri_combat_log_frame = CreateFrame("Frame")
 retri_combat_log_frame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
@@ -2089,11 +2101,17 @@ spec:RegisterAbilities( {
         startsCombat = false,
         texture = 135969,
 
+        usable = function()
+            if state.planned_seal and state.planned_seal.seal_of_truth then return false, "seal_of_truth already planned" end
+            return true
+        end,
+
         handler = function()
             removeBuff("seal_of_righteousness")
             removeBuff("seal_of_justice")
             removeBuff("seal_of_insight")
             applyBuff("seal_of_truth")
+            if state.planned_seal then state.planned_seal.seal_of_truth = true end
         end
     },
 
@@ -2106,11 +2124,17 @@ spec:RegisterAbilities( {
         startsCombat = false,
         texture = 135960,
 
+        usable = function()
+            if state.planned_seal and state.planned_seal.seal_of_righteousness then return false, "seal_of_righteousness already planned" end
+            return true
+        end,
+
         handler = function()
             removeBuff("seal_of_truth")
             removeBuff("seal_of_justice")
             removeBuff("seal_of_insight")
             applyBuff("seal_of_righteousness")
+            if state.planned_seal then state.planned_seal.seal_of_righteousness = true end
         end
     },
 
@@ -2123,11 +2147,17 @@ spec:RegisterAbilities( {
         startsCombat = false,
         texture = 135971,
 
+        usable = function()
+            if state.planned_seal and state.planned_seal.seal_of_justice then return false, "seal_of_justice already planned" end
+            return true
+        end,
+
         handler = function()
             removeBuff("seal_of_truth")
             removeBuff("seal_of_righteousness")
             removeBuff("seal_of_insight")
             applyBuff("seal_of_justice")
+            if state.planned_seal then state.planned_seal.seal_of_justice = true end
         end
     },
 
@@ -2140,11 +2170,17 @@ spec:RegisterAbilities( {
         startsCombat = false,
         texture = 135917,
 
+        usable = function()
+            if state.planned_seal and state.planned_seal.seal_of_insight then return false, "seal_of_insight already planned" end
+            return true
+        end,
+
         handler = function()
             removeBuff("seal_of_truth")
             removeBuff("seal_of_righteousness")
             removeBuff("seal_of_justice")
             applyBuff("seal_of_insight")
+            if state.planned_seal then state.planned_seal.seal_of_insight = true end
         end
     }
 } )
@@ -2200,6 +2236,15 @@ spec:RegisterOptions( {
     holy_prism_heal = false,
     execution_sentence_heal = false,
 } )
+
+-- Expose settings to APL/emulator by name
+spec:RegisterStateExpr( "recommend_seals", function()
+    return state.settings and state.settings.recommend_seals or false
+end )
+
+spec:RegisterStateExpr( "seal_of_righteousness_threshold", function()
+    return ( state.settings and state.settings.seal_of_righteousness_threshold ) or 4
+end )
 
 spec:RegisterSetting("recommend_seals", true, {
     name = "Recommend Seals",

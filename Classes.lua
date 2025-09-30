@@ -4347,14 +4347,17 @@ all:RegisterAura( "synapse_springs", {
     copy = {96228, 96229, 96230, 82174, 126734, 141330}
 })
 all:RegisterAbility( "synapse_springs", {
-    -- Equipment-based, not a learned spell; use a high positive ID to avoid conflicts.
-    id = 99982174,
+    -- Equipment-based, not a learned spell; use a negative sentinel ID so the loader doesn't query spell info.
+    id = -82174,
     cast = 0,
     cooldown = 60,
     gcd = "off",
 
     startsCombat = true,
     toggle = "cooldowns",
+
+    -- Internal helper; not shown in ability pickers.
+    unlisted = true,
 
     -- Provide item/texture like Cata for UI parity.
     -- Always provide the equipped glove item ID; gating is handled by known/usable.

@@ -34,6 +34,18 @@ local function UA_GetPlayerAuraBySpellID(spellID)
     return nil
 end
 
+-- Planned seals within a single recommendation build (prevents duplicate seal spam in queue)
+spec:RegisterStateTable( "planned_seal", setmetatable( {}, { __index = function() return false end } ) )
+
+-- Clear planned seals at the beginning of each recommendation build
+spec:RegisterHook( "reset_precast", function ()
+    if state.planned_seal then
+        for k in pairs( state.planned_seal ) do
+            state.planned_seal[ k ] = nil
+        end
+    end
+end )
+
 spec:RegisterResource( 0 ) -- Mana = 0 in MoP
 spec:RegisterResource( 9, { -- HolyPower = 9 in MoP
     beacon_of_light = {
