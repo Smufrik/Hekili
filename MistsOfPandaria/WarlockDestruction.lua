@@ -1486,15 +1486,13 @@ end )
 spec:RegisterStateExpr( "should_cast_chaos_bolt", function()
     local be = state.burning_embers and state.burning_embers.current or 0
     local bd = buff.backdraft.up and (buff.backdraft.stack or 0) or 0
-    return be >= 3.5 and bd <= 2
+    if target.health_pct > 20 and be >= 3.5 and bd <= 2 then return true end 
 end )
 
 spec:RegisterStateExpr( "should_cast_shadowburn", function()
     local be = state.burning_embers and state.burning_embers.current or 0
     local bd = buff.backdraft.up and (buff.backdraft.stack or 0) or 0
     if target.health_pct < 20 and be >= 3.5 and bd <= 2 then return true end
-    if target.health_pct < 35 and be >= 1 then return true end
-    return false
 end )
 
 spec:RegisterStateExpr( "should_cast_rain_of_fire", function()
