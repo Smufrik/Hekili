@@ -2343,26 +2343,16 @@ Hekili.KeybindInfo = keys
 local updatedKeys = {}
 
 local bindingSubs = {
---    { "CTRL%-", "C" },
---    { "ALT%-", "A" },
---    { "SHIFT%-", "S" },
---    { "STRG%-", "ST" },
---    { "%s+", "" },
---    { "NUMPAD", "N" },
---    { "PLUS", "+" },
---    { "MINUS", "-" },
---    { "MULTIPLY", "*" },
---    { "DIVIDE", "/" },
---    { "BUTTON", "M" },
---    { "MOUSEWHEELUP", "MwU" },
---    { "MOUSEWHEELDOWN", "MwD" },
---    { "MOUSEWHEEL", "Mw" },
---    { "DOWN", "Dn" },
---    { "UP", "Up" },
---    { "PAGE", "Pg" },
---    { "BACKSPACE", "BkSp" },
---    { "DECIMAL", "." },
---    { "CAPSLOCK", "CAPS" },
+    -- Keep substitutions minimal and readable to prevent keybind text overflow.
+    -- Modifiers -> lowercase with trailing hyphen.
+--    { "CTRL%-", "ctrl-" },
+--    { "ALT%-", "alt-" },
+--    { "SHIFT%-", "shift-" },
+    -- Mouse wheel directions -> concise lowercase.
+--    { "MOUSEWHEELUP", "mwup" },
+--    { "MOUSEWHEELDOWN", "mwdown" },
+    -- Generic mouse button -> short prefix (e.g., BUTTON4 -> m4).
+--    { "BUTTON", "m" },
 }
 
 local function improvedGetBindingText( binding )
@@ -2370,6 +2360,12 @@ local function improvedGetBindingText( binding )
 
     for i, rep in ipairs( bindingSubs ) do
         binding = binding:gsub( rep[1], rep[2] )
+    end
+
+    -- Ensure the label looks grammatical by capitalizing the leading character if it's alphabetic.
+    local first = binding:sub( 1, 1 )
+    if first:match( "%a" ) then
+        binding = first:upper() .. binding:sub( 2 )
     end
 
     return binding

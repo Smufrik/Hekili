@@ -48,22 +48,31 @@ local resourceFormatting = {
 
 -- Formats a number based on resource type
 function SnapshotUtil.FormatResourceNumber(value, resourceKey)
+    local num = tonumber(value)
+
+    if not num then
+        if Hekili and Hekili.ActiveDebug then
+            Hekili:Debug(2, "SnapshotUtil: resource '%s' provided non-numeric value %s", resourceKey, tostring(value))
+        end
+        return value ~= nil and tostring(value) or "n/a"
+    end
+
     local rules = resourceFormatting[resourceKey] or { decimals = 2 }
 
     -- Handle K formatting for mana
-    if rules.useK and rules.kThreshold and value >= rules.kThreshold then
-        if value >= 1000000 then
-            return format("%.1fM", value / 1000000)
+    if rules.useK and rules.kThreshold and num >= rules.kThreshold then
+        if num >= 1000000 then
+            return format("%.1fM", num / 1000000)
         else
-            return format("%.0fK", value / 1000)
+            return format("%.0fK", num / 1000)
         end
     end
 
     -- Standard decimal formatting
     if rules.decimals == 0 then
-        return format("%.0f", value)
+        return format("%.0f", num)
     else
-        return format("%." .. rules.decimals .. "f", value)
+        return format("%." .. rules.decimals .. "f", num)
     end
 end
 
@@ -161,25 +170,33 @@ function SnapshotUtil.FormatResourcesTable(includeDeltas, previousResources)
     end
 
     for k in orderedPairs(class.resources) do
-        local current = state[k].current
-        local maximum = state[k].max
-        local usage = maximum > 0 and math.floor((current / maximum) * 100) or 0
+        local resource = state[k]
 
-        -- Format resource name (capitalize first letter, replace underscores)
-        local resourceName = k:gsub("_", " "):gsub("(%a)([%w_']*)", function(first, rest)
-            return first:upper() .. rest:lower()
-        end)
+        if type(resource) == "table" then
+            local current = tonumber(resource.current) or 0
+            local maximum = tonumber(resource.max) or 0
+            local usage = maximum > 0 and math.floor((current / maximum) * 100) or 0
 
-        -- Format numbers for display based on resource type
-        local currentStr = SnapshotUtil.FormatResourceNumber(current, k)
-        local maxStr = SnapshotUtil.FormatResourceNumber(maximum, k)
+            -- Format resource name (capitalize first letter, replace underscores)
+            local resourceName = k:gsub("_", " "):gsub("(%a)([%w_']*)", function(first, rest)
+                return first:upper() .. rest:lower()
+            end)
 
-        if includeDeltas and previousResources and previousResources[k] then
-            local delta = current - previousResources[k].current
-            local deltaStr = delta > 0 and ("+" .. SnapshotUtil.FormatResourceNumber(delta, k)) or SnapshotUtil.FormatResourceNumber(delta, k)
-            output[#output + 1] = format("| %-13s | %7s | %9s | %4d%% | %5s |", resourceName, currentStr, maxStr, usage, deltaStr)
-        else
-            output[#output + 1] = format("| %-13s | %7s | %9s | %4d%% |", resourceName, currentStr, maxStr, usage)
+            -- Format numbers for display based on resource type
+            local currentStr = SnapshotUtil.FormatResourceNumber(current, k)
+            local maxStr = SnapshotUtil.FormatResourceNumber(maximum, k)
+
+            if includeDeltas and previousResources and previousResources[k] and type(previousResources[k]) == "table" then
+                local prior = tonumber(previousResources[k].current) or 0
+                local delta = current - prior
+                local deltaStr = delta > 0 and ("+" .. SnapshotUtil.FormatResourceNumber(delta, k)) or SnapshotUtil.FormatResourceNumber(delta, k)
+                output[#output + 1] = format("| %-13s | %7s | %9s | %4d%% | %5s |", resourceName, currentStr, maxStr, usage, deltaStr)
+            else
+                output[#output + 1] = format("| %-13s | %7s | %9s | %4d%% |", resourceName, currentStr, maxStr, usage)
+            end
+        elseif Hekili and Hekili.ActiveDebug then
+            -- Some resources can momentarily resolve to numeric placeholders while specs initialize.
+            Hekili:Debug(2, "SnapshotUtil: skipping resource '%s' because state[%s] is %s", k, k, type(resource))
         end
     end
 
@@ -193,16 +210,22 @@ function SnapshotUtil.FormatResourcesCompact()
     local output = {}
 
     for k in orderedPairs(class.resources) do
-        local current = state[k].current
-        local maximum = state[k].max
+        local resource = state[k]
 
-        local currentStr = SnapshotUtil.FormatResourceNumber(current, k)
-        local maxStr = SnapshotUtil.FormatResourceNumber(maximum, k)
+        if type(resource) == "table" then
+            local current = tonumber(resource.current) or 0
+            local maximum = tonumber(resource.max) or 0
 
-        if maximum > 0 then
-            output[#output + 1] = format("%s: %s/%s", k, currentStr, maxStr)
-        else
-            output[#output + 1] = format("%s: %s", k, currentStr)
+            local currentStr = SnapshotUtil.FormatResourceNumber(current, k)
+            local maxStr = SnapshotUtil.FormatResourceNumber(maximum, k)
+
+            if maximum > 0 then
+                output[#output + 1] = format("%s: %s/%s", k, currentStr, maxStr)
+            else
+                output[#output + 1] = format("%s: %s", k, currentStr)
+            end
+        elseif Hekili and Hekili.ActiveDebug then
+            Hekili:Debug(2, "SnapshotUtil: skipping compact resource '%s' because state[%s] is %s", k, k, type(resource))
         end
     end
 
@@ -214,10 +237,14 @@ function SnapshotUtil.CaptureResourceState()
     local resources = {}
 
     for k in orderedPairs(class.resources) do
-        resources[k] = {
-            current = state[k].current,
-            max = state[k].max
-        }
+        local resource = state[k]
+
+        if type(resource) == "table" then
+            resources[k] = {
+                current = resource.current,
+                max = resource.max
+            }
+        end
     end
 
     return resources

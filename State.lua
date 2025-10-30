@@ -8045,22 +8045,26 @@ function state.advance(time)
 	for k in pairs(class.resources) do
 		local resource = state[k]
 
-		if not resource.regenModel then
-			local override = ns.callHook("advance_resource_regen", false, k, time)
+		-- Some specs may temporarily expose a numeric value for a resource token;
+		-- only apply regen logic when the resource is a table/state model.
+		if type(resource) == "table" then
+			if not resource.regenModel then
+				local override = ns.callHook("advance_resource_regen", false, k, time)
 
-			local regen = resource.regen
-			if regen == 0.001 then
-				regen = 0
-			end
+				local regen = resource.regen
+				if regen == 0.001 then
+					regen = 0
+				end
 
-			if not override and resource.regen and regen ~= 0 then
-				resource.actual = min(resource.max, max(0, resource.actual + (regen * time)))
+				if not override and resource.regen and regen ~= 0 then
+					resource.actual = min(resource.max, max(0, resource.actual + (regen * time)))
+				end
+			else
+				-- revisit this, may want to forecastResources( k ) instead.
+				state.delay = time
+				resource.actual = resource.current
+				state.delay = 0
 			end
-		else
-			-- revisit this, may want to forecastResources( k ) instead.
-			state.delay = time
-			resource.actual = resource.current
-			state.delay = 0
 		end
 	end
 
