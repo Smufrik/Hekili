@@ -22,7 +22,7 @@ actions.variables+=/variable,name=use_cds,op=set,value=1
 actions.variables+=/variable,name=execute,op=set,value=target.health.pct<=35
 actions.variables+=/variable,name=dots_up,op=set,value=dot.blood_plague.ticking&dot.frost_fever.ticking
 actions.variables+=/variable,name=need_dots,op=set,value=!dot.blood_plague.ticking|!dot.frost_fever.ticking
-actions.variables+=/variable,name=proc_window,op=set,value=buff.unholy_strength.up|buff.dark_transformation.up|buff.bloodlust.up|buff.heroism.up|buff.time_warp.up|buff.ancient_hysteria.up|buff.blood_fury.up|buff.berserking.up
+actions.variables+=/variable,name=proc_window,op=set,value=buff.unholy_strength.up|buff.dark_transformation.up|buff.bloodlust.up|buff.heroism.up|buff.time_warp.up|buff.ancient_hysteria.up|buff.blood_fury.up|buff.berserking.up|buff.synapse_springs.up
 actions.variables+=/variable,name=shadow_infusion_ready,op=set,value=buff.shadow_infusion.stack>=4|buff.dark_transformation.up
 actions.variables+=/variable,name=runic_overcap,op=set,value=runic_power>=90
 actions.variables+=/variable,name=pool_for_gargoyle,op=set,value=cooldown.summon_gargoyle.remains<=14|target.time_to_die<=35
@@ -42,8 +42,8 @@ actions.cooldowns+=/arcane_torrent,if=runic_power.deficit>=20
 actions.cooldowns+=/unholy_frenzy,if=variable.proc_window&variable.dots_up
 actions.cooldowns+=/summon_gargoyle,if=(variable.pool_for_gargoyle&(variable.cooldown_window|variable.early_gargoyle|variable.long_fight_or_execute|target.time_to_die<=35))&variable.dots_up
 actions.cooldowns+=/dark_transformation,if=pet.ghoul.active&buff.shadow_infusion.stack>=5&variable.holy_moly&fight_remains>=15&!(variable.execute&cooldown.summon_gargoyle.ready)
-actions.cooldowns+=/death_coil,if=pet.ghoul.active&buff.shadow_infusion.stack>=4&buff.dark_transformation.down&cooldown.dark_transformation.remains<=gcd
-actions.cooldowns+=/use_item,slot=hands,if=variable.cooldown_window
+actions.cooldowns+=/death_coil,if=pet.ghoul.active&buff.shadow_infusion.stack>=4&buff.dark_transformation.down&cooldown.dark_transformation.remains<=gcd&(buff.sudden_doom.react|runic_power>=40)
+actions.cooldowns+=/use_item,slot=hands,if=variable.cooldown_window&cooldown.synapse_springs.ready
 actions.cooldowns+=/use_item,slot=trinket1,if=variable.cooldown_window|target.time_to_die<=25
 actions.cooldowns+=/use_item,slot=trinket2,if=variable.cooldown_window|target.time_to_die<=25
 actions.cooldowns+=/potion,if=variable.cooldown_window&target.time_to_die<=60
@@ -61,7 +61,7 @@ actions.single_target+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.
 actions.single_target+=/death_and_decay,if=runes.unholy.count>=1&(active_enemies>=2|variable.pool_for_gargoyle)
 actions.single_target+=/scourge_strike,if=runes.unholy.count>=1
 actions.single_target+=/festering_strike,if=runes.blood.count>=1&runes.frost.count>=1
-actions.single_target+=/death_coil,if=variable.runic_overcap|buff.sudden_doom.react|buff.shadow_infusion.stack>=4|(variable.holy_moly&runic_power>=70)
+actions.single_target+=/death_coil,if=variable.runic_overcap|buff.sudden_doom.react|(buff.shadow_infusion.stack>=4&runic_power>=40)|(variable.holy_moly&runic_power>=70)
 actions.single_target+=/horn_of_winter,if=buff.horn_of_winter.down
 actions.single_target+=/empower_rune_weapon,if=runic_power.deficit>=60&(runes.unholy.count+runes.death.count=0)
 

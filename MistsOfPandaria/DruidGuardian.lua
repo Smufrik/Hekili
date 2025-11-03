@@ -241,28 +241,7 @@ spec:RegisterAuras( {
         max_stack = 1,
     },
 
-    -- Enhanced Demoralizing Roar ability
-    demoralizing_roar = {
-        id = 99,
-        cast = 0,
-        cooldown = 30,
-        gcd = "spell",
-
-        spend = 10,
-        spendType = "rage",
-
-        startsCombat = true,
-        texture = 132117,
-
-        form = "bear_form",
-
-        handler = function ()
-            applyDebuff( "target", "demoralizing_roar", 30 )
-            if active_enemies > 1 then
-                active_dot.demoralizing_roar = active_enemies
-            end
-        end,
-    },
+    -- Removed misfiled ability block; demoralizing_roar ability is defined in RegisterAbilities below.
 
     -- Buffs from talents
     incarnation = {
@@ -304,6 +283,13 @@ spec:RegisterAuras( {
         id = 102351,
         duration = 30,
         max_stack = 1,
+    },
+
+    rejuvenation = {
+        id = 774,
+        duration = 12,
+        max_stack = 1,
+        tick_time = 3,
     },
 
     -- Other forms
@@ -395,11 +381,7 @@ spec:RegisterAuras( {
         max_stack = 1,
     },
 
-    pulverize = {
-        id = 80313,
-        duration = 20,
-        max_stack = 1,
-    },
+    -- Removed duplicate/incorrect Pulverize aura (80313 is the ability, not a buff).
 
     symbiosis = {
         id = 110309,
@@ -428,11 +410,7 @@ spec:RegisterAuras( {
         max_stack = 1,
     },
 
-    tooth_and_claw_debuff = {
-        id = 135286,
-        duration = 6,
-        max_stack = 1,
-    },
+    -- tooth_and_claw_debuff is defined earlier with correct ID (135601); remove duplicate.
 
     -- Weakened Blows debuff (applied by Thrash)
     weakened_blows = {
@@ -588,6 +566,9 @@ spec:RegisterHook( "reset_precast", function()
             forecastResources( "rage" )
         end
     end
+    
+    -- Set target.in_melee_range for SimC compatibility
+    state.target.in_melee_range = target.within8
 end )
 
 -- Bear Form drop cancels Enrage and Symbiosis interaction tracking
@@ -748,13 +729,7 @@ spec:RegisterSetting( "emergency_health_pct", 30, {
 } )
 
 -- State expressions for settings
-spec:RegisterStateExpr( "ironfur_damage_threshold", function ()
-    return ( settings.ironfur_damage_threshold or 0 ) / 100 * health.max * ( solo and 0.5 or 1 )
-end )
 
-spec:RegisterStateExpr( "max_ironfur", function()
-    return settings.max_ironfur or 1
-end )
 
 spec:RegisterStateExpr( "defensive_health_pct", function()
     return settings.defensive_health_pct or 50
@@ -1044,12 +1019,14 @@ spec:RegisterAbilities( {
         cast = 0,
         cooldown = 6,
         gcd = "spell",
+        copy = { "mangle_bear" },
 
         spend = -5,
         spendType = "rage",
 
         startsCombat = true,
         texture = 132135,
+        range = 5,
 
         form = "bear_form",
 
@@ -1086,12 +1063,18 @@ spec:RegisterAbilities( {
         spend = 10,
         spendType = "rage",
 
+        talent = "disorienting_roar",
         startsCombat = true,
-        texture = 132121,
+        texture = 132121,  -- Purple/disorienting roar icon
 
         form = "bear_form",
-        duration = 30,
-        max_stack = 1,
+
+        handler = function ()
+            applyDebuff( "target", "disorienting_roar", 30 )
+            if active_enemies > 1 then
+                active_dot.disorienting_roar = active_enemies
+            end
+        end,
     },
 
     -- Enhanced Lacerate (Guardian ability) with APL-based logic
@@ -1134,6 +1117,7 @@ spec:RegisterAbilities( {
         cast = 0,
         cooldown = 0,
         gcd = "spell",
+        copy = { "pulverize_bear" },
 
         spend = 15,
         spendType = "rage",
@@ -1163,16 +1147,24 @@ spec:RegisterAbilities( {
         cooldown = 3, -- 3 second cooldown from APL analysis
         gcd = "spell",
 
-        spend = function() return buff.bear_form.up and 20 or 30 end, -- Guardian gets reduced cost
+        spend = function()
+            -- Tooth & Claw makes Maul free; otherwise 20 (Bear) or 30 (other)
+            if buff.tooth_and_claw.up then return 0 end
+            return buff.bear_form.up and 20 or 30
+        end,
         spendType = "rage",
 
         startsCombat = true,
         texture = 132136,
+        range = 5,
 
         form = "bear_form",
         
-        -- Rage dumping logic from APL analysis
-        usable = function() return rage.current >= ( buff.bear_form.up and 20 or 30 ) end,
+        -- Usable if free via Tooth & Claw or we have enough rage
+        usable = function()
+            if buff.tooth_and_claw.up then return true end
+            return rage.current >= ( buff.bear_form.up and 20 or 30 )
+        end,
 
         handler = function ()
             if buff.tooth_and_claw.up then
@@ -1180,8 +1172,8 @@ spec:RegisterAbilities( {
                 removeBuff( "tooth_and_claw" )
                 applyDebuff( "target", "tooth_and_claw_debuff", 6 )
                 -- Apply absorb shield based on attack power and stacks
-                local absorb_amount = stat.attack_power * 0.65 * stacks
-                absorbDamage( absorb_amount )
+                -- In Hekili's simulator we don't track actual absorb values; omit the actual absorb application
+                -- to avoid calling undefined helpers. Effects are represented via the debuff and decision logic.
             end
             
             -- Benefits from Rend and Tear if bleeds are active
@@ -1255,6 +1247,25 @@ spec:RegisterAbilities( {
         end,
     },
 
+    -- Might of Ursoc (Guardian ability - heal based on Vengeance)
+    might_of_ursoc = {
+        id = 106922,
+        cast = 0,
+        cooldown = 180,
+        gcd = "off",
+
+        defensive = true,
+        toggle = "defensives",
+
+        startsCombat = false,
+        texture = 132091,
+
+        handler = function ()
+            -- Heals for 30% of max health
+            health.actual = min( health.max, health.actual + ( health.max * 0.3 ) )
+        end,
+    },
+
     -- Rage generators - Enhanced Enrage with proper tick mechanics
     enrage = {
         id = 5229,
@@ -1315,6 +1326,8 @@ spec:RegisterAbilities( {
 
         startsCombat = true,
         texture = 136033,
+        range = 30,
+        form = "bear_form",
         
         copy = { 16857 }, -- Bear form version
 
@@ -1367,6 +1380,10 @@ spec:RegisterAbilities( {
 
         startsCombat = true,
         texture = 132117,
+
+        form = "bear_form",
+
+        usable = function() return not talent.disorienting_roar.enabled end,
 
         handler = function ()
             applyDebuff( "target", "demoralizing_roar" )
@@ -1598,7 +1615,7 @@ spec:RegisterAbilities( {
 
         toggle = "interrupts",
 
-        startsCombat = false,
+        startsCombat = true,
         texture = 132091,
 
         form = "bear_form",
@@ -1609,6 +1626,8 @@ spec:RegisterAbilities( {
         handler = function ()
             interrupt()
         end,
+
+        copy = { "skullbash", "skull_bash_bear" },
     },
 
     -- Mighty Bash (talent interrupt)
@@ -1884,6 +1903,45 @@ spec:RegisterAbilities( {
         end,
     },
 
+    -- Cenarion Ward (talent healing ability)
+    cenarion_ward = {
+        id = 102351,
+        cast = 0,
+        cooldown = 30,
+        gcd = "spell",
+
+        spend = 0.14,
+        spendType = "mana",
+
+        talent = "cenarion_ward",
+        startsCombat = false,
+        texture = 132137,
+
+        handler = function ()
+            applyBuff( "cenarion_ward" )
+        end,
+    },
+
+    -- Rejuvenation (healing spell - castable in bear form with HotW)
+    rejuvenation = {
+        id = 774,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+
+        spend = 0.16,
+        spendType = "mana",
+
+        startsCombat = false,
+        texture = 136081,
+
+        usable = function() return buff.heart_of_the_wild.up or not buff.bear_form.up end,
+
+        handler = function ()
+            applyBuff( "rejuvenation" )
+        end,
+    },
+
     -- Nature's Swiftness (talent ability)
     nature_swiftness = {
         id = 132158,
@@ -1923,42 +1981,8 @@ spec:RegisterAbilities( {
 } )
 
 -- Settings that reference abilities (must be after abilities registration)
-spec:RegisterSetting( "maul_rage", 20, {
-    name = strformat( "%s Rage Threshold", Hekili:GetSpellLinkWithTexture( spec.abilities.maul.id ) ),
-    desc = strformat( "If set above zero, %s can be recommended only if you'll still have this much Rage after use.\n\n"
-        .. "This option helps to ensure that %s or %s are available if needed.",
-        Hekili:GetSpellLinkWithTexture( spec.abilities.maul.id ),
-        Hekili:GetSpellLinkWithTexture( spec.abilities.savage_defense.id ), Hekili:GetSpellLinkWithTexture( spec.abilities.frenzied_regeneration.id ) ),
-    type = "range",
-    min = 0,
-    max = 60,
-    step = 0.1,
-    width = 1.5
-} )
 
-spec:RegisterSetting( "ironfur_damage_threshold", 5, {
-    name = strformat( "%s Damage Threshold", Hekili:GetSpellLinkWithTexture( spec.abilities.ironfur.id ) ),
-    desc = strformat( "If set above zero, %s will not be recommended for mitigation purposes unless you've taken this much damage in the past 5 seconds (as a percentage "
-        .. "of your total health).\n\n"
-        .. "This value is halved when playing solo.",
-        Hekili:GetSpellLinkWithTexture( spec.abilities.ironfur.id ) ),
-    type = "range",
-    min = 0,
-    max = 200,
-    step = 0.1,
-    width = 1.5
-} )
 
-spec:RegisterSetting( "max_ironfur", 1, {
-    name = strformat( "%s Maximum Stacks", Hekili:GetSpellLinkWithTexture( spec.abilities.ironfur.id ) ),
-    desc = strformat( "When set above zero, %s will not be recommended for mitigation purposes if you already have this many stacks.",
-        Hekili:GetSpellLinkWithTexture( spec.abilities.ironfur.id ) ),
-    type = "range",
-    min = 0,
-    max = 14,
-    step = 1,
-    width = 1.5
-} )
 
 -- State table and hooks
 spec:RegisterStateExpr( "lacerate_up", function()
@@ -1977,40 +2001,6 @@ spec:RegisterStateExpr( "rage_spent_recently", function()
 end )
 
 -- Vengeance state expressions
-spec:RegisterStateExpr("vengeance_stacks", function()
-    if not state.vengeance then
-        return 0
-    end
-    return state.vengeance:get_stacks()
-end)
-
-spec:RegisterStateExpr("vengeance_attack_power", function()
-    if not state.vengeance then
-        return 0
-    end
-    return state.vengeance:get_attack_power()
-end)
-
-spec:RegisterStateExpr("vengeance_value", function()
-    if not state.vengeance then
-        return 0
-    end
-    return state.vengeance:get_stacks()
-end)
-
-spec:RegisterStateExpr("high_vengeance", function()
-    if not state.vengeance or not state.settings then
-        return false
-    end
-    return state.vengeance:is_high_vengeance(state.settings.vengeance_stack_threshold)
-end)
-
-spec:RegisterStateExpr("should_prioritize_damage", function()
-    if not state.vengeance or not state.settings or not state.settings.vengeance_optimization or not state.settings.vengeance_stack_threshold then
-        return false
-    end
-    return state.settings.vengeance_optimization and state.vengeance:is_high_vengeance(state.settings.vengeance_stack_threshold)
-end)
 
 -- Register representative abilities for range checking.
 -- Include core melee-range and utility abilities to standardize distance evaluation.
@@ -2035,15 +2025,6 @@ spec:RegisterOptions( {
 } )
 
 -- Guardian-specific settings
-spec:RegisterSetting( "defensive_health_threshold", 80, {
-    name = "Defensive Health Threshold",
-    desc = "The health percentage at which defensive abilities will be recommended.",
-    type = "range",
-    min = 50,
-    max = 100,
-    step = 5,
-    width = 1.5,
-} )
 
 spec:RegisterSetting( "use_symbiosis", true, {
     name = strformat( "Use %s", Hekili:GetSpellLinkWithTexture( 110309 ) ),
@@ -2063,41 +2044,9 @@ spec:RegisterSetting( "use_savage_defense", true, {
 
 -- Remove old rage threshold setting since it's now fixed at 60 rage per charge
 
-spec:RegisterSetting( "lacerate_stacks", 3, {
-    name = strformat( "%s Stacks", Hekili:GetSpellLinkWithTexture( 33745 ) ),
-    desc = strformat( "The number of %s stacks to maintain on the target.",
-        Hekili:GetSpellLinkWithTexture( 33745 ) ),
-    type = "range",
-    min = 1,
-    max = 3,
-    step = 1,
-    width = 1.5,
-} )
 
-spec:RegisterSetting( "maintain_faerie_fire", true, {
-    name = strformat( "Maintain %s", Hekili:GetSpellLinkWithTexture( 770 ) ),
-    desc = strformat( "If checked, %s will be maintained on the target.",
-        Hekili:GetSpellLinkWithTexture( 770 ) ),
-    type = "toggle",
-    width = "full",
-} )
 
 -- Vengeance system variables and settings (Lua-based calculations)
-spec:RegisterVariable( "vengeance_stacks", function()
-    return state.vengeance:get_stacks()
-end )
-
-spec:RegisterVariable( "vengeance_attack_power", function()
-    return state.vengeance:get_attack_power()
-end )
-
-spec:RegisterVariable( "high_vengeance", function()
-    return state.vengeance:is_high_vengeance(state.settings.vengeance_stack_threshold)
-end )
-
-spec:RegisterVariable( "vengeance_active", function()
-    return state.vengeance:is_active()
-end )
 
 -- Health-based defensive automation variables (StateExpr for SimC access)
 spec:RegisterStateExpr( "emergency_health", function()
@@ -2173,22 +2122,6 @@ end )
 
 -- Vengeance-based ability conditions (using RegisterStateExpr instead of RegisterVariable)
 
-spec:RegisterSetting( "vengeance_optimization", true, {
-    name = strformat( "Optimize for %s", Hekili:GetSpellLinkWithTexture( 132365 ) ),
-    desc = "If checked, the rotation will prioritize damage abilities when Vengeance stacks are high.",
-    type = "toggle",
-    width = "full",
-} )
-
-spec:RegisterSetting( "vengeance_stack_threshold", 5, {
-    name = "Vengeance Stack Threshold",
-    desc = "Minimum Vengeance stacks before prioritizing damage abilities over pure threat abilities.",
-    type = "range",
-    min = 1,
-    max = 10,
-    step = 1,
-    width = "full",
-} )
 
 spec:RegisterSetting( "faerie_fire_auto", true, {
     name = strformat( "Auto %s", Hekili:GetSpellLinkWithTexture( 770 ) ),
@@ -2226,53 +2159,10 @@ spec:RegisterSetting( "enrage_rage_threshold", 40, {
     width = 1.5,
 } )
 
-spec:RegisterSetting( "primal_fury", true, {
-    name = strformat( "%s Enabled", Hekili:GetSpellLinkWithTexture( 16961 ) ),
-    desc = strformat( "If checked, %s crit-based rage generation is factored into resource calculations.",
-        Hekili:GetSpellLinkWithTexture( 16961 ) ),
-    type = "toggle",
-    width = "full",
-} )
 
-spec:RegisterSetting( "rend_and_tear_multiplier", 1.2, {
-    name = "Rend and Tear Damage Multiplier",
-    desc = "Damage multiplier applied when bleeds are active (default 1.2 = 20% bonus).",
-    type = "range",
-    min = 1.0,
-    max = 1.5,
-    step = 0.1,
-    width = 1.5,
-} )
 
-spec:RegisterSetting( "emergency_health_pct", 30, {
-    name = "Emergency Health Threshold",
-    desc = "Health percentage for emergency defensive abilities (Survival Instincts, etc.).",
-    type = "range",
-    min = 15,
-    max = 50,
-    step = 5,
-    width = 1.5,
-} )
 
-spec:RegisterSetting( "moderate_damage_pct", 70, {
-    name = "Moderate Damage Health Threshold", 
-    desc = "Health percentage for moderate healing/defensive abilities.",
-    type = "range",
-    min = 50,
-    max = 90,
-    step = 5,
-    width = 1.5,
-} )
 
-spec:RegisterSetting( "defensive_health_pct", 50, {
-    name = "Defensive Health Threshold",
-    desc = "Health percentage for defensive abilities like Barkskin (emergency threshold is separate).",
-    type = "range",
-    min = 30,
-    max = 70,
-    step = 5,
-    width = 1.5,
-} )
 
 -- Settings-based StateExpr for SimC access (after settings registration)
 spec:RegisterStateExpr( "auto_pulverize", function()
@@ -2286,4 +2176,4 @@ end )
 
 
 -- Priority List - Comprehensive Guardian Druid APL adapted for MoP
-spec:RegisterPack( "Guardian", 20250128, [[Hekili:T31sVTnoq4FlJ4r7zJy4mNr2w6v7SZzYVTJSMIIjWu95E4bsSeA8c4BBKsKYkmwFbELYdNFIYF1CJRT1hFVCEwT7EF2JKNY2T0d5CFnTdrYpRYn2)Nxv8BU9)Zl5ZV97E)69D7FVYyv5I8SZJ)qmT7Yp8XVnpNplVE(k5dzS)2JiA8FU7YBF)KmKKRxb)2N25l7GlYJE2NSMqfqf1V3E73T)2M9B3F)5FPz2v58XKMKlYJNv)9M9N2F57p8)73Y9Rxlg)N95lEo79YJE)jz8M)1N9B)7YJu7G)KW)EFB7VE3E7)9YbWa9YxUo)7s5Fl)MF5B)87V4Y)52U82s7DxTDVDlz)75YYJmcF)x)Y7E58JmcVF6r2JKtE55Bt2)YNFx95p87xz2JpZX8UBmI(FSEF8F5YsZM)1V)2FYJCIpKoEn(d(8cZI)1hJKZ)8FpFBKT4pZXS4pZXEIUfvOWGKt3FE8DnhCIF3E7Xz8J)jDz(Jdz)3YnLl(g57Myn9z3r2x8J4k)3VBZMYlES(3p8kJ8xEGYBX5pZnwc)Ep(6YK)FxtGOdmz)6XKuCJ(2M0dVWm4CGANJRaR31n5RFkMB2nYxVJtSY)lnxfZjIh3vJ(N)hVU5GtzJ)9Y7uJ6Y7OOlz2l0N)9n7h7z3pXs1bznhUJB)2VYwSb1HGXxIKXsf6YNFEnOTF6bVv7(5(7lN7VhB)2p1YczjlX5h93nKpFnHn8lKQ1(3J)GJ3)x)JDLNpnBFo)XHVF6jHdVcMGKKKKK1d6Z7(n4()Y7YFKdEkqGvdHjK)zt8ZV(7)n(3sJ6l6f5X)7YYBl3FKYTVMVFoFpZYmJH7F5T)kJ)j7n)72V7hYJO(7NF7x55XzpZxmj5l5XUgJ(Blhfvfz)ck54pZJYx(g8JQbEWHKK)1)8JR)3EFtVE7cEL5xfxS5vXLfBEvoElGTEEjFzFjxgJxXL5GdJfBlwSwmNnLKQtKLJfBSwS7w8KFWWWvXLrXLnL5GdqOo7fBUcwdNXLQYTIl1mBv5swS8USFP8Yg8U5vXLLXcEIz8)HhY7c5XuSHJGhRhZbOxlvLQdFSGJZJJHzPwQYYhzKGCFCnOx2nv8owbhXsOWYQvPYwGJlBl1hEQsYMpbdFhsQ7xVIKXdVa9gIINRmxhNfqJxhJOhYT3FNpQzqVoZEo)LFhFKYk5ZqUX8dIVF0Vnh5dZ4z2FNmGz(J6ZDgYHYlzlHpKzgR0Blz2KusSjGzKRNx(mGbwlG)8Fh)Bv7sWJIvVEMqK(h)YXzQK7Gf)m9FrghsI6Bh1uNJF)YS9lKGVmW47gOjlwFj7eMy0TjYIH7rYjHYGGa5FNPE)2ZMnR5Q5Yf6aPNZCHaVzV5Y0yZL1lhOZV4F5(x1CUjqKK70mHUuPwlhjOKzNAQkJL1fJ6f7ysGY8jdLxLVXoOGOQkJNHc(7gRcKVP5E8vMLzzPgZYzgJaOXpbqVw(GDN1n4VrEX2Z3Zh2gKQ2t(Hv6Ky8I6JxcJmOyELGlp(D4V6Y8owFfMTF5zhAZ6E)yPKzsHR6xFtAzznjNuIqYF1M7E0b(cZmzOiE9WBjMEzf1sIYa5CnFO8y8GYJJJOQqLK(T5HrGj21fk3cCQMqGwWrmB1PVV8GhVYKCO2yC8FcDLTj9O)YYqHO5E3RuEQ4YIOGh8SyBLEWh(G3owI)(Jy2jZJnvgFfxSXKzGEBHhhfWJlvFvn1fXHzrCOF8GVxOLxBwCKLYR8)2S6f)LhggLzPVr5vHcELAzj(8v)2)mH1pwLBLTaVbIkLhJd1hhOFx2J0Fg)LKl9S)Sc1jjKGx87()V8FxgW8DMMCC7JHmhVy2BxCFxgPvAUIJ(7B9LTVnSh3Q9x85YGOx(NMjmJ5dI((3gEIXCPuUZGVZKzO38J6CY95MUjvxSrApkJ4kL6gKLVRG3t)jrJUB5LUHYuwsn48X4lJIvOKGBCEFb2TIjr6JTZXz3j6d6X9qgKE)X(qJZtXnKTzAGPo4ZfGJoSfxaVT2BPJY3(jvSJKcTGZKLLYMJYZdHjr8qohCE31uXKpPLPWQTLnJjQsZbj)lnJNPQ8F2HhJLSa8gvGdGa85KYGtPd(o6qhZ)dDCTGZG0q85hAirhJRZdoKsGqhjx1JtQqUF8qZMPV4W)RjFe4BOqD8Vd)R6VKUNbQqTN4aDIUYGHFtCCc4KIgzaXJqaGvg8MJO25H8ZT26dYYLXHNqozJGO4CCFqgQM85LQXKCpzY2Qf8kTbOI0RIklrP1GiryQ8cGE9Fy4aOdjOhg8U46vGAe0GgkPcyq9(LvDCzjvBAkMSkWQqwMILDaF7YhJRGVpCJqGqe6lSjWFO)YGu9GSEeYmzKdS2PKFjqJGnTjkLzD2SFXxhKcNpJMSdgI1aXLuKfScBTiOPgaSP3Lz4HjmTF9CmTsAPgaSZ1tHBGPX8H3MjDlGd5(RdJdjLQS1sC(Zt5AuKQhCx4n5YFNLHqaQJNuWyZg1PGVZfYLPx)g6hSxWrxJGhIRYEOGzYQJ9y9E9JGOFyeD8q0QqSsrF6IxdLBGRTZO8MtFgKI8zStAw81fUKJYYOY0gKPn(MqB2sSvTQHzjGGxPeYmEP9vGuBxIe9Qm4FKzxcrnFKIcm4QIzaU2u9kbyS7aTpvTODJRc5uxDLrKGzABaJKYEGCIhWz7gFGLX2sJ6Qg8qqFJXdKLmOb8KhGWPQQJQzOLCOX2GF29QqoMvX2aQvKyL2bCvKdXFGRkBhHJJXbVhSJzLTZzVGcwPu5CqmjEUWZxA5mJBqOScm4vSKSmJR2qOvDiOEjRuYNTJrYcgC8BLmGqfJnOr0cFODCnuYjzKDjyTbWE2eINfQ(ycNVmTGOhfKGZqTfyWEGHZJnLTBBKOBCiXMGAXzTIXGC1yKwrQQERAOqJhJgjb0KumDbgxcgCCHXzgTRH6GJKHPo5JvCzWnFCYK9KxfQHG4vOeqO1XO(qKO2Mj6LTvgGRMSqh1vgDqdjuWuNz3tBhsKFmkB1P8CzYUe(ZGLPKcxfBu2oVUW4gZECedbr2vvZfqZsVpOgeCGGV7r)PSkO8K7vlnWTK2Dpe2BXxTPdON47iKqoUXJNUGLFrNQJLI(gX2sjnF6jYLPQnYHXHjpvgH)X4j2DZ0uQQXnQqHvLdJNgGaTkGJsXxOv4H2xFiYyGQsgJvL0iJaBfv5mU2oQJFMYQLRUfL3NRqYPeHvJeYBLGZLLRJL6DdY6vKMPPOIZsOyqGAj4fUTTKkUqjrHUDgKnhG6KReBczgfNJQgm2yecN3iGt6RUevH8GTWsOJh4OyMjnDbRJNJ2hLFW2J9nBOKXJBZy(YHt1CbLOVQyJWsLFGcKBGMQ6GJOQYYBLj1yGDKUcfhQcZejKi4mFhJlmSvHchzgWD1b7dGKZEJnmMwvDbsGqgq4qjPeZRbD4uKKoYgbLGFDzNNpJXlOH9C35vJGWH2qjJd2QoGI02KIK6(UrN4)zyxZiAjNPtXJt6Y1vUGjV5T2tTbFTdnmTjVF12oAqBdejYE6XsDDdHPrUvnCZnG51OP2QqEv6MNJKBfJUcjR7BhvHJ9qnY5DZs14R1RK9NmBRt7YSQ4YZKmdCFcI5EFVfZYWDq7lJPY0sFvUHCpYZVlXWPq4eLpVTzLqhOaU4qGbXHkQ8E5G1GjvmJaKKrL2w4zLSk3vvTnOPQIzJLrOTB2ZQnZAjLxLn6YKdqI8iCr5XbdxPXKPDnzjbGwrwLpyHPqz8vwIg4YUvmJ4vX)GBX4QXSC8oOqrGcOwBGcxb6m(pCEQxEwfDEsj8kwXLJZ2OZbCvPnrJNvY8KHNj(v3YFLLnlNm3ILNnvvFxdIqRUQa3LmPgAaKQHQqzQLHaG8BrCZBUMjnVYv)xpnCXCzOIhvnFKdKC1FUcvPwNKJPq6GmQakmGrVJfBKGhzT4vjQgxZK6)d0sGUJCgHLOCEf4O5lVWsF8)y7sAGJZlNjgG(0s)iK48eO9(AhIg0YqiKUVB7uPrEhRrEfxUqjdaGrKCZCKJ5OiF3OL2O8g2kSJuiHb0lGGbX7U1nY6w23GUqfK5i43BLKcPGQmllqf8ySHGh6x(dGr4FnP3qiGv3iyKgLyqAI4VzMXa8FgJyK3OGDngHmjvzA8JXDH3GcEUf6gLKK3n71oNfFGDqJmZYGNFhJ)r3WzSzNOzGY2PNGo1e6zZDFoUUqczmKKLrCjkB6Q2rMNYL9P7qOHROEHYJB0G7MNabyOZT2VhJq6n1Aou2c)bJFGrMvK(XaBNKmcmKxWOl7UJc9GXzJZq0i6RZE84UqwM3eAaZJfyQmYFBqvgLyJNIFqbMo8dP6y0WfX8JrnfzVcFyKzoJpyqDGlYhGUd5GHvQsGGOEKlEGhOVKr0vKQQXOD4nKg)K4Q4HSRpq0yEaVhJYgKuBZGWKuoJU2h1uD1p7ScsNcOGrEp4YQnKGVhJjMJGZfQZOdHnZnudQqZpQzX8nQTbOLFagOO4Lk1Cq5RWKcw97BNRgJmIJU8QkJOFTz3rTn8kJKOhj06S9)KLnJ8IhKKvd4M2dA1JKrQYZrUKrdwsyb6g8fJTDmjPdgrPTsv6bMiQVGbOiuFmBtKagGXIbqUIa2XKmJjX4VC(2sIjBg2nLHyJqbcUe0nI8FfFULnK1gKLFJl6gnUfOvKJgUaINQ8rn0sIxWKk2DKfCuKpx6dMd8kXgBbEKc0XJmUQGLBXUDXOQgF(I9EB42KdPDgNNaOWJKSZzMKzDQhE4zqgY)Bzt5v7IHH1Fn7iOzmnPdpUcpwK9HIbpZO5FNO87OQ8dIjMzEK(GxQBk80SbgIj2SbOaDnM3n1WP7Ndb(iXqxW3mKKGWqN9mQ(8z7CHUDbKrSpyJYbKNpKCdUVNkL0DLhHLqJrZT8zjnLm0qj3f(FhJpyxaRJnI6dELBs1GMGUqVe6rUbzJoNJMxhLKCMI9cNdPsAKNiMR8U3sjJkJ1oAUQ8JsQj4QiZd34xwfqyGj9YIxlFurlpEIjf8CTAjIqfq4AqpGmYlq1nXEKQQgGhKr4zOa96k(r4Sb2dWoI6u9iDIkD7f)q6Ww4oLJlNyYQ6cYKbMIU82iGXUKLGNOsYxFNOAGU2TdEfnQdMM8KyXcJkn4aJW4gKHkoCHKNKCtbOBzWw5ivcppNPsKIK14Cb8A2K5KdECX94Ay9l0i0s7KLKvpFzUqJ3RXZhfCJU5vu3UJBfZM)OPKu1LqZ3CaAM39kY1jfmJLlGHKfx8Y21s5lZwNNzs5gYgUTz8t0KSKvqGgCKfKqz5E(hxaWv3yNqN(AHvyRNnyKQHt7)fqqTUe1ZRZQ9dHfwFyacFryGX7aNd9UOtRQhEKLV2xHjSNlJyKkLFCLpCrr8HFH3Vdz6OOELVCHzXy4fRd9qrMBjJJ1X9w3i9lL9vD8Vfq5lbJQCRsLr6LmSXcJPMQq(QmJq1YBT0K86xlfOsJrrP3vCKKKKKCZ7JOwJKkRD8(3mC1Ajs)bSDjLvCmwEK4Zo67vPPwgHzDMvFHYCH6o4J0HqaRJROvGsQDjLxrCCg5LNmLhzKH5u3WVOP4yYklOgLRl4HKwLU4AO6OOWDOBC9KLLtmJZiCwA7UHqJLQrZtb1kfMLz1k1Jg1BNGKpPGzfYqGGv0pCMGk2Uj5b40Yb0X4OHFKd4Y4xUrZCU7ETUP8EjFrJpN8(3lF2M6YzEL85u)qDyxCEOAyb6QKPJsEZUYjNOQfXU0y0sYxvxJMM3l(O6CxqfLg7J1Q80Y1uvw5hUQC(2YYfJ7c1xzKfRfzCd75IFXh1Lj)q5fJMuJqX5p)0qg2qI3w10n3SoRQ1Bt7lSMcQLGGf3hCkL(K2YmGP5x(h9qAH8xPJKgEjH)95YvC6DdlpgMlG9pD9bJh3IzWNn8fYYZK)v(YkT7F5rHdFFvU(wfKHJ9Y0Uw5zppj87tA5xqpkKO4tA5gZLY8f)MYDnRu4xyX8XHDbPJ4vyFh)YsKDvD05XjKLUvRVNLBvPPJvUGT70LgVJYlVrCyxKvxFW(k(t)fKKUOVJjETD)pDO5v(Lz7PB)VH6RGnRjGnOFAGUx0y3FkOZo3O0B6Ay0B5pL77jjgmQ0PnAmWF5pn9qUB)Eqk7TwznHuZn2Sn2Py04n2n1n(3J5YfO2bBTAn15iBkBN3ZFiPv(Pu3PJR2BT2zS3S)SPMA8bT3r(X8qZ2PJH66QPMsno9VfE5JJyKhc9E)Vr)h8p7oV87y7SXMk7(BHGLdMAYYFgpOVUGDHa0qNyUaZdyVPc75YQRjjgZUd6Y7hNLyTzY(bxVq8G4bBrXw5Uo1g09x0xF5B1E95LV(Uw5fL5xNz8FHKo3XENGcSDvqGzHGlS8E(IzEX1(5qfF89LzJxf1YIb12fz71cRFi66Zw5ZI5b3U6Z8gFvEVNFu(IqTwrx)bnJl4g1Y2WwNKo1v)qY3vPO9qQ(NWS)N1xCnyE9Aq18b9q1vKWwHHpJcE1gFKGLZmQ1zxI2LIx4Kz6BFUT(JztFzLF1b9(pnAK5rSFZhK5oP3yKrIYhJNL67lCZWd(z4v8U74b8hQlJvqAfN84z4b7zN(x0nqflVmYpCE2UwHX7FlFvSKXzr7(nnJqGIzYUnhTDG0X77oD5uNX9pV4nKEr(IzvnGnpz(xf5gJWr8z3qhqI4l7d6tI8wfX1fNGN4j7N4BDm5nDMZEGT6Q2FXH7x(dJ)0Sq8m(S3Gd)g8sYXgmFDm1cBj4QiHrNDEomHXOOxjgF(Gd9K5cF(fqjSq7lmOtK8w0cINdwOJe7Dp5E(oMJTn9J3QBF3qpVUvPz3MnwN8c1TU(2R3P7QHzE17Y5E7m)pFAE)UFJBQxj3o7RF)DxA9m8)2NEYM6IwdF(IEU)tz(V)9g4G7YHHL0LPpUHRZfDVnN4Sw7gk)TzKR(w6uv(Gn9zKbgRV8X86hBxp8VVmv)VVl3z2k9pMFd)1RxlzrHF6FVh1p7L7XAXF5c5Y6pF2nJRxFKIYfP4aVzp1(5vQ7U90THCzEvzVnzQM3E5h8FnvfFzK5lSWZ5E(TUESwQvwTQ5)5OYLv6(Ej)N5MZR7f)0Wc5SXPMgKFy8BKLvHkD5YEP2Xj)LbKSSPQB5rRIDjqBXyT4vSDTiCJO3I)8Yp9KvYLcF93IZpVpEo(T7BBzZMt(h70M)GFVX4(w3d9xp)HZZ)cOZqZN7EFPXJvGSDcXpNG76tPUDZ9R3VHmpmLVFZk7hx5pYrm5Lq5gCZ4xhFLw3NL9)VKsRHgAvJEzjYFDfITglPAPDtMZMhrvdx2zSlR0p8U(NKjDXXUTPT2O34N)0YNZQYOJBnYZNSJNDgNRHIGU4qvvb21hQzNR3Ns9XG4Kb6PB8zr6RQRp7Y2VZlpd0FhJO9pFXyZPpQ23Uq0UQBDVS2Wv3tJ4H0V1wQSb0G0wJ6rEhR8G09rL)qIhM)3NpI47fGYH5Mh2vKpV)nRhEfnCZKovXJVcPz6xd2FE)I]])  
+spec:RegisterPack( "Guardian", 20251104, [[Hekili:LVvBZTnUr4FlzYCkwZLtNKFnoNKN5sCY5KMCnZj3MVjskkijetsWcsAvNXd)y)b0FI9xs3fVqccckj70RtF5dNJn5IDxSy3N9fWB2OzxpB6IGCYSF9WHhEYOrdpEWWHNm6KrZMMFxkz200GWBcwb)ssqm8ZFPiGVGgKGV4UiwWcKbzScEi8YztNxqJYFxYS5o46Hdp(SztdkYxZ4ZMonUyjNEZSPRPlwqKRGKfoB61RPzL(4)fu6RKEPpBj83H5uwsPFenlhE9sgV0)kYn0i6GztfpuOm0KvreV8a(kso8GFvShjjbZJilM9Qztd50CcNgGcCEXYLdIccjCqBhKLdIR0)IjL(hv63R03MaojoGMaYEmqYXcsG9dZlTi6wGLFfSbsLempvpkhScDQcc(NZy5R9csw4fgfSzqrQGZYDWaAIxmjIq84bjRmeqCqreY7J6K3huTbwgapH4TKYjdwW2a2W7V35lBSbpT0VVqtmOWd3V1kHXBqD549qxwqIz8Gi6xHZjpolG3wJAtITHxQxpbnsrKK8blOzmqrsYRwHwlQu1wmfv4t6uHvwFLgTHeCdjHSWBEeBtMqJR5C(AEq2AKDNISR(acDenzpqXz7YzuYmV5e7D9rUe4l6KDGTrWV5eEgHFJ2P6G2o1kV(XcNEJtb3E9an9R1ennOUC(dqxCSxYHGbyt7kIvtByquKN8p8W4DzuVNezcyeji3BfCmbAesVJaVU5uT2MTMveTWllLabKCb2NHywueNkFQqLJP50vsXTvOgUafdrwoDO4GqyqYcUfEU3cYsssgXYTQ5l3dyehCRwuKeufSeH8HYDsB73d6KOwxWhFlXd4tmLKPGtByddyo3o71XCt4DHMdKbOTrB)aO2hmG7bPoIB4fw90TBM1mjoGFJhBPx(AI3gA0Ig8Y(LvG0AcwXzBISWfo2Ka1Xstk6gQY03ABUpNUT9LBGoNrQBbe7joZQOWE270iVyNWONBsHcwXIKrd3dT0eT19ED0dU8HXnWQnqiZLE())Cjj7Fwj79LRetnYC5kR00W7cRalYq7(EwKY)wkyYP21Dy()Hwcv3OkpQsOoBNX(DxZZJQeQVXYwu4mvOUBOPeHOBQ1qS)AsWoYrPojcHxYXKFBGET0NcItlKf5RhKgMl86p3aUVXI2EaUsmaZ45nYIzkkXoVnjQawXB5KVuClSgubSQ2WDwwZfSDCcTpjussmkF5URiRTk2Iep0iboOAv1YMDMHntrPxoRiC92HgS4Yrd14wcLa2sfqOoC4VmpHKLjKngnkEBkNandZ43zrq)U1KC0zEjaNUJoyZPXeHcbEHtZY50q0J0WIxK0zLu6YM2HVIigomidXfmtcGpYJMa0XlsZPZJmseKDdWyV5QiK9jDWolkZ(OP7If)xQJU55oMegDFmSHRz5B8wKM5c5UBn0Gbg9p4alDVyHScpOK7mx1MTxSqan5aADVwSaSZbq6ET4qglcHoYKo9qOsilEEqB3(51muuFd0LMQ8)AwOxJMWImIh4leNzLbzh1(OX7RG0oqo7j7MAoufJZYYu5EdIXESaiUvKGKqaqalqrr9jnc411SUpOG0KWaUcMTLNR5l)9uHnKZ2rkT72uOq6Zi9laq7f3vZ8Q(q36azE8bZnl2O17vaUvD2Vvi3V9YJ729t1jxPpx06gQqyB5GVE0IhGeYBakS1DJvETSc(T0BdIaGDeWpmxMof2Rafg47TiB77llPuPCoz(CO)5SBO7OcblwUKts(kfQUKtQNGHb7B6fAnPKW1OzfC7bVEJYdCYZhuzc7P5mMUATWHSGNXcvvlQZSSxt1imiVD(t9d9qET9divLZCOeDRGf8rvmO7Jde1gA6KbfeudFu3UkNMA1aIHeOPvcOBl7draqa0lmogjCwiLbvgohywLOoXmtrgeLTq(kRY2HJcOP5mKkXLzm88dpB2uOi7eOEOm86kGiwACkJNRUsINvLe7zqGm5Vua96brVzmSunm3vm0Ak8aWRdcEZgu((pqtGxn6LL()PKSIuKxibsLdyyvcVNbex((3fRPy0rw3kc8EyZKscX(sogZNYwsXkZE6tFAPV(YBk9VKxqH1)ZQ1(jOZbWsFxP)haUa5p(i7t9rrHlt8d)Fd3tXKKfOCNsYXYb1xcJ)pUwCnm(ctVwkVuTYFO0)nXeialj8o8cBq))s)R14AVeRM(7QP9sn4GBApXK2pYwiA0hwLitwtspRbPa0iSleeDjaS2K0ZhQ3T(xxio)X7Fkb2QVMbHUbcNUAJXhzOv6wOFdnPCPxqebmrIJg0SMJ(gFOiao8PlGF9wAaAixb2ychsOLtEZFnLpOs0)r8OaQCwFWult4DPieeWjWHcSKeeYJfx6)o0O(Njc)(vWHk5Ls6)fCiJL()J)2Fhm)jYelI)yQa7tBN1p9Ar)SWj)NvTPx6)kSp9(Q3)wXClG)LI7udQ(zEmJRP6JI(1v)XRKL4yjaXF8b1aAkFV07nBGQzKVFYpwv1)ZPlN8KwTh4Aj2tCTELoguRlgiMiRRxilmX1BAMcbLis5ftoDOlQLJlqOxDnOvxlZyArMRT5Sv7zpTj3MiXjJt7T8yAV06MZl11A0ZEdxLZ51n(Ok)9pcW11GqsOhHdVITa7SAG95yxdtus75YgENmcLf2j84rdnxBDxOccA0jBVo7I1Kd70x0Ky7(CK6QopUufCxcBVo7bTxDbfxm5SH7wC19tUBARRrC30I6XUPcno7MQQg2QDeQ1A)dqm6Fao1q0LAvSVbwylim8Rfqa2(0rL(PvjZejNmSiyEGBiea7NMR7qc(xyXXfHRL)wk0CK0naLKg5uENGqXwWVxi0SnRjadNEjk8KNzWUdsry6wWY9FEPFcdO7lfOBUA)HkvteMA1DRGmsxgx34NBojbYqo01c71QXn9PZL1(j1NbVvK9zdGDrJZGmOtFhCAvWfdjcky6oXOtUf)hAE2pbzduv1RpvilOfadYsP3qW3)2FRPnfSnf5QCWx9j5taKYb17VAFd0s1QsBCVwh9mERLI3bt1DIyXkxTV0bhC2cHf72vRl92rBltg2HWB2wXdZEOo6VsoxYTCU)AICUZL(Fgk7doWWoFoF439tyLoFP42AVIRy5FgohxQIdksbsU6A5tUK9AmWLfQoXhd1UzCuJAgcNqmMXTbGAJNBazo(8HT4H5mOFKyYUh(DVTuQIs2RnNYRHWBnd7E7C02M7YZAVlBjjdYpAyVd6AQ13F)wMyDvhbqrXAe8g5RhuHSdQq1W3K(nQQbXECqeBTtryeGsqEoctSAnIyQMef4IrtawLbVcXlyWbaxpWkztVzDJ16wJuv6ubcAoNVEhiXV1dm7Ijhc2cixW933XqYUyYjDihJrLzCiB80EoNC3JvfQZtPnUy0OwHa7xg0Xa5Rer6R8neeJvzodMdDTLlMp4bhne(5RbSxHnDB2rRCjgPm65CoFU5sRqRht0yJ8uVcR(W)TqWNDduA5JrNDwwsRpaM9CDvZne3aT(4HQ7RuWEOXSA(3u5Aj)oLyatilB3LJEm8QX3ttLY(ZS3a43SCx6jiDGBvFmbDwOpOq964w9hp54En)kfKUXxJJvv34DuWgTdnngRxayq0D6QeWKfHOpTOCcihkr3J)3J(1zm(CSSnkbkBZs1XPKw592AsU9CoJvBEu1MtJ7Wx2kYtAGUaC8GUndqST7MK6BlrZEbDi0d64lxOsao(Qfgp50(BP7rPCBDP)MsZ9xIqLm78Rqa25979KU(YdCxPbuytbo8bRjuaqxJgDYzN)c18vKdAOV6tionnckTAG9MQUZ2D(rk027r2jnQI)brZe6rBaDnGAfNfjRzIjCtPXby1Wk50TI09hVWyZiB7Lz7Sztz9hKqvW9uQCknxlJ57koVbYW)TgXBVj(2I9T5M18z(Dig0wI)pw0O927rfx2(m(HeHMPIgAfG2TUTNHQ2mWC0y7ohHkpq7ee1IQ)(OSTbi0t03yw4nc8RkO5rhV4YHjweQIvaPgpGOGFrvIBx0IrE44cr7s41TUIxjd()4iIrd9zkoaNRUBohV5Jl)0uWv91O6ilyCnjck8TAmtAfsp(or9tgxNwTL14Q3CUSQlqZWZP6E2CVc1fIHlW8AVGY971(6UGGxNCXX1ETFm8Ix4KFgxrgERyZ(Nd]])  

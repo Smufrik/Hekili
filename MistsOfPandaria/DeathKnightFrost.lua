@@ -1293,7 +1293,10 @@ spec:RegisterAbilities( {
         
         startsCombat = true,
         
-        usable = function() return runes.frost.count > 0 or runes.death.count > 0 end,
+        usable = function()
+            -- death_runes.frost counts Frost + Death runes available for Frost spells.
+            return (( state.death_runes and state.death_runes.frost ) or 0) > 0
+        end,
         
         handler = function ()
             -- Spend Frost rune explicitly (engine doesn't process spend_runes here).
@@ -1326,7 +1329,9 @@ spec:RegisterAbilities( {
         
         startsCombat = true,
         
-        usable = function() return runes.frost.count > 0 or runes.death.count > 0 end,
+        usable = function()
+            return (( state.death_runes and state.death_runes.frost ) or 0) > 0
+        end,
         
         handler = function ()
             applyDebuff("target", "chains_of_ice")
@@ -1438,7 +1443,10 @@ spec:RegisterAbilities( {
         
         startsCombat = true,
         
-        usable = function() return runes.unholy.count > 0 or runes.death.count > 0 end,
+        usable = function()
+            -- death_runes.unholy counts Unholy + Death runes usable as Unholy
+            return (( state.death_runes and state.death_runes.unholy ) or 0) > 0
+        end,
         
         handler = function ()
             -- Generate RP based on number of enemies hit
@@ -1710,9 +1718,9 @@ spec:RegisterAbilities( {
         
         usable = function ()
             -- Stricter gating to avoid early ERW usage.
-            -- Allow during Pillar window with slightly lower RP deficit, otherwise require higher deficit.
-            local frost_plus_death = ( runes.frost.count or 0 ) + ( runes.death.count or 0 )
-            local rp_def = runic_power.deficit or 0
+            -- Use death_runes.frost which includes Frost and Death runes usable as Frost.
+            local frost_plus_death = ( state.death_runes and state.death_runes.frost ) or 0
+            local rp_def = ( runic_power and runic_power.deficit ) or 0
             if buff.pillar_of_frost.up then
                 return frost_plus_death == 0 and rp_def >= 30
             end
@@ -2223,7 +2231,29 @@ spec:RegisterSetting( "frost_execute_threshold", 35, {
     width = "full",
 } )
 
+-- Frost strategy selector for ST priority (Masterfrost vs Obliterate)
+spec:RegisterSetting( "frost_strategy", "masterfrost", {
+    name = "Frost Single-Target Strategy",
+    desc = "Choose your single-target rotation style. Enter 'masterfrost' (HB/FS focus) or 'obliterate' (OB focus).",
+    type = "input",
+    width = "full",
+    get = function()
+        return ( state and state.settings and state.settings.frost_strategy ) or "masterfrost"
+    end,
+    set = function( val )
+        if type( val ) ~= "string" then return end
+        val = val:lower()
+        if val ~= "masterfrost" and val ~= "obliterate" then
+            -- keep previous value if invalid
+            return
+        end
+        if state and state.settings then
+            state.settings.frost_strategy = val
+        end
+    end,
+} )
+
 -- Register default pack for MoP Frost Death Knight
 spec:RegisterPack(
-	"Frost", 20251026, [[Hekili:TRvBVTnos4FlbfWObjqNFjo9fuhGE32f32dx3I6c0VjjAj6yIilQtIk58bd9B)gksjrkrkj7K27l3h2UnuCEgodN5zgonUZC)U76qed7(L5tNVC20536mFXIztFR7A2HeS76euWdO7H)smAp8N)EknJXx9qeffYLoJMNgaFXD9MCse7pID3ycYP38g31OC2oAQ7617Z3MsEWD9osyiwibolWD933rYk85)hQWxQ6cF6w4NdyeACHFejJbFElnTW)VJFGerCCxxUy5HHeFFe2JHsVhZGf(sPbIJrBIWHU)v31bPegoLGaZdfHJzoBIO0qqGeh5Uk8Nu4VjF7w5Nc2XbZjJbNMc)7wv4pBkyjLhhWMRe3Lb27qklpEhn6G3MiY97yAk8reSp4NCIX4qVqkyo16qtkUEwyvp9bdnNTjfJEGJWnwr4IcFqmNT87zVT4hXPomsWdGFTbPD0NIGfGtekR8aTCi4eUPKi0954U4jw3lJbXeyoE3oSbI)34GCgU05LMhJZehzNaAEmtEp1ObiinYdm(eCkh)3mm(aMKapky)bOKc)JhvUJEyphRWdn4lCxngWBhHci7XTHPJJ9DwXXMnR4qeXnw8iuiCcGINNc6bcPpDfX9jIVgIrSDwuuhBAM9CsHtpH(eovGZTtT7JNny6MmUkcJd2n6SnvHkvJ9STswcGql2JU17jsmSSti9PyvJx9JLW1o1RAR49L2Th3J69eeQYxKZkMsse7yny6bmURHHirf(F6B)49aHi9Pc)V91c)xVd4hG0n8wsaHDzH)h)YVv4htl8ljTV634xsYBmloDhPWcN)ntlDwV2yc2vgV7bPaHU0LFrdh(TO8OgA4klDpjo0BBkg)FWQEcdeOvseGII8e)GhNRxW47jkjvDzMnsQX8mSxqy2irpGsJ43Pz9tBYf)rShogVNGZK(VgvaUkRAarX9ZH2gBa6fJd6Gim6rJmQJrA9IPLxPjP4a6(niJ1w1cwLrB)JyErR3lJbHGP)jfcvx6S0z6L9LMyp3(cz1zbDaCGYWXbWTAsBMIQpvhwu9zu6(dCTX2H9GO3WwbH3OU3uejZ4UwQUReQmhwDh3QTdsuekLR1TIoOu3kteemM2vm2brpTky3po2wfSNrjpsPuIKGhQXRrZARYF9h7TldHKBa0hSJLFYNKeCgJevflzpr98BP822MTSJs7ncnIs8LmZEiGSnehGou34J5kZ6bVJPbMNvhs)A7SXcrt7SWMsjgYfPadtgM1aw1U5)TOC4)nRCnj7zvzgdjHdJKGZ1zhgfbfxtcaR8dCA)LQAq2cSPK0H1qpnMlUl77HanNHgYdd5OdFk60W37MQIUwiMPCVH1qzAxl2xOyHWgBYjJYBV8omqNKTxFrgVP9NqPj6lJIdiqMV3UdzLbXguG3280dTwhNMHt5Eu91ZoeJsGONSKu4BzLL2A8jjP0aE8l0uIjgIr6r4V(WbsrdyA(7M3Ky4vsJeA4n5L0k7rb7iXg0sn5qzoNShLZU43Gn0))Rj(Z4K8ZVM4BhznrlLZcoeu38Agp4Yqe9ZTCA7QKvBvDCdN)Wlmzb2lB(cvxUZKamuw9fOyTjB7LDWaJSKFZ776Lb6SE1H25O3xamM3TQs83kZGxBPFcHbqPUsu)jZwhvWCLRdee3fd3T00uiZV)Uyb3Ac0NZ97GeghoapIBas5TxgYDRVFHmYSHn1SikRAZ9K5cbrXpGzZgcqrELSnTYUcyuVqcw0N28LvkSgpd5UT058xyDo3y68qQyIDnOMZjFXRPS2QTCkd06tF7hf(3dClVhynW)RCskOZV8NMgDvH)R5JGa6Si8YcF4(e(JqqeeNpLphS6aZW80YYzC7RWxyGdgPCUJ8QIWZC(XIPUYjOa0YzCJx(pocWvTg6NmM3ON76)aCzPmEXX306FXdNIpdxVj4aqWLZk7cClH351Rk8hXOwk(CXNFfS1Vwn)MIplGpZPEKoxT6VOZvAEp60Cxt2U6cZmJMfV9WxmVRMuFZFxe(z5B6eTvM(FJYJP(D(4sRed2SYSivxU9ibVM356Q6Nho8wRlRWDqTh9OQ4TgaNqAeT0XkieRg83DRUzqbfnt3v2vlguuTP9XDAnE3A7gKT6VlesAqxttwbVm46YNbSA2yKu2cKUKDE27hwTy5yqRUFDD8UWwpUhpEHLoChJ206WsxJkma3T6DthdAkKp6yz5PRhp25zRYLAEYQCb1NRkxYWtvvbS6zQvRP(ev5ADFE6ySYMNwAWiBEn6yGQQjwdaz8TNnmaYCszzJn5PCEszHHgnxN7EESDQI3HlY0MAC8AKfQfLmlx9LZPjNEdACznu36UvZNAw8gU5s3r7(3mleNOak7U)AElkRkBd70o06au1wLnmoESBtmFy18LNa2ZFzWwuPYgwtmb1TGJhcx)Fr3rMTbdDYz1GEDNgNUQtttRME5eJHClMwLRUUSAuH)3fLJGtjHc9TDO5aQvVQolIbeYWrZ2uhMyzId3TA2u7qRnbjf4nopQj1UL6Is2rUAOsAUZriN2SoktdhSCwBi0(LUOgcJdeYkgkZ5qZcKf3N0jw4o1MdAJM6741GtRE7XJ1Rxvi4e8tnywxpQNBN6rEijj7ymt6oIJEnXoNhtGE8yNmMtYVP1dYT9exR(R6GsyTPFTjoPOA9NrWr22VPeTi6E2)Eny)mzHdZin0nthlnwDRfL9DdN1fvpFo7sfU0YV(IsKud5yzqQfOzeYkhaJtjEIncHjds2uRTMXexsX8ZwDpZIaV1aK6PSAZTunPSE)TgtCtsUvsIArvPtBPOZGETg2xaE1MWTgkrdNWZHI06X0knMYvJ(4ke5IFK(jir8MRmLjcpS(utdBl8yt4e7(xs2Mqv)As1unRZop7224D6jnc50soB)XxG4E5v(ZUpGQtBRFnNyUU)3)]]
+    "Frost", 20251030, [=[Hekili:TR1EVnUns8pllkGxh0CQ(D2TioaT3DbT5U2Bb8(3wIwMowiYIc6rY5dg6Z(nKuIpKiLK9607(JI2D3esop4Wz(ndhQ1Jx)11R2IYWR)9jJMmF8OPJCMmD8DJNUEv2Xy86vXi)xqpd)qe6a83pMqsZOJEmKG2sPoLKN4dZSE1M8GWSFnA9gZSCY6vO8S9KK1RwDiFxsWlRxTpy7wmNcCQ)6vFDFqAHh9pOcVsrx4r2b)UFwajQWlmindMEhjPW7xWVeeg4SEfBqQY8kkjaTjet)LFNT5Wr0FF76FE9ksmOTyq758sUA6pfMd)Zy2yU8TAEk21FB66myJC2CkdL8moZzpgfMT3j2pRW7(LfEtNRkb8)g7NdgkqctpBj8HcVTKmNnHeYw34q0Z5yNSa)xcIEUW70PcVYfSJEI5Ud)koPAEvDicJ36cRJTpND2ArsEuGVBm5nmCE8aSd)8ivUZNMaY2hftLW8ZwcBY3TZjoimeykzNlB74KhZ3JSjzMGW86dVhNqcspOpywWbS7BOKy9Hrr(b4Om39htZWGcyqaU7YtowBCCskoHAr1hp9yekg8EsJtG5sHjvTjXjeF33cI2sEJArwCzwKeyJ4KGHfPzVPBpy0ThPS(UlJ1qqviO3Uhq(7dImiLxoiKbm(be1MXoxmf15NeWmP0yIqWgxAnZqXoLRQWBGMH2Fpn4XjndI)5ovJhj1zb5McmBiS8O9KWJUBcdEEFMMaR27oYiaHm0OYu4PuoTXgsE2gWq9IPqljhAloTIt7jVXos2ecgBtXrnyNjCbj)4J7MMbOWytEHg2GLOvmJhexJt5QSJpjpkR8CskbiTqi1ljgNyYv0a)1Wk4rtI5eECc(ZnxYnWN6HaKbh2nSF2kF47zURH2MUvls1KsusAEG7wO4LaUzGiq8ebGRE7kGjrqTv8z3Irq(gZhjn2RJThR2axFXi72(XDggw6VfIX(71IcB4QMGpGcIGm83dzlflrn4O5kOG6CTCY8g(4mzY0s7bX88fKKiAggaAgg2bGNJuTDQtYyN9iAfJhCGSlWpO8Wy2iM(o0O7cm)iRhL8jVrQq4dm(7sxR7BqCgmidogeikpucfxrWbiJdK9eJ)pyv12aiAff(OWqx(V4sRWIxNvzoazLw9dESQAQ(XDFcjKEaySQej3PK)k2fhHpeGtlTXsra2gRsarWTJJwN30Q36hR9dXOx7avfsdNXQnqelbX)pFKjMpkre(y)KOKaxAr4BnH42h(OMkN5mvUv6tA9RuMw7qj9ntRDNXsnfklSeheWDAhnsuqTbCOgjv5uUb4ENj8FN1KyCAwaib)o8XV8kY(KLcYQ7XBo3Zk)JGNLl)ssPuNRwlrWAMxj)zGLUiaIBl2hD0ufbMQm5YRZX0oWETdxPICAuCGHAi6vbdITMrJQP921TwblPv1YlLXbPVySN)eK59vtE)bzw0tqMVvKI70Dj1qQu9i71Lm(McW762hNFSSbecbqspJcBuDrFcjVGJ7)8w()V7w(dPWfwAzj3l2(kMnNzQdXpJJ2Iso6CaNHy1y(kwEyCd7)FN6DqvKftaCjlRC)E9s31JeShs3iTM6L27FG751(Hl66)xecqR5ZVY9zOZayR9hyy3TiGQuD0JGBAet0NUc0WbywB11yp0)I6UG9q)lV7b17fv9MtiviRDxqEXCdjb0TnXj4uw1bS32jjiMp5FJ3FcixaEp61asYpw4fSRWZ6nIPVguejJTIcp67(GIGHjz7PNlSgxFBHNYvx5psuH3BbHHuXu4LNsDNgUdfgUHLUbTbYqFJtnev2bLUYt7DFvgiHlK(JruRgHEKer9faQLXJ(idTNiPdUiEsI2ZFy1lyIIxacQHbo)ZijjqqA7jqaZxmKB459a2TdhbUkaU1xWPYHQXcKHWGwvMds2OVX6DdlbfKIHc6qT26J9qvFPDzlzATqRQ)uoL43PHKSk(zijsLab0HOxWzJ7wMSDhp9k7jQYiUBdW8npTPMCbk4NHmo1K5KRSmN0r2jRMYH2fYIrkpAMjhevCBc7FBpZvBkX7cM50(Gzcyj(KdBqgFEm(RSZb(tD3eK1eVeuQcV)reTkvaR8roe3WFJ8fiUWzUZiqhxXrlzL7ee5hMVfVfw7VPckcoRfE)lrrau8WeYbaMK8wAWbGWF6l)ZuGxFHHqwch)JTamp8JkGUFKBiv7D5nnqoB7IgTaCAhA2wkNwrqfb3OKdhPQdKjHHD4uR6S6ZlGuna7OVxwOLVGu6GOUI76DgfMpeuutkDPIVPcWNbLerpxwV6xbpVKmAkUpv7dLWP4jioog7deoFm7TN3fqFV3VRWRpowp9DxvFlk7UEUxfpbmKYXQ4RIN4B(uhri33V8h2bLH(YT04SLQHzMxSUhQfgQ5RDBWULFWS7PzYR7vrzqhUKMzK07Z88C)olZP7Xvzk)RKe4W7Xqa2SImyXkpDK6W1FbNBPpIWsXdd19sfftsnb1FPivYR9MfCQreMTNxRr1T9Ey5SojK)OgnPD50ojTERqOmXId8svF1ozSA5Rpr)VQdnH5eOS6N5KuANULetvHBzfcVCCFOSSd36u24Y93VeU6Fp4MOLi687d26pXPtFWsNq6J006VMUevYs)WYppQpCtPobDEzPKKtNA8fhvoK8RnQCa1V0OYHm8vgPYWQVWOQXu)6IkhR5xwuF2LYopyytk)qI6dRQA0Ibgz8ZgIb5))tx5tI0vI9uM8AtEcNbuFbj4JJaJ6Ya(vjVbMRPfj9e0afvlO1mDcVLZJo974rP1qXUpSCYiZKlZbXmh1Vc4GHwdK66IF3VC(Pt0GOhwoMwjIjPtHabi2d3sVQYs21XST7h0(v66d)RU9LnraQBJl6C)YjZpdEp56WBEMFRMIHM41IrLymnpSSy9nCHh7ISX1VwcYRX1Uwo6Mbg9)MoQkWvRUZHRGJWqiC)RSDeeghGGi6mca8cb1)Yp)dpUsr7vqmeHAzqAeqRT9SfdS8KfuVsBmw7HfuyUXNPyGWEjsKAJVvV0GMvUtQ0AhllkTZ0V6mq7zeemW4dhAHdkn0xt3llezqdNJhulKrNxICfLkJGzAvgC6KyCXBd0x7JKJI8MwpreL4vICwRj8W(W4Mt1j)(L3TO36MjMzio6mSFAvnTWQpTAFZvCPn14(b26y)9thyPr9WmCOEveT6Mc1BMrvbB9v3ghSGxzeVz2OZaYsutb7IfaQ00QEELQcDYM9QcpiyzFrgeei)mcuuaJFPanpnld2BCw2aeqin5Nkad(49wCFJa7FYal1de1(azud1eRV2xzGv0bdKQcwwtqxa4PGTxbCtP7Me2ZGgAdWRx7(EdpPC0O3YgES4pr(7qG4SV3uKiIC2HH1jUVbC8v)hs0gxu)XeQPUTU44Sf1535h0WPtl4S(Kxb)(YJCd56ppN8kT1K)QS5P)LDeF(TxzTyQrrUkoY1Bh13(zIArTg4(zfZ0AQldmVVXugi9cQX1axUKcDnWMAv7o0yN1oDY04ZMpO1pJMBUPd4EtMvn)2gU5d4sOQjO3R0futCRv8z1cz7ZPuRvA35w5scb7JwDj1yB3BQxvmp0EjZNozTM52rcA9KAw7X5xsX2gyJLkU7FL1MBgWSrShfB9)n]=]
 )

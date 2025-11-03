@@ -1,10 +1,12 @@
 # Death Knight: Frost (MoP 5.5.0)
+# Strategies included: Masterfrost and Obliterate (from wowsims APLs)
+# Pack setting: settings.frost_strategy ('masterfrost' | 'obliterate')
 
 ## Precombat
 actions.precombat+=/flask,type=winters_bite
 actions.precombat+=/horn_of_winter
-actions.precombat+=/frost_presence
-actions.precombat+=/army_of_the_dead
+actions.precombat+=/frost_presence,if=!buff.frost_presence.up
+actions.precombat+=/army_of_the_dead,if=cooldown.army_of_the_dead.ready
 actions.precombat+=/raise_dead
 actions.precombat+=/potion
 actions.precombat+=/pillar_of_frost
@@ -15,7 +17,8 @@ actions+=/call_action_list,name=variables
 actions+=/call_action_list,name=cooldowns,if=variable.use_cds
 actions+=/run_action_list,name=aoe,if=active_enemies>=4
 actions+=/run_action_list,name=cleave,if=active_enemies=3
-actions+=/run_action_list,name=single_target
+actions+=/run_action_list,name=obliterate_build,if=settings.frost_strategy='obliterate'
+actions+=/run_action_list,name=masterfrost
 
 
 actions.variables+=/variable,name=use_cds,op=set,value=1
@@ -25,6 +28,7 @@ actions.variables+=/variable,name=runic_overcap,op=set,value=runic_power>=90
 actions.variables+=/variable,name=proc_window,op=set,value=buff.pillar_of_frost.up|buff.bloodlust.up|buff.heroism.up|buff.time_warp.up|buff.ancient_hysteria.up|buff.blood_fury.up|buff.berserking.up|buff.synapse_springs.up
 actions.variables+=/variable,name=rime_ready,op=set,value=buff.rime.react
 actions.variables+=/variable,name=km_ready,op=set,value=buff.killing_machine.react
+# Default behavior: if settings.frost_strategy is not set or any other value, masterfrost list will be used (fallback above).
 
 ## Cooldowns and burst windows
 actions.cooldowns+=/frost_presence,if=!buff.frost_presence.up
@@ -32,28 +36,28 @@ actions.cooldowns+=/pillar_of_frost
 actions.cooldowns+=/blood_fury,if=variable.proc_window
 actions.cooldowns+=/berserking,if=variable.proc_window
 actions.cooldowns+=/arcane_torrent,if=runic_power.deficit>=20
-actions.cooldowns+=/raise_dead,if=!pet.ghoul.active
-actions.cooldowns+=/use_item,slot=hands,if=variable.proc_window
+actions.cooldowns+=/raise_dead,if=!pet.ghoul.active&(buff.pillar_of_frost.up|cooldown.pillar_of_frost.remains<=5|time>=10)
+actions.cooldowns+=/use_item,slot=hands,if=variable.proc_window&cooldown.synapse_springs.ready
 actions.cooldowns+=/use_item,slot=trinket1,if=variable.proc_window|target.time_to_die<=25
 actions.cooldowns+=/use_item,slot=trinket2,if=variable.proc_window|target.time_to_die<=25
-actions.cooldowns+=/potion,if=variable.proc_window&target.time_to_die<=60
+actions.cooldowns+=/potion,if=variable.proc_window&(target.time_to_die<=60|buff.pillar_of_frost.up)
 actions.cooldowns+=/empower_rune_weapon,if=variable.proc_window&(runes.frost.count=0|runes.death.count=0)&runic_power.deficit>=30
 
-## Single Target priority
-actions.single_target+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.stack>=10
-actions.single_target+=/unholy_blight,if=talent.unholy_blight.enabled&variable.need_dots
-actions.single_target+=/outbreak,if=variable.need_dots
-actions.single_target+=/howling_blast,if=!dot.frost_fever.ticking
-actions.single_target+=/plague_strike,if=!dot.blood_plague.ticking
-actions.single_target+=/soul_reaper,if=variable.execute&runes.frost.count>=1
-actions.single_target+=/frost_strike,if=variable.runic_overcap|variable.km_ready
-actions.single_target+=/howling_blast,if=variable.rime_ready
-actions.single_target+=/obliterate,if=runes.frost.count>=1&runes.unholy.count>=1
-actions.single_target+=/howling_blast,if=runes.frost.count>=1|runes.death.count>=1
-actions.single_target+=/frost_strike,if=runic_power>=60
-actions.single_target+=/plague_leech,if=talent.plague_leech.enabled&variable.need_dots
-actions.single_target+=/horn_of_winter,if=buff.horn_of_winter.down
-actions.single_target+=/empower_rune_weapon,if=runic_power.deficit>=40&(runes.frost.count=0|runes.death.count=0)
+## Masterfrost (Single Target bias toward HB/FS)
+actions.masterfrost+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.stack>=10
+actions.masterfrost+=/unholy_blight,if=talent.unholy_blight.enabled&variable.need_dots
+actions.masterfrost+=/outbreak,if=variable.need_dots
+actions.masterfrost+=/howling_blast,if=!dot.frost_fever.ticking
+actions.masterfrost+=/plague_strike,if=!dot.blood_plague.ticking
+actions.masterfrost+=/soul_reaper,if=variable.execute&runes.frost.count>=1
+actions.masterfrost+=/frost_strike,if=variable.runic_overcap|variable.km_ready
+actions.masterfrost+=/howling_blast,if=variable.rime_ready
+actions.masterfrost+=/obliterate,if=runes.unholy.count>=1&runes.frost.count>=1&runic_power<=76
+actions.masterfrost+=/howling_blast,if=runes.frost.count>=1|runes.death.count>=1
+actions.masterfrost+=/frost_strike,if=runic_power>=60
+actions.masterfrost+=/plague_leech,if=talent.plague_leech.enabled&dot.blood_plague.remains<3&dot.frost_fever.remains<3&time>=25
+actions.masterfrost+=/horn_of_winter,if=buff.horn_of_winter.down
+actions.masterfrost+=/empower_rune_weapon,if=runic_power.deficit>=40&(runes.frost.count=0|runes.death.count=0)
 
 ## Cleave (3 targets)
 actions.cleave+=/unholy_blight,if=talent.unholy_blight.enabled&variable.need_dots
@@ -80,3 +84,20 @@ actions.aoe+=/howling_blast
 actions.aoe+=/frost_strike,if=variable.runic_overcap|variable.km_ready
 actions.aoe+=/obliterate,if=runes.frost.count>=1&runes.unholy.count>=1
 actions.aoe+=/horn_of_winter
+
+## Obliterate-focused build (Single Target)
+actions.obliterate_build+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.stack>=10
+actions.obliterate_build+=/unholy_blight,if=talent.unholy_blight.enabled&variable.need_dots
+actions.obliterate_build+=/outbreak,if=variable.need_dots
+actions.obliterate_build+=/howling_blast,if=!dot.frost_fever.ticking
+actions.obliterate_build+=/plague_strike,if=!dot.blood_plague.ticking
+actions.obliterate_build+=/soul_reaper,if=(target.health.pct<=35|(target.health.pct<=45&legendary.meta_active.enabled))&runes.frost.count>=1
+actions.obliterate_build+=/obliterate,if=variable.km_ready&active_enemies<=3
+actions.obliterate_build+=/frost_strike,if=runic_power>=76
+actions.obliterate_build+=/howling_blast,if=variable.rime_ready
+actions.obliterate_build+=/obliterate,if=runes.frost.count>=1&runes.unholy.count>=1
+actions.obliterate_build+=/howling_blast,if=runes.frost.count>=1|runes.death.count>=1
+actions.obliterate_build+=/plague_leech,if=talent.plague_leech.enabled&(dot.blood_plague.remains<3|dot.frost_fever.remains<3)
+actions.obliterate_build+=/frost_strike,if=runic_power>=40
+actions.obliterate_build+=/horn_of_winter,if=buff.horn_of_winter.down
+actions.obliterate_build+=/empower_rune_weapon,if=(runes.frost.count=0|runes.death.count=0)&runic_power.deficit>=40

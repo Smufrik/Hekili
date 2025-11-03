@@ -1,76 +1,2852 @@
-### Guardian Druid Action Priority List - MoP Adaptation
-### Based on retail Guardian structure but adapted for MoP mechanics
-### 
-### Recommended Settings for `/hekili` > *Guardian*:
-###
-### - Maul Rage Threshold: 60 (dumping threshold)
-### - Emergency Health Threshold: 30%
-### - Defensive Health Threshold: 50%
-### - Moderate Damage Threshold: 70%
+Guardian; Primary - Thrash(0.30), Thrash(1.74), Thrash(3.18)
+build: v5.5.2-1.0.0o
+level: 90 (90)
+class: DRUID
+spec: guardian
 
-### Tunables and Constants ###
-### Note: Variables are now handled by local functions in the Lua file
-### State expressions reference these functions directly
+### Talents ###
 
-### On Pull Actions ###
-actions.on_pull+=/bear_form,if=!buff.bear_form.up
-actions.on_pull+=/mark_of_the_wild,if=!buff.mark_of_the_wild.up
+In-Game Import: MoP Export Unavailable
+    disorienting_roar = 1/0
+    displacer_beast = 1/0
+    dream_of_cenarius = 1/0
+    mass_entanglement = 1/0
+    savage_defense = 1/0
+    yseras_gift = 1/0
 
-### Main Action List ###
-actions+=/call_action_list,name=on_pull,strict=1,if=time=0
-actions+=/skull_bash,if=target.casting&target.cast_interruptible
-actions+=/bear_form,if=!buff.bear_form.up
+### Legacy Content ###
 
-actions+=/call_action_list,name=mitigation
-actions+=/call_action_list,name=defensives,if=tanking
-actions+=/call_action_list,name=heal
-actions+=/call_action_list,name=bear
-actions+=/call_action_list,name=cooldowns
+legendaries: none
 
-### Mitigation (Rage-based defensives) ###
-actions.mitigation+=/savage_defense,if=rage>=60&!buff.savage_defense.up
-actions.mitigation+=/enrage,if=rage<40&buff.enrage.down
+### Gear & Items ###
 
-### Defensives ###
-actions.defensives+=/survival_instincts,if=health.pct<30
-actions.defensives+=/barkskin,if=health.pct<50
-actions.defensives+=/frenzied_regeneration,if=buff.frenzied_regeneration.down&health.pct<50
+sets:
+    hands = 1
+    synapse_springs = 1
 
-### Healing ###
-actions.heal+=/healing_touch,if=health.pct<30&(buff.nature_swiftness.up|buff.predatory_swiftness.up|buff.dream_of_cenarius_healing.stack>0)
-actions.heal+=/rejuvenation,if=health.pct<70&!buff.rejuvenation.up&(buff.predatory_swiftness.up|buff.dream_of_cenarius_healing.stack>0)
+gear:
+    burlap_loop = 1
+    doubtridden_shoulderguards = 1
+    engraved_amber_pendant = 1
+    ghostheart = 1
+    hands = 1
+    headcover_of_the_impatient = 1
+    kafa_leather_boots = 1
+    leggings_of_the_empty_throne = 1
+    signet_of_dancing_jade = 1
+    silentleaf_armwraps = 1
+    singing_cricket_medallion = 1
+    steppebeast_belt = 1
+    steppebeast_gloves = 1
+    steppebeast_tunic = 1
+    synapse_springs = 1
+    tabard_of_the_guardians_of_hyjal = 1
+    windsoaked_drape = 1
+    windswept_pages = 1
 
-### Cooldowns ###
-actions.cooldowns+=/berserk,if=buff.berserk.down&(active_enemies>=2|boss)
-actions.cooldowns+=/incarnation,if=talent.incarnation&buff.incarnation.down&(active_enemies>=2|boss)
-actions.cooldowns+=/enrage,if=rage<40&buff.enrage.down
-actions.cooldowns+=/heart_of_the_wild,if=talent.heart_of_the_wild&buff.heart_of_the_wild.down
+itemIDs: 65906, 80773, 81071, 81123, 81125, 81128, 81271, 82555, 82571, 83667, 83694, 83703, 84523, 85185, 87320, 87338
 
-### Bear Form Actions ###
-actions.bear+=/call_action_list,name=threat_generation
-actions.bear+=/call_action_list,name=dump_rage,if=should_spend_rage
+### Settings ###
 
-### Threat Generation ###
-actions.threat_generation+=/call_action_list,name=multi_target,if=active_enemies>=3
-actions.threat_generation+=/call_action_list,name=single_target
+Settings:
+    aoe = 3
+    custom1Name = Custom 1
+    custom2Name = Custom 2
+    cycle = true
+    cycle_min = 6
+    damage = true
+    damageDots = true
+    damageExpiration = 3
+    damageOnScreen = true
+    damagePets = false
+    damageRange = 0
+    enabled = true
+    gcdSync = true
+    nameplateRange = 10
+    nameplates = true
+    noFeignedCooldown = false
+    package = Guardian
+    petbased = false
+    potion = flask_of_spring_blossoms
+    rangeFilter = false
+    auto_pulverize = true
+    defensive_health_pct = 50
+    defensive_health_threshold = 80
+    emergency_health_pct = 30
+    enrage_rage_threshold = 40
+    faerie_fire_auto = false
+    ironfur_damage_threshold = 5
+    lacerate_stacks = 3
+    maintain_faerie_fire = true
+    maul_rage = 20
+    max_ironfur = 1
+    moderate_damage_pct = 70
+    primal_fury = true
+    rage_dump_threshold = 90
+    rend_and_tear_multiplier = 1.2
+    savage_defense_rage_threshold = 80
+    use_defensives = true
+    use_emergency_abilities = true
+    use_savage_defense = true
+    use_symbiosis = true
+    use_utility = true
+    vengeance_optimization = true
+    vengeance_stack_threshold = 5
 
-### Multi-Target Rotation ###
-actions.multi_target+=/pulverize,if=debuff.lacerate.stack>=3&debuff.lacerate.remains<=4&auto_pulverize
-actions.multi_target+=/lacerate,cycle_targets=1,if=!buff.berserk.up&(debuff.lacerate.remains<=4|debuff.lacerate.stack<3)
-actions.multi_target+=/faerie_fire,cycle_targets=1,if=(debuff.faerie_fire.down|debuff.faerie_fire.remains<=6)&faerie_fire_auto
-actions.multi_target+=/demoralizing_roar,if=(debuff.demoralizing_roar.down|debuff.demoralizing_roar.remains<=4)
-actions.multi_target+=/mangle
-actions.multi_target+=/thrash,if=!buff.berserk.up
-actions.multi_target+=/swipe_bear
+Toggles:
+    cooldowns = true 
+    custom1 = false 
+    custom2 = false 
+    defensives = true 
+    essences = false 
+    funnel = false 
+    interrupts = true 
+    mode = single 
+    potions = true [overridden]
 
-### Single Target Rotation ###
-actions.single_target+=/pulverize,if=debuff.lacerate.stack>=3&debuff.lacerate.remains<=4&auto_pulverize
-actions.single_target+=/faerie_fire,if=(debuff.faerie_fire.down|debuff.faerie_fire.remains<=6)&faerie_fire_auto
-actions.single_target+=/demoralizing_roar,if=(debuff.demoralizing_roar.down|debuff.demoralizing_roar.remains<=4)
-actions.single_target+=/mangle
-actions.single_target+=/lacerate,if=!buff.berserk.up&(debuff.lacerate.stack<3|debuff.lacerate.remains<=3)
-actions.single_target+=/thrash,if=!buff.berserk.up
+Keybinds:
+    auto_attack           = 1   [08], 1   [10]
+    barkskin              = 4   [01]
+    berserk               = 2   [07], 4   [09]
+    cat_form_hotw         = 2   [08]
+    disorienting_roar     = SHIFT-0[06]
+    enrage                = R   [01], R   [09]
+    faerie_fire           = SHIFT-+[06], 4   [08], 3   [10]
+    frenzied_regeneration = ALT-8[05], BUTTON4[09]
+    growl                 = F   [09]
+    healing_touch         = SHIFT-2[06]
+    lacerate              = E   [09]
+    mangle                = Q   [09]
+    maul                  = 3   [09]
+    might_of_ursoc        = ALT-7[05]
+    prowl                 = BUTTON5[07]
+    rejuvenation          = BUTTON4[01]
+    rip_hotw              = 6   [07]
+    savage_defense        = 1   [09]
+    shadowmeld            = SHIFT-9[06]
+    survival_instincts    = 6   [01], ALT-0[05], 3   [07], BUTTON5[09], 2   [10]
+    swipe_bear            = 6   [09]
+    thrash                = 1   [07], 2   [09]
 
-### Rage Dump ###
-actions.dump_rage+=/tooth_and_claw,if=buff.tooth_and_claw.up&target.in_melee_range
-actions.dump_rage+=/maul,if=can_spend_rage_on_maul&target.in_melee_range
+### Warnings ###
+
+[#1] Unknown buff in [Feral:opener:4]: tigers_fury
+[Interface/AddOns/Hekili/State.lua]:5073: in function <Interface/AddOns/Hekili/State.lua:5058>
+[return buff.tigers_fury.up]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#2] Unknown key 'disable_shred_when_solo' in emulated environment for [ Feral:opener:5 : shred ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return disable_shred_when_solo]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#3] Unknown key 'disable_shred_when_solo' in emulated environment for [ Feral:opener:5 : shred ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return (safebool(disable_shred_when_solo) and active_enemies==1)]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#4] Unknown key 'disable_shred_when_solo' in emulated environment for [ Feral:opener:5 : shred ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return disable_shred_when_solo]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#5] Unknown key 'disable_shred_when_solo' in emulated environment for [ Feral:opener:5 : shred ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return disable_shred_when_solo]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:789: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#6] Unknown buff in [Feral:snek:1]: natures_swiftness
+[Interface/AddOns/Hekili/State.lua]:5073: in function <Interface/AddOns/Hekili/State.lua:5058>
+[return buff.natures_swiftness.up]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#7] Unknown key 'should_wrath_weave' in emulated environment for [ Feral:cat_optimal:5 : call_action_list ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return should_wrath_weave]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#8] Unknown key 'should_wrath_weave' in emulated environment for [ Feral:cat_optimal:5 : call_action_list ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[-- Feral:cat_optimal:5
+return safebool( safebool(variable.opt_wrath_weave) and safebool(should_wrath_weave) )]:2: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1424: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#9] Unknown key 'should_wrath_weave' in emulated environment for [ Feral:cat_optimal:5 : call_action_list ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return should_wrath_weave]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#10] Unknown key 'should_bear_weave' in emulated environment for [ Feral:cat_optimal:6 : call_action_list ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return should_bear_weave]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#11] Unknown key 'should_bear_weave' in emulated environment for [ Feral:cat_optimal:6 : call_action_list ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return (safebool(should_bear_weave) or buff.bear_form.up)]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#12] Unknown key 'should_bear_weave' in emulated environment for [ Feral:cat_optimal:6 : call_action_list ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[-- Feral:cat_optimal:6
+return safebool( safebool(variable.opt_bear_weave) and (safebool(should_bear_weave) or buff.bear_form.up) )]:2: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1424: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#13] Unknown key 'should_bear_weave' in emulated environment for [ Feral:cat_optimal:6 : call_action_list ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return should_bear_weave]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#14] Unknown key 'should_bear_weave' in emulated environment for [ Feral:cat_optimal:6 : call_action_list ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return should_bear_weave]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:789: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#15] Unknown buff in [Feral:st:2]: savage_roar
+[Interface/AddOns/Hekili/State.lua]:5073: in function <Interface/AddOns/Hekili/State.lua:5058>
+[return buff.savage_roar.up]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#16] Unknown key 'combo_points_for_rip' in emulated environment for [ Feral:st:3 : rip ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return combo_points_for_rip]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#17] Unknown key 'rip_stronger' in emulated environment for [ Feral:st:3 : rip ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return rip_stronger]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#18] Unknown key 'delay_rip_for_tf' in emulated environment for [ Feral:st:3 : rip ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return delay_rip_for_tf]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#19] Unknown key 'clip_rip_with_snapshot' in emulated environment for [ Feral:st:3 : rip ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return clip_rip_with_snapshot]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#20] Unknown key 'combo_points_for_rip' in emulated environment for [ Feral:st:3 : rip ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[-- Feral:st:3
+return safebool( safebool(combo_points_for_rip) and (dot.rip.down or dot.rip.remains<=2 or safebool(rip_stronger)) and not (safebool(delay_rip_for_tf)) and not (safebool(clip_rip_with_snapshot))  )]:2: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1424: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#21] Unknown key 'combo_points_for_rip' in emulated environment for [ Feral:st:3 : rip ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return combo_points_for_rip]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#22] Unknown key 'rip_stronger' in emulated environment for [ Feral:st:3 : rip ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return rip_stronger]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#23] Unknown key 'delay_rip_for_tf' in emulated environment for [ Feral:st:3 : rip ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return delay_rip_for_tf]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#24] Unknown key 'clip_rip_with_snapshot' in emulated environment for [ Feral:st:3 : rip ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return clip_rip_with_snapshot]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#25] Unknown key 'rip_stronger' in emulated environment for [ Feral:st:3 : rip ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return rip_stronger]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:789: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#26] Unknown key 'rake_stronger' in emulated environment for [ Feral:st:4 : rake ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return rake_stronger]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#27] Unknown key 'delay_rake_for_tf' in emulated environment for [ Feral:st:4 : rake ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return delay_rake_for_tf]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#28] Unknown key 'clip_rake_with_snapshot' in emulated environment for [ Feral:st:4 : rake ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return clip_rake_with_snapshot]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#29] Unknown key 'delay_rake_for_tf' in emulated environment for [ Feral:st:4 : rake ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[-- Feral:st:4
+return safebool( (dot.rake.down or dot.rake.remains<=3 or safebool(rake_stronger)) and not (safebool(delay_rake_for_tf)) and not (safebool(clip_rake_with_snapshot))  )]:2: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1424: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#30] Unknown key 'clip_rake_with_snapshot' in emulated environment for [ Feral:st:4 : rake ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[-- Feral:st:4
+return safebool( (dot.rake.down or dot.rake.remains<=3 or safebool(rake_stronger)) and not (safebool(delay_rake_for_tf)) and not (safebool(clip_rake_with_snapshot))  )]:2: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1424: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#31] Unknown key 'rake_stronger' in emulated environment for [ Feral:st:4 : rake ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return rake_stronger]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#32] Unknown key 'delay_rake_for_tf' in emulated environment for [ Feral:st:4 : rake ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return delay_rake_for_tf]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#33] Unknown key 'clip_rake_with_snapshot' in emulated environment for [ Feral:st:4 : rake ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return clip_rake_with_snapshot]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#34] Unknown key 'rake_stronger' in emulated environment for [ Feral:st:4 : rake ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return rake_stronger]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:789: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#35] WARNING: Unknown debuff in [Feral:st:5]: thrash
+[Interface/AddOns/Hekili/State.lua]:6215: in function <Interface/AddOns/Hekili/State.lua:6177>
+[Interface/AddOns/Hekili/State.lua]:4244: in function <Interface/AddOns/Hekili/State.lua:4240>
+[return dot.thrash.down]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#36] Unknown key 'disable_shred_when_solo' in emulated environment for [ Feral:st:6 : shred ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return disable_shred_when_solo]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#37] Unknown key 'disable_shred_when_solo' in emulated environment for [ Feral:st:6 : shred ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return (safebool(disable_shred_when_solo) and active_enemies==1)]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#38] Unknown key 'disable_shred_when_solo' in emulated environment for [ Feral:st:6 : shred ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return disable_shred_when_solo]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#39] Unknown key 'disable_shred_when_solo' in emulated environment for [ Feral:st:6 : shred ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return disable_shred_when_solo]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:789: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#40] Unknown key 'disable_shred_when_solo' in emulated environment for [ Feral:st:8 : shred ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return disable_shred_when_solo]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#41] Unknown key 'disable_shred_when_solo' in emulated environment for [ Feral:st:8 : shred ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return (safebool(disable_shred_when_solo) and active_enemies==1)]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#42] Unknown key 'disable_shred_when_solo' in emulated environment for [ Feral:st:8 : shred ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[-- Feral:st:8
+return safebool( (energy.deficit<=10 or not (dot.rip.remains<=2 or buff.savage_roar.remains<=4 or dot.rake.remains<=3)) and not (safebool(disable_shred_when_solo) and active_enemies==1)  )]:2: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1424: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#43] Unknown key 'disable_shred_when_solo' in emulated environment for [ Feral:st:8 : shred ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return disable_shred_when_solo]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#44] Unknown key 'disable_shred_when_solo' in emulated environment for [ Feral:st:8 : shred ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return disable_shred_when_solo]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:789: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#45] WARNING: Unknown debuff in [Feral:aoe:2]: thrash_cat
+[Interface/AddOns/Hekili/State.lua]:6215: in function <Interface/AddOns/Hekili/State.lua:6177>
+[Interface/AddOns/Hekili/State.lua]:4244: in function <Interface/AddOns/Hekili/State.lua:4240>
+[return dot.thrash_cat.remains]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#46] Unknown key 'combo_points_for_rip' in emulated environment for [ Feral:aoe:5 : rip ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return combo_points_for_rip]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#47] Unknown key 'delay_rip_for_tf' in emulated environment for [ Feral:aoe:5 : rip ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return delay_rip_for_tf]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#48] Unknown key 'clip_rip_with_snapshot' in emulated environment for [ Feral:aoe:5 : rip ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return clip_rip_with_snapshot]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#49] Unknown key 'combo_points_for_rip' in emulated environment for [ Feral:aoe:5 : rip ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[-- Feral:aoe:5
+return safebool( active_enemies<=4 and safebool(combo_points_for_rip) and dot.rip.remains<7.2 and not (safebool(delay_rip_for_tf)) and not (safebool(clip_rip_with_snapshot))  )]:2: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1424: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#50] Unknown key 'combo_points_for_rip' in emulated environment for [ Feral:aoe:5 : rip ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return combo_points_for_rip]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#51] Unknown key 'delay_rip_for_tf' in emulated environment for [ Feral:aoe:5 : rip ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return delay_rip_for_tf]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#52] Unknown key 'clip_rip_with_snapshot' in emulated environment for [ Feral:aoe:5 : rip ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return clip_rip_with_snapshot]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#53] Unknown key 'should_wrath_weave' in emulated environment for [ Feral:wrath:1 : wrath ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return should_wrath_weave]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#54] Unknown key 'should_wrath_weave' in emulated environment for [ Feral:wrath:1 : wrath ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[-- Feral:wrath:1
+return safebool( safebool(variable.opt_wrath_weave) and safebool(should_wrath_weave) )]:2: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1424: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#55] Unknown key 'should_wrath_weave' in emulated environment for [ Feral:wrath:1 : wrath ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return should_wrath_weave]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#56] Unknown key 'berserk_clip_for_hotw' in emulated environment for [ Feral:cooldowns:8 : berserk ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return berserk_clip_for_hotw]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#57] Unknown key 'berserk_clip_for_hotw' in emulated environment for [ Feral:cooldowns:8 : berserk ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[-- Feral:cooldowns:8
+return safebool( buff.tigers_fury.up or safebool(berserk_clip_for_hotw) )]:2: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1424: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#58] Unknown key 'berserk_clip_for_hotw' in emulated environment for [ Feral:cooldowns:8 : berserk ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return berserk_clip_for_hotw]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#59] Unknown key 'berserk_clip_for_hotw' in emulated environment for [ Feral:cooldowns:10 : heart_of_the_wild ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return berserk_clip_for_hotw]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#60] Unknown key 'berserk_clip_for_hotw' in emulated environment for [ Feral:cooldowns:10 : heart_of_the_wild ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return berserk_clip_for_hotw]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#61] Unknown key 'berserk_clip_for_hotw' in emulated environment for [ Feral:cooldowns:10 : heart_of_the_wild ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return berserk_clip_for_hotw]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:789: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#62] Unknown key 'maintain_ff' in emulated environment for [ Feral:default:1 : variable ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return maintain_ff]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1550: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#63] Unknown key 'opt_bear_weave' in emulated environment for [ Feral:default:2 : variable ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return opt_bear_weave]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1550: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#64] Unknown key 'opt_wrath_weave' in emulated environment for [ Feral:default:3 : variable ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return opt_wrath_weave]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1550: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#65] Unknown key 'opt_snek_weave' in emulated environment for [ Feral:default:4 : variable ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return opt_snek_weave]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1550: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#66] Unknown key 'opt_use_ns' in emulated environment for [ Feral:default:5 : variable ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return opt_use_ns]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1550: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#67] Unknown key 'opt_melee_weave' in emulated environment for [ Feral:default:6 : variable ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return opt_melee_weave]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1550: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#68] Unknown key 'use_trees' in emulated environment for [ Feral:default:7 : variable ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return use_trees]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1550: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#69] Unknown key 'use_hotw' in emulated environment for [ Feral:default:8 : variable ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return use_hotw]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1550: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#70] Unknown buff in [Balance:default:5]: dream_of_cenarius
+[Interface/AddOns/Hekili/State.lua]:5073: in function <Interface/AddOns/Hekili/State.lua:5058>
+[return buff.dream_of_cenarius.up]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#71] Unknown buff in [Balance:default:6]: celestial_alignment
+[Interface/AddOns/Hekili/State.lua]:5073: in function <Interface/AddOns/Hekili/State.lua:5058>
+[return buff.celestial_alignment.up]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#72] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:6 : use_items ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#73] Unknown buff in [Balance:default:6]: lunar_eclipse
+[Interface/AddOns/Hekili/State.lua]:5073: in function <Interface/AddOns/Hekili/State.lua:5058>
+[return buff.lunar_eclipse.up]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#74] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:6 : use_items ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return (safenum(eclipse_power)>=80 and buff.lunar_eclipse.up)]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#75] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:6 : use_items ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[-- Balance:default:6
+return safebool( buff.celestial_alignment.up or (safenum(eclipse_power)>=80 and buff.lunar_eclipse.up) )]:2: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1424: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#76] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:6 : use_items ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#77] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:6 : use_items ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:789: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#78] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:6 : use_items ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return (eclipse_power)]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:799: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#79] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:6 : use_items ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1472: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#80] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:10 : celestial_alignment ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#81] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:10 : celestial_alignment ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[-- Balance:default:10
+return safebool( safenum(eclipse_power)>=80 and buff.lunar_eclipse.up )]:2: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1424: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#82] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:10 : celestial_alignment ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#83] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:10 : celestial_alignment ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:789: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#84] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:10 : celestial_alignment ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return (eclipse_power)]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:799: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#85] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:10 : celestial_alignment ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1472: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#86] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:11 : incarnation ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#87] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:11 : incarnation ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return (safenum(eclipse_power)>=80 and buff.lunar_eclipse.up and cooldown.incarnation.remains>=86)]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#88] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:11 : incarnation ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return (buff.celestial_alignment.up or (safenum(eclipse_power)>=80 and buff.lunar_eclipse.up and cooldown.incarnation.remains>=86))]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#89] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:11 : incarnation ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#90] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:11 : incarnation ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:789: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#91] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:11 : incarnation ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return (safenum(eclipse_power)>=80 and buff.lunar_eclipse.up and cooldown.incarnation.remains>=86)]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:789: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#92] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:11 : incarnation ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return (eclipse_power)]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:799: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#93] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:11 : incarnation ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1472: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#94] Unknown buff in [Balance:default:12]: incarnation_chosen_of_elune
+[Interface/AddOns/Hekili/State.lua]:5073: in function <Interface/AddOns/Hekili/State.lua:5058>
+[return buff.incarnation_chosen_of_elune.up]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#95] Unknown buff in [Balance:default:14]: wild_mushroom_stacks
+[Interface/AddOns/Hekili/State.lua]:5073: in function <Interface/AddOns/Hekili/State.lua:5058>
+[return buff.wild_mushroom_stacks.stack]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#96] Unknown key 'ticking' in emulated environment for [ Balance:default:18 : sunfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return ticking]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#97] Unknown key 'ticking' in emulated environment for [ Balance:default:18 : sunfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return ticking]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#98] Unknown key 'remains' in emulated environment for [ Balance:default:18 : sunfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return remains]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1472: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#99] Unknown key 'ticking' in emulated environment for [ Balance:default:19 : moonfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return ticking]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#100] Unknown key 'ticking' in emulated environment for [ Balance:default:19 : moonfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return ticking]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#101] Unknown key 'remains' in emulated environment for [ Balance:default:19 : moonfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return remains]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1472: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#102] Unknown key 'remains' in emulated environment for [ Balance:default:20 : sunfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return remains]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#103] Unknown key 'tick_time' in emulated environment for [ Balance:default:20 : sunfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return tick_time]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#104] Unknown key 'remains' in emulated environment for [ Balance:default:20 : sunfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return remains]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#105] Unknown key 'remains' in emulated environment for [ Balance:default:20 : sunfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[-- Balance:default:20
+return safebool( safenum(remains)<=safenum(tick_time) or (buff.lunar_eclipse.up and safenum(remains)<=3) or (buff.lunar_eclipse.up and buff.lunar_eclipse.remains<=3 and safenum(remains)<=6) )]:2: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1424: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#106] Unknown key 'tick_time' in emulated environment for [ Balance:default:20 : sunfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[-- Balance:default:20
+return safebool( safenum(remains)<=safenum(tick_time) or (buff.lunar_eclipse.up and safenum(remains)<=3) or (buff.lunar_eclipse.up and buff.lunar_eclipse.remains<=3 and safenum(remains)<=6) )]:2: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1424: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#107] Unknown key 'remains' in emulated environment for [ Balance:default:20 : sunfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return remains]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#108] Unknown key 'tick_time' in emulated environment for [ Balance:default:20 : sunfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return tick_time]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#109] Unknown key 'remains' in emulated environment for [ Balance:default:20 : sunfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return remains]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:789: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#110] Unknown key 'tick_time' in emulated environment for [ Balance:default:20 : sunfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return tick_time]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:789: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#111] Unknown key 'remains' in emulated environment for [ Balance:default:20 : sunfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return remains]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:789: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#112] Unknown key 'remains' in emulated environment for [ Balance:default:20 : sunfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return (remains)]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:799: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#113] Unknown key 'tick_time' in emulated environment for [ Balance:default:20 : sunfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return (tick_time)]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:799: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#114] Unknown key 'remains' in emulated environment for [ Balance:default:20 : sunfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return remains]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1472: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#115] Unknown key 'tick_time' in emulated environment for [ Balance:default:20 : sunfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return tick_time]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1472: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#116] Unknown key 'remains' in emulated environment for [ Balance:default:21 : moonfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return remains]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#117] Unknown key 'tick_time' in emulated environment for [ Balance:default:21 : moonfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return tick_time]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#118] Unknown buff in [Balance:default:21]: solar_eclipse
+[Interface/AddOns/Hekili/State.lua]:5073: in function <Interface/AddOns/Hekili/State.lua:5058>
+[return buff.solar_eclipse.up]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#119] Unknown key 'remains' in emulated environment for [ Balance:default:21 : moonfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return remains]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#120] Unknown key 'remains' in emulated environment for [ Balance:default:21 : moonfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[-- Balance:default:21
+return safebool( safenum(remains)<=safenum(tick_time) or (buff.solar_eclipse.up and safenum(remains)<=3) or (buff.solar_eclipse.up and buff.solar_eclipse.remains<=3 and safenum(remains)<=6) )]:2: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1424: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#121] Unknown key 'tick_time' in emulated environment for [ Balance:default:21 : moonfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[-- Balance:default:21
+return safebool( safenum(remains)<=safenum(tick_time) or (buff.solar_eclipse.up and safenum(remains)<=3) or (buff.solar_eclipse.up and buff.solar_eclipse.remains<=3 and safenum(remains)<=6) )]:2: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1424: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#122] Unknown key 'remains' in emulated environment for [ Balance:default:21 : moonfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return remains]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#123] Unknown key 'tick_time' in emulated environment for [ Balance:default:21 : moonfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return tick_time]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#124] Unknown key 'remains' in emulated environment for [ Balance:default:21 : moonfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return remains]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:789: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#125] Unknown key 'tick_time' in emulated environment for [ Balance:default:21 : moonfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return tick_time]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:789: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#126] Unknown key 'remains' in emulated environment for [ Balance:default:21 : moonfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return remains]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:789: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#127] Unknown key 'remains' in emulated environment for [ Balance:default:21 : moonfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return (remains)]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:799: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#128] Unknown key 'tick_time' in emulated environment for [ Balance:default:21 : moonfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return (tick_time)]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:799: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#129] Unknown key 'remains' in emulated environment for [ Balance:default:21 : moonfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return remains]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1472: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#130] Unknown key 'tick_time' in emulated environment for [ Balance:default:21 : moonfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return tick_time]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1472: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#131] Unknown buff in [Balance:default:22]: shooting_stars
+[Interface/AddOns/Hekili/State.lua]:5073: in function <Interface/AddOns/Hekili/State.lua:5058>
+[return buff.shooting_stars.react]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#132] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:23 : starsurge ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#133] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:23 : starsurge ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[-- Balance:default:23
+return safebool( safenum(eclipse_power)>=80 and buff.lunar_eclipse.up and cooldown.celestial_alignment.remains>=35 )]:2: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1424: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#134] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:23 : starsurge ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#135] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:23 : starsurge ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:789: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#136] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:23 : starsurge ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return (eclipse_power)]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:799: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#137] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:23 : starsurge ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1472: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#138] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:24 : starsurge ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#139] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:24 : starsurge ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#140] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:24 : starsurge ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:789: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#141] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:24 : starsurge ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return (eclipse_power)]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:799: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#142] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:24 : starsurge ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1472: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#143] Unknown buff in [Balance:default:26]: lunar_shower
+[Interface/AddOns/Hekili/State.lua]:5073: in function <Interface/AddOns/Hekili/State.lua:5058>
+[return buff.lunar_shower.stack]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#144] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:27 : starfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#145] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:27 : starfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return (safenum(eclipse_power)<0 and not (buff.solar_eclipse.up))]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#146] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:27 : starfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return (safenum(eclipse_power)<=60 and eclipse_direction==lunar)]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#147] Unknown key 'eclipse_direction' in emulated environment for [ Balance:default:27 : starfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return (safenum(eclipse_power)<=60 and eclipse_direction==lunar)]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#148] Unknown key 'lunar' in emulated environment for [ Balance:default:27 : starfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return (safenum(eclipse_power)<=60 and eclipse_direction==lunar)]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#149] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:27 : starfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[-- Balance:default:27
+return safebool( buff.lunar_eclipse.up or (safenum(eclipse_power)<0 and not (buff.solar_eclipse.up)) or (safenum(eclipse_power)<=60 and eclipse_direction==lunar) )]:2: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1424: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#150] Unknown key 'eclipse_direction' in emulated environment for [ Balance:default:27 : starfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[-- Balance:default:27
+return safebool( buff.lunar_eclipse.up or (safenum(eclipse_power)<0 and not (buff.solar_eclipse.up)) or (safenum(eclipse_power)<=60 and eclipse_direction==lunar) )]:2: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1424: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#151] Unknown key 'lunar' in emulated environment for [ Balance:default:27 : starfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[-- Balance:default:27
+return safebool( buff.lunar_eclipse.up or (safenum(eclipse_power)<0 and not (buff.solar_eclipse.up)) or (safenum(eclipse_power)<=60 and eclipse_direction==lunar) )]:2: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1424: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#152] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:27 : starfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#153] Unknown key 'eclipse_direction' in emulated environment for [ Balance:default:27 : starfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_direction]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#154] Unknown key 'lunar' in emulated environment for [ Balance:default:27 : starfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return lunar]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#155] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:27 : starfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:789: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#156] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:27 : starfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return (eclipse_power)]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:799: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#157] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:27 : starfire ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1472: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#158] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:28 : wrath ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#159] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:28 : wrath ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return (safenum(eclipse_power)>0 and not (buff.lunar_eclipse.up))]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#160] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:28 : wrath ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return (safenum(eclipse_power)>=60 and eclipse_direction==solar)]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1053: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1407: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#161] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:28 : wrath ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[-- Balance:default:28
+return safebool( buff.solar_eclipse.up or (safenum(eclipse_power)>0 and not (buff.lunar_eclipse.up)) or (safenum(eclipse_power)>=60 and eclipse_direction==solar) )]:2: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1424: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#162] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:28 : wrath ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#163] Unknown key 'eclipse_direction' in emulated environment for [ Balance:default:28 : wrath ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_direction]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#164] Unknown key 'solar' in emulated environment for [ Balance:default:28 : wrath ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return solar]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1430: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#165] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:28 : wrath ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:1011: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:789: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#166] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:28 : wrath ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return (eclipse_power)]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1026: in function 'EmulateSyntax'
+[Interface/AddOns/Hekili/Scripts.lua]:799: in function 'BuildRecheck'
+[Interface/AddOns/Hekili/Scripts.lua]:1465: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+[#167] Unknown key 'eclipse_power' in emulated environment for [ Balance:default:28 : wrath ].
+[Interface/AddOns/Hekili/State.lua]:3198: in function <Interface/AddOns/Hekili/State.lua:2514>
+[return eclipse_power]:1: in main chunk
+[C]: in function 'pcall'
+[Interface/AddOns/Hekili/Scripts.lua]:1256: in function <Interface/AddOns/Hekili/Scripts.lua:1245>
+[Interface/AddOns/Hekili/Scripts.lua]:1472: in function <Interface/AddOns/Hekili/Scripts.lua:1397>
+[Interface/AddOns/Hekili/Scripts.lua]:1904: in function 'LoadScript'
+[Interface/AddOns/Hekili/Scripts.lua]:1753: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Scripts.lua]:1765: in function 'LoadScripts'
+[Interface/AddOns/Hekili/Core.lua]:2286: in function <Interface/AddOns/Hekili/Core.lua:2284>
+
+
+
+player_buffs:
+    93341 - champion_of_the_guardians_of_hyjal       -   1 - 3600.00
+     1126 - mark_of_the_wild                         -   1 - 3261.47
+    24932 - leader_of_the_pack                       -   1 - 3600.00
+     5487 - bear_form                                -   1 - 3600.00
+   117642 - singing_cricket_medallion                -   1 - 0.33  
+
+player_debuffs:
+
+target_buffs:
+
+target_debuffs:
+   115798 - weakened_blows_1                         -   1 - 24.44 
+    77758 - thrash_bear                              -   1 - 12.33 
+    33745 - lacerate                                 -   3 - 10.94 
+
+
+New Recommendations for [ Primary ] requested at 00:39:13 ( 3161625.32 ); using built-in ( Guardian ) priority.
+*** START OF NEW DISPLAY: Primary ***
+Purged 342 marked values in 0.21ms.
+Combat Timer: 25.86
+
+RECOMMENDATION #1 ( Offset: 0.00, GCD: 0.00, Casting: 0.00 ).
+
+    ### Resources ###
+    | Resource      | Current | Max       | Usage |
+    |---------------|---------|-----------|-------|
+    | Combo Points  |       0 |         5 |    0% |
+    | Energy        |  100.00 |    100.00 |  100% |
+    | Mana          |   60000 |     60000 |  100% |
+    | Rage          |      49 |       100 |   49% |
+    
+    Checking if I'm casting ( No ) and if it is a channel ( No ).
+    No whitelist.
+    
+    Processing precombat action list [ Guardian - precombat ].
+        
+        Current recommendation was NO ACTION at +15.00s.
+        
+        Entry #1 in list ( precombat ) is not set or not enabled.  Skipping.
+        Exiting precombat with recommendation of NO ACTION at +15.00s.
+    
+    Completed precombat action list [ Guardian - precombat ].
+    
+    Processing default action list [ Guardian - default ].
+        
+        Current recommendation was NO ACTION at +15.00s.
+        
+        1.   run_action_list:on_pull ( default - 1 )
+        Criteria for on_pull FAIL at +0.00 - time[25.86] < 10
+        
+        2.   skull_bash ( default - 2 ) - ability unknown
+        Time spent on this action:  0.04ms
+        TimeData:Guardian-default-2:skull_bash:x0:0.04:Ability Known, Enabled(0.04)
+        
+        3.   bear_form ( default - 3 )
+        The action (bear_form) is usable at (0.00 + 0.00).
+         - the action is ready before the current recommendation (at +0.00 vs. +15.00).
+         - this entry's criteria FAILS: ! buff.bear_form.up[true]
+        There were no recheck events to check.
+        Time spent on this action:  0.16ms
+        TimeData:Guardian-default-3:bear_form:x0:0.16:Ability Known, Enabled(0.03):Post-TTR and Essential(0.05):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.02):Post Stack(0.01):Pre-Script(0.00):Post-Script(0.02):Pre-Recheck(0.01):Post-Recheck Times(0.01):Post Recheck(0.01)
+        
+        4.   call_action_list:hotw_dps ( default - 4 )
+        Time-sensitive Criteria FAIL at +0.00 with no valid rechecks - talent.heart_of_the_wild.enabled[false] & buff.heart_of_the_wild.up[false] & health.pct[100.00] >= 70
+        
+        5.   call_action_list:mitigation ( default - 5 )
+        There is no criteria for mitigation.
+        Action list (mitigation) was found.
+        + mitigation
+        Current recommendation was NO ACTION at +15.00s.
+        
+        6.   savage_defense ( mitigation - 1 )
+        The action is not ready ( 3600.00 ) before our maximum delay window ( 15.00 ) for this query.
+        Time spent on this action:  0.03ms
+        TimeData:Guardian-mitigation-1:savage_defense:x0:0.03:Ability Known, Enabled(0.03)
+        
+        7.   enrage ( mitigation - 2 )
+        The action is not ready ( 34.62 ) before our maximum delay window ( 15.00 ) for this query.
+        Time spent on this action:  0.05ms
+        TimeData:Guardian-mitigation-2:enrage:x0:0.05:Ability Known, Enabled(0.05)
+        Exiting mitigation with recommendation of NO ACTION at +15.00s.
+        Returned from list (mitigation), current recommendation is NO ACTION (+15.00).
+        - mitigation
+        
+        8.   call_action_list:defensives ( default - 6 )
+        There is no criteria for defensives.
+        Action list (defensives) was found.
+        + defensives
+        Current recommendation was NO ACTION at +15.00s.
+        
+        9.   survival_instincts ( defensives - 1 )
+        The action (survival_instincts) is usable at (0.00 + 0.00).
+         - the action is ready before the current recommendation (at +0.00 vs. +15.00).
+        List ( defensives ) called from ( Guardian:default:6 ) would PASS at 0.00.
+        NONE
+         - this entry's criteria FAILS: health.pct[100.00] < survival_instincts_health_pct[30.00]
+        There were no recheck events to check.
+        Time spent on this action:  0.15ms
+        TimeData:Guardian-defensives-1:survival_instincts:x0:0.15:Ability Known, Enabled(0.03):Post-TTR and Essential(0.04):Post Cycle(0.00):Post Usable(0.02):Post Ready/Clash(0.02):Post Stack(0.02):Pre-Script(0.00):Post-Script(0.01):Pre-Recheck(0.01):Post-Recheck Times(0.01):Post Recheck(0.00)
+        
+        10.  barkskin ( defensives - 2 )
+        The action (barkskin) is usable at (0.00 + 0.00).
+         - the action is ready before the current recommendation (at +0.00 vs. +15.00).
+        List ( defensives ) called from ( Guardian:default:6 ) would PASS at 0.00.
+        NONE
+         - this entry's criteria FAILS: health.pct[100.00] < defensive_health_pct[50.00]
+        There were no recheck events to check.
+        Time spent on this action:  0.13ms
+        TimeData:Guardian-defensives-2:barkskin:x0:0.13:Ability Known, Enabled(0.03):Post-TTR and Essential(0.03):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.02):Post Stack(0.02):Pre-Script(0.00):Post-Script(0.00):Pre-Recheck(0.01):Post-Recheck Times(0.01):Post Recheck(0.00)
+        
+        11.  frenzied_regeneration ( defensives - 3 )
+        The action (frenzied_regeneration) is usable at (0.00 + 0.00).
+         - the action is ready before the current recommendation (at +0.00 vs. +15.00).
+        List ( defensives ) called from ( Guardian:default:6 ) would PASS at 0.00.
+        NONE
+         - this entry's criteria FAILS: health.pct[100.00] < frenzied_regeneration_health_pct[70.00] & cooldown.savage_defense.charges[2.00] = 0
+        There were no recheck events to check.
+        Time spent on this action:  0.16ms
+        TimeData:Guardian-defensives-3:frenzied_regeneration:x0:0.16:Ability Known, Enabled(0.03):Post-TTR and Essential(0.03):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.02):Post Stack(0.02):Pre-Script(0.00):Post-Script(0.01):Pre-Recheck(0.04):Post-Recheck Times(0.01):Post Recheck(0.00)
+        
+        12.  might_of_ursoc ( defensives - 4 )
+        The action (might_of_ursoc) is usable at (0.00 + 0.00).
+         - the action is ready before the current recommendation (at +0.00 vs. +15.00).
+        List ( defensives ) called from ( Guardian:default:6 ) would PASS at 0.00.
+        NONE
+         - this entry's criteria FAILS: health.pct[100.00] < survival_instincts_health_pct[30.00]
+        There were no recheck events to check.
+        Time spent on this action:  0.13ms
+        TimeData:Guardian-defensives-4:might_of_ursoc:x0:0.13:Ability Known, Enabled(0.03):Post-TTR and Essential(0.03):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.02):Post Stack(0.02):Pre-Script(0.00):Post-Script(0.00):Pre-Recheck(0.01):Post-Recheck Times(0.01):Post Recheck(0.00)
+        Exiting defensives with recommendation of NO ACTION at +15.00s.
+        Returned from list (defensives), current recommendation is NO ACTION (+15.00).
+        - defensives
+        
+        13.  call_action_list:heal ( default - 7 )
+        There is no criteria for heal.
+        Action list (heal) was found.
+        + heal
+        Current recommendation was NO ACTION at +15.00s.
+        
+        14.  cenarion_ward ( heal - 1 ) - talent [ cenarion_ward ] missing
+        Time spent on this action:  0.02ms
+        TimeData:Guardian-heal-1:cenarion_ward:x0:0.02:Ability Known, Enabled(0.02)
+        
+        15.  rejuvenation ( heal - 2 )
+        The action (rejuvenation) is unusable at (0.00 + 0.00) because IsUsable returned false.
+        Time spent on this action:  0.08ms
+        TimeData:Guardian-heal-2:rejuvenation:x0:0.08:Ability Known, Enabled(0.02):Post-TTR and Essential(0.04):Post Cycle(0.00):Post Usable(0.01)
+        
+        16.  healing_touch ( heal - 3 )
+        The action (healing_touch) is usable at (0.00 + 0.00) with cost of 9000 mana (have 60000).
+         - the action is ready before the current recommendation (at +0.00 vs. +15.00).
+        List ( heal ) called from ( Guardian:default:7 ) would PASS at 0.00.
+        NONE
+         - this entry's criteria FAILS: talent.dream_of_cenarius.enabled[true] & buff.dream_of_cenarius_healing.up[false] & health.pct[100.00] < 70
+        There were no recheck events to check.
+        Time spent on this action:  0.19ms
+        TimeData:Guardian-heal-3:healing_touch:x0:0.19:Ability Known, Enabled(0.02):Post-TTR and Essential(0.06):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.02):Post Stack(0.02):Pre-Script(0.00):Post-Script(0.02):Pre-Recheck(0.01):Post-Recheck Times(0.01):Post Recheck(0.00)
+        
+        17.  healing_touch ( heal - 4 )
+        The action (healing_touch) is usable at (0.00 + 0.00) with cost of 9000 mana (have 60000).
+         - the action is ready before the current recommendation (at +0.00 vs. +15.00).
+        List ( heal ) called from ( Guardian:default:7 ) would PASS at 0.00.
+        NONE
+         - this entry's criteria FAILS: health.pct[100.00] < 30 & ( buff.nature_swiftness.up[false] | buff.predatory_swiftness.up[false] )
+        There were no recheck events to check.
+        Time spent on this action:  0.15ms
+        TimeData:Guardian-heal-4:healing_touch:x0:0.15:Ability Known, Enabled(0.02):Post-TTR and Essential(0.03):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.02):Post Stack(0.02):Pre-Script(0.00):Post-Script(0.00):Pre-Recheck(0.03):Post-Recheck Times(0.01):Post Recheck(0.00)
+        Exiting heal with recommendation of NO ACTION at +15.00s.
+        Returned from list (heal), current recommendation is NO ACTION (+15.00).
+        - heal
+        
+        18.  call_action_list:bear ( default - 8 )
+        There is no criteria for bear.
+        Action list (bear) was found.
+        + bear
+        Current recommendation was NO ACTION at +15.00s.
+        
+        19.  call_action_list:threat_generation ( bear - 1 )
+        There is no criteria for threat_generation.
+        Action list (threat_generation) was found.
+        + bear, threat_generation
+        Current recommendation was NO ACTION at +15.00s.
+        
+        20.  call_action_list:aoe ( threat_generation - 1 )
+        Criteria for aoe FAIL at +0.00 - active_enemies[1.00] >= 3
+        
+        21.  call_action_list:single_target ( threat_generation - 2 )
+        There is no criteria for single_target.
+        Action list (single_target) was found.
+        + bear, threat_generation, single_target
+        Current recommendation was NO ACTION at +15.00s.
+        
+        22.  pulverize ( single_target - 1 ) - ability unknown
+        Time spent on this action:  0.03ms
+        TimeData:Guardian-single_target-1:pulverize:x0:0.03:Ability Known, Enabled(0.03)
+        
+        23.  maul ( single_target - 2 )
+        The action (maul) is usable at (0.00 + 0.00) with cost of 20 rage (have 49).
+         - the action is ready before the current recommendation (at +0.00 vs. +15.00).
+        List ( bear ) called from ( Guardian:default:8 ) would PASS at 0.00.
+        NONE
+        List ( threat_generation ) called from ( Guardian:bear:1 ) would PASS at 0.00.
+        NONE
+        List ( single_target ) called from ( Guardian:threat_generation:2 ) would PASS at 0.00.
+        NONE
+         - this entry's criteria FAILS: buff.tooth_and_claw.up[false] & target.in_melee_range[true]
+        There were no recheck events to check.
+        Time spent on this action:  0.16ms
+        TimeData:Guardian-single_target-2:maul:x0:0.16:Ability Known, Enabled(0.02):Post-TTR and Essential(0.05):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.02):Post Stack(0.03):Pre-Script(0.00):Post-Script(0.00):Pre-Recheck(0.01):Post-Recheck Times(0.01):Post Recheck(0.00)
+        
+        24.  faerie_fire ( single_target - 3 )
+        The action (faerie_fire) is usable at (0.00 + 0.00).
+         - the action is ready before the current recommendation (at +0.00 vs. +15.00).
+        List ( bear ) called from ( Guardian:default:8 ) would PASS at 0.00.
+        NONE
+        List ( threat_generation ) called from ( Guardian:bear:1 ) would PASS at 0.00.
+        NONE
+        List ( single_target ) called from ( Guardian:threat_generation:2 ) would PASS at 0.00.
+        NONE
+         - this entry's criteria FAILS: ( debuff.faerie_fire.down[true] | debuff.faerie_fire.remains[0.00] <= 6 ) & faerie_fire_auto[false]
+        There were no recheck events to check.
+        Time spent on this action:  0.15ms
+        TimeData:Guardian-single_target-3:faerie_fire:x0:0.15:Ability Known, Enabled(0.02):Post-TTR and Essential(0.04):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.02):Post Stack(0.03):Pre-Script(0.00):Post-Script(0.02):Pre-Recheck(0.01):Post-Recheck Times(0.01):Post Recheck(0.00)
+        
+        25.  demoralizing_roar ( single_target - 4 )
+        The action (demoralizing_roar) is unusable at (0.00 + 0.00) because IsUsable returned false.
+        Time spent on this action:  0.06ms
+        TimeData:Guardian-single_target-4:demoralizing_roar:x0:0.06:Ability Known, Enabled(0.02):Post-TTR and Essential(0.04):Post Cycle(0.00):Post Usable(0.00)
+        
+        26.  thrash ( single_target - 5 )
+        The action (thrash) is usable at (0.00 + 0.30).
+         - the action is ready before the current recommendation (at +0.30 vs. +15.00).
+        List ( bear ) called from ( Guardian:default:8 ) would PASS at 0.30.
+        NONE
+        List ( threat_generation ) called from ( Guardian:bear:1 ) would PASS at 0.30.
+        NONE
+        List ( single_target ) called from ( Guardian:threat_generation:2 ) would PASS at 0.30.
+        NONE
+         - this entry's criteria PASSES: target.debuff.weakened_blows.down[true]
+        Action chosen:  thrash at 0.30!
+        Texture shown:  %s
+        Time spent on this action:  0.15ms
+        TimeData:Guardian-single_target-5:thrash:x0:0.15:Ability Known, Enabled(0.02):Post-TTR and Essential(0.03):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.02):Post Stack(0.03):Pre-Script(0.00):Post-Script(0.02):Post Recheck(0.01):Action Stored(0.01)
+        
+        27.  mangle ( single_target - 6 ) - ability unknown
+        Time spent on this action:  0.02ms
+        TimeData:Guardian-single_target-6:mangle:x0:0.02:Ability Known, Enabled(0.02)
+        
+        28.  thrash ( single_target - 7 )
+        The action is not ready in time ( 0.30 vs. 0.30 ) [ Clash: 0.00 vs. 0.00 ] - padded by 0.05s.
+        Time spent on this action:  0.02ms
+        TimeData:Guardian-single_target-7:thrash:x0:0.02:Ability Known, Enabled(0.02)
+        
+        29.  lacerate ( single_target - 8 )
+        The action (lacerate) is usable at (0.00 + 0.00).
+         - the action is ready before the current recommendation (at +0.00 vs. +0.30).
+        List ( bear ) called from ( Guardian:default:8 ) would PASS at 0.00.
+        NONE
+        List ( threat_generation ) called from ( Guardian:bear:1 ) would PASS at 0.00.
+        NONE
+        List ( single_target ) called from ( Guardian:threat_generation:2 ) would PASS at 0.00.
+        NONE
+         - this entry's criteria FAILS: ! buff.berserk.up[false] & ( debuff.lacerate.stack[3.00] < 3 | debuff.lacerate.remains[10.94] <= 3 )
+        There were no recheck events to check.
+        Time spent on this action:  0.16ms
+        TimeData:Guardian-single_target-8:lacerate:x0:0.16:Ability Known, Enabled(0.02):Post-TTR and Essential(0.03):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.02):Post Stack(0.03):Pre-Script(0.00):Post-Script(0.03):Pre-Recheck(0.01):Post-Recheck Times(0.01):Post Recheck(0.00)
+        
+        30.  thrash ( single_target - 9 )
+        The action is not ready in time ( 0.30 vs. 0.30 ) [ Clash: 0.00 vs. 0.00 ] - padded by 0.05s.
+        Time spent on this action:  0.02ms
+        TimeData:Guardian-single_target-9:thrash:x0:0.02:Ability Known, Enabled(0.02)
+        Exiting single_target with recommendation of thrash at +0.30s.
+        Returned from list (single_target), current recommendation is thrash (+0.30).
+        - single_target
+        Exiting threat_generation with recommendation of thrash at +0.30s.
+        Returned from list (threat_generation), current recommendation is thrash (+0.30).
+        - threat_generation
+        
+        31.  call_action_list:dump_rage ( bear - 2 )
+        Criteria for dump_rage FAIL at +0.00 - should_spend_rage[false]
+        Exiting bear with recommendation of thrash at +0.30s.
+        Returned from list (bear), current recommendation is thrash (+0.30).
+        - bear
+        
+        32.  call_action_list:cooldowns ( default - 9 )
+        There is no criteria for cooldowns.
+        Action list (cooldowns) was found.
+        + cooldowns
+        Current recommendation was thrash at +0.30s.
+        
+        33.  use_items ( cooldowns - 1 )
+        There is no criteria for Use Items.
+        + cooldowns, items
+        Current recommendation was thrash at +0.30s.
+        
+        34.  synapse_springs ( items - 1 )
+        The action (synapse_springs) is unusable at (0.00 + 0.00) because no synapse springs on gloves.
+        Time spent on this action:  0.05ms
+        TimeData:UseItems-items-1:synapse_springs:x0:0.05:Ability Known, Enabled(0.02):Post-TTR and Essential(0.02):Post Cycle(0.00):Post Usable(0.00)
+        Exiting items with recommendation of thrash at +0.30s.
+        Returned from Use Items; current recommendation is thrash (+0.30).
+        - items
+        
+        35.  berserk ( cooldowns - 2 ) - talent [ berserk ] missing
+        Time spent on this action:  0.02ms
+        TimeData:Guardian-cooldowns-2:berserk:x0:0.02:Ability Known, Enabled(0.02)
+        
+        36.  incarnation ( cooldowns - 3 ) - talent [ incarnation ] missing
+        Time spent on this action:  0.02ms
+        TimeData:Guardian-cooldowns-3:incarnation:x0:0.02:Ability Known, Enabled(0.02)
+        
+        37.  enrage ( cooldowns - 4 )
+        The action is not ready ( 34.62 ) before our maximum delay window ( 0.30 ) for this query.
+        Time spent on this action:  0.02ms
+        TimeData:Guardian-cooldowns-4:enrage:x0:0.02:Ability Known, Enabled(0.02)
+        
+        38.  heart_of_the_wild ( cooldowns - 5 ) - talent [ heart_of_the_wild ] missing
+        Time spent on this action:  0.02ms
+        TimeData:Guardian-cooldowns-5:heart_of_the_wild:x0:0.02:Ability Known, Enabled(0.02)
+        Exiting cooldowns with recommendation of thrash at +0.30s.
+        Returned from list (cooldowns), current recommendation is thrash (+0.30).
+        - cooldowns
+        Exiting default with recommendation of thrash at +0.30s.
+    
+    Completed default action list [ Guardian - default ].
+    Recommendation is thrash at 0.00 + 0.30.
+    Recommendation #1 is thrash at 0.30s (0.30s).
+    Running thrash at 3161625.62.
+
+RECOMMENDATION #2 ( Offset: 0.30, GCD: 1.44, Casting: 0.00 ).
+
+    ### Resources ###
+    | Resource      | Current | Max       | Usage | Delta |
+    |---------------|---------|-----------|-------|-------|
+    | Combo Points  |       0 |         5 |    0% |     0 |
+    | Energy        |  100.00 |    100.00 |  100% |  0.00 |
+    | Mana          |   60000 |     60000 |  100% |     0 |
+    | Rage          |      49 |       100 |   49% |     0 |
+    
+    Checking if I'm casting ( No ) and if it is a channel ( No ).
+    No whitelist.
+    
+    Processing precombat action list [ Guardian - precombat ].
+        
+        Current recommendation was NO ACTION at +15.00s.
+        
+        Entry #1 in list ( precombat ) is not set or not enabled.  Skipping.
+        Exiting precombat with recommendation of NO ACTION at +15.00s.
+    
+    Completed precombat action list [ Guardian - precombat ].
+    
+    Processing default action list [ Guardian - default ].
+        
+        Current recommendation was NO ACTION at +15.00s.
+        
+        1.   run_action_list:on_pull ( default - 1 )
+        Criteria for on_pull FAIL at +0.30 - time[26.16] < 10
+        
+        2.   skull_bash ( default - 2 ) - ability unknown
+        Time spent on this action:  0.02ms
+        TimeData:Guardian-default-2:skull_bash:x0:0.02:Ability Known, Enabled(0.02)
+        
+        3.   bear_form ( default - 3 )
+        The action (bear_form) is usable at (0.30 + 1.44).
+         - the action is ready before the current recommendation (at +1.44 vs. +15.00).
+         - this entry's criteria FAILS: ! buff.bear_form.up[true]
+        There were no recheck events to check.
+        Time spent on this action:  0.13ms
+        TimeData:Guardian-default-3:bear_form:x0:0.13:Ability Known, Enabled(0.02):Post-TTR and Essential(0.02):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.03):Post Stack(0.01):Pre-Script(0.00):Post-Script(0.01):Pre-Recheck(0.02):Post-Recheck Times(0.01):Post Recheck(0.01)
+        
+        4.   call_action_list:hotw_dps ( default - 4 )
+        Time-sensitive Criteria FAIL at +0.30 with no valid rechecks - talent.heart_of_the_wild.enabled[false] & buff.heart_of_the_wild.up[false] & health.pct[100.00] >= 70
+        
+        5.   call_action_list:mitigation ( default - 5 )
+        There is no criteria for mitigation.
+        Action list (mitigation) was found.
+        + mitigation
+        Current recommendation was NO ACTION at +15.00s.
+        
+        6.   savage_defense ( mitigation - 1 )
+        The action is not ready ( 3599.70 ) before our maximum delay window ( 15.00 ) for this query.
+        Time spent on this action:  0.03ms
+        TimeData:Guardian-mitigation-1:savage_defense:x0:0.03:Ability Known, Enabled(0.03)
+        
+        7.   enrage ( mitigation - 2 )
+        The action is not ready ( 34.32 ) before our maximum delay window ( 15.00 ) for this query.
+        Time spent on this action:  0.02ms
+        TimeData:Guardian-mitigation-2:enrage:x0:0.02:Ability Known, Enabled(0.02)
+        Exiting mitigation with recommendation of NO ACTION at +15.00s.
+        Returned from list (mitigation), current recommendation is NO ACTION (+15.00).
+        - mitigation
+        
+        8.   call_action_list:defensives ( default - 6 )
+        There is no criteria for defensives.
+        Action list (defensives) was found.
+        + defensives
+        Current recommendation was NO ACTION at +15.00s.
+        
+        9.   survival_instincts ( defensives - 1 )
+        The action (survival_instincts) is usable at (0.30 + 0.00).
+         - the action is ready before the current recommendation (at +0.00 vs. +15.00).
+        List ( defensives ) called from ( Guardian:default:6 ) would PASS at 0.00.
+        NONE
+         - this entry's criteria FAILS: health.pct[100.00] < survival_instincts_health_pct[30.00]
+        There were no recheck events to check.
+        Time spent on this action:  0.12ms
+        TimeData:Guardian-defensives-1:survival_instincts:x0:0.12:Ability Known, Enabled(0.02):Post-TTR and Essential(0.02):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.01):Post Stack(0.02):Pre-Script(0.00):Post-Script(0.01):Pre-Recheck(0.01):Post-Recheck Times(0.01):Post Recheck(0.00)
+        
+        10.  barkskin ( defensives - 2 )
+        The action (barkskin) is usable at (0.30 + 0.00).
+         - the action is ready before the current recommendation (at +0.00 vs. +15.00).
+        List ( defensives ) called from ( Guardian:default:6 ) would PASS at 0.00.
+        NONE
+         - this entry's criteria FAILS: health.pct[100.00] < defensive_health_pct[50.00]
+        There were no recheck events to check.
+        Time spent on this action:  0.10ms
+        TimeData:Guardian-defensives-2:barkskin:x0:0.10:Ability Known, Enabled(0.02):Post-TTR and Essential(0.02):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.01):Post Stack(0.01):Pre-Script(0.00):Post-Script(0.00):Pre-Recheck(0.01):Post-Recheck Times(0.01):Post Recheck(0.00)
+        
+        11.  frenzied_regeneration ( defensives - 3 )
+        The action (frenzied_regeneration) is usable at (0.30 + 0.00).
+         - the action is ready before the current recommendation (at +0.00 vs. +15.00).
+        List ( defensives ) called from ( Guardian:default:6 ) would PASS at 0.00.
+        NONE
+         - this entry's criteria FAILS: health.pct[100.00] < frenzied_regeneration_health_pct[70.00] & cooldown.savage_defense.charges[2.00] = 0
+        There were no recheck events to check.
+        Time spent on this action:  0.12ms
+        TimeData:Guardian-defensives-3:frenzied_regeneration:x0:0.12:Ability Known, Enabled(0.02):Post-TTR and Essential(0.02):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.01):Post Stack(0.01):Pre-Script(0.00):Post-Script(0.00):Pre-Recheck(0.03):Post-Recheck Times(0.01):Post Recheck(0.00)
+        
+        12.  might_of_ursoc ( defensives - 4 )
+        The action (might_of_ursoc) is usable at (0.30 + 0.00).
+         - the action is ready before the current recommendation (at +0.00 vs. +15.00).
+        List ( defensives ) called from ( Guardian:default:6 ) would PASS at 0.00.
+        NONE
+         - this entry's criteria FAILS: health.pct[100.00] < survival_instincts_health_pct[30.00]
+        There were no recheck events to check.
+        Time spent on this action:  0.11ms
+        TimeData:Guardian-defensives-4:might_of_ursoc:x0:0.11:Ability Known, Enabled(0.02):Post-TTR and Essential(0.02):Post Cycle(0.00):Post Usable(0.00):Post Ready/Clash(0.01):Post Stack(0.01):Pre-Script(0.00):Post-Script(0.00):Pre-Recheck(0.01):Post-Recheck Times(0.02):Post Recheck(0.00)
+        Exiting defensives with recommendation of NO ACTION at +15.00s.
+        Returned from list (defensives), current recommendation is NO ACTION (+15.00).
+        - defensives
+        
+        13.  call_action_list:heal ( default - 7 )
+        There is no criteria for heal.
+        Action list (heal) was found.
+        + heal
+        Current recommendation was NO ACTION at +15.00s.
+        
+        14.  cenarion_ward ( heal - 1 ) - talent [ cenarion_ward ] missing
+        Time spent on this action:  0.02ms
+        TimeData:Guardian-heal-1:cenarion_ward:x0:0.02:Ability Known, Enabled(0.02)
+        
+        15.  rejuvenation ( heal - 2 )
+        The action (rejuvenation) is unusable at (0.30 + 1.44) because IsUsable returned false.
+        Time spent on this action:  0.05ms
+        TimeData:Guardian-heal-2:rejuvenation:x0:0.05:Ability Known, Enabled(0.02):Post-TTR and Essential(0.03):Post Cycle(0.00):Post Usable(0.01)
+        
+        16.  healing_touch ( heal - 3 )
+        The action (healing_touch) is usable at (0.30 + 1.44) with cost of 9000 mana (have 60000).
+         - the action is ready before the current recommendation (at +1.44 vs. +15.00).
+        List ( heal ) called from ( Guardian:default:7 ) would PASS at 1.44.
+        NONE
+         - this entry's criteria FAILS: talent.dream_of_cenarius.enabled[true] & buff.dream_of_cenarius_healing.up[false] & health.pct[100.00] < 70
+        There were no recheck events to check.
+        Time spent on this action:  0.11ms
+        TimeData:Guardian-heal-3:healing_touch:x0:0.11:Ability Known, Enabled(0.02):Post-TTR and Essential(0.03):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.02):Post Stack(0.02):Pre-Script(0.00):Post-Script(0.00):Pre-Recheck(0.01):Post-Recheck Times(0.01):Post Recheck(0.00)
+        
+        17.  healing_touch ( heal - 4 )
+        The action (healing_touch) is usable at (0.30 + 1.44) with cost of 9000 mana (have 60000).
+         - the action is ready before the current recommendation (at +1.44 vs. +15.00).
+        List ( heal ) called from ( Guardian:default:7 ) would PASS at 1.44.
+        NONE
+         - this entry's criteria FAILS: health.pct[100.00] < 30 & ( buff.nature_swiftness.up[false] | buff.predatory_swiftness.up[false] )
+        There were no recheck events to check.
+        Time spent on this action:  0.11ms
+        TimeData:Guardian-heal-4:healing_touch:x0:0.11:Ability Known, Enabled(0.02):Post-TTR and Essential(0.03):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.02):Post Stack(0.01):Pre-Script(0.00):Post-Script(0.00):Pre-Recheck(0.01):Post-Recheck Times(0.01):Post Recheck(0.00)
+        Exiting heal with recommendation of NO ACTION at +15.00s.
+        Returned from list (heal), current recommendation is NO ACTION (+15.00).
+        - heal
+        
+        18.  call_action_list:bear ( default - 8 )
+        There is no criteria for bear.
+        Action list (bear) was found.
+        + bear
+        Current recommendation was NO ACTION at +15.00s.
+        
+        19.  call_action_list:threat_generation ( bear - 1 )
+        There is no criteria for threat_generation.
+        Action list (threat_generation) was found.
+        + bear, threat_generation
+        Current recommendation was NO ACTION at +15.00s.
+        
+        20.  call_action_list:aoe ( threat_generation - 1 )
+        Criteria for aoe FAIL at +0.30 - active_enemies[1.00] >= 3
+        
+        21.  call_action_list:single_target ( threat_generation - 2 )
+        There is no criteria for single_target.
+        Action list (single_target) was found.
+        + bear, threat_generation, single_target
+        Current recommendation was NO ACTION at +15.00s.
+        
+        22.  pulverize ( single_target - 1 ) - ability unknown
+        Time spent on this action:  0.02ms
+        TimeData:Guardian-single_target-1:pulverize:x0:0.02:Ability Known, Enabled(0.02)
+        
+        23.  maul ( single_target - 2 )
+        The action (maul) is usable at (0.30 + 1.44) with cost of 20 rage (have 49).
+         - the action is ready before the current recommendation (at +1.44 vs. +15.00).
+        List ( bear ) called from ( Guardian:default:8 ) would PASS at 1.44.
+        NONE
+        List ( threat_generation ) called from ( Guardian:bear:1 ) would PASS at 1.44.
+        NONE
+        List ( single_target ) called from ( Guardian:threat_generation:2 ) would PASS at 1.44.
+        NONE
+         - this entry's criteria FAILS: buff.tooth_and_claw.up[false] & target.in_melee_range[true]
+        There were no recheck events to check.
+        Time spent on this action:  0.14ms
+        TimeData:Guardian-single_target-2:maul:x0:0.14:Ability Known, Enabled(0.02):Post-TTR and Essential(0.03):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.02):Post Stack(0.03):Pre-Script(0.00):Post-Script(0.00):Pre-Recheck(0.01):Post-Recheck Times(0.01):Post Recheck(0.00)
+        
+        24.  faerie_fire ( single_target - 3 )
+        The action (faerie_fire) is usable at (0.30 + 1.44).
+         - the action is ready before the current recommendation (at +1.44 vs. +15.00).
+        List ( bear ) called from ( Guardian:default:8 ) would PASS at 1.44.
+        NONE
+        List ( threat_generation ) called from ( Guardian:bear:1 ) would PASS at 1.44.
+        NONE
+        List ( single_target ) called from ( Guardian:threat_generation:2 ) would PASS at 1.44.
+        NONE
+         - this entry's criteria FAILS: ( debuff.faerie_fire.down[true] | debuff.faerie_fire.remains[0.00] <= 6 ) & faerie_fire_auto[false]
+        There were no recheck events to check.
+        Time spent on this action:  0.12ms
+        TimeData:Guardian-single_target-3:faerie_fire:x0:0.12:Ability Known, Enabled(0.02):Post-TTR and Essential(0.02):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.01):Post Stack(0.03):Pre-Script(0.00):Post-Script(0.01):Pre-Recheck(0.01):Post-Recheck Times(0.01):Post Recheck(0.00)
+        
+        25.  demoralizing_roar ( single_target - 4 )
+        The action (demoralizing_roar) is unusable at (0.30 + 1.44) because IsUsable returned false.
+        Time spent on this action:  0.05ms
+        TimeData:Guardian-single_target-4:demoralizing_roar:x0:0.05:Ability Known, Enabled(0.02):Post-TTR and Essential(0.03):Post Cycle(0.00):Post Usable(0.00)
+        
+        26.  thrash ( single_target - 5 )
+        The action (thrash) is usable at (0.30 + 1.44).
+         - the action is ready before the current recommendation (at +1.44 vs. +15.00).
+        List ( bear ) called from ( Guardian:default:8 ) would PASS at 1.44.
+        NONE
+        List ( threat_generation ) called from ( Guardian:bear:1 ) would PASS at 1.44.
+        NONE
+        List ( single_target ) called from ( Guardian:threat_generation:2 ) would PASS at 1.44.
+        NONE
+         - this entry's criteria PASSES: target.debuff.weakened_blows.down[true]
+        Action chosen:  thrash at 1.44!
+        Texture shown:  %s
+        Time spent on this action:  0.11ms
+        TimeData:Guardian-single_target-5:thrash:x0:0.11:Ability Known, Enabled(0.02):Post-TTR and Essential(0.02):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.01):Post Stack(0.03):Pre-Script(0.00):Post-Script(0.00):Post Recheck(0.01):Action Stored(0.01)
+        Only off-GCD abilities would be usable before the currently selected ability; skipping...
+        The recommended action (thrash) is ready within the active GCD; exiting list (single_target).
+        Exiting single_target with recommendation of thrash at +1.44s.
+        Returned from list (single_target), current recommendation is thrash (+1.44).
+        - single_target
+        Exiting threat_generation with recommendation of thrash at +1.44s.
+        Returned from list (threat_generation), current recommendation is thrash (+1.44).
+        - threat_generation
+        The recommended action (thrash) is ready within the active GCD; exiting list (bear).
+        Exiting bear with recommendation of thrash at +1.44s.
+        Returned from list (bear), current recommendation is thrash (+1.44).
+        - bear
+        The recommended action (thrash) is ready within the active GCD; exiting list (default).
+        Exiting default with recommendation of thrash at +1.44s.
+    
+    Completed default action list [ Guardian - default ].
+    Recommendation is thrash at 0.30 + 1.44.
+    Recommendation #2 is thrash at 1.44s (1.74s).
+    Running thrash at 3161627.06.
+
+RECOMMENDATION #3 ( Offset: 1.74, GCD: 1.44, Casting: 0.00 ).
+
+    ### Resources ###
+    | Resource      | Current | Max       | Usage | Delta |
+    |---------------|---------|-----------|-------|-------|
+    | Combo Points  |       0 |         5 |    0% |     0 |
+    | Energy        |  100.00 |    100.00 |  100% |  0.00 |
+    | Mana          |   60000 |     60000 |  100% |     0 |
+    | Rage          |      49 |       100 |   49% |     0 |
+    
+    Checking if I'm casting ( No ) and if it is a channel ( No ).
+    No whitelist.
+    
+    Processing precombat action list [ Guardian - precombat ].
+        
+        Current recommendation was NO ACTION at +15.00s.
+        
+        Entry #1 in list ( precombat ) is not set or not enabled.  Skipping.
+        Exiting precombat with recommendation of NO ACTION at +15.00s.
+    
+    Completed precombat action list [ Guardian - precombat ].
+    
+    Processing default action list [ Guardian - default ].
+        
+        Current recommendation was NO ACTION at +15.00s.
+        
+        1.   run_action_list:on_pull ( default - 1 )
+        Criteria for on_pull FAIL at +1.74 - time[27.60] < 10
+        
+        2.   skull_bash ( default - 2 ) - ability unknown
+        Time spent on this action:  0.03ms
+        TimeData:Guardian-default-2:skull_bash:x0:0.03:Ability Known, Enabled(0.03)
+        
+        3.   bear_form ( default - 3 )
+        The action (bear_form) is usable at (1.74 + 1.44).
+         - the action is ready before the current recommendation (at +1.44 vs. +15.00).
+         - this entry's criteria FAILS: ! buff.bear_form.up[true]
+        There were no recheck events to check.
+        Time spent on this action:  0.09ms
+        TimeData:Guardian-default-3:bear_form:x0:0.09:Ability Known, Enabled(0.02):Post-TTR and Essential(0.02):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.01):Post Stack(0.01):Pre-Script(0.00):Post-Script(0.00):Pre-Recheck(0.01):Post-Recheck Times(0.01):Post Recheck(0.00)
+        
+        4.   call_action_list:hotw_dps ( default - 4 )
+        Time-sensitive Criteria FAIL at +1.74 with no valid rechecks - talent.heart_of_the_wild.enabled[false] & buff.heart_of_the_wild.up[false] & health.pct[100.00] >= 70
+        
+        5.   call_action_list:mitigation ( default - 5 )
+        There is no criteria for mitigation.
+        Action list (mitigation) was found.
+        + mitigation
+        Current recommendation was NO ACTION at +15.00s.
+        
+        6.   savage_defense ( mitigation - 1 )
+        The action is not ready ( 3598.26 ) before our maximum delay window ( 15.00 ) for this query.
+        Time spent on this action:  0.02ms
+        TimeData:Guardian-mitigation-1:savage_defense:x0:0.02:Ability Known, Enabled(0.02)
+        
+        7.   enrage ( mitigation - 2 )
+        The action is not ready ( 32.88 ) before our maximum delay window ( 15.00 ) for this query.
+        Time spent on this action:  0.02ms
+        TimeData:Guardian-mitigation-2:enrage:x0:0.02:Ability Known, Enabled(0.02)
+        Exiting mitigation with recommendation of NO ACTION at +15.00s.
+        Returned from list (mitigation), current recommendation is NO ACTION (+15.00).
+        - mitigation
+        
+        8.   call_action_list:defensives ( default - 6 )
+        There is no criteria for defensives.
+        Action list (defensives) was found.
+        + defensives
+        Current recommendation was NO ACTION at +15.00s.
+        
+        9.   survival_instincts ( defensives - 1 )
+        The action (survival_instincts) is usable at (1.74 + 0.00).
+         - the action is ready before the current recommendation (at +0.00 vs. +15.00).
+        List ( defensives ) called from ( Guardian:default:6 ) would PASS at 0.00.
+        NONE
+         - this entry's criteria FAILS: health.pct[100.00] < survival_instincts_health_pct[30.00]
+        There were no recheck events to check.
+        Time spent on this action:  0.12ms
+        TimeData:Guardian-defensives-1:survival_instincts:x0:0.12:Ability Known, Enabled(0.03):Post-TTR and Essential(0.02):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.01):Post Stack(0.02):Pre-Script(0.00):Post-Script(0.01):Pre-Recheck(0.01):Post-Recheck Times(0.01):Post Recheck(0.00)
+        
+        10.  barkskin ( defensives - 2 )
+        The action (barkskin) is usable at (1.74 + 0.00).
+         - the action is ready before the current recommendation (at +0.00 vs. +15.00).
+        List ( defensives ) called from ( Guardian:default:6 ) would PASS at 0.00.
+        NONE
+         - this entry's criteria FAILS: health.pct[100.00] < defensive_health_pct[50.00]
+        There were no recheck events to check.
+        Time spent on this action:  0.10ms
+        TimeData:Guardian-defensives-2:barkskin:x0:0.10:Ability Known, Enabled(0.02):Post-TTR and Essential(0.02):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.01):Post Stack(0.01):Pre-Script(0.00):Post-Script(0.00):Pre-Recheck(0.01):Post-Recheck Times(0.01):Post Recheck(0.00)
+        
+        11.  frenzied_regeneration ( defensives - 3 )
+        The action (frenzied_regeneration) is usable at (1.74 + 0.00).
+         - the action is ready before the current recommendation (at +0.00 vs. +15.00).
+        List ( defensives ) called from ( Guardian:default:6 ) would PASS at 0.00.
+        NONE
+         - this entry's criteria FAILS: health.pct[100.00] < frenzied_regeneration_health_pct[70.00] & cooldown.savage_defense.charges[2.00] = 0
+        There were no recheck events to check.
+        Time spent on this action:  0.12ms
+        TimeData:Guardian-defensives-3:frenzied_regeneration:x0:0.12:Ability Known, Enabled(0.02):Post-TTR and Essential(0.02):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.01):Post Stack(0.01):Pre-Script(0.00):Post-Script(0.00):Pre-Recheck(0.03):Post-Recheck Times(0.01):Post Recheck(0.00)
+        
+        12.  might_of_ursoc ( defensives - 4 )
+        The action (might_of_ursoc) is usable at (1.74 + 0.00).
+         - the action is ready before the current recommendation (at +0.00 vs. +15.00).
+        List ( defensives ) called from ( Guardian:default:6 ) would PASS at 0.00.
+        NONE
+         - this entry's criteria FAILS: health.pct[100.00] < survival_instincts_health_pct[30.00]
+        There were no recheck events to check.
+        Time spent on this action:  0.10ms
+        TimeData:Guardian-defensives-4:might_of_ursoc:x0:0.10:Ability Known, Enabled(0.02):Post-TTR and Essential(0.02):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.01):Post Stack(0.02):Pre-Script(0.00):Post-Script(0.00):Pre-Recheck(0.01):Post-Recheck Times(0.01):Post Recheck(0.00)
+        Exiting defensives with recommendation of NO ACTION at +15.00s.
+        Returned from list (defensives), current recommendation is NO ACTION (+15.00).
+        - defensives
+        
+        13.  call_action_list:heal ( default - 7 )
+        There is no criteria for heal.
+        Action list (heal) was found.
+        + heal
+        Current recommendation was NO ACTION at +15.00s.
+        
+        14.  cenarion_ward ( heal - 1 ) - talent [ cenarion_ward ] missing
+        Time spent on this action:  0.02ms
+        TimeData:Guardian-heal-1:cenarion_ward:x0:0.02:Ability Known, Enabled(0.02)
+        
+        15.  rejuvenation ( heal - 2 )
+        The action (rejuvenation) is unusable at (1.74 + 1.44) because IsUsable returned false.
+        Time spent on this action:  0.05ms
+        TimeData:Guardian-heal-2:rejuvenation:x0:0.05:Ability Known, Enabled(0.02):Post-TTR and Essential(0.03):Post Cycle(0.00):Post Usable(0.01)
+        
+        16.  healing_touch ( heal - 3 )
+        The action (healing_touch) is usable at (1.74 + 1.44) with cost of 9000 mana (have 60000).
+         - the action is ready before the current recommendation (at +1.44 vs. +15.00).
+        List ( heal ) called from ( Guardian:default:7 ) would PASS at 1.44.
+        NONE
+         - this entry's criteria FAILS: talent.dream_of_cenarius.enabled[true] & buff.dream_of_cenarius_healing.up[false] & health.pct[100.00] < 70
+        There were no recheck events to check.
+        Time spent on this action:  0.11ms
+        TimeData:Guardian-heal-3:healing_touch:x0:0.11:Ability Known, Enabled(0.02):Post-TTR and Essential(0.03):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.02):Post Stack(0.02):Pre-Script(0.00):Post-Script(0.00):Pre-Recheck(0.01):Post-Recheck Times(0.01):Post Recheck(0.00)
+        
+        17.  healing_touch ( heal - 4 )
+        The action (healing_touch) is usable at (1.74 + 1.44) with cost of 9000 mana (have 60000).
+         - the action is ready before the current recommendation (at +1.44 vs. +15.00).
+        List ( heal ) called from ( Guardian:default:7 ) would PASS at 1.44.
+        NONE
+         - this entry's criteria FAILS: health.pct[100.00] < 30 & ( buff.nature_swiftness.up[false] | buff.predatory_swiftness.up[false] )
+        There were no recheck events to check.
+        Time spent on this action:  0.11ms
+        TimeData:Guardian-heal-4:healing_touch:x0:0.11:Ability Known, Enabled(0.02):Post-TTR and Essential(0.03):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.02):Post Stack(0.01):Pre-Script(0.00):Post-Script(0.00):Pre-Recheck(0.01):Post-Recheck Times(0.01):Post Recheck(0.00)
+        Exiting heal with recommendation of NO ACTION at +15.00s.
+        Returned from list (heal), current recommendation is NO ACTION (+15.00).
+        - heal
+        
+        18.  call_action_list:bear ( default - 8 )
+        There is no criteria for bear.
+        Action list (bear) was found.
+        + bear
+        Current recommendation was NO ACTION at +15.00s.
+        
+        19.  call_action_list:threat_generation ( bear - 1 )
+        There is no criteria for threat_generation.
+        Action list (threat_generation) was found.
+        + bear, threat_generation
+        Current recommendation was NO ACTION at +15.00s.
+        
+        20.  call_action_list:aoe ( threat_generation - 1 )
+        Criteria for aoe FAIL at +1.74 - active_enemies[1.00] >= 3
+        
+        21.  call_action_list:single_target ( threat_generation - 2 )
+        There is no criteria for single_target.
+        Action list (single_target) was found.
+        + bear, threat_generation, single_target
+        Current recommendation was NO ACTION at +15.00s.
+        
+        22.  pulverize ( single_target - 1 ) - ability unknown
+        Time spent on this action:  0.02ms
+        TimeData:Guardian-single_target-1:pulverize:x0:0.02:Ability Known, Enabled(0.02)
+        
+        23.  maul ( single_target - 2 )
+        The action (maul) is usable at (1.74 + 1.44) with cost of 20 rage (have 49).
+         - the action is ready before the current recommendation (at +1.44 vs. +15.00).
+        List ( bear ) called from ( Guardian:default:8 ) would PASS at 1.44.
+        NONE
+        List ( threat_generation ) called from ( Guardian:bear:1 ) would PASS at 1.44.
+        NONE
+        List ( single_target ) called from ( Guardian:threat_generation:2 ) would PASS at 1.44.
+        NONE
+         - this entry's criteria FAILS: buff.tooth_and_claw.up[false] & target.in_melee_range[true]
+        There were no recheck events to check.
+        Time spent on this action:  0.14ms
+        TimeData:Guardian-single_target-2:maul:x0:0.14:Ability Known, Enabled(0.02):Post-TTR and Essential(0.03):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.02):Post Stack(0.03):Pre-Script(0.00):Post-Script(0.00):Pre-Recheck(0.01):Post-Recheck Times(0.01):Post Recheck(0.00)
+        
+        24.  faerie_fire ( single_target - 3 )
+        The action (faerie_fire) is usable at (1.74 + 1.44).
+         - the action is ready before the current recommendation (at +1.44 vs. +15.00).
+        List ( bear ) called from ( Guardian:default:8 ) would PASS at 1.44.
+        NONE
+        List ( threat_generation ) called from ( Guardian:bear:1 ) would PASS at 1.44.
+        NONE
+        List ( single_target ) called from ( Guardian:threat_generation:2 ) would PASS at 1.44.
+        NONE
+         - this entry's criteria FAILS: ( debuff.faerie_fire.down[true] | debuff.faerie_fire.remains[0.00] <= 6 ) & faerie_fire_auto[false]
+        There were no recheck events to check.
+        Time spent on this action:  0.14ms
+        TimeData:Guardian-single_target-3:faerie_fire:x0:0.14:Ability Known, Enabled(0.02):Post-TTR and Essential(0.02):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.01):Post Stack(0.03):Pre-Script(0.00):Post-Script(0.01):Pre-Recheck(0.02):Post-Recheck Times(0.01):Post Recheck(0.01)
+        
+        25.  demoralizing_roar ( single_target - 4 )
+        The action (demoralizing_roar) is unusable at (1.74 + 1.44) because IsUsable returned false.
+        Time spent on this action:  0.06ms
+        TimeData:Guardian-single_target-4:demoralizing_roar:x0:0.06:Ability Known, Enabled(0.03):Post-TTR and Essential(0.03):Post Cycle(0.00):Post Usable(0.00)
+        
+        26.  thrash ( single_target - 5 )
+        The action (thrash) is usable at (1.74 + 1.44).
+         - the action is ready before the current recommendation (at +1.44 vs. +15.00).
+        List ( bear ) called from ( Guardian:default:8 ) would PASS at 1.44.
+        NONE
+        List ( threat_generation ) called from ( Guardian:bear:1 ) would PASS at 1.44.
+        NONE
+        List ( single_target ) called from ( Guardian:threat_generation:2 ) would PASS at 1.44.
+        NONE
+         - this entry's criteria PASSES: target.debuff.weakened_blows.down[true]
+        Action chosen:  thrash at 1.44!
+        Texture shown:  %s
+        Time spent on this action:  0.12ms
+        TimeData:Guardian-single_target-5:thrash:x0:0.12:Ability Known, Enabled(0.02):Post-TTR and Essential(0.02):Post Cycle(0.00):Post Usable(0.01):Post Ready/Clash(0.01):Post Stack(0.03):Pre-Script(0.00):Post-Script(0.00):Post Recheck(0.01):Action Stored(0.01)
+        Only off-GCD abilities would be usable before the currently selected ability; skipping...
+        The recommended action (thrash) is ready within the active GCD; exiting list (single_target).
+        Exiting single_target with recommendation of thrash at +1.44s.
+        Returned from list (single_target), current recommendation is thrash (+1.44).
+        - single_target
+        Exiting threat_generation with recommendation of thrash at +1.44s.
+        Returned from list (threat_generation), current recommendation is thrash (+1.44).
+        - threat_generation
+        The recommended action (thrash) is ready within the active GCD; exiting list (bear).
+        Exiting bear with recommendation of thrash at +1.44s.
+        Returned from list (bear), current recommendation is thrash (+1.44).
+        - bear
+        The recommended action (thrash) is ready within the active GCD; exiting list (default).
+        Exiting default with recommendation of thrash at +1.44s.
+    
+    Completed default action list [ Guardian - default ].
+    Recommendation is thrash at 1.74 + 1.44.
+    Recommendation #3 is thrash at 1.44s (3.18s).
+    Time spent generating recommendations:  9.20ms11111
