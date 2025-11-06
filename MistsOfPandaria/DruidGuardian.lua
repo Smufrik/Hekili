@@ -692,13 +692,6 @@ spec:RegisterStateExpr( "can_use_defensive_buff", can_use_defensive_buff )
 spec:RegisterStateExpr( "rage_per_second_auto_attack", rage_per_second_auto_attack )
 spec:RegisterStateExpr( "rage_gain_mangle", rage_gain_mangle )
 
--- Health threshold state expressions
-spec:RegisterStateExpr( "barkskin_health_pct", function() return defensive_health_pct end )
-spec:RegisterStateExpr( "frenzied_regeneration_health_pct", function() return moderate_damage_pct end )
-spec:RegisterStateExpr( "survival_instincts_health_pct", function() return emergency_health_pct end )
--- Expose health percentage thresholds explicitly so scripts referencing the raw variable names don't warn.
-spec:RegisterStateExpr( "healing_touch_health_pct", function() return emergency_health_pct end )
-
 -- Rage cost state expressions
 spec:RegisterStateExpr( "rage_cost_savage_defense", function() return 60 end )
 spec:RegisterStateExpr( "rage_cost_maul", function() return 30 end )
@@ -749,6 +742,12 @@ end )
 spec:RegisterStateExpr( "emergency_health_pct", function()
     return settings.emergency_health_pct or 30
 end )
+
+-- Health threshold alias state expressions (must come after the main exprs above)
+spec:RegisterStateExpr( "barkskin_health_pct", function() return defensive_health_pct end )
+spec:RegisterStateExpr( "frenzied_regeneration_health_pct", function() return moderate_damage_pct end )
+spec:RegisterStateExpr( "survival_instincts_health_pct", function() return emergency_health_pct end )
+spec:RegisterStateExpr( "healing_touch_health_pct", function() return emergency_health_pct end )
 
 -- Comprehensive State Functions adapted from retail simc
 local function rage_spent_recently( amt )
@@ -2099,21 +2098,8 @@ end )
 
 -- Settings-based StateExpr for SimC access (moved after settings registration)
 
--- Provide rage_dump_threshold as a state expression for script access (single definition).
-spec:RegisterStateExpr( "rage_dump_threshold", function()
-    return settings.rage_dump_threshold or 90
-end )
-
-spec:RegisterStateExpr( "use_symbiosis", function()
-    return settings.use_symbiosis
-end )
-
-spec:RegisterStateExpr( "auto_barkskin", function()
-    return health.pct <= ( settings.defensive_health_pct or 50 ) and not buff.barkskin.up and not buff.survival_instincts.up
-end )
-
--- Vengeance-based ability conditions (using RegisterStateExpr instead of RegisterVariable)
-
+-- Note: State expressions for settings-dependent values are registered AFTER RegisterSetting calls below
+-- to avoid referencing undefined settings. See lines 2150+ for actual registrations.
 
 -- Also expose key thresholds as Variables for the script emulator/UI.
 -- Some script evaluation paths (e.g., Options preview) reference these as simple keys.
@@ -2141,13 +2127,6 @@ spec:RegisterSetting( "faerie_fire_auto", true, {
     width = "full",
 } )
 
--- Re-register critical health threshold state expressions here (redundant safeguard) so they are guaranteed
--- to exist at pack compilation time for the script emulator (warnings showed they were missing earlier).
--- These duplicate earlier definitions but are harmless; can remove earlier ones once validated.
-spec:RegisterStateExpr( "survival_instincts_health_pct", function() return settings.emergency_health_pct or 30 end )
-spec:RegisterStateExpr( "defensive_health_pct", function() return settings.defensive_health_pct or 50 end )
-spec:RegisterStateExpr( "frenzied_regeneration_health_pct", function() return settings.moderate_damage_pct or 70 end )
-spec:RegisterStateExpr( "rage_dump_threshold", function() return settings.rage_dump_threshold or 90 end )
 
 spec:RegisterSetting( "auto_pulverize", true, {
     name = strformat( "Auto %s", Hekili:GetSpellLinkWithTexture( 80313 ) ),
