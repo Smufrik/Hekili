@@ -13,7 +13,7 @@ actions+=/variable,name=solo_prowl,value=solo_prowl
 actions.precombat+=/mark_of_the_wild,if=!buff.mark_of_the_wild.up
 # Proc Dream of Cenarius before combat (T16H)
 actions.precombat+=/healing_touch,if=!buff.dream_of_cenarius.up&talent.dream_of_cenarius.enabled
-actions.precombat+=/cat_form,if=!buff.cat_form.up
+actions.precombat+=/cat_form,if=!buff.cat_form.up&in_combat=0
 actions.precombat+=/savage_roar,if=!buff.savage_roar.up
 actions.precombat+=/prowl,if=(variable.solo_prowl|in_combat=0)&!buff.prowl.up
 actions.precombat+=/use_item,slot=hands
@@ -29,33 +29,34 @@ actions.cooldowns+=/berserking,if=buff.tigers_fury.up
 actions.cooldowns+=/potion,name=virmens_bite_potion,if=buff.berserk.up|target.time_to_die<=26
 actions.cooldowns+=/incarnation,if=talent.incarnation.enabled&buff.tigers_fury.up
 actions.cooldowns+=/berserk,if=buff.tigers_fury.up|berserk_clip_for_hotw
-# Use Force of Nature when it lines up with damage windows (MoP has no charges)
-# Prefer using with Tiger's Fury or Berserk, or near end of fight.
-actions.cooldowns+=/force_of_nature,if=variable.use_trees&talent.force_of_nature.enabled&(buff.tigers_fury.up|buff.berserk.up|target.time_to_die<=16)
+# Use Force of Nature on cooldown with Tiger's Fury or Berserk active
+actions.cooldowns+=/force_of_nature,if=variable.use_trees&talent.force_of_nature.enabled&(buff.tigers_fury.up|buff.berserk.up)
 actions.cooldowns+=/heart_of_the_wild,if=variable.use_hotw&talent.heart_of_the_wild.enabled&(buff.berserk.down|berserk_clip_for_hotw)
 
 actions.maint+=/faerie_fire,if=variable.maintain_ff&debuff.faerie_fire.down&buff.cat_form.up
 actions.maint+=/skull_bash,if=target.casting&buff.cat_form.up
 
-actions.snek+=/healing_touch,if=talent.dream_of_cenarius.enabled&(variable.opt_snek_weave|variable.opt_use_ns)&buff.savage_roar.up&(energy.current<=40)&((buff.predatory_swiftness.up&buff.predatory_swiftness.remains<=2)|((buff.predatory_swiftness.up|buff.natures_swiftness.up)&buff.clearcasting.down&((combo_points.current>=5&rip_refresh_time<=0)|rake_refresh_time<=0)))&buff.cat_form.up
-actions.snek+=/natures_swiftness,if=talent.dream_of_cenarius.enabled&variable.opt_use_ns&combo_points.current=5&cooldown.natures_swiftness.remains=0&!buff.natures_swiftness.up&buff.savage_roar.up&active_enemies<=2&buff.cat_form.up
+actions.snek+=/natures_swiftness,if=talent.dream_of_cenarius.enabled&variable.opt_use_ns&cooldown.natures_swiftness.remains=0&!buff.natures_swiftness.up&buff.savage_roar.up&active_enemies<=2&buff.cat_form.up&(buff.tigers_fury.up|cooldown.tigers_fury.remains<=3)
+actions.snek+=/healing_touch,if=talent.dream_of_cenarius.enabled&(variable.opt_snek_weave|variable.opt_use_ns)&buff.savage_roar.up&((buff.predatory_swiftness.up&combo_points.current<5)|(buff.natures_swiftness.up&(buff.tigers_fury.up|cooldown.tigers_fury.remains<=3)))&buff.cat_form.up
 actions.snek+=/rip,if=buff.dream_of_cenarius_damage.up&combo_points.current=5&buff.savage_roar.up&active_enemies<3&buff.cat_form.up&rip_refresh_time<=0
 actions.snek+=/rake,if=buff.dream_of_cenarius_damage.up&combo_points.current<5&buff.savage_roar.up&active_enemies<3&buff.cat_form.up&rake_refresh_time<=0
 actions.snek+=/thrash_cat,if=buff.dream_of_cenarius_damage.up&active_enemies>=4&buff.cat_form.up&(dot.thrash_cat.down|dot.thrash_cat.remains<=4.5)
 actions.snek+=/swipe_cat,if=buff.dream_of_cenarius_damage.up&active_enemies>=4&buff.cat_form.up
 
-actions.bear+=/bear_form,if=variable.opt_bear_weave&bearweave_trigger_ok&cooldown.thrash_bear.ready
-actions.bear+=/thrash_bear,if=buff.bear_form.up&rage.current>=25&!prev.thrash_bear,strict=1
+actions.bear+=/bear_form,if=variable.opt_bear_weave&(should_bear_weave|bearweave_trigger_ok)&cooldown.thrash_bear.ready
+actions.bear+=/thrash_bear,if=buff.bear_form.up&!prev.thrash_bear,strict=1
+actions.bear+=/cat_form,if=buff.bear_form.up&(prev.thrash_bear|dot.thrash_bear.ticking)&(rip_refresh_time<=3|rake_refresh_time<=3|buff.savage_roar.remains<=5)&energy.current>=35
 actions.bear+=/maul,if=buff.bear_form.up&rage.current>=30&buff.clearcasting.down&!prev_off_gcd.maul&active_enemies<3
 actions.bear+=/mangle_bear,if=buff.bear_form.up&active_enemies<3
 actions.bear+=/lacerate,if=buff.bear_form.up&active_enemies<3
-actions.bear+=/cat_form,if=buff.bear_form.up&!bear_thrash_pending
+actions.bear+=/cat_form,if=buff.bear_form.up&(prev.thrash_bear|dot.thrash_bear.ticking)&(buff.clearcasting.up|!(should_bear_weave|bearweave_trigger_ok)|rip_refresh_time<=2|rake_refresh_time<=2|buff.savage_roar.remains<=4)
 
 actions.wrath+=/wrath,if=variable.opt_wrath_weave&should_wrath_weave
 actions.st+=/tigers_fury,if=(tf_timing|cat_excess_energy>15)&buff.berserk.down&buff.cat_form.up
 actions.st+=/savage_roar,if=!buff.savage_roar.up&combo_points.current>0&buff.cat_form.up
-actions.st+=/rip,if=combo_points_for_rip&(dot.rip.down|dot.rip.remains<=2|rip_stronger)&buff.cat_form.up&!delay_rip_for_tf
-actions.st+=/rake,if=(dot.rake.down|dot.rake.remains<=3|rake_stronger)&buff.cat_form.up&!delay_rake_for_tf
+actions.st+=/rip,if=combo_points_for_rip&(dot.rip.down|rip_refresh_time<=0)&buff.cat_form.up&!delay_rip_for_tf
+actions.st+=/rake,if=(dot.rake.down|rake_refresh_time<=0)&buff.cat_form.up&!delay_rake_for_tf
+actions.st+=/thrash_cat,if=(dot.thrash_cat.down|dot.thrash_cat.remains<=3)&buff.cat_form.up
 actions.st+=/thrash_cat,if=buff.clearcasting.up&(dot.thrash_cat.down|dot.thrash_cat.remains<=3)&buff.cat_form.up
 actions.st+=/thrash_cat,if=active_enemies>=2&buff.cat_form.up&(dot.thrash_cat.down|dot.thrash_cat.remains<=3)
 actions.st+=/ferocious_bite,if=should_bite_emergency&buff.cat_form.up
@@ -78,6 +79,8 @@ actions.cat_optimal+=/variable,name=tf_bonus,value=0
 # Use Ravage when stealthed (T16H opener)
 actions.cat_optimal+=/ravage,if=buff.stealthed.up
 actions.cat_optimal+=/call_action_list,name=maint
+# Use Tiger's Fury early in opener and during rotation
+actions.cat_optimal+=/tigers_fury,if=(tf_timing|cat_excess_energy>15)&buff.berserk.down&buff.cat_form.up
 actions.cat_optimal+=/call_action_list,name=cooldowns
 actions.cat_optimal+=/call_action_list,name=snek,if=talent.dream_of_cenarius.enabled&(variable.opt_snek_weave|variable.opt_use_ns)
 actions.cat_optimal+=/call_action_list,name=wrath,if=variable.opt_wrath_weave&should_wrath_weave

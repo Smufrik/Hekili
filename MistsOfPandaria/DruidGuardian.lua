@@ -262,6 +262,16 @@ spec:RegisterAuras( {
         id = 132158,
         duration = 8,
         max_stack = 1,
+        -- Provide alias so both buff.nature_swiftness and buff.natures_swiftness resolve in scripts.
+        copy = "natures_swiftness",
+    },
+
+    -- Explicit alias aura so scripts referencing either key succeed (some script contexts don't process 'copy' as reverse alias).
+    natures_swiftness = {
+        id = 132158,
+        duration = 8,
+        max_stack = 1,
+        copy = "nature_swiftness",
     },
 
     -- Heart of the Wild Feral auras (needed for DPS rotation)
@@ -404,11 +414,7 @@ spec:RegisterAuras( {
         copy = "dream_of_cenarius_heal",
     },
 
-    mangle = {
-        id = 33878,
-        duration = 0,
-        max_stack = 1,
-    },
+
 
     -- tooth_and_claw_debuff is defined earlier with correct ID (135601); remove duplicate.
 
@@ -690,6 +696,7 @@ spec:RegisterStateExpr( "rage_gain_mangle", rage_gain_mangle )
 spec:RegisterStateExpr( "barkskin_health_pct", function() return defensive_health_pct end )
 spec:RegisterStateExpr( "frenzied_regeneration_health_pct", function() return moderate_damage_pct end )
 spec:RegisterStateExpr( "survival_instincts_health_pct", function() return emergency_health_pct end )
+-- Expose health percentage thresholds explicitly so scripts referencing the raw variable names don't warn.
 spec:RegisterStateExpr( "healing_touch_health_pct", function() return emergency_health_pct end )
 
 -- Rage cost state expressions
@@ -1712,6 +1719,7 @@ spec:RegisterAbilities( {
     },
 
     -- Nature's Swiftness (if talented)
+    -- Ability key uses 'natures_swiftness' but applies/removes the base aura key 'nature_swiftness' to keep buff references consistent.
     natures_swiftness = {
         id = 132158,
         cast = 0,
@@ -1731,11 +1739,11 @@ spec:RegisterAbilities( {
     -- Healing Touch (for Nature's Swiftness)
     healing_touch = {
         id = 5185,
-        cast = function() return buff.nature_swiftness.up and 0 or 3 end,
+    cast = function() return buff.nature_swiftness.up and 0 or 3 end,
         cooldown = 0,
         gcd = "spell",
 
-        spend = function() return buff.nature_swiftness.up and 0 or 0.15 end,
+    spend = function() return buff.nature_swiftness.up and 0 or 0.15 end,
         spendType = "mana",
 
         startsCombat = false,
@@ -1942,23 +1950,6 @@ spec:RegisterAbilities( {
         end,
     },
 
-    -- Nature's Swiftness (talent ability)
-    nature_swiftness = {
-        id = 132158,
-        cast = 0,
-        cooldown = 60,
-        gcd = "off",
-
-        startsCombat = false,
-        texture = 136076,
-
-        talent = "nature_swiftness",
-
-        handler = function ()
-            applyBuff( "nature_swiftness" )
-        end,
-    },
-
     -- Prowl (stealth ability)
     prowl = {
         id = 5215,
@@ -2108,6 +2099,7 @@ end )
 
 -- Settings-based StateExpr for SimC access (moved after settings registration)
 
+-- Provide rage_dump_threshold as a state expression for script access (single definition).
 spec:RegisterStateExpr( "rage_dump_threshold", function()
     return settings.rage_dump_threshold or 90
 end )
@@ -2123,6 +2115,24 @@ end )
 -- Vengeance-based ability conditions (using RegisterStateExpr instead of RegisterVariable)
 
 
+-- Also expose key thresholds as Variables for the script emulator/UI.
+-- Some script evaluation paths (e.g., Options preview) reference these as simple keys.
+spec:RegisterVariable( "survival_instincts_health_pct", function()
+    return settings.emergency_health_pct or 30
+end )
+
+spec:RegisterVariable( "defensive_health_pct", function()
+    return settings.defensive_health_pct or 50
+end )
+
+spec:RegisterVariable( "frenzied_regeneration_health_pct", function()
+    return settings.moderate_damage_pct or 70
+end )
+
+-- Mirror settings into variables for legacy script references (Guardian pack uses variable.* lookups after /reload).
+spec:RegisterVariable( "rage_dump_threshold", function() return settings.rage_dump_threshold or 90 end )
+
+
 spec:RegisterSetting( "faerie_fire_auto", true, {
     name = strformat( "Auto %s", Hekili:GetSpellLinkWithTexture( 770 ) ),
     desc = strformat( "If checked, %s will be automatically applied when the debuff is not present on the target.",
@@ -2130,6 +2140,14 @@ spec:RegisterSetting( "faerie_fire_auto", true, {
     type = "toggle",
     width = "full",
 } )
+
+-- Re-register critical health threshold state expressions here (redundant safeguard) so they are guaranteed
+-- to exist at pack compilation time for the script emulator (warnings showed they were missing earlier).
+-- These duplicate earlier definitions but are harmless; can remove earlier ones once validated.
+spec:RegisterStateExpr( "survival_instincts_health_pct", function() return settings.emergency_health_pct or 30 end )
+spec:RegisterStateExpr( "defensive_health_pct", function() return settings.defensive_health_pct or 50 end )
+spec:RegisterStateExpr( "frenzied_regeneration_health_pct", function() return settings.moderate_damage_pct or 70 end )
+spec:RegisterStateExpr( "rage_dump_threshold", function() return settings.rage_dump_threshold or 90 end )
 
 spec:RegisterSetting( "auto_pulverize", true, {
     name = strformat( "Auto %s", Hekili:GetSpellLinkWithTexture( 80313 ) ),
