@@ -839,7 +839,7 @@ spec:RegisterAbilities( {
         cast = 0,
         cooldown = 300,
         gcd = "spell",
-    toggle = "cooldowns", -- treat as major CD so hidden when CDs disabled
+        toggle = "cooldowns", -- treat as major CD so hidden when CDs disabled
         
         spend = 0.23,
         spendType = "mana",
