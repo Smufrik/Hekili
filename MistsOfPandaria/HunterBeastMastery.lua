@@ -750,7 +750,8 @@ end )
 
             talent = "a_murder_of_crows",
             startsCombat = true,
-            toggle = "cooldowns",
+
+                toggle = "cooldowns",
 
             handler = function ()
                 applyDebuff( "target", "a_murder_of_crows" )
@@ -829,6 +830,7 @@ end )
 
             talent = "barrage",
             startsCombat = true,
+
             toggle = "cooldowns",
 
             start = function ()
@@ -843,7 +845,8 @@ end )
             gcd = "off",
 
             startsCombat = true,
-            toggle = "cooldowns",
+
+                toggle = "cooldowns",
 
             handler = function ()
                 applyBuff( "stampede" )
@@ -859,7 +862,7 @@ end )
 
             startsCombat = false,
 
-            toggle = "cooldowns",
+                toggle = "cooldowns",
 
             handler = function ()
                 applyBuff( "bestial_wrath" )
@@ -875,7 +878,7 @@ end )
 
             talent = "binding_shot",
             startsCombat = false,
-            toggle = "interrupts",
+            
 
             handler = function ()
                 applyDebuff( "target", "binding_shot_stun" )
@@ -964,7 +967,7 @@ end )
 
             startsCombat = false,
 
-            toggle = "defensives",
+            
 
             handler = function ()
                 applyBuff( "deterrence" )
@@ -980,7 +983,8 @@ end )
 
             talent = "dire_beast",
             startsCombat = true,
-            toggle = "cooldowns",
+
+                toggle = "cooldowns",
 
             handler = function ()
                 applyBuff( "dire_beast" )
@@ -1043,7 +1047,7 @@ end )
 
             startsCombat = false,
 
-            toggle = "defensives",
+            
 
             handler = function ()
                 applyBuff( "feign_death" )
@@ -1058,6 +1062,7 @@ end )
             school = "nature",
 
             startsCombat = false,
+
             toggle = "defensives",
 
             handler = function ()
@@ -1106,6 +1111,8 @@ end )
             talent = "fervor",
             startsCombat = false,
 
+                toggle = "cooldowns",
+
             handler = function ()
                 applyBuff( "fervor" )
             end,
@@ -1137,7 +1144,8 @@ end )
 
             talent = "glaive_toss",
             startsCombat = true,
-            toggle = "cooldowns",
+
+                toggle = "cooldowns",
 
             handler = function ()
                 applyDebuff( "target", "glaive_toss" )
@@ -1168,7 +1176,7 @@ end )
 
             talent = "intimidation",
             startsCombat = true,
-            toggle = "interrupts",
+            
 
             usable = function() return pet.alive, "requires a living pet" end,
 
@@ -1312,7 +1320,8 @@ end )
 
             talent = "lynx_rush",
             startsCombat = true,
-            toggle = "cooldowns",
+
+                toggle = "cooldowns",
 
             usable = function() return pet.alive, "requires a living pet" end,
 
@@ -1406,6 +1415,7 @@ end )
 
             talent = "powershot",
             startsCombat = true,
+
             toggle = "cooldowns",
 
             handler = function ()
@@ -1422,6 +1432,7 @@ end )
             school = "physical",
 
             startsCombat = true,
+
             toggle = "cooldowns",
 
             start = function ()
@@ -1487,8 +1498,8 @@ end )
             gcd = "spell",
             school = "physical",
 
-            startsCombat = true,
             toggle = "interrupts",
+            startsCombat = true,
 
             debuff = "casting",
             readyTime = state.timeToInterrupt,
@@ -1508,6 +1519,7 @@ end )
 
             talent = "silencing_shot",
             startsCombat = true,
+
             toggle = "interrupts",
 
             debuff = "casting",
@@ -1577,9 +1589,9 @@ end )
             gcd = "spell",
             school = "nature",
 
+            toggle = "cooldowns",
             talent = "wyvern_sting",
             startsCombat = true,
-            toggle = "interrupts",
 
             handler = function ()
                 applyDebuff( "target", "wyvern_sting" )

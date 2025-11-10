@@ -617,7 +617,6 @@ spec:RegisterResource(6, {
 		gcd = "spell",
 		
 		startsCombat = false,
-		
 		toggle = "cooldowns",
 		
 		handler = function ()
@@ -633,6 +632,7 @@ spec:RegisterResource(6, {
 		gcd = "spell",
 		
 		startsCombat = false,
+		toggle = "cooldowns",
 		
 		usable = function ()
 			return pet.ghoul.active
@@ -711,7 +711,7 @@ spec:RegisterResource(6, {
 		
 		startsCombat = false,
 		
-		toggle = "cooldowns",
+		
 		
 		handler = function ()
 			applyBuff("pillar_of_frost", 20)
@@ -794,7 +794,7 @@ spec:RegisterResource(6, {
 		
 		startsCombat = false,
 		
-		toggle = "cooldowns",
+		
 
 		usable = function ()
 			-- Gate ERW to true starvation moments per APL: no Unholy+Death runes and sufficient RP deficit.
@@ -842,7 +842,7 @@ spec:RegisterResource(6, {
 		
 		startsCombat = true,
 		
-		toggle = "interrupts",
+		
 		
 		debuff = "casting",
 		readyTime = state.timeToInterrupt,
@@ -861,12 +861,7 @@ spec:RegisterResource(6, {
 		
 		startsCombat = false,
 		
-		toggle = function()
-			if settings.dps_shell then
-				return
-			end
-			return "defensives"
-		end,
+		
 		
 		handler = function ()
 			applyBuff("antimagic_shell")
@@ -1825,12 +1820,7 @@ spec:RegisterAbilities({
 
 		startsCombat = false,
 
-		toggle = function()
-			if settings.dps_shell then
-				return
-			end
-			return "defensives"
-		end,
+		
 
 		handler = function()
 			applyBuff("antimagic_shell")
@@ -1847,7 +1837,7 @@ spec:RegisterAbilities({
 		talent = "antimagic_zone",
 		startsCombat = false,
 
-		toggle = "cooldowns",
+		
 
 		handler = function()
 			applyBuff("antimagic_zone")
@@ -1865,7 +1855,6 @@ spec:RegisterAbilities({
 
 		startsCombat = false,
 		texture = 237511,
-
 		toggle = "cooldowns",
 
 		handler = function()
@@ -1884,7 +1873,7 @@ spec:RegisterAbilities({
 		talent = "asphyxiate",
 		startsCombat = true,
 
-		toggle = "interrupts",
+		
 
 		debuff = "casting",
 		readyTime = state.timeToInterrupt,
@@ -2242,7 +2231,7 @@ spec:RegisterAbilities({
 		talent = "death_pact",
 		startsCombat = false,
 
-		toggle = "defensives",
+		
 
 		usable = function()
 			return pet.alive, "requires an undead pet"
@@ -2339,7 +2328,6 @@ spec:RegisterAbilities({
 
 		talent = "icebound_fortitude",
 		startsCombat = false,
-
 		toggle = "defensives",
 
 		handler = function()
@@ -2357,7 +2345,7 @@ spec:RegisterAbilities({
 		talent = "lichborne",
 		startsCombat = false,
 
-		toggle = "defensives",
+		
 
 		handler = function()
 			applyBuff("lichborne")
@@ -2372,7 +2360,6 @@ spec:RegisterAbilities({
 		gcd = "off",
 
 		startsCombat = true,
-
 		toggle = "interrupts",
 
 		debuff = "casting",
@@ -2442,7 +2429,7 @@ spec:RegisterAbilities({
 		talent = "purgatory",
 		startsCombat = false,
 
-		toggle = "defensives",
+		
 
 		handler = function()
 			applyBuff("purgatory")
@@ -2461,7 +2448,7 @@ spec:RegisterAbilities({
 		startsCombat = false,
 		texture = 136143,
 
-		toggle = "cooldowns",
+		
 
 		handler = function() end,
 	},
@@ -2523,10 +2510,9 @@ spec:RegisterAbilities({
 		cooldown = 120,
 		gcd = "off",
 
+		toggle = "interrupts",
 		startsCombat = false,
 		texture = 136214,
-
-		toggle = "interrupts",
 
 		debuff = "casting",
 		readyTime = state.timeToInterrupt,
@@ -2664,7 +2650,7 @@ spec:RegisterAbilities({
 
 		startsCombat = true,
 
-		toggle = "cooldowns",
+		
 
 		handler = function()
 			summonPet("gargoyle", 30)

@@ -454,6 +454,7 @@ local function RegisterMistweaverSpec()
             id = 116680,
             cooldown = 45,
             gcd = "spell",
+            toggle = "cooldowns",
 
             handler = function()
                 applyBuff("thunder_focus_tea", 30)
@@ -477,14 +478,14 @@ local function RegisterMistweaverSpec()
             id = 115310,
             cooldown = 180,
             gcd = "spell",
-
-            toggle = "cooldowns"
+            toggle = "cooldowns",
+            
         },
         life_cocoon = {
             id = 116849,
             cooldown = 120,
-
-            toggle = "cooldowns"
+            toggle = "defensives",
+            
         },
         expel_harm = {
             id = 115072,
@@ -502,9 +503,8 @@ local function RegisterMistweaverSpec()
             cast = 0,
             cooldown = 10,
             gcd = "off",
-
-            toggle = "interrupts",
             startsCombat = true,
+            toggle = "interrupts",
 
             debuff = "casting",
             readyTime = state.timeToInterrupt,
@@ -521,6 +521,7 @@ local function RegisterMistweaverSpec()
             cooldown = 45,
             charges = 2,
             gcd = "off",
+            toggle = "cooldowns",
 
             talent = "chi_brew",
 

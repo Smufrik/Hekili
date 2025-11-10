@@ -2946,6 +2946,7 @@ do
         {
             name = "virmen_bite",
             item = 76089,
+            texture = 609897,
             duration = 25
         },
         {
@@ -3560,6 +3561,10 @@ all:RegisterAbility( "hands", {
 
     -- Copy all runtime behavior (cooldown, usable, item, handler, etc.).
     copy = "synapse_springs",
+
+    -- Explicitly classify as a cooldown so global CD toggle always gates it,
+    -- even if copy semantics change.
+    toggle = "cooldowns",
 
     -- Ensure the correct texture is always shown from the equipped gloves.
     item = function() return (tinker and tinker.hand and tinker.hand.item) or 0 end,

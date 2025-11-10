@@ -1908,7 +1908,9 @@ spec:RegisterAbilities( {
         cooldown = 60,
         gcd = "off",
         school = "nature",
+        toggle = "defensives",
         startsCombat = false,
+
         handler = function ()
             applyBuff( "barkskin" )
         end
@@ -1940,7 +1942,7 @@ spec:RegisterAbilities( {
         gcd = "off",
         school = "physical",
         startsCombat = false,
-        toggle = "cooldowns",
+    
         handler = function ()
             if buff.cat_form.down then shift( "cat_form" ) end
             applyBuff( "berserk" )
@@ -2064,8 +2066,9 @@ spec:RegisterAbilities( {
         gcd = "off",
         school = "physical",
         talent = "incarnation_king_of_the_jungle",
-        startsCombat = false,
         toggle = "cooldowns",
+        startsCombat = false,
+    
         handler = function ()
             if buff.cat_form.down then shift( "cat_form" ) end
             applyBuff( "incarnation_king_of_the_jungle" )
@@ -2213,6 +2216,7 @@ spec:RegisterAbilities( {
         cooldown = 60,
         gcd = "off",
         school = "nature",
+        toggle = "cooldowns",
         startsCombat = false,
         handler = function()
             applyBuff( "natures_swiftness" )
@@ -2312,8 +2316,9 @@ spec:RegisterAbilities( {
         cooldown = 10,
         gcd = "off",
         school = "physical",
-        startsCombat = false,
         toggle = "interrupts",
+        startsCombat = false,
+    
         interrupt = true,
         form = function ()
             return buff.bear_form.up and "bear_form" or "cat_form"
@@ -2339,7 +2344,9 @@ spec:RegisterAbilities( {
         cooldown = 180,
         gcd = "off",
         school = "physical",
+        toggle = "defensives",
         startsCombat = false,
+
         handler = function ()
             applyBuff( "survival_instincts" )
         end,
@@ -2390,10 +2397,11 @@ spec:RegisterAbilities( {
         cooldown = 30,
         gcd = "off",
         school = "physical",
+        toggle = "cooldowns",
         spend = -60,
         spendType = "energy",
         startsCombat = false,
-        
+
         usable = function()
             return not buff.berserk.up, "cannot use while Berserk is active"
         end,
@@ -2402,9 +2410,7 @@ spec:RegisterAbilities( {
             shift( "cat_form" )
             applyBuff( "tigers_fury" )
         end,
-    },
-
-    -- Swipe (Cat): Swipe nearby enemies, dealing damage and awarding 1 combo point.
+    },    -- Swipe (Cat): Swipe nearby enemies, dealing damage and awarding 1 combo point.
     swipe_cat = {
         id = 62078,
         cast = 0,
@@ -2471,6 +2477,7 @@ spec:RegisterAbilities( {
         school = "nature",
         talent = "heart_of_the_wild",
         toggle = "cooldowns",
+    
         startsCombat = false,
         handler = function ()
             applyBuff( "heart_of_the_wild" )
@@ -2485,6 +2492,7 @@ spec:RegisterAbilities( {
         gcd = "off",
         school = "nature",
         talent = "renewal",
+        toggle = "defensives",
         startsCombat = false,
         handler = function ()
             -- Healing handled by game
@@ -2500,6 +2508,7 @@ spec:RegisterAbilities( {
         school = "nature",
         talent = "force_of_nature",
         toggle = "cooldowns",
+    
         startsCombat = true,
         handler = function ()
             -- Summon handled by game

@@ -463,8 +463,8 @@ spec:RegisterAuras( {
         explosive_trap = {
             id = 13813,
             duration = 20,
-        max_stack = 1
-    },
+            max_stack = 1
+        },
         -- Dire Beast focus regen aura (used by resources)
         dire_beast = {
             id = 120694,
@@ -695,8 +695,9 @@ spec:RegisterAuras( {
             cooldown = 300,
         gcd = "off",
         
-        startsCombat = false,
             toggle = "cooldowns",
+        startsCombat = false,
+            
         
     handler = function ()
                 applyBuff( "rapid_fire" )
@@ -792,8 +793,9 @@ spec:RegisterAuras( {
             cooldown = 300,
             gcd = "off",
         
-            startsCombat = true,
             toggle = "cooldowns",
+        startsCombat = true,
+            
         
     handler = function ()
                 applyBuff( "stampede" )
@@ -826,7 +828,7 @@ spec:RegisterAuras( {
 
         talent = "silencing_shot",
         startsCombat = true,
-        toggle = "interrupts",
+            toggle = "interrupts",
 
             debuff = "casting",
             readyTime = state.timeToInterrupt,
@@ -979,7 +981,7 @@ spec:RegisterAuras( {
         cast = 0,
             cooldown = 90,
         gcd = "off",
-        
+            toggle = "defensives",
         startsCombat = false,
             texture = 132369,
         
@@ -1223,8 +1225,9 @@ spec:RegisterAuras( {
             spend = 60,
             spendType = "focus",
 
-            startsCombat = true,
             toggle = "cooldowns",
+            startsCombat = true,
+            
 
             handler = function ()
                 applyDebuff( "target", "a_murder_of_crows" )
@@ -1237,8 +1240,9 @@ spec:RegisterAuras( {
             cooldown = 90,
             gcd = "spell",
 
-            startsCombat = true,
             toggle = "cooldowns",
+            startsCombat = true,
+            
 
             handler = function ()
                 applyDebuff( "target", "lynx_rush" )
@@ -1254,6 +1258,7 @@ spec:RegisterAuras( {
             spend = 15,
             spendType = "focus",
 
+            toggle = "cooldowns",
             startsCombat = true,
 
             handler = function ()
@@ -1270,6 +1275,7 @@ spec:RegisterAuras( {
             spend = 15,
             spendType = "focus",
             
+            toggle = "cooldowns",
             startsCombat = true,
 
             handler = function ()
@@ -1287,6 +1293,7 @@ spec:RegisterAuras( {
             spend = 40,
             spendType = "focus",
 
+            toggle = "cooldowns",
             startsCombat = true,
             usable = function()
                 -- Optional gating: prefer during raid burst or when not starving Chimera/Crows soon.
@@ -1311,7 +1318,7 @@ spec:RegisterAuras( {
             gcd = "spell",
 
             startsCombat = true,
-
+            toggle = "cooldowns",
             handler = function ()
                 -- Pet ability, no special handling needed
             end,
@@ -1409,8 +1416,9 @@ spec:RegisterAuras( {
             cooldown = 120,
             gcd = "off",
             
-        startsCombat = false,
             toggle = "defensives",
+        startsCombat = false,
+            
         
         handler = function ()
                 -- Self-heal ability
@@ -1423,9 +1431,9 @@ spec:RegisterAuras( {
         cast = 0,
             cooldown = 30,
         gcd = "off",
-        
-            startsCombat = false,
             toggle = "cooldowns",
+            startsCombat = false,
+            
         
         handler = function ()
                 applyBuff( "fervor" )
@@ -1437,9 +1445,9 @@ spec:RegisterAuras( {
             cast = 0,
             cooldown = 45,
             gcd = "spell",
-            
-            startsCombat = true,
             toggle = "cooldowns",
+            startsCombat = true,
+            
 
             handler = function ()
                 applyBuff( "dire_beast" )

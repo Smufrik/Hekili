@@ -95,7 +95,7 @@ class.items.purified_bindings_of_immerseus = {
     cooldown = 120,
     gcd = "off",
     item = 104426,
-    toggle = "cooldowns",
+    
     handler = function()
         -- Grants Purified Resolve, increasing stats
         applyBuff( "purified_resolve" )
@@ -109,7 +109,7 @@ class.items.jinas_arcane_proxies = {
     cooldown = 60,
     gcd = "off",
     item = 94510,
-    toggle = "cooldowns",
+    
     handler = function()
         -- Grants Jin'ya's Arcane Proxies buff (Feather stacks)
         applyBuff( "jinas_arcane_proxies" )
@@ -143,7 +143,7 @@ if class and class.specs and class.specs[0] then
 
             gcd = "off",
             cooldown = 55,
-            toggle = "cooldowns",
+            
         },
     })
 end

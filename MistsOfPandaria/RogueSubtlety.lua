@@ -640,7 +640,7 @@ spec:RegisterAbilities( {
 
     startsCombat = false,
     
-    toggle = "cooldowns",
+    
 
     handler = function ()
       applyBuff( "vanish", 10 )
@@ -657,8 +657,9 @@ spec:RegisterAbilities( {
     school = "physical",
 
     startsCombat = true,
-
     toggle = "interrupts",
+
+    
 
     debuff = "casting",
     readyTime = state.timeToInterrupt,
@@ -892,8 +893,9 @@ spec:RegisterAbilities( {
     cooldown = 60,
     gcd = "off",
     startsCombat = false,
-
     toggle = "cooldowns",
+
+    
 
     handler = function ()
       -- Shadow Dance: Subtlety signature ability
@@ -1059,6 +1061,8 @@ spec:RegisterAbilities( {
     startsCombat = false,
     toggle = "defensives",
 
+    
+
     handler = function ()
       applyBuff( "cloak_of_shadows", 5 )
     end
@@ -1074,6 +1078,8 @@ spec:RegisterAbilities( {
 
     startsCombat = false,
     toggle = "defensives",
+
+    
 
     handler = function ()
       applyBuff( "evasion", 5 )
@@ -1207,6 +1213,8 @@ spec:RegisterAbilities( {
     startsCombat = false,
     toggle = "cooldowns",
 
+    
+
     handler = function ()
       applyBuff( "shadow_blades", 12 )
     end
@@ -1268,7 +1276,7 @@ spec:RegisterAbilities( {
     spendType = "energy",
 
     startsCombat = false,
-    toggle = "defensives",
+    
 
     handler = function ()
       applyBuff( "smoke_bomb", 10 )
@@ -1303,7 +1311,7 @@ spec:RegisterAbilities( {
 
     talent = "combat_readiness",
     startsCombat = false,
-    toggle = "defensives",
+    
 
     handler = function ()
       applyBuff( "combat_readiness", 20 )
@@ -1342,7 +1350,7 @@ spec:RegisterAbilities( {
     talent = "prep",
     startsCombat = false,
 
-    toggle = "cooldowns",
+    
 
     handler = function ()
       applyBuff( "preparation" )

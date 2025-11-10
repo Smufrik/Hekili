@@ -3643,9 +3643,7 @@ local mt_toggle = {
 		then
 			return true
 		end
-		if k == "cooldowns" and toggle.override then
-			return true
-		end
+
 		-- Do not auto-enable potions based on the cooldowns toggle; require the potions toggle itself.
 		if k == "potions" and toggle.override and state.toggle.cooldowns then
 			return toggle.value

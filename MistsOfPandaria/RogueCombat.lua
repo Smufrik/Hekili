@@ -340,7 +340,12 @@ spec:RegisterAuras( {
         max_stack = 1
     },
     stealth = {
-        id = 115191,
+        -- Stealth: Primary spell ID in MoP Classic is 1784. Some data sources (or client tooltips) may surface
+        -- an alternate stealth aura ID (115191). Include both so the engine recognizes the buff regardless
+        -- of which variant is applied. This resolves buff.stealth.up returning false when the player uses
+        -- the 1784 Stealth ability.
+        id = 1784,
+        copy = { 115191 },
         duration = 3600,
         max_stack = 1
     },
@@ -1204,7 +1209,7 @@ spec:RegisterAbilities( {
         gcd = "off",
         school = "shadow",
         
-        toggle = "cooldowns",
+    
         startsCombat = false,
 
         handler = function ()
@@ -1282,9 +1287,7 @@ spec:RegisterAbilities( {
         debuff = "casting",
         readyTime = state.timeToInterrupt,
         handler = function () interrupt() end,
-    },
-    
-    -- Increases your dodge chance by 50% for 10 sec.
+    },    -- Increases your dodge chance by 50% for 10 sec.
     evasion = {
         id = 5277,
         cast = 0,
@@ -1298,9 +1301,7 @@ spec:RegisterAbilities( {
         handler = function ()
             applyBuff("evasion")
         end,
-    },
-    
-    -- Allows the rogue to enter stealth mode. Lasts until cancelled.
+    },    -- Allows the rogue to enter stealth mode. Lasts until cancelled.
     stealth = {
         id = 1784,
         cast = 0,
@@ -1337,7 +1338,7 @@ spec:RegisterAbilities( {
         gcd = "off",
         school = "physical",
         
-        toggle = "cooldowns",
+    
         startsCombat = false,
 
         handler = function ()
@@ -1388,7 +1389,7 @@ spec:RegisterAbilities( {
         spend = function() return talent.dirty_tricks.enabled and 0 or 15 end,
         spendType = "energy",
         
-        toggle = "cooldowns",
+    
         startsCombat = true,
 
         handler = function ()
@@ -1407,7 +1408,7 @@ spec:RegisterAbilities( {
         spend = 25,
         spendType = "energy",
         
-        toggle = "cooldowns",
+    
         startsCombat = true,
         
         usable = function() return combo_points.current > 0, "requires combo points" end,
@@ -1451,7 +1452,7 @@ spec:RegisterAbilities( {
         gcd = "spell",
         school = "physical",
         
-        toggle = "cooldowns",
+        
         startsCombat = false,
 
         handler = function ()
@@ -1474,9 +1475,7 @@ spec:RegisterAbilities( {
             applyBuff("cloak_of_shadows")
             removeDebuff("target", "all")
         end,
-    },
-    
-    -- Disarm the enemy's weapon for 10 sec.
+    },    -- Disarm the enemy's weapon for 10 sec.
     dismantle = {
         id = 51722,
         cast = 0,
@@ -1484,7 +1483,7 @@ spec:RegisterAbilities( {
         gcd = "spell",
         school = "physical",
         
-        toggle = "cooldowns",
+        toggle = "interrupts",
         startsCombat = true,
 
         handler = function ()

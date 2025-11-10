@@ -1552,11 +1552,13 @@ spec:RegisterAbilities( {
         cast = 0,
         cooldown = 180,
         gcd = "off",
+    toggle = "cooldowns",
 
-        toggle = "cooldowns",
+        
 
         startsCombat = false,
         texture = 135919,
+    toggle = "cooldowns",
 
         handler = function()
             applyBuff("guardian_of_ancient_kings")
@@ -1569,7 +1571,7 @@ spec:RegisterAbilities( {
         cooldown = 180,
         gcd = "off",
 
-        toggle = "cooldowns",
+        
 
         startsCombat = false,
         texture = 135875,
@@ -1585,9 +1587,10 @@ spec:RegisterAbilities( {
         cooldown = 180,
         gcd = "off",
 
-        toggle = "cooldowns",
+        
 
         talent = "holy_avenger",
+    toggle = "cooldowns",
 
         startsCombat = false,
         texture = 571555,
@@ -1649,6 +1652,7 @@ spec:RegisterAbilities( {
         talent = "execution_sentence",
 
         startsCombat = function() return not (state.settings and state.settings.execution_sentence_heal) end,
+    toggle = "cooldowns",
         texture = 613954,
 
         handler = function()
@@ -1666,9 +1670,10 @@ spec:RegisterAbilities( {
         end,
         gcd = "spell",
 
-        toggle = "defensives",
+        
 
         startsCombat = false,
+        toggle = "defensives",
         texture = 524354,
 
         handler = function()
@@ -1685,9 +1690,10 @@ spec:RegisterAbilities( {
         end,
         gcd = "off",
 
-        toggle = "defensives",
+        
 
         startsCombat = false,
+        toggle = "defensives",
         texture = 524353,
 
         handler = function()
@@ -1720,7 +1726,7 @@ spec:RegisterAbilities( {
         end,
         gcd = "spell",
 
-        toggle = "defensives",
+        
 
         startsCombat = false,
         texture = 135928,
@@ -1762,7 +1768,7 @@ spec:RegisterAbilities( {
         end,
         gcd = "spell",
 
-        toggle = "defensives",
+        
 
         startsCombat = false,
         texture = 135964,
@@ -1784,7 +1790,7 @@ spec:RegisterAbilities( {
         end,
         gcd = "off",
 
-        toggle = "defensives",
+        
 
         startsCombat = false,
         texture = 135966,
@@ -2203,11 +2209,12 @@ spec:RegisterRanges( "judgment", "hammer_of_justice", "rebuke", "crusader_strike
 spec:RegisterAbilities({
     rebuke = {
         id = 96231,
+    toggle = "interrupts",
         cast = 0,
         cooldown = 15,
         gcd = "off",
 
-        toggle = "interrupts",
+        
         startsCombat = true,
 
         debuff = "casting",

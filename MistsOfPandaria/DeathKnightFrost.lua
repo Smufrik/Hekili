@@ -1390,7 +1390,7 @@ spec:RegisterAbilities( {
         cooldown = 180,
         gcd = "off",
         
-        toggle = "defensives",
+              toggle = "defensives",
         
         startsCombat = false,
         
@@ -1621,6 +1621,7 @@ spec:RegisterAbilities( {
         gcd = "spell",
         
         startsCombat = false,
+
         toggle = "cooldowns",
         
         handler = function ()

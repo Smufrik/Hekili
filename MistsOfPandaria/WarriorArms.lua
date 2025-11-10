@@ -1541,7 +1541,7 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
 
-        toggle = "cooldowns",
+        
 
         startsCombat = false,
         texture = 464593,
@@ -1561,6 +1561,7 @@ spec:RegisterAbilities( {
         startsCombat = false,
         texture = 136009,
 
+        toggle = "defensives",
         handler = function()
             applyBuff( "berserker_rage" )
         end,
@@ -1592,7 +1593,7 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
 
-        toggle = "defensives",
+        
 
         startsCombat = false,
         texture = 132351,
@@ -1611,7 +1612,7 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
 
-        toggle = "defensives",
+        
 
         startsCombat = false,
         texture = 132336,
@@ -1674,11 +1675,12 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
 
-        toggle = "cooldowns",
+        
 
         startsCombat = false,
         texture = 613534,
 
+        toggle = "cooldowns",
         handler = function()
             applyBuff( "avatar" )
         end,
@@ -1693,11 +1695,12 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
 
-        toggle = "cooldowns",
+        
 
         startsCombat = false,
         texture = 236304,
 
+        toggle = "cooldowns",
         handler = function()
             applyBuff( "bloodbath" )
         end,
@@ -1712,11 +1715,12 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
 
-        toggle = "cooldowns",
+        
 
         startsCombat = true,
         texture = 236303,
 
+        toggle = "cooldowns",
         handler = function()
             applyBuff( "bladestorm" )
         end,
@@ -1731,11 +1735,12 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
 
-        toggle = "cooldowns",
+        
 
         startsCombat = true,
         texture = 642418,
 
+        toggle = "cooldowns",
         handler = function()
             applyDebuff( "target", "dragon_roar" )
         end,
@@ -1753,11 +1758,12 @@ spec:RegisterAbilities( {
         end,
         spendType = "rage",
 
-        toggle = "cooldowns",
+        
 
         startsCombat = true,
         texture = 236312,
 
+        toggle = "interrupts",
         handler = function()
             applyDebuff( "target", "shockwave" )
         end,
@@ -1772,11 +1778,12 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
 
-        toggle = "cooldowns",
+        
 
         startsCombat = true,
         texture = 613535,
 
+        toggle = "interrupts",
         handler = function()
             applyDebuff( "target", "storm_bolt" )
         end,
@@ -1791,7 +1798,7 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
 
-        toggle = "cooldowns",
+        
 
         startsCombat = false,
         texture = 236331,
@@ -1863,11 +1870,12 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
 
-        toggle = "interrupts",
+        
 
         startsCombat = true,
         texture = 613534,
 
+        toggle = "interrupts",
         handler = function()
             applyDebuff( "target", "disrupting_shout" )
             setCooldown( "pummel", 15 )
@@ -1884,7 +1892,7 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
 
-        toggle = "interrupts",
+        
 
         startsCombat = true,
         texture = 132938,
@@ -1892,6 +1900,7 @@ spec:RegisterAbilities( {
         debuff = "casting",
         readyTime = state.timeToInterrupt,
 
+        toggle = "interrupts",
         handler = function()
             interrupt()
             setCooldown( "disrupting_shout", 15 )
@@ -2108,8 +2117,8 @@ spec:RegisterAbilities( {
         id = 12975,
         cast = 0,
         cooldown = 180,
-        gcd = "off",
-        toggle = "defensives",
+    gcd = "off",
+        
         spend = 0,
         spendType = "rage",
         startsCombat = false,
@@ -2142,10 +2151,11 @@ spec:RegisterAbilities( {
         cooldown = 300,
         gcd = "off",
         spend = 0,
-        spendType = "rage",
-        toggle = "cooldowns",
+    spendType = "rage",
+        
         startsCombat = true,
         texture = 132109,
+        toggle = "cooldowns",
         handler = function()
             applyBuff( "recklessness" )
         end,
@@ -2157,8 +2167,8 @@ spec:RegisterAbilities( {
         cooldown = 240,
         gcd = "off",
         spend = 0,
-        spendType = "rage",
-        toggle = "defensives",
+    spendType = "rage",
+        
         startsCombat = false,
         texture = 132362,
         handler = function()
@@ -2173,8 +2183,7 @@ spec:RegisterAbilities( {
         gcd = "spell",
         spend = 0,
         spendType = "rage",
-    -- Mark as defensive/utility so the engine treats it as a valid suggested action category.
-    toggle = "defensives",
+    -- Marked previously as defensive/utility; now globally governed.
         startsCombat = true,
         texture = 132366,
         handler = function()
@@ -2189,7 +2198,7 @@ spec:RegisterAbilities( {
         gcd = "spell",
         spend = 0,
         spendType = "rage",
-    toggle = "defensives",
+    
         startsCombat = true,
         texture = 132154,
         handler = function()
@@ -2203,8 +2212,8 @@ spec:RegisterAbilities( {
         cooldown = 60,
         gcd = "off",
         spend = 0,
-        spendType = "rage",
-        toggle = "defensives",
+    spendType = "rage",
+        
         startsCombat = false,
         texture = 132345,
         handler = function()
@@ -2219,7 +2228,7 @@ spec:RegisterAbilities( {
         gcd = "spell",
         spend = 0,
         spendType = "rage",
-    toggle = "defensives",
+    
         startsCombat = true,
         texture = 132342,
         handler = function()
@@ -2234,7 +2243,7 @@ spec:RegisterAbilities( {
         gcd = "spell",
         spend = 0,
         spendType = "rage",
-    toggle = "utility",
+    
         startsCombat = true,
         texture = 134955,
         handler = function()
@@ -2263,8 +2272,8 @@ spec:RegisterAbilities( {
         cooldown = 180,
         gcd = "spell",
         spend = 0,
-        spendType = "rage",
-        toggle = "cooldowns",
+    spendType = "rage",
+        
         startsCombat = false,
         texture = 236303,
         handler = function()

@@ -1144,13 +1144,11 @@ spec:RegisterAbilities( {
             return glyph.glyph_of_combustion.enabled and 90 or 45
         end,
         gcd = "spell",
-        
+
         toggle = "cooldowns",
-        
+
         startsCombat = true,
-        texture = 135824,
-        
-        usable = function()
+        texture = 135824,        usable = function()
             return debuff.ignite.up, "requires ignite on target"
         end,
         
@@ -1276,7 +1274,6 @@ spec:RegisterAbilities( {
         gcd = "off",
         
         toggle = "cooldowns",
-        
         startsCombat = false,
         texture = 607849,
         
@@ -1364,7 +1361,6 @@ spec:RegisterAbilities( {
         gcd = "spell",
         
         toggle = "cooldowns",
-        
         startsCombat = false,
         texture = 136075,
         
@@ -1442,7 +1438,7 @@ spec:RegisterAbilities( {
         cast = 0,
         cooldown = 300,
         gcd = "spell",
-        
+
         toggle = "defensives",
         
         startsCombat = false,
@@ -1494,8 +1490,6 @@ spec:RegisterAbilities( {
         cooldown = 300,
         gcd = "spell",
         
-        toggle = "defensives",
-        
         startsCombat = false,
         texture = 132220,
         
@@ -1510,8 +1504,7 @@ spec:RegisterAbilities( {
         cooldown = 90,
         gcd = "spell",
         
-        toggle = "defensives",
-        
+        toggle = "cooldowns",
         startsCombat = false,
         texture = 606086,
         
@@ -1529,7 +1522,6 @@ spec:RegisterAbilities( {
         gcd = "off",
         
         toggle = "cooldowns",
-        
         startsCombat = false,
         texture = 136031,
         
@@ -1638,7 +1630,6 @@ spec:RegisterAbilities( {
         gcd = "off",
         
         toggle = "cooldowns",
-        
         startsCombat = false,
         texture = 458224,
         
@@ -1766,7 +1757,7 @@ spec:RegisterAbilities( {
         cast = 0,
         cooldown = 180,
         gcd = "spell",
-        
+
         toggle = "cooldowns",
         
         startsCombat = false,

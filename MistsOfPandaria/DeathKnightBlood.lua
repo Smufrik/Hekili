@@ -1905,12 +1905,7 @@ spec:RegisterAbilities({
 
 		startsCombat = false,
 
-		toggle = function()
-			if settings.dps_shell then
-				return
-			end
-			return "defensives"
-		end,
+		toggle = "defensives",
 
 		handler = function()
 			applyBuff("antimagic_shell")
@@ -1930,6 +1925,8 @@ spec:RegisterAbilities({
 		texture = 237511,
 
 		toggle = "cooldowns",
+
+		--
 		
 		usable = function()
 			return settings.use_army_of_the_dead, "army_of_the_dead setting is disabled"
@@ -2045,9 +2042,11 @@ spec:RegisterAbilities({
 		cooldown = 90,
 		gcd = "spell",
 
-		toggle = "cooldowns",
+		--
 
 		startsCombat = false,
+
+		toggle = "cooldowns",
 
 		handler = function()
 			applyBuff("dancing_rune_weapon")
@@ -2207,9 +2206,11 @@ spec:RegisterAbilities({
 		cooldown = 300,
 		gcd = "off",
 
-		toggle = "cooldowns",
+		--
 
 		startsCombat = false,
+
+		toggle = "cooldowns",
 
 		usable = function()
 			-- Conservative gate: only when we cannot cast Death Strike (no FU or death pair) and RP deficit is high.
@@ -2458,11 +2459,11 @@ spec:RegisterAbilities({
 		cooldown = 30,
 		gcd = "off",
 
+		toggle = "defensives",
+
 		startsCombat = false,
 
 		spend_runes = { 1, 0, 0 }, -- 1 Blood, 0 Frost, 0 Unholy
-
-		toggle = "defensives",
 
 		handler = function()
 			-- Rune Tap base functionality
@@ -2526,7 +2527,7 @@ spec:RegisterAbilities({
 		cooldown = 60,
 		gcd = "off",
 
-		toggle = "defensives",
+		toggle = "cooldowns",
 
 		startsCombat = false,
 

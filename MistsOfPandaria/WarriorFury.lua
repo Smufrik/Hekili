@@ -1144,10 +1144,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
 
-        toggle = "cooldowns",
-
         startsCombat = false,
         texture = 132109,
+
+        toggle = "cooldowns",
 
         handler = function()
             applyBuff( "recklessness" )
@@ -1382,6 +1382,8 @@ spec:RegisterAbilities( {
         startsCombat = false,
         texture = 136009,
         
+        toggle = "defensives",
+        
         handler = function()
             applyBuff( "berserker_rage" )
             if buff.raging_blow and buff.raging_blow.stack < 2 then
@@ -1416,10 +1418,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "defensives",
-        
         startsCombat = false,
         texture = 132351,
+        
+        toggle = "defensives",
         
         handler = function()
             applyBuff( "rallying_cry" )
@@ -1435,10 +1437,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "defensives",
-        
         startsCombat = false,
         texture = 132336,
+        
+        toggle = "defensives",
         
         handler = function()
             applyBuff( "die_by_the_sword" )
@@ -1498,10 +1500,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "cooldowns",
-        
         startsCombat = false,
         texture = 613534,
+        
+        toggle = "cooldowns",
         
         handler = function()
             applyBuff( "avatar" )
@@ -1517,10 +1519,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "cooldowns",
-        
         startsCombat = false,
         texture = 236304,
+        
+        toggle = "cooldowns",
         
         handler = function()
             applyBuff( "bloodbath" )
@@ -1536,10 +1538,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "cooldowns",
-        
         startsCombat = true,
         texture = 236303,
+        
+        toggle = "cooldowns",
         
         handler = function()
             applyBuff( "bladestorm" )
@@ -1555,10 +1557,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "cooldowns",
-        
         startsCombat = true,
         texture = 642418,
+        
+        toggle = "cooldowns",
         
         handler = function()
             applyDebuff( "target", "dragon_roar" )
@@ -1577,10 +1579,10 @@ spec:RegisterAbilities( {
         end,
         spendType = "rage",
         
-        toggle = "cooldowns",
-        
         startsCombat = true,
         texture = 236312,
+        
+        toggle = "interrupts",
         
         handler = function()
             applyDebuff( "target", "shockwave" )
@@ -1596,10 +1598,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "cooldowns",
-        
         startsCombat = true,
         texture = 613535,
+        
+        toggle = "interrupts",
         
         handler = function()
             applyDebuff( "target", "storm_bolt" )
@@ -1614,8 +1616,6 @@ spec:RegisterAbilities( {
         
         spend = 0,
         spendType = "rage",
-        
-        toggle = "cooldowns",
         
         startsCombat = false,
         texture = 236331,
@@ -1686,10 +1686,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "interrupts",
-        
         startsCombat = true,
         texture = 132117,
+        
+        toggle = "interrupts",
         
         handler = function()
             applyDebuff( "target", "disrupting_shout" )
@@ -1706,10 +1706,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
 
-        toggle = "interrupts",
-
         startsCombat = true,
         texture = 132938,
+
+        toggle = "interrupts",
 
         debuff = "casting",
         readyTime = state.timeToInterrupt,
@@ -1728,10 +1728,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "defensives",
-        
         startsCombat = false,
         texture = 132345,
+        
+        toggle = "defensives",
         
         handler = function()
             local instant_heal = health.max * 0.1
@@ -1749,10 +1749,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "defensives",
-        
         startsCombat = false,
         texture = 132361,
+        
+        toggle = "defensives",
         
         handler = function()
             applyBuff( "spell_reflection" )
@@ -1767,8 +1767,6 @@ spec:RegisterAbilities( {
         
         spend = 0,
         spendType = "rage",
-        
-        toggle = "defensives",
         
         startsCombat = false,
         texture = 132361,
@@ -1786,8 +1784,6 @@ spec:RegisterAbilities( {
         
         spend = 0,
         spendType = "rage",
-        
-        toggle = "cooldowns",
         
         startsCombat = false,
         texture = 603532,

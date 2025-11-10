@@ -1567,6 +1567,7 @@ kidney_shot = {
         school = "physical",
         
         startsCombat = false,
+        toggle = "defensives",
         
         handler = function()
             applyBuff("cloak_of_shadows", 5) -- 5 second duration
