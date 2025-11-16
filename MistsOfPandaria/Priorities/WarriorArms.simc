@@ -26,9 +26,9 @@ actions.single_target+=/variable,name=ending_rage,op=set,value=rage.deficit<25
 actions.single_target+=/colossus_smash,if=debuff.colossus_smash.remains<1.5
 
 # Cooldowns on CS application (Wowsims: "On UsUwU and BloodbUwU" group)
-actions.single_target+=/recklessness,if=debuff.colossus_smash.up&variable.cs_last_used<1
+actions.single_target+=/recklessness,if=(debuff.colossus_smash.up&variable.cs_last_used<1)|(target.time_to_die<40)|(time>90)
 actions.single_target+=/avatar,if=talent.avatar.enabled&debuff.colossus_smash.up&variable.cs_last_used<1
-actions.single_target+=/bloodbath,if=talent.bloodbath.enabled&debuff.colossus_smash.up&variable.cs_last_used<1
+actions.single_target+=/bloodbath,if=talent.bloodbath.enabled&((debuff.colossus_smash.up&variable.cs_last_used<1)|(target.time_to_die<40)|(time>90))
 actions.single_target+=/skull_banner,if=debuff.colossus_smash.up&variable.cs_last_used<1
 
 # Trinkets with CS
@@ -80,9 +80,9 @@ actions.execute+=/variable,name=feather_stacks,op=set,value=buff.jinas_arcane_pr
 actions.execute+=/colossus_smash,if=debuff.colossus_smash.remains<1.5
 
 # Cooldowns
-actions.execute+=/recklessness,if=debuff.colossus_smash.up&variable.cs_last_used<1
+actions.execute+=/recklessness,if=(debuff.colossus_smash.up&variable.cs_last_used<1)|(target.time_to_die<40)|(time>90)
 actions.execute+=/avatar,if=talent.avatar.enabled&debuff.colossus_smash.up&variable.cs_last_used<1
-actions.execute+=/bloodbath,if=talent.bloodbath.enabled&debuff.colossus_smash.up&variable.cs_last_used<1
+actions.execute+=/bloodbath,if=talent.bloodbath.enabled&((debuff.colossus_smash.up&variable.cs_last_used<1)|(target.time_to_die<40)|(time>90))
 actions.execute+=/skull_banner,if=debuff.colossus_smash.up&variable.cs_last_used<1
 
 # Mortal Strike - maintain Mortal Wounds
@@ -103,6 +103,9 @@ actions.execute+=/battle_shout,if=!buff.battle_shout.up&rage<40
 actions.aoe+=/variable,name=cs_last_used,op=set,value=time-debuff.colossus_smash.applied_at
 actions.aoe+=/variable,name=feather_stacks,op=set,value=buff.jinas_arcane_proxies.stack
 
+# Ensure CS is applied first in AoE windows
+actions.aoe+=/colossus_smash,if=debuff.colossus_smash.remains<1.5&active_enemies<=6
+
 # Sweeping Strikes
 actions.aoe+=/sweeping_strikes,if=!buff.sweeping_strikes.up
 
@@ -115,13 +118,10 @@ actions.aoe+=/bladestorm,if=talent.bladestorm.enabled&active_enemies<=2&target.h
 # Thunder Clap for Blood and Thunder
 actions.aoe+=/thunder_clap,if=talent.blood_and_thunder.enabled&!dot.deep_wounds.ticking&active_enemies>=3
 
-# Colossus Smash
-actions.aoe+=/colossus_smash,if=debuff.colossus_smash.remains<1.5&active_enemies<=6
-
 # Cooldowns
-actions.aoe+=/recklessness,if=debuff.colossus_smash.up&variable.cs_last_used<1
+actions.aoe+=/recklessness,if=(debuff.colossus_smash.up&variable.cs_last_used<1)|(target.time_to_die<40)|(time>90)
 actions.aoe+=/avatar,if=talent.avatar.enabled&debuff.colossus_smash.up&variable.cs_last_used<1
-actions.aoe+=/bloodbath,if=talent.bloodbath.enabled&debuff.colossus_smash.up&variable.cs_last_used<1
+actions.aoe+=/bloodbath,if=talent.bloodbath.enabled&((debuff.colossus_smash.up&variable.cs_last_used<1)|(target.time_to_die<40)|(time>90))
 actions.aoe+=/skull_banner,if=debuff.colossus_smash.up&variable.cs_last_used<1
 
 # Dragon Roar AOE

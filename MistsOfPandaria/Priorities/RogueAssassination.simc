@@ -11,16 +11,17 @@ actions.precombat+=/slice_and_dice,if=talent.marked_for_death.enabled
 ## Main Actions
 actions+=/potion,if=buff.bloodlust.react|target.time_to_die<40
 actions+=/kick
-actions+=/use_item,slot=hands,if=buff.vendetta.up|target.time_to_die<20
-actions+=/use_item,slot=trinket1,if=buff.vendetta.up|target.time_to_die<20
-actions+=/use_item,slot=trinket2,if=buff.vendetta.up|target.time_to_die<20
+actions+=/use_item,slot=hands,if=buff.slice_and_dice.up&(dot.garrote.ticking|dot.rupture.ticking|buff.vendetta.up)
+actions+=/use_item,slot=trinket1,if=buff.vendetta.up|target.time_to_die<30
+actions+=/use_item,slot=trinket2,if=buff.vendetta.up|target.time_to_die<30
 actions+=/blood_fury,if=buff.vendetta.up
 actions+=/berserking,if=buff.vendetta.up
 actions+=/arcane_torrent,if=energy<60
 # T16H Cooldown management
 # Prefer pairing Shadow Blades with Vendetta or near execute; still allow on BL or after 60s.
-actions+=/shadow_blades,if=buff.vendetta.up|target.time_to_die<40|buff.bloodlust.react|time>60
-actions+=/vendetta,if=buff.slice_and_dice.up&dot.rupture.ticking
+actions+=/shadow_blades,if=(buff.slice_and_dice.up|dot.rupture.ticking)&(buff.vendetta.up|(target.time_to_die<cooldown.vendetta.remains&target.health.pct<35))
+actions+=/vendetta,if=buff.slice_and_dice.up|dot.rupture.ticking
+actions+=/vanish,if=buff.vendetta.up&combo_points<5&energy<60&!buff.blindside.up&gcd.remains=0
 # Stealth opener
 actions+=/mutilate,if=buff.stealth.up
 actions+=/run_action_list,name=aoe,if=active_enemies>=3
@@ -34,16 +35,20 @@ actions.aoe+=/fan_of_knives,if=combo_points<5
 actions.aoe+=/envenom,if=combo_points>=5
 
 # T16H Generators
-actions.generator+=/marked_for_death,if=talent.marked_for_death.enabled&combo_points=0
+actions.generator+=/marked_for_death,if=talent.marked_for_death.enabled&combo_points=0&buff.slice_and_dice.up&dot.rupture.ticking&!buff.stealth.up
+actions.generator+=/garrote,if=time<1&!dot.garrote.ticking&!dot.rupture.ticking
 actions.generator+=/dispatch,if=target.health.pct<35
 actions.generator+=/dispatch,if=dot.rupture.ticks_remain<2&energy>90
-actions.generator+=/mutilate,if=combo_points<5
+actions.generator+=/dispatch,if=buff.blindside.react
+actions.generator+=/mutilate,if=combo_points<=3|(talent.anticipation.enabled&combo_points<=4)|(buff.shadow_blades.up&combo_points<=4)
+actions.generator+=/preparation,if=!cooldown.vanish.ready&!buff.stealth.up
 
 # T16H Finishers
 actions.finisher+=/slice_and_dice,if=buff.slice_and_dice.remains<2&combo_points>=2
-actions.finisher+=/rupture,if=ticks_remain<2&target.time_to_die>=8&combo_points>=1
-actions.finisher+=/rupture,if=combo_points=5&ticks_remain<3&target.time_to_die>=8
+actions.finisher+=/rupture,if=!dot.garrote.ticking&!dot.rupture.ticking&target.time_to_die>=8&combo_points>=1
+actions.finisher+=/rupture,if=dot.rupture.remains<=2&(combo_points=5|(!talent.anticipation.enabled&combo_points>=4))&target.time_to_die>=8
 # Pool slightly before Envenom to avoid starving the next GCD unless Rupture needs refresh.
 actions.finisher+=/pool_resource,if=combo_points>=5&energy<60&dot.rupture.remains>4
-actions.finisher+=/envenom,if=combo_points>=5
+actions.finisher+=/envenom,if=combo_points>=5&dot.rupture.remains>4
 actions.finisher+=/envenom,if=combo_points>=2&buff.slice_and_dice.remains<3
+actions.finisher+=/envenom,if=combo_points>=4&dot.rupture.remains>=4&buff.envenom.remains<1&(energy>=50)&!buff.shadow_blades.up&!buff.blindside.up&!talent.anticipation.enabled&target.health.pct>35
