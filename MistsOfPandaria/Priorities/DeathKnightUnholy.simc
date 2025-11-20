@@ -17,6 +17,7 @@ actions+=/call_action_list,name=cooldowns,if=variable.use_cds
 actions+=/run_action_list,name=aoe,if=active_enemies>=4
 actions+=/run_action_list,name=cleave,if=active_enemies=3
 actions+=/run_action_list,name=single_target
+actions+=/wait,sec=1
 
 actions.variables+=/variable,name=use_cds,op=set,value=1
 actions.variables+=/variable,name=execute,op=set,value=target.health.pct<=35

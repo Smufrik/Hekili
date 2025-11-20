@@ -933,7 +933,14 @@ end )
 
 do
     local function itemSorter( a, b )
-        local action1, action2 = class.abilities[ a.action ].cooldown, class.abilities[ b.action ].cooldown
+        local abA = class.abilities[ a.action ]
+        local abB = class.abilities[ b.action ]
+
+        if not abA and not abB then return false end
+        if not abA then return false end
+        if not abB then return true end
+
+        local action1, action2 = abA.cooldown, abB.cooldown
         return action1 > action2
     end
 

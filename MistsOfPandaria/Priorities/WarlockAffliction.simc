@@ -32,12 +32,17 @@ actions+=/summon_terrorguard,if=talent.grimoire_of_supremacy.enabled&(target.tim
 actions+=/dark_soul_misery,if=(buff.bloodlust.up|trinket.proc.intellect.up|target.health.pct<=20)&soul_shards>settings.soul_shard_pool
 
 # Soulburn + Soul Swap for snapshotting during cooldowns (when not pooling)
-actions+=/soulburn,if=!buff.soul_burn.up&soul_shards>settings.soul_shard_pool&(buff.dark_soul_misery.up|trinket.proc.intellect.up)&dot.agony.ticking&dot.corruption.ticking&dot.unstable_affliction.ticking
+# Cast Soulburn to empower Soul Swap (copies DoTs without removing them)
+actions+=/soulburn,if=!buff.soul_burn.up&!buff.soul_swap.up&soul_shards>settings.soul_shard_pool&(buff.dark_soul_misery.up|trinket.proc.intellect.up)&dot.agony.ticking&dot.corruption.ticking&dot.unstable_affliction.ticking
+# Soul Swap with Soulburn active: copy DoTs from current target
 actions+=/soul_swap,if=buff.soul_burn.up&dot.agony.ticking&dot.corruption.ticking&dot.unstable_affliction.ticking
+# Soul Swap: Exhale to apply copied DoTs back to same target (snapshot refresh)
+actions+=/soul_swap_exhale,if=buff.soul_swap.up
 
 # Emergency Soul Swap if no DOTs are active (always cast regardless of pooling)
-actions+=/soulburn,if=!buff.soul_burn.up&soul_shards>=1&(!dot.agony.ticking|!dot.corruption.ticking|!dot.unstable_affliction.ticking)&target.time_to_die>10
+actions+=/soulburn,if=!buff.soul_burn.up&!buff.soul_swap.up&soul_shards>=1&(!dot.agony.ticking|!dot.corruption.ticking|!dot.unstable_affliction.ticking)&target.time_to_die>10
 actions+=/soul_swap,if=buff.soul_burn.up&(!dot.agony.ticking|!dot.corruption.ticking|!dot.unstable_affliction.ticking)
+actions+=/soul_swap_exhale,if=buff.soul_swap.up&(!dot.agony.ticking|!dot.corruption.ticking|!dot.unstable_affliction.ticking)
 
 # Initial DoT application
 actions+=/agony,if=!dot.agony.ticking

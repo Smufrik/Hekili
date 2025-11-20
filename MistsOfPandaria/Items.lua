@@ -145,6 +145,23 @@ if class and class.specs and class.specs[0] then
             cooldown = 55,
             
         },
+        
+        flashing_steel_talisman = {
+            id = 81265,
+            cast = 0,
+            cooldown = 60,
+            gcd = "off",
+            item = 81265,
+            handler = function() applyBuff("flashing_steel_talisman") end,
+        },
+        
+        synapse_springs = {
+            id = 126734,
+            cast = 0,
+            cooldown = 60,
+            gcd = "off",
+            handler = function() applyBuff("synapse_springs") end,
+        },
     })
 end
 
