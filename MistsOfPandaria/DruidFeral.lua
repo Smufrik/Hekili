@@ -668,7 +668,7 @@ spec:RegisterAuras( {
     },
     rip = {
         id = 1079,
-
+        debuff = true,
         duration = function () return 4 + ( combo_points.current * 4 ) end,
         tick_time = 2,
         mechanic = "bleed",
@@ -718,6 +718,7 @@ spec:RegisterAuras( {
     },
     thrash = {
         id = 106830,
+        debuff = true,
         duration = 15,
         tick_time = 3,
         mechanic = "bleed",
@@ -727,6 +728,7 @@ spec:RegisterAuras( {
 
     thrash_cat = {
         id = 106830,
+        debuff = true,
         duration = 15,
         tick_time = 3,
         mechanic = "bleed",
@@ -735,6 +737,7 @@ spec:RegisterAuras( {
     -- Bear-form Thrash (separate aura so we can gate bear exit reliably).
     thrash_bear = {
         id = 77758,
+        debuff = true,
         duration = 16,
         tick_time = 2,
         mechanic = "bleed",
@@ -1574,9 +1577,7 @@ spec:RegisterStateExpr( "shred_position_ok", function ()
 end )
 
 -- Missing state expressions for APL functionality
-spec:RegisterStateExpr( "combo_points_for_rip", function ()
-    return combo_points.current >= 5
-end )
+-- combo_points_for_rip defined later with execute-phase logic
 
 spec:RegisterStateExpr( "rake_stronger", function ()
     if not debuff.rake.up then return true end

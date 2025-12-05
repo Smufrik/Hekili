@@ -1471,13 +1471,7 @@ spec:RegisterAbilities( {
     },
 
     exorcism = {
-        id = function()
-            -- Use Mass Exorcism spell ID when glyph is active
-            if state.glyph.mass_exorcism.enabled then
-                return 122032
-            end
-            return 879
-        end,
+        id = 879,
         cast = 0,
 		cooldown = 15,
         gcd = "spell",
@@ -1491,15 +1485,11 @@ spec:RegisterAbilities( {
         startsCombat = true,
         texture = 135903,
 
-        copy = { 122032, 879 },
+        -- Treat Mass Exorcism (glyphed) as a copy so the engine recognizes both.
+        copy = 122032,
 
         usable = function()
-            -- Debug glyph detection
-            if Hekili.ActiveDebug then
-                Hekili:Debug("Exorcism usability check - Glyph enabled: %s, Current spell ID: %s",
-                    tostring(state.glyph.mass_exorcism.enabled),
-                    tostring(state.glyph.mass_exorcism.enabled and 122032 or 879))
-            end
+            -- Always usable from the engine perspective; range/targeting handled by the client.
             return true
         end,
 
