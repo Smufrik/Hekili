@@ -1488,6 +1488,12 @@ spec:RegisterAbilities( {
         -- Treat Mass Exorcism (glyphed) as a copy so the engine recognizes both.
         copy = 122032,
 
+        -- Exorcism's spell ID can present as an override depending on glyph/state.
+        -- Treat it as known if either the base or override ID is known.
+        known = function()
+            return state.IsSpellKnownOrOverridesKnown(879, true) or state.IsSpellKnownOrOverridesKnown(122032, true)
+        end,
+
         usable = function()
             -- Always usable from the engine perspective; range/targeting handled by the client.
             return true
@@ -1542,13 +1548,10 @@ spec:RegisterAbilities( {
         cast = 0,
         cooldown = 180,
         gcd = "off",
-    toggle = "cooldowns",
-
-        
+        toggle = "cooldowns",
 
         startsCombat = false,
         texture = 135919,
-    toggle = "cooldowns",
 
         handler = function()
             applyBuff("guardian_of_ancient_kings")
@@ -1561,7 +1564,7 @@ spec:RegisterAbilities( {
         cooldown = 180,
         gcd = "off",
 
-        
+        toggle = "cooldowns",
 
         startsCombat = false,
         texture = 135875,

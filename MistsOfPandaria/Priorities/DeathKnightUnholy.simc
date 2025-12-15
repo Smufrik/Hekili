@@ -1,4 +1,6 @@
-# Death Knight: Unholy (MoP 5.5.1)
+﻿# Death Knight: Unholy (MoP 5.5.1)
+# Updated for Festerblight and User Options
+# To use this priority: Open Hekili Options -> Priorities -> Import -> Select this file
 
 ## Precombat
 actions.precombat+=/flask,type=winters_bite
@@ -20,7 +22,7 @@ actions+=/run_action_list,name=single_target
 actions+=/wait,sec=1
 
 actions.variables+=/variable,name=use_cds,op=set,value=1
-actions.variables+=/variable,name=execute,op=set,value=target.health.pct<=35
+actions.variables+=/variable,name=execute,op=set,value=target.health.pct<=settings.unholy_execute_threshold
 actions.variables+=/variable,name=dots_up,op=set,value=dot.blood_plague.ticking&dot.frost_fever.ticking
 actions.variables+=/variable,name=need_dots,op=set,value=!dot.blood_plague.ticking|!dot.frost_fever.ticking
 actions.variables+=/variable,name=proc_window,op=set,value=buff.unholy_strength.up|buff.dark_transformation.up|buff.bloodlust.up|buff.heroism.up|buff.time_warp.up|buff.ancient_hysteria.up|buff.blood_fury.up|buff.berserking.up|buff.synapse_springs.up
@@ -36,6 +38,9 @@ actions.variables+=/variable,name=advanced_icd,op=set,value=1
 actions.variables+=/variable,name=cds_running_out,op=set,value=buff.synapse_springs.remains<=1.5|buff.blood_fury.remains<=1.5|buff.unholy_strength.remains<=1.5
 actions.variables+=/variable,name=snap_window,op=set,value=variable.advanced_icd&(variable.proc_window|(variable.gargoyle_soon&(target.time_to_die<=60|variable.execute)))
 
+# Festerblight Variable: Check if we are in a state where we should extend dots
+actions.variables+=/variable,name=festerblight,op=set,value=dot.blood_plague.remains>15&dot.frost_fever.remains>15
+
 actions.cooldowns+=/army_of_the_dead,if=time=0
 actions.cooldowns+=/blood_fury,if=variable.cooldown_window
 actions.cooldowns+=/berserking,if=variable.cooldown_window
@@ -43,6 +48,7 @@ actions.cooldowns+=/arcane_torrent,if=runic_power.deficit>=20
 actions.cooldowns+=/unholy_frenzy,if=variable.proc_window&variable.dots_up
 actions.cooldowns+=/summon_gargoyle,if=(variable.pool_for_gargoyle&(variable.cooldown_window|variable.early_gargoyle|variable.long_fight_or_execute|target.time_to_die<=35))&variable.dots_up
 actions.cooldowns+=/dark_transformation,if=pet.ghoul.active&buff.shadow_infusion.stack>=5&variable.holy_moly&fight_remains>=15&!(variable.execute&cooldown.summon_gargoyle.ready)
+actions.cooldowns+=/dark_transformation,if=settings.dark_transformation_auto&pet.ghoul.active&buff.shadow_infusion.stack>=5
 actions.cooldowns+=/death_coil,if=pet.ghoul.active&buff.shadow_infusion.stack>=4&buff.dark_transformation.down&cooldown.dark_transformation.remains<=gcd&(buff.sudden_doom.react|runic_power>=40)
 actions.cooldowns+=/use_item,slot=hands,if=variable.cooldown_window&cooldown.synapse_springs.ready
 actions.cooldowns+=/use_item,slot=trinket1,if=variable.cooldown_window|target.time_to_die<=25
@@ -55,14 +61,35 @@ actions.single_target+=/unholy_blight,if=talent.unholy_blight.enabled&variable.n
 actions.single_target+=/outbreak,if=variable.need_dots
 actions.single_target+=/plague_strike,if=!dot.blood_plague.ticking
 actions.single_target+=/icy_touch,if=!dot.frost_fever.ticking
-actions.single_target+=/unholy_blight,if=talent.unholy_blight.enabled&variable.snap_window&variable.dots_up
-actions.single_target+=/outbreak,if=variable.snap_window&variable.dots_up
+
+# Snapshotting / Festerblight Logic
+# Only suggest Outbreak for snapshotting if NOT glyphed (CD exists) or if we really want to overwrite weak dots
+actions.single_target+=/unholy_blight,if=talent.unholy_blight.enabled&variable.snap_window&variable.dots_up&!variable.festerblight
+actions.single_target+=/outbreak,if=variable.snap_window&variable.dots_up&!glyph.outbreak.enabled&!variable.festerblight
+
 actions.single_target+=/soul_reaper,if=variable.execute&(runes.unholy.count>=1|runes.death.count>=1)
-actions.single_target+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.stack>=10
+actions.single_target+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.stack>=settings.unholy_blood_tap_threshold
 actions.single_target+=/death_and_decay,if=runes.unholy.count>=1&(active_enemies>=2|variable.pool_for_gargoyle)
-actions.single_target+=/scourge_strike,if=runes.unholy.count>=1
+actions.single_target+=/scourge_strike,if=runes.unholy.count>=1&!variable.festerblight
+
+# Festering Strike to extend dots (Festerblight)
+# If we have good procs, start extending
+actions.single_target+=/festering_strike,if=variable.proc_window&variable.dots_up&(runes.blood.count>=1|runes.death.count>=1)&(runes.frost.count>=1|runes.death.count>=1)
+# If we are already in festerblight mode (long dots), keep extending
+actions.single_target+=/festering_strike,if=variable.festerblight&(runes.blood.count>=1|runes.death.count>=1)&(runes.frost.count>=1|runes.death.count>=1)
+# Standard Festering Strike usage
 actions.single_target+=/festering_strike,if=runes.blood.count>=1&runes.frost.count>=1
-actions.single_target+=/death_coil,if=variable.runic_overcap|buff.sudden_doom.react|(buff.shadow_infusion.stack>=4&runic_power>=40)|(variable.holy_moly&runic_power>=70)
+
+# Death Coil Priorities
+# 1. Prevent capping
+actions.single_target+=/death_coil,if=variable.runic_overcap
+# 2. Sudden Doom (if prioritized)
+actions.single_target+=/death_coil,if=settings.unholy_sudden_doom_priority&buff.sudden_doom.react
+# 3. Build Shadow Infusion (High Priority) - This fixes the "barely recommends death coil" issue
+actions.single_target+=/death_coil,if=settings.unholy_shadow_infusion_priority&buff.dark_transformation.down&buff.shadow_infusion.stack<5&runic_power>=40
+# 4. Spend RP (Standard)
+actions.single_target+=/death_coil,if=variable.holy_moly&runic_power>=settings.unholy_runic_power_threshold
+
 actions.single_target+=/horn_of_winter,if=buff.horn_of_winter.down
 actions.single_target+=/empower_rune_weapon,if=runic_power.deficit>=60&(runes.unholy.count+runes.death.count=0)
 

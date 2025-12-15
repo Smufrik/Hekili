@@ -90,14 +90,66 @@ local function RegisterWindwalkerSpec()
     -- Auras for Windwalker Monk
     spec:RegisterAuras({
         tigereye_brew = {
-            id = 1247279,
+            -- Tigereye Brew (stacking buff).  In MoP this is typically 125195, but allow fallbacks.
+            id = 125195,
             duration = 120,
-            max_stack = 20
+            max_stack = 20,
+            generate = function( t )
+                local ids = { 125195, 116740, 124727 }
+                for _, spellID in ipairs(ids) do
+                    local name, icon, count, debuffType, duration, expirationTime, caster = FindUnitBuffByID( "player", spellID )
+                    if name then
+                        t.name = name
+                        t.count = (count and count > 0) and count or 1
+                        t.expires = expirationTime or 0
+                        t.applied = (expirationTime and duration) and (expirationTime - duration) or 0
+                        t.caster = caster or "player"
+                        t.up = true
+                        t.down = false
+                        t.remains = (expirationTime or 0) - GetTime()
+                        return
+                    end
+                end
+
+                t.count = 0
+                t.expires = 0
+                t.applied = 0
+                t.caster = "nobody"
+                t.up = false
+                t.down = true
+                t.remains = 0
+            end
         },
         tigereye_brew_use = {
-            id = 1247275,
+            -- Tigereye Brew (consumed/active damage buff).  Often 116740, allow fallbacks.
+            id = 116740,
             duration = 15,
-            max_stack = 1
+            max_stack = 1,
+            generate = function( t )
+                local ids = { 116740, 125195, 124727 }
+                for _, spellID in ipairs(ids) do
+                    local name, icon, count, debuffType, duration, expirationTime, caster = FindUnitBuffByID( "player", spellID )
+                    if name then
+                        t.name = name
+                        t.count = 1
+                        t.expires = expirationTime or 0
+                        t.applied = (expirationTime and duration) and (expirationTime - duration) or 0
+                        t.caster = caster or "player"
+                        t.up = true
+                        t.down = false
+                        t.remains = (expirationTime or 0) - GetTime()
+                        return
+                    end
+                end
+
+                t.count = 0
+                t.expires = 0
+                t.applied = 0
+                t.caster = "nobody"
+                t.up = false
+                t.down = true
+                t.remains = 0
+            end
         },
         touch_of_karma = {
             id = 122470,
@@ -229,18 +281,22 @@ local function RegisterWindwalkerSpec()
             end
         },
         tigereye_brew = {
-            id = 1247275,
+            id = 116740,
             cast = 0,
             cooldown = 0,
             gcd = "off",
             startsCombat = false,
             toggle = "cooldowns",
 
+            known = function()
+                return state.IsSpellKnownOrOverridesKnown(116740, true) or state.IsSpellKnownOrOverridesKnown(124727, true)
+            end,
+
             handler = function()
                 -- Consume current Tigereye Brew stacks (simplified MoP model: each stack grants damage buff percentage; we just track duration)
-                if buff.tigereye_brew.up and buff.tigereye_brew.stack > 0 then
+                local stacks = buff.tigereye_brew.count or buff.tigereye_brew.stack or 0
+                if buff.tigereye_brew.up and stacks > 0 then
                     -- Apply a use buff; we can store the consumed stacks in v1 for scaling if needed later.
-                    local stacks = buff.tigereye_brew.stack
                     removeBuff("tigereye_brew")
                     applyBuff("tigereye_brew_use", 15)
                     buff.tigereye_brew_use.v1 = stacks
@@ -467,6 +523,8 @@ local function RegisterWindwalkerSpec()
             gcd = "off",
             startsCombat = true,
 
+            toggle = "cooldowns",
+
             talent = "invoke_xuen",
 
             handler = function() end
@@ -550,12 +608,15 @@ local function RegisterWindwalkerSpec()
             while chiSpentForBrew >= 4 do
                 chiSpentForBrew = chiSpentForBrew - 4
                 if buff.tigereye_brew.up then
-                    buff.tigereye_brew.stack = math.min( 20, ( buff.tigereye_brew.stack or 0 ) + 1 )
+                    local newCount = math.min( 20, ( buff.tigereye_brew.count or buff.tigereye_brew.stack or 0 ) + 1 )
+                    buff.tigereye_brew.count = newCount
+                    buff.tigereye_brew.stack = newCount
                 else
                     applyBuff( "tigereye_brew" )
+                    buff.tigereye_brew.count = 1
                     buff.tigereye_brew.stack = 1
                 end
-                if buff.tigereye_brew.stack >= 20 then
+                if ( buff.tigereye_brew.count or buff.tigereye_brew.stack or 0 ) >= 20 then
                     chiSpentForBrew = 0
                     break
                 end

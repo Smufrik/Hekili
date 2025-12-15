@@ -5,6 +5,8 @@ actions.precombat+=/arcane_brilliance,if=!buff.arcane_brilliance.up
 actions.precombat+=/frost_armor,if=!buff.frost_armor.up
 actions.precombat+=/summon_water_elemental,if=!pet.water_elemental.active
 actions.precombat+=/rune_of_power,if=talent.rune_of_power.enabled
+actions.precombat+=/evocation,if=talent.invocation.enabled&!buff.invocation.up
+actions.precombat+=/incanter_s_ward,if=talent.incanter_s_ward.enabled&buff.incanter_s_ward.down
 actions.precombat+=/use_item,slot=hands
 actions.precombat+=/potion
 actions.precombat+=/frostbolt,if=time<2
@@ -14,10 +16,12 @@ actions.precombat+=/frostbolt,if=time<2
 actions+=/frozen_orb
 
 # Icy Veins usage
-actions+=/icy_veins,if=buff.rune_of_power.up|target.time_to_die<20
+actions+=/icy_veins,if=(talent.rune_of_power.enabled&buff.rune_of_power.up)|(talent.invocation.enabled&buff.invocation.up)|(talent.incanter_s_ward.enabled&buff.incanter_s_ward.up)|target.time_to_die<20
 
-# Rune of Power maintenance
+# Level 90 talent maintenance
 actions+=/rune_of_power,if=talent.rune_of_power.enabled&buff.rune_of_power.remains<=cast_time
+actions+=/evocation,if=talent.invocation.enabled&buff.invocation.remains<=gcd.max*2
+actions+=/incanter_s_ward,if=talent.incanter_s_ward.enabled&buff.incanter_s_ward.down
 
 # Use gloves and trinkets with Icy Veins
 actions+=/use_item,slot=hands,if=buff.icy_veins.up
