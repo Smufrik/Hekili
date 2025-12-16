@@ -16,12 +16,11 @@ actions.precombat+=/healing_touch,if=!buff.dream_of_cenarius.up&talent.dream_of_
 actions.precombat+=/cat_form,if=!buff.cat_form.up&in_combat=0
 actions.precombat+=/savage_roar,if=!buff.savage_roar.up
 actions.precombat+=/prowl,if=(variable.solo_prowl|in_combat=0)&!buff.prowl.up
-actions.precombat+=/use_item,slot=hands
 actions.precombat+=/use_item,slot=trinket1
 actions.precombat+=/use_item,slot=trinket2
 actions.precombat+=/potion,name=virmens_bite_potion
 
-actions.cooldowns+=/use_item,slot=hands
+actions.cooldowns+=/use_item,slot=hands,if=variable.use_trees&talent.force_of_nature.enabled&charges.force_of_nature=3
 actions.cooldowns+=/use_item,slot=trinket1
 actions.cooldowns+=/use_item,slot=trinket2
 actions.cooldowns+=/blood_fury,if=buff.tigers_fury.up
@@ -29,8 +28,8 @@ actions.cooldowns+=/berserking,if=buff.tigers_fury.up
 actions.cooldowns+=/potion,name=virmens_bite_potion,if=buff.berserk.up|target.time_to_die<=26
 actions.cooldowns+=/incarnation,if=talent.incarnation.enabled&buff.tigers_fury.up
 actions.cooldowns+=/berserk,if=buff.tigers_fury.up|berserk_clip_for_hotw
-# Use Force of Nature on cooldown with Tiger's Fury or Berserk active
-actions.cooldowns+=/force_of_nature,if=variable.use_trees&talent.force_of_nature.enabled&(buff.tigers_fury.up|buff.berserk.up)
+# Snapshot treants under Synapse Springs (gloves). Dump all charges while the buff is up.
+actions.cooldowns+=/force_of_nature,if=variable.use_trees&talent.force_of_nature.enabled&buff.synapse_springs.up
 actions.cooldowns+=/heart_of_the_wild,if=variable.use_hotw&talent.heart_of_the_wild.enabled&(buff.berserk.down|berserk_clip_for_hotw)
 
 actions.maint+=/faerie_fire,if=variable.maintain_ff&debuff.faerie_fire.down&buff.cat_form.up

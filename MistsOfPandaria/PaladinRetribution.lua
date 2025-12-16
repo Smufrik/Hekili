@@ -1485,14 +1485,11 @@ spec:RegisterAbilities( {
         startsCombat = true,
         texture = 135903,
 
-        -- Treat Mass Exorcism (glyphed) as a copy so the engine recognizes both.
-        copy = 122032,
-
-        -- Exorcism's spell ID can present as an override depending on glyph/state.
-        -- Treat it as known if either the base or override ID is known.
-        known = function()
-            return state.IsSpellKnownOrOverridesKnown(879, true) or state.IsSpellKnownOrOverridesKnown(122032, true)
-        end,
+            -- Exorcism should be considered known if the player knows the spell.
+            -- NOTE: The second parameter to IsSpellKnownOrOverridesKnown is 'isPetSpell'; passing true would incorrectly hide Exorcism.
+            known = function()
+                return state.IsSpellKnownOrOverridesKnown(879) or state.IsSpellKnown(879) or state.buff.art_of_war.up
+            end,
 
         usable = function()
             -- Always usable from the engine perspective; range/targeting handled by the client.

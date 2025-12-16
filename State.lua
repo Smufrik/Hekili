@@ -8329,8 +8329,12 @@ function state:IsKnown(sID)
 		return false, "equipment [ " .. ability.equipped .. " ] missing"
 	end
 
-	if ability.item and not ability.bagItem and not state.equipped[ability.item] then
-		return false, "item [ " .. ability.item .. " ] missing"
+	if ability.item and not ability.bagItem then
+		local item = ability.item
+		if type(item) == "function" then item = item() end
+		if item and item ~= 0 and not state.equipped[item] then
+			return false, "item [ " .. item .. " ] missing"
+		end
 	end
 
 	if ability.noOverride and IsSpellKnownOrOverridesKnown(ability.noOverride, true) then
@@ -8400,8 +8404,12 @@ do
 			if ability.id < -100 or ability.id > 0 or toggleSpells[spell] then
 				if state.filter ~= "none" and state.filter ~= toggle and not ability[state.filter] then
 					return true, "display"
-				elseif ability.item and not ability.bagItem and not state.equipped[ability.item] then
-					return false
+				elseif ability.item and not ability.bagItem then
+					local item = ability.item
+					if type(item) == "function" then item = item() end
+					if item and item ~= 0 and not state.equipped[item] then
+						return false
+					end
 				end
 			end
 		end
@@ -8507,8 +8515,12 @@ do
 		if state.filter ~= "none" and state.filter ~= toggle and not ability[state.filter] then
 			return true, "display"
 		end
-		if ability.item and not ability.bagItem and not state.equipped[ability.item] then
-			return false, "not equipped"
+		if ability.item and not ability.bagItem then
+			local item = ability.item
+			if type(item) == "function" then item = item() end
+			if item and item ~= 0 and not state.equipped[item] then
+				return false, "not equipped"
+			end
 		end
 		if toggleSpells[spell] and toggle and toggle ~= "none" then
 			if
@@ -8571,8 +8583,12 @@ do
 		end
 
 		if ability.item then
-			if not ability.bagItem and not self.equipped[ability.item] then
-				return false, "item not equipped"
+			if not ability.bagItem then
+				local item = ability.item
+				if type(item) == "function" then item = item() end
+				if item and item ~= 0 and not self.equipped[item] then
+					return false, "item not equipped"
+				end
 			end
 		end
 
