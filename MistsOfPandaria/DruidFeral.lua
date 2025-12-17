@@ -1407,12 +1407,24 @@ spec:RegisterStateExpr( "rake_refresh_time", function()
     if buff.dream_of_cenarius_damage.up and (rake_damage_increase_pct > 0.001) then
         return 0
     end
+
+    -- Rune of Re-Origination: huge mastery spike. If it would improve our snapshot, take it immediately.
+    -- Only applies when Rune is actually equipped.
+    if has_roro_equipped and buff.rune_of_reorigination and buff.rune_of_reorigination.up and (rake_damage_increase_pct > 0.001) then
+        return 0
+    end
     
-    if not buff.tigers_fury.up and not buff.synapse_springs.up then
+    if not buff.tigers_fury.up and not buff.synapse_springs.up and not (has_roro_equipped and buff.rune_of_reorigination and buff.rune_of_reorigination.up) then
         return math.max(0, standardRefreshTime)
     end
     
-    local tempBuffRemains = buff.tigers_fury.up and buff.tigers_fury.remains or buff.synapse_springs.remains
+    local tempBuffRemains = math.huge
+    if buff.tigers_fury.up then tempBuffRemains = math.min( tempBuffRemains, buff.tigers_fury.remains ) end
+    if buff.synapse_springs.up then tempBuffRemains = math.min( tempBuffRemains, buff.synapse_springs.remains ) end
+    if has_roro_equipped and buff.rune_of_reorigination and buff.rune_of_reorigination.up then
+        tempBuffRemains = math.min( tempBuffRemains, buff.rune_of_reorigination.remains )
+    end
+    if tempBuffRemains == math.huge then tempBuffRemains = 0 end
     
     if tempBuffRemains > standardRefreshTime + 0.5 then
         return math.max(0, standardRefreshTime)
@@ -1448,8 +1460,14 @@ spec:RegisterStateExpr( "rip_refresh_time", function()
     if buff.dream_of_cenarius_damage.up and (rip_damage_increase_pct > 0.001) then
         return 0
     end
+
+    -- Rune of Re-Origination: huge mastery spike. If it would improve our snapshot, take it immediately.
+    -- Only applies when Rune is actually equipped.
+    if has_roro_equipped and buff.rune_of_reorigination and buff.rune_of_reorigination.up and (rip_damage_increase_pct > 0.001) then
+        return 0
+    end
     
-    if not buff.tigers_fury.up and not buff.synapse_springs.up then
+    if not buff.tigers_fury.up and not buff.synapse_springs.up and not (has_roro_equipped and buff.rune_of_reorigination and buff.rune_of_reorigination.up) then
         return math.max(0, standardRefreshTime)
     end
     
@@ -1457,7 +1475,13 @@ spec:RegisterStateExpr( "rip_refresh_time", function()
         return math.max(0, standardRefreshTime)
     end
     
-    local tempBuffRemains = buff.tigers_fury.up and buff.tigers_fury.remains or buff.synapse_springs.remains
+    local tempBuffRemains = math.huge
+    if buff.tigers_fury.up then tempBuffRemains = math.min( tempBuffRemains, buff.tigers_fury.remains ) end
+    if buff.synapse_springs.up then tempBuffRemains = math.min( tempBuffRemains, buff.synapse_springs.remains ) end
+    if has_roro_equipped and buff.rune_of_reorigination and buff.rune_of_reorigination.up then
+        tempBuffRemains = math.min( tempBuffRemains, buff.rune_of_reorigination.remains )
+    end
+    if tempBuffRemains == math.huge then tempBuffRemains = 0 end
     
     if tempBuffRemains > standardRefreshTime + 0.5 then
         return math.max(0, standardRefreshTime)
@@ -1593,6 +1617,7 @@ end )
 
 spec:RegisterStateExpr( "delay_rip_for_tf", function ()
     -- Don't delay if TF is on cooldown or already up
+    if has_roro_equipped and buff.rune_of_reorigination and buff.rune_of_reorigination.up then return false end
     if cooldown.tigers_fury.remains > 3 or buff.tigers_fury.up then return false end
     -- Delay if TF is coming up soon
     return cooldown.tigers_fury.remains < 1.5
@@ -1600,6 +1625,7 @@ end )
 
 spec:RegisterStateExpr( "delay_rake_for_tf", function ()
     -- Don't delay if TF is on cooldown or already up
+    if has_roro_equipped and buff.rune_of_reorigination and buff.rune_of_reorigination.up then return false end
     if cooldown.tigers_fury.remains > 3 or buff.tigers_fury.up then return false end
     -- Delay if TF is coming up soon
     return cooldown.tigers_fury.remains < 1.5
@@ -2545,7 +2571,7 @@ spec:RegisterAbilities( {
         toggle = "cooldowns",
         startsCombat = false,
         known = function()
-            return IsSpellKnown( 20572, false )
+            return isSpellKnown( 20572 )
         end,
         handler = function ()
             applyBuff( "blood_fury" )
@@ -2562,7 +2588,7 @@ spec:RegisterAbilities( {
         toggle = "cooldowns",
         startsCombat = false,
         known = function()
-            return IsSpellKnown( 26297, false )
+            return isSpellKnown( 26297 )
         end,
         handler = function ()
             applyBuff( "berserking" )
@@ -3034,6 +3060,11 @@ spec:RegisterStateFunction( "get_bleed_snapshot_value", function( kind, unit )
     return 0
 end )
 
+spec:RegisterStateExpr( "has_roro_equipped", function()
+    -- Rune of Re-Origination (ToT). Gate Rune-specific snapshot logic behind actual equip state.
+    return equipped[ 94535 ] and true or false
+end )
+
 spec:RegisterStateExpr( "rake_stronger", function()
     local predicted = predict_bleed_value and predict_bleed_value( "rake" ) or 0
     local stored = get_bleed_snapshot_value and get_bleed_snapshot_value( "rake" ) or 0
@@ -3082,21 +3113,21 @@ end )
 -- These are simple, conservative heuristics to support APL flags used by WoWSims imports.
 -- If the new snapshot isn't stronger, and the DoT has more than ~2 ticks left, we avoid clipping.
 spec:RegisterStateExpr( "clip_rake_with_snapshot", function()
-    -- If the new Rake would be stronger, don't block.
-    if rake_stronger then return false end
-    local rem = (debuff.rake and debuff.rake.remains) or 0
-    local tick = (debuff.rake and debuff.rake.tick_time) or 3
-    -- Block clipping when plenty of duration remains and we're not gaining a stronger snapshot.
-    return rem > (2 * tick)
+    -- Allow clipping when we have a stronger snapshot during a temporary buff window.
+    if not rake_stronger then return false end
+    return (has_roro_equipped and buff.rune_of_reorigination and buff.rune_of_reorigination.up)
+        or buff.tigers_fury.up
+        or buff.synapse_springs.up
+        or buff.dream_of_cenarius_damage.up
 end )
 
 spec:RegisterStateExpr( "clip_rip_with_snapshot", function()
-    -- If the new Rip would be stronger, don't block.
-    if rip_stronger then return false end
-    local rem = (debuff.rip and debuff.rip.remains) or 0
-    local tick = (debuff.rip and debuff.rip.tick_time) or 2
-    -- Block clipping when plenty of duration remains and we're not gaining a stronger snapshot.
-    return rem > (2 * tick)
+    -- Allow clipping when we have a stronger snapshot during a temporary buff window.
+    if not rip_stronger then return false end
+    return (has_roro_equipped and buff.rune_of_reorigination and buff.rune_of_reorigination.up)
+        or buff.tigers_fury.up
+        or buff.synapse_springs.up
+        or buff.dream_of_cenarius_damage.up
 end )
 
 -- Provide SimC-style action.<spell>.tick_damage hooks without replacing the core state.action table.
@@ -3349,4 +3380,4 @@ spec:RegisterStateExpr( "should_bite", function()
     return rip_ok and roar_ok
 end )
 
-spec:RegisterPack( "Feral", 20251216, [[Hekili:TZXAVTnYXFlgfqvcjqvpSDUdWkax7DhAdqtkQs)kPOPwzXAksbsk76cb(BVZ(ICFm7ssfLRF5qqSTwUZSZoVNzxXG5bFny92OksWNxmBXDZxm)(PlwC7pS8hdwx92rsW6JrXph9e8hzrhGF(RKIOu6OVLMhTLcDz(PIy4jbRF8usA1Fll4rCu(HG1rNQ2NxeSE9Ht7ksEoy9(KTBjCiiLXbR)6(KY6n0)hvVrS01BY3bFoUkjpREtAszf84D5f1B(RKNtstMcKtr(UKuGi4ZQ8DR(tVevKe9yk59u6E1HOKSk4)H729(xIspPns9NCbw(XQWhjrfHVsIEHiGuFq)a)Aru1ElOvg1p4LzKNTGUDq)aFQKeMvQaiFa)aDGKsiwlPYOUbNI(QccrUKnF2pi7ZREvbc6hDdW2Ks6hcl3xq2g(6EswyzEAUaEhp1n6OpneuEEnvGH2bQ)udytpwqIZp8yufGGdrfphMVlSApWqss3((KDRU5Xt72n18jtpDS(t)H6n)JI846n)Cbj6axv(VqYaQ4eOf)ib0JbfCo2R3m(RZV)VobFH3tIstYEkSk)u8(2vDlfV0LnwGvyzhvfLsYQqEg8ByZVfFfIJQcb65qlYLJqXjyQWN5Qz4Gxg9cyTgwKhv0IbLbz8dma5caaKXsPZ0w5W5Zkl8KrCSYEIt8rvJsQihEFzAE1QQIKSNjvZhWCx4GoZPJX1CEjP4ajRm8ra4q(du1yIZZt3M)ktLtFj2hLTTKUzB2Rn2jsXgWXJjuXwwu1PcIuOnkEFuXtKsZNVAzFwxB2qNZDb(CFmnpFB4UtfVr3gm5rvYtKIs2yAsfnWGzqkEguHheyDW0BWLa9aEoFUIYNQa0Fa4S5HBtipSAX944pjloQayKcCjebkJ2W(7njlifhBZZNfppmon5i18s4ZdCvabzpwcFQEdOqeLrd0DkBlbc1T(n6JaxfqSoGfcpy8tP5VqkNmf8TC6WriczAk4jHRJuV519qarap7HFqPcEu1thNItZg6uxMck3INtPHLCc1jxc8Nvuz6jvBnPSf5sAn7MfDSM4NIDhC4jQgOSW)09DePiHeUlXypRKEWOTe2sOmv2YmY0fPn2lF(uAA4JrL756wm1Y4OYkGZGaElcOX4b4583YWYxt2vLrklvurD6CFuZMOnO)ijNFQfkNwqOKB5QzcNR2Za8(J4mFeLyFHesYihsiLGjM1wsiCmnaAig1hiiJhwTCIfFWk2xN8GXAmH2uMoFgH7mbD7nESiwdbYMnV4nDgcnQaeIkhe0GE9PIcGEE4UjNpp2nt8Y4gtM4rttWGkso24UXIPeUn6aSXCr1RURps3L2cxyrdli7GT5(qQV2huZmqsyrptUyk7HlMYGvTtsRAFbyygcW1lcuFv)4QBr023MdrDAqRWzKXGns2BNENTMoOVCKCfPjvNk0IwyHNGAxK55Pzn0wvZOXqyOtPBvgI6vnQG9Nq0GKNaD1W8NN06zrShPZc2KrBFZALvMHsCBb1q3p3agBVOIO3xclvC1Q5w4snzvBen2erAIbgjwLettgzYOX26XlpFgrfcg1sDSrAE3KrGyO4P3KkVFC1Y7SO6drNsXP4cQiTf0zcjzkmhradEqhglcuh2f(u82Pu8zzpGSQzpbLf5MV3jgsJIHc)Rixi4xrHLnBH6d9MERVcswlX9cuX9cFI7B1YMGvqpSpz)2YSsPC)rcYeRdatlPPmOeeGvsu1ok5a7tiqbWfj)Nyiysixv7JZVteBqn9hFrl6zDAOEJ)4SUWSikKkWSSVGX5(gH)q4uej2HDyUr3SLKg9gfEgEQ2zUGIOlCKdFqIDe))EqpD2O4xpeXWCVV0ByBBSJPypWikdDjndFGLa3ajaJ1BhPipoj)eVMn6AkTtPLWroaAXKS436IS9IMUaM1niM8tZuHvjwF458C0qShaF(ikvJFKSpjBBipBFXAOupzi1rMSsM)9jQN5wArTUZMblRG0FHzVvzO9rGK4ajLpMOcLdjpTV6nw9gAdhLCq9Z0f5yuCsveDllT5BE8XtPVav68FPK1Kr30MjTJ2Rz4(F18r3a1n9uroaUHOqeisO(5lLpehAwHc7TCxeyElzxcSRFy18z0igshsnAV(D4Z16zozuto)3vagIcW3NYTl5DNlpf85ZpocfxeSX5Aa4L)GfwRf3r5ed6o(nqvuiDHn7vCFWxlJma0ZQe05U7DnlhKCWJ5zNkhusa8vXilaZqblfzAPAlW99BpU0CyPJ0g8waRypRfxYr4fOGjt4yjaGiqmYiD19JSmEXWgK)spq2TJqZWX0FYhMUWxcmcXGSEpTUhdmkiXXKdrPVZ8ilKICXbwmJ13W)fTZG)tMiH25psw9MgFgItvOEt(rQQ0exltbd8Mmru954cK4O00q(JcPNlNYzT1swFLQo)hlR38RGcD9gWjEk8RKmjbvVjkdiYTNOTlSEtrEfZ7NR187A(X9z710dZHbgT(EkbFL7C1WiIVT6t6ZkiRXCq9vGlHARiCG7kWsc1f2WWsPMj4H8S8y2P(0JteEw)GZ(WG7jGwhd8mvsTIKTnp7DTvzJ8OEuZhcuk2AipvytH8KopOmliOEMXg2UGsLSVraWUqbNW2aTBl9wTgv(9p9LFXskzF)cM5hau9O5DdJLQGfmdAV83)YN)YF5N(QBF5CTsma6ZDhyE)xjhe4x)Lp)ZF5Z9GFpVty6IL7bmVwUoGZiq987qGaNvW1M790v4CbRHe3lHhlU7nZNDFW6xHckONexW6)2HJ5fv0ucaQr)g1mT(tbRlpsId(88zldwZgKD9EQGF(z29eseHk4phSoUamVGDBW6X1BAcbxV5856nwHHR38r(koPEZi(PrQfqUDuLGYY7YtWAfVqbvWgZjPCJalg(1OyhZlaJSM1XIRGl6IV05IJLsid3adsT1xCEKz7VQ38WkgXmbLEydcBpZSjBPtymk9DRp5KwtYe0HzJYggH024mfkbgKsk31fPy0vjobHN6pNQw6IQu0vAaLsc37Ke4yqVXpQsRV)02hCsB053MhdOLcOFHBPX3cf7I4(bNehA776yJRhuMI)FSp4FWyD(mFQCAUDO8okdAa6bsqC4kb4OCpCEmCOuHAVHuOHo7pe(C1FGwnBkdR2RiHIbw)I0FeVNrAJH33iTPO27ijV4g2oVRUiXMQPUpWvNlXHSNsA6TmKWe(UdrHlXEGjW6iEKzph7qNST)MmsYDOkGFO3usUn58zCM5nAHn0mBxOkyTBcdFs32A(R2Zdvxv)UA6)FutDNbbwtezi1rJe7Y)y70zlS7udSBuQNCMw1DotADInGAkSMTL8Ni533TVBtr9BLvhyT9cDX3x06j652sV8dPHMv7qegeihDTup19fUOLoB6Mc2ENFNkOeTzgrQnHrQpBE48w5mWg0BUX44ESnUTYAr9W)L7)XUsFEP3CAx2hhNnfPO31DE89L31U3LAh(t6gFJREvpeyEwxXCeccTl(bQRiiS2s1asNs9Nmooj2fwBUpj9in7bIC5vnXFsYxDvkBEVmKXnxKHkttevnDHx10(gFFcQUi4sI2Hi)UK6Qf0mwcsZM19(48IKQeJqwro2THSvJhPEDlvKoRbInUXTZwKVU7RxjwLqw0AxHp6bZCSb)u5RWdJgrz2t8YHg3URXVHQEIH)G0rhDTh3Lm6BN56jHZw(U2D8ThXt8CVi9N(YDdtZJTfCP45OpodOVmFd7LhUY7fh9cAiT2Px7gSgCCRxJ7lQbh0d41Dlo6iO11BpOK8O8SE5oQJv6BlI)6CaYssvl4sNe0)k9e8RzSXcPnbg2DI2nJ5TQv(rvr4Fxlbft(Gd5SJTytQLYHzZ2gIsVZ18gmliDEXbiwjnsoLoaJq8x4jmh8BrxSrSw6fpP5uM9RR(Dm6tpjuw6gEtvZ1znZOn7ZBUNRldIaV9Q8cl9YoZY(YlKje7U9MyUnw2tShLJ3LZEbCPWPd)SKUm)nZv93OuLoMlNbInDjeMNKUr4mteQQuH4DPBmo)oxEyViBA(56Hzq3lWvJxWKLBj7GY7qBRs37nv531uSAijVYYytX61wIR7E0e9kpbrhOFyN7F1eZIrrun6hwvo6DtuR(ie)0DJ)MV(NQyUDqexW9dN0VtMMOKngIh0UXOJ21QUaUMcMt1UxW2VI6QRHYOvihkXLzOlUfgxMHULBrDBWHBH3LF2HBvBHrndTQgpNY9Flxu04dLLZBX643qGweIDA)YNPLeQ26DR60ePeAmftFf8TkYDJQfrIplDjihMvdMoYDN6LNZQubJ8suDNhvVWI1XXwjZrR)ThFijhkZ)RI(2Fr8oAW)sjf(iVNoArR5dX0NKZvVJf6fMm4x6hyuk272dgJPR0(XmdTrVzH2nVOn4DWdXodjM6fBC59(H0OwO8czHLDUbnQC2DIwHXFXGOygj9f7kNl5lgdGatZRu(mILLbmlmGzbMD0qm1PojHS8ruJBmZuowRR)HNPD53PeHxVPMNrcRDFqbYVtr(jtAEi1mJ6Y1RgnfaRYQ0AEP53Jb9EFI3ODjo8D5X6rJnn07DBa5SzwSEzPWw0AKLRsr4bkCZJOsR756i2xtaXkIPp4YoIggPJL7wl2jLB1Ct5SVVd1B(W0fsdC7l)gg59b1GLTDCtlIzvGs)v8ySXEx9GAM1(UTsXD8o8xlk8nn(7UhMxSLs3i81ZtehF(QC16nF(Q6OT06D8xjhNM3aq(DK7hje57diFAvsxLXMN8N(94Y(n(J4mJU3NdyV5o5(nbuR9UR9Mcq(tTcblYZve5nyJDwMiLk1ePqxtZi)KFlEtdDDSC4oOTEPcfGv1MJ1J9(vsz5C(YeslKHEGkNcfT2dAHzU3MF6l)cMFMbwz03CVzU6TCZcH6DiXv)8hw1VIV5a(Cu7)4fevpFDyzgTt5IoWdZTi)Fb)V]] )
+spec:RegisterPack( "Feral", 20251217, [[Hekili:TZXAVTnYXFlgfqvcjqvpSD6byfG07YH7cqtkQs)kFyQvwSMIuLpSRlm4V9o7UCj3hZUKur5A)WHGyBTCNh7mZoV2v0BP3x92UlSK495vlwDZYvlF38vlV(hw(N92w(YjI32tHrpg(a8hPHhHF(ZK8We6OVKKfUJcDrwvEe8eVT3xfNu(RPE3JJY35TnSQ8qwU32ThR2Nh)O32dX72r4qqkI82(1dXf1b0)hwh0q66GS9WNJkJZsRdsIlkHhVplVo4xipgNephyN8S9XjatWNvXB28NEkmpo8(eYBP89MJHXPLW)93V)TpfMuPms9NSbw2Ps)7jH5(ptcFI0aP6GUb(58WYdgqlnQBWlsjpAaD3GUbUQG4NwibiFa3aDKKqigKuAu7GtrFzoHiiz7NDdYHSYNLGG(r7aSlUG(b)Id5KD(pFGK6xKLK1aVLNAhD0N6dgppN0GHUbQ)ulyZpLtIYoEFyjGGJH5p6NT3V8aiqIt29249BU6(Q97NR)K5vNQ)0FOo4VLNfvh8t5KWJCt5FKKcCrfyfFpbSJbdCo2RdM(1L3(lZWj8bsysC6d(Lzvrh6O6okEPKnQbRazNugMqslrEg8ByXVdNcrHL(a)CSd5IrO4e2QWN5Mf4Gxe(eSB1pplmVddsdYKhyaYvaaitfAN5D6HxFvIWZMWXk7jwXh1mkUKC8TfjzLBkZJtFKuUCeZDLf(mJog3Y5P48JK0c)7bG95pq2Ijkllzx2ZmtovsCimDxbDX2UwB3NiuBGepIqvBPHLv5eHsBs0HW8hif6pFZ6HqxtXqVZDf(CVpjlBN)(Q8xOldM(Om(bsEbBmfTIcyWmi5pcMWwa71xNEiSamvYZ8j)RQ4tNG1mBE5vPS1Bojlp(HyyzdyhGygoL6rp1s(goIr6sQOTe4OJGYiZFxm5UnRUfh)XPrH5CMGIRgTM0OTASXkCSkzAEUFus8j6oYg3KG3fiU8Pc4t1bGnuykn2yv6oceDC7l0hbExGWJGuhEW0hsYEIumBo4oQ64jiOAsc48HBwvh88bigkGNdWpOCbpqC1P548SMz45ztZDsW5u)coJAvkbUaZl1D(QqtQyrqsJz3s0PkQFk2TiHNjVNMLXaDDhsYJj(7J1wZszumzhHrcPPYiZeDVQMyV4XQKe)7dloWTTyMLrHfLGKbb8oeqtlaGNlFl8lEoEFzkPOqYe1A8GjTlIU8eMiK8Znq58CcLDl2SOXFS5mGagi()Nqz2Ni(KuYXysbSfZyj1OC03a0YmYpOHnUBZ6zgYbJWL9kdMQie6YY61xrKoZqxEtN2eEIajaNL)IQaHgibIQLbkAWUUkph4N7Uzg43ZUq88KgZM5WsRraLhFQ1DJHqXFx4ryHzJR3CZq0URnvUarbV47HL5bFQV27KtMqWyHpsoBo7UZMZaQ2lRvEih2y6dWniguLQVFZ1iw77YGOoTOTXzK2GTA2RNFJPLoyVCICb5jzNk06CyHNGYDePgQSBORqOjtHWqvj7KgI6vnmN9Nq0G4haBv)ShN15zPznsNfSid39IbLLMHuC7gUHUEUc2S9KmIEBbqQOYnlnWLC(TMiAQoIuudmwSmoIM)YSjtnTJx)6RiMqWOgMJTAZBMnbud5p8IW499BwFJbxFmSkbNJZPQ0oqx0OjtG50eWGh0HjIaZH9(peTBofFg7hqOA6dqLu2L79IHKWicuNl5mb)cQSmfluFOxny7vqZAOUxHQUx5sDFTs2eSEaaRt2Vn2wj1HGjnSjwtdMxqtzqkiaRkQY9u2bwNqGcqks(3rqWeFUP27xEttSb50FCfTyGL2H6n(9l6dZnrHgzI)JjOeAmiWhrwki105MMqpJLDggDP2l2imxmiVSyjHcJZdra)rtSbKqOMr7NC1oss4lu4z4PCVLvkh5WheyhjmOd0tNnk(vJuoUOCRDM9Ij2X2FpYaRJLK6rrXYJDKmGg92tYZIIZQ4LUsPPWDfTswYryZmjn6L(yBNOPpGz9rJP)u8yWkiDiYCEQQiUfGqFigvtVNCioDNpVONgAivwTp1FUOGU)zfnavhVix(D7GfLqvaWS3jn0HqqtCKKWhRPqTJXpCO8fwzxkdhgFu(ZuICkmkUmKUKfB1BF8PQKNGc((pu2A2KR6kOWsJj1IcUz5KRGYhFiptP1gfLDXJBm)CL5lIFDJmcgSEVj)KDK9XWQ(UnlxqdCkCi1A96oUh3QN5KrUgLF3aymgaFF66qbVVMzjGpF(b5i5IGno3capGlw09oChMr047OxatXgTlSyVGRdoT0sesn5AWM7M30soihP7ZsRkgvUqCQOLmKEOG1njCkVxG773CCX2H1wYEYzD8nRzL4swcVa1nQdhlbaefIwI5BUDIXMxmSb5VmaKD9e0mC09N8U5RCLatJAqu2RsF3bbfK)C8XWK3OFypcvEZr9SG1(0)bTbP)DMkH2ausADqRpJMZJPoi7e1uAMnYKZaVntezFo2ajkmjXN)iF6jAkDkLDS1xPMZ)XI6GFgmORdaN4jWVItfmuDqykWK7QODnToipRK59Zgn)UwMWqwETTYDCGrBZbLHVWnWBCmX3wzAdHcIsThv7v4AOUcJh5Qc2jH6cBCyPqzl4XS0Si25LnGZsFXWGZ8y0hiGghG(czwTKKUll9nDnBa5rdO0xeOK2RH80M9uipP3Jy0acQNzSHnlOuk7BeamluWkSTqBFNENvJS8(dF5JgAjZBMXc3aGAhTSFymmfmGzuRL)6x(8x(Xp8v7(Y5wLyamKBDXYHtjlm4x)4N)PV85biVx2lm9jYDaMZDUwGtlq9YBqGaxuWTMh80LKCEBHe3lGh3ERLU1B7Zqbf0dK0B7VE8uwEjnLaGBuVlsZR)K32ItKiVpVCXAVTSbzxmQs4NFMDdRAIq59x82gLdBVGvR32P1bTHGRdE916aJWW1bVNtXz1bt4hkRsa5UrLcklUfuEBL8c5vclmRSYvnyrZVgf7yEbyS1IEiUeUOeFTvIB0SToeBRHBo4Sn1b30HaKfKrom0bL7jy3sagLY6xFXz9XXBY9nuI5GHPC3nw5oSCTzyeS8K7Pi34tVVI1b3THPLNzN1a7g900nKE36AdGs3hB4d9oqoogPRJKMIQ31hRO1UoodHxtfNRwBJRK2e2ckLf(Zwzbogu7OMS267pV9dw5n687sqe2(dOFLDTX3chBJ5wUWk3H2y0Ew5QP7WiGDp1sey8O1Ux3PAE0PspQiAewccqS4LM7mCMZTouUqUTBs8qVTEdFUQpqPCyPHLBdxJPbwR4uFeVDCkJH3soLPi3woHS4k2kVVg0XMQU1pivxkWHODDkwUmKWu(2J6HRXUtj6LLq96TZThBYUwhZyj7rZa5HA)E57kxUGlmVsjWHYg3vYkwZ(BXN01DoaKBNKSZQF3m9)nMP2ZHaR)SmKAPhT95FSB6mcBp5aZEqZqT1K(6lDuLMC7r3kSLTKCNJ(33LV9qdQ37VEWA3vgKVUOLQnWLLALDInAgDAQzdbYLJqyNA)k90XNTnQcBTZV1ouMwpNi5(BjSN1V(hgznWg0zzh44EQjUnYBr(6Liw)tTLa9ANz1UEiooBR)t9an4X3xFt3AxyD4UOf8fU8LjQbZl6lMtJIq5QfH6kccRTwoGuvI7kxWzX(WA7nwYDzhNdYfxMj3vrCXnPmL9IqgxDwBuzwIOMPRCAMo047ZqTfbxs8gXG5ukdCKvqk7au4BI(xjvWVwYgZN2XMgF2C)WyErgj2uD)H5VOFeUqhHsT8cBJy)yechlHsr3WW2X0jSvBVfVluceWAkg2EIbbEKutYy6s5bolf6cBlpDTPad8dyJ)DeemF5doMtUZytQC2EyQ9bjz45pGOIBJfj1)neM)mpFpVFl6H45AS1EgFU9b33z5jCaA5e94lvKt1tZfKdgLIm3EZTDsFmEZ80(giDzq45StqNz2zMbFgQSqeZCCnaA9aXEygpxF9g4miGlk5oD(Wx(4fWzZ))f9WaHDg5U8Smop2CBUHxrWym2f2Z06P4h51fqpzkzhVQQV4YJxxzGrfDvzBKwX6Vtz1KkKe5Cw9h(XX0HqSJwbnMJc9UwEAnra0MIUlF(sf5GO7quZNfE77cz)ird52906O7LsyKFCc2DBoiSy0G2sAK59qfjNPDRSlLlPNgTTaxy3o67hCVvz8PWQT7WPpoDJUHHDE8EDm3mksUhddRsheVoQLFeI1C)4V97eRmM7geX2Ey4K(fvvhLSXqIO3pgT0HrzcyBkyb57NGDFv)LPH0OLiNnZ5fhS9lZV7yHc3ViVqh6OS(dX2LlMRY3fvTkbg9Bhcmof7LablYDF5zJ59We969IV9nYaVZRir6qCAC2H3S3Mi5ceKEZDWshwJhL6NoVx7nVbjKcKjm2SvLS4nOaWGjzLsFgXBGgmR0Gzf2U9XeSTuUsleJ5wlp6BBc0886E7SizNSh)BPpVdV4V9jyI31I1hNEo2k4siARiCxcXEAZP6xCAP0FAFhw42cdbjCZlW07SU8hZmsbdCm4YQtycy0Lr1Zm289xrtN7U1LHLZSYS)ETOBHAt(kbK7K2SkGrFFmyM)ksmU2u9unu187(BX7nJlZgpUVsJxrgOHBTqp2BlejYz9vJHsJNv7sKvLIIrTbM5oRO9aWHBk5Zf7YF6BkFXeOmbI)PoIQFilSJP5M6G3ifSr00YX0rTo3zQ3kp7HFPay00ffnK(3XKwFto6uVahUUyFwpkERbPT7h26f(Po465svMPEDFS18rEDL2LruT1TCBeZ7zqdfXShS5(Lw1zpK7AdXjBRH4Y2zEHjQdE38vISrmV)CyShZlDROx8nFrMJzBZyn10zUT9LqiJTEcRXQtKoKxRVryKokErMwyVwtK8RzEjiXKXUVSzwdI469Kc2voZGxD7QyqcZZRl2oLqt7w14VQzCSb)oX5jl7PWQo6Bx4oiNjQfi50PiE9oDVGtCS0303vd2WYt4Re1WZYfMv13r)POEERL7UWRflx6wnhV9NRCFRgSyAx7CZ9zDtsPFffTFxs75UbC5wdy(SzoQB(oD4kNi3h9ytR2rCp1FhxmoZbTwBDwhgQEZw4)Z7)o]] )

@@ -24,7 +24,7 @@ actions.cooldowns+=/use_item,slot=hands,if=variable.use_trees&talent.force_of_na
 actions.cooldowns+=/use_item,slot=trinket1
 actions.cooldowns+=/use_item,slot=trinket2
 actions.cooldowns+=/blood_fury,if=buff.tigers_fury.up
-actions.cooldowns+=/berserking,if=buff.tigers_fury.up
+actions.cooldowns+=/berserking,if=buff.tigers_fury.up|(has_roro_equipped&buff.rune_of_reorigination.up)
 actions.cooldowns+=/potion,name=virmens_bite_potion,if=buff.berserk.up|target.time_to_die<=26
 actions.cooldowns+=/incarnation,if=talent.incarnation.enabled&buff.tigers_fury.up
 actions.cooldowns+=/berserk,if=buff.tigers_fury.up|berserk_clip_for_hotw
@@ -53,6 +53,8 @@ actions.bear+=/cat_form,if=buff.bear_form.up&(prev.thrash_bear|dot.thrash_bear.t
 actions.wrath+=/wrath,if=variable.opt_wrath_weave&should_wrath_weave
 actions.st+=/tigers_fury,if=(tf_timing|cat_excess_energy>15)&buff.berserk.down&buff.cat_form.up
 actions.st+=/savage_roar,if=!buff.savage_roar.up&combo_points.current>0&buff.cat_form.up
+actions.st+=/rip,if=has_roro_equipped&buff.rune_of_reorigination.up&combo_points.current=5&buff.savage_roar.up&buff.cat_form.up&rip_stronger
+actions.st+=/rake,if=has_roro_equipped&buff.rune_of_reorigination.up&buff.savage_roar.up&buff.cat_form.up&rake_stronger
 actions.st+=/rip,if=combo_points_for_rip&(dot.rip.down|rip_refresh_time<=0)&buff.cat_form.up&!delay_rip_for_tf
 actions.st+=/rake,if=(dot.rake.down|rake_refresh_time<=0)&buff.cat_form.up&!delay_rake_for_tf
 actions.st+=/thrash_cat,if=(dot.thrash_cat.down|dot.thrash_cat.remains<=3)&buff.cat_form.up

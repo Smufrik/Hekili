@@ -527,6 +527,10 @@ local function RegisterWindwalkerSpec()
 
             talent = "invoke_xuen",
 
+            usable = function()
+                return toggle.cooldowns, "cooldowns toggle disabled"
+            end,
+
             handler = function() end
         },
         dampen_harm = {

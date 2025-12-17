@@ -1215,7 +1215,13 @@ end)
             
             essential = true,
             
-            usable = function() return not state.pet.water_elemental.up, "water elemental already summoned" end,
+            usable = function()
+                -- Primary source of truth is the registered pet token.
+                -- Fall back to the real pet unit, in case pet ID matching fails or the pet model changes.
+                local petUp = (state.pet.water_elemental and state.pet.water_elemental.up)
+                    or (UnitExists("pet") and not UnitIsDead("pet") and UnitHealth("pet") > 0)
+                return not petUp, "water elemental already summoned"
+            end,
             
             handler = function()
                 state.summonPet( "water_elemental" )
@@ -1741,7 +1747,14 @@ end)
     } )
 
     -- Water Elemental Abilities
-    spec:RegisterPet( "water_elemental", 78116, "summon_water_elemental", 600 )
+    -- Use a dynamic ID derived from the player's current pet GUID.
+    -- This avoids repeated summon recommendations when the hard-coded NPC id doesn't match MoP Classic.
+    spec:RegisterPet( "water_elemental", function()
+        local guid = UnitGUID("pet")
+        if not guid then return 0 end
+        local pid = guid:match("%-(%d+)%-[0-9A-F]+$")
+        return pid and tonumber(pid) or 0
+    end, "summon_water_elemental", 600 )
 
 
     -- State Functions and Expressions
