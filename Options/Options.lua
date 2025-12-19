@@ -4795,13 +4795,16 @@ found = true end
                 local name = class.itemList[ v.item ] or v.name
                 if name then abilities[ name ] = v.itemKey or v.key end
             end
-        end        for k, v in orderedPairs( abilities ) do
+        end
+
+        for k, v in orderedPairs( abilities ) do
             local ability = class.abilities[ v ]
             -- Safety check: skip if ability doesn't exist
             if ability then
+                local abilityName = ability.name or ability.key or k or "Item"
                 local option = {
                 type = "group",
-                name = function () return ability.name .. ( state:IsDisabled( v, true ) and "|cFFFF0000*|r" or "" ) end,
+                name = function () return abilityName .. ( state:IsDisabled( v, true ) and "|cFFFF0000*|r" or "" ) end,
                 order = 1,
                 set = "SetItemOption",
                 get = "GetItemOption",
@@ -4809,7 +4812,7 @@ found = true end
                     multiItem = {
                         type = "description",
                         name = function ()
-                            return "These settings will apply to |cFF00FF00ALL|r of the " .. ability.name .. " PvP trinkets."
+                            return "These settings will apply to |cFF00FF00ALL|r of the " .. abilityName .. " PvP trinkets."
                         end,
                         fontSize = "medium",
                         width = "full",

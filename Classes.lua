@@ -3622,7 +3622,19 @@ all:RegisterAbility( "hands", {
         end
 
         if not (knownByID or knownByName) then
-            return false, "no synapse springs on gloves"
+            -- MoP Classic sometimes omits the exact Synapse spell ID from the glove slot; treat any glove on-use as valid.
+            local hasGloveUse = false
+            if spellID and spellID > 0 then
+                hasGloveUse = true
+            elseif (spellName and spellName ~= "") then
+                hasGloveUse = true
+            elseif tinker and tinker.hand and (tinker.hand.spell or tinker.hand.item) then
+                hasGloveUse = true
+            end
+
+            if not hasGloveUse then
+                return false, "no synapse springs on gloves"
+            end
         end
 
         -- Feral fine-tuning: only fire gloves when treants are fully recharged so they can snapshot.

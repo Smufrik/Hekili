@@ -154,15 +154,21 @@ if class and class.specs and class.specs[0] then
             item = 81265,
             handler = function() applyBuff("flashing_steel_talisman") end,
         },
-        
-        synapse_springs = {
+    })
+
+    -- Synapse Springs is defined in core (Classes.lua) with:
+    -- - glove-tinker presence checks
+    -- - cooldown driven by glove slot (GetInventoryItemCooldown)
+    -- so we only register a fallback if it's missing.
+    if not ( all.abilities and all.abilities.synapse_springs ) then
+        all:RegisterAbility( "synapse_springs", {
             id = 126734,
             cast = 0,
             cooldown = 60,
             gcd = "off",
             handler = function() applyBuff("synapse_springs") end,
-        },
-    })
+        } )
+    end
 end
 
 Hekili:Debug( "MoP Items module loaded." )
