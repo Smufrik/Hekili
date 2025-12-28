@@ -780,6 +780,8 @@ spec:RegisterGear( "tier16_lfr", 99446, 99447, 99448, 99449, 99450 )      -- LFR
 spec:RegisterGear( "tier16_normal", 99183, 99184, 99185, 99186, 99187 )   -- Normal versions  
 spec:RegisterGear( "tier16_heroic", 99709, 99710, 99711, 99712, 99713 )    -- Heroic versions
 spec:RegisterGear( "tier16_mythic", 100445, 100446, 100447, 100448, 100449 ) -- Mythic versions
+-- Aggregate Tier 16 set for unified 4pc checks (mix-and-match difficulties)
+spec:RegisterGear( "tier16", 99446, 99447, 99448, 99449, 99450, 99183, 99184, 99185, 99186, 99187, 99709, 99710, 99711, 99712, 99713, 100445, 100446, 100447, 100448, 100449 )
 -- T16 Set Bonuses: 2pc = Obliterate increases crit by 5%, 4pc = Killing Machine increases damage by 25%
 
 -- Legendary Cloak variants for all classes
@@ -1680,7 +1682,21 @@ spec:RegisterAbilities( {
         startsCombat = false,
         
         usable = function ()
-            return buff.blood_charge.stack >= 5
+            -- Require 5 charges and at least one rune on cooldown so the conversion has somewhere to go.
+            if buff.blood_charge.stack < 5 then return false end
+            -- Check simulated rune state to see if there's room for a new rune
+            local ready = 0
+            if state.runes and state.runes.expiry then
+                for i = 1, 6 do
+                    if state.runes.expiry[i] <= state.query_time then
+                        ready = ready + 1
+                    end
+                end
+            end
+            if ready >= 6 then
+                return false, "all runes ready"
+            end
+            return true
         end,
         
         handler = function ()
@@ -2147,12 +2163,25 @@ spec:RegisterStateExpr( "rune_max", function()
 end )
 
 
+-- Soul Reaper execute threshold helper; bumps to 45% with T16 4pc and uses user setting otherwise.
+spec:RegisterStateExpr( "sr_execute_threshold", function()
+    local threshold = ( state.settings and state.settings.frost_execute_threshold ) or 35
+
+    -- T16 4pc increases Soul Reaper execute range to 45%.
+    if state.set_bonus.tier16_4pc > 0 then
+        threshold = math.max( threshold, 45 )
+    end
+
+    return threshold
+end )
+
 -- Soul Reaper execute check normalized to importer's math
--- Equivalent to: target.health.pct - 3 * ( target.health.pct / target.time_to_die ) <= 35
+-- Equivalent to: target.health.pct - 3 * ( target.health.pct / target.time_to_die ) <= threshold
 spec:RegisterStateExpr( "sr_exec_window_3s", function()
     if not target or not target.time_to_die or target.time_to_die <= 0 then return false end
     local hp = target.health and target.health.pct or 100
-    return ( hp - 3 * ( hp / target.time_to_die ) ) <= 35
+    local threshold = state.sr_execute_threshold or 35
+    return ( hp - 3 * ( hp / target.time_to_die ) ) <= threshold
 end )
 
 
@@ -2224,7 +2253,7 @@ spec:RegisterSetting( "frost_rime_priority", true, {
 
 spec:RegisterSetting( "frost_execute_threshold", 35, {
     name = "Execute Threshold for Soul Reaper",
-    desc = "Target health percentage to use Soul Reaper",
+    desc = "Target health percentage to use Soul Reaper (automatically increased to 45% with Tier 16 4pc).",
     type = "range",
     min = 20,
     max = 50,

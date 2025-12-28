@@ -1342,6 +1342,12 @@ spec:RegisterAbilities( {    starfire = {
 
         handler = function ()
             applyDebuff("target", "sunfire")
+            -- Unerring Vision: DoT application crits have 30% chance to proc Shooting Stars
+            if state.buff.unerring_vision_of_lei_shen.up and state.talent.shooting_stars.enabled then
+                if math.random() < 0.30 then
+                    applyBuff("shooting_stars")
+                end
+            end
         end,
     },
 
@@ -1360,6 +1366,12 @@ spec:RegisterAbilities( {    starfire = {
 
         handler = function ()
             applyDebuff("target", "moonfire")
+            -- Unerring Vision: DoT application crits have 30% chance to proc Shooting Stars
+            if state.buff.unerring_vision_of_lei_shen.up and state.talent.shooting_stars.enabled then
+                if math.random() < 0.30 then
+                    applyBuff("shooting_stars")
+                end
+            end
         end,
     },
 

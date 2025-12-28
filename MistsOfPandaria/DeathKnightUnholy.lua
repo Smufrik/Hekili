@@ -1946,9 +1946,17 @@ spec:RegisterAbilities({
 
 		startsCombat = true,
 
-		--handler = function()
-		--TODO: Increase the duration of Blood Plague, Frost Fever, and Chains of Ice effects on the target by up to 6 seconds
-		--end,
+		handler = function()
+			-- Extends disease duration by 6 seconds (or to max 30s)
+			if debuff.blood_plague.up then
+				debuff.blood_plague.expires = min(debuff.blood_plague.expires + 6, query_time + 30)
+			end
+			if debuff.frost_fever.up then
+				debuff.frost_fever.expires = min(debuff.frost_fever.expires + 6, query_time + 30)
+			end
+			-- Bad Juju: extending diseases maintains the snapshot if diseases were applied at peak
+			-- Priority: use Festering Strike to extend when Bad Juju snapshot is active
+		end,
 	},
 
 	-- Outbreak: Instantly applies both Frost Fever and Blood Plague to the target
@@ -1986,6 +1994,11 @@ spec:RegisterAbilities({
 		handler = function()
 			applyDebuff("target", "frost_fever")
 			applyDebuff("target", "blood_plague")
+			-- Bad Juju: snapshot diseases at peak strength (10s into buff = max stacks)
+			if state.buff.feather_of_ji_kun.up and state.buff.feather_of_ji_kun.remains <= 1 then
+				-- Mark that diseases were snapshotted at peak strength for extension tracking
+				state.diseases_snapshotted_with_bad_juju = true
+			end
 		end,
 	},
 

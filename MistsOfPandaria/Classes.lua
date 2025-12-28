@@ -402,6 +402,12 @@ local function RegisterMistsAuras()
             max_stack = 1,
         },
 
+        unerring_vision_of_lei_shen = {
+            id = 139133,
+            duration = 4,
+            max_stack = 1,
+        },
+
         rune_of_reorigination = {
             id = 139120,
             duration = 10,

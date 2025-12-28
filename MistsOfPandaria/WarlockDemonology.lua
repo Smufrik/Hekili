@@ -1107,6 +1107,12 @@ spec:RegisterAbilities( {
         texture = 136122,
         handler = function()
             applyDebuff( "target", "doom" )
+            -- Unerring Vision: Doom crits proc double ember generation
+            if state.buff.unerring_vision_of_lei_shen.up then
+                if state.soul_shards and state.soul_shards.generate then 
+                    state.soul_shards.generate( 2 ) -- Double shards from crit proc
+                end
+            end
         end,
     },
 

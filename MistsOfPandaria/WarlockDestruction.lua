@@ -182,7 +182,10 @@ spec:RegisterResource( 14, {
             -- Immolate generates 0.1 ember per tick (crit doubles) -> 10 ticks (~30s) ~1 ember overall.
             if not state.debuff.immolate.up then return 0 end
             local embers = 0.1
-            if rawget(state, "last_critical_tick") then embers = embers * 2 end
+            -- Unerring Vision: guaranteed crits during 4s window
+            if state.buff.unerring_vision_of_lei_shen.up or rawget(state, "last_critical_tick") then 
+                embers = embers * 2 
+            end
             return embers
         end,
     },

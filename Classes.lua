@@ -3622,13 +3622,13 @@ all:RegisterAbility( "hands", {
         end
 
         if not (knownByID or knownByName) then
-            -- MoP Classic sometimes omits the exact Synapse spell ID from the glove slot; treat any glove on-use as valid.
+            -- MoP Classic sometimes omits the exact Synapse spell ID from the glove slot; only treat as usable if we at least see an on-use spell on the gloves.
             local hasGloveUse = false
             if spellID and spellID > 0 then
                 hasGloveUse = true
-            elseif (spellName and spellName ~= "") then
+            elseif spellName and spellName ~= "" then
                 hasGloveUse = true
-            elseif tinker and tinker.hand and (tinker.hand.spell or tinker.hand.item) then
+            elseif tinker and tinker.hand and tinker.hand.spell and tinker.hand.spell > 0 then
                 hasGloveUse = true
             end
 
