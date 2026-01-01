@@ -19,7 +19,7 @@ actions+=/wait,sec=1
 
 ## Variables inspired by NAG helpers
 actions.variables+=/variable,name=use_cds,op=set,value=1
-actions.variables+=/variable,name=execute,op=set,value=target.health.pct<=35
+actions.variables+=/variable,name=execute,op=set,value=target.health.pct<=(set_bonus.tier15_4pc?45:35)
 actions.variables+=/variable,name=need_dots,op=set,value=!dot.blood_plague.ticking|!dot.frost_fever.ticking
 actions.variables+=/variable,name=mitigation_window,op=set,value=incoming_damage_5s>=health.max*0.30|health.pct<50
 

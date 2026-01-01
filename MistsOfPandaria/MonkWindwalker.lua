@@ -281,7 +281,7 @@ local function RegisterWindwalkerSpec()
             end
         },
         tigereye_brew = {
-            id = 116740,
+            id = 125195,  -- Stacking buff ID (not the consumed buff 116740)
             cast = 0,
             cooldown = 0,
             gcd = "off",
@@ -289,7 +289,7 @@ local function RegisterWindwalkerSpec()
             toggle = "cooldowns",
 
             known = function()
-                return state.IsSpellKnownOrOverridesKnown(116740, true) or state.IsSpellKnownOrOverridesKnown(124727, true)
+                return state.IsSpellKnownOrOverridesKnown(125195, true) or state.IsSpellKnownOrOverridesKnown(116740, true) or state.IsSpellKnownOrOverridesKnown(124727, true)
             end,
 
             handler = function()

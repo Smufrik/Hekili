@@ -2915,6 +2915,34 @@ else
 end
 
 
+local function AbbreviateKeybind( bind )
+    if type( bind ) ~= "string" or bind == "" then return bind end
+
+    -- Avoid altering ConsolePort/icon texture strings.
+    if bind:find( "|t", 1, true ) then return bind end
+
+    -- Mousewheel.
+    bind = bind:gsub( "[Mm][Oo][Uu][Ss][Ee][Ww][Hh][Ee][Ee][Ll][Dd][Oo][Ww][Nn]", "MwD" )
+    bind = bind:gsub( "[Mm][Oo][Uu][Ss][Ee][Ww][Hh][Ee][Ee][Ll][Uu][Pp]", "MwU" )
+
+    -- Mouse buttons.
+    bind = bind:gsub( "[Mm][Oo][Uu][Ss][Ee][Bb][Uu][Tt][Tt][Oo][Nn](%d+)", "M%1" )
+    bind = bind:gsub( "[Bb][Uu][Tt][Tt][Oo][Nn](%d+)", "M%1" )
+
+    -- Numpad.
+    bind = bind:gsub( "[Nn][Uu][Mm][Pp][Aa][Dd](%d)", "NP%1" )
+    bind = bind:gsub( "[Nn][Uu][Mm][Pp][Aa][Dd][Pp][Ll][Uu][Ss]", "NP+" )
+    bind = bind:gsub( "[Nn][Uu][Mm][Pp][Aa][Dd][Mm][Ii][Nn][Uu][Ss]", "NP-" )
+    bind = bind:gsub( "[Nn][Uu][Mm][Pp][Aa][Dd][Mm][Uu][Ll][Tt][Ii][Pp][Ll][Yy]", "NP*" )
+    bind = bind:gsub( "[Nn][Uu][Mm][Pp][Aa][Dd][Dd][Ii][Vv][Ii][Dd][Ee]", "NP/" )
+    bind = bind:gsub( "[Nn][Uu][Mm][Pp][Aa][Dd][Dd][Ee][Cc][Ii][Mm][Aa][Ll]", "NP." )
+    bind = bind:gsub( "[Nn][Uu][Mm][Pp][Aa][Dd][Pp][Ee][Rr][Ii][Oo][Dd]", "NP." )
+    bind = bind:gsub( "[Nn][Uu][Mm][Pp][Aa][Dd][Ee][Nn][Tt][Ee][Rr]", "NPEn" )
+
+    return bind
+end
+
+
 
 if select( 2, UnitClass( "player" ) ) == "DRUID" then
     local prowlOrder = { 8, 7, 1, 2, 3, 4, 5, 6, 10, 9, 13, 14, 15 }
@@ -2937,7 +2965,7 @@ if select( 2, UnitClass( "player" ) ) == "DRUID" then
         override = override and override.keybind
 
         if override and override ~= "" then
-            return override
+            return AbbreviateKeybind( override )
         end
 
         if not keys[ key ] then return "" end
@@ -2985,7 +3013,7 @@ if select( 2, UnitClass( "player" ) ) == "DRUID" then
             end
         end
 
-        return output
+        return AbbreviateKeybind( output )
     end
 
 elseif select( 2, UnitClass( "player" ) ) == "ROGUE" then
@@ -3006,7 +3034,7 @@ elseif select( 2, UnitClass( "player" ) ) == "ROGUE" then
         override = override and override.keybind
 
         if override and override ~= "" then
-            return override
+            return AbbreviateKeybind( override )
         end
 
         if not keys[ key ] then
@@ -3048,7 +3076,7 @@ elseif select( 2, UnitClass( "player" ) ) == "ROGUE" then
             end
         end
 
-        return output, source
+        return AbbreviateKeybind( output ), source
     end
 
 else
@@ -3064,7 +3092,7 @@ else
         override = override and override.keybind
 
         if override and override ~= "" then
-            return override
+            return AbbreviateKeybind( override )
         end
 
         if not keys[ key ] then return "" end
@@ -3103,7 +3131,7 @@ else
             end
         end
 
-        return output, source
+        return AbbreviateKeybind( output ), source
     end
 end
 

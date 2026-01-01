@@ -56,7 +56,7 @@ actions.masterfrost+=/howling_blast,if=variable.rime_ready
 actions.masterfrost+=/obliterate,if=runes.unholy.count>=1&runes.frost.count>=1&runic_power<=76
 actions.masterfrost+=/howling_blast,if=runes.frost.count>=1|runes.death.count>=1
 actions.masterfrost+=/frost_strike,if=runic_power>=60
-actions.masterfrost+=/plague_leech,if=talent.plague_leech.enabled&dot.blood_plague.remains<3&dot.frost_fever.remains<3&time>=25
+actions.masterfrost+=/plague_leech,if=talent.plague_leech.enabled&dot.blood_plague.remains<=3&time>=25
 actions.masterfrost+=/horn_of_winter,if=buff.horn_of_winter.down
 actions.masterfrost+=/empower_rune_weapon,if=runic_power.deficit>=40&(runes.frost.count=0|runes.death.count=0)
 
@@ -98,7 +98,7 @@ actions.obliterate_build+=/frost_strike,if=runic_power>=76
 actions.obliterate_build+=/howling_blast,if=variable.rime_ready
 actions.obliterate_build+=/obliterate,if=runes.frost.count>=1&runes.unholy.count>=1
 actions.obliterate_build+=/howling_blast,if=runes.frost.count>=1|runes.death.count>=1
-actions.obliterate_build+=/plague_leech,if=talent.plague_leech.enabled&(dot.blood_plague.remains<3|dot.frost_fever.remains<3)
+actions.obliterate_build+=/plague_leech,if=talent.plague_leech.enabled&dot.blood_plague.remains<=3
 actions.obliterate_build+=/frost_strike,if=runic_power>=40
 actions.obliterate_build+=/horn_of_winter,if=buff.horn_of_winter.down
 actions.obliterate_build+=/empower_rune_weapon,if=(runes.frost.count=0|runes.death.count=0)&runic_power.deficit>=40

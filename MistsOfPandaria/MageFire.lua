@@ -201,11 +201,132 @@ spec:RegisterStateExpr( "spell_power", function()
 end )
 
 spec:RegisterStateExpr( "hot_streak_bonus", function()
-    return buff.hot_streak.up and 0.25 or 0 -- 25% damage bonus
+    if buff.hot_streak.up then return 0.25 end
+    return 0
 end )
 
 spec:RegisterStateExpr( "heating_up_bonus", function()
-    return buff.heating_up.up and 0.15 or 0 -- 15% damage bonus
+    if buff.heating_up.up then return 0.15 end
+    return 0
+end )
+
+-- ===================
+-- FIRE MAGE VARIABLE LOGIC (From WoWSims APL)
+-- ===================
+
+-- Proc State Variables
+spec:RegisterStateExpr( "has_instant", function()
+    -- True if we have Hot Streak proc (instant Pyroblast)
+    if buff.hot_streak.up then return 1 end
+    return 0
+end )
+
+spec:RegisterStateExpr( "has_hu", function()
+    -- True if we have Heating Up (need one more crit for Hot Streak)
+    if buff.heating_up.up then return 1 end
+    return 0
+end )
+
+spec:RegisterStateExpr( "has_instant_hu", function()
+    -- True if we have both Hot Streak and Heating Up (rare case from Ignite spreading)
+    if buff.hot_streak.up and buff.heating_up.up then return 1 end
+    return 0
+end )
+
+spec:RegisterStateExpr( "hu_to_hot", function()
+    -- Optimization: Can convert Heating Up to Hot Streak with next crit
+    -- This helps with predictive ability weighting
+    if buff.heating_up.up then return 1 end
+    return 0
+end )
+
+spec:RegisterStateExpr( "no_ignite", function()
+    -- True if target doesn't have Ignite debuff
+    if not debuff.ignite.up then return 1 end
+    return 0
+end )
+
+spec:RegisterStateExpr( "ignite_active", function()
+    -- True if target has Ignite debuff
+    if debuff.ignite.up then return 1 end
+    return 0
+end )
+
+spec:RegisterStateExpr( "ignite_expiring", function()
+    -- True if Ignite will expire soon (within 2 seconds)
+    if debuff.ignite.up and debuff.ignite.remains < 2 then return 1 end
+    return 0
+end )
+
+-- Timing Window Variables
+spec:RegisterStateExpr( "alter_time_ready", function()
+    -- True if Alter Time is ready (with 6 second leeway for planning)
+    if cooldown.alter_time.ready then return 1 end
+    return 0
+end )
+
+spec:RegisterStateExpr( "alter_time_soon", function()
+    -- True if Alter Time will be ready soon (within 6 seconds)
+    if cooldown.alter_time.remains < 6 then return 1 end
+    return 0
+end )
+
+spec:RegisterStateExpr( "alter_time_dot_window", function()
+    -- True if we're in a window where Alter Time cooldown allows burning cooldowns
+    -- Essentially: Alter Time is ready OR recently used (allows burst planning)
+    if cooldown.alter_time.ready then return 1 end
+    if cooldown.alter_time.remains > 172 then return 1 end -- 172 = 180 - 8
+    return 0
+end )
+
+-- Combustion Threshold Variables (for intelligent Combustion timing)
+spec:RegisterStateExpr( "combustion_ready_burst", function()
+    -- True if we should use Combustion when all buffs align for burst damage
+    -- Requires: Hot Streak/Pyroblast, Alter Time cooldown ready, and sufficient cooldowns
+    if buff.hot_streak.up and cooldown.alter_time.ready then return 1 end
+    return 0
+end )
+
+spec:RegisterStateExpr( "combustion_on_ignite", function()
+    -- True if Combustion should be used to snapshot high Ignite DoT
+    -- Used for single-target sustained damage when short-term burst unavailable
+    if debuff.ignite.up and debuff.ignite.remains > 1 then return 1 end
+    return 0
+end )
+
+spec:RegisterStateExpr( "combustion_with_invocation", function()
+    -- True if Combustion should be used when Invocation buff active (15% spell power increase)
+    if buff.invocation.up and cooldown.combustion.ready then return 1 end
+    return 0
+end )
+
+spec:RegisterStateExpr( "combustion_with_potions", function()
+    -- True if Combustion should sync with damage potion for peak burst
+    return 0 -- Would need potion detection from combat log
+end )
+
+spec:RegisterStateExpr( "combustion_multidot_value", function()
+    -- Estimate total damage spread from Combustion to multiple DoTs
+    -- Used to determine if multi-target Combustion is worth the cooldown
+    local dot_value = 0
+    if debuff.ignite.up then dot_value = dot_value + 1 end
+    if debuff.living_bomb.up then dot_value = dot_value + 1 end
+    if debuff.nether_tempest.up then dot_value = dot_value + 1 end
+    return dot_value
+end )
+
+-- Additional State Tracking Variables
+spec:RegisterStateExpr( "burn_phase_active", function()
+    -- True if in a burn phase (Combustion recently used or about to be used)
+    -- Used for resource pooling and cooldown alignment decisions
+    if cooldown.combustion.remains < 5 or buff.combustion.up then return 1 end
+    return 0
+end )
+
+spec:RegisterStateExpr( "pooling_for_combustion", function()
+    -- True if we should pool resources for upcoming Combustion window
+    if cooldown.combustion.remains < 10 and not buff.combustion.up then return 1 end
+    return 0
 end )
 
 -- Talents (MoP 6-tier system)
@@ -1364,8 +1485,6 @@ spec:RegisterAbilities( {
         startsCombat = false,
         texture = 136075,
         
-        talent = function() return not talent.rune_of_power.enabled end,
-        
         handler = function()
             -- Restore 60% mana over 6 sec
             gain( 0.6 * mana.max, "mana" )
@@ -1771,7 +1890,8 @@ spec:RegisterAbilities( {
 
 -- State Functions and Expressions
 spec:RegisterStateExpr( "hot_streak", function()
-    return buff.pyroblast_clearcasting.up
+    if buff.pyroblast_clearcasting.up then return 1 end
+    return 0
 end )
 
 spec:RegisterStateExpr( "combustion_dot_value", function()
@@ -1810,5 +1930,4 @@ spec:RegisterOptions( {
 } )
 
 -- Register default pack for MoP Fire Mage  
--- Updated October 1, 2025 - Use the MageFire.simc file for optimized priorities
-spec:RegisterPack( "Fire", 20251001, [[Hekili:1I1)VTjou8)wIMuuRwxwcPSDRQzs3oDt3QU2vDSt73aCioTwfWCGPz9uf)TFVNbcyWgs76nPScy73397Z79Cx4(nxNneb19kR5w2lMpFXmRLZTpDPRJ4HeQRtcj4oYnWdXKi4)Ze0m8JpeYjBWdNXZtdGfCDwNZcfFj2DTrkMLqdCV6DWt3Y2SHwUvAwGRZ3ULLv4J)if(vSSWNVfEpqW4Xf(HSmbS8wEAH)FqVJfYM56i)OufOBj5Hc4XRKQenMSoKUX9tUoLea(098as5JiptzjLV871FVI4rKyqg2DlfzkFNRdSvbnLrCDWLMLeik8pFvHV1CxbOKDyxZUxNVD7S08yQhFRxcFhnDwknIWIZkpFajt4jyOvTVmcuEPbfrHKDuMlbYlGFf()fSRsl41L7RrWeKqASOJOvXOc)Pf(hv4Rr43W3b09Xh1UOEnRW)yuto1GMiszX3rflGiJqUO97DSIKq4njfNLNifr5NVLl8YePuYDQFMc2W4B8YtGp3Xa9RiLk8)Mu4YO)tonoaEAhtClexXbxRJKGf(VgJZKeQW)VbQFezZ9eyZGjkjK8GuXShwXSEzvefJKfY)3nCWxFUTHlMfWJwNNHck412MsZUfpVC5ML8GD6Dpjmhw4JGl905Y)1OInBffK3BWq0ibd5hEnQVPzIgpspv5qSqvQapeJuBP8EO0CpKsc0xYMhq59xmiValybcJsrFd6r69G7VLKa2xKu4nLiw8g5Qhx4F2AAAgn9oq4pJKgqG7sYlsNPCT6mnkXzjpKYxhcxXQZj3AtsZiQGFWGc26WM9hswb)9nf(5z0o3lWCKxxPvLjyUe0R)3mvOYSy(OHx7nphIEH3255cff7TxZVuQX7imrfuqMaqIGCARPWRW5ui2VUNHJQ5tmEnFIzDxQ4MaZEYXPplrOjuRFq3gEoiuE43LsAxCWXc4uIPUUEt1aVX4QimMIjFhiwQiY1c)lv0MAkeLmLv4ByYqBPg3fFUrQ(j4nMGEVjtfv1sNrffetWRdvOqNYdWl6YQ8AuIXTcLMbtyGHS7XmZRHtde7HaiyrqsVHcfSb1Ob1s9dp1V6SutrkTOIsjktknvTxwWcW0PDRicklK9gyVLi5La9)P8yf(FcohKwigO5vuXTYinAucTYW2fETw1IL71tuT1dt7S1ODQesNc2zh16ikDMWC3MYHYVkT7kMIpJlSxPtscz1fe3tWAOrpHIkdHBTHQuvMGuBvOGQ48B7xOk6tM(f2Esi9h4dXBy4QzQrLMQqz5hkRqbLLUOFhscJjARDOSKbtvwOEH4u7X3hErEX7xow1ww2duSLvx4W2UpmABMeruW92WOv5oShHJlThQ8olt4qS4T00yUNUm8FPCniGRmZUGlDQ3ttfDkTgxPfEq)I)6vL34WzkoyPoycHAllLUMegoeav3MbEtlvbL(s0Wr0cJYQAD(OSAgB5GRg2aAHvx0c1ueSWqeRONTbpRdGBHXfKb7ZUQA21PaPyez1jDAr9g6zf(FMLwEH)RW3Jy)lMHbsQev4)D(3DyrWDLl5xJwBCycWIFnqWxJzOxCc27TLT2R1DzETbD0ecrCiGj2JKgXtvSETxqxB59YDQTVAtOY1DhV3xXl)Bdd00MzlwkRl6C4(RE3T0TTJKgdHfqE0VeLWtLwtRotwzwXfO)LVLfcoSxbg)NKB6IxnKNQ4cydVs22qz8tXfLmpB2(qQxV6T9CENW2UAIr)QEI02D1C(oEx9hvXZGNDWbLOLeLUpdRv7xKKgCCNVS2WCPCKnxNY4GN9bS(eiH5fsR6iJNApRagSF6ridQNv15RSMBCtsBJ2b5C(QMH4ukighTuBQ)KmHtpsd)rKZhF8GeSJRKSxUz60wvGoF9GRzrNGJDzv9OP2B1uWxM2pR8unixJrDRxkQ3GEBGIMNd0uD1i8XvvZ)rNfV)0BAlkn8DVOmMMmD8z40MdQ9cFc2E6QUJeXGz4O(YtvSNMw0o(LyMn6mGYD90g3sB9xjVYpTsoKa(Io3e9bj7nzguMjAIGMyszglkP1mmEjyNUXLuzoF(t7WONEYpTRE6aT4)Xv2g58tKlAhPbalvzA0pjIbbvgwUTRbSEED(3MZTgVWjkTZVAXj9AXF1YwaEAMBX0jgMyrBoQ2V)bWu7wmv)4ek5R(bjuzQmnzG2swth)T4y)5eaCtZecQ4Zb3YVzWm9Wtvn)B(y6UTmXy)(6qGAIWo1EO1pFf0FVjuuzF9MLY(TVd3tSnqSYw2RSSp7MTBlmkDZ3axRGnBoJO6iv0K37z0eTsayvVOgQJyYWLe1hLCSYqQVBiBjwNGaTCLdaIq7Yor5Btz3jB3Y9)c]] )
+spec:RegisterPack( "Fire", 20260101, [[Hekili:9MvBVTTUv4FlgxaJeuxF9lXP5oevGTIn0BXUDftzRFts020XersuJIkPziq)23HK6fkAsfjFZDfnbosKNZZ5WZB8XbldUlWFpIJd(6QfRUEXYfRMVyXvxV8MaF(Zz4a)m0Uhq3dFifLa)(VryYh(CmfTxS5CAbBh8Oa)TfKy(VMgS1Me3S6kyTz4DbF961b(hj73JvlfNVlW)UJK8YiXpOYOkvwgrpa)9ooHMwgftY5WRpqzLrFg)ajMmpWx(qPjGpGkI5Wh)Q0KWPOTX49b)LaFAgOympWxjPa)hrmI4TIpfxGfa)WH5hP8WCodJEyErMcwmsMAhFJr3vg5ZbRQm6FxT9CPKcvULJO8qsAohLYd4GLFMyaJ4K07dlYKyOR4pwiK86ZuY6wxz00YOxxHv2tLIV6mvStnueYPHaUecFZOf(KYO9yPgi3Ns4ydPNsdvpxi9RhT07t0Qhgk27JsX)HF3IxEG09HmCccoakJUTmALf1J)rgHbowbaUz0ayhLgVN(u6CumhZc5KeHgr7F2iW)oscOJYOVtsHL7i2VvgHkzaq6xEJGuRt4AhQmNcId04YfVrQeSGYOxEPmQxe9r7VFFbdPQx9(YOBCa59qY4tspQe4VffSKrqd9u9t0KTf5kyE3rgo)iSphhU7AwR6WnCBblxMZUC8f5gtCp4Gx6aiW)BtUxEMvejPps3jpRoX91QQA3Nvy8eHFmSvmsWm(QKl6t6zuXNZLIE81iV40AKLrxwg9UYO2xftEuuFElOzRVpfZpkcMWjz4CUAjoGCc0bMicUv6xa6Xx61(PqBDGnQKtj20wYj9S)Z73teFcf305(ogmyHSEM1qDiYonmd68PxCF54RU)AwWYfYWTj2nIw8KbYrC0aJ8e2UijOmR4xJfz5LNqmtNXNQGeyVWdHIdeuvAW2ykDFmi65I3lfUzT7gHd9BEaZHSY8yOTD7Flg4XS6RXMwzSPvYnzw5REt4MCQUMXVHsHXdtGFFpobdJAzAnSIuCi9aK38eMP509GSBuoxwsuQzZAxTYjBh)2BwydlI9zwSPEvDuSbQ)NW7uZY(nXBfgajLdcjvm3CRM5OyWMmSHkDjJyUOnOP7IejLnjfdXhiYHfMJz5QAZ5ikDFE9rw1F0cuNfkDmyP2J7ziB)Ntrz5a08Zed2aqwuceUuGAm03vjYYiyNcSBwpSg7APkUB790rm87kqR0dGTYif4KLa113Gn(lSzOAhog(LlDwmtyHMfpF7oDg0Tb6EfONz0TXq8dC9mgHcARXX95Ah1)kt64(SWr6x5ifGGkFCvMVSz2kZQQaAi7aqH)pfyzAXY)qmjlXic0ywo9)ZOjR23kbJRYVdlUUkLHJJJj3dLta)E1m8BHgBqDeXQQTar8U4M6d246FKyOcZh2iVKQRUbTwQZOllXuQKvDZe9iIeRA6A0byiE(ozQTnaRtu7V)TNCeez5Z1U6FnaZCFrswJXQNWqtJFEaw1eNgwVWxCgb3usaE3TahTkHz(M3yZD9vRCeMV2vN08Du2UJM9gKpeILPvDpHF6eKOdF34CI12qc04QrO20XGkEExmoKJy3lkJ9vOOqc6hHDFQ)AlT01NXwVH(eLRt)1CICevZbFetw)EyT8QR8V2v3VUJRpqmVXcMnM73cSnwrnYfOZvNRbKyyjL4cOJtcIbLGoqIJXSl7pyvIaZgmDuNGeZTO44Ab2cWdvVjqeKcdIGfjriR8kwVfeBhcM4AldefrntNXqR3J)tLrcDkzf4FKjQi)Ff(YdmAsz03PF3NKa5l)g9B2IJprb1Zh4mbUENjuOmDAiILqzD64O)cP7YHTLqym42hG3xWaCJ7qnhT)hMlR2BM70IdXK6ZHbQLx7X(q1Ni0RfI0m6Eydj7CCCtDCLc4oJsP2H2AXMmdSojYX62KHtpIz5I1wtmoKmc3vlvmSBG)VMKrzCruXkdsVNx(fHqPqSkiTFcItgtev5xk)YpbB6B1OQ8lkPNpVbOVZ7NpjiBg5G3eNXF2fIEyv7(nIcDSvTiTzD9GEqCM9n1egjuwDWgC7ntbCT9T3jkriI(cUmL5vUaLk6XC5RTV46OgllxDS1WubugSIgJ)6pGfNlIKYRpW)7fOlH1loLT9nv0OBqJ10vmtqYGNgp)ZOzE5y(mjlgEwMbOxHCSW2(70bEiGWHC0XX0rj66VLHZhDnFvcDfXKtOwZPe68ng0vkJwi18(3VyMALu1BxjJQkJCsRVB1BsYFx97Mj9Hiqbf(drEkJ46bjZwo2hIKbK(Yl9O0p2hx)V)Mk36RXRUBG3oQUol7VAMWz4210udn6NtS0hxoiDyWrUflQdp8tDF9ZbRTkoZ7QQfdA)DjWUReUW0VC57UWkf6Tp)eQZVSkqzyCt7gYNWuTJy8tVb4TBE5fj20EvFvDSZb9Wv3YftNytFQMBFIkMGHr5QVZmvouft16yQHwBrtAJBTl5XqBTfGtboGsMjOhZRMJ6xDf1LgnPywFJDg3qcdRCTERxlpRU2TCyLDfmgOIB9wVa(xfa6JTyDXnQHxMEXel4TiRky41mJ642rqrRBhUKWsbGDMRBPd)uBZJCsr3XXQRoe1IT7fzxCkoQ8HDG7L2ZYuJO9MXK6BGpEedwnux0Ge8mdkw96KH2qtWFqA60aNZH20ZX503mgEFyZPHiJJouNoXb5QQIU1zevBQilv392C5PiUxMnhdaNybH9GMp6TCXVxXBLiZB9QBo8Q0qQRFfrMTxdURMM4SGwhU(0fO2ygZ6qGN3YzNqQN3ATEcw4FC6ehmpQRXUdWmaLUrtP2jquPx7uh6m6VxYahXzELcmP)txcT04Gk4hPSaF)KIdmYdskCc(F]] )

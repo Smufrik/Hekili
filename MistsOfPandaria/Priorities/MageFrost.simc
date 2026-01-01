@@ -3,51 +3,55 @@
 ## Precombat
 actions.precombat+=/arcane_brilliance,if=!buff.arcane_brilliance.up
 actions.precombat+=/frost_armor,if=!buff.frost_armor.up
-actions.precombat+=/summon_water_elemental,if=!pet.water_elemental.active
-actions.precombat+=/rune_of_power,if=talent.rune_of_power.enabled
-actions.precombat+=/evocation,if=talent.invocation.enabled&!buff.invocation.up
-actions.precombat+=/incanter_s_ward,if=talent.incanter_s_ward.enabled&buff.incanter_s_ward.down
-actions.precombat+=/use_item,slot=hands
-actions.precombat+=/potion
-actions.precombat+=/frostbolt,if=time<2
+actions.precombat+=/summon_water_elemental,if=!pet.water_elemental.active,precombat_time=15
+actions.precombat+=/mirror_image,precombat_time=6.5
+actions.precombat+=/evocation,precombat_time=5
+actions.precombat+=/rune_of_power,if=talent.rune_of_power.enabled,precombat_time=3.5
+actions.precombat+=/potion,precombat_time=2
+actions.precombat+=/frostbolt,precombat_time=2
 
+## Core rotation
+# Cooldowns and maintenance
+actions+=/use_item,slot=trinket1
+actions+=/use_item,slot=trinket2
+
+# Evocation priority - use when Rune of Power is about to expire or mana is low
+actions+=/evocation,if=buff.rune_of_power.remains<=cast_time
+actions+=/evocation,if=mana.current<=45000
+
+# Rune of Power maintenance - refresh when down or about to expire
+actions+=/rune_of_power,if=talent.rune_of_power.enabled&(!buff.rune_of_power.up|buff.rune_of_power.remains<=cast_time)
+
+# Synapse Springs with Icy Veins and Brain Freeze at 2 stacks with Fingers of Frost
+actions+=/use_item,slot=hands,if=cooldown.icy_veins.ready&buff.brain_freeze.stack=2&buff.fingers_of_frost.up
+
+# Racial cooldowns - use when Icy Veins is ready or on long cooldown
+actions+=/blood_fury,if=cooldown.icy_veins.ready|cooldown.icy_veins.remains>=75
+actions+=/berserking,if=cooldown.icy_veins.ready|cooldown.icy_veins.remains>=50
+
+# Icy Veins - use with Brain Freeze at 2 stacks, cooldowns active, and bloodlust/long fight
+actions+=/icy_veins,if=buff.brain_freeze.stack=2&(buff.blood_fury.up|buff.berserking.up|buff.synapse_springs.up|buff.bloodlust.up|target.time_to_die>=180)&(buff.bloodlust.up|target.time_to_die>=180)
+
+# Dump Brain Freeze at 2 stacks immediately
+actions+=/frostfire_bolt,if=buff.brain_freeze.stack=2
+
+# Ice Lance with Fingers of Frost when Icy Veins is on cooldown
+actions+=/ice_lance,if=buff.fingers_of_frost.up&cooldown.icy_veins.remains>=10
+
+# Multi-dotting - Living Bomb on up to 3 targets if fight duration permits
+actions+=/living_bomb,cycle_targets=1,max_cycle_targets=3,if=talent.living_bomb.enabled&target.time_to_die>=dot.living_bomb.tick_time*3&!dot.living_bomb.ticking
+
+# Nether Tempest - multidot on up to 5 targets
+actions+=/nether_tempest,cycle_targets=1,max_cycle_targets=5,if=talent.nether_tempest.enabled&!dot.nether_tempest.ticking
+
+# Frost Bomb on current target
+actions+=/frost_bomb,if=talent.frost_bomb.enabled&!debuff.frost_bomb.up
 
 # Frozen Orb on cooldown
 actions+=/frozen_orb
 
-# Icy Veins usage
-actions+=/icy_veins,if=(talent.rune_of_power.enabled&buff.rune_of_power.up)|(talent.invocation.enabled&buff.invocation.up)|(talent.incanter_s_ward.enabled&buff.incanter_s_ward.up)|target.time_to_die<20
-
-# Level 90 talent maintenance
-actions+=/rune_of_power,if=talent.rune_of_power.enabled&buff.rune_of_power.remains<=cast_time
-actions+=/evocation,if=talent.invocation.enabled&buff.invocation.remains<=gcd.max*2
-actions+=/incanter_s_ward,if=talent.incanter_s_ward.enabled&buff.incanter_s_ward.down
-
-# Use gloves and trinkets with Icy Veins
-actions+=/use_item,slot=hands,if=buff.icy_veins.up
-actions+=/use_item,slot=trinket1,if=buff.icy_veins.up
-actions+=/use_item,slot=trinket2,if=buff.icy_veins.up
-
-# Racials with cooldowns
-actions+=/berserking,if=buff.icy_veins.up
-actions+=/blood_fury,if=buff.icy_veins.up
-
-# Potion usage
-actions+=/potion,if=buff.icy_veins.up|target.time_to_die<30
-
-# Water Elemental Freeze for Fingers of Frost
-actions+=/freeze,if=!buff.fingers_of_frost.up
-
-# Ice Lance with Fingers of Frost
-actions+=/ice_lance,if=buff.fingers_of_frost.react
-
-# Frostfire Bolt with Brain Freeze
-actions+=/frostfire_bolt,if=buff.brain_freeze.react
-
-# Multi-dotting
-actions+=/living_bomb,cycle_targets=1,max_cycle_targets=3,if=talent.living_bomb.enabled&!dot.living_bomb.ticking
-actions+=/nether_tempest,cycle_targets=1,max_cycle_targets=5,if=talent.nether_tempest.enabled&!dot.nether_tempest.ticking
-actions+=/frost_bomb,if=talent.frost_bomb.enabled&!debuff.frost_bomb.up
+# Dump Brain Freeze with Frostfire Bolt when Icy Veins on cooldown
+actions+=/frostfire_bolt,if=buff.brain_freeze.up&cooldown.icy_veins.remains>=10
 
 # Filler
 actions+=/frostbolt
