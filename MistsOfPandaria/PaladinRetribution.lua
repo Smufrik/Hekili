@@ -1077,6 +1077,29 @@ spec:RegisterAuras({
         end
     },
 
+    -- T15 4-Piece Aura
+    templars_verdict = {
+        id = 138169,
+        duration = 3600,
+        max_stack = 1,
+        generate = function( t )
+            local name, icon, count, debuffType, duration, expirationTime, caster = GetPlayerAuraBySpellID(138169)
+
+            if name and state.set_bonus.templars_verdict > 0 then
+                t.name = name
+                t.count = 1
+            end
+
+            t.count = 0
+            t.expires = 0
+            t.applied = 0
+            t.caster = "nobody"
+            t.up = false
+            t.down = true
+            t.remains = 0
+        end
+    },
+
 
     ret_tier16_2pc = {
         id = 144586,
@@ -2262,4 +2285,4 @@ spec:RegisterSetting("seal_of_righteousness_threshold", 4, {
 } )
 
 -- Register default pack for MoP Retribution Paladin
-spec:RegisterPack( "Retribution", 20250720, [[Hekili:9M1xVTTnq8plfdWOPRZZw2EnBikpS9sBEOyyQpljAjABUilPrsLudyOp77iLLfjfPKskArrBt4D8UF3F1DsHld)syqkIJd)S3cVnlUDP38fl9wUCtya)ujomOeL8iAp8d5OJW)(pyoLSTItkYf0oLvGsfYGvurta6bKJ)ffTJxhVz9T)YTHbBRiz8pLhU1UEwdxTeNe(5pSim4ajnf3WkMLeg8LdewDS4VO64laPoUyh87jceuhNryCG8UcAD8hXpsYiZbyrl2rYaW8t1X)nkdLsY)J6yfKx)aqXaP1pu)qJuzZlP4KIJBr8F2)x3MHzms((OIDrpc)p79KD(BR2TBoJJ4S5PfpNpt(7TCkpACHDKS)a)QWoIyCm90ltCLfnwJnA)Bv6(J4CUWUUYbCodJYeQNtR4h6Sf1tBaH4kpHJW54Jem7UwoOcyJlQy5a8I4hOy2HIS0znk(n(lMjbbO60iXDy(GmX2qGMK6HenQ2q09(JbPXasJ7tO53EXJxuKMvX4ZPyGRZNBogLNqahzuzXZy68QYMWd6jC(ErO8zkcCzvL3C(mhr3J5Z5KJ4iErukbFN)6f3OQts()vryeDfRCO0spFU3Xu8rejNDNV3nZElyDNAGZ9(RSQ2ooEN3IlIlL8ejhhvwrlly4gBudB6M01iIkmQkvVW(kenLGYfbHwVKEnI77krOuJyQGDokdU(C1JNJZrqvq6S(Ejik0zIcNIQORy4ichF89IwwquNK)iMVuOKNquIqKZVCye7uEselRG7VCMnLyldqjcPtaAiK8O)YjagVraJ33jWiZWJ2vrpPDkMYWurGtlBGMGYfjuuQSnshf8xXjY(OqDvohNNGvcG9joCy81zuAwvMO(NfDabf7Q5sAN)DhfxkVyGd7OaeMDR8uRB93mqrzBJhTAbTmEOSFyLRk7eAfdLcIqk8zQGqveqoAzgIYIEcdf1jYhnzbWdcQXKNttEMDkn98wR13qgnfDCKDPuj9mIWFpdN4NuaT)HO3CdMBLOakJXZ9lMngl35VyU3Rmky)zitY)n4T6Gk)aU7jJ2si1CRTJlmnT0AmGPsjpIhoiyWS1GGdEudcoyPxqa)1cAcH5Ogu)e4XZnrck0(LtW0LBI8kte517ZovEqmwglQvITTqS53g2f0YLvB3KOQrBs7BiLBs5w2QnT5Ch2CV6WSzUMevnxtA9mxNaxjaUUjaAePx)Y6v7AaS7xpj4m6nBABsVKNQo8J8W2uTWaqYm4ox2B6dEWAspJO5IPScd(0XYckhYiJ9m2jAE9dHbiyy(cAyWhHjdrHbscYf(W7qvzC4h)SCbWwL9NHbjuyyfyUeXIB7STxqD8Sgv15VQJVRoEKHXLxRzhH6434xhVqEIXi61XafXy6a2LwdSDOkcc5GFyAiU)(dwr(9(td6thOAsra4vob8BRJLy2yXJ64ZNRJBjAU(HeooArhFtZD7VraeJaeVg8630b5MfGeyC9Oy0ChLgf5kzVrDEsantAlDZj040xnas15(DGGwOOoR9Ounlf8iSTndNWOpjyNu09Ucb9BVob5CljHm)GtzoWcrT(ulQvss171gh6WJQefq4wdi0Yx7ItQGY9olYkILDjNwGL9mAJKjlJA3i6gJO5TqDfAa8)9HHV3la(E)yHVNa(lxiWFlO7wqt1MeSTuJTRBSzYMNkB6RWzYQ7(sJUk3yjGF7UkTm2(arAaUBAn0cG)GXUggKW2D)iBpCYZwdu48nJ2ru9HigBT1RlXLoY6qxDkjjYhPbO9XonvLa7dOd3nehWbmjZtP1GXyBsfB2g0UXz4JN5kc0(uq4zUJO3FxTI1yttJswVfgyeM6ga6iRP2jDXK6Qg2y3eCCTdQnoRIh0atRlX5itv6orX(CnUtx8gzAWbeLTGHN7EI2QnxBlWPT3TuOU7tnggBx)tkMnQjkgBdBMOywPQNO4yv6jKO44M2suCYQAII7QD39cnPihSTl7P3Q8ssdSoV6ZzAOiH2TQU7Rbcd)S5Wh6(zZT3NGd28k28S95rXLUYShXuQ9CxGTAALYATfhUgBL2ikxD56o2vMfI6owZ3tWeCSMxXMJTppQo2rkJ79giCTP8ipqy1Rz(a37HDVMc7fEFb704qKwTHPTwJXR64AV0R0cfsl46N1m0YlSO9sBn)oTnFezkPSHU9peS5xbUNdO7J825N3Q(LzLTbg2jQ(TDDjfR2H8tel9NQLmx2AxVGz94DRA)t4)p]] )
+spec:RegisterPack( "Retribution", 20260102, [[Hekili:9I1xZXPnq8plDYmm2PPuoUZjoDm(H2xA8dz60lZ03aKbD3PA(xfc74zUHp7DL44qsibyNM(qITrR293(BxTA1gUk8lHBtrmC4N998FV3kpF3vBw5D1MWTSNRWHBRqjpG2d)sbkh())eZOK7ByKYc(ApNvIs56OUSHMaRVLK)Bu0owB8vBU(NUoC79nKm2NkcV3OD2Sc2Afoj8ZFWlC7bsAkUtuCDs42VCGu3gZ)hQn(eqAJl3b)DchbTXzKAgS8UsAB8VJFGKrCd3k(OWXW7qnzm4x)SWrXfO7ZWPH)A42ekHHPeehG725wJrzrL7Iy0g2b30YNaD70zMhXr4cCobd25M24EjPK9hy4YM6cCDDe7afxFOmlvSTKY87raf8dbTXEIVqXW3YXfPr89dAcwbSfqyDEcWcYiiKb80YqScoSJ8Bdwg0xoqv0chWR1aC)gQk7(5GdCrBSWhUpRSmnRPM5sXG0TXhp2g3ViQiHGlyrvLpHPUnvc41TYJ4I9KI9rprrq0IV0LD7LHO7XmxgjhhXkJsjq6YnGhSbIcx2NcNxUVPtRrNGga(nwz7E8qk(NgsnHVHt0m3IJwIIZrKI6o76lqMJWPak(5oZ2fnwpbKvL(TGI8Kmxk5rsboQQHwvwJ75UlhyCj8W9TRMotsg9nvdArLM5k69VofTVbrtjOcEwtFu9bqXISMpyvNmugiPRGjeybsdojypNAWSILKzV(4WaEK1ihcxBjXfQ0v8aMTsgupIGFac6EAXO6NlsIQZkzIJkRgYsnalZP2AjtQlwZGYEDQ2xkh(m0a4)XPHV)la(())cFFo8x5XXFpOfLeI21qFw2N4ITsrmmTgt5jr6I5llgIMGk4NROuat6IQxWAuQh(R4eXvDqXWcgUibV0eWVDQsjJDmqeoG9IwNCGmEn66OdiOK(Ip88Fm2vWGa22Rhz6wlFtfqHVF1SveLVnrPkIHQeNQiRc9tQTgYFYfiFMcGNKpH2uJsb7CchoJX(e2WEbXjiGf5EsLgW5vziAD0JyOYCctyy9YGMDono2XweO)wq4Y3zS7hLpX2LMWVPO7wh1JS(EAySgADCBsj09cKE6QT5EumO9NqeMSJn3obIRVdU5fLFrJNROMM)mTBAprXCdo2tx8NPnXjuLPGHV9AIMoBUXuGJDap0COqP2Rtnhg)7M0958s3C1CLCIsp3bubL8awprr)KQAII2MFbjkw2PPefRIkNOy)0U9AH6Ri6WDi7rpU2xpyF2ZvhCZrqp)4Vwsti159xjiFtt3kcWDTmHFouOX06TFOY0976fqX6BXe3owgjsDTEvILC6Z(rS1l7WSsHXPpLTwPjLZuUkXUw)OOkXEoeUCIvFlMi2XYitSZCq2wM3Oe2zVuy9RPhb7Vf7wfdoka)cExJfvA0hw2tBQOgpioSwixBBReVm)EKXPz0Vj4VRR5vsHYWDVWsmjfkPQB9)aLHsjf)sBS0CCAJhn0g9znWqmPzli(wVPeFwuiyAseQ7a)5ZtQfJ(ro)QebFQzaBVM)Sw0ED)0fYeKme9Q5YWhs1vEFaA3aonrl6yYpLxvsz8(N91gaLB7D8au5osgGO30gBMNV7nJO627AVRtv1UNJW)yWppkq(oYUaTyHZygCELjyZZktoOSy11rRVJt)bJyFZBPNY5U7zjGVRm0RbxC0W4Cup0FZmtYYPZW)qGNJ28Sc4ZYYecu00iKmEiBAi62G5G0CazswLdOlofFugz2XJxy45ynvoMBS6YJhhpVPBc24DPmuKQ3nyy9XFD8OTAJ3e4FPZfdV(42G1gn7GeV137K6mDxQc2uDPZbkTNXkTbRdFAb7v(vvCXNyIuoJzjikm4ICsrw1n14iO(yExaVFCoCJyFenbRCmzetzasridVupy1caJ)mGX)7eygMaKYxppWhLSbL57iVY4jMifaTpxhZHXxNtP4vktbrckgNqZ3nui35dhe6fX8Lp3gC1ehk7l8On4bhLJ9tBCzDR2lUJmiKvHEBwC1yaWtcQ50Nvx2X8kD182Ou3qDebYlXBo)DqN8bZnpbouMtMB9CMtKBcGE3FLrbZ3HSi(BYDzzubMsivO1(UiwMv0E(90bblVvxjiyrg5GGfrgfe6FLL5ZGQFbUEUlsy41vot8MEtm30KG(JQv8E9fLDB91(gs6wu2LXrrAGEN2D1FQRI7QVOS7QV2i31kWnfc1I2BEz1RT1e2TBweGMDNdpdvVbi93Tc9Qxsd3(x4YNepMk8F)]] )

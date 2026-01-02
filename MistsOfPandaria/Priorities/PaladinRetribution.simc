@@ -33,14 +33,14 @@ actions+=/hammer_of_the_righteous,if=active_enemies>=4
 actions+=/judgment,if=buff.avenging_wrath.up
 actions+=/crusader_strike
 actions+=/wait,sec=cooldown.crusader_strike.remains,if=cooldown.crusader_strike.remains>0&cooldown.crusader_strike.remains<=0.2
-actions+=/exorcism,if=active_enemies>=2&active_enemies<=4&buff.ret_tier15_2pc.up&glyph.mass_exorcism.enabled
+actions+=/exorcism,if=active_enemies>=2&active_enemies<=4&buff.templars_verdict.up&glyph.mass_exorcism.enabled
 actions+=/judgment
 actions+=/wait,sec=cooldown.judgment.remains,if=cooldown.judgment.remains>0&cooldown.judgment.remains<=0.2
 actions+=/divine_storm,if=buff.divine_crusader.react
 actions+=/templars_verdict,if=buff.divine_purpose.react
 actions+=/exorcism
 actions+=/wait,sec=cooldown.exorcism.remains,if=cooldown.exorcism.remains>0&cooldown.exorcism.remains<=0.2
-actions+=/templars_verdict,if=buff.ret_tier15_4pc.up&active_enemies<4
+actions+=/templars_verdict,if=buff.templars_verdict.up&active_enemies<4
 actions+=/divine_storm,if=active_enemies>=2&buff.inquisition.remains>4
 actions+=/templars_verdict,if=buff.inquisition.remains>4
 actions+=/holy_prism,if=talent.holy_prism.enabled
