@@ -143,7 +143,10 @@
         "callHook",
         "RED_FONT_COLOR",
         "GREEN_FONT_COLOR",
-        "coroutine"
+        "coroutine",
+        "ClassTalentImportExportMixin",
+        "ExportUtil",
+        "PlayerUtil"
     ],
     "Lua.runtime.version": "Lua 5.1",
     "Lua.runtime.builtin": {
@@ -158,7 +161,7 @@
         "utf8": "disable"
     },
     "Lua.workspace.library": [
-        "c:\\Users\\fredd\\.cursor\\extensions\\ketho.wow-api-0.20.8\\Annotations\\Core"
+        "~\\.vscode\\extensions\\ketho.wow-api-0.21.0\\Annotations\\Core"
     ],
     "Lua.type.weakUnionCheck": true,
     "github.copilot.chat.codesearch.enabled": true,

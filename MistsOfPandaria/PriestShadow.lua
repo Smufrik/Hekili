@@ -1759,6 +1759,8 @@ spec:RegisterAbilities( {
 
         spend = 0.15,
         spendType = "mana",
+
+        toggle = "interrupts",
     },
 
     -- Dispersion
@@ -1767,6 +1769,8 @@ spec:RegisterAbilities( {
         cast = 0,
         cooldown = 120,
         gcd = "spell",
+
+        toggle = "cooldowns",
 
         handler = function ()
             applyBuff( "dispersion" )
@@ -1794,6 +1798,8 @@ spec:RegisterAbilities( {
 
         spend = 0.23,
         spendType = "mana",
+
+        toggle = "defensives",
 
         handler = function ()
             applyBuff( "power_word_shield" )
@@ -1832,6 +1838,8 @@ spec:RegisterAbilities( {
         cast = 0,
         cooldown = 30,
         gcd = "spell",
+
+        toggle = "defensives",
     },
 
     -- Mind Sear

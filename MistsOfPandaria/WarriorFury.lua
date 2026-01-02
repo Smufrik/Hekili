@@ -378,6 +378,28 @@ spec:RegisterAuras( {
             t.caster = "nobody"
         end,
     },
+    sudden_death = {
+        id = 52437,
+        duration = 10,
+        max_stack = 1,
+        generate = function( t )
+            local name, icon, count, debuffType, duration, expirationTime, caster = FindUnitBuffByID( "player", 52437 )
+
+            if name then
+                t.name = name
+                t.count = count or 1
+                t.expires = expirationTime
+                t.applied = expirationTime - duration
+                t.caster = caster
+                return
+            end
+
+            t.count = 0
+            t.expires = 0
+            t.applied = 0
+            t.caster = "nobody"
+        end,
+    },
     
     -- Enhanced Berserker Rage Tracking
     berserker_rage = {
@@ -1122,10 +1144,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
 
-        toggle = "cooldowns",
-
         startsCombat = false,
-        texture = 458972,
+        texture = 132109,
+
+        toggle = "cooldowns",
 
         handler = function()
             applyBuff( "recklessness" )
@@ -1170,7 +1192,7 @@ spec:RegisterAbilities( {
         spendType = "rage",
         
         startsCombat = true,
-        texture = 589617,
+        texture = 589068,
         
         handler = function()
             removeBuff( "bloodsurge" )
@@ -1280,7 +1302,7 @@ spec:RegisterAbilities( {
         spendType = "rage",
 
         startsCombat = true,
-        texture = 236171,
+        texture = 132453,
 
         handler = function()
             -- Ranged pull; no extra state
@@ -1360,6 +1382,8 @@ spec:RegisterAbilities( {
         startsCombat = false,
         texture = 136009,
         
+        toggle = "defensives",
+        
         handler = function()
             applyBuff( "berserker_rage" )
             if buff.raging_blow and buff.raging_blow.stack < 2 then
@@ -1394,10 +1418,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "defensives",
-        
         startsCombat = false,
         texture = 132351,
+        
+        toggle = "defensives",
         
         handler = function()
             applyBuff( "rallying_cry" )
@@ -1413,10 +1437,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "defensives",
-        
         startsCombat = false,
         texture = 132336,
+        
+        toggle = "defensives",
         
         handler = function()
             applyBuff( "die_by_the_sword" )
@@ -1476,10 +1500,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "cooldowns",
-        
         startsCombat = false,
         texture = 613534,
+        
+        toggle = "cooldowns",
         
         handler = function()
             applyBuff( "avatar" )
@@ -1495,10 +1519,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "cooldowns",
-        
         startsCombat = false,
         texture = 236304,
+        
+        toggle = "cooldowns",
         
         handler = function()
             applyBuff( "bloodbath" )
@@ -1514,10 +1538,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "cooldowns",
-        
         startsCombat = true,
         texture = 236303,
+        
+        toggle = "cooldowns",
         
         handler = function()
             applyBuff( "bladestorm" )
@@ -1533,10 +1557,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "cooldowns",
-        
         startsCombat = true,
         texture = 642418,
+        
+        toggle = "cooldowns",
         
         handler = function()
             applyDebuff( "target", "dragon_roar" )
@@ -1555,10 +1579,10 @@ spec:RegisterAbilities( {
         end,
         spendType = "rage",
         
-        toggle = "cooldowns",
-        
         startsCombat = true,
         texture = 236312,
+        
+        toggle = "interrupts",
         
         handler = function()
             applyDebuff( "target", "shockwave" )
@@ -1574,10 +1598,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "cooldowns",
-        
         startsCombat = true,
         texture = 613535,
+        
+        toggle = "interrupts",
         
         handler = function()
             applyDebuff( "target", "storm_bolt" )
@@ -1592,8 +1616,6 @@ spec:RegisterAbilities( {
         
         spend = 0,
         spendType = "rage",
-        
-        toggle = "cooldowns",
         
         startsCombat = false,
         texture = 236331,
@@ -1664,10 +1686,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "interrupts",
-        
         startsCombat = true,
         texture = 132117,
+        
+        toggle = "interrupts",
         
         handler = function()
             applyDebuff( "target", "disrupting_shout" )
@@ -1684,10 +1706,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
 
-        toggle = "interrupts",
-
         startsCombat = true,
         texture = 132938,
+
+        toggle = "interrupts",
 
         debuff = "casting",
         readyTime = state.timeToInterrupt,
@@ -1706,10 +1728,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "defensives",
-        
         startsCombat = false,
         texture = 132345,
+        
+        toggle = "defensives",
         
         handler = function()
             local instant_heal = health.max * 0.1
@@ -1727,10 +1749,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "defensives",
-        
         startsCombat = false,
         texture = 132361,
+        
+        toggle = "defensives",
         
         handler = function()
             applyBuff( "spell_reflection" )
@@ -1745,8 +1767,6 @@ spec:RegisterAbilities( {
         
         spend = 0,
         spendType = "rage",
-        
-        toggle = "defensives",
         
         startsCombat = false,
         texture = 132361,
@@ -1764,8 +1784,6 @@ spec:RegisterAbilities( {
         
         spend = 0,
         spendType = "rage",
-        
-        toggle = "cooldowns",
         
         startsCombat = false,
         texture = 603532,
@@ -1828,6 +1846,94 @@ spec:RegisterAbilities( {
             applyDebuff( "target", "demoralizing_shout" )
         end,
     },
+
+    -- Stance switching abilities for MoP
+    battle_stance = {
+        id = 2457,
+        cast = 0,
+        cooldown = 1.5,
+        gcd = "spell",
+
+        spend = 0,
+        spendType = "rage",
+
+        startsCombat = false,
+        texture = 132349,
+
+        usable = function()
+            return state.current_stance ~= "battle", "already in battle stance"
+        end,
+
+        handler = function()
+            removeBuff( "berserker_stance" )
+            removeBuff( "defensive_stance" )
+            applyBuff( "battle_stance" )
+            state.current_stance = "battle"
+
+            local current_rage = (state.rage and state.rage.current) or 0
+            if current_rage > 0 then
+                spend( current_rage * 0.25, "rage" )
+            end
+        end,
+    },
+
+    defensive_stance = {
+        id = 71,
+        cast = 0,
+        cooldown = 1.5,
+        gcd = "spell",
+
+        spend = 0,
+        spendType = "rage",
+
+        startsCombat = false,
+        texture = 132341,
+
+        usable = function()
+            return state.current_stance ~= "defensive", "already in defensive stance"
+        end,
+
+        handler = function()
+            removeBuff( "battle_stance" )
+            removeBuff( "berserker_stance" )
+            applyBuff( "defensive_stance" )
+            state.current_stance = "defensive"
+
+            local current_rage = (state.rage and state.rage.current) or 0
+            if current_rage > 0 then
+                spend( current_rage * 0.25, "rage" )
+            end
+        end,
+    },
+
+    berserker_stance = {
+        id = 2458,
+        cast = 0,
+        cooldown = 1.5,
+        gcd = "spell",
+
+        spend = 0,
+        spendType = "rage",
+
+        startsCombat = false,
+        texture = 132275,
+
+        usable = function()
+            return state.current_stance ~= "berserker", "already in berserker stance"
+        end,
+
+        handler = function()
+            removeBuff( "battle_stance" )
+            removeBuff( "defensive_stance" )
+            applyBuff( "berserker_stance" )
+            state.current_stance = "berserker"
+
+            local current_rage = (state.rage and state.rage.current) or 0
+            if current_rage > 0 then
+                spend( current_rage * 0.25, "rage" )
+            end
+        end,
+    },
 } )
 
 -- Range
@@ -1853,7 +1959,7 @@ spec:RegisterOptions( {
 } )
 
 -- Default pack for MoP Fury Warrior
-spec:RegisterPack( "Fury", 20250515, [[Hekili:TznBVTTnu4FlXjHjMjENnWUYJaUcMLf8KvAm7nYjPPQonGwX2jzlkiuQumzkaLRQiQOeH9an1Y0YnpYoWgwlYFltwGtRJ(aiCN9tobHNVH)8TCgF)(5ElyJlFNlcDnPXD5A8j0)(MNZajDa3aNjp2QphnPtoKvyF)GcKKOzjI08QjnOVOCXMj3nE)waT58Pw(aFm0P)MM]] )
+spec:RegisterPack( "Fury", 20251017, [[Hekili:nR1EZTTns8plTzghNEUQ6rSDthlptDUEZvpTPzQsU8FKeIescN5dDaGwX3OHF2Vfa8biiajTJBMBYKejsG99U43UqEZ8(G3Qieh79U5tNF(SPZUCYSlw86fER4pSh7TApk8o0w4dPOe4F)h50hep8H4muKyVSSCAi8cVvRZjX8Fn1BTvco9cVvOC(UmQ3Qvj5BOK78wTJefHv7aZc9w9HDewrG4VOIGsoxeKTb(EiNKLweetyC41BYOfb)t8DKyYeqCOzBiXGq8IIaHawe8jeLseR5NF)VvU6FxTtbXEpkncrjOIBHnCdIHJGNde)tzhyKeyrFi7dWQO4yscjfji4nKvkID7lEXlKVlmlznIxei((TkXJnzF1Z)Bl)b4F5XyF2USC(zKnl)M15B2mr)PtY3BFRWhsazKKU1C7MVbiXjpccVgtzy6DyQpJJsdXAYLXBKKqPP7ZJJR8acBpnlPXwzNnXzzr8Dektk6Csc(Qzto3LYgNXy5mFwcITRz9f3wASfEiW4xXFDdUy77q0T4QTTCQ(7AukksTgPUItfFDsu2Hu9vVppjbhlPKGK8jryLnhX4GbFcfdRvFd08uF138fXLNjsrwMKDpobNkv8QppjIOSQxF(G7hLjfuXZVh7JtXjem76zdUpgiIG)xj6TmqO44UlpcVbNYawWQTZRKuaI(vKqzOHN)Ve5kRJXv5DCrwX2IGtHaG8yex(L6CN7rX546T8QgFElbeKR7lxJsEcz(XGD2phYgplB)sgMFMKus363x5kAfRmbTFFmbh5J4JLnBWi(ovqE4DS2msYH)nKWZ8r0quk2hkS8zW6prUAPDQi4TLIayVeYqrW3xeSJSDhMbMS9IQoeouW4WomurPviwhrRBKVD1KItqKuMkfQuiYIf0MPkC9wO4K0weIuLjpT0D8tfbF7FaF)JSpE4JWAsHkD3isoxdF)Blc2sZY33JpcstVd8ISu4VULpOguLvEIUF8QzUPm6Ee8zvYwSifr9ai3uqMOtE(4KSyeuQzNgZQF2xa)KoIpqjP3HfhSCGW3P8eICK)uZW5w0as5t44KZyXz8LCfTMjKZtFSYZRoEuUbDpwRJbgfVN)8YBPj6prHeuSUfQFxL)g4i8N3GTYZbGN(0ORup(f5PgfbICroe2aLZhKJ9CYZjonZhpgwME7QqWIEszno71KTLUQYNyPYYkHJkfwQw1SXYmxAupfyqBfyza6COxxJk(QzXQsYxVCUBsZ4z0e)1zXCTe)MhoyMVBkhbccCyknRvbmTNocARcP(momNJ)bzjzwoveEbN5e2tjdSAl1UwwUacTFK4CnfcLtS98Y4g309ajocoveGL3q711ILoLB90A6wMQVvcga0NdYdgZfi3uN1o6yaNU6JhhWCEtt0iavHehJPJk0Tr6fs7ECAeK9oAtLir66Lxo19gaahzKWoB5n9SfZMhe74QfdZd(oky6Rq09Z)XV0aJ7Mye0LLi(x4xK6QgmbPNsvHUeJuTJtEGMsKNpvRYdGuvAhRiBRZxREyDQWPNwxETniSRxU4KAQF84PvFUSVgRaYaqlVsRGLextynMidj8jbZQnjE(WbPO3FDOFQCk)1G5PnxE2Qd(jinmwCQtvV6yrN1VngJUxpfwX1dvlUUyrcSC)q1Q1pKR1Z7EuxVhORzhF6hM((62bqRjXeob3j48rFcAzaPLAMTu3XDMzPfD01(nyXtqQC6nnFHJIMxo9eX6AAn(QLVEuYM1kQNpTUw5Vx2RUXeDQAHVrIaoSxfURgsqvR9ZMBDxAZNWyd)O11pwylJJAwpw4V307FBLTzOaISBc2F9dWwbJ2HmQmDBhgfdfq2hYV6IPNqsdZeJcWpcLawt)ZzxxUGe0N)UPtMFUdstrXXpi2yOcPVgz1pJRT4GtYG9r(Ve9PInKimZLiOYzJ8P4TqGev23SPO4AVQ1a(Ku8yL(7jHGl8bFAU6eiT9ar0Y4x9LaXVERG4ygqPQbPkMG6benf0wMyuPqLlsY(mkVSO5lBbj4LWr24)toHkgUjllbwnkNNLG4IhabLPBHZrlUvsNnzXqkRe6gkNIe9QHPyjOayXK0IaUyzkntne2IG158Q1LMjfI80wRoksS4i4GT1ig(NGWpbKqBNNx(kDmRIGvl6y9GdhR(9BKu4vlaeoFmLLVxqlXcQuLxAo3ZxoXbNHQiJLN))In1MA0evowTrzbVWPfupUvz9(1KQfDHXK7Hx7Tcqyh69UlN7Ts(m5TiOh6cp4DY7LOSuN3nERYG8bg8QvkYbjhLqueFkoh(pXycLgJHgvO6YgOK9kc9fnDtPC4RUAeDSsECiR9rRcUX7kp5wNzTHqly3cd2vXL22bdL)rpmtGEWJWGGlOupOOlcUQiaqcjeTx7q00rv3rWg9aoDoFZQXBoSmdOfcor4CTa7vPic14Cd1OHQwbXlj5tMF1gjfrf8)IH4Fhe(ptIqnDfsXLoCMvtVecYJZ46FVrop9PlnfbVQi44rrjYnDM0OrWZygkRqv(X(vL5FDe9wMR5c56noKRMXJAOWDgX6Zvi)SPoJ5EYKTrDQNkRKvML8nww5Oun0Cl9WPlKMnSjfUEDLc)0aJFvQhlaVQuSnlZ3hZRdcA3XyDTY2EAvxHsM4Q4U(6mkGAzoUJX9jzNzb7H3M0WAVHZIGRxwemxRSFZkKCBW6QD7(P3cBnCQzJsgnybulJUyKCsBNsw5Qkz54BnJIDnh4oHtDh3BJL32iFvXQsrYSANbLnB4VHUDh4BjvR1kTbiizLRcy6EEZkyUNCChr1viMkbRVi75M1ZAjewMFSZuY5UkxPBl6OJAZxwxRu1We6WLtLe3DrLML(MPnmT1WsKuWSIHjfeoqncOpDe5(LLamiVCkc6uvSuqh3GYJTIAxlbtIohKAnEQMmInOYURH68ybliG1tVPU(9C0qq1p)dB4vBiuNFqhGROiqRWTXpndvloLy2R2C)yjf7Uz6ws6pBC0h6q1gmXXS129F1dkpZFmjTOstVLQiJ6M1TfBynYRDcZJ63Y1J8hYLUj)BQk01(Nqv)rMvBYYVilzPtxevRXS2B0wi8WNZpWVpRU5GUBlZ2k1f3w9rkDWIiU(CT13cuNcTplxfL1wGmV4PkiFNQHkTD3ZQYPlKlSP868P142p185AUxhxpLCVVYweKd7zx0BTVuRHbHzPXB3ve)YrVtnAMQNOPVkDhpikYVkDh)1dIPRk01xOIrivV3XwNJC7CLAAnVy7A10J6C1wT7Iyp6U4gQrQHAI2rP0o3w3ysz86Vp5UMSVSULCJXAay8gYGB07dGgZjDmL0f6qi1cl1Xp2xVM6OILQHj0ORGx96rOGDqh3tlN1OJp3n6yElOo9I7T5EEKe9cLI09wRK48AU5QIGVdGkpzUgYsZRJRF0jg8vhQV(LV1)HeJvmNPlMDUMU(pCWuq1iLTROR)k99O1A3zx)1PnOrzONmaRZn0vrC9xOIpQX63FxrTVdxfy)5DcCf34C)UBBe6h1WAu3PvF9i13SwgGbTh0YO7Du9hV)3d]] )
 
 -- Register pack selector for Fury
 

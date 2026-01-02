@@ -28,7 +28,7 @@ actions+=/tigereye_brew,if=buff.tigereye_brew_use.down&chi>=2&(buff.tigereye_bre
 actions+=/energizing_brew,if=time_to_max_energy>5
 actions+=/rising_sun_kick,if=debuff.rising_sun_kick.down&chi>=2
 actions+=/tiger_palm,if=buff.tiger_power.down&debuff.rising_sun_kick.remains>1&time_to_max_energy>1&chi>=1
-actions+=/invoke_xuen,if=talent.invoke_xuen.enabled
+actions+=/invoke_xuen,if=talent.invoke_xuen.enabled&toggle.cooldowns
 actions+=/run_action_list,name=aoe,if=active_enemies>=3
 actions+=/run_action_list,name=single_target,if=active_enemies<3
 
@@ -36,8 +36,9 @@ actions+=/run_action_list,name=single_target,if=active_enemies<3
 # Single-Target (ST)
 # =======================
 actions.single_target+=/touch_of_death,if=buff.death_note.up&chi>=3
+actions.single_target+=/fists_of_fury,if=buff.tigereye_brew_use.up&buff.tiger_power.up&chi>=3&time_to_max_energy>4
 actions.single_target+=/rising_sun_kick,if=chi>=2
-actions.single_target+=/fists_of_fury,if=buff.energizing_brew.down&time_to_max_energy>4&buff.tiger_power.remains>4&chi>=3
+actions.single_target+=/fists_of_fury,if=buff.energizing_brew.down&time_to_max_energy>4&buff.tiger_power.remains>4&chi>=3&(buff.tigereye_brew_use.up|buff.tigereye_brew.stack>=15)
 actions.single_target+=/chi_wave,if=talent.chi_wave.enabled&time_to_max_energy>2
 actions.single_target+=/chi_burst,if=talent.chi_burst.enabled&time_to_max_energy>2
 actions.single_target+=/zen_sphere,cycle_targets=1,if=talent.zen_sphere.enabled&time_to_max_energy>2&!dot.zen_sphere.ticking

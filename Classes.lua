@@ -2946,6 +2946,7 @@ do
         {
             name = "virmen_bite",
             item = 76089,
+            texture = 609897,
             duration = 25
         },
         {
@@ -3554,40 +3555,146 @@ all:RegisterAbilities( {
 -- Support 'use_item,slot=hands' by exposing a pseudo-ability that copies Synapse Springs.
 -- This lets APLs request slot-based glove usage while we still drive behavior from synapse_springs.
 all:RegisterAbility( "hands", {
-    -- Keep simple labels; behavior is inherited from synapse_springs.
     name = "|cff00ccff[Hands]|r",
     listName = "|T136243:0|t |cff00ccff[Hands]|r",
 
-    -- Copy all runtime behavior (cooldown, usable, item, handler, etc.).
-    copy = "synapse_springs",
+    -- Equipment-based, not a learned spell; use a negative sentinel ID so the loader doesn't query spell info.
+    id = -82174,
+    cast = 0,
+    cooldown = 60,
+    gcd = "off",
 
-    -- Ensure the correct texture is always shown from the equipped gloves.
+    startsCombat = true,
+    toggle = "cooldowns",
+
+    -- Provide item/texture sourced from the equipped gloves.
     item = function() return (tinker and tinker.hand and tinker.hand.item) or 0 end,
+    itemKey = "synapse_springs",
     texture = function()
-        -- 1) Try the equipped glove's actual texture from the inventory slot.
         local tex = GetInventoryItemTexture("player", INVSLOT_HAND)
         if tex then return tex end
-
-        -- 2) Try the cached texture from our tinker tracker.
         if tinker and tinker.hand and tinker.hand.texture then
             return tinker.hand.texture
         end
-
-        -- 3) If we know the glove item, try its icon from item info (should be cached when equipped).
         local itemID = (tinker and tinker.hand and tinker.hand.item) or 0
         if itemID and itemID > 0 then
             local _, _, _, _, _, _, _, _, _, invTex = GetItemInfo(itemID)
             if invTex then return invTex end
         end
-
-        -- 4) Fall back to Synapse Springs spell icon so it never shows a question mark.
         if GetSpellTexture then
             local sTex = GetSpellTexture(82174) or GetSpellTexture(96228) or GetSpellTexture(96229) or GetSpellTexture(96230)
             if sTex then return sTex end
         end
-
-        -- 5) Final fallback.
         return "Interface\\Icons\\INV_Misc_QuestionMark"
+    end,
+
+    known = true,
+
+    usable = function()
+        -- Never recommend glove tinkers precombat.
+        if state and state.combat == 0 then
+            return false, "not in combat"
+        end
+
+        -- Only treat as usable if the glove slot's on-use is actually Synapse Springs.
+        local spellName, spellID = GetInventoryItemSpell("player", INVSLOT_HAND)
+        if type(spellName) == "number" and not spellID then
+            spellID = spellName
+            spellName = nil
+        end
+
+        local function isSynapseID(id)
+            return id == 82174 or id == 96228 or id == 96229 or id == 96230 or id == 126734 or id == 141330
+        end
+
+        local knownByID = isSynapseID(spellID)
+        if not knownByID then
+            local s = (tinker and tinker.hand) and tinker.hand.spell or 0
+            knownByID = isSynapseID(s)
+        end
+
+        local knownByName = false
+        if not knownByID and type(spellName) == "string" and spellName ~= "" then
+            local n = GetSpellInfo(82174) or GetSpellInfo(96228) or GetSpellInfo(96229) or GetSpellInfo(96230) or GetSpellInfo(126734)
+            if n and spellName == n then
+                knownByName = true
+            end
+        end
+
+        if not (knownByID or knownByName) then
+            -- MoP Classic sometimes omits the exact Synapse spell ID from the glove slot; only treat as usable if we at least see an on-use spell on the gloves.
+            local hasGloveUse = false
+            if spellID and spellID > 0 then
+                hasGloveUse = true
+            elseif spellName and spellName ~= "" then
+                hasGloveUse = true
+            elseif tinker and tinker.hand and tinker.hand.spell and tinker.hand.spell > 0 then
+                hasGloveUse = true
+            end
+
+            if not hasGloveUse then
+                return false, "no synapse springs on gloves"
+            end
+        end
+
+        -- Feral fine-tuning: only fire gloves when treants are fully recharged so they can snapshot.
+        if state and state.spec and state.spec.id == 103 and state.talent and state.talent.force_of_nature and state.talent.force_of_nature.enabled then
+            local fcd = state.cooldown and state.cooldown.force_of_nature
+            if fcd and fcd.charges < fcd.max_charges then
+                return false, "waiting for treants"
+            end
+        end
+
+        return true
+    end,
+
+    -- Drive cooldown timing from the glove slot rather than a spell.
+    meta = {
+        duration = function(t)
+            local start, dur = GetInventoryItemCooldown("player", INVSLOT_HAND)
+            if start == nil or dur == nil then dur = 60; start = 0 end
+            t.duration = dur or 60
+            t.expires = (start and start > 0 and dur) and (start + dur) or 0
+            t.true_duration = t.duration
+            t.true_expires = t.expires
+            return t.duration
+        end,
+        expires = function(t)
+            local start, dur = GetInventoryItemCooldown("player", INVSLOT_HAND)
+            if start == nil or dur == nil then dur = 60; start = 0 end
+            t.duration = dur or 60
+            t.expires = (start and start > 0 and dur) and (start + dur) or 0
+            t.true_duration = t.duration
+            t.true_expires = t.expires
+            return t.expires
+        end,
+        remains = function(t)
+            local start, dur = GetInventoryItemCooldown("player", INVSLOT_HAND)
+            if start == nil or dur == nil then dur = 60; start = 0 end
+            local expires = (start and start > 0 and dur) and (start + dur) or 0
+            t.duration = dur or 60
+            t.expires = expires
+            t.true_duration = t.duration
+            t.true_expires = expires
+            local now = (state and state.query_time) or GetTime()
+            local remains = expires > 0 and max(0, expires - now) or 0
+            return remains
+        end,
+        ready = function(t)
+            local start, dur = GetInventoryItemCooldown("player", INVSLOT_HAND)
+            if start == nil or dur == nil then dur = 60; start = 0 end
+            local expires = (start and start > 0 and dur) and (start + dur) or 0
+            t.duration = dur or 60
+            t.expires = expires
+            t.true_duration = t.duration
+            t.true_expires = expires
+            local now = (state and state.query_time) or GetTime()
+            return expires == 0 or expires <= now
+        end,
+    },
+
+    handler = function()
+        applyBuff("synapse_springs")
     end,
 } )
 
@@ -4369,17 +4476,38 @@ all:RegisterAbility( "synapse_springs", {
     known = true,
 
     usable = function()
-        -- Prefer robust slot-use detection: if the glove slot has any on-use spell, treat as Synapse Springs.
-        -- MoP clients may return only the spell name; rely on presence of a spell rather than exact IDs.
-        local hasUse = GetInventoryItemSpell("player", INVSLOT_HAND) ~= nil
+        -- We only want this to be usable when the gloves actually have Synapse Springs.
+        -- Some clients return only a spell name (no spellID), so we accept either an ID match or a localized name match.
 
-        -- Keep ID-based detection as a secondary signal when available.
-        local s = (tinker and tinker.hand) and tinker.hand.spell or 0
-        local knownByID = (s == 82174 or s == 96228 or s == 96229 or s == 96230 or s == 126734 or s == 141330)
+        local spellName, spellID = GetInventoryItemSpell("player", INVSLOT_HAND)
+        if type(spellName) == "number" and not spellID then
+            spellID = spellName
+            spellName = nil
+        end
 
-        if not (hasUse or knownByID) then
+        local function isSynapseID(id)
+            return id == 82174 or id == 96228 or id == 96229 or id == 96230 or id == 126734 or id == 141330
+        end
+
+        local knownByID = isSynapseID(spellID)
+
+        if not knownByID then
+            local s = (tinker and tinker.hand) and tinker.hand.spell or 0
+            knownByID = isSynapseID(s)
+        end
+
+        local knownByName = false
+        if not knownByID and type(spellName) == "string" and spellName ~= "" then
+            local n = GetSpellInfo(82174) or GetSpellInfo(96228) or GetSpellInfo(96229) or GetSpellInfo(96230) or GetSpellInfo(126734)
+            if n and spellName == n then
+                knownByName = true
+            end
+        end
+
+        if not (knownByID or knownByName) then
             return false, "no synapse springs on gloves"
         end
+
         return true
     end,
 

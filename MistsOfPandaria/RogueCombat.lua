@@ -340,7 +340,12 @@ spec:RegisterAuras( {
         max_stack = 1
     },
     stealth = {
+        -- Stealth: Primary spell ID in MoP Classic is 1784. Some data sources (or client tooltips) may surface
+        -- an alternate stealth aura ID (115191). Include both so the engine recognizes the buff regardless
+        -- of which variant is applied. This resolves buff.stealth.up returning false when the player uses
+        -- the 1784 Stealth ability.
         id = 1784,
+        copy = { 115191 },
         duration = 3600,
         max_stack = 1
     },
@@ -582,7 +587,7 @@ spec:RegisterAuras( {
     bandits_guile = {
         id = 84654,
         duration = 3600,
-        max_stack = 1
+        max_stack = 12 -- Stacks from 0-12, triggers insight buffs at 4, 8, 12
     },
     combat_potency = {
         id = 35553,
@@ -799,7 +804,7 @@ spec:RegisterStateExpr("bandit_guile_stack", function()
 end)
 
 spec:RegisterStateExpr("in_combat", function()
-    return UnitAffectingCombat and UnitAffectingCombat("player") or InCombatLockdown()
+    return combat == 1
 end)
 
 spec:RegisterStateExpr("effective_combo_points", function()
@@ -809,6 +814,11 @@ spec:RegisterStateExpr("effective_combo_points", function()
         return cp + buff.anticipation.stack
     end
     return cp
+end)
+
+-- T16H compatibility: anticipation_charges for SimC APL
+spec:RegisterStateExpr("anticipation_charges", function()
+    return buff.anticipation.stack or 0
 end)
 
 spec:RegisterStateExpr("energy_regen_combined", function()
@@ -1199,7 +1209,7 @@ spec:RegisterAbilities( {
         gcd = "off",
         school = "shadow",
         
-        toggle = "cooldowns",
+    
         startsCombat = false,
 
         handler = function ()
@@ -1277,9 +1287,7 @@ spec:RegisterAbilities( {
         debuff = "casting",
         readyTime = state.timeToInterrupt,
         handler = function () interrupt() end,
-    },
-    
-    -- Increases your dodge chance by 50% for 10 sec.
+    },    -- Increases your dodge chance by 50% for 10 sec.
     evasion = {
         id = 5277,
         cast = 0,
@@ -1293,9 +1301,7 @@ spec:RegisterAbilities( {
         handler = function ()
             applyBuff("evasion")
         end,
-    },
-    
-    -- Allows the rogue to enter stealth mode. Lasts until cancelled.
+    },    -- Allows the rogue to enter stealth mode. Lasts until cancelled.
     stealth = {
         id = 1784,
         cast = 0,
@@ -1332,7 +1338,7 @@ spec:RegisterAbilities( {
         gcd = "off",
         school = "physical",
         
-        toggle = "cooldowns",
+    
         startsCombat = false,
 
         handler = function ()
@@ -1383,7 +1389,7 @@ spec:RegisterAbilities( {
         spend = function() return talent.dirty_tricks.enabled and 0 or 15 end,
         spendType = "energy",
         
-        toggle = "cooldowns",
+    
         startsCombat = true,
 
         handler = function ()
@@ -1402,7 +1408,7 @@ spec:RegisterAbilities( {
         spend = 25,
         spendType = "energy",
         
-        toggle = "cooldowns",
+    
         startsCombat = true,
         
         usable = function() return combo_points.current > 0, "requires combo points" end,
@@ -1446,7 +1452,7 @@ spec:RegisterAbilities( {
         gcd = "spell",
         school = "physical",
         
-        toggle = "cooldowns",
+        
         startsCombat = false,
 
         handler = function ()
@@ -1469,9 +1475,7 @@ spec:RegisterAbilities( {
             applyBuff("cloak_of_shadows")
             removeDebuff("target", "all")
         end,
-    },
-    
-    -- Disarm the enemy's weapon for 10 sec.
+    },    -- Disarm the enemy's weapon for 10 sec.
     dismantle = {
         id = 51722,
         cast = 0,
@@ -1479,7 +1483,7 @@ spec:RegisterAbilities( {
         gcd = "spell",
         school = "physical",
         
-        toggle = "cooldowns",
+        toggle = "interrupts",
         startsCombat = true,
 
         handler = function ()
@@ -1960,6 +1964,22 @@ spec:RegisterSetting( "use_killing_spree", true, {
     width = "full"
 } )
 
+-- Optional: Avoid casting Killing Spree while Adrenaline Rush is active (can cause energy waste)
+spec:RegisterSetting( "avoid_killing_spree_during_ar", true, {
+    name = strformat( "Avoid %s during %s", Hekili:GetSpellLinkWithTexture( 51690 ), Hekili:GetSpellLinkWithTexture( 13750 ) ), -- KS during AR
+    desc = "If checked, Killing Spree will not be recommended while Adrenaline Rush is active.",
+    type = "toggle",
+    width = "full"
+} )
+
+-- Optional: Allow auto-toggling Blade Flurry based on enemy count
+spec:RegisterSetting( "auto_blade_flurry", true, {
+    name = strformat( "Auto-toggle %s", Hekili:GetSpellLinkWithTexture( 13877 ) ), -- Blade Flurry
+    desc = "If checked, Blade Flurry is toggled on for cleave and off for single-target.",
+    type = "toggle",
+    width = "full"
+} )
+
 spec:RegisterSetting( "bandits_guile_threshold", 3, {
     name = strformat( "Bandit's Guile Threshold for Eviscerate" ),
     desc = "Minimum Bandit's Guile stack level before recommending Eviscerate (0 = None, 1 = Shallow, 2 = Moderate, 3 = Deep)",
@@ -1996,4 +2016,11 @@ spec:RegisterSetting( "allow_shadowstep", true, {
     width = "full"
 } )
 
-spec:RegisterPack( "Combat", 20250721, [[Hekili:TM1AVnUTs0FlgfWiz7cvBz7S3wyzGU7TfDxGUOOE)SEyjQyvlljisL0ayOF7DiPEqsrs7M0pKaB(y4WzoZHZm2FP)383Nerq(F1DH7MfFWDPZILlCxUYFp5LkK)(QO4trpcFOi6m8)pvE(qeHo8l5Lrj0TJlBQJHP83FOjlN85c)d6L5syTvOyy4hw4V)ywscIVweo2F)3oMHBdP)f1g2DQTHLPW3JjzLfTH5zycmDAzDB4VHoLLN5aksDzAwoC8FxB4Fw(yd6NAd5kz7xGH(JAum)BDIb3(LUp4u1p3379dK6S4t4GY0aYruaPokbPFH)fmtagvxHkibvLmnt7cXeuuo547Zs9M19zuItuEUHLNNfJcIkscsGpq31HM0uh5HDskFgoo2n73JYaBsDjjsshOI6y2tubKGyIijdS655rhYrbOIAWS60ujU(tWvNUEsu9JiIt32IJWKSIhvwRg7eBRzNr7wTqCLXrfXO8aQSEpf74DiNA6sZBQRFHUhMwfWpuSJ4SBDNZubXXu0JyWqgW)AafxWpI4eS4IQBkMUM0SImmZTqT9LGpmRGG92C1ngvIMQ2PrfuJXPISNq4DEUxxhPbjjxFzjOuubMk1o)9px(lAC3oGwbYq12oZQ9RBt1OKmabse89u)yaPeaBOTBMtx(tuqd6CgC7CNkGNaCnascWaU4esa0Pofd5ox0IVDJQ4UTqGA0za5dBxsAIM(ETRPI0uJu9078wpF6TD3s35Y4)UTZvCzlXwV1QhMeo4QWK1xXsexNDgdWbc6CfctMcwvDnEteb6PmCmQgOHTa17n80qccQwWnQQFmi4hzqxnGqgMwVGmXIjzb8wOrw3eAyIO2Pru6WPsxqVvZTIBTGd3T5MmdM83MVT3zd87Qc(VVZf9Rm2nD(ioV3nByVHWSbjAisdGPZiWZfG1C(DhkX4lxKHTElVFUwMkdbO8NZqOQaqZYE8irIuBqDSb9VCrdt3dk3X1xUOCp6CghbQ6YNfo9o1)Czc78eM5(jYqV2Z8AFQSmNc0esobEkdUknyqMalW7X5LepanvCcrwo4ZuK2LlSrJsQrfuqmkOUbFuYizrSUVzXQScQ8apD9JVSD1MolfK1gp6cY9HMhIX4oyQ7SOmhYlltYBWmtTQEiDiYAHoO(GBC6n0Ko0P1aKlj4zu0PcegRttyQzqAd)v53KX9aQgs7Kgm9MffGJb0gWqvjM2hqzrtzBN3Yfq8xoKFRZ4cDarcjqMmrRAQXe6tBW7DOe9IBtV4KxSjrcEniIXKOMzu1gMY0XWc1()c5v1FUJ5ArF7fQR5eB38tGQihzPV7uft265UOdTOUqjdTKirpfHHrvL0qqr38MfqkQZIKvaKkuODs0zir(Gn4DDs8C0F)UfoUgeaKMxt1aLOGsa(AzUVvD604omRw8IxcQrrjz0iGBrdhadQBU3p5V)jaPdhwF5JlHIfFoQUaek2F)Npxvwta3z4huQm0P9l(7zFIwvk7Hv4dFLvIBVS)O)E(EGsrLFKMxgADwfFwLuD83dtblolIkz9PH0goVnu0y2g61gUWNaxefD4vjSDuHnQ(s7HEiRmEiYYzlOvRyY3wopSfyjXaM(SzuFufcvJwFRAKKKuDmGG2yuq3DfLeeTRoBPhB87TypjuerAutoXkkcQ1wb6ixyUOYARGC7WetLMpQi0I4TJcOz8W8AReGrAQN3UNZCv7cgBD50nEMcDgGhaeW7TK4g051h3VCbZ8O(oHaVHq37d3i0Ztgelx3VKG5PxsL9hUrJJurFDyUB7SGYYOh0)71ya4eFWU)XxZUh535HadTOsxqGeSxP5BA682vrDm8F)A00OnXd3kuFwBOul3eIx5dBhJBIu2oBb1PzHPqcDlB6KATJY9qBO0TWviuGdNHLfzs1MXcWy0bIyYUocz36E1NnSXU)V7DIRXTVXe3UThkn)AYubTMDa6mPGLBPR4SA6BKwto9931I8aS1BN06QelRVQHxAt2PXMsrQh7itEQ00kDey3gl8y976OXETjrq4VnyjcTV8AkMPKi(DfaPAr8HxU0fOoT2lLq9Hk91fdROiUVXdw6w4ApMMxHmZkUI7T75EuRy3AMJDt3NvMz9vS(DP8WuUi2PhMQ16im6uQzgnvxxNnuVVKMlzOSZZ8kCMJpJ03rb7mgVLJyOtd2PjukpNtiSCrhNOHQ0ftDUFo7uf6pMnIhJ(k(fUrsZBNvX2XnZYftzbxtL4D5WVVoJ(KUSqpP2VbfMLXgBiEBgl1N)WJ7cPybn9WWEYfQYtHSyStgI05SXSZ)mTTbSxyhBDqB47G6FDeEyN1ue78dsA7a2C6R8RKUesT(qmZL(HThCFRxfjeS5UHm4(vwbh60vvITkuLZ)rg0O(Zf8FtUxwrqgsUGg5W)TcgyJlXyoJLAIh0asG6vYPP(BDE9020XqQnTSBTXk87cvHnKc(dgSyR57YGLzOfht(1hKmaA(niy2ils2UfqknmEfonKJL1(73FUjfEUNnO))m]] )
+spec:RegisterSetting( "use_tricks_of_the_trade", true, {
+    name = strformat( "Use %s", Hekili:GetSpellLinkWithTexture( 57934 ) ), -- Tricks of the Trade
+    desc = "If checked, Tricks of the Trade will be recommended based on the Combat Rogue priority. If unchecked, it will not be recommended automatically.",
+    type = "toggle",
+    width = "full"
+} )
+
+spec:RegisterPack( "Combat", 20251111, [[Hekili:9MvBpUnUr4FlgbWDn6gfzzlNMcRfOxlYD3wCPb13NLeTfTTGLLeKO2ClGH(T3zi1lK0uYEtABqswTIKZ8mVpdL)C)F3FteHr9)IJTJ7C4pwo22RM74VH9Ao1Ftoz3jYb4HuYz4))7zN3sy4RFnjJeHhVmRQyhSK)MTvXjSFn1FRknTxz544(r7fWEZP7GxVY2FZX4OiQyV0YD(B(9JXL1H4)i1HnCTomBp877yXzP1HjXLmy59zf1H)c9uCsSL)g(lrySponU8iTaE(lCXIMs2MqJ8)jbhkIZrYamA(QFPoefKS6WVMfNYQd)CZHl93aBKrlIjO4SFVvzs8oAajnkicEWQGEMeNcOyTxDiOKeydemLT5ZaHudd90LfV7uzGGsaHa6uhoToKrkoqzwS4Z0awgqhq8Fc5Yk(YpiueVqdOP0ZX0Y2JE5sD4K6qoA3MqIOb7tQkkE1QkVoCwpelQYzvfCSTyqSPZceaFKZ)OmMfSVZLzPbm65CAjIvfjrvLOTzKVlr(2Uo9L4YD0c0rrcl4(2Ca4pSqMrJz753tsdY2hCkfaCj6iKsd2f5VX9wYZY7WH4NBrq5nSLKeAkZ6mP4enkaCndIOe2rRMnZ1C7qkhKJegqaaa7EHq)GJBDqBqb9fkbe2dbLSI4tAUKlKS3AB8kdqj60duUDDDRqeDpPkHzYgOfKSnjllkPQerhqDHpPj)zWJDPK0NNX)zRgU91Na3kv0mIoP11)fcgcZD6568SKOSVL2(6oL0t1HRKrqbnNag6gySuJnz5GAIY63)leGPWQ4tjvWpMJudEBGi)ijpVi7pq)TIdVIITBo3Z39nt42xyzIK1HFOou8gq0GWL6W3xho3XYvgmNj)rqR6VbhREZ4OttcjCfEtGotYRd4Bhu1zOewG8e7IcIHqwimTlxnGOpoq49rizAPAAZZur4JW)sKE(ibaxapVxjy8XmXzS2tdK)VmsA47IET4H7JhSVQ4vKSF6)AKfk6qlobkwKSZThKUcRnpes2bMuSJKIk8IcireNgdLWeIYtprzZVUgNg6KaojcilHNBTOQj8AWGBm)VDRfOJBiK0tGQbjN)VcjhoKgoJcepWa7rPfPcOJCj12cXgQfZRuZxF4AXcCoyH8PJCWzYoI9lZLe9KwsscdQaWosJSijjs(mN3cko(z1ZlPzgIO0CiOTm(WrwBQ1ohrqIDTLZCGb1CQQNLrp6ascp3UvzQwEeufl60tnvxjPqJgX58S0kvwLxiy3r0bOJe9ABdouycTb5)YFC(Vuy0A)BNxtdbBaZ(SDvLke0OdEhyLsb4yllHTKTAlOM3xDGQq02JHUOFs5CtUnIM8wO(kBDNvjNc9e9gtT5AlPT6deFjlokqPauquvb(lKIBP4M11I89sVzYTIiThUyCRckGVTRupwYUD8ZpCLdj1Wc37Q4HMaZBKA4kiDLPnwlwev6oU2CCwpCxI)GSwwMVsJ6OxCXqZ9BWXZW4vWN9FWF8BXSJ1H)e8My2FccA)zy2v41qsa6HM(bV7rb7gdRlzZW7uwm3Y5EzWbK3wLmyOxENdZNByUb(Klk(MgM5uVOMbvr3KnF4ZDQ)Y8KywRo5VjLutAAIQ0aXZb4i3YkNRsG6(JMaviQISpgN5bh8e(vU6aHtttM9ZnIkJHRlo5giRl07Q6F4kDDeRgyQmhgAcX9AwaBSLdxFQPu7WNEH2O9AghjDICV2odxUVlnUilUznGiHQ51KNWYLpwGSFX9Hvz7hJpC2oX9n1ocQ2GJQZio8u6teQyr3qQzteVB8rmVzBuJ6PnWP1AJJlWVaddGlkU4mB7p5V5BKIuSML)MF9CEwbdDpxQDNyw1pJkRS9X4CBVRo8FNDOI(xf3PbbcSF43Y(kyvSCTCGQH1px)87GD91w1leZZjxz9Zc6wA1P6)ZEFyFcP80J41b6bLbXOqywOYYSZdSFHXX8AnkJhJ37nrrXyE7cvmU77yZYAutmqi1)g)UQ0f4oyJh00DAC5Y1ZxSEPTmbWRTqHG93TahoQxtX0bUIINGWpoqFEZ)6l9ZwJ3jk4v9AZ9F(p3aPWIpZZbskYQWcBqjvy12K6saPLgpIrzEMUpHh5d77nFL9WNtB4(MJm61u8b5RO4941tmm5n2zqdtg)oiE)q3)GmZQkPbqq55hXrb94xpaAuWD7zF5I5CWsNVF8)32X6gV)nDm1P6XJk0KRvnqQcv7e3DUW6COHXx3DLrNBpNBZlN)3Wl9i5HNiF6dpGhRFy6N8CMoX0y0ZUCrBRRDMACJZuSe3ide3pgDw70eA9mmTXY55AB(qOE4P52tFqUE56faChPhLPMAny9cuihyCxn6V87H(lNb)bu5Jm040bNDOvr4ypRN3xpuzZ2EY7t89nzmEn52uzLTQ9ujdIuGLlyaE4(gqCyrea8K7JgkysXy15sOKRuJBsaFH79Kp56Jp(izpn3DyXCuS)DsxeVqrVV)X1uaLYKr95Omow2ANUGgZR3czdJR5nF(u5WQN8wotsoEtZAjlaAnjlQq21DmkqkbZUFpbZElNozSHRMDta1vLg7Uze(34GQLy8YLXhKAnOCVCXe0bTS58Cq2wZ7FXTfgfTBt2Jv2MGocztVVTbo33Rmr8Zsoed9rg7BOTdgyJ3YFHZhB(aNEUia1l6T0mf0)8I8KlJ)jlv8N9SntxDFgKUJ9Xjx7TWmH0(gKJOS6(e99eQ1)7nhX75yKinFHCrg4(VSn0NW1TSa9zSA6vnua5)n2sHr2P9bYnzw)40B9z3hswK)66qxthHzQ385Sdr00u(SM()Np]] )

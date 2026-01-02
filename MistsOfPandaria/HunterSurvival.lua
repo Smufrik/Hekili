@@ -132,6 +132,37 @@ local strformat = string.format
 
     -- Auras
 spec:RegisterAuras( {
+        -- Added missing global/CD related buffs for proper toggle gating & script references.
+        aspect_of_the_pack = {
+            id = 13159,
+            duration = 3600,
+            max_stack = 1
+        },
+        beast_cleave = {
+            id = 118455,
+            duration = 4,
+            max_stack = 1
+        },
+        bestial_wrath = {
+            id = 19574,
+            duration = 10,
+            max_stack = 1
+        },
+        frenzy = {
+            id = 19623, -- Pet Frenzy (MoP)
+            duration = 30,
+            max_stack = 5
+        },
+        master_marksman = {
+            id = 82926, -- Using talent ID for placeholder if separate aura differs
+            duration = 20,
+            max_stack = 5
+        },
+        dire_beast = {
+            id = 120679,
+            duration = 8,
+            max_stack = 1
+        },
         aspect_of_the_hawk = {
             id = 13165,
             duration = 3600,
@@ -618,11 +649,8 @@ spec:RegisterAuras( {
             cooldown = 300,
             gcd = "off",
 
-            startsCombat = false,
             toggle = "cooldowns",
-
-            -- Extra guard: do not recommend if the Cooldowns toggle is off (Primary/Auto cleanliness).
-            usable = function() return state.toggle and state.toggle.cooldowns, "cooldowns off" end,
+            startsCombat = false,
 
             handler = function ()
                 applyBuff( "rapid_fire" )
@@ -694,11 +722,8 @@ spec:RegisterAuras( {
             cooldown = 300,
             gcd = "off",
 
-            startsCombat = true,
             toggle = "cooldowns",
-
-            -- Extra guard: do not recommend if the Cooldowns toggle is off (Primary/Auto cleanliness).
-            usable = function() return state.toggle and state.toggle.cooldowns, "cooldowns off" end,
+            startsCombat = true,
 
             handler = function ()
                 applyBuff( "stampede" )
@@ -714,7 +739,7 @@ spec:RegisterAuras( {
 
             startsCombat = true,
 
-            toggle = "interrupts",
+            
 
             usable = function ()
                 if buff.dispellable_magic.up or buff.dispellable_enrage.up then return true end
@@ -733,8 +758,9 @@ spec:RegisterAuras( {
             gcd = "spell",
             school = "physical",
 
-            startsCombat = true,
             toggle = "interrupts",
+            startsCombat = true,
+            
 
             debuff = "casting",
             readyTime = state.timeToInterrupt,
@@ -753,8 +779,9 @@ spec:RegisterAuras( {
             school = "physical",
 
             talent = "silencing_shot",
-            startsCombat = true,
             toggle = "interrupts",
+            startsCombat = true,
+            
 
             debuff = "casting",
             readyTime = state.timeToInterrupt,
@@ -832,11 +859,10 @@ spec:RegisterAuras( {
         kill_shot = {
             id = 53351,
             cast = 0,
-            cooldown = 0,
+            cooldown = 10,
             gcd = "spell",
             
-            spend = 35,
-            spendType = "focus",
+            spend = 0,
             
             startsCombat = true,
             texture = 236174,
@@ -869,6 +895,7 @@ spec:RegisterAuras( {
             cooldown = 90,
             gcd = "off",
             
+            toggle = "defensives",
             startsCombat = false,
             texture = 132369,
 
@@ -1112,11 +1139,8 @@ spec:RegisterAuras( {
             spend = 60,
             spendType = "focus",
 
-            startsCombat = true,
             toggle = "cooldowns",
-
-            -- Extra guard: do not recommend if the Cooldowns toggle is off (Primary/Auto cleanliness).
-            usable = function() return state.toggle and state.toggle.cooldowns, "cooldowns off" end,
+            startsCombat = true,
 
             handler = function ()
                 applyDebuff( "target", "a_murder_of_crows" )
@@ -1129,11 +1153,8 @@ spec:RegisterAuras( {
             cooldown = 90,
             gcd = "spell",
 
-            startsCombat = true,
             toggle = "cooldowns",
-
-            -- Extra guard: do not recommend if the Cooldowns toggle is off (Primary/Auto cleanliness).
-            usable = function() return state.toggle and state.toggle.cooldowns, "cooldowns off" end,
+            startsCombat = true,
 
             handler = function ()
                 applyDebuff( "target", "lynx_rush" )
@@ -1145,6 +1166,7 @@ spec:RegisterAuras( {
             cast = 0,
             cooldown = 15,
             gcd = "spell",
+            toggle = "cooldowns",
 
             spend = 15,
             spendType = "focus",
@@ -1161,6 +1183,7 @@ spec:RegisterAuras( {
             cast = 3,
             cooldown = 45,
             gcd = "spell",
+            toggle = "cooldowns",
             
             spend = 15,
             spendType = "focus",
@@ -1178,6 +1201,7 @@ spec:RegisterAuras( {
             channeled = true,
             cooldown = 20,
             gcd = "spell",
+            toggle = "cooldowns",
 
             spend = 40,
             spendType = "focus",
@@ -1194,6 +1218,7 @@ spec:RegisterAuras( {
             cast = 0,
             cooldown = 20,
             gcd = "spell",
+            toggle = "cooldowns",
 
             startsCombat = true,
 
@@ -1307,8 +1332,9 @@ spec:RegisterAuras( {
             cooldown = 120,
             gcd = "off",
             
-            startsCombat = false,
             toggle = "defensives",
+            startsCombat = false,
+            
 
             handler = function ()
                 -- Self-heal ability
@@ -1322,11 +1348,8 @@ spec:RegisterAuras( {
             cooldown = 30,
             gcd = "off",
             
-            startsCombat = false,
             toggle = "cooldowns",
-
-            -- Extra guard: do not recommend if the Cooldowns toggle is off (Primary/Auto cleanliness).
-            usable = function() return state.toggle and state.toggle.cooldowns, "cooldowns off" end,
+            startsCombat = false,
 
             handler = function ()
                 applyBuff( "fervor" )
@@ -1339,14 +1362,11 @@ spec:RegisterAuras( {
             cooldown = 45,
             gcd = "spell",
             
-            startsCombat = true,
             toggle = "cooldowns",
-
-            -- Extra guard: do not recommend if the Cooldowns toggle is off (Primary/Auto cleanliness).
-            usable = function() return state.toggle and state.toggle.cooldowns, "cooldowns off" end,
+            startsCombat = true,
 
             handler = function ()
-                applyBuff( "dire_beast" )
+                -- Dire Beast summons a beast and increases focus regen; no player buff required here.
             end,
         },
 
@@ -1513,6 +1533,6 @@ spec:RegisterAuras( {
         width = "full"
     } )
 
-    spec:RegisterPack( "Survival", 20250914, [[Hekili:vZv)YTTns8NLmDoFYtDvLTLss7fNzKDusCQTLhtL25(hjrrczXXue84h2134r)zFaUhX7j52faKeae8dzR0B60jPseelwSy)43UyvME40jtTCTtitV6OEhnO3pDy)UhD8H9h8MPwjpgsMAfA7CN9TWhcSxd)TvA09E3B7Jd8Op12fjqmnnYbgCQ1Iup)KZdMUWmvhm1Yonzfnci060LrE3n1ALNRlHpdsSZuRjR8I3mh)J9M5IvFZC6s47ojE0GnZ99ItGHxsJ2m)ZK78896cSteDPNpWeFh8W0GecmygZUz(pSz(L0R38LnFbg(6BgD24lpD4e2hVE4ndNC(4R28fo9J7ggrCORxyN89N8J2XHeNKz0LZswrM5SIqsSxDG3YtE1I0Ll7AC4UPH79Q1uKjC3Bn9EVGBBdXxz)WDvrzCmgztS9jbjAJ6frd4VcjWEHpXTnlx(KACnnmwXkY3RvVhDS99NfssMDiBDWpz77DpX8BVIDYfpBTDeJV6etssaAh3fFYm7GhF6Pe7OBjjD9INTGghV)EiDUNmZLM0vE6N0BpXBM4TMmlHoZ1J8(dhyEHj)EOpngPtsKDiJvDjSnU6iW(1mbcP4ZoaTso5EVO1KaG)8sicDUF1oYdpAa12i66nZ)n6Vz5Tg0IhE9f)8M5UehpxyWhwraf8ek8K01HW39swbVtKJDamQ1kAs(QdR59cIYxvy0uF3HwhaA8PKt6SK6Kg)(tg0Bphk13L(qq3f(G90m7Oi6dDJiRT9cGxO)(p9K4DFtpb7E5WZVAZ8BgpHBAa2jNp(MZN8p3m)IZTMiZdSZx(xNHgMCEHgscirOym)amnMmJ)49WdK3D4rntMmgpgPeoR3FYXco8WUGCz8iGjPj2C)cDo(7bzh7mpEFMn)KXxlX7nUC2ucUqcfkGvx7rIFF2kEeSIxqDUdCef4IF0g(7fPrXjGFQv2XWbuNpF(N(8iRjYcm(rkNM7lZdrPbLzbFkEaf4od9ToJrDKLyAIkJXuez81XDlFEb79tbocyquWqxU0ZXd9dEBkQMHZAyyO)JITcQiKa)b0WirWreSHSWdnyd9GNpmTfWElISmIeVcP5cyINrxezZvjv2vXCkmlgjGSDKYaOBJkSozC3z2OuDuMPNq1NTzY0jaMR0PbeeWbSPwbpc9copMeAhbXH8FuHhlmPJbYImPq)VVKTI6lbMl2UpQWD)ct0WzSocdx2wIh9AbXN(aO107VbmeX2pzLcpaHT8ZxEHOG)ADdDsE3jh1tzXofTCrpbrir1KdEllwA(bgZdlpc5Yu8bUPrmRefEqYDG8jLSxc4CsiBoEGPtStElYMmg9ROfGIRQ52SW0W0Z9NXetpqWZiKdJtzQMmvoXlYooxsEi3uwMJTzKpxUL5aSBMVV9uTDbXO8SxN6N4PFMd(h1m4Xjjj6L00bzTGlVfDKjKOs7kxAWFpjBZrcOP3UkFJXonqXGYoYbPEopfZ2hZkEOIPvcQdQ)UspnZ1i6r4dKLqiiMAatI(1eaNuYJCxdJNmz8LBJNr3CQjwI(O7xgKaW5JDaGrBn7q8zrDo2IybThF9ORgDJS3SoF0J5LDZtqqdWO2Hg4gV)bWoZ372a0qNhNmpOknYLeXGKa07IGlGZc0AgJW6TEnX1J5ta(cy4KgceIcGAIEWd1GpD4M5)3)4)aBVlPNj(4hjr3JNESVuYRe7PN9HyXNS5EwZDLEVhO9CjQ69dsVphiNUcrxEesJ(OQigqPzULw1gOG9S1POeer75aVpp8Ra5P(yzyol8Cw(vyopZwYx3ZWsUKjHLwh(dktCXZ5uKBn(Ux37PN6SJ4pGy7VFRopQnsXE5ruy6Gwj2RdjO(harz09KOhtwXcWUifdvH(WdC8tHmGa9E7qpqLg05ZSDtaD57yGAkZxXckRWrzpmlQvPzfHRXSLWsOmVIhl2fCS)sp2OghcTdG6U(GyFAYjy03yv25Xa7q4DIdJyqbRIRuPJyxFyBFXJmAlqPaNNg9Ocdv84k5LfqEeKO7eGykMz(JRCMvLjWm(aYOVQ2hb6zkGahHUG3Peb4I69yym62R7TxvaWmPm9sbVvII36BZsDcYutY4w6PLnpLhuXw6Wbc9X24eeC0bbLKwtXtkVEzdu955dWHEosngXYFwzYvmKmKXlgF2Vah7x9b8JdH)(0VEdlpHpp0AuBWRxcR7TGqc8wCmMrjHyiSKJnRmjDcO5qqCOqixqXIwaFCFg15oB0ibgifXYzVKvnfqlueOmdXdc3wuQggcQcHNH0y2MyAFNk66e77WTk49GgXWWqUhxEatlZhQUOPbUOniVbg4CSItjyYr)UeiwJR4bCHTo6xmn(WiKxzNgHHkfjXmZPbW1O8jZE4TzPim066rNnbZc8QHFA0LJUQidDrDByyN)2xTPQwSDwTMeB4pm6JJUY68FDKWK6Rto)czKMDZXRY06w55BZbRlzcl)4CRyj9Gb9mto(ReNaMgi1KMr)kMXAVyxW(YjNbwbEgs6g7LKYw93lLLIYetISd(xPaU9)nO5ORY66bsjFFwrLmo7ypyF6Oot2oxDG89UGUOMSIIQmnF4ra7sqr8bbfLFCzpIkJQ4r)ObMxgVaiWINR(rM8JlVmkJwAz4j0nE8fFy8VDLIPslC(kbj7GSSbGpmeJzJij51N(mguzHFHceF8804frjLTmyAXRTdahzy8Zy(dcH4DEkhM5v)AxbytMGppa3CiYYMgY08pV8gKx1wHaMDm(jgYInZNaIAtNlkLvX4ATBHZiyRt5aq2m)hb8azOhqEI9WoLlymM0kE9kYjeiZLVCWpYuBNG)XINca8bEoaz1bFuWTEaoxEy1B9PaMM)b74idJrnm2ZmTdHfn3g3Ebwwep0i8hYwxwTeeaDYxpr9Ba0aERtbgNSCjw8dZY)2L1XEDkBS(0tSNjm6sdR6eUDzN0YvGjrMisYSnY6YPM147MvtTXC5Auj5VzpkC4qj0OiqTlpVM3jx2cZYLmOr3kk7Li5RCiCaxq9IxZpR8tJR4OSHK5YXOLtgMe2iQYNEsKmvz)C5aB43OrrHVWB0yYWB(0Ojw73Mavz1C7NnKWqokAId4ymWbrZFpEwmKosXqqvr31En6hcPEPum4MOgldVsEbgUyejfBBkzlto4JJp7RwLcIZ2hmrMOsU7xuxA5CRBSQ0s3JKqAqdHi1OOMTgzIe1nqBRU8XLYVbV5fYVtCstiOLrqzA3YCw(iYR9lea)S6gpo0ETCAuDObyvi4B)Gmor74KR39zVBz2TftMxoBWEGWVM(4NR8OFLz1RQYnbCJjUSdXCbUetBfI17GM81OsLDPUgw7QUMxtL4qiMR5Yy04GTSwSvDdlFN2TqWpX8cmC9jSJfPdDngQHRBihBsF9j24Lpum1PwGBLyyUI2)4ThF4uRhSJcWOWtToFDinkb9I9wTE6O7MVm1cZ9dMi2RiShInyIiVs4JxX6yfbOJPNcdXiq2RiNpjVHsI8c5Vq5KKNAbJMaypSNA9kSuSvLw6M57Tz(RYQaxtPdpnbyFnUClxOgYcUQDD(7aSqYulEfSQtOP6ZvtGTlVhM)kCjmYNsgDi14bRrRB2zQW489Nabxgui)LEtK4hxjXBkjk2I0uIu6CYR7jPiPpfKF63e)OMZOktiN3iBKo5l(7W1EZ8NEI9WD(EtqEiW1(fBqo7G7QbvURYxeJ39VM0RFVkTJGf51vyXLLxQMT2o6(HmUzutfgzU30SeqVWckEMuYNOyVv8yCrEBfsawEAMzut5RbImF01eFAaD)PkOBwojzti)7WCoSx9t6iTjDeBs6EnnWY6P0jBANncJwv73OYK3KOv(imAP7MG3zMgYoPGcIVJZw3Oo7vkGRPh4SjxPnDxvY7wf3pzkvvCjtm2TAR1QNiJULHsbl7M5hk5(vzESvt3STKhpdL6r1)uPY9O734Wbk2sLcYKZDsuIXBvB1AUipQ8LsHEKuT4pMTa6wSLwGsv9rDj0Q8JS2NyaoUexYsBq9XeWeAiEQKum1So8b)KFk8)6Oimh0tBxwUbhfERzXdWiosZ(n90u13zDPjJXNjAzArVjzc(GYQxFtxwit0BIg5tkdTBj3AamdyrgbprmC1cMtGrSEWhS5YWUuhtir18kOycfHYEE7BJZ2jhut0Jz5FSclcz1ycmGcZTl64tPWJQ97zZWnLzxd3wyTWmu8SPUR2((fDN2SO7ex4gaX0QCA299vAfb36R5yYeIY6qjLxWhJBGTV1tv9MRv)iWXWj4Rxh8k5uvmXs7Sgu95Ltv16lWWVTwmGsx5U2o7BvhTkVfl1cRSDIU7l25tdGslhwSKtqgvmH4Zee1C3S5vhY4b)UV9yvINPxHkJiGl9(s1Lso3RIhAcjSAGPTTjABzOX8R52i6wvwylAY2wU6zfsJHdl)NVIjKy5whM(foPXOv(7TQIFQvtBSEyf)sQYall(9uX(k)3BKj8unr3Nxb9QqyiQ0wniNAft0ulVKlayB6k4f5s)vtDBa6K)lWstLH9B0YeKOIz3bJ8P97XIdQw93KfdRDH)h9FzwBMd(H612K0KNPjipMIwuQy(MGhGdzcir50PNwop6ezqU1y(ivtenNNpJwr5p1(qz6lSSq1AD(CQFyr19giv6TI669xNQNwvP5KIujQsObZXS3rU8aQQwBtBUyqmTlkXrD5MKvYbvM(f0emg2dBrPqm4bOe52ff(OPcIkxMtJ6kMRoQAzKBFx2Cq5USPE4)5LZuDj3rnsJXTCP20hL6Dm5THhfsTXwWY)Bc3VPfsVR(36fQqqPwR2QIluuTAfPzwt4ySi2vbqV2IyR7vulRhrN1OF1Fv0Kogs34DSB0khoTbXG0Q3iK323Uo1w2Bh1kRi3Cok4vkNcmF4AAuhZybmvEMN79U(I(Pc8n83jWo6hjqPtN2CnRzcUQklYZ)xlW02wyKgmKmWuFB(fe0O8tpA8B7nnRS7ImpRvZSOR412ov009gcxAQ16zCLIKLHJRwuIAVU8nUk1f(nG9tRz7lxfePUZVEyBLB8EzFW6TQF9PsvBR4lNAKOD8LWgQmL6ZiQM2Zxfbt5w0xxl6iPuYKF7wHFYuJ7RYaLBE)6ya53MRCJLZ)56W9L00LFd74YDB7w2OBJ6C7w5Dd36gX8BwxyAassdva9468M3MamLBxZwhezRV89)V2rNBVSTVsbbmPIvv6SA1LrvkSvDbQmxxlpw5)a)utLP4hJvMABLxss1xpYuJvW6LFFhvD)yvxo)NxhMkZ)LQwFPkd03uMWLiG8)MwuMcsLjrUG(z)30)3p]] )
+    spec:RegisterPack( "Survival", 20251026, [[Hekili:vVvBZTnUr4FlzYuvP58Pts2kj314mJIJsIZzBLXs5UPFrsqIqwCmFR8f7ZD8Wp2Fa9Ny)L0DbajbibiLSvUoDAV7sibWUyXIDF29HAE)5ZMp1IetNF1GEdg2V3Gx1DWX9FDVxpFA8db05tdiRVLCd8h8iUW)EAs4D23rCWx8GJpXcxGi)KW1WlNpDvITt85EZxPFvpbgBaDn84HdNpDRTLfLpwA065tNT1okDj(pK0Lc5MU0Fd83xhB77LU0XokgE9g)W0LFMERTJD35tzpevd)aQhne(txX2wupYkhQ183pFkF(WJ(Jah)i77OlI26hZLBODa)Lt(64RgFD6YRNmB0SZNCv6Y2F0omkoDz6J9hKUmIU23ZkQZrG(4yFJh1kD592XBtx(7()(uBxqX8dTOH2E3KU8cVlsxYeNfShSDDPw2GbX5b4VaBOKayv8J3sdV3ocgW7hLU8)8V(3PlhDP)zI)4hPH3HBu2FzCMMNUCkO6INE2hIe)jsqaU2tPHGraE9D2Gn8YeNy7FuA8Xeh2BTsCdIMpf27XG(sWZTnB664V(2fepRf45A3KG5XWbvjlzXuEbSmu28w5qWjgg6FpmR0LTWtO1jGQ9UttxE8Wc7V0iXf)yJloxr7sw4MGM0f(BwSgMuuxXOzczTVVJL)9EAgwiLy9qzn5v9k0Kktb1NtAsF2Wos0ReI3vi525c)TOStx(4JShEW3BILVd8)l2GC1b3vdnURYfI69cUemERbwYxz4(vumXnGArlDZAQ4XPl)bWt(oA4dXBz3swL4z5apUTT3ANeyoWTpsGnycGBEWZbNrWEb3OULgh1rRQNjsHsdk3RBE)gIczXgqgswZxG6d4ol9s4oq(ER4XOqEJblWwqLJ0ROp4rcIaByagHikZih5GbI4tdw3F2W6kmc9ZMq(FhMt)E1pPbLM0a2KkhJuJkVYX3h2YjHpu2LO4nS1YCuII1IggrdVf26vwR83WwRYbf45DUZo0L6fTyfSWlc8fxIfRG4VJZU8v4SH4IHc1f1FutboXW1EuWdZcczdrS9QjmQsWMmNkruYiUewefJ2aE01(MVBAEIS1nMeEdnUBSTlDrS)clB42Y7sx2xkyRY8ysR812kX3UXHGxZJ9JmensEaAJX2FOYDPkPuY1oPvIPBMV1k0TvqAdaqGE9k7LLDT4pMjGY3yRiGa)7bprm(Nwru86scj)fZX)3uIp9jdbz0KXk4pogIxoB01FA8SPq09FeWjqIq9cXc5VzJ9ABIt6YBsSXyRF96ZNC95Z(7)cG(am7IONxagE0D5wm4AqiDn4j7TgXvbXHb8g(GejRaKuX20mOvUK)W2nXf8ajUmmyvqFCp7EqfXee6VwGGd2U4WB)5Z)0NhpDwH615jH7OX7XFCYzFBkCZD0vJ(04lhF1mM9IT9yMraAOlSdbZ43qaxY3Wjr5UW4n6SD39WW2sWnboF(fUmlKpivx02Zea3mziqWqEGaUbzHqneqJ0bckBNcOBD0Tr)v45zhd2Eiit66KyqldjEQkHigXwkXjEB3G1WeEli1b90H1PzdmUVpPWs(lQgXOaIl6ay7dYhcl023dJRYnLEzkBjpgUt9NTVzl6lwmzMng8tXtkSqatbzRX2Es9XH0GlQ6n0yiNFjRG0nHzWBrOlBYnjGMGOwaijRX0zkE61QJIi9QsUHq98JrtiXKrARUdEp(gWXfFfpsswiUNg6EZ6i863OdqwMoU2FvirNR2z4lud1y7fLWc4Xs8kuaMBsHtOS(dRAIJ1Icrujr1j6GXvzbIIXG9MwbjGV5dJNfWIUHakMUmb(byU54IjFhbKi8w8p5Ka)N2kYr4KlHkR4ajK6sattU7uhEvgsZ(19kzC)nH0Grf67kv86OVEXVGN6Rzzt4M9y)8yISkDhfUM4jYcWu8fI2cWSwJMQl0TI0VC05xjNIllRaep48PZK8niq0p(FzbwGVYrdnoMbHobGtZl6N7ecEFSQHa8OSUciuorFbQjwBvPjn9mdV2sev2CN7bAyysqSSpEc(W8kNkh0rz(97cwygea)yc(irUlrUhE0Yzt(AHzB3myvI9GPEK3IiMfnbtuuUbD1KWFvcRbjbBjrAt2N5hX1aPYtdt8mPTgaokPUkVCbthQloJkqy1D1XDrmdQ(KnGZsuXaZkG3(IjyMT8ciMgZkTT99S80RWeZ0nH0OT4cUcMOu0Tohee)1uoATOnpJGNDvW2jNsa2hAb5fHqJWA3TW(Ifqcz92sFf6ABUqnL6Ac4dxDLH)0weKIzz44oxrDW0Ad69xanKb8PZodjYyD0MtMY1jZPuf4dY0qUpHdZyZsETjbFGvsi76Ub3HNFg4kf7NTZiS456S2muYYH73bCYAsrZ8B2qVppiM8wmlXx3S0hArZXoGAOnd7gMWbAH5QRPdndrHDWRauPTqjUbZ2WppLnrw(E)14mlf1Zp5MTQazQ0nHkyy02HJ6GSycGs1gpOMhcJk(b6gaaoZvLDi(TySiXh4HhNmB2Kl3T0qsXTTYwsTDJqvfobZfIKfa2SljEq9vUm)QNU0jSvlIJpdRe23DfrlcT8BhSzGDEnElDX6TuAmzBjf9ZS87GpGGyeMgEPplh94ZMC57hXsho(RJUMLEP0vC2fCTYj7QomixgicE)iC9Vt0oNABnVM1Dl5(BLw0S2qRmg7qWYXgy2cBWyGJrhIQ9uj0mIcvq2aW20g0L8zOdGMIcfqJxqWWVLCzWN3xh8SIz3gt0jWD6scr8hpWbBlI8AhTyLFueddEr8hliJ3wMls0cCAPlH4q921w4jptDa00LTOsrK6qdWQSvdKPQnBTy25DznwgtCnxFK6yEPGNtMCXhM87xvPDn1b7sIyGJYihd(dJWkarcs4mfEgsrYrIqwf8oWdnYHJLWKbMmZLDgIhar8heahG2SkX0GJzpinO2BNpfUKky6zOejwfC88)pmPzI4gPmvcoKQPfnYnpw116tS3avjXUkw9y3u)ooGnax3f1CKKIgsxQLm8NMU8NGufzDtg1y2dBxToDKazKF9OoA2d7rJY1ebOYYDiAlEt0LjtcMwFf9CNPsYiFmWTE(GY6VXyVBS9OuoT8344FhfJpKeL3JJglirISlvrEnHhHsQ)5)y2sZAxcJH)cJvu5(Rt3SbYJPDlxM7nMvVTUOn8SqSNlIBGpRJ2kA0jOseZT)cQWqPYKNP8cfCzQynNj45vlfNM4dOwkonHQxu1tSFyi4Hx(ZaHFMfw(Svt5gVL91nKdkxJzqs6nI6E0nca28eTSYczoTG(4Bh5(tmxcNeewBnKIUwTrk5tk)a0ynW8xlGruntGmsczSafO6RL2RT2oeEzrL23Fy8hhF10Z)TXqOTR(auOXSZVGHQVsOi5frjAKYEHLJS2mWLg(jszZ4Vkk23J2qE1TWTL4Ur2XjIw1vUct7il4EZAHHQ2pUe2bILnGQ1XHWWFu4Ft8(hjGJX)eCfm2fXkwQiB4)SoBkk2kH0wteTdlpVRYuQhTPqk3)WD0qprBQ0MDqzeAZxoqcUR8O3PCt2Ea4nBRQoe5kGYiAubKhn35wxRgFQS7EXKZ(vHp(ftgb)73)TRznl9ZJMoUr8Vv6d3nGyG9WXyIokvtJ8WJyyaT98Z3WR9JIpc5JRWe1j7JTP08Jq9al(FdR(wiQyE(mEEZYK9wj0Z(WR7UW2zoj2z0esVJkfMSKbsZnm9T9RHSeAuQZXpjXywECPoIPvloIFmuUvAiVkbHO(ZoNccyxfBW(v2Z9n94(Ozn2yN7KbRw5sjFM(1XNntUGS57BT87ydfE(DUOHMgyAxl3MaMDdc2eHJJ9rQ27Nr(8UNe6HGhHZy3a)qwtxEtQ63FA30VG9pYFJngO(LPln2cOVK(LxAQpqPFHVOrDZBf1pC6pPTtqhzV50xuBJIA9crlIAX7uYUS4OLW0klSKTEXUDMUlIlFsnkZgoEX9Q59yr7CyYjVHp6hTC)vWX3UslEE8r1270PfpyxLg7CAVwvBOZ76puVGv7edtvn(naODb4aWocXbEQmmqHp3bJK3CPdYmRD9CPM1Z(JyKwFkV73V70H9Avht1V70t684JIX(6Ec1TEwHL1HYD4LRlCgErZOgUHBHhiVT)GMxMI604QvoFUktvIrxX42FEBBwxi(uC)i82e0y8UJfs8qqgRSouIowUkOb7dQs6ZnX1R9NovCwhsgvL3vk8OkFjRmbRMU6Y0UdpnPY6OkIrujRL4ufDA)5cvwY5qUqHwbH0BpDqpfHDWi5uwhKIqiF(OY4zlr4IJhQ7C603GQjtr)EXzPSglHke14kuy2s9glygLNDbTJ4Klczw6Aoojjt)HNMr1aAz8lYcGw5dNs(cvblIsJv(BKseqCFjqS54H5Dzite7bbHnV6ci0I1(q(lbcxV)p4hdubkdEstTrMme5VYm3ZB1AwHkDFIhJQEQmA1engzI8v90isElnLKJkbnT0sotl(TX3(QEp(y7dK(blwNo705rdzkEPmdypRF5nA0MmAAu0dvoD0mRI(jRmVYuRjkcqT7ZvxneJhG519iS3VNYOpqvD0rBqJRtwFN31boq7nGSU3ROqvAQVMzM38y1zwUl9vNPPsceDgwgP1t)x7Ig5QnN2R61YeylDotpxGAvwrjE6KUsRHEVwMP2llCr)Hc)XDj0hNFnjzwIoUw6PIt75PGanPfRczCTmreNiv2ZQNJSf47wBhXv)W05XcJNMsw2NmzVuft9(1WXM0IDbVnw053LMl2KYvcwRw7t29H3Kvyq1MgwigbIQF4pL2ozsyhSMoj2WgOQQqrYrPY86kyRs6kSosSAj5hmSN(LtIzkC1KMXjgMHmdumfOeLvVtQ2eLjwL0jjxwjAQ0pBvIKK256jLQLkHu6xtzMHKwrDeq1QgYNY8GhmuVyK5)rsm6OzQvnumjlgEzCpHp4jCE)z(npvyrYBd2HcWM8c(0GzZbglF1qEn)ZRAbzPUtiGzhJ7ZhLKEzDyHZiuRNXNDKET85d(rE1oi4F2JVkO)w1Vki9k2tSSdXn6dYNmKb7)Uv1rR2vVS(4JQFxpMoH3TQt2rjWSizF2p7ITUAPzno2SoPz6Z6XqefLVqO86AERCZk0BxYGgTZFmpMC(z5Gmvmxogn5pVNCUQurv(4J18j9KPUpJF4548)(9Bphx9d6p)CjuJ(09S4GD(hzEE3O)o87mV8gyx7P8XvQVP6pF8YR9owZY)t)TH)uThNySQEvxUM)DEB2LkJDxnY2eFV6AXHWmxdfmL0G9SdSM4v5LL4Ey3)TyxwHAGKHCSjNuEIns5qXuNpLKeV1pC(0PUjBcT5FOhZ)V)]] )
 
    

@@ -1,58 +1,75 @@
 # Death Knight: Blood (MoP)
-# Defensive alignment based on WoWSims APL:
 
 ## Precombat
 actions.precombat+=/blood_presence,if=!buff.blood_presence.up
 actions.precombat+=/bone_shield,if=buff.bone_shield.down
-actions.precombat+=/horn_of_winter,if=!buff.horn_of_winter.up|buff.horn_of_winter.remains<6
+actions.precombat+=/horn_of_winter,if=buff.horn_of_winter.down
 actions.precombat+=/raise_dead,if=!pet.ghoul.active
 actions.precombat+=/potion
 
-## Core Priority (Defensive first)
+## Core Flow
 actions+=/mind_freeze
-actions+=/antimagic_shell,if=incoming_damage_5s>=health.max*0.30
+actions+=/antimagic_shell,damage=health.max*0.30
+actions+=/call_action_list,name=variables
+actions+=/call_action_list,name=cooldowns,if=variable.use_cds
+actions+=/call_action_list,name=defensives
+actions+=/run_action_list,name=aoe,if=active_enemies>=4
+actions+=/run_action_list,name=single_target
+actions+=/wait,sec=1
 
-# Execute phase priority
-actions+=/soul_reaper,if=target.health.pct<=35
+## Variables inspired by NAG helpers
+actions.variables+=/variable,name=use_cds,op=set,value=1
+actions.variables+=/variable,name=execute,op=set,value=target.health.pct<=(set_bonus.tier15_4pc?45:35)
+actions.variables+=/variable,name=need_dots,op=set,value=!dot.blood_plague.ticking|!dot.frost_fever.ticking
+actions.variables+=/variable,name=mitigation_window,op=set,value=incoming_damage_5s>=health.max*0.30|health.pct<50
 
-# Vengeance-optimized rotation (when vengeance stacks are high) - temporarily disabled
-# actions+=/death_strike,if=should_prioritize_damage&runic_power>=45
-# actions+=/heart_strike,if=should_prioritize_damage&active_enemies>=2
-# actions+=/blood_boil,if=should_prioritize_damage&active_enemies>=3
-# actions+=/death_coil,if=should_prioritize_damage&runic_power>=40
+## Major cooldown handling
+actions.cooldowns+=/blood_presence,if=!buff.blood_presence.up
+actions.cooldowns+=/bone_shield,if=buff.bone_shield.down
+actions.cooldowns+=/blood_fury,if=variable.mitigation_window|variable.execute
+actions.cooldowns+=/berserking,if=variable.mitigation_window|variable.execute
+actions.cooldowns+=/vampiric_blood,if=variable.mitigation_window
+actions.cooldowns+=/icebound_fortitude,if=incoming_damage_5s>=health.max*0.40|health.pct<30
+actions.cooldowns+=/antimagic_shell,if=incoming_damage_5s>=health.max*0.25
+actions.cooldowns+=/rune_tap,if=incoming_damage_5s>=health.max*0.25|health.pct<35
+actions.cooldowns+=/dancing_rune_weapon,if=variable.mitigation_window|active_enemies>=3
+actions.cooldowns+=/army_of_the_dead,if=time=0|target.time_to_die>=180
+actions.cooldowns+=/use_items
+actions.cooldowns+=/potion,if=variable.mitigation_window
 
-# Big hits or low HP: prioritize Death Strike
-actions+=/death_strike,if=incoming_damage_5s>=health.max*0.65|health.pct<50
-actions+=/death_strike,if=((runes.frost.count>0&runes.unholy.count>0)|runes.death.count>=2)&(incoming_damage_5s>=health.max*0.45|health.pct<60)
+## Defensive resource smoothing
+actions.defensives+=/death_strike,if=incoming_damage_5s>=health.max*0.40|health.pct<60
+actions.defensives+=/death_strike,if=(runes.unholy.count>=1&runes.frost.count>=1)|(runes.death.count>=2)
+actions.defensives+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.stack>=10&(runes.blood.count=0|runes.frost.count=0|runes.unholy.count=0)
+actions.defensives+=/plague_leech,if=talent.plague_leech.enabled&dot.frost_fever.ticking&dot.blood_plague.ticking&(dot.frost_fever.remains<=3|dot.blood_plague.remains<=3|rune_deficit>=2)
 
-# Major defensives and mitigation
-actions+=/vampiric_blood,if=incoming_damage_5s>=health.max*0.45|health.pct<35
-actions+=/icebound_fortitude,if=incoming_damage_5s>=health.max*0.35|health.pct<20
-actions+=/rune_tap,if=incoming_damage_5s>=health.max*0.25|health.pct<25
-actions+=/bone_shield,if=buff.bone_shield.down
+## Single Target DPS (1-3 targets)
+actions.single_target+=/outbreak,if=variable.need_dots
+actions.single_target+=/plague_strike,if=!dot.blood_plague.ticking
+actions.single_target+=/icy_touch,if=!dot.frost_fever.ticking
+# Use Crimson Scourge procs immediately for free damage
+actions.single_target+=/death_and_decay,if=buff.crimson_scourge.up
+actions.single_target+=/blood_boil,if=buff.crimson_scourge.up
+actions.single_target+=/soul_reaper,if=variable.execute&runes.blood.count>=1
+actions.single_target+=/rune_strike,if=runic_power>=90
+actions.single_target+=/death_strike,if=runes.unholy.count>=1&runes.frost.count>=1
+actions.single_target+=/heart_strike,if=runes.blood.count>=1|runes.death.count>=1
+actions.single_target+=/rune_strike,if=runic_power>=60
+actions.single_target+=/horn_of_winter,if=buff.horn_of_winter.down
+actions.single_target+=/empower_rune_weapon,if=runic_power.deficit>=40&(runes.frost.count+runes.unholy.count=0)
+actions.single_target+=/rune_strike,if=runic_power>=30
 
-# Emergency recovery and cooldown pooling
-actions+=/empower_rune_weapon,if=health.pct<=45&!((runes.frost.count>0&runes.unholy.count>0)|runes.death.count>=2)
-actions+=/potion,if=health.pct<=35
-
-# Army and DRW usage with mitigation up or during heavy windows
-actions+=/army_of_the_dead,if=buff.bone_shield.up&buff.dancing_rune_weapon.down
-actions+=/dancing_rune_weapon,if=incoming_damage_5s>=health.max*0.65|(target.time_to_die<40&buff.bone_shield.up)
-actions+=/use_items
-
-## Resource smoothing and diseases
-actions+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.stack>=10&(runes.blood.count<1|runes.frost.count<1|runes.unholy.count<1)
-actions+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.stack>=5&(((runes.frost.count>0&runes.unholy.count>0)|runes.death.count>=2))
-actions+=/plague_leech,if=talent.plague_leech.enabled&health.pct<=50&!(((runes.frost.count>0&runes.unholy.count>0)|runes.death.count>=2))&(dot.blood_plague.ticking|dot.frost_fever.ticking)
-actions+=/outbreak,if=!dot.blood_plague.ticking|!dot.frost_fever.ticking
-actions+=/plague_strike,if=!dot.blood_plague.ticking
-actions+=/icy_touch,if=!dot.frost_fever.ticking
-
-## AoE and filler
-actions+=/death_and_decay,if=active_enemies>=2
-actions+=/death_strike,if=(runes.frost.count>0&runes.unholy.count>0)|runes.death.count>=2
-actions+=/blood_boil,if=active_enemies>=2
-actions+=/heart_strike,if=runes.blood.count>0|runes.death.count>0
-actions+=/blood_boil
-actions+=/horn_of_winter,if=!buff.horn_of_winter.up|buff.horn_of_winter.remains<6
-actions+=/death_coil,if=runic_power>90
+## AoE rotation (4+ targets)
+actions.aoe+=/outbreak,if=variable.need_dots
+actions.aoe+=/blood_boil,if=talent.roiling_blood.enabled&dot.blood_plague.ticking&dot.frost_fever.ticking
+actions.aoe+=/pestilence,if=!talent.roiling_blood.enabled&dot.blood_plague.ticking&dot.frost_fever.ticking
+# Prioritize Crimson Scourge procs for free AoE damage
+actions.aoe+=/death_and_decay,if=buff.crimson_scourge.up
+actions.aoe+=/blood_boil,if=buff.crimson_scourge.up
+actions.aoe+=/death_and_decay
+actions.aoe+=/blood_boil
+actions.aoe+=/heart_strike,if=runes.blood.count>=1|runes.death.count>=1
+actions.aoe+=/death_strike,if=runes.unholy.count>=1&runes.frost.count>=1
+actions.aoe+=/rune_strike,if=runic_power>=80
+actions.aoe+=/horn_of_winter
+actions.aoe+=/rune_strike,if=runic_power>=30

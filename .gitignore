@@ -1,18 +1,48 @@
-debug_survival.lua
-MistsOfPandaria/Priorities/Feral_Guide.md
-syntaxcheck.bat
-test_specs.lua
-test_syntax.lua
-test_syntax.lua
-Libs/LibItemBuffs-1.0/tests/wowmock/tests/wowlua_tests.lua
-Libs/LibItemBuffs-1.0/tests/tests.lua
-Libs/LibItemBuffs-1.0/tests/tests.lua
-Libs/LibItemBuffs-1.0/tests/wowmock/tests/wowlua_tests.lua
+# Dependencies
+node_modules/
 
-# Documentation and planning files
-Documentation/
-.vscode/settings.json
+# Release files
+*.zip
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Temporary folders
+tmp/
+temp/
+release.json
 .gitignore
-
-syntaxcheck.bat
-.vscode/settings.json
+package-lock.json
+Documentation/Rogue_Spell_ID_Audit.md
+scripts/release.js
+Documentation/MoP_Spell_Mechanics_TODO.md
+Documentation/Hunter_Spell_ID_Audit.md
+package.json
+.gitignore
+Documentation/README.md
+Documentation/Feral_SimC_APL.simc

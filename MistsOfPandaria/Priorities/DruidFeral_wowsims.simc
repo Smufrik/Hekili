@@ -22,7 +22,7 @@ actions.precombat+=/savage_roar,if=!buff.savage_roar.up
 actions.precombat+=/potion,name=virmens_bite_potion
 
 # Cooldowns
-actions.cooldowns+=/use_item,slot=hands
+actions.cooldowns+=/use_item,slot=hands,if=cooldown.synapse_springs.ready
 actions.cooldowns+=/use_item,slot=trinket1
 actions.cooldowns+=/use_item,slot=trinket2
 actions.cooldowns+=/blood_fury
@@ -38,11 +38,11 @@ actions.maint+=/faerie_fire,if=variable.maintain_ff&debuff.faerie_fire.down
 actions.maint+=/skull_bash,if=target.casting
 
 # Snek weave (snapshot HT/Regrowth)
-actions.snek+=/natures_swiftness,if=variable.opt_use_ns&(talent.dream_of_cenarius.enabled)&buff.predatory_swiftness.down
+actions.snek+=/natures_swiftness,if=variable.opt_use_ns&(talent.dream_of_cenarius.enabled)&buff.predatory_swiftness.down&!buff.natures_swiftness.up
 actions.snek+=/healing_touch,if=variable.opt_use_ns&(buff.natures_swiftness.up|buff.predatory_swiftness.up)
 actions.snek+=/regrowth,if=variable.opt_snek_weave&buff.predatory_swiftness.up&energy.current<=40
 
-actions.bear+=/thrash
+actions.bear+=/thrash_bear
 actions.bear+=/cat_form,if=buff.clearcasting.up
 actions.bear+=/cat_form,if=buff.bear_form.up&(energy.deficit<=10|(dot.rake.remains<=3|dot.rip.remains<=2|cooldown.tigers_fury.remains<=2))
 actions.bear+=/maul,if=!buff.clearcasting.up&rage.current>=30
@@ -54,25 +54,25 @@ actions.wrath+=/wrath,if=variable.opt_wrath_weave&should_wrath_weave
 # Single-target core
 actions.st+=/tigers_fury,if=energy.current<=35+variable.tf_bonus&buff.berserk.down
 actions.st+=/savage_roar,if=!buff.savage_roar.up&combo_points.current>0
-actions.st+=/rip,if=combo_points_for_rip&(dot.rip.down|dot.rip.remains<=2|rip_stronger)&!delay_rip_for_tf&!clip_rip_with_snapshot
-actions.st+=/rake,if=(dot.rake.down|dot.rake.remains<=3|rake_stronger)&!delay_rake_for_tf&!clip_rake_with_snapshot
-actions.st+=/thrash,if=buff.clearcasting.up&(dot.thrash.down|dot.thrash.remains<=3)
+actions.st+=/rip,if=combo_points_for_rip&(dot.rip.down|dot.rip.remains<=2|rip_stronger)&!delay_rip_for_tf&!clip_rip_with_snapshot&use_dots
+actions.st+=/rake,if=(dot.rake.down|dot.rake.remains<=3|rake_stronger)&!delay_rake_for_tf&!clip_rake_with_snapshot&use_dots
+actions.st+=/thrash_cat,if=buff.clearcasting.up&(dot.thrash_cat.down|dot.thrash_cat.remains<=3)&(use_dots|active_enemies>=2)
 actions.st+=/shred,if=(buff.berserk.up|buff.clearcasting.up&(dot.thrash.up|combo_points.current>=5))&!(disable_shred_when_solo&active_enemies=1)
 actions.st+=/mangle_cat,if=combo_points.current<5&buff.berserk.down&buff.clearcasting.down
 actions.st+=/shred,if=(energy.deficit<=10|!(dot.rip.remains<=2|buff.savage_roar.remains<=4|dot.rake.remains<=3))&!(disable_shred_when_solo&active_enemies=1)
 
 # AOE core
 actions.aoe+=/tigers_fury,if=energy.current<=35+variable.tf_bonus&buff.berserk.down
-actions.aoe+=/thrash_cat,if=dot.thrash_cat.remains<4.5
+actions.aoe+=/thrash_cat,if=dot.thrash_cat.remains<4.5&(use_dots|active_enemies>=2)
 actions.aoe+=/swipe_cat
-actions.aoe+=/rake,cycle_targets=1,if=active_enemies<=6&dot.rake.remains<4.5
-actions.aoe+=/rip,cycle_targets=1,if=active_enemies<=4&combo_points_for_rip&dot.rip.remains<7.2&!delay_rip_for_tf&!clip_rip_with_snapshot
+actions.aoe+=/rake,cycle_targets=1,if=active_enemies<=6&dot.rake.remains<4.5&use_dots
+actions.aoe+=/rip,cycle_targets=1,if=active_enemies<=4&combo_points_for_rip&dot.rip.remains<7.2&!delay_rip_for_tf&!clip_rip_with_snapshot&use_dots
 
 # Unified Cat Optimal Rotation (translation of WoWSims catOptimalRotationAction)
 actions.cat_optimal+=/variable,name=tf_bonus,value=0
 actions.cat_optimal+=/call_action_list,name=maint
-actions.cat_optimal+=/call_action_list,name=cooldowns
 actions.cat_optimal+=/call_action_list,name=snek
+actions.cat_optimal+=/call_action_list,name=cooldowns
 actions.cat_optimal+=/call_action_list,name=wrath,if=variable.opt_wrath_weave&should_wrath_weave
 actions.cat_optimal+=/call_action_list,name=bear,if=variable.opt_bear_weave&(should_bear_weave|buff.bear_form.up)
 actions.cat_optimal+=/call_action_list,name=aoe,if=active_enemies>=3
@@ -94,7 +94,18 @@ actions.tendon+=/rip,if=combo_points.current>=5
 actions.tendon+=/ferocious_bite,if=combo_points.current>=5
 
 # Master action list (Default preset)
+actions+=/call_action_list,name=opener,if=time<12
 actions+=/call_action_list,name=cat_optimal
+
+# Opener sequence (guided): FF -> Rake -> TF+Berserk (<=30 energy) -> builders -> Rip (TF window) -> Thrash (TF window)
+actions.opener+=/faerie_fire,if=variable.maintain_ff&debuff.faerie_fire.down
+actions.opener+=/rake,if=use_dots
+actions.opener+=/tigers_fury,if=energy.current<=30
+actions.opener+=/berserk,if=buff.tigers_fury.up
+actions.opener+=/shred,if=combo_points.current<5&buff.berserk.up&!(disable_shred_when_solo&active_enemies=1)
+actions.opener+=/mangle_cat,if=combo_points.current<5&buff.berserk.down
+actions.opener+=/rip,if=combo_points.current>=5&buff.tigers_fury.up&use_dots
+actions.opener+=/thrash_cat,if=buff.tigers_fury.up&(use_dots|active_enemies>=2)
 
 # AOE preset top-level (disable FF; enable bear+snek weave)
 actions.AOE+=/variable,name=maintain_ff,value=0

@@ -11,6 +11,23 @@ local addon, ns = ...
 local Hekili = _G[addon]
 local class, state = Hekili.Class, Hekili.State
 
+-- Seed state.runes before any resource lookups to avoid metatable errors during script initialization.
+do
+	local runes = rawget(state, "runes")
+	if not runes then
+		runes = { expiry = { 0, 0, 0, 0, 0, 0 }, cooldown = 10, max = 6 }
+		rawset(state, "runes", runes)
+	end
+	if not runes.expiry then
+		runes.expiry = { 0, 0, 0, 0, 0, 0 }
+	end
+	for i = 1, 6 do
+		if not runes.expiry[i] then
+			runes.expiry[i] = 0
+		end
+	end
+end
+
 -- Safe local references to WoW API (helps static analyzers and emulation)
 local GetRuneCooldown = rawget(_G, "GetRuneCooldown") or function()
 	return 0, 10, true
@@ -207,18 +224,30 @@ spec:RegisterResource(
 		values = {},
 		resource = "blood_runes",
 
-		reset = function()
-			local t = state.blood_runes
-			for i = 1, 2 do
-				local start, duration, ready = GetRuneCooldown(i)
-				start = start or 0
-				duration = duration or (10 * state.haste)
-				t.expiry[i] = ready and 0 or (start + duration)
+	reset = function()
+		local t = state.blood_runes
+		local count = 0
+		-- Blood runes are in slots 1 and 2
+		-- Death runes in these slots can also be used as blood runes
+		for i = 1, 2 do
+			local start, duration, ready = GetRuneCooldown(i)
+			local runeType = GetRuneType(i)
+			start = start or 0
+			duration = duration or (10 * state.haste)
+			
+			-- Count blood runes (type 1) AND death runes (type 4) in blood slots
+			if runeType == 1 or runeType == 4 then
+				count = count + 1
+				t.expiry[count] = ready and 0 or (start + duration)
 				t.cooldown = duration
 			end
-			table.sort(t.expiry)
-			t.actual = nil
-		end,
+		end
+		for i = count + 1, 2 do
+			t.expiry[i] = 999
+		end
+		table.sort(t.expiry)
+		t.actual = nil
+	end,
 
 		gain = function(amount)
 			local t = state.blood_runes
@@ -253,7 +282,7 @@ spec:RegisterResource(
 					end
 				end
 				return amount
-			elseif k == "current" then
+			elseif k == "current" or k == "count" then
 				return t.actual
 			end
 			return rawget(t, k)
@@ -292,18 +321,30 @@ spec:RegisterResource(
 		values = {},
 		resource = "frost_runes",
 
-		reset = function()
-			local t = state.frost_runes
-			for i = 5, 6 do -- Frost runes are at positions 5-6
-				local start, duration, ready = GetRuneCooldown(i)
-				start = start or 0
-				duration = duration or (10 * state.haste)
-				t.expiry[i - 4] = ready and 0 or (start + duration)
+	reset = function()
+		local t = state.frost_runes
+		local count = 0
+		-- Frost runes are in slots 5 and 6
+		-- Death runes in these slots can also be used as frost runes
+		for i = 5, 6 do
+			local start, duration, ready = GetRuneCooldown(i)
+			local runeType = GetRuneType(i)
+			start = start or 0
+			duration = duration or (10 * state.haste)
+			
+			-- Count frost runes (type 3) AND death runes (type 4) in frost slots
+			if runeType == 3 or runeType == 4 then
+				count = count + 1
+				t.expiry[count] = ready and 0 or (start + duration)
 				t.cooldown = duration
 			end
-			table.sort(t.expiry)
-			t.actual = nil
-		end,
+		end
+		for i = count + 1, 2 do
+			t.expiry[i] = 999
+		end
+		table.sort(t.expiry)
+		t.actual = nil
+	end,
 
 		gain = function(amount)
 			local t = state.frost_runes
@@ -338,7 +379,7 @@ spec:RegisterResource(
 					end
 				end
 				return amount
-			elseif k == "current" then
+			elseif k == "current" or k == "count" then
 				return t.actual
 			end
 			return rawget(t, k)
@@ -377,18 +418,30 @@ spec:RegisterResource(
 		values = {},
 		resource = "unholy_runes",
 
-		reset = function()
-			local t = state.unholy_runes
-			for i = 3, 4 do -- Unholy runes are at positions 3-4
-				local start, duration, ready = GetRuneCooldown(i)
-				start = start or 0
-				duration = duration or (10 * state.haste)
-				t.expiry[i - 2] = ready and 0 or (start + duration)
+	reset = function()
+		local t = state.unholy_runes
+		local count = 0
+		-- Unholy runes are in slots 3 and 4
+		-- Death runes in these slots can also be used as unholy runes
+		for i = 3, 4 do
+			local start, duration, ready = GetRuneCooldown(i)
+			local runeType = GetRuneType(i)
+			start = start or 0
+			duration = duration or (10 * state.haste)
+			
+			-- Count unholy runes (type 2) AND death runes (type 4) in unholy slots
+			if runeType == 2 or runeType == 4 then
+				count = count + 1
+				t.expiry[count] = ready and 0 or (start + duration)
 				t.cooldown = duration
 			end
-			table.sort(t.expiry)
-			t.actual = nil
-		end,
+		end
+		for i = count + 1, 2 do
+			t.expiry[i] = 999
+		end
+		table.sort(t.expiry)
+		t.actual = nil
+	end,
 
 		gain = function(amount)
 			local t = state.unholy_runes
@@ -423,7 +476,7 @@ spec:RegisterResource(
 					end
 				end
 				return amount
-			elseif k == "current" then
+			elseif k == "current" or k == "count" then
 				return t.actual
 			end
 			return rawget(t, k)
@@ -1852,12 +1905,7 @@ spec:RegisterAbilities({
 
 		startsCombat = false,
 
-		toggle = function()
-			if settings.dps_shell then
-				return
-			end
-			return "defensives"
-		end,
+		toggle = "defensives",
 
 		handler = function()
 			applyBuff("antimagic_shell")
@@ -1878,6 +1926,12 @@ spec:RegisterAbilities({
 
 		toggle = "cooldowns",
 
+		--
+		
+		usable = function()
+			return settings.use_army_of_the_dead, "army_of_the_dead setting is disabled"
+		end,
+
 		handler = function()
 			applyBuff("army_of_the_dead", 4)
 			summonPet("army_ghoul", 40)
@@ -1891,9 +1945,18 @@ spec:RegisterAbilities({
 		cooldown = 0,
 		gcd = "spell",
 
-		spend_runes = { 1, 0, 0 }, -- 1 Blood, 0 Frost, 0 Unholy
+		spend = function()
+			return buff.crimson_scourge.up and 0 or 1
+		end,
+		spendType = function()
+			return buff.crimson_scourge.up and nil or "blood_runes"
+		end,
 
 		startsCombat = true,
+
+		usable = function()
+			return buff.crimson_scourge.up or runes.blood.count > 0 or runes.death.count > 0
+		end,
 
 		handler = function()
 			-- Blood Boil base functionality for MoP
@@ -1903,6 +1966,9 @@ spec:RegisterAbilities({
 			end
 			if debuff.blood_plague.up and state.talent.roiling_blood.enabled then
 				active_dot.blood_plague = min(active_enemies, active_dot.blood_plague + active_enemies - 1)
+			end
+			if buff.crimson_scourge.up then
+				removeBuff("crimson_scourge")
 			end
 		end,
 	},
@@ -1976,9 +2042,11 @@ spec:RegisterAbilities({
 		cooldown = 90,
 		gcd = "spell",
 
-		toggle = "cooldowns",
+		--
 
 		startsCombat = false,
+
+		toggle = "cooldowns",
 
 		handler = function()
 			applyBuff("dancing_rune_weapon")
@@ -2138,9 +2206,22 @@ spec:RegisterAbilities({
 		cooldown = 300,
 		gcd = "off",
 
-		toggle = "cooldowns",
+		--
 
 		startsCombat = false,
+
+		toggle = "cooldowns",
+
+		usable = function()
+			-- Conservative gate: only when we cannot cast Death Strike (no FU or death pair) and RP deficit is high.
+			local fu_pair_unavailable = ( (runes.frost.count or 0) + (runes.unholy.count or 0) ) == 0 and (runes.death and runes.death.count or 0) < 2
+			local rp_def = runic_power.deficit or 0
+			-- Allow slightly earlier if Vampiric Blood is up (mitigation window), else require larger deficit.
+			if buff.vampiric_blood.up then
+				return fu_pair_unavailable and rp_def >= 30
+			end
+			return fu_pair_unavailable and rp_def >= 40
+		end,
 
 		handler = function()
 			gain(25, "runicpower")
@@ -2222,6 +2303,10 @@ spec:RegisterAbilities({
 		spend_runes = { 0, 1, 0 }, -- 0 Blood, 1 Frost, 0 Unholy
 
 		startsCombat = true,
+		
+		usable = function()
+			return runes.frost.count > 0, "no frost runes available"
+		end,
 
 		handler = function()
 			applyDebuff("target", "frost_fever")
@@ -2374,11 +2459,11 @@ spec:RegisterAbilities({
 		cooldown = 30,
 		gcd = "off",
 
+		toggle = "defensives",
+
 		startsCombat = false,
 
 		spend_runes = { 1, 0, 0 }, -- 1 Blood, 0 Frost, 0 Unholy
-
-		toggle = "defensives",
 
 		handler = function()
 			-- Rune Tap base functionality
@@ -2442,7 +2527,7 @@ spec:RegisterAbilities({
 		cooldown = 60,
 		gcd = "off",
 
-		toggle = "defensives",
+		toggle = "cooldowns",
 
 		startsCombat = false,
 
@@ -2560,6 +2645,13 @@ spec:RegisterTotems({
 	},
 })
 
+-- Ensure death rune container exists for consistent counting across APLs
+if not state.death_runes then
+	state.death_runes = { count = 0 }
+elseif type(state.death_runes) ~= "table" then
+	state.death_runes = { count = tonumber(state.death_runes) or 0 }
+end
+
 -- Convert runes to death runes (Blood Tap, etc.)
 spec:RegisterStateFunction("convert_to_death_rune", function(rune_type, amount)
 	amount = amount or 1
@@ -2574,6 +2666,35 @@ spec:RegisterStateFunction("convert_to_death_rune", function(rune_type, amount)
 		state.unholy_runes.current = state.unholy_runes.current - amount
 		state.death_runes.count = state.death_runes.count + amount
 	end
+end)
+
+-- Provide a unified 'runes' table so APL conditions like runes.death.count work in Blood
+spec:RegisterStateExpr("runes", function()
+	local function readyCount(indices, acceptType)
+		local c = 0
+		for _, idx in ipairs(indices) do
+			local _, _, ready = GetRuneCooldown(idx)
+			local rtype = GetRuneType(idx)
+			if ready and (not acceptType or rtype == acceptType) then c = c + 1 end
+		end
+		return c
+	end
+
+	local blood = readyCount({1,2})
+	local frost = readyCount({5,6})
+	local unholy = readyCount({3,4})
+	local death = readyCount({1,2,3,4,5,6}, 4)
+
+	return {
+		blood = { count = blood },
+		frost = { count = frost },
+		unholy = { count = unholy },
+		death = { count = death },
+	}
+end)
+
+spec:RegisterStateExpr("runes_by_type", function()
+	return state.runes
 end)
 
 -- Add function to check runic power generation
@@ -2869,7 +2990,17 @@ spec:RegisterSetting("dps_shell", false, {
 	width = "full",
 })
 
+spec:RegisterSetting("use_army_of_the_dead", true, {
+	name = strformat("Use %s", Hekili:GetSpellLinkWithTexture(42650)),
+	desc = strformat(
+		"If checked, %s will be recommended when available.",
+		Hekili:GetSpellLinkWithTexture(42650)
+	),
+	type = "toggle",
+	width = "full",
+})
+
 -- Register default pack for MoP Blood Death Knight
 spec:RegisterPack(
-	"Blood", 20250918, [[Hekili:1M16UTTnu4NLGcyy3TQj7yN1mKyG21cSMTweuxS(pjrlrBXfjrbkQK6cd9SVdj1fQl0X52pAtQi55635ADM68nNvbio25lZSNTW(8PV1A205ZTN6SIVlf7Skf5FdAl8ljOy4VFFeLgi(6Uikkq86mAoZhoXz16Cse)tjoRhKKWntX(Whxy7SkKeeGv3eN57S6BHKScpXFqfELSSWJUb(3(CcnPWlIKXHJ3qzfE)f(gseXYzL8JsvaVbLhXHF9lsvs9kNvXKKa3nmm(NGeItqRJWboV3HdIH4AnFzLpJWXmcYzfjXNcVBRBakged3faBxEzHxigfXdTIr)OW71fE2wNA3WiucNa3M47MfIJIeC40oCO6QGblYLHrPyMs9zKu1jF8hy)CoO4PHOmXpyekiw70LooITfZTkfMuFEH3fGWD6cblNBGLbyep0nJZi3G7WZ)fNSfJs8XVHcFjM8tCqHhJYrkZ(47cXWpUT6wfEzCW9iCum4Fes2goPW7nfECCCkLHyKODfEbKmPmu5(YSkDq)YL)MUS8RKnxMfc2Ja3sDf4FPDFelpbmNP07WSLxoFXq0cScm(XqlXtVf7ItWXeC2YlNne1wlW2URPKOheTo1Sw6FF0QToAx49EYwHvva1fi9i6DaC)6)OglaVTW7dcIx4TQ0F(iGUNbMZ97RpqbJk8GqtafTWyOXyaqaOJ8eCM1ggnJB5tZtG3UeiAH3OQZYtcPr7AF4efhvxqAEQphKWzYlmss)JwlMpSwCMGBga)G6DMHGKBrXPeg4owRYX1km5ZO)t4pahmojdC)IaGeaFhdUKTi1DEe(bdAGkA(3Fgsrnm9NPL5I4Jxd(binjLXj88aPr6TpDEpZaVx0WBbyWLJsfC8CJCCD(MnwRPWvZcj4OaRa6Djner7ebDMABW)ksqbXzUsMEhK)vbo0Z)gJHKRj(qgmg2NElMTR0n7tPrcUcXHWVbAVU81nxSWPci5tKG5xW4fP2o1OzBGse12IuQ8Ncc0TqyDfnw8ox6gxEiKTcJ6gq8o44sJZh(63l8YZKLSVJiYm1evahKQsLfKZa7MeoC7oXftadA2b9ZINc2i53dGQpcuNM3tHde6q3sTpc0AvgrWFvwIfQgcGtQBablbUZTBKMUsPE6M(cQugNR3xsEg2feX4SoDLm1CUxokcNWTufPGygRYBPjuYJ8dfIVLSmTsxNAxLzvbMK3Rcmbk2uDKwlyA3dBJtvNQP61YMuv6MN95qvwuPjVSrwhqRmNuUuRsJqBZXUrySFylfRB84c72PjEz1NkdxaTYWReuaM7FJmWuqdXPs27UbdP)AouZEORGstI5AfNCF87eJSSHF0C(AOD5BK8YCvIdWREYEtZaZ6wTOhbpOSr83bPiYvgIzMZf3UNXsht3wuGKPqMwF0ojXmpGYlfqXCltZmNG9E0SMEQL0P7akn0zGutkH2Kedh2Wg9bbKmAHE2wnHOZqGMZrDszMOqklrugeQxbNit2lKOHoJHJrKKmvpOAYwRBjzR5KiAdei1XZT76v8v2soaMfnPeVg1m27aLXlJhy4mOXMUd)voiXFNaJXXHHmKt3dPj(m96jIXmkB2fQZhr2MeJfg(1WOPWDeL2)o97RiXGc)UR)N)yiJxBMdgVdp59dRrpZyYxsFNzemW1uOTHTIz9SuHfAD6IizL9rvnHvNEXAHmL(xiJtM4KQ9Oa9VDhILajGG2g(KyCBUWtmRZssSkUciEohKDNvRIZ3abfcWcDdjcKOxvp)4WU9RE1d1ZxCf8i4vxxHhlUsjqzw1q06XRRadIXIpzyqIHN349fVDqSYWVSTtSHX9Gh73FaOXfNnm1B8Ssk3fcm8Ju(8kd3Fsf7s56YT9aocn7)gclJpPMkWB12PL(N7SbkHW0V53Lx2047RfBWskcfEM28Kod02BLG49we1fxctBQi3l7sLeCOrSE07tQnzEcRsQnHE0BrAi16bVajL9)HVfjDhDxl69cJoBX(9A4aOX2dqTXJ718Ys7r9BAzP9K977v4hS3tgn(ELO5TLOZSNuAzU)94Ol7Txj0rzl6Wzrird96VRLJIMN2MMZAzFR2HYrrPzDOulP74YWQYxC8BkrNddScgbN0ZHmFXOtE6qeDMQY12Lp15QEMwKrRuXDwDYGwZ80rhCXgTIH6FNJYDlcmh3FDgxm3E0aYtlRw9gkQks9vS6)PhizDmLYdL2aPzdsmJHQgTmb1dnRkvm88(JmmR)YlNApACVjcUyAL3wdy08rDKXftN8mknlgn(PdjBJj1MHwtMgA3bJ0rTlSfrhpDzz0ytZkVFVHHEBj)vZKlB5XmPoX0(e6BkAkqyKETZKwo4D9lgKnkO77OFSeQcTahbtw1R8u9O3cYnqf(duo7j6l6dtRAD4GIr32v6fSS0Ei(zpm7Ar5N7UL71mJEplNBlN1X5)d]]
+	"Blood", 20251026, [[Hekili:9Q1EVTnos8plflqq62C6SJJttpuhGUB372Tl2IcOE3FkjAjABErsuqIkz9cd9z)gsQhKuIskUPhkABmFmV4m)MhoEl9(QNBeIH9(81lUE9YfxFRZ1RwD3Y78CzhZWEUzOWhq7HFifLa)7pftPr8vpgtrr8BxqlZdHD8C3wsIz)wQ32Hj5BHZMHdHLxVWZ9ajkclplUi0Z9Rhifvb8)IQcQzAvaDh85qgHMwfetkyW27O5vb)k(bsmXbeKC6osmW(FOk4Jye7qvWVNs2FG9pQceYAvWL)b9lVU6tvF6hGZ8LCCinzlIv9jjDlCYAw6nB(7B5xXhwPaNgIVISBZR2wUBNJ(6oLzwUonf7xCGGJJ43vE1U1CIOpLo8npqZt9P78FIKYW5TxwF5rUFoIuG9JWibJFvgM5S)aTm2HF4hXdFPmQWYwBA(zAoyX)NX0NApnCMesAK)UCm(VWQlJszKe0EsiOA444RIqWNWBoGrXSdojO)8hx4SAH6ncrXX(Yp6ZFkVI7qT5ruobTngxm9rdP0yUbOGRHn3ZPeu7WOzC9i8oCAbyl0oBEzA)JIOINEPPZhNIti4I73CZKxSGKUpg7Zq57XSg76)PvfdiPfzKCm4uU9yvWN)W)QkaSEz48ozYP1IamP5NLuVwvVIMTPaZU6ruCjEZY5Ct8FIdlzy9BkLsN6NSSq273SA9COwkgh5hrzgsYRGLAcuIr7lXoms4dGf50jXw7YPfm)D4hbh56DMd3simYEKWqdrbGdGoxjPG7mqkFPhO)A4HYWl80jfDC9IM3L)a9F5qjnUvWtbknkwtQAD5opObTR)SGg6Z4DL5h1C87zxoDQDV63Bl0dC3W5CZ)ld9EeLao1asGqqhNMdtbsiElTKJZqZzewzKW8o5l7n6VSkWnAu3eQAoK(61dtliQNhENntIOlFwOzeknKtgbTFcJYOPt9WyImTYIMNNCKN9GDOl1aylWBadxD0p)J(mQFebF)ML3zXeYrEimCsXWBlZJm1lVmQ7JnWWvbqiJO2HQGIekLDql0RdUMBI4z29ly5KholxJBxmtcFj)rOWPm9an(iOJLPmWSCHCvbaw7IV(0P6tlisZ6x)AlSsggx77WqX40g0synhCk3SfDHcKs4b(tKtbdkgc43IlQzNyxj74pK9KTUfvvJnlSjysWA)ymo8GISPUCR4zbh)cBq)xCP5nYXjiiniKR50PE3sDtr4aiOKqsTzv6a5kYXwf8vzs2Gp(fxOgVL)TvvbsF6cffvlHmOR0s22Cm6bnF128z2VxTXOZrXAYo70GeEeI0kLgz7zebv8Fxa63pNtsk4196cVF58IHHADd5frKKGJiqb2XhRRgMxEwvGmwWo)L(6qooWQgIo2MfkuYi)cjF0YGzsdPgVLsIpRRdX7X(G9ptwIRz(Ll65GFVA9nMut4H09KaFeW4ZOpHZVFZ7wmLHq7IZmM3onbWMCwpAQRjnHLA4fNP(D7i6350lHjnWjcgzMusrgCAJnVPfAsXA9MjGGEok7Q2A2(a9xG8guMiZce2FZBgkQhQF)zeRlpTUNDngyo8rEAg57Oki4GGDtwLRKvz4cg0ZAtvKVW8s0KlHMdjG)RXGruqoewvt4dPSEoGgdzqN5LmyNDAAUZlr8NQi8THoiP0yU0QvAvRbAHNphATAHNl4cuahVDMlR9CFcLNcEefEU)gemNZ4TD(wJXP4u9jpxujdyUNRBs5oGbEUITeZ2rnifw4ZI5fv7B69tEUWlkiSeeia9IWaclyLNBtKOhdKpRu4vGpOfV9osPLiMtVvtrVbcs6ixBozoPUXGunhYWPuoXQCsMC3VLK1QIRLieUGT2QoA7sTYExedNq3o9ZxtREbxaaTMbrvb3VPkyzh5vsOZP)BTsFfhwjrE3IoQO4CZPYDJrfJyXAjsrCvIj7jUQX2Co9Uj4uFvVk40PgoPGJ0JtQ4rCoTCX8nn3A30S0EaOTC8kYK2McYzpACGm9sP7MfcJ9LdAVFtZQ6VrW1GB96orzGYleYJ9O5EwPvwTsm(d9ouzChKvZbvMMPkFgaxQ5ggtpGpABzKRXqMgclQHgMdKuIW6lNOE7KVgccAGa06PaotQ32M(q4iZIcD9koocc)(DZKO2xr7jYklGuCdHEmNRQNHs823oH7HsyPJl2m1odi9X(IemYWm8iahpr3GZ(tr062z8eCNteVDhmqzm)wduEcA)6fA9JAZitRdPvIMyQoEJw2GDtOTNQ)VyAhzowIeaMPlnLw(0ANz88ZNdTZVD8AdSZHoAPp72XdW7p0nzqEhqyvWpca9o8meCvOBaCvbVxhWU)eFhV8HzZBEHV2GUhT0INbhgw7wBKoIHYgVeJP8agcqDLsTm9hB8efAWN1BtUyod6pc46YyUt5LYCgYDvH0CI2HdBKrDKIlMJRznUIamHNG47C3hJ1fUOGhRd8RzZrB0qVo8rBA57SK0n9HHaOA9UgTNNVHbm0dTEGUxgfw7CA5XQwP5W(w1JQqf9tnv3jVC9mmv3jVC9b9C6o5UP6oXsXhZgC4zxPFt5PJIqmB8DlzVuBkZ08zxxUC4(HM(Tc6wskgxA1Z5AToQmLj7qm2(UNeYJLV)PAPYO1pnx9U8kdOtMBor7HTY241qnY3u1yyHtdIEz)7w)vtb(cCpsPUy77Vs7qcpwToO1F4uLEPlDxhHd4rtbKUcmtTeo5P5)uCj8FlfRv3Fut3Id4LonL69BisTITwLdn1NoGp30CyKz(jTEJneVozOlR)a(ltlfZgBy1Wyd8FF26eM(10WA)J3)l]]
 )

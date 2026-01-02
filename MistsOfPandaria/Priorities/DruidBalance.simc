@@ -1,47 +1,65 @@
-# Druid: Balance
+# Druid: Balance - Optimized for MoP 5.4
+# Based on WoWSims MoP simulator analysis
+
 ## Precombat
 actions.precombat+=/moonkin_form
 actions.precombat+=/flask
 actions.precombat+=/food
 actions.precombat+=/mark_of_the_wild
-actions.precombat+=/healing_touch,if=talent.dream_of_cenarius.enabled&!buff.dream_of_cenarius_damage.up
-actions.precombat+=/starsurge,if=!buff.celestial_alignment.up
+actions.precombat+=/healing_touch,if=talent.dream_of_cenarius.enabled&!buff.dream_of_cenarius.up
+actions.precombat+=/wild_mushroom,if=buff.wild_mushroom_stacks.stack<3
+actions.precombat+=/wild_mushroom,if=buff.wild_mushroom_stacks.stack<3
+actions.precombat+=/wild_mushroom,if=buff.wild_mushroom_stacks.stack<3
+actions.precombat+=/natures_swiftness
+actions.precombat+=/wrath
 
 ## Default
 actions+=/moonkin_form,if=!buff.moonkin_form.up
 actions+=/skull_bash
 actions+=/renewal,if=health.pct<40&talent.renewal.enabled
-actions+=/might_of_ursoc,if=health.pct<30
 actions+=/barkskin,if=health.pct<50
-actions+=/rejuvenation,if=health.pct<65
-actions+=/healing_touch,if=talent.dream_of_cenarius.enabled&!buff.dream_of_cenarius_damage.up&buff.predatory_swiftness.up
+actions+=/healing_touch,if=talent.dream_of_cenarius.enabled&!buff.dream_of_cenarius.up&buff.predatory_swiftness.up
 
 ## Cooldowns
+# Use cooldowns when at or near 100 Lunar Energy for maximum benefit
+actions+=/use_items,if=buff.celestial_alignment.up|(eclipse_power>=80&buff.lunar_eclipse.up)
 actions+=/berserking,if=buff.celestial_alignment.up
-actions+=/natures_vigil,if=talent.natures_vigil.enabled&(buff.celestial_alignment.up|!cooldown.celestial_alignment.remains)
-actions+=/incarnation,if=talent.incarnation.enabled&(buff.celestial_alignment.up|!cooldown.celestial_alignment.remains)
-actions+=/celestial_alignment,if=eclipse_energy=0&!buff.celestial_alignment.up
-actions+=/force_of_nature,if=talent.force_of_nature.enabled&(buff.celestial_alignment.up|cooldown.celestial_alignment.remains>30)
+actions+=/blood_fury,if=buff.celestial_alignment.up  
+actions+=/arcane_torrent,if=buff.celestial_alignment.up
+actions+=/celestial_alignment,if=eclipse_power>=80&buff.lunar_eclipse.up
+actions+=/incarnation,if=talent.incarnation.enabled&(buff.celestial_alignment.up|(eclipse_power>=80&buff.lunar_eclipse.up&cooldown.incarnation.remains>=86))
+actions+=/natures_vigil,if=talent.natures_vigil.enabled&(buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up)
+actions+=/force_of_nature,if=talent.force_of_nature.enabled&buff.lunar_eclipse.up&buff.lunar_eclipse.remains>=13
 
-## Wild Mushrooms (MoP mechanics)
-actions+=/wild_mushroom,if=buff.wild_mushroom.stack<3
-actions+=/wild_mushroom_detonate,if=buff.wild_mushroom.stack=3
+## Wild Mushrooms
+actions+=/wild_mushroom_detonate,if=buff.wild_mushroom_stacks.stack>=1&buff.lunar_eclipse.up
+actions+=/wild_mushroom,if=buff.wild_mushroom_stacks.stack<3&buff.lunar_eclipse.up
 
 ## Multi-target
-actions+=/hurricane,if=active_enemies>=3&buff.solar_eclipse.up
-actions+=/astral_storm,if=active_enemies>=3&buff.lunar_eclipse.up
+actions+=/starfall,if=active_enemies>=4&buff.lunar_eclipse.up&buff.incarnation_chosen_of_elune.remains<=18
+actions+=/hurricane,if=active_enemies>=4&buff.lunar_eclipse.up
+actions+=/sunfire,if=active_enemies>=3&!ticking&buff.lunar_eclipse.up
+actions+=/moonfire,if=active_enemies>=3&!ticking&buff.lunar_eclipse.up
 
-## Eclipse Transition Management
+## Single Target Priority
+# Maintain DoTs - refresh within 1 tick to maximize uptime
+actions+=/sunfire,if=remains<=tick_time|(buff.lunar_eclipse.up&remains<=3)|(buff.lunar_eclipse.up&buff.lunar_eclipse.remains<=3&remains<=6)
+actions+=/moonfire,if=remains<=tick_time|(buff.solar_eclipse.up&remains<=3)|(buff.solar_eclipse.up&buff.solar_eclipse.remains<=3&remains<=6)
+
+# Starsurge usage
 actions+=/starsurge,if=buff.shooting_stars.react
-actions+=/starsurge,if=eclipse_energy>0&eclipse_energy<=20&buff.solar_eclipse.up
-actions+=/starsurge,if=eclipse_energy<0&eclipse_energy>=-20&buff.lunar_eclipse.up
-actions+=/starsurge,if=(eclipse_energy>-80&eclipse_energy<-60)|(eclipse_energy>60&eclipse_energy<80) # optimized for transition
-actions+=/starfall,if=buff.lunar_eclipse.up
-actions+=/sunfire,if=remains<3|(buff.solar_eclipse.up&buff.solar_eclipse.remains<3)
-actions+=/moonfire,if=remains<3|(buff.lunar_eclipse.up&buff.lunar_eclipse.remains<3)
-actions+=/hurricane,if=active_enemies>=4&buff.solar_eclipse.up
-actions+=/astral_storm,if=active_enemies>=4&buff.lunar_eclipse.up
+actions+=/starsurge,if=eclipse_power>=80&buff.lunar_eclipse.up&cooldown.celestial_alignment.remains>=35
+actions+=/starsurge,if=buff.incarnation_chosen_of_elune.up&eclipse_power>=80
 
-## Eclipse Cycling
-actions+=/wrath,if=(eclipse_energy<=0&eclipse_change=1)|(eclipse_energy>0)
-actions+=/starfire,if=(eclipse_energy>=0&eclipse_change=-1)|(eclipse_energy<0)
+## Starfall
+# Use Starfall during Lunar Eclipse when conditions are met
+actions+=/starfall,if=buff.lunar_eclipse.up&(!talent.incarnation.enabled|cooldown.incarnation.remains>=35|(buff.incarnation_chosen_of_elune.up&buff.incarnation_chosen_of_elune.remains<=18))
+
+## Eclipse Filler Spells
+# Maintain Lunar Shower stacks with Moonfire
+actions+=/moonfire,if=buff.lunar_shower.stack<3&(buff.lunar_eclipse.up|buff.solar_eclipse.up|!buff.celestial_alignment.up)
+
+# Cast based on Eclipse phase
+actions+=/starfire,if=buff.lunar_eclipse.up|(eclipse_power<0&!buff.solar_eclipse.up)|(eclipse_power<=60&eclipse_direction=="lunar")
+actions+=/wrath,if=buff.solar_eclipse.up|(eclipse_power>0&!buff.lunar_eclipse.up)|(eclipse_power>=60&eclipse_direction=="solar")
+actions+=/starfire

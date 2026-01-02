@@ -1,0 +1,124 @@
+# Arms Warrior APL for Mists of Pandaria
+# Updated to fix priority issues
+
+actions.precombat+=/battle_shout
+actions.precombat+=/shattering_throw
+
+### Base Dispatcher ###
+actions+=/charge,if=time=0|target.range>8
+actions+=/run_action_list,name=movement,if=movement.distance>5
+actions+=/call_action_list,name=cooldowns
+actions+=/run_action_list,name=execute,if=target.health.pct<20
+actions+=/run_action_list,name=aoe,if=active_enemies>=2
+actions+=/run_action_list,name=st,if=active_enemies=1
+actions+=/call_action_list,name=defensives
+actions+=/call_action_list,name=utility
+
+### Cooldowns ###
+# Use offensive cooldowns either inside an active CS window or when CS is about to be applied.
+actions.cooldowns+=/colossus_smash,if=debuff.colossus_smash.remains<1
+actions.cooldowns+=/avatar,if=talent.avatar.enabled&(debuff.colossus_smash.up|cooldown.colossus_smash.remains<4|target.time_to_die<25)
+actions.cooldowns+=/bloodbath,if=talent.bloodbath.enabled&(debuff.colossus_smash.up|cooldown.colossus_smash.remains<4|target.time_to_die<25)
+actions.cooldowns+=/recklessness,if=debuff.colossus_smash.up|target.time_to_die<30
+actions.cooldowns+=/berserker_rage,if=buff.enrage.down&(debuff.colossus_smash.up|cooldown.colossus_smash.remains<3|is_execute_phase)
+actions.cooldowns+=/deadly_calm,if=talent.deadly_calm.enabled&debuff.colossus_smash.up&rage>=60
+actions.cooldowns+=/storm_bolt,if=talent.storm_bolt.enabled&debuff.colossus_smash.up
+actions.cooldowns+=/dragon_roar,if=talent.dragon_roar.enabled&(debuff.colossus_smash.up|cooldown.colossus_smash.remains>6)&active_enemies<=4
+# Bladestorm usage - now recommended more frequently
+actions.cooldowns+=/bladestorm,if=talent.bladestorm.enabled&rage>=20
+# Skull Banner - now properly recommended
+actions.cooldowns+=/skull_banner,if=rage>=20
+
+# Trinkets / Racials / Potion
+actions.cooldowns+=/use_item,slot=trinket1,if=debuff.colossus_smash.up|target.time_to_die<25
+actions.cooldowns+=/use_item,slot=trinket2,if=debuff.colossus_smash.up|target.time_to_die<25
+actions.cooldowns+=/potion,name=mogu_power_potion,if=buff.recklessness.up|target.time_to_die<25
+actions.cooldowns+=/blood_fury,if=debuff.colossus_smash.up
+actions.cooldowns+=/berserking,if=debuff.colossus_smash.up
+actions.cooldowns+=/arcane_torrent,if=rage.deficit>=40
+
+### Execute Phase (<20%) ###
+actions.execute+=/colossus_smash,if=debuff.colossus_smash.remains<1
+actions.execute+=/mortal_strike,if=!debuff.mortal_wounds.up|debuff.mortal_wounds.remains<3
+actions.execute+=/execute,if=debuff.colossus_smash.up&rage>=30
+actions.execute+=/execute,if=buff.sudden_death.up&buff.sudden_death.remains<3
+actions.execute+=/execute,if=rage>=100
+actions.execute+=/slam,if=debuff.colossus_smash.up&rage>=25&rage<100
+actions.execute+=/overpower,if=buff.taste_for_blood.stack>=2|rage<80
+actions.execute+=/execute,if=rage>=30
+actions.execute+=/slam,if=rage>=50
+actions.execute+=/heroic_strike,use_off_gcd=1,if=(rage>=85&debuff.colossus_smash.down)|buff.deadly_calm.up
+actions.execute+=/battle_shout,if=rage<40
+
+### Single Target (non-execute) ###
+actions.st+=/colossus_smash,if=debuff.colossus_smash.remains<1
+actions.st+=/mortal_strike,if=!debuff.mortal_wounds.up|debuff.mortal_wounds.remains<4
+actions.st+=/overpower,if=debuff.colossus_smash.up
+# Overpower / Taste for Blood management
+actions.st+=/overpower,if=buff.taste_for_blood.stack>=2
+# Slam priority during Colossus Smash and above 60 rage outside CS
+actions.st+=/slam,if=buff.colossus_smash.up&rage>=25
+actions.st+=/slam,if=rage>=60&!buff.colossus_smash.up
+actions.st+=/execute,if=buff.sudden_death.up&buff.sudden_death.remains<3
+actions.st+=/storm_bolt,if=talent.storm_bolt.enabled&debuff.colossus_smash.up
+actions.st+=/dragon_roar,if=talent.dragon_roar.enabled&debuff.colossus_smash.up
+actions.st+=/shockwave,if=talent.shockwave.enabled&debuff.colossus_smash.up
+actions.st+=/slam,if=rage>=50
+actions.st+=/heroic_strike,use_off_gcd=1,if=(rage>=85&debuff.colossus_smash.down)|buff.deadly_calm.up
+actions.st+=/overpower,if=rage<70
+actions.st+=/battle_shout,if=rage<50&!buff.battle_shout.up
+actions.st+=/heroic_throw,if=rage>90
+
+### AOE (>=2 targets) ###
+actions.aoe+=/sweeping_strikes,if=!buff.sweeping_strikes.up&active_enemies>=2
+actions.aoe+=/thunder_clap,if=talent.blood_and_thunder.enabled&!dot.deep_wounds.ticking&active_enemies>=3
+actions.aoe+=/colossus_smash,if=debuff.colossus_smash.remains<1&active_enemies<=6
+actions.aoe+=/mortal_strike,if=buff.sweeping_strikes.up&active_enemies<=4
+# Bladestorm usage - now recommended more frequently
+actions.aoe+=/bladestorm,if=talent.bladestorm.enabled&rage>=20
+actions.aoe+=/dragon_roar,if=talent.dragon_roar.enabled&active_enemies>=3
+actions.aoe+=/thunder_clap,if=active_enemies>=4&dot.deep_wounds.remains<4
+actions.aoe+=/cleave,if=active_enemies<=4&buff.sweeping_strikes.up
+actions.aoe+=/slam,if=buff.sweeping_strikes.up&rage>=25
+actions.aoe+=/slam,if=debuff.colossus_smash.up&rage>=25&active_enemies>=3
+actions.aoe+=/heroic_strike,use_off_gcd=1,if=buff.sweeping_strikes.up&rage>=85
+actions.aoe+=/execute,if=buff.sudden_death.up&active_enemies<=3
+actions.aoe+=/overpower,if=active_enemies<=4&rage<80
+actions.aoe+=/whirlwind,if=active_enemies>=5&rage>=30
+# Battle Shout during Bladestorm - now used during Bladestorm
+actions.aoe+=/battle_shout,if=buff.bladestorm.up
+actions.aoe+=/battle_shout,if=rage<rage.max-30&active_enemies>=3
+
+### Movement ###
+actions.movement+=/heroic_leap,if=target.distance>12|debuff.colossus_smash.up
+# Charge during combat - now used on CD for rage generation
+actions.movement+=/charge,if=rage<20&!buff.charge.up
+actions.movement+=/charge,if=target.distance>8
+actions.movement+=/intervene,if=group&!solo&target.distance>10
+actions.movement+=/storm_bolt,if=talent.storm_bolt.enabled&target.distance>8
+actions.movement+=/heroic_throw,if=target.distance>5
+
+### Defensives ###
+actions.defensives+=/die_by_the_sword,if=health.pct<60&incoming_damage_5s>health.max*0.25
+actions.defensives+=/shield_wall,if=health.pct<50&incoming_damage_4s>health.max*0.4
+actions.defensives+=/last_stand,if=health.pct<30&incoming_damage_3s>health.max*0.2
+actions.defensives+=/rallying_cry,if=group&!solo&health.pct<25
+actions.defensives+=/demoralizing_shout,if=active_enemies>=2&incoming_damage_5s>health.max*0.15
+actions.defensives+=/intimidating_shout,if=active_enemies>=2&health.pct<40&!target.debuff.fear.up
+actions.defensives+=/enraged_regeneration,if=health.pct<35&buff.enraged_regeneration.down
+actions.defensives+=/vigilance,if=talent.vigilance.enabled&group&!solo&tank.health.pct<50
+actions.defensives+=/healthstone,if=health.pct<30
+actions.defensives+=/victory_rush,if=health.pct<70&buff.victory_rush.up
+
+### Utility ###
+actions.utility+=/sunder_armor,if=!debuff.sunder_armor.up&!debuff.expose_armor.up&target.time_to_die>15
+actions.utility+=/demoralizing_shout,if=!debuff.demoralizing_shout.up&active_enemies>=2
+actions.utility+=/commanding_shout,if=group&!buff.commanding_shout.up&!buff.blood_pact.up
+actions.utility+=/battle_shout,if=group&!buff.battle_shout.up&!buff.horn_of_winter.up
+
+### Fallback ###
+actions+=/battle_shout,if=rage<20
+# Slam priority - now used more frequently
+actions+=/slam,if=rage>=25
+actions+=/overpower
+actions+=/heroic_throw

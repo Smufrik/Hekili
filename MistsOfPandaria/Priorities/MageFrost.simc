@@ -1,38 +1,67 @@
-# Mage: Frost
+# Mage: Frost - Optimized from WoWSims MoP
+
 ## Precombat
 actions.precombat+=/arcane_brilliance,if=!buff.arcane_brilliance.up
-actions.precombat+=/water_elemental
-actions.precombat+=/rune_of_power,if=talent.rune_of_power.enabled
+actions.precombat+=/frost_armor,if=!buff.frost_armor.up
+actions.precombat+=/summon_water_elemental,if=!pet.water_elemental.active,precombat_time=15
+actions.precombat+=/mirror_image,precombat_time=6.5
+actions.precombat+=/evocation,precombat_time=5
+actions.precombat+=/rune_of_power,if=talent.rune_of_power.enabled,precombat_time=3.5
+actions.precombat+=/potion,precombat_time=2
+actions.precombat+=/frostbolt,precombat_time=2
 
-## Default
-actions+=/counterspell
-actions+=/time_warp,if=target.health.pct<25|time>5
-actions+=/mirror_image
-actions+=/icy_veins
+## Core rotation
+# Cooldowns and maintenance
+actions+=/use_item,slot=trinket1
+actions+=/use_item,slot=trinket2
+
+# Evocation priority - use when Rune of Power is about to expire or mana is low
+actions+=/evocation,if=buff.rune_of_power.remains<=cast_time
+actions+=/evocation,if=mana.current<=45000
+
+# Rune of Power maintenance - refresh when down or about to expire
+actions+=/rune_of_power,if=talent.rune_of_power.enabled&(!buff.rune_of_power.up|buff.rune_of_power.remains<=cast_time)
+
+# Synapse Springs with Icy Veins and Brain Freeze at 2 stacks with Fingers of Frost
+actions+=/use_item,slot=hands,if=cooldown.icy_veins.ready&buff.brain_freeze.stack=2&buff.fingers_of_frost.up
+
+# Racial cooldowns - use when Icy Veins is ready or on long cooldown
+actions+=/blood_fury,if=cooldown.icy_veins.ready|cooldown.icy_veins.remains>=75
+actions+=/berserking,if=cooldown.icy_veins.ready|cooldown.icy_veins.remains>=50
+
+# Icy Veins - use with Brain Freeze at 2 stacks, cooldowns active, and bloodlust/long fight
+actions+=/icy_veins,if=buff.brain_freeze.stack=2&(buff.blood_fury.up|buff.berserking.up|buff.synapse_springs.up|buff.bloodlust.up|target.time_to_die>=180)&(buff.bloodlust.up|target.time_to_die>=180)
+
+# Dump Brain Freeze at 2 stacks immediately
+actions+=/frostfire_bolt,if=buff.brain_freeze.stack=2
+
+# Ice Lance with Fingers of Frost when Icy Veins is on cooldown
+actions+=/ice_lance,if=buff.fingers_of_frost.up&cooldown.icy_veins.remains>=10
+
+# Multi-dotting - Living Bomb on up to 3 targets if fight duration permits
+actions+=/living_bomb,cycle_targets=1,max_cycle_targets=3,if=talent.living_bomb.enabled&target.time_to_die>=dot.living_bomb.tick_time*3&!dot.living_bomb.ticking
+
+# Nether Tempest - multidot on up to 5 targets
+actions+=/nether_tempest,cycle_targets=1,max_cycle_targets=5,if=talent.nether_tempest.enabled&!dot.nether_tempest.ticking
+
+# Frost Bomb on current target
+actions+=/frost_bomb,if=talent.frost_bomb.enabled&!debuff.frost_bomb.up
+
+# Frozen Orb on cooldown
 actions+=/frozen_orb
-actions+=/presence_of_mind,if=talent.presence_of_mind.enabled
-actions+=/berserking,if=buff.icy_veins.up|buff.brain_freeze.react
-actions+=/blood_fury,if=buff.icy_veins.up|buff.brain_freeze.react
-actions+=/use_item,slot=trinket1,if=buff.icy_veins.up|cooldown.icy_veins.remains>20
-actions+=/use_item,slot=trinket2,if=buff.icy_veins.up|cooldown.icy_veins.remains>20
 
-## Tier 5/6 Talents
-actions+=/frost_bomb,if=talent.frost_bomb.enabled&!ticking
-actions+=/rune_of_power,if=talent.rune_of_power.enabled&!ticking&buff.rune_of_power.down
-actions+=/incanter_s_ward,if=talent.incanter_s_ward.enabled&!buff.incanter_s_ward.up
+# Dump Brain Freeze with Frostfire Bolt when Icy Veins on cooldown
+actions+=/frostfire_bolt,if=buff.brain_freeze.up&cooldown.icy_veins.remains>=10
 
-## Core Rotation
-actions+=/alter_time,if=buff.alter_time.down&(buff.brain_freeze.react|buff.fingers_of_frost.stack>1)
-actions+=/cold_snap,if=health.pct<30&talent.cold_snap.enabled
-actions+=/ice_barrier,if=!buff.ice_barrier.up&talent.ice_barrier.enabled
-actions+=/frostfire_bolt,if=buff.brain_freeze.react
-actions+=/ice_lance,if=buff.fingers_of_frost.react
-actions+=/pet.freeze,if=buff.fingers_of_frost.stack<2&pet.water_elemental.cooldown.freeze.remains<gcd
-
-## AoE Rotation
-actions+=/blizzard,if=active_enemies>=3&!moving
-actions+=/cone_of_cold,if=active_enemies>=3&moving
-
-## Single Target
+# Filler
 actions+=/frostbolt
-actions+=/ice_lance,if=moving
+
+## AoE Priority (3+ targets)
+actions.aoe+=/frozen_orb
+actions.aoe+=/icy_veins
+actions.aoe+=/blizzard
+actions.aoe+=/cone_of_cold,if=active_enemies>=5
+actions.aoe+=/arcane_explosion,if=active_enemies>=5
+actions.aoe+=/ice_lance,if=buff.fingers_of_frost.react
+actions.aoe+=/frostfire_bolt,if=buff.brain_freeze.react
+actions.aoe+=/frostbolt

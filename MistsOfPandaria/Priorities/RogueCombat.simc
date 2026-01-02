@@ -1,65 +1,51 @@
-# Rogue: Combat
-# Precombat actions
-actions.precombat+=/tricks_of_the_trade,if=time<5
-actions.precombat+=/potion,name=virmens_bite_potion
+# Rogue: Combat (MoP 5.5.2) 
+
+## Precombat Actions
+actions.precombat+=/flask,type=spring_blossoms
+actions.precombat+=/potion
 actions.precombat+=/stealth,if=!stealthed.all
-actions.precombat+=/slice_and_dice,if=buff.slice_and_dice.down
+actions.precombat+=/ambush,if=stealthed.all
+actions.precombat+=/blade_flurry,if=!stealthed.all
 
-# Main rotation
-actions+=/bloodlust,if=raid
-actions+=/marked_for_death,if=combo_points=0
-actions+=/slice_and_dice,if=(buff.slice_and_dice.remains<=4|combo_points>=5)&!buff.slice_and_dice.up
-actions+=/killing_spree,if=buff.slice_and_dice.up&(combo_points>=5|energy<=40)&(buff.killing_spree.up|buff.adrenaline_rush.up)
-actions+=/adrenaline_rush,if=time_to_ready.killing_spree>=15
-actions+=/shadow_blades,if=time_to_ready.killing_spree>=15
-actions+=/ambush,if=behind_target&combo_points<=4
-actions+=/revealing_strike,if=(combo_points<=4&buff.anticipation.up&buff.anticipation.stack<=4)|debuff.revealing_strike.remains<=3
-actions+=/rupture,if=combo_points>=5&dot.rupture.remains<=2
-actions+=/eviscerate,if=combo_points>=5
-actions+=/vanish,if=energy>=50&combo_points>=3
-actions+=/ambush,if=behind_target&energy>=50&combo_points>=3
-actions+=/sinister_strike,if=combo_points<=4
-actions+=/preparation,if=!cooldown.vanish.ready
-actions+=/tricks_of_the_trade,if=false
+## Main Actions
+actions+=/potion,if=buff.bloodlust.react|target.time_to_die<40
+actions+=/kick
+actions+=/preparation,if=!buff.vanish.up&cooldown.vanish.remains>60
+## JSON variable parity for KS timing around one finisher
+actions+=/variable,name=approx_energy_to_5pt,value=160
+actions+=/variable,name=max_time_to_5pt,value=variable.approx_energy_to_5pt/energy.regen-12.5
+actions+=/variable,name=ks_cd_in_one_finisher,value=cooldown.killing_spree.remains-variable.max_time_to_5pt
+actions+=/use_item,slot=hands,if=time=0|buff.shadow_blades.up
+actions+=/blood_fury,if=time=0|buff.shadow_blades.up
+actions+=/berserking,if=time=0|buff.shadow_blades.up
+actions+=/arcane_torrent,if=energy<60
+actions+=/use_item,slot=trinket1,if=buff.shadow_blades.up|buff.adrenaline_rush.up|target.time_to_die<=20
+actions+=/use_item,slot=trinket2,if=buff.shadow_blades.up|buff.adrenaline_rush.up|target.time_to_die<=20
+actions+=/blade_flurry,if=settings.auto_blade_flurry&((active_enemies>=2&!buff.blade_flurry.up)|(active_enemies<2&buff.blade_flurry.up))
+actions+=/ambush,if=stealthed.all
+actions+=/vanish,if=buff.deep_insight.up&energy<=50
+actions+=/vanish,if=time>10&(combo_points<3|(talent.anticipation.enabled&anticipation_charges<3)|(buff.shadow_blades.down&(combo_points<4|(talent.anticipation.enabled&anticipation_charges<4))))&((talent.shadow_focus.enabled&buff.adrenaline_rush.down&energy<20)|(talent.subterfuge.enabled&energy>=90)|(!talent.shadow_focus.enabled&!talent.subterfuge.enabled&energy>=60))
+actions+=/killing_spree,if=energy<50&((settings.avoid_killing_spree_during_ar&buff.adrenaline_rush.down)|!settings.avoid_killing_spree_during_ar)
+actions+=/shadow_blades,if=time>5
+actions+=/adrenaline_rush,if=energy<35|buff.shadow_blades.up
+actions+=/adrenaline_rush,if=variable.ks_cd_in_one_finisher>15&buff.adrenaline_rush.down
+actions+=/shadow_blades,if=variable.ks_cd_in_one_finisher>15&buff.adrenaline_rush.up
+# T16H Slice and Dice with Bandit's Guile integration
+actions+=/slice_and_dice,if=buff.slice_and_dice.remains<2|(buff.slice_and_dice.remains<15&buff.bandits_guile.stack=11&combo_points>=4)
+# T16H Generator/Finisher split with Anticipation
+actions+=/run_action_list,name=generator,if=combo_points<5|(talent.anticipation.enabled&anticipation_charges<=4&!dot.revealing_strike.ticking)
+actions+=/run_action_list,name=finisher,if=!talent.anticipation.enabled|buff.deep_insight.up|cooldown.shadow_blades.remains<=11|anticipation_charges>=4|(buff.shadow_blades.up&anticipation_charges>=3)
+actions+=/run_action_list,name=generator,if=energy>60|buff.deep_insight.down|buff.deep_insight.remains>5-combo_points
 
-# AoE rotation
-actions.aoe+=/blade_flurry,if=!buff.blade_flurry.up
-actions.aoe+=/redirect,if=target.time_to_die<5&active_enemies>2
-actions.aoe+=/revealing_strike,if=debuff.revealing_strike.down&combo_points<5
-actions.aoe+=/slice_and_dice,if=buff.slice_and_dice.remains<5&combo_points>=2
-actions.aoe+=/rupture,if=combo_points>=4&target.time_to_die>12&target.debuff.rupture.down&active_enemies<=4
-actions.aoe+=/fan_of_knives,if=spell_targets.fan_of_knives>=4&combo_points<5
-actions.aoe+=/crimson_tempest,if=combo_points=5&active_enemies>=5
-actions.aoe+=/eviscerate,if=combo_points=5
-actions.aoe+=/sinister_strike,if=combo_points<5
+# T16H Combo Point Generators
+actions.generator+=/fan_of_knives,line_cd=5,if=active_enemies>=4
+actions.generator+=/marked_for_death,if=talent.marked_for_death.enabled&combo_points=0
+actions.generator+=/revealing_strike,if=dot.revealing_strike.remains<=3
+actions.generator+=/sinister_strike
 
-# Build rotation
-actions.build+=/sinister_strike,if=buff.slice_and_dice.down&combo_points=0
-actions.build+=/slice_and_dice,if=buff.slice_and_dice.down&combo_points>0
-actions.build+=/revealing_strike,if=combo_points<=3&debuff.revealing_strike.down&buff.slice_and_dice.remains>5
-actions.build+=/sinister_strike,if=combo_points<5
-actions.build+=/slice_and_dice,if=(buff.slice_and_dice.remains<2&combo_points>=2)
-
-# Finish rotation
-actions.finish+=/slice_and_dice,if=buff.slice_and_dice.remains<5&combo_points>=2
-actions.finish+=/rupture,if=combo_points=5&!ticking&(boss|active_enemies=1)&!buff.blade_flurry.up&target.time_to_die>12&buff.deep_insight.up
-actions.finish+=/eviscerate,if=combo_points=5|target.time_to_die<6&combo_points>=4|combo_points=5&(buff.shallow_insight.up&!buff.moderate_insight.up)|combo_points=5&buff.deep_insight.up
-
-# Cooldowns
-actions.cds+=/use_item,slot=trinket1,if=buff.deep_insight.up|buff.adrenaline_rush.up
-actions.cds+=/use_item,slot=trinket2,if=buff.deep_insight.up|buff.adrenaline_rush.up
-actions.cds+=/use_item,slot=hands,if=buff.deep_insight.up|buff.adrenaline_rush.up
-actions.cds+=/adrenaline_rush,if=energy<35&!buff.killing_spree.up&debuff.revealing_strike.up&(buff.deep_insight.up|buff.bloodlust.up)
-actions.cds+=/killing_spree,if=energy<35&buff.slice_and_dice.up&!buff.adrenaline_rush.up&(buff.deep_insight.up|debuff.find_weakness.up)
-actions.cds+=/blood_fury,if=buff.deep_insight.up|buff.adrenaline_rush.up
-actions.cds+=/berserking,if=buff.deep_insight.up|buff.adrenaline_rush.up
-actions.cds+=/shadowstep,if=target.distance>=10&talent.shadowstep.enabled
-actions.cds+=/burst_of_speed,if=target.distance>=15&talent.burst_of_speed.enabled
-actions.cds+=/sprint,if=target.distance>=15&!talent.shadowstep.enabled&!talent.burst_of_speed.enabled
-
-# Defensives
-actions.defensives+=/cloak_of_shadows,if=health.pct<=20&!buff.cloak_of_shadows.up
-actions.defensives+=/evasion,if=health.pct<=35&!buff.evasion.up
-actions.defensives+=/feint,if=incoming_damage_5s>health.max*0.2
-actions.defensives+=/recuperate,if=health.pct<10&combo_points>=3&!buff.recuperate.up
-actions.defensives+=/combat_readiness,if=incoming_damage_5s>health.max*0.5&talent.combat_readiness.enabled
+# T16H Combo Point Finishers
+actions.finisher+=/slice_and_dice,if=buff.slice_and_dice.remains<=2
+# Rupture only for ST/cleave when BF is off; apply or refresh at <=2 ticks and with sufficient target life
+actions.finisher+=/rupture,if=(dot.rupture.ticks_remain<=2|!dot.rupture.ticking)&target.time_to_die>=26&buff.blade_flurry.down&active_enemies<=2
+actions.finisher+=/crimson_tempest,if=active_enemies>=7&dot.crimson_tempest.ticks_remain<=2
+actions.finisher+=/eviscerate

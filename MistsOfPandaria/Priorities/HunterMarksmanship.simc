@@ -1,62 +1,116 @@
-actions.precombat+=/aspect_of_the_hawk,if=!buff.aspect_of_the_hawk.up
+## Marksmanship Hunter - MoP 5.5.0
+## Phase-based rotation: Burn (>80% HP), Sustain (20-80% HP), Execute (<20% HP)
+
+actions.precombat+=/aspect_of_the_hawk,if=!buff.aspect_of_the_hawk.up&!talent.aspect_of_the_iron_hawk.enabled
+actions.precombat+=/aspect_of_the_iron_hawk,if=!buff.aspect_of_the_hawk.up&!buff.aspect_of_the_iron_hawk.up&!moving
 actions.precombat+=/hunters_mark,if=(settings.mark_any|target.is_boss)&active_dot.hunters_mark=0&target.time_to_die>15
-actions.precombat+=/explosive_trap,if=!debuff.explosive_trap.up
-actions.precombat+=/potion,name=virmens_bite
+actions.precombat+=/explosive_trap,if=active_enemies>=2
+actions.precombat+=/potion,if=settings.potions
 actions.precombat+=/aimed_shot
 
-actions+=/call_action_list,name=aoe,if=active_enemies>=3
-# Careful Aim phase: above 80% target health, hardcast Aimed Shot aggressively without delaying Chimera Shot
-actions+=/call_action_list,name=careful_aim,if=target.health.pct>80
-# Rapid Fire burn window below 80%: favor Aimed Shot as dump while keeping Chimera on-time
-actions+=/call_action_list,name=rf_burn,if=buff.rapid_fire.up&target.health.pct<=80
-actions+=/call_action_list,name=single_target
+## Interrupt
+actions+=/silencing_shot,if=talent.silencing_shot.enabled&target.is_casting
 
-actions.cooldowns+=/a_murder_of_crows
-actions.cooldowns+=/stampede
+## Variables
+actions+=/call_action_list,name=variables
+# Refresh Steady Focus when we have 2 successive Steady Shots and <=7s remains.
+actions.variables+=/variable,name=steady_focus_refresh,op=set,value=(prev_gcd.1.steady_shot&prev_gcd.2.steady_shot&buff.steady_focus.remains<=7)
+# Allow Aimed Shot hard-casts when in burst/high-focus or not starving priority CDs (CS/Crows) within 3s.
+actions.variables+=/variable,name=aimed,op=set,value=(focus>=85|buff.rapid_fire.up|(cooldown.chimera_shot.remains>3&cooldown.a_murder_of_crows.remains>3))
+
+## Auto-cast cooldowns after 2s
+actions+=/call_action_list,name=cooldowns,if=time>=2
+
+## Opener sequence (first 10 seconds)
+actions+=/run_action_list,name=opener,if=time<=10
+
+## Burst windows with haste effects
+actions+=/call_action_list,name=burst_window,if=buff.rapid_fire.up|buff.bloodlust.up
+
+## Phase-based rotation
+actions+=/call_action_list,name=burn_phase,if=target.health.pct>80
+actions+=/call_action_list,name=execute_phase,if=target.health.pct<=20
+actions+=/call_action_list,name=sustain_phase
+
+## OPENER SEQUENCE (First 10 seconds)
+# Requested order: SrS > AMoC > CDs > Fervor + Chimera, then Steady Shots
+actions.opener+=/serpent_sting,if=!debuff.serpent_sting.up
+actions.opener+=/a_murder_of_crows,if=talent.a_murder_of_crows.enabled
+actions.opener+=/stampede,if=talent.stampede.enabled
+actions.opener+=/rapid_fire
+actions.opener+=/use_item,slot=hands,if=buff.rapid_fire.up&cooldown.synapse_springs.ready
+actions.opener+=/blood_fury,if=buff.rapid_fire.up
+actions.opener+=/fervor,if=talent.fervor.enabled
+actions.opener+=/chimera_shot
+actions.opener+=/steady_shot,if=variable.steady_focus_refresh
+actions.opener+=/barrage,if=buff.stormlash.up
+actions.opener+=/glaive_toss,if=talent.glaive_toss.enabled&cooldown.glaive_toss.ready&focus>=15
+
+## BURST WINDOW (Rapid Fire/Bloodlust active)
+actions.burst_window+=/steady_shot,if=(!buff.steady_focus.up|buff.steady_focus.remains<=4)&!in_flight
+actions.burst_window+=/chimera_shot
+actions.burst_window+=/serpent_sting,if=!debuff.serpent_sting.up
+actions.burst_window+=/aimed_shot,if=buff.master_marksman.react
+actions.burst_window+=/aimed_shot,if=variable.aimed&cooldown.chimera_shot.remains>=1
+actions.burst_window+=/glaive_toss,if=talent.glaive_toss.enabled&cooldown.glaive_toss.ready&focus>=15
+actions.burst_window+=/aimed_shot,if=variable.aimed
+actions.burst_window+=/arcane_shot,if=buff.thrill_of_the_hunt.react
+actions.burst_window+=/aimed_shot,if=variable.aimed
+actions.burst_window+=/steady_shot,if=focus<=40&!in_flight
+actions.burst_window+=/arcane_shot,if=focus>=90&cooldown.chimera_shot.remains>=3
+
+## BURN PHASE (>80% HP) - Cast as many Aimed Shots as possible (Careful Aim)
+actions.burn_phase+=/serpent_sting,if=!debuff.serpent_sting.up
+actions.burn_phase+=/chimera_shot
+actions.burn_phase+=/steady_shot,if=(!buff.steady_focus.up|buff.steady_focus.remains<=6)&!in_flight
+actions.burn_phase+=/aimed_shot,if=buff.master_marksman.react
+actions.burn_phase+=/aimed_shot,if=variable.aimed
+actions.burn_phase+=/glaive_toss,if=talent.glaive_toss.enabled&cooldown.glaive_toss.ready&focus>=15
+actions.burn_phase+=/arcane_shot,if=buff.thrill_of_the_hunt.react
+actions.burn_phase+=/aimed_shot,if=variable.aimed
+actions.burn_phase+=/steady_shot,if=!in_flight
+
+## SUSTAIN PHASE (20-80% HP) - Standard rotation with Steady Focus maintenance
+actions.sustain_phase+=/steady_shot,if=(!buff.steady_focus.up|buff.steady_focus.remains<=4)&!in_flight
+actions.sustain_phase+=/chimera_shot
+actions.sustain_phase+=/serpent_sting,if=!debuff.serpent_sting.up
+actions.sustain_phase+=/aimed_shot,if=buff.master_marksman.react
+actions.sustain_phase+=/multi_shot,if=active_enemies>=4
+actions.sustain_phase+=/kill_shot,if=target.health.pct<=20
+actions.sustain_phase+=/fervor,if=talent.fervor.enabled&focus<=50
+actions.sustain_phase+=/glaive_toss,if=talent.glaive_toss.enabled&cooldown.glaive_toss.ready&focus>=15
+actions.sustain_phase+=/arcane_shot,if=buff.thrill_of_the_hunt.react
+actions.sustain_phase+=/aimed_shot,if=variable.aimed
+actions.sustain_phase+=/arcane_shot,if=focus>=60|(focus>=43&cooldown.chimera_shot.remains>=action.steady_shot.cast_time)&!buff.rapid_fire.up&!buff.bloodlust.up
+actions.sustain_phase+=/steady_shot,if=!in_flight
+
+## EXECUTE PHASE (<20% HP) - Weave in Kill Shot
+actions.execute_phase+=/steady_shot,if=(!buff.steady_focus.up|buff.steady_focus.remains<=4)&!in_flight
+actions.execute_phase+=/chimera_shot
+actions.execute_phase+=/kill_shot
+actions.execute_phase+=/serpent_sting,if=!debuff.serpent_sting.up
+actions.execute_phase+=/aimed_shot,if=buff.master_marksman.react
+actions.execute_phase+=/multi_shot,if=active_enemies>=4
+actions.execute_phase+=/fervor,if=talent.fervor.enabled&focus<=50
+actions.execute_phase+=/glaive_toss,if=talent.glaive_toss.enabled&cooldown.glaive_toss.ready&focus>=15
+actions.execute_phase+=/arcane_shot,if=buff.thrill_of_the_hunt.react
+actions.execute_phase+=/aimed_shot,if=variable.aimed
+actions.execute_phase+=/arcane_shot,if=focus>=60|(focus>=43&cooldown.chimera_shot.remains>=action.steady_shot.cast_time)&!buff.rapid_fire.up&!buff.bloodlust.up
+actions.execute_phase+=/steady_shot,if=!in_flight
+
+## Cooldowns (after opener)
+actions.cooldowns+=/a_murder_of_crows,if=talent.a_murder_of_crows.enabled
 actions.cooldowns+=/rapid_fire
-actions.cooldowns+=/use_item,slot=hands,if=buff.rapid_fire.up
-actions.cooldowns+=/barrage,if=talent.barrage.enabled&cooldown.barrage.ready
-actions.cooldowns+=/powershot,if=talent.powershot.enabled&cooldown.powershot.ready
-
-# Trinkets
+actions.cooldowns+=/stampede
+actions.cooldowns+=/fervor,if=talent.fervor.enabled&focus<=65
+actions.cooldowns+=/dire_beast,if=talent.dire_beast.enabled
+actions.cooldowns+=/lynx_rush,if=talent.lynx_rush.enabled
+actions.cooldowns+=/glaive_toss,if=talent.glaive_toss.enabled
+actions.cooldowns+=/powershot,if=talent.powershot.enabled
+actions.cooldowns+=/barrage,if=talent.barrage.enabled&(buff.stormlash.up|(cooldown.chimera_shot.remains>3&cooldown.a_murder_of_crows.remains>3))
+actions.cooldowns+=/use_item,slot=hands,if=cooldown.synapse_springs.ready
 actions.cooldowns+=/use_item,slot=trinket1
 actions.cooldowns+=/use_item,slot=trinket2
-
-actions.single_target+=/steady_shot,if=!buff.steady_focus.up|buff.steady_focus.remains<5
-actions.single_target+=/chimera_shot
-actions.single_target+=/a_murder_of_crows
-actions.single_target+=/serpent_sting,if=!debuff.serpent_sting.up
-actions.cooldowns+=/fervor,if=talent.fervor.enabled&cooldown.fervor.ready&focus<50
-actions.single_target+=/aimed_shot,if=buff.aimed_shot_instant.up
-actions.single_target+=/a_murder_of_crows
-actions.aoe+=/glaive_toss,if=talent.glaive_toss.enabled&cooldown.glaive_toss.ready&focus>=15
-actions.single_target+=/arcane_shot,if=focus>85&cooldown.chimera_shot.remains>0.6
-actions.single_target+=/kill_shot,if=target.health.pct<=20
-actions.single_target+=/aimed_shot,if=cooldown.chimera_shot.remains>2
-actions.single_target+=/steady_shot
-
-# Careful Aim phase priorities (target > 80% HP)
-actions.careful_aim+=/steady_shot,if=!buff.steady_focus.up|buff.steady_focus.remains<5
-actions.careful_aim+=/chimera_shot
-actions.careful_aim+=/serpent_sting,if=!debuff.serpent_sting.up
-# Hardcast Aimed Shot as the primary dump during Careful Aim; do not clip Chimera
-actions.careful_aim+=/aimed_shot,if=focus>=70&cooldown.chimera_shot.remains>1
-actions.careful_aim+=/glaive_toss,if=talent.glaive_toss.enabled&cooldown.glaive_toss.ready&focus>=15
-actions.careful_aim+=/steady_shot
-
-# Rapid Fire burn priorities (target <= 80% HP & buff.rapid_fire.up)
-actions.rf_burn+=/steady_shot,if=!buff.steady_focus.up|buff.steady_focus.remains<5
-actions.rf_burn+=/chimera_shot
-actions.rf_burn+=/serpent_sting,if=!debuff.serpent_sting.up
-actions.rf_burn+=/aimed_shot,if=focus>=65&cooldown.chimera_shot.remains>1
-actions.rf_burn+=/glaive_toss,if=talent.glaive_toss.enabled&cooldown.glaive_toss.ready&focus>=15
-actions.rf_burn+=/arcane_shot,if=focus>85&cooldown.chimera_shot.remains>0.6
-actions.rf_burn+=/steady_shot
-
-actions.aoe+=/steady_shot,if=!buff.steady_focus.up|buff.steady_focus.remains<5
-actions.aoe+=/chimera_shot
-actions.aoe+=/multi_shot
-actions.aoe+=/kill_shot,if=target.health.pct<=20
-actions.aoe+=/glaive_toss
-actions.aoe+=/steady_shot
-
+actions.cooldowns+=/blood_fury
+actions.cooldowns+=/berserking
+actions.cooldowns+=/potion,if=target.health.pct<=20|debuff.a_murder_of_crows.up

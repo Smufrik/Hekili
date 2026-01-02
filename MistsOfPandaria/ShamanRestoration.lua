@@ -1109,7 +1109,7 @@ spec:RegisterAbilities( {
         cooldown = 180,
         gcd = "totem",
         
-        toggle = "cooldowns",
+        
         
         spend = 0.18,
         spendType = "mana",
@@ -1128,7 +1128,7 @@ spec:RegisterAbilities( {
         cooldown = 180,
         gcd = "totem",
         
-        toggle = "cooldowns",
+        
         
         spend = 0.07,
         spendType = "mana",
@@ -1147,7 +1147,7 @@ spec:RegisterAbilities( {
         cooldown = 180,
         gcd = "totem",
         
-        toggle = "cooldowns",
+        
         
         spend = 0.12,
         spendType = "mana",
@@ -1273,7 +1273,7 @@ spec:RegisterAbilities( {
         cooldown = function() return glyph.spiritwalkers_grace.enabled and 60 or 120 end,
         gcd = "spell",
         
-        toggle = "cooldowns",
+        
         
         startsCombat = false,
         texture = 451170,
@@ -1303,7 +1303,7 @@ spec:RegisterAbilities( {
         cooldown = 90,
         gcd = "off",
         
-        toggle = "defensives",
+        
         
         startsCombat = false,
         texture = 538565,
@@ -1319,7 +1319,7 @@ spec:RegisterAbilities( {
         cooldown = 60,
         gcd = "totem",
         
-        toggle = "defensives",
+        
         
         spend = 0.05,
         spendType = "mana",
@@ -1340,7 +1340,7 @@ spec:RegisterAbilities( {
         cooldown = 120,
         gcd = "off",
         
-        toggle = "cooldowns",
+        
         
         startsCombat = false,
         texture = 136115,
@@ -1356,7 +1356,7 @@ spec:RegisterAbilities( {
         cooldown = 60,
         gcd = "off",
         
-        toggle = "cooldowns",
+        
         
         startsCombat = false,
         texture = 136076,
@@ -1372,7 +1372,7 @@ spec:RegisterAbilities( {
         cooldown = 120,
         gcd = "off",
         
-        toggle = "cooldowns",
+        
         
         startsCombat = false,
         texture = 538564,

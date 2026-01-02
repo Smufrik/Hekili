@@ -17,7 +17,7 @@ ns.TargetDummies = ns.TargetDummies or {}
 Hekili = LibStub("AceAddon-3.0"):NewAddon( "Hekili", "AceConsole-3.0", "AceSerializer-3.0", "AceTimer-3.0" )
 
 -- MoP compatibility - simple version detection
-Hekili.Version = "v5.5.1-1.0.0e"
+Hekili.Version = "v5.5.3-1.0.0u"
 Hekili.Flavor = "MoP"
 
 local format = string.format
@@ -300,7 +300,8 @@ Hekili.Class = {
     initialized = false,
 
 	resources = {},
-	resourceAuras = {},    talents = {},
+	resourceAuras = {},
+    talents = {},
     pvptalents = {},
     glyphs = {},
 	auras = {},
@@ -612,7 +613,6 @@ function Hekili:OnInitialize()
     ns.db = LibStub("AceDB-3.0"):New("HekiliDB", ns.Defaults, true)
     self.db = ns.db
     self.DB = ns.db  -- Make sure Hekili.DB is properly set
-    Hekili.DB = ns.db  -- Also set the global reference
 
     -- Register slash commands, etc.
     self:RegisterChatCommand("hekili", "ChatCommand")

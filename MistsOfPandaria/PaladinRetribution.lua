@@ -217,7 +217,7 @@ spec:RegisterAura( "ret_tier15_2pc", {
 
 spec:RegisterAura( "ret_tier15_4pc", {
     id = 138164,
-    duration = 3600,
+    duration = 6,
     max_stack = 1,
 } )
 
@@ -1050,34 +1050,6 @@ spec:RegisterAuras({
         end
     },
 
-    ret_tier15_4pc = {
-        id = 138164,
-        duration = 3600,
-        max_stack = 1,
-        generate = function( t )
-            if state.set_bonus.tier15_4pc > 0 then
-                t.name = "Retribution T15 4-Piece Bonus"
-                t.count = 1
-                t.expires = query_time + 3600
-                t.applied = query_time
-                t.caster = "player"
-                t.up = true
-                t.down = false
-                t.remains = 3600
-                return
-            end
-
-            t.count = 0
-            t.expires = 0
-            t.applied = 0
-            t.caster = "nobody"
-            t.up = false
-            t.down = true
-            t.remains = 0
-        end
-    },
-
-
     ret_tier16_2pc = {
         id = 144586,
         duration = 6,
@@ -1444,6 +1416,10 @@ spec:RegisterAbilities( {
             if state.buff.divine_purpose.up then
                 removeBuff("divine_purpose")
             end
+            -- T15 4pc: Consumes the damage buff
+            if state.buff.ret_tier15_4pc.up then
+                removeBuff("ret_tier15_4pc")
+            end
         end
     },
 
@@ -1471,13 +1447,7 @@ spec:RegisterAbilities( {
     },
 
     exorcism = {
-        id = function()
-            -- Use Mass Exorcism spell ID when glyph is active
-            if state.glyph.mass_exorcism.enabled then
-                return 122032
-            end
-            return 879
-        end,
+        id = 879,
         cast = 0,
 		cooldown = 15,
         gcd = "spell",
@@ -1491,15 +1461,14 @@ spec:RegisterAbilities( {
         startsCombat = true,
         texture = 135903,
 
-        copy = { 122032, 879 },
+            -- Exorcism should be considered known if the player knows the spell.
+            -- NOTE: The second parameter to IsSpellKnownOrOverridesKnown is 'isPetSpell'; passing true would incorrectly hide Exorcism.
+            known = function()
+                return state.IsSpellKnownOrOverridesKnown(879) or state.IsSpellKnown(879) or state.buff.art_of_war.up
+            end,
 
         usable = function()
-            -- Debug glyph detection
-            if Hekili.ActiveDebug then
-                Hekili:Debug("Exorcism usability check - Glyph enabled: %s, Current spell ID: %s",
-                    tostring(state.glyph.mass_exorcism.enabled),
-                    tostring(state.glyph.mass_exorcism.enabled and 122032 or 879))
-            end
+            -- Always usable from the engine perspective; range/targeting handled by the client.
             return true
         end,
 
@@ -1552,7 +1521,6 @@ spec:RegisterAbilities( {
         cast = 0,
         cooldown = 180,
         gcd = "off",
-
         toggle = "cooldowns",
 
         startsCombat = false,
@@ -1585,9 +1553,10 @@ spec:RegisterAbilities( {
         cooldown = 180,
         gcd = "off",
 
-        toggle = "cooldowns",
+        
 
         talent = "holy_avenger",
+    toggle = "cooldowns",
 
         startsCombat = false,
         texture = 571555,
@@ -1649,6 +1618,7 @@ spec:RegisterAbilities( {
         talent = "execution_sentence",
 
         startsCombat = function() return not (state.settings and state.settings.execution_sentence_heal) end,
+    toggle = "cooldowns",
         texture = 613954,
 
         handler = function()
@@ -1666,9 +1636,10 @@ spec:RegisterAbilities( {
         end,
         gcd = "spell",
 
-        toggle = "defensives",
+        
 
         startsCombat = false,
+        toggle = "defensives",
         texture = 524354,
 
         handler = function()
@@ -1685,9 +1656,10 @@ spec:RegisterAbilities( {
         end,
         gcd = "off",
 
-        toggle = "defensives",
+        
 
         startsCombat = false,
+        toggle = "defensives",
         texture = 524353,
 
         handler = function()
@@ -1720,7 +1692,7 @@ spec:RegisterAbilities( {
         end,
         gcd = "spell",
 
-        toggle = "defensives",
+        
 
         startsCombat = false,
         texture = 135928,
@@ -1762,7 +1734,7 @@ spec:RegisterAbilities( {
         end,
         gcd = "spell",
 
-        toggle = "defensives",
+        
 
         startsCombat = false,
         texture = 135964,
@@ -1784,7 +1756,7 @@ spec:RegisterAbilities( {
         end,
         gcd = "off",
 
-        toggle = "defensives",
+        
 
         startsCombat = false,
         texture = 135966,
@@ -1825,6 +1797,12 @@ spec:RegisterAbilities( {
 
         handler = function()
             gain(1, "holy_power")
+            -- T15 4pc: 40% chance to make next TV deal 40% more damage
+            if state.set_bonus.tier15_4pc > 0 and state.buff.avenging_wrath.up then
+                if math.random() < 0.40 then
+                    applyBuff("ret_tier15_4pc")
+                end
+            end
         end
     },
 
@@ -2203,11 +2181,12 @@ spec:RegisterRanges( "judgment", "hammer_of_justice", "rebuke", "crusader_strike
 spec:RegisterAbilities({
     rebuke = {
         id = 96231,
+    toggle = "interrupts",
         cast = 0,
         cooldown = 15,
         gcd = "off",
 
-        toggle = "interrupts",
+        
         startsCombat = true,
 
         debuff = "casting",
@@ -2262,4 +2241,4 @@ spec:RegisterSetting("seal_of_righteousness_threshold", 4, {
 } )
 
 -- Register default pack for MoP Retribution Paladin
-spec:RegisterPack( "Retribution", 20250720, [[Hekili:9M1xVTTnq8plfdWOPRZZw2EnBikpS9sBEOyyQpljAjABUilPrsLudyOp77iLLfjfPKskArrBt4D8UF3F1DsHld)syqkIJd)S3cVnlUDP38fl9wUCtya)ujomOeL8iAp8d5OJW)(pyoLSTItkYf0oLvGsfYGvurta6bKJ)ffTJxhVz9T)YTHbBRiz8pLhU1UEwdxTeNe(5pSim4ajnf3WkMLeg8LdewDS4VO64laPoUyh87jceuhNryCG8UcAD8hXpsYiZbyrl2rYaW8t1X)nkdLsY)J6yfKx)aqXaP1pu)qJuzZlP4KIJBr8F2)x3MHzms((OIDrpc)p79KD(BR2TBoJJ4S5PfpNpt(7TCkpACHDKS)a)QWoIyCm90ltCLfnwJnA)Bv6(J4CUWUUYbCodJYeQNtR4h6Sf1tBaH4kpHJW54Jem7UwoOcyJlQy5a8I4hOy2HIS0znk(n(lMjbbO60iXDy(GmX2qGMK6HenQ2q09(JbPXasJ7tO53EXJxuKMvX4ZPyGRZNBogLNqahzuzXZy68QYMWd6jC(ErO8zkcCzvL3C(mhr3J5Z5KJ4iErukbFN)6f3OQts()vryeDfRCO0spFU3Xu8rejNDNV3nZElyDNAGZ9(RSQ2ooEN3IlIlL8ejhhvwrlly4gBudB6M01iIkmQkvVW(kenLGYfbHwVKEnI77krOuJyQGDokdU(C1JNJZrqvq6S(Ejik0zIcNIQORy4ichF89IwwquNK)iMVuOKNquIqKZVCye7uEselRG7VCMnLyldqjcPtaAiK8O)YjagVraJ33jWiZWJ2vrpPDkMYWurGtlBGMGYfjuuQSnshf8xXjY(OqDvohNNGvcG9joCy81zuAwvMO(NfDabf7Q5sAN)DhfxkVyGd7OaeMDR8uRB93mqrzBJhTAbTmEOSFyLRk7eAfdLcIqk8zQGqveqoAzgIYIEcdf1jYhnzbWdcQXKNttEMDkn98wR13qgnfDCKDPuj9mIWFpdN4NuaT)HO3CdMBLOakJXZ9lMngl35VyU3Rmky)zitY)n4T6Gk)aU7jJ2si1CRTJlmnT0AmGPsjpIhoiyWS1GGdEudcoyPxqa)1cAcH5Ogu)e4XZnrck0(LtW0LBI8kte517ZovEqmwglQvITTqS53g2f0YLvB3KOQrBs7BiLBs5w2QnT5Ch2CV6WSzUMevnxtA9mxNaxjaUUjaAePx)Y6v7AaS7xpj4m6nBABsVKNQo8J8W2uTWaqYm4ox2B6dEWAspJO5IPScd(0XYckhYiJ9m2jAE9dHbiyy(cAyWhHjdrHbscYf(W7qvzC4h)SCbWwL9NHbjuyyfyUeXIB7STxqD8Sgv15VQJVRoEKHXLxRzhH6434xhVqEIXi61XafXy6a2LwdSDOkcc5GFyAiU)(dwr(9(td6thOAsra4vob8BRJLy2yXJ64ZNRJBjAU(HeooArhFtZD7VraeJaeVg8630b5MfGeyC9Oy0ChLgf5kzVrDEsantAlDZj040xnas15(DGGwOOoR9Ounlf8iSTndNWOpjyNu09Ucb9BVob5CljHm)GtzoWcrT(ulQvss171gh6WJQefq4wdi0Yx7ItQGY9olYkILDjNwGL9mAJKjlJA3i6gJO5TqDfAa8)9HHV3la(E)yHVNa(lxiWFlO7wqt1MeSTuJTRBSzYMNkB6RWzYQ7(sJUk3yjGF7UkTm2(arAaUBAn0cG)GXUggKW2D)iBpCYZwdu48nJ2ru9HigBT1RlXLoY6qxDkjjYhPbO9XonvLa7dOd3nehWbmjZtP1GXyBsfB2g0UXz4JN5kc0(uq4zUJO3FxTI1yttJswVfgyeM6ga6iRP2jDXK6Qg2y3eCCTdQnoRIh0atRlX5itv6orX(CnUtx8gzAWbeLTGHN7EI2QnxBlWPT3TuOU7tnggBx)tkMnQjkgBdBMOywPQNO4yv6jKO44M2suCYQAII7QD39cnPihSTl7P3Q8ssdSoV6ZzAOiH2TQU7Rbcd)S5Wh6(zZT3NGd28k28S95rXLUYShXuQ9CxGTAALYATfhUgBL2ikxD56o2vMfI6owZ3tWeCSMxXMJTppQo2rkJ79giCTP8ipqy1Rz(a37HDVMc7fEFb704qKwTHPTwJXR64AV0R0cfsl46N1m0YlSO9sBn)oTnFezkPSHU9peS5xbUNdO7J825N3Q(LzLTbg2jQ(TDDjfR2H8tel9NQLmx2AxVGz94DRA)t4)p]] )
+spec:RegisterPack( "Retribution", 20251228, [[Hekili:9Q1xVTTnq8plfdWOPRtZw2zjBikpS9sBFOyyApljAjABUilPrsLmdyOp77iLLfjfPKslArr7sipE3V7V8oQfTk6VJcZqCC0N9x6F7kF)79899x5VokKFQchfwHsFcTh(Hc0r4F)lmNs2wZjLfI9oLxIYe8GvwttH9djh)dkAhVj52n3)t3hfUTMKZ)yr0w7YXhoAfon6Z3Tmk8ajld3skMLgf(3hiSMeXFrnjxasts5o43tfiOjjNW4W27kPnjFa)ejN4bWIwUJKdG5hAs(tuokJu8BnjkiV5tTNN5vrXPLh3I4)yWpVnhZyKI9XL7IFc(VS3t2fSTE3opghXzEzLVuSq(7DukxAAMDKS)a)kZoIyCm90RJDvLI1EVWheCSCFDCv5lyAC7Y2pY)uNT)iUG38jXFUqbSodJYfOItR5h6vr1vBXM4ipJJXf4Jem7HokOcTbxwZkauhZpqXSdL5zlAf8BcwUqccq0zXIZWcaEITHanonajA7AdrpgmfKMciJAvfa6Tx8pLLz51mUhfdh(852LrfPeW(2EiV6QwNj6zCXEHJ)fkcSK1v3C(mhr3J5ECYrCmVmoJGFiyZYBuHcP4FRjmIUGvwuAaoFEWYu8rePG9qG)nlElO0NAHZJbRTk2EkEN)YlSlJ8mPahxvtRkz4wDudB6Q0vhLkmQRupW(AenJGke(MoRKEgL7ZkrOuIyQGCokhoUN6YE4ceKZKTyOvc8c9QOWOOY6AgoMWXhBD4q1GINW8vcH8mIseS07YIXStfPXS8sEWQf2eITiafpK(gq5J0NcwndW4pby8)gbgzeE8UA6jTvXugMkCCArd0uuHiGIsLvx63b)F4uz9viDRGJlsXkoWHBoUB8ltP00QCrzbw8beudqnwsB9V5O4s6fdmyhfGWSiMVAEBWTJKu2v4rlxqlIhs7hx4Q8oLwZqzalKmFHkiuzbeJwLJOS4NXqsDQ8ImlaEuqnf)CQYlSVtBnVnA1nKEtrfhzvk1TEbr4VNHtdslHBfaVNNbXDCuaLPO5XLlMIKhcw65)f6fSFhYSSFdovlZOqfeobtxDB8MQudM1jDaBuYt4r4fdyZ2YIAMxpZaBHnrO1gZRcX2DO8d4(R4TLcPfi013Z8KIHby8WgdITg24Gg1WghKmiSb)FL0ucZrvd9vGgkg4l8LU7f7ZpvDq02jlUJJDf9Sz3g3e0rLvD3CtvL2CVVIKKzfBzRAInJ74Q7vdMn11Ctv11CVbQRtGpiF10tV51D7YGR16q7MzbNjpzBHE6L4u121Kl2fQffcCMbNPDcWL35dd89cIwi6lmk8JhRkPCiImX3y6oVMpffIGPskPrHFa6Lfffk3qo6kEhQoNd)4NLJY2jSFpkmLcTxbDsjgbDNTbCAsw0kQE7vtYdnjtmvH8yTd70K8MGMKLYvmM1Ojb2rmVbGDP2aZ5QIGioyhMhIhoiKvK)yW8G(8bQgxeaETbG7oq7atQkWBBsK6GXOtnjNp3K0TP5aus45OKDYnTND4mnGpd0GnGx4MUhPyWSCcWVXP1UdpMJB1krxzbTY1xISfsLQVLNwVX6rGSo1Vdy0sfXzT4Lq)6S4k4rOB3oEKKEtT9Cr3mly0V8LXiNd8j45Do55iZ21ztTiw5wQwVo)qpEu5Oac37iWTBgqvq5E8lzQYQ(OulWYEOTrWKLPgAzTVsm8vObW)xhh((Vc47)9f((c4VAPa)DGUFwtvDsq2knYUo8Pjz(QKPpnQjPMfSge65EQ0Pca)6nvArSdbIubCx0ASzz)oJDnmiHT76r2U1Y3wbuy9BNSIO6TjgdGoOkXLkY6qxT9jjYNOaO9(rnfLa7Jid3fehXaml1tP0Gr)CsbBwg0UYzyJx4Yd0DliC57eY9xvZyngA2iL1FPbgH2XbGoXe39Cx0cVQIn1jbdxxhCttQ4IgOnEjoNODt3bk2BWXD4I)eTjAPxPoPmyuIX9t(UlxoIKS9WakwvBaryL7HIX4WsK4UU3uMpRk2RRE0gBbRApcHKPtuQyem2nlSKn3PMCyAlmsomtG1toC8UcZi5WXjTLC4Ku1KdZgwMt9FZDKD1BneQ9DnKBnYBBOE3A7oYry06f5QJq3oV2m5w3oB(ugZWaBEeBw2H0OysxprvaR1BCxuz9eP62Uky8CS1BunSxn5ggwZerDdR5JMmddR5rSzyhsJQHDI04HpFQ1G1jVeCT7B9DNtmObovTCZiU3jUPFgS0Qo4oVEK395AT0R7fj4w41pwDKLxVP7qBn)O8T))gaLu1UV1VV)a9T)d43Bw3Q(v3LvTg3MP(D7DXfRWw(5)LMpdb46XkUYfJhVy8QwD)j6))d]] )

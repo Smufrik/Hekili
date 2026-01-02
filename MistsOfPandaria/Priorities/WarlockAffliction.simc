@@ -1,45 +1,93 @@
-# Warlock: Affliction
-# SimCraft 548-8
+# Warlock: Affliction - Optimized from WoWSims MoP
+# Updated October 1, 2025
 
+## Precombat
 actions.precombat+=/dark_intent,if=!buff.dark_intent.up
-actions.precombat+=/summon_felhunter,if=(!pet.alive&!talent.grimoire_of_sacrifice.enabled&!talent.grimoire_of_supremacy.enabled)|(talent.grimoire_of_sacrifice.enabled&!talent.grimoire_of_supremacy.enabled&buff.grimoire_of_sacrifice.down)
-actions.precombat+=/summon_observer,if=!pet.alive&talent.grimoire_of_supremacy.enabled
+# Pet summoning based on settings
+actions.precombat+=/summon_felhunter,if=settings.auto_summon_pet&!pet.alive&!talent.grimoire_of_sacrifice.enabled&!talent.grimoire_of_supremacy.enabled
+actions.precombat+=/summon_imp,if=settings.auto_summon_pet&!pet.alive&!talent.grimoire_of_sacrifice.enabled&!talent.grimoire_of_supremacy.enabled
+actions.precombat+=/summon_observer,if=settings.auto_summon_pet&talent.grimoire_of_supremacy.enabled&!pet.alive
 actions.precombat+=/grimoire_of_sacrifice,if=talent.grimoire_of_sacrifice.enabled&pet.alive
 actions.precombat+=/potion
+actions.precombat+=/haunt,if=soul_shards>=2
 
-actions+=/curse_of_elements,if=debuff.magic_vulnerability.down
-actions+=/potion,if=buff.bloodlust.up|target.health.pct<=20
-actions+=/use_items
-actions+=/lifeblood
-actions+=/berserking
-actions+=/dark_soul_misery,if=!talent.archimondes_darkness.enabled|(talent.archimondes_darkness.enabled&(charges=2|trinket.proc.intellect.up|trinket.stacking_proc.intellect.up|target.health.pct<=10))
-actions+=/grimoire_of_sacrifice,if=talent.grimoire_of_sacrifice.enabled&pet.alive
-actions+=/run_action_list,name=aoe,if=active_enemies>6
-actions+=/summon_terrorguard,if=talent.grimoire_of_supremacy.enabled
-actions+=/summon_doomguard,if=!talent.grimoire_of_supremacy.enabled
-actions+=/soul_swap,if=buff.soulburn.up
-actions+=/soulburn,if=(buff.dark_soul.up|trinket.proc.intellect.up|trinket.stacking_proc.intellect.count>6)&(dot.agony.refreshable|dot.corruption.refreshable|dot.unstable_affliction.refreshable)&soul_shards>0&buff.soulburn.down
-actions+=/soulburn,if=(dot.unstable_affliction.ticks_remain<=1|dot.corruption.ticks_remain<=1|dot.agony.ticks_remain<=1)&soul_shards>0&target.health.pct<=20&buff.soulburn.down
-actions+=/soul_swap,if=active_enemies>1&buff.soul_swap.down&(buff.dark_soul.up|trinket.proc.intellect.up|trinket.stacking_proc.intellect.count>6)
-actions+=/soul_swap,cycle_targets=1,if=active_enemies>1&buff.soul_swap.up&((dot.agony.percent_increase>15&dot.agony.refreshable)|(dot.corruption.percent_increase>15&dot.corruption.refreshable)|(dot.unstable_affliction.percent_increase>15&dot.unstable_affliction.refreshable))&soul_shards>0
-actions+=/haunt,if=!haunt_in_flight&remains<cast_time+1.5&soul_shards>0
-actions+=/agony,if=dot.agony.down|(dot.agony.percent_increase>15&dot.agony.refreshable)|ticks_remain<2
-actions+=/corruption,if=dot.corruption.down|(dot.corruption.percent_increase>15&dot.corruption.refreshable)|ticks_remain<2
-actions+=/unstable_affliction,if=dot.unstable_affliction.down|(dot.unstable_affliction.percent_increase>15&dot.unstable_affliction.refreshable)|ticks_remain<2
-actions+=/summon_felhunter,if=(!pet.alive&!talent.grimoire_of_sacrifice.enabled&!talent.grimoire_of_supremacy.enabled)|(talent.grimoire_of_sacrifice.enabled&!talent.grimoire_of_supremacy.enabled&buff.grimoire_of_sacrifice.down)
-actions+=/summon_observer,if=!pet.alive&talent.grimoire_of_supremacy.enabled
-actions+=/life_tap,if=buff.dark_soul.down&buff.bloodlust.down&mana.pct<50
-actions+=/drain_soul,interrupt=1,chain=1,interrupt_if=soul_shards=4,if=target.health.pct<=20&soul_shards<4
-actions+=/malefic_grasp,interrupt=1,chain=1,interrupt_if=(target.health.pct<=20|(dot.agony.ticks_remain<2)|(dot.corruption.ticks_remain<2)|(dot.unstable_affliction.ticks_remain<2)|(dot.agony.percent_increase>15&dot.agony.refreshable)|(dot.corruption.percent_increase>15&dot.corruption.refreshable)|(dot.haunt.remains<action.haunt.cast_time+1.5))&target.health.pct>20
-actions+=/life_tap,moving=1,if=mana.pct<80&mana.pct<target.health.pct
-actions+=/fel_flame,moving=1
+
+# Trinket usage with Dark Soul sync
+actions+=/use_item,slot=trinket1,if=buff.dark_soul_misery.up|target.time_to_die<25
+actions+=/use_item,slot=trinket2,if=buff.dark_soul_misery.up|target.time_to_die<25
+
+# Racial abilities
+actions+=/berserking,if=buff.dark_soul_misery.up|target.time_to_die<18
+actions+=/blood_fury,if=buff.dark_soul_misery.up|target.time_to_die<18
+actions+=/arcane_torrent,if=mana.pct<80
+
+# Potion usage
+actions+=/potion,if=buff.dark_soul_misery.up|target.time_to_die<30
+
+# Summon Doomguard/Infernal
+actions+=/summon_doomguard,if=target.time_to_die>40|target.time_to_die<30
+actions+=/summon_terrorguard,if=talent.grimoire_of_supremacy.enabled&(target.time_to_die>40|target.time_to_die<30)
+
+# Dark Soul: Misery - use with cooldowns or on execute (when not pooling)
+actions+=/dark_soul_misery,if=(buff.bloodlust.up|trinket.proc.intellect.up|target.health.pct<=20)&soul_shards>settings.soul_shard_pool
+
+# Soulburn + Soul Swap for snapshotting during cooldowns (when not pooling)
+# Cast Soulburn to empower Soul Swap (copies DoTs without removing them)
+actions+=/soulburn,if=!buff.soul_burn.up&!buff.soul_swap.up&soul_shards>settings.soul_shard_pool&(buff.dark_soul_misery.up|trinket.proc.intellect.up)&dot.agony.ticking&dot.corruption.ticking&dot.unstable_affliction.ticking
+# Soul Swap with Soulburn active: copy DoTs from current target
+actions+=/soul_swap,if=buff.soul_burn.up&dot.agony.ticking&dot.corruption.ticking&dot.unstable_affliction.ticking
+# Soul Swap: Exhale to apply copied DoTs back to same target (snapshot refresh)
+actions+=/soul_swap_exhale,if=buff.soul_swap.up
+
+# Emergency Soul Swap if no DOTs are active (always cast regardless of pooling)
+actions+=/soulburn,if=!buff.soul_burn.up&!buff.soul_swap.up&soul_shards>=1&(!dot.agony.ticking|!dot.corruption.ticking|!dot.unstable_affliction.ticking)&target.time_to_die>10
+actions+=/soul_swap,if=buff.soul_burn.up&(!dot.agony.ticking|!dot.corruption.ticking|!dot.unstable_affliction.ticking)
+actions+=/soul_swap_exhale,if=buff.soul_swap.up&(!dot.agony.ticking|!dot.corruption.ticking|!dot.unstable_affliction.ticking)
+
+# Initial DoT application
+actions+=/agony,if=!dot.agony.ticking
+actions+=/corruption,if=!dot.corruption.ticking
+actions+=/unstable_affliction,if=!dot.unstable_affliction.ticking
+
+# Drain Soul in execute phase or for soul shard generation
+actions+=/drain_soul,interrupt=1,chain=1,if=target.health.pct<=20&soul_shards<4&dot.agony.ticking&dot.corruption.ticking&dot.unstable_affliction.ticking
+
+# Haunt - maintain when DOTs are active (respect shard pooling)
+actions+=/haunt,if=!haunt_in_flight&debuff.haunt.remains<(cast_time+travel_time+1.5)&soul_shards>settings.soul_shard_pool&dot.agony.ticking&dot.corruption.ticking&dot.unstable_affliction.ticking
+# Haunt - always cast if shards are capped
+actions+=/haunt,if=!haunt_in_flight&soul_shards>=4&dot.agony.ticking&dot.corruption.ticking&dot.unstable_affliction.ticking
+
+# DoT refresh with percent_increase logic (uses setting for threshold)
+actions+=/agony,if=dot.agony.percent_increase>=settings.dot_refresh_threshold|dot.agony.remains<=12&dot.agony.percent_increase>=5
+actions+=/unstable_affliction,if=dot.unstable_affliction.percent_increase>=settings.dot_refresh_threshold|dot.unstable_affliction.remains<=7&dot.unstable_affliction.percent_increase>=5
+actions+=/corruption,if=dot.corruption.percent_increase>=settings.dot_refresh_threshold|dot.corruption.remains<=9&dot.corruption.percent_increase>=5
+
+# Life Tap for mana management
+actions+=/life_tap,if=mana.pct<=15
+
+# Malefic Grasp as filler
+actions+=/malefic_grasp,interrupt=1,chain=1,if=dot.agony.ticking&dot.corruption.ticking&dot.unstable_affliction.ticking&mana.pct>20
+
+# Life Tap as last resort
 actions+=/life_tap
 
-actions.aoe=summon_infernal
-actions.aoe+=/soulburn,cycle_targets=1,if=buff.soulburn.down&!dot.soulburn_seed_of_corruption.ticking&!action.soulburn_seed_of_corruption.in_flight_to_target&soul_shards>0
-actions.aoe+=/soul_swap,if=buff.soulburn.up&!dot.agony.ticking&!dot.corruption.ticking
-actions.aoe+=/soul_swap,cycle_targets=1,if=buff.soulburn.up&dot.corruption.ticking&!dot.agony.ticking
-actions.aoe+=/seed_of_corruption,cycle_targets=1,if=(buff.soulburn.down&!in_flight_to_target&!ticking)|(buff.soulburn.up&!dot.soulburn_seed_of_corruption.ticking&!action.soulburn_seed_of_corruption.in_flight_to_target)
-actions.aoe+=/haunt,cycle_targets=1,if=!in_flight_to_target&debuff.haunt.remains<cast_time+travel_time&soul_shards>0
-actions.aoe+=/life_tap,if=mana.pct<70
-actions.aoe+=/fel_flame,cycle_targets=1,if=!in_flight_to_target
+## Movement Priority
+actions.move+=/haunt,if=soul_shards>=2&debuff.haunt.remains<4
+actions.move+=/agony,if=!dot.agony.ticking|dot.agony.remains<=gcd
+actions.move+=/corruption,if=!dot.corruption.ticking|dot.corruption.remains<=gcd
+actions.move+=/life_tap,if=mana.pct<80
+actions.move+=/fel_flame
+
+## AoE Priority (3+ targets)
+actions.aoe+=/summon_infernal,if=active_enemies>=3
+# Seed of Corruption spread (requires setting enabled)
+actions.aoe+=/soulburn,if=settings.soc_spread&!buff.soul_burn.up&soul_shards>=2&active_enemies>=6
+actions.aoe+=/seed_of_corruption,cycle_targets=1,if=settings.soc_spread&buff.soul_burn.up&!dot.soulburn_seed_of_corruption.ticking&!in_flight_to_target
+actions.aoe+=/seed_of_corruption,cycle_targets=1,if=settings.soc_spread&!dot.seed_of_corruption.ticking&!in_flight_to_target
+# Standard multi-dotting
+actions.aoe+=/haunt,cycle_targets=1,if=soul_shards>settings.soul_shard_pool&debuff.haunt.remains<3
+actions.aoe+=/agony,cycle_targets=1,max_cycle_targets=5,if=!dot.agony.ticking&active_dot.agony<5
+actions.aoe+=/corruption,cycle_targets=1,max_cycle_targets=8,if=!dot.corruption.ticking
+actions.aoe+=/life_tap,if=mana.pct<40
+actions.aoe+=/malefic_grasp,if=dot.agony.ticking&dot.corruption.ticking
+actions.aoe+=/fel_flame,cycle_targets=1

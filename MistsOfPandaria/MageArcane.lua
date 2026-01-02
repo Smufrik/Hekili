@@ -1,34 +1,27 @@
 -- MageArcane.lua
--- Updated July 13, 2025 - Smufrik
+-- Updated October 1, 2025 - Modern Structure
+-- Mists of Pandaria module for Mage: Arcane spec
 
--- MoP: Use UnitClass instead of UnitClassBase
-local _, playerClass = UnitClass('player')
-if playerClass ~= 'MAGE' then return end
+-- Early return if not a Mage
+if select(2, UnitClass('player')) ~= 'MAGE' then return end
 
 local addon, ns = ...
 local Hekili = _G[ "Hekili" ]
+
+-- Early return if Hekili is not available
+if not Hekili or not Hekili.NewSpecialization then return end
+
 local class = Hekili.Class
 local state = Hekili.State
 
-local function getReferences()
-    -- Legacy function for compatibility
-    return class, state
-end
-
 local strformat = string.format
 local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+local PTR = ns.PTR
 
--- Enhanced helper functions for Arcane Mage
-local function UA_GetPlayerAuraBySpellID(spellID)
-    return FindUnitBuffByID("player", spellID)
-end
+local spec = Hekili:NewSpecialization( 62, true )
 
-local function GetTargetDebuffByID(spellID)
-    return FindUnitDebuffByID("target", spellID, "PLAYER")
-end
-
-local spec = Hekili:NewSpecialization( 62 ) -- Arcane spec ID for MoP
-
+-- Register resources
+spec:RegisterResource( 0 ) -- Mana = 0 in MoP
 
 -- Arcane-specific combat log event tracking
 local arcaneCombatLogFrame = CreateFrame("Frame")
@@ -1375,6 +1368,57 @@ spec:RegisterAbilities( {
             -- Creates a Mana Gem
         end,
     },
+
+    living_bomb = {
+        id = 44457,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        school = "fire",
+
+        spend = 0.03,
+        spendType = "mana",
+
+        talent = "living_bomb",
+        startsCombat = true,
+
+        handler = function ()
+            applyDebuff( "target", "living_bomb" )
+        end,
+    },
+
+    frost_bomb = {
+        id = 112948,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        school = "frost",
+
+        spend = 0.03,
+        spendType = "mana",
+
+        talent = "frost_bomb",
+        startsCombat = true,
+
+        handler = function ()
+            applyDebuff( "target", "frost_bomb" )
+        end,
+    },
+
+    mana_gem = {
+        id = 36799,
+        cast = 0,
+        cooldown = 120,
+        gcd = "off",
+
+        startsCombat = false,
+        toggle = "cooldowns",
+
+        handler = function ()
+            -- Consumes a mana gem to restore mana
+            gain( state.max_mana * 0.15, "mana" )
+        end,
+    },
     
     counterspell = {
         id = 2139,
@@ -1827,6 +1871,10 @@ spec:RegisterStateExpr( "arcane_charges", function()
     return buff.arcane_charge.stack
 end )
 
+spec:RegisterStateExpr( "arcane_charge", function()
+    return buff.arcane_charge.stack
+end )
+
 spec:RegisterStateExpr( "arcane_missiles_charges", function()
     return buff.arcane_missiles.stack
 end )
@@ -1852,6 +1900,5 @@ spec:RegisterOptions( {
 } )
 
 -- Register default pack for MoP Arcane Mage
-spec:RegisterPack( "Arcane", 20250713, [[Hekili:1I1wVTTnu4FlgdWjblZvso2jDWja7YdRgRbdZzVklAz6yIij6rrLGayOF77qkrrszrz1GUhAHd158DUFHm0p8PWvBrCC4JbEbZ8U1F6eVaV7MEx4k(7hWHRoGIFb9m8Jmuk8)iwmhNZfN)EcfTvWFoTGfdFlC1Mcsc)lzHB6eupFG2d44WhNheUApz7wCfP484WvpTNKxgj(hQmQwQLr0DWFhZj0SYOesoh(8okRm6pWVqsitcxjpuAf4DOIeo8ZhLwvfxHRIPfzCmdeCss4kCgAtcEB4VgYbTtqN(KvXmcqjbb2oI9mMpzpgLW3p5qmVmArzuWSYOJhlJ4Kuq1EOmAMwmIZw)gIDqa8uNaVPy3UjGteLHxhVxiLj5CWylJUVm6gnCPegJYwtsf(EaXB(yi6vgng0xucoJp5adNJZIXRP7wNsY2orHxJuBtHqYZ(ys2WwQj5a9nmtG48wi24czKSxWCFxYqcWKIdvbHyknzl9Tm7VYWPiswUm6e4b5BjuUbYG0VTFPh8)M0des)Ub5nvYsRDBGmym7fs2Zcu(8hfLekD76DfS3fO471t(VmJjdZ3JzR540dqrVkFrMtDzz0irLqSqNQ8jnwpuQmDY8YORQZ(K1sYceoD9wsvTZCTAzlgPQ5FovJvKjttRmstnZuTG)u6rSPwe40s36BsH3xFbPWjzVsJrc2TKSuugFtih9hgqLIMxPE4UnsJEaqchTox06zBB3qT(ytJz(qRVjf6560KiOxem7280LjFd2TguPk8rB54mDBrx9J2GyS6UR(TBj1Tetj55KeC(WmpvzYzAva6MASs3AUFaujDI2R0fP63UN2qCyD7tsq1fGdRrLHhPFn0DhRuugQzc7TENXXcno86lsg4UN2OMbHokF1e4U5IL2o1RVgC(gBhGnRRdKn3sPVk6MdlRuRURRpXyM0octftAT5sWqHOLlQfmthkmeyPGeuw8jiCJ5UwwzrweYLlxett3G0ROzeMe7aYihQG5RGM(ZLr)IeTtrNrssisDrTdxZwtaJRrSukRLAE2oPDgXDpJqAqqlZmWnLl2Dfc5K0dugVE)0lQxh9cXyX)TaIJq(tovS3iQGttHTJHdGC7SNHQNYL)jjd(Kpy1)twEXbbsccuR(EH5wSx0qFGt6Bwhvt8uNeBUSPM(BCsF71e18mZjpMn)00775Kb7LcmyXTtYkkzWHB3KUtGb5UDuTMxAWJBNLE2Mb5N1pvxVAWY8ZXIQFRbp3EoEKvQgmC35yOdH85ZXZj2sG7Oo(04rG7aUU)Ob5UJ2o1NEI4Q(Egu3tSULxv2xyhnjH(MCDuubdbJ8HSt48ICbVeGpUGmfiIl0kMaYv0LrLnvkYSOE7wbXWTSrBq5q3YLLr)eCCtYM6aZHO2NPcL2NkRDQpQv6EZPQyu9bwLDWzl7ODytZ)VxnepzyWq6kQNpmK2IN0oPC5xsvufyhXeQmmUOGVxm7zvAXog5fXmp6oWhhU6hkJSMQvU8hGJ(lLxPCzfy5tACu)49F6eBSBY0wv3F3YoUMS7(E3YzzLQ97vZVAqeWXCgK55nZAQWU1lNSiy2XJcsEyMjtMZCe85ALV7VXKR2tE6LtVXN5Hpmr2m9F46dudVg2Ki9AXn9Vx9mdT5xDNOJh79Uape4DwSd((GT(5eCHNf1npBGBQRYAEIaDaIM9j4Y)pj995M4yps3itS73zy8LJQVi)XJ1MXIPtMF14tx4(H5MY5BkHFSsiJD8sbMiR79za7PxNyCxVeW4HLs1QPRLCI762(Jh54E(QGYVrfJr(BkVUPTrsFZ4cDG1((9J7kApqlXECB)fvDetx0fyQHwTrZ4IO9ODJVS3IKfIovNQh(bx1LzjgY3Nr9r1)(DHQlGU4wpNg6dw16yZu2rUZzh1BvsJCN61v9N)mv22xPVItbCmvb9EAxxD1Y797Xk7IKM9W6fG6xVGhg(Fp]] )
-
--- Register pack selector for Arcane
+-- Updated October 1, 2025 - Use the MageArcane.simc file for optimized priorities
+spec:RegisterPack( "Arcane", 20251001, [[Hekili:fJ1AVTjsu0FlrRKvB3uV2462nRmrQT7RgP(qlDv)gWy8q8OamSddjnRI43(EVZagWmGX5H2pKMgMH79m3hN5EWDU7xDD2qKu3pznZA58zZMp1YA5BMn31rEBk11jLeCf5s4)KqIH)9TIasI6X3gXjBWxpJNlcGh56SoNfj)qI7At2C5Y3a7nLg4(PxB56SLTzdvVvAwGRZx3YYk8XFif(LoTWNhc)DGKXtk8Jyzsy5qUOW)pPxXIytDDuperX6Crc87pPor0eY6i6g3356eiysQGrCDikO7fSLiqtBx4)Qc)jf(RZddNwUymllJfrZMkOGBH3r5BW6urgvCfl5snEfSu9cVNZJ2WVbGxg9FYPjqGqcN7NgqeX5B8cZf3I(yXtIpkxoLFdvGE5vpIEPZYkVmnpT29sbl5kQeQ(YI4Yg)naLL)VafR9GIfcLx)icLApkYHf5H1b)38i6MEpXQfEwHVKfdw6CWuZNv4F3DWt0N4PPcEWusuuLHEEJYLiaqE4Rc4vI9gHK8i5WnIssenroT1XDA5oRqJcPT3HUndbMHff0yclbOhwbhGasM0tFEEEFH32TXFeEzj8tH)Fb7sZ78LQ0q)DZ645UyqVOyxOVERnl1kZiRjcHIQTf0(18yihP5Dl8FVkJdE4MTuaTVfnyH)xvErrEUMNdPijVWN(9uMGAIQOYVrSRbgnV18yGgo42GiQNenpWOcPpNyY39A)uNf7h3GKn7LB4sPIAStoUHhALH1gCkgj8KCVnSYspWsTENn5cIM9)ff(lmrivDwsOYTySLgNsZKJ84S0aKBBOwO(ena3BhswG6IHbPOknEOGdffDchOHPQkKgBOzfs9Jnr)0kLuvP8XY2F42uO)TWpptDJ6lXsrbeqjsfPXEfw1Uma6490)HhEl7dJ(rFtTNEic1D13l(TtgjfNHwYZB0r2T1lIKj3pq2S3c3)16WxapbQ2ZP6azzM)Np6JIXZrMeM8rTjRoySAtO7oBGcTUDwDzJm2)Hm(KRPr9eImYo9BjB0SLHSl3czao88y2)QAArGoF2tasXDzeQHaHxzUe99ONfePESuUlMKqMMI1sOtSwwBBCfVlPXDU5iHOFnynOfhyMzYTq7N65)bSFej9FfsFNpRLhUGFuLXVt1TNULKPlFJ3DvNHUFeR9py5bW6ra0M1YZFKMXSU3z(EPsm9E2YrfTEppbg0)6YlDkJA6mQzIv9r4rA20(pcRmEcAfgp(HspmB6iJHO7FkiZBF(N1lNe6)rZaJvSlgtoyak4ru0aTAr4eKGYq0I6C0(82TmZVZIIWjt7jedLQPcAamda5adyVxGDTammJaAtno15Uv7WSDj9xQl7HZZN1K74qlWajXf(FJ)nhwm0j8r(xk8)7uu1pS4NdK814jF(PquCgWIo4u0vWngCOhreZBleR(Xdl7DizfU9lYsX(uTAkx)7Ahm8uDQBPwzQuPoRb5TRPImCXDFqexNBiQzhGsPpeNYfQ42I9(yhtlUaZ58qOMZ15hWlvoUuYf)WqzLIlGna74lvvvfxODF20DfA)O9p1Po5uwO9j9wGz2i1jX63Uv(28R1kBHV5GAhnAcDkD4JgMRuwhYNRSW4Ik01RQWDw7yH4KN1JW27URFrTRS3ns0Zlr2duuyt83Mkfpa9mcDdymPRA2QqwtbHnDtdvDN2sfM98t7OmZErJaPbnKt6ojY529PD8flAIJ2I3gbuw2akM1go5K(vf2011I4AyYUkcbZzqlyz89HPURjA2xF3PO2mB8Tr016ot7xnzGlQ1aR7hcTULdnk4X6pI6X6H9n0Upe6d0qL7AxR7dWu5zup4AH4tXVwOD13T84m6eJFFUr5jRNcp1HAB8oOBOEhzXXziJiDYZqdDU98z3DN5Vszfr5OfXBIsS6AH9r7jheUDippVwvBxhvzIrhzutuABvEghsd(Wm9DPrBsYBGKTHQ7wmB70DFFS6k7wMT8Q3diRUP7RKM3j(DUT1KkneRSlN4PW)yKepuDHPJI1YHkpoqYVhdocY3Jv16XuUpqj48DH3ZTpB5JxPDTDxz0S3RwZda1g9f3hRU6SzdLn2xo4XeRwzVym8aA9J9fTaLj5YTGikhN48qb7kL0e3)l]] )

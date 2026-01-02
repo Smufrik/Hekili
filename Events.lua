@@ -18,6 +18,106 @@ local function RequestUpdate(reason)
     end)
 end
 
+-- Swing timer integration will be initialized after StartEventHandler is called
+local swingTimerInitialized = false
+local function InitializeSwingTimer()
+    if swingTimerInitialized then return end
+    
+    local SwingAPI = LibStub and LibStub:GetLibrary("LibClassicSwingTimerAPI", true)
+    if not SwingAPI then return end
+    
+    local function SyncSwingSpeeds(mhSpeed, ohSpeed)
+        local sw = state.swings
+        if not sw then return end
+
+        local changed
+
+        if mhSpeed and mhSpeed > 0 then
+            sw.mh_speed = mhSpeed
+            state.mainhand_speed = mhSpeed
+            if sw.mh_actual and sw.mh_actual > 0 then
+                sw.mh_projected = sw.mh_actual + mhSpeed
+                sw.mh_pseudo = sw.mh_actual
+                sw.mh_pseudo_speed = mhSpeed
+                state.nextMH = sw.mh_projected
+            end
+            changed = true
+        end
+
+        if ohSpeed and ohSpeed > 0 then
+            sw.oh_speed = ohSpeed
+            state.offhand_speed = ohSpeed
+            if sw.oh_actual and sw.oh_actual > 0 then
+                sw.oh_projected = sw.oh_actual + ohSpeed
+                sw.oh_pseudo = sw.oh_actual
+                sw.oh_pseudo_speed = ohSpeed
+                state.nextOH = sw.oh_projected
+            end
+            changed = true
+        end
+
+        if changed then
+            RequestUpdate("SWING_TIMER_SPEED")
+        end
+    end
+
+    SwingAPI:RegisterCallback("SWING_TIMER_READY", function(event, mhSpeed, ohSpeed)
+        SyncSwingSpeeds(mhSpeed, ohSpeed)
+    end)
+
+    SwingAPI:RegisterCallback("SWING_TIMER_SPEED", function(event, mhSpeed, ohSpeed)
+        SyncSwingSpeeds(mhSpeed, ohSpeed)
+    end)
+
+    SwingAPI:RegisterCallback("SWING_TIMER_MAINHAND", function(event, timestamp, speed)
+        local sw = state.swings
+        if not sw then return end
+
+        local now = timestamp or GetTime()
+        sw.mh_actual = now
+
+        if speed and speed > 0 then
+            sw.mh_speed = speed
+            state.mainhand_speed = speed
+        end
+
+        local mhSpeed = sw.mh_speed or speed or 0
+        if mhSpeed > 0 then
+            sw.mh_projected = now + mhSpeed
+            sw.mh_pseudo = now
+            sw.mh_pseudo_speed = mhSpeed
+            state.nextMH = sw.mh_projected
+        end
+
+        RequestUpdate("SWING_TIMER_MAINHAND")
+    end)
+
+    SwingAPI:RegisterCallback("SWING_TIMER_OFFHAND", function(event, timestamp, speed)
+        local sw = state.swings
+        if not sw then return end
+
+        local now = timestamp or GetTime()
+        sw.oh_actual = now
+
+        if speed and speed > 0 then
+            sw.oh_speed = speed
+            state.offhand_speed = speed
+        end
+
+        local ohSpeed = sw.oh_speed or speed or 0
+        if ohSpeed > 0 then
+            sw.oh_projected = now + ohSpeed
+            sw.oh_pseudo = now
+            sw.oh_pseudo_speed = ohSpeed
+            state.nextOH = sw.oh_projected
+        end
+
+        RequestUpdate("SWING_TIMER_OFFHAND")
+    end)
+    
+    swingTimerInitialized = true
+end
+
 local PTR = ns.PTR
 local TTD = ns.TTD
 
@@ -452,6 +552,9 @@ function ns.StartEventHandler()
     end )
 
     Hekili:RunSpellCallbacks()
+    
+    -- Initialize swing timer integration after event system is ready
+    InitializeSwingTimer()
 end
 
 
@@ -830,7 +933,14 @@ end )
 
 do
     local function itemSorter( a, b )
-        local action1, action2 = class.abilities[ a.action ].cooldown, class.abilities[ b.action ].cooldown
+        local abA = class.abilities[ a.action ]
+        local abB = class.abilities[ b.action ]
+
+        if not abA and not abB then return false end
+        if not abA then return false end
+        if not abB then return true end
+
+        local action1, action2 = abA.cooldown, abB.cooldown
         return action1 > action2
     end
 
@@ -2240,26 +2350,16 @@ Hekili.KeybindInfo = keys
 local updatedKeys = {}
 
 local bindingSubs = {
---    { "CTRL%-", "C" },
---    { "ALT%-", "A" },
---    { "SHIFT%-", "S" },
---    { "STRG%-", "ST" },
---    { "%s+", "" },
---    { "NUMPAD", "N" },
---    { "PLUS", "+" },
---    { "MINUS", "-" },
---    { "MULTIPLY", "*" },
---    { "DIVIDE", "/" },
---    { "BUTTON", "M" },
---    { "MOUSEWHEELUP", "MwU" },
---    { "MOUSEWHEELDOWN", "MwD" },
---    { "MOUSEWHEEL", "Mw" },
---    { "DOWN", "Dn" },
---    { "UP", "Up" },
---    { "PAGE", "Pg" },
---    { "BACKSPACE", "BkSp" },
---    { "DECIMAL", "." },
---    { "CAPSLOCK", "CAPS" },
+    -- Keep substitutions minimal and readable to prevent keybind text overflow.
+    -- Modifiers -> lowercase with trailing hyphen.
+--    { "CTRL%-", "ctrl-" },
+--    { "ALT%-", "alt-" },
+--    { "SHIFT%-", "shift-" },
+    -- Mouse wheel directions -> concise lowercase.
+--    { "MOUSEWHEELUP", "mwup" },
+--    { "MOUSEWHEELDOWN", "mwdown" },
+    -- Generic mouse button -> short prefix (e.g., BUTTON4 -> m4).
+--    { "BUTTON", "m" },
 }
 
 local function improvedGetBindingText( binding )
@@ -2267,6 +2367,12 @@ local function improvedGetBindingText( binding )
 
     for i, rep in ipairs( bindingSubs ) do
         binding = binding:gsub( rep[1], rep[2] )
+    end
+
+    -- Ensure the label looks grammatical by capitalizing the leading character if it's alphabetic.
+    local first = binding:sub( 1, 1 )
+    if first:match( "%a" ) then
+        binding = first:upper() .. binding:sub( 2 )
     end
 
     return binding
@@ -2809,6 +2915,34 @@ else
 end
 
 
+local function AbbreviateKeybind( bind )
+    if type( bind ) ~= "string" or bind == "" then return bind end
+
+    -- Avoid altering ConsolePort/icon texture strings.
+    if bind:find( "|t", 1, true ) then return bind end
+
+    -- Mousewheel.
+    bind = bind:gsub( "[Mm][Oo][Uu][Ss][Ee][Ww][Hh][Ee][Ee][Ll][Dd][Oo][Ww][Nn]", "MwD" )
+    bind = bind:gsub( "[Mm][Oo][Uu][Ss][Ee][Ww][Hh][Ee][Ee][Ll][Uu][Pp]", "MwU" )
+
+    -- Mouse buttons.
+    bind = bind:gsub( "[Mm][Oo][Uu][Ss][Ee][Bb][Uu][Tt][Tt][Oo][Nn](%d+)", "M%1" )
+    bind = bind:gsub( "[Bb][Uu][Tt][Tt][Oo][Nn](%d+)", "M%1" )
+
+    -- Numpad.
+    bind = bind:gsub( "[Nn][Uu][Mm][Pp][Aa][Dd](%d)", "NP%1" )
+    bind = bind:gsub( "[Nn][Uu][Mm][Pp][Aa][Dd][Pp][Ll][Uu][Ss]", "NP+" )
+    bind = bind:gsub( "[Nn][Uu][Mm][Pp][Aa][Dd][Mm][Ii][Nn][Uu][Ss]", "NP-" )
+    bind = bind:gsub( "[Nn][Uu][Mm][Pp][Aa][Dd][Mm][Uu][Ll][Tt][Ii][Pp][Ll][Yy]", "NP*" )
+    bind = bind:gsub( "[Nn][Uu][Mm][Pp][Aa][Dd][Dd][Ii][Vv][Ii][Dd][Ee]", "NP/" )
+    bind = bind:gsub( "[Nn][Uu][Mm][Pp][Aa][Dd][Dd][Ee][Cc][Ii][Mm][Aa][Ll]", "NP." )
+    bind = bind:gsub( "[Nn][Uu][Mm][Pp][Aa][Dd][Pp][Ee][Rr][Ii][Oo][Dd]", "NP." )
+    bind = bind:gsub( "[Nn][Uu][Mm][Pp][Aa][Dd][Ee][Nn][Tt][Ee][Rr]", "NPEn" )
+
+    return bind
+end
+
+
 
 if select( 2, UnitClass( "player" ) ) == "DRUID" then
     local prowlOrder = { 8, 7, 1, 2, 3, 4, 5, 6, 10, 9, 13, 14, 15 }
@@ -2831,7 +2965,7 @@ if select( 2, UnitClass( "player" ) ) == "DRUID" then
         override = override and override.keybind
 
         if override and override ~= "" then
-            return override
+            return AbbreviateKeybind( override )
         end
 
         if not keys[ key ] then return "" end
@@ -2879,7 +3013,7 @@ if select( 2, UnitClass( "player" ) ) == "DRUID" then
             end
         end
 
-        return output
+        return AbbreviateKeybind( output )
     end
 
 elseif select( 2, UnitClass( "player" ) ) == "ROGUE" then
@@ -2900,7 +3034,7 @@ elseif select( 2, UnitClass( "player" ) ) == "ROGUE" then
         override = override and override.keybind
 
         if override and override ~= "" then
-            return override
+            return AbbreviateKeybind( override )
         end
 
         if not keys[ key ] then
@@ -2942,7 +3076,7 @@ elseif select( 2, UnitClass( "player" ) ) == "ROGUE" then
             end
         end
 
-        return output, source
+        return AbbreviateKeybind( output ), source
     end
 
 else
@@ -2958,7 +3092,7 @@ else
         override = override and override.keybind
 
         if override and override ~= "" then
-            return override
+            return AbbreviateKeybind( override )
         end
 
         if not keys[ key ] then return "" end
@@ -2997,7 +3131,7 @@ else
             end
         end
 
-        return output, source
+        return AbbreviateKeybind( output ), source
     end
 end
 

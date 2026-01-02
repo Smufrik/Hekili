@@ -33,7 +33,7 @@ local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDeb
             cast = function(x) return x > 0 and x or nil end,
             aura = function(x)
                 -- Only predict focus if casting Steady Shot
-                if state.buff.casting.up and state.casting and state.casting.name == "Steady Shot" then
+                if state.buff.casting.up and state.casting and state.casting.name == "steady_shot" then
                     return "casting"
                 end
                 return nil
@@ -43,7 +43,7 @@ local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDeb
             end,
             interval = function() return state.buff.casting.duration end,
             value = function()
-                -- Predict 17 focus if Steady Focus buff is up, otherwise 14
+                -- Steady Shot provides 14 focus (17 with Steady Focus active)
                 if state.buff.steady_focus and state.buff.steady_focus.up then
                     return 17
                 end
@@ -129,6 +129,33 @@ spec:RegisterTalents( {
 
     -- Auras
 spec:RegisterAuras( {
+        -- Internal helper for opener gating on Stormlash.
+        stormlash_totem_raid = {
+            id = 0, -- internal only
+            duration = 10,
+            max_stack = 1,
+        },
+        -- Stormlash (player buff) for burst-window awareness.
+        stormlash = {
+            id = 120676,
+            duration = 10,
+            max_stack = 1,
+            generate = function( t )
+                local name, _, _, _, duration, expires, caster = FindUnitBuffByID( "player", 120676 )
+                if name then
+                    t.name = name
+                    t.count = 1
+                    t.applied = expires - duration
+                    t.expires = expires
+                    t.caster = caster
+                    return
+                end
+                t.count = 0
+                t.expires = 0
+                t.applied = 0
+                t.caster = "nobody"
+            end,
+        },
         -- Common aspects
         aspect_of_the_hawk = {
             id = 13165,
@@ -216,19 +243,32 @@ spec:RegisterAuras( {
     },
         -- Master Marksman (Aimed Shot!); expose as master_marksman for APL compatibility
         master_marksman = {
-            -- Use the same aura as Aimed Shot! and alias it
+            -- Ready, Set, Aim... buff for instant/free Aimed Shot
             id = 82926,
-            duration = 10,
-        max_stack = 1,
-            copy = "aimed_shot_instant"
-    },
+            duration = 8,
+            max_stack = 1
+        },
+        master_marksman_counter = {
+            -- Counter for Master Marksman stacks (hidden)
+            id = 82925,
+            duration = 30,
+            max_stack = 2
+        },
     steady_focus = {
         id = 53220,
         duration = 20,
         max_stack = 1,
-        haste = 0.15,
+        haste = 0.15
     
     },
+
+        -- Internal helper aura to track consecutive Steady Shots for Steady Focus maintenance.
+        -- Not a real game aura; used by APL conditions like buff.steady_focus_pre.stack.
+        steady_focus_pre = {
+            id = 0, -- internal only
+            duration = 10,
+            max_stack = 2,
+        },
 
         thrill_of_the_hunt = {
             id = 34720,
@@ -340,23 +380,18 @@ spec:RegisterAuras( {
             debuff = true
         },
 
-            lock_and_load = {
+        lock_and_load = {
         id = 56453,
         duration = 8,
         max_stack = 3,
-    },
+        },
 
         piercing_shots = {
             id = 82924,
-        duration = 8,
+            duration = 8,
             max_stack = 1
         },
 
-        aimed_shot_instant = {
-            id = 82926,
-            duration = 10,
-            max_stack = 1
-        },
 
         blink_strikes = {
             id = 109304,
@@ -428,8 +463,8 @@ spec:RegisterAuras( {
         explosive_trap = {
             id = 13813,
             duration = 20,
-        max_stack = 1
-    },
+            max_stack = 1
+        },
         -- Dire Beast focus regen aura (used by resources)
         dire_beast = {
             id = 120694,
@@ -660,11 +695,14 @@ spec:RegisterAuras( {
             cooldown = 300,
         gcd = "off",
         
-        startsCombat = false,
             toggle = "cooldowns",
+        startsCombat = false,
+            
         
-        handler = function ()
+    handler = function ()
                 applyBuff( "rapid_fire" )
+        -- Break Steady Focus pre-chain on non-Steady cast
+        removeBuff("steady_focus_pre")
         end,
     },
     
@@ -675,27 +713,32 @@ spec:RegisterAuras( {
         gcd = "spell",
             school = "physical",
 
-            spend = -14,
+            spend = function()
+                -- Steady Shot provides 14 focus (17 with Steady Focus)
+                return buff.steady_focus.up and -17 or -14
+            end,
             spendType = "focus",
 
             startsCombat = true,
             texture = 132213,
         
         handler = function ()
-                -- Track consecutive Steady Shot casts for Steady Focus buff
-                state.last_steady_shot = state.last_steady_shot or 0
-                state.steady_shot_chain = state.steady_shot_chain or 0
-                if state.last_steady_shot > 0 and (query_time - state.last_steady_shot) < 5 then
-                    state.steady_shot_chain = state.steady_shot_chain + 1
-                else
-                    state.steady_shot_chain = 1
+                -- Track consecutive Steady Shots for Steady Focus precondition.
+                -- Increment steady_focus_pre stack count (max 2)
+                local current_stacks = buff.steady_focus_pre.stack or 0
+                applyBuff("steady_focus_pre", 10, math.min(2, current_stacks + 1))
+                -- Master Marksman: 50% chance to gain a stack on Steady Shot cast
+                -- At 2 stacks, gain Ready, Set, Aim... buff for instant free Aimed Shot
+                if talent.master_marksman.enabled then
+                    if math.random() < 0.5 then
+                        if buff.master_marksman_counter.stack == 1 then
+                            removeBuff("master_marksman_counter")
+                            applyBuff("master_marksman", 8) -- Ready, Set, Aim...
+                        else
+                            applyBuff("master_marksman_counter")
+                        end
+                    end
                 end
-                state.last_steady_shot = query_time
-
-                if state.steady_shot_chain >= 2 then
-                    applyBuff("steady_focus", 10)
-                    state.steady_shot_chain = 0
-            end
         end,
     },
     
@@ -711,8 +754,9 @@ spec:RegisterAuras( {
             
         startsCombat = true,
 
-        handler = function ()
+    handler = function ()
                 applyDebuff( "target", "serpent_sting" )
+        removeBuff("steady_focus_pre")
         end,
     },
     
@@ -727,7 +771,7 @@ spec:RegisterAuras( {
         
         startsCombat = true,
         
-        handler = function ()
+    handler = function ()
                 -- Apply Explosive Shot DoT (fires a shot that explodes after a delay)
                 applyDebuff( "target", "explosive_shot" )
                 
@@ -739,6 +783,7 @@ spec:RegisterAuras( {
                 
                 -- Explosive Shot is the signature Survival ability
                 -- It does high fire damage and is central to the rotation
+                removeBuff("steady_focus_pre")
         end,
     },
     
@@ -748,11 +793,13 @@ spec:RegisterAuras( {
             cooldown = 300,
             gcd = "off",
         
-            startsCombat = true,
             toggle = "cooldowns",
+        startsCombat = true,
+            
         
-        handler = function ()
+    handler = function ()
                 applyBuff( "stampede" )
+        removeBuff("steady_focus_pre")
         end,
     },
     
@@ -770,24 +817,7 @@ spec:RegisterAuras( {
         end,
     },
     
-        counter_shot = {
-            id = 147362,
-            cast = 0,
-            cooldown = 24,
-            gcd = "spell",
-            school = "physical",
-
-            startsCombat = true,
-            toggle = "interrupts",
-
-            debuff = "casting",
-            readyTime = state.timeToInterrupt,
-
-            handler = function ()
-                applyDebuff( "target", "counter_shot" )
-                -- interrupt() handled by the system
-            end,
-        },
+        -- Counter Shot exists in MoP but Marksmanship uses Silencing Shot when talented; prefer silencing_shot.
 
         silencing_shot = {
         id = 34490,
@@ -798,7 +828,7 @@ spec:RegisterAuras( {
 
         talent = "silencing_shot",
         startsCombat = true,
-        toggle = "interrupts",
+            toggle = "interrupts",
 
             debuff = "casting",
             readyTime = state.timeToInterrupt,
@@ -824,24 +854,68 @@ spec:RegisterAuras( {
     
         aimed_shot = {
             id = 19434,
-            cast = 2.5,
-            cooldown = 1,
+            cast = function()
+                -- Master Marksman makes Aimed Shot instant cast
+                if buff.master_marksman.up then
+                    return 0
+                end
+                return 2.5 / haste
+            end,
+            cooldown = 0,
             gcd = "spell",
             
-            spend = function() return buff.aimed_shot_instant and buff.aimed_shot_instant.up and 0 or 50 end,
+            spend = function()
+                -- Master Marksman makes Aimed Shot free
+                return buff.master_marksman.up and 0 or 50
+            end,
             spendType = "focus",
             
             startsCombat = true,
+            usable = function()
+                -- Always allow instant proc version
+                if buff.master_marksman.up then return true end
+                -- Gate hard-casts per 'aimed' logic
+                local focus_now = (state.focus and state.focus.current) or 0
+                if focus_now >= 85 then return true end
+                if buff.rapid_fire and buff.rapid_fire.up then return true end
+                local cs_in = (cooldown.chimera_shot and cooldown.chimera_shot.remains) or 0
+                local crows_in = (cooldown.a_murder_of_crows and cooldown.a_murder_of_crows.remains) or 999
+                if cs_in > 3 and crows_in > 3 then return true end
+                return false, "aimed gated to avoid starving CS/Crows"
+            end,
         
         handler = function ()
-                -- Basic Aimed Shot handling
+                -- Consume Master Marksman buff if present
+                if buff.master_marksman.up then
+                    removeBuff("master_marksman")
+                end
+        end,
+    },
+    
+        -- Master Marksman proc version (spell ID changes when buff is active)
+        master_marksman_aimed_shot = {
+            id = 82928,
+            cast = 0, -- Instant when procced
+            cooldown = 0,
+            gcd = "spell",
+            
+            spend = 0, -- Free when procced
+            spendType = "focus",
+            
+            startsCombat = true,
+            
+            copy = "aimed_shot", -- Link to main aimed_shot for keybind sharing
+        
+        handler = function ()
+                -- Consume Master Marksman buff
+                removeBuff("master_marksman")
         end,
     },
     
         chimera_shot = {
             id = 53209,
         cast = 0,
-            cooldown = 9,
+            cooldown = 10,
         gcd = "spell",
         
             spend = 45,
@@ -872,11 +946,10 @@ spec:RegisterAuras( {
         kill_shot = {
             id = 53351,
         cast = 0,
-            cooldown = 0,
+            cooldown = 10,
         gcd = "spell",
             
-            spend = 35,
-            spendType = "focus",
+            spend = 0,
             
             startsCombat = true,
             texture = 236174,
@@ -908,7 +981,7 @@ spec:RegisterAuras( {
         cast = 0,
             cooldown = 90,
         gcd = "off",
-        
+            toggle = "defensives",
         startsCombat = false,
             texture = 132369,
         
@@ -1152,8 +1225,9 @@ spec:RegisterAuras( {
             spend = 60,
             spendType = "focus",
 
-            startsCombat = true,
             toggle = "cooldowns",
+            startsCombat = true,
+            
 
             handler = function ()
                 applyDebuff( "target", "a_murder_of_crows" )
@@ -1166,8 +1240,9 @@ spec:RegisterAuras( {
             cooldown = 90,
             gcd = "spell",
 
-            startsCombat = true,
             toggle = "cooldowns",
+            startsCombat = true,
+            
 
             handler = function ()
                 applyDebuff( "target", "lynx_rush" )
@@ -1183,6 +1258,7 @@ spec:RegisterAuras( {
             spend = 15,
             spendType = "focus",
 
+            toggle = "cooldowns",
             startsCombat = true,
 
             handler = function ()
@@ -1199,6 +1275,7 @@ spec:RegisterAuras( {
             spend = 15,
             spendType = "focus",
             
+            toggle = "cooldowns",
             startsCombat = true,
 
             handler = function ()
@@ -1216,7 +1293,18 @@ spec:RegisterAuras( {
             spend = 40,
             spendType = "focus",
 
+            toggle = "cooldowns",
             startsCombat = true,
+            usable = function()
+                -- Optional gating: prefer during raid burst or when not starving Chimera/Crows soon.
+                if settings and settings.mm_gate_barrage_on_burst then
+                    if buff.stormlash and buff.stormlash.up then return true end
+                    local cs_in = (cooldown.chimera_shot and cooldown.chimera_shot.remains) or 0
+                    local crows_in = (cooldown.a_murder_of_crows and cooldown.a_murder_of_crows.remains) or 999
+                    if cs_in <= 3 or crows_in <= 3 then return false, "hold for upcoming CS/Crows" end
+                end
+                return true
+            end,
 
             handler = function ()
                 applyBuff( "barrage" )
@@ -1230,7 +1318,7 @@ spec:RegisterAuras( {
             gcd = "spell",
 
             startsCombat = true,
-
+            toggle = "cooldowns",
             handler = function ()
                 -- Pet ability, no special handling needed
             end,
@@ -1255,19 +1343,6 @@ spec:RegisterAuras( {
         -- Additional talent abilities
         piercing_shots = {
             id = 82924,
-        cast = 0,
-            cooldown = 0,
-            gcd = "off",
-        
-        startsCombat = false,
-        
-        handler = function ()
-                -- Passive talent, no active handling needed
-        end,
-    },    
-
-        careful_aim = {
-            id = 82926,
         cast = 0,
             cooldown = 0,
             gcd = "off",
@@ -1341,8 +1416,9 @@ spec:RegisterAuras( {
             cooldown = 120,
             gcd = "off",
             
-        startsCombat = false,
             toggle = "defensives",
+        startsCombat = false,
+            
         
         handler = function ()
                 -- Self-heal ability
@@ -1355,9 +1431,9 @@ spec:RegisterAuras( {
         cast = 0,
             cooldown = 30,
         gcd = "off",
-        
-            startsCombat = false,
             toggle = "cooldowns",
+            startsCombat = false,
+            
         
         handler = function ()
                 applyBuff( "fervor" )
@@ -1369,9 +1445,9 @@ spec:RegisterAuras( {
             cast = 0,
             cooldown = 45,
             gcd = "spell",
-            
-            startsCombat = true,
             toggle = "cooldowns",
+            startsCombat = true,
+            
 
             handler = function ()
                 applyBuff( "dire_beast" )
@@ -1435,6 +1511,17 @@ spec:RegisterCombatLogEvent( function( _, subtype, _, sourceGUID, sourceName, so
 end )
 
     -- State Expressions
+    -- In-flight tracking for Steady Shot (prevents focus waste)
+    spec:RegisterStateExpr( "in_flight", function()
+        -- Check if Steady Shot is currently being cast
+        if buff.casting.up and action.steady_shot.lastCast and query_time - action.steady_shot.lastCast < 0.5 then
+            return true
+        end
+        -- For now, simplified check - always return false as projectiles travel fast
+        -- Can be enhanced later with actual projectile tracking if needed
+        return false
+    end )
+    
     spec:RegisterStateExpr( "focus_time_to_max", function()
         local regen_rate = 6 * haste
         if buff.aspect_of_the_iron_hawk.up then regen_rate = regen_rate * 1.3 end
@@ -1463,6 +1550,24 @@ spec:RegisterStateExpr( "bloodlust", function()
 end )
 
     -- Threat is provided by engine; no spec override
+
+    -- MM variables approximating APL logic.
+    -- Refresh Steady Focus when we have 2 stacks and <= 7s remains.
+    spec:RegisterVariable( "steady_focus", function()
+        -- Emulate: 2 consecutive Steady Shots (steady_focus_pre.stack == 2) and Steady Focus buff needs refresh (<=7s).
+        local pre = buff.steady_focus_pre and buff.steady_focus_pre.stack == 2
+        local needs = buff.steady_focus and buff.steady_focus.remains <= 7
+        return (pre and needs) or false
+    end )
+
+    -- Permit Aimed Shot hard-cast during high-focus/burst, or when not starving upcoming Chimera/Crows within 3s.
+    spec:RegisterVariable( "aimed", function()
+        local focus_now = (state.focus and state.focus.current) or 0
+        local rf = buff.rapid_fire and buff.rapid_fire.up
+        local cs_in = (cooldown.chimera_shot and cooldown.chimera_shot.remains) or 0
+        local crows_in = (cooldown.a_murder_of_crows and cooldown.a_murder_of_crows.remains) or 999
+        return (focus_now >= 85) or rf or (cs_in > 3 and crows_in > 3)
+    end )
 
 -- === SHOT ROTATION STATE EXPRESSIONS ===
 
@@ -1551,4 +1656,11 @@ spec:RegisterOptions( {
     width = "full"
 } )
 
-    spec:RegisterPack( "Marksmanship", 20250914, [[Hekili:DJvxVTTnx4FlfdZTflvV2oXjPBXbyVfyOnaRyyUxljAjQycljQrsLmdeOF77qs9bLeLSsMtVyx0MeXdp88fFoph6UW9BUBcrcS7xxoF5Q5FCXfolpF55lUYDJ4qg2Dtgkyp6E4xsrjW))7i2EEckLVJKjx8qmffkvcNMZcabC3SnNel(sQ7w7A(c3nOCXokZDZMK8igzV7MDKWqSEhyEG7MVTJWl8L)dv4xAbf(0i4VdeeAAHFmHlGLJOSc)pJ3tIjoUBuFuzmK07JXEce7ESa(Wxv(jofTngh6()D3eWicmJGC38Mc)T5rroCbgfEWlIgKZDYZk8F6jBRWWjiskCY3u4Vc8eL5ahOwg(oQWvaES84QwlyhjbZq6fnmcqUZnLd5LKZcXmpAKxaJ(iVJWxmMpeI12kMLHtfECbeba3WWcnxrQUvdQoLMqGrhQSzpWFfOurl11SSuxx(C8JRg8GvH4c)Bl8VEvH)Sc)aknoK(yQJzmSjhaco35sJtMfGsX1w11dEq6cdNDyuSyNtwGaYNRl8xoVrxqjvCTM(4GA64w4YHcAlMBg1mRGAfVeYlfrO84Juilv0dypCkoHGLhn4qNBufIa)r)hEY7j6BlE6B1ikUUS1q5YlJmsMwbFcXWr5Xf()kjbUuUdXX)mCFCl9b4Q51Z)XcFDuTWxhwpd(felmaXfQ9Gdl83aEhSN7VNH5CWAJpu4)ibadYfYs4y0bO4SW)t6yPw(XCHrZOYYO5TCZaTl4b5H6BFd5U)jkJaw8VryyjoalvAPPqQg(lCS8hGpdbGi0dsmO2oie(dZtaqKh3rIH9VhJZA7z00piiQq)eCo1fsM0G8Ia7rbpnRkE3RkUJtZI8KMVneKjvB0glvvpMXWb0KTOjcTI4z4aHeoqSd7Td94(2qj9w2wTyJAFxHphlKWyCNeODKhk9GgUUmGq4EBPCih8EvyQ8IriCVCxEkOeUNCBf(qSAUzGuMq8euVqcwv9SWaG3CN2QDSbgJ)7SyQSm3tajVw(C7LSLB0b)hiSeCk4pG2B2Dgv9ZkqClWlDrqKxWhnxjqXq3bN7JrkJccFoLY1gi2uaMeXsTCfW962bndHhpL(Q0e(8j2e(ct5saCwInPgUD5ZTzsRMLMHilTjNs3btunl5yRQ4yi7Wpyek4IQwjVRcz)2sK(p)hV)KL(EU0LoDmGgco08EuRa1NhOFg4ka0LkMb4dhQa)dZzAqFJ4l0vmKw4Nk3xqmjRULGnEqqv0vZNirOfhRi91)(9LtUIT80411R1H(JWDCz7JaLKHdX2QsQKPPRPTB9ws(7qPH8XB(cNCS0R0IoLW(weJbJWypKxTOkC3yiLFUoWoM(ZOpcnNKLewpHML7Cg1l4AHxELqcOkEpwSOZLHVP)mVkAulMfM3Du1Yo7zP7OCSlDYimdOAz3dlxRxfReHXahwlMUiSIx0lcY0c7qRaMA(yketLz1Vy6)IaPwrYUCQJ0TWks8uUM96JUnQtEIgBDQn(Hp8aC7vkM(jwUAoy9pIyPsQXYhrbQnjjzuMO8HsEBlU8VTWNH)RCOmeIsCAcinkxqtqc5hca0T7XCNI7u6jIgdd9OANHYzYoEaYb89CUuysAzhqTzRFEgzfROsovdViAEAlPddLchIeOTQXjVRW)dWN790dWc39fLNipTR68mqGncbkyicioS6c54j0iySRQGi3PEELFA9)R)0gNrIw)MHhuP4oBQXCEaPcExVrsE6P2JJ8(zs9yzqK1ZN1FaKBxSY(b3EYbLTp04g2vGE4HZKZxS2C8c7s3KlK5GsjGV3DKrT(GXmKwuPJw(ue3U(8I7(H20G(E(ach3Snyqln)Ee6V965kp47ZBcCC7TS1L0w73qzwpZ)M1s7)ykTf2GrY2PMTMSCOl)m7IvXmZ(QnMR91bmfpOGm5mjjH1kww2Dv7BVK4KotAJ(1m7uVSRTAksg6RhDRzdr1sghHcNkUstXFR4r9mKDPz6QvEuLlQ7G0G01HGXtpni5IBwnSQnBVnSuJuZ0ZwnzwyIT1LmI9GJMENrIQnLXzwPlot5U3SA(iEqniyDDO1Nh)ffdamtqadYgg2VfcnZgMmJ2tUD9IrszgCnKNJEhxVA2OuwUfORmSkRFCdRyN3SE5KJSJBelNunE5nUx0BAyuv10r40EfQTITFbQZHp97eGFFcEIIFzONOyilSDsSSi8Q5hPMAXqQ716QWG50YsMt4mDnhAzR6tBruJsTxazCOtV4P)MTMxV8yyflSPQxRCQHX(VhyZAUYS1QgQ(eMi1k0EsuVwZ7r3DLNdSBVEmJ4tQjlD)Nd]] )
+    spec:RegisterSetting( "mm_gate_barrage_on_burst", true, {
+        name = "Gate Barrage on Burst Window",
+        desc = "Prefer using Barrage during raid burst (e.g., Stormlash) and avoid using it within 3s of Chimera Shot or A Murder of Crows becoming ready.",
+        type = "toggle",
+        width = "full",
+    } )
+
+    spec:RegisterPack( "Marksmanship", 20251026, [[Hekili:TRvBVTjYw4FlrRUwoQjU(100v1rknRRA6vB2ElP3E)KbmmoGcgyhgIBKS43(9mdWWamdGDs2URu)qITHzoZzoZ5558cSC0YBxQzBsqlVz8WXZgnC8zdgpz05JwQrEmeTul006EZ7GV4BUb()VBIVpAJPFKJBi9Mp6fyAtLruqm2cgWsTvXUEKR9xUsQGh(wySHil4YZMUuZX12gLowuK1sTBDCJsmO)zMyKT2jgbRHFBrCd8tm8CJiWTxhGtm(i6Exp3bl1yxKQgbHiFeg(2nSDgY3CLhYE57xQLoFyXryyme9iIR)DPll2nm9EFb9NXOicYgwsSnc)RjgAyTeJlsmU83dUI9LR(Ti2NFaHFGQdVcUKJ7ge28KedIdcurncY0(r4tNaqR0a5tqyxZLAhLyyJwfVE9GsAXG4WLeWGurJlMhX0dg8at9nXu1spyTUfoyB0G8rZ3D1gcvWtAtWreZnHiBuD5LFhQyMsft(nWMHU26RDXirrdJAMc7UJPVDjJbZouigWiKy0lXWkiWZoyR)GOh9ndJq6rHyWgfnatnQGg5fqYLgSCNPCVvx(fkZkVGa4YX4hPY4nTzFwZoRRBDsVoveNlABSs9h0JCOQAjRZBvUupycFaxgomOBu91bwXr6y0AmkYr8aHDxMOb5nAyZ7)isaEJNzKt5TVjgtb1ubufNuBZFNNP7diDsqe3FR8bL4aWPE(9Oauq)bKY8eJrZkwAHbVKUd0qFhzftq6HoMriza3cfQFIbGGY2xfgjMNZUDYUdgTX01huJ3bQX0eJJzQgiexF91EU35quAzh3Xt0jIJdOJ8KnOPk3tnqjOGYscgRYH(gtyVG13KXvtpuSe2OMWEXMVpvdGOJhoQac1nUOSJYPfIztShXLlM9edj6IqpBMnujQ6hLVzdyvMvM4GPN2arlW6R7edQtvdn2Y0h1fSkh8ZoBuDu1awvyhD2Wu0q)s7ZPtkBye9OlGj0rMU2deGddSahkDcmbbeKc6787Wyy9IJiL8KRAruhYRlyu4g57NOMzoEIbqh3PiFLyc4bo7krqNGjNntgmrnDqMqTbLvFfcofRVHlUxZSbzIY7r)VRJJHak1Ke)wDIpqc0vjsSvEGWGTimZvTMO43QziDMGYImwY(3NhzPiwkhI1gGkXOcWRUpyLbdiSJLhQUk)HYuR2ZCOQXRKlycmR7rKr5ZG)Bzy3ktACLjnMnPsyeHSWkJsgvkvZvW5hcFplD9YdRjhF8DiYahKPhXzqOfjf)moJBmlKB9ZcrYQWa2NmEgB0AtiExNyzICHpSa1vx0JK5fKPwUr6ukv2oItyuAwCwhjgyltiSt6p0Pf(Kw(JEAbA5rsAlXFgzoLUFChfCbtBZ0ymbtT1JecPJJ9vk4Ss2ApTMkbB4z8jputJBMvXy47BD9HDuB0E1CKay65d7(c5NLABlKIk8x746uolAjuMDskrGreOI4sHuXs9p0SZLQUhuI3Q973)eVv7TxoBWUM32ivluRX0FrZIwTpF3s6vDS)dll8oubEZjHRolEHe1MoS7(YDlT(3oSRoctuT3jIHhKGLdcPU8ckA(OPFZlgXW4Hy0d63zzpyKyjcmDJFRX1UvlG)3WY5PsV4yD(OOBAFi1wSL1ITTqqghZhG)poXik2Ycff5s)zPEVbfZ4BtxH3aFnBbhW2w5eEY61IKqVDYYiCyD(mbopjXTEbtCSKr8spVGTjgxMYJOXonCmX2Nst)GBmD9PAkWZ)AhWr90S9bT5M(0jaXeWpaeG0dy3aW38XSUG2)kTxFfvtGvERlXHkNjLnWPqjMRx5Gl)muYFjHsOJVZ9WzVYcQA6jfT(Qlv)9ZUb9ZUb983niiaKvWMvMTuNwUwzsFque(zM527f078wgvAmUyiTz2aZfCXMPMWKfizpvcjJOqfkg2MGhkvlPIz0mlg4HaH4iS(eqPD0n9Fm13POQ1vayi)upJAXg8iOU7qr6m2QedWRzOy1UuxfagPB7IyHQebzIZSzwrzmzc1UI(EOxqedWcUHntkY3MPv4hvifEj)PCHsaELIjqkvGxB(C7FmINEOPNyK0Z2RiP)1esRBSJ)DTONdlyH6qFDZAOo4vxoytRCaGP07L948PB(TMyFkoAP21BcdWSNB(BR8K6hK8jkVCWAxAYY)YVKyi(keKy8rgbqIXPWnc(me6FWSbdt(eDGFMIQoDf8pqU4aIjvS)AIX7biheq7IZh(VG5)5JpbYSnn3s4QJhEQW1xK2we46VBC2vt(uYNs1qa)NhV4vZFDDE4tCxp)i1C09oQBHi6YYXNuRRzlre6DuASa5lQiBlDL6xJWF3UYK9h3tbn)8H9QtVFXOzYx4YSZ0LUmD(fZhlFIPeY0juL0wHzL72tpNPErxt1zCCiHpbyyLB2kv8n272E16BBU0)V51tlk9Q9y7eATqZFOyOWeFXkVTWUWxqqLY)EQQiRS3tccP24ty1ZoVV8Y87jVe)EkdJa62XS97pKkr7ITG5XuzZZw3lMF(SD7QNy7UD9BmV5lM0R9A2VyYXhN7dDzmjGzgkc(qpAxZ4fh3bpl(SyoYGgXGtPc)pyDxNMA3FgdE2uQqyFqxRrdPx1kW3gSAcRrLE1NUePnPpx(VBom5Sf49XmPL2H4OuZp9OnIs7IwVgiQ6WwqSnZ0vrMzVwLe5QG0afDAnZsDlLaOsjUq8L2LrP(UlvmVB(4oiNsnhHF295f3S4laAzX)5RlU5QfWz3hKD2XOtE(FZ1kqpPN(uEtXmuzXQuKuRK5wdliq7Q8bZlthYEY6IS2vE)1KmRcFjj3mocIIsqBoH(elNZEUOYDc718twvIOlEgNYLOKPK2XdHTxLMLuFgI0qsTyCMAQuB8nnt2wi9rqZ1)sph86dxivyH9GK0T7Pov7EzmW08jYOz(6x0UnX4BxFZV9hFdacFHAebFzWk(63NZjKxuAbF2arIL6MI(hjR0OmQg5XZMECVJ4zmRCDKFIuvz2F0ufjuKUd)0rAvwDuaLlMOxZH5MpsPuFUDboaLx9KkQSIBZuvp2Z7kxX3JT)a)PHDXFQIwNzBE7W2oJMiGFUbIu(Xl1wiw7eRWRRy5Eycrh2W65JqsArPxpeowCHDintltGPi2JnQY4SSOxhSJDX8vIEewINmq(mLa5Iv5GWxQMEdUjft5fe6iOxhkg4jT1QCKjA8t9r1(Q2TxETGBQqX8mhvnceAgkAqilVS8nRuff9iMagkAcVCLPuowplUqkIfuDHK7oxtD2FqtvrS)URvLqXdeIkH0OPffPpv9e5p(N2tcU2CBjHNEzmLZAqeVuWMAw4dc5085KkWtlRDM2E2qOG0SVpDsBXdsLT8hNZXzDxQCgVhjPSRoIOQJWx8)wC1xVDrbcVOTCu893qSEEqRE)FdM0S(eWxUsfB9scGRUqYbWvhfhc0GgV)y8QIy)X4vLqNX4vN4bGtRkIxkCAnR0bHtB2wRcN2YA)3aCAlaN640Rk6dv)SgrLwFNqgF8Uo9QNCT9IIswH6I3pVwF53TJUONnt(0lEz4fer93EE5tM)(Vlm3AVU8YNANHfYNo)DCxyY1EL4LpvHI7L)kW3RFTI(Fg7aQmvsr3y6ARxulQ8xF99ySJvy14D1rX95VY6QoWOxtzQs7218lOEmXjaVutBt8AS79SNp3Y))]] )

@@ -1,55 +1,54 @@
-# Rogue: Assassination (MoP) — rebuilt from wowtbc.gg + wowsims JSON
+# Rogue: Assassination (MoP 5.5.1) 
+# Based on SimC Tier 16 Heroic profile
 
-# Precombat
-actions.precombat+=/apply_poison,lethal=deadly,nonlethal=crippling
-actions.precombat+=/tricks_of_the_trade,if=settings.use_tricks_of_the_trade&group
-actions.precombat+=/potion,name=virmens_bite_potion
-actions.precombat+=/stealth,if=!stealthed.all
+## Precombat Actions
+actions.precombat+=/flask,type=spring_blossoms
+actions.precombat+=/potion
+actions.precombat+=/stealth,if=!buff.stealth.up
+actions.precombat+=/marked_for_death,if=talent.marked_for_death.enabled
+actions.precombat+=/slice_and_dice,if=talent.marked_for_death.enabled
 
-# Opener while stealthed
-actions.stealth+=/garrote,if=!dot.garrote.ticking&target.time_to_die>8
-actions.stealth+=/slice_and_dice,if=buff.slice_and_dice.down&combo_points>=1
-actions.stealth+=/mutilate
-
-# Main
-actions+=/kick,if=target.casting
-actions+=/shiv,if=debuff.dispellable_enrage.up
-actions+=/tricks_of_the_trade,if=settings.use_tricks_of_the_trade&group&time>30
-actions+=/call_action_list,name=cds
-actions+=/run_action_list,name=stealth,if=stealthed.all
-actions+=/run_action_list,name=finish,if=combo_points>=5|(talent.anticipation.enabled&combo_points>=4&buff.anticipation.stack>=3)
+## Main Actions
+actions+=/potion,if=buff.bloodlust.react|target.time_to_die<40
+actions+=/kick
+actions+=/use_item,slot=hands,if=buff.slice_and_dice.up&(dot.garrote.ticking|dot.rupture.ticking|buff.vendetta.up)
+actions+=/use_item,slot=trinket1,if=buff.vendetta.up|target.time_to_die<30
+actions+=/use_item,slot=trinket2,if=buff.vendetta.up|target.time_to_die<30
+actions+=/blood_fury,if=buff.vendetta.up
+actions+=/berserking,if=buff.vendetta.up
+actions+=/arcane_torrent,if=energy<60
+# T16H Cooldown management
+# Prefer pairing Shadow Blades with Vendetta or near execute; still allow on BL or after 60s.
+actions+=/shadow_blades,if=(buff.slice_and_dice.up|dot.rupture.ticking)&(buff.vendetta.up|(target.time_to_die<cooldown.vendetta.remains&target.health.pct<35))
+actions+=/vendetta,if=buff.slice_and_dice.up|dot.rupture.ticking
+actions+=/vanish,if=buff.vendetta.up&combo_points<5&energy<60&!buff.blindside.up&gcd.remains=0
+# Stealth opener
+actions+=/mutilate,if=buff.stealth.up
 actions+=/run_action_list,name=aoe,if=active_enemies>=3
-actions+=/call_action_list,name=build
-actions+=/call_action_list,name=defensives
+actions+=/call_action_list,name=finisher,if=combo_points>=5
+actions+=/call_action_list,name=generator
 
-# AoE
-actions.aoe+=/crimson_tempest,if=combo_points>=4&active_enemies>=3&!dot.crimson_tempest.ticking
+# T16H AoE
+actions.aoe+=/slice_and_dice,if=buff.slice_and_dice.remains<2&combo_points>=2
+actions.aoe+=/crimson_tempest,if=combo_points>=4&active_enemies>=4&!dot.crimson_tempest.ticking
 actions.aoe+=/fan_of_knives,if=combo_points<5
-actions.aoe+=/crimson_tempest,if=combo_points>=4&active_enemies>=3&dot.crimson_tempest.remains<2
+actions.aoe+=/envenom,if=combo_points>=5
 
-# Builders
-actions.build+=/marked_for_death,if=combo_points=0
-actions.build+=/dispatch,if=target.health.pct<35|(buff.blindside.up&combo_points<4)
-actions.build+=/mutilate,if=combo_points<4|(talent.anticipation.enabled&combo_points<5&buff.anticipation.stack<3)
+# T16H Generators
+actions.generator+=/marked_for_death,if=talent.marked_for_death.enabled&combo_points=0&buff.slice_and_dice.up&dot.rupture.ticking&!buff.stealth.up
+actions.generator+=/garrote,if=time<1&!dot.garrote.ticking&!dot.rupture.ticking
+actions.generator+=/dispatch,if=target.health.pct<35
+actions.generator+=/dispatch,if=dot.rupture.ticks_remain<2&energy>90
+actions.generator+=/dispatch,if=buff.blindside.react
+actions.generator+=/mutilate,if=combo_points<=3|(talent.anticipation.enabled&combo_points<=4)|(buff.shadow_blades.up&combo_points<=4)
+actions.generator+=/preparation,if=!cooldown.vanish.ready&!buff.stealth.up
 
-# Finishers
-actions.finish+=/slice_and_dice,if=buff.slice_and_dice.down&combo_points>=1
-actions.finish+=/rupture,if=!ticking&target.time_to_die>8&combo_points>=1
-actions.finish+=/rupture,if=remains<2&target.time_to_die>8&combo_points>=1
-actions.finish+=/envenom,if=combo_points>=5
-actions.finish+=/envenom,if=combo_points>=4&buff.slice_and_dice.up&dot.rupture.remains>1
-
-# Cooldowns
-actions.cds+=/vendetta,if=settings.use_vendetta&!stealthed.all&buff.slice_and_dice.up&dot.rupture.ticking
-actions.cds+=/shadow_blades,if=buff.bloodlust.react|target.time_to_die<40|(cooldown.vendetta.remains>30|buff.vendetta.up)
-actions.cds+=/use_items,if=buff.vendetta.up|target.time_to_die<30
-actions.cds+=/use_item,slot=hands,if=buff.vendetta.up|target.time_to_die<30
-actions.cds+=/blood_fury,if=buff.vendetta.up
-actions.cds+=/berserking,if=buff.vendetta.up
-actions.cds+=/arcane_torrent,if=energy<60
-actions.cds+=/shadowstep,if=settings.allow_shadowstep&talent.shadowstep.enabled&target.distance>=12
-
-# Defensives
-actions.defensives+=/cloak_of_shadows,if=health.pct<=20&!buff.cloak_of_shadows.up
-actions.defensives+=/evasion,if=health.pct<=35&!buff.evasion.up
-actions.defensives+=/feint,if=incoming_damage_5s>health.max*0.2
+# T16H Finishers
+actions.finisher+=/slice_and_dice,if=buff.slice_and_dice.remains<2&combo_points>=2
+actions.finisher+=/rupture,if=!dot.garrote.ticking&!dot.rupture.ticking&target.time_to_die>=8&combo_points>=1
+actions.finisher+=/rupture,if=dot.rupture.remains<=2&(combo_points=5|(!talent.anticipation.enabled&combo_points>=4))&target.time_to_die>=8
+# Pool slightly before Envenom to avoid starving the next GCD unless Rupture needs refresh.
+actions.finisher+=/pool_resource,if=combo_points>=5&energy<60&dot.rupture.remains>4
+actions.finisher+=/envenom,if=combo_points>=5&dot.rupture.remains>4
+actions.finisher+=/envenom,if=combo_points>=2&buff.slice_and_dice.remains<3
+actions.finisher+=/envenom,if=combo_points>=4&dot.rupture.remains>=4&buff.envenom.remains<1&(energy>=50)&!buff.shadow_blades.up&!buff.blindside.up&!talent.anticipation.enabled&target.health.pct>35
