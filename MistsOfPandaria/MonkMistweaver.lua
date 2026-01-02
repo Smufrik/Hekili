@@ -134,9 +134,65 @@ local function RegisterMistweaverSpec()
     end)
 
     -- MoP Tier Gear Registration
-    spec:RegisterGear("tier14", 85470, 85473, 85476, 85479, 85482)
+    spec:RegisterGear("tier14", 85389, 85390, 85391, 85392, 85393, 86729, 86730, 86731, 86732, 86733, 87089, 87090, 87091, 87092, 87093)
     spec:RegisterGear("tier15", 95863, 95866, 95869, 95872, 95875)
     spec:RegisterGear("tier16", 99252, 99255, 99258, 99261, 99264)
+
+    spec:RegisterAura( "tier14_2pc_mistweaver", {
+        id = 123152,
+        duration = 3600,
+        max_stack = 1,
+        emulated = true,
+        generate = function( t )
+            if ( state.set_bonus.tier14_2pc or 0 ) > 0 then
+                t.name = "Mistweaver T14 2-Piece Bonus"
+                t.count = 1
+                t.expires = state.query_time + 3600
+                t.applied = state.query_time
+                t.caster = "player"
+                t.up = true
+                t.down = false
+                t.remains = 3600
+                return
+            end
+
+            t.count = 0
+            t.expires = 0
+            t.applied = 0
+            t.caster = "nobody"
+            t.up = false
+            t.down = true
+            t.remains = 0
+        end,
+    } )
+
+    spec:RegisterAura( "tier14_4pc_mistweaver", {
+        id = 123153,
+        duration = 3600,
+        max_stack = 1,
+        emulated = true,
+        generate = function( t )
+            if ( state.set_bonus.tier14_4pc or 0 ) > 0 then
+                t.name = "Mistweaver T14 4-Piece Bonus"
+                t.count = 1
+                t.expires = state.query_time + 3600
+                t.applied = state.query_time
+                t.caster = "player"
+                t.up = true
+                t.down = false
+                t.remains = 3600
+                return
+            end
+
+            t.count = 0
+            t.expires = 0
+            t.applied = 0
+            t.caster = "nobody"
+            t.up = false
+            t.down = true
+            t.remains = 0
+        end,
+    } )
 
     -- MoP Talent Registration (Shared with other Monk specs)
     spec:RegisterTalents({

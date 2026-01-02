@@ -179,17 +179,9 @@ spec:RegisterResource( 9, { -- HolyPower = 9 in MoP
 } )
 
 -- Comprehensive Tier sets with MoP gear progression
-spec:RegisterGear( "tier14", 85339, 85340, 85341, 85342, 85343 ) -- T14 White Tiger Battlegear
-spec:RegisterGear( "tier14_lfr", 86679, 86680, 86681, 86682, 86683 ) -- LFR versions
-spec:RegisterGear( "tier14_heroic", 87099, 87100, 87101, 87102, 87103 ) -- Heroic versions
-
-spec:RegisterGear( "tier15", 95280, 95281, 95282, 95283, 95284 ) -- T15 Battlegear of the Lightning Emperor
-spec:RegisterGear( "tier15_lfr", 95910, 95911, 95912, 95913, 95914 ) -- LFR versions
-spec:RegisterGear( "tier15_heroic", 96654, 96655, 96656, 96657, 96658 ) -- Heroic versions
-
-spec:RegisterGear( "tier16", 99132, 99136, 99137, 99138, 99139 ) -- T16 Battlegear of Winged Triumph
-spec:RegisterGear( "tier16_lfr", 98985, 98986, 98987, 99002, 99052 ) -- LFR versions
-spec:RegisterGear( "tier16_heroic", 99372, 99373, 99374, 99379, 99380 ) -- Heroic versions
+spec:RegisterGear( "tier14", 85339, 85340, 85341, 85342, 85343, 86679, 86680, 86681, 86682, 86683, 87099, 87100, 87101, 87102, 87103 )
+spec:RegisterGear( "tier15", 95280, 95281, 95282, 95283, 95284, 95910, 95911, 95912, 95913, 95914, 96654, 96655, 96656, 96657, 96658 )
+spec:RegisterGear( "tier16", 99132, 99136, 99137, 99138, 99139, 98985, 98986, 98987, 99002, 99052, 99372, 99373, 99374, 99379, 99380 )
 
 -- Notable MoP Paladin items and legendary
 spec:RegisterGear( "legendary_cloak", 102249 ) -- Qian-Ying, Fortitude of Niuzao
@@ -1080,14 +1072,32 @@ spec:RegisterAuras({
     -- T15 4-Piece Aura
     templars_verdict = {
         id = 138169,
-        duration = 3600,
+        duration = 6,
         max_stack = 1,
         generate = function( t )
+            if ( state.set_bonus.tier15_4pc or 0 ) <= 0 then
+                t.count = 0
+                t.expires = 0
+                t.applied = 0
+                t.caster = "nobody"
+                t.up = false
+                t.down = true
+                t.remains = 0
+                return
+            end
+
             local name, icon, count, debuffType, duration, expirationTime, caster = GetPlayerAuraBySpellID(138169)
 
-            if name and state.set_bonus.templars_verdict > 0 then
+            if name then
                 t.name = name
                 t.count = 1
+                t.expires = expirationTime
+                t.applied = expirationTime - duration
+                t.caster = caster
+                t.up = true
+                t.down = false
+                t.remains = expirationTime - GetTime()
+                return
             end
 
             t.count = 0
@@ -1467,9 +1477,9 @@ spec:RegisterAbilities( {
             if state.buff.divine_purpose.up then
                 removeBuff("divine_purpose")
             end
-            -- T15 4pc: Consumes the damage buff
-            if state.buff.ret_tier15_4pc.up then
-                removeBuff("ret_tier15_4pc")
+            -- T15 4pc: Consumes the proc damage buff (if emulated/predicted).
+            if state.buff.templars_verdict.up then
+                removeBuff("templars_verdict")
             end
         end
     },
@@ -1851,7 +1861,7 @@ spec:RegisterAbilities( {
             -- T15 4pc: 40% chance to make next TV deal 40% more damage
             if state.set_bonus.tier15_4pc > 0 and state.buff.avenging_wrath.up then
                 if math.random() < 0.40 then
-                    applyBuff("ret_tier15_4pc")
+                    applyBuff("templars_verdict", 6)
                 end
             end
         end
@@ -2292,4 +2302,4 @@ spec:RegisterSetting("seal_of_righteousness_threshold", 4, {
 } )
 
 -- Register default pack for MoP Retribution Paladin
-spec:RegisterPack( "Retribution", 20260102, [[Hekili:9IvBVTTnq4FlfdqiPRttw2UPDikFy7lR9dfdZfyFtYms02CrVnkQKAad9BFhPSSiPiLKBxhkABIi5Dp3Z9cpEHlc)C4Meedh(jFp)36TWZ3DXk)1EVpCd7yjoCtjk(j0E4hYrzW)(NygL8ynJuKZx7yAbkHlJQIAAmS(gs2Vrr7ynBxV6D)07c38ynjL9H8WhnPNvRHtwIJd)0DEHBoqssWT7exfhU5ZhivnB5)f1S9moA2wSd(9yoaA2MsQyWY7kOnB)D8tKuIB4gXhf2fEhQoLb)4Ne2joh9ykoj8xd3etjmmLG44B3o3kmknQyxeJwZo4Mu8ciBNw18mocNJZiyqp33STBNuY(dmCrDvoUQkIDGIRouKMiowCr2JiGbEvqZwpXxOy4Bz48Ki(5bjbRa6c4RwlbybzeeYaAAEiwbh2r(dbZd6ZhOksHd4LAaU7aLfT)FVbCtZwHn8yArrsADfZLIHD3S90PMTDlIYJj4CwuzXlyQBDPaETR8moFpjFF0lue4T4lDB7zzi6EmZLrYWrSIOeceUCpybRaVWTDrWzf7RBLA0zObGFLv2UdpK8)PMur4h4mnZ14GLO4mejVQvV(cK5imkGIp2Q2wVXYrGS6UFniipj1LqEMKJJkRPLfv4oU72EgxcpCBB94rsYOVUSxkQ0mxqV9Rtq7Rr0eckNh105vFceSiQ5oRYKHsHD6kycbwGWGZBSJtnOwXsYSxNFOhpYsKdH3zjWfk0L)eMTqgupJG)d2O75fJQoMhhvLwWePkl6JsnalZH2AbtQlwXGYETI2xkg(c0a4)(XHV)vaF))FHVph(l844Vd0Iscr7QPhLTj(2wOSnmTct5br6BZxEBiAmkNNxrPaM03QEbRbHE4VGJf30bfdZz48y8Cda)2PkLi2Harya2lAD2as51ORIoGGs6Zo55)ySRGbbSTxpY0Tw(MkGcFF9KveLVnrPkIHQeNRiRc9ZITcIFYeiFIcGN3FmTUcLa65moCgI9r0H9cIJqaZY8KknGZktr0QONXqL5yMqX6LbnBCACSJnpq3TGWLVtO33lNX2gMWVPO9wh1uwFpnmwbToUjUa6EbcpD1oChk6L(lict2WM6KaX11b30BLFrJNROMM)eTBApqXCdo2dx8NOnrd9k1PfDNHIEm5P8TxW8Q1fNk71whra2fL8KO4MV9IBtXrgX(1v0zLPis2bCFxVcHor9GrW4FxNSpJFNexm3jNbOZfAza6zPQzaAh(kYaSCstzaw3QCgGExjZPiV(kIw3hnGvS4(0JLhCZqWJzWFPGgtQY6URt(k02veVurPLJlUcvMEPEoSkt3DQRGI1pIjUD4EKi1LtKSBSSI9AhlNiF2uf)XZYwUsMyVq5AeREQOkXEXfoFIv)iMi2H7rMyNir2wK3Ga2jVTBP9R3TNxmOtnz7C1io4jUsFgI0Onyp3w(nBLuJjI9RfYL2MsXihEezCmnDhc(9QkELuOmC7thfJiIskBx)pqPOes(V0Svz(u6ZmHHysZir8Toj3EJeBY5UaLzGF94OsXiSZ43CiOpnfyBQexKI2ukgVULGtbNvfFp8zTT27oOTji5HM3sCFiRSGY4VdWxBqAUnFK7pk2rsbe9dnBnsRnFS9qvUxCD)yWppWd9gYUanw3zixnTWe82fHjt)ZwCTe4B4eDWaE28r6i3MpY)Z5DaFxzmD9M4GXh6OMnF)eZEZPvXVkWZrBcCb8PVzcbksAasgowqne9qWuqAkGmkRYb0nN9pkd570PBm8aY6shZDmD7PtdNq29bR8UvgksfY6vS(a7oDYwrV7d8V15M(3l9qWsJQTFhV237S4mDjPc2unPlokThElDaRJlBgNv(DG8TpYm0CgYsGxO3e5KISORRWrqLWSwhE3aO4kX(qLcw4ysjMIaK8qgMTqWIzag)jaJ)3jW0pZkLVEzevkrdktKsELHZ4rYbAFsuMDJFDgLIvPm3gjOyCMsF3qHClnCqOxeZxoVny9ijLDfE0gvIJsA)4kxw2Qnz7idczrO3)exmga8OGAk5z1KDmVsBnVvk1nuhQH8s8UUFd0IEWutaHdLP2ZdEotTL7dGMY)k9cMVdzw83Gt1kmtD(ljoTNcF1stPNLRcEM9EkJOWu(IIxVRjN5PfnBD8yelZiqjgXYEKJrSSLbXiDVUZCjc1VaDpy136mYSemXCJtc6pMxX61xu2S1x7BiNywrxgNTRb6DCZv)j2kMR(IYMR(AdmxRa3KluZBV66UozW9yD4D1Sa0KNS)5V69NP)Ez4Pef0Wn)fU4fXR6c)3p]] )
+spec:RegisterPack( "Retribution", 20260102, [[Hekili:9IvBVTTnq4FlfdqiPRtZw2PPDikFy7lR9dfdZfyFtY0s02CrVnsQKgad9BFhPSSiPiLuAxhkABIi5Dp3Z9cpErlJ(C0Muehh9PGfbVDXYfb(lV5M3TmiAd)5kC0MkuYdOdWpuGYH)9pXCkzxnNuwiw75SsuQqgSYAAcS(gs(Vrr75nBVz97(P3fTzxnjJ)HIOD20ZTRwbhTcNe9PBxeT5ijnf3UvmljAZNpsynBf)f1S9mqA2wUh(9ebcA2MryCy59L0MT)o(bsgXpAJ8JsddVhvNXHF8tsdfxG2LHtJ(1Onjuchtjiba3V3NHrzXL7J50A(r)0YNaz71QMhXX4cCobd65UMTD7KsoCKJlRzfyglMFKIzhlZsLhlPmFhcOGxf2SDH8lum8TCCrAS48GKGvaDbewRLaSGkcI4apnpeRHd3i)(W5b95dunPia8kda3DGQY2)V3aUQzR0g2LvwMMvZ4(umS7MTNo1STBrurcbxWJRkFct9RRKWRDLhXfhifhIFIIaVLyPRBplhrpG5(CsooMxgNsGWL7alyn4fUUleoV8qDRuJpdna8RDY2D4Hu8p1egrCGZ0SqJdwIIZrKcwREdKiZtAuaf)CRAB9gRgbY67(1GGwOOUuYJKcCCvnTQKH74UR7zCf8iSTBgpssf91v9srNMfc6TFDc6qnIMsqfIOMoV6dGGLrn36uMCugStFjtiXcegCEJDCQf1kxsL968d94rvIci8ohbUqLUIhW8LQG6re8FWg9pVym75IKywwjxMQSSpk1cSShABemPViJdL9AfDGsm8fObW)9Jd)Gxa8d()f(bc4VCHa)DGwwsiEFn9zvBsSTLABdtzyQiiYCBbQBdrtqfI8kkfWK5wnlyni0d)fCI8QoOyybhxKGNBa43ovPfXoeisdWDrRZgqMOgnl(ickPp7KN)JXUggKW2D9iB3AfyRak89BMSIO6TjAvrSuL4CfzDOFwSmi(jxI8jkaEE)j0Agkf0ZzC4ne7JOd3fehHaML5PuAaNxLHOS4hXqL5eUuXMLbTBCgCSNlpq3TGWLVtO33RMX2gMiUPO9wh9u2GfgyKbToUjPe6Ebcp9noChk6L(ticx1WM6KaX11b30BvCrZcFznTGjA30DGI9gCChUemrBIw6vQtlModn9yZtf4UG5i6Ib3YSRSOMb94GPlVjEDvIcVAhkcMUhmD8ey2uYdYAFbUR9nffA10Ez1KwBlGLFe33uSuOtuUyem(31PhYfxzjeZTQjiMCHrcIzsSEcIXHFbjiooPTeeNBvnbXSPL5ChG5kYo7hnEwU4HSNRo6NJG36G)sjnHWY7Uku9g22vKpKrRJKlUcDMELzkUot3DQxafBEeBC7W9OqQRMOwG1QoUlTSAI0DBximEw2Q1Qe7fk3Gyntf1j2lUW5tSMhXgXoCpQe7ejYUI8geWo5LHRCF7V78IbnYPANRhXbpXn(ZqKwTb352QpPRIAnrSFTiH02ujNiXoK1P40Di43zmrLuOmC7llLtqIsQAx)pqzOusXV0SvB(vMJuHJ4kJqr(Toj3EJeFYXYaLzGF95rLIvyNlU5qsFgkW1qlUifJHymEDljNcolMypxMfNi5Hw0sCFiVQKYfptiWyoB(nFu4pk3tYae9dnBTsRnFS9qm)lUUFm8Nh4HEdzFObR7nKRMwysE7IWuP)zlUwc8ncIoCapB)iDKBZhf)58oGVRnfVEtCW0f90ZMVBIrZ51Q4xfUWZyaDHIHZzdbAsAasgo1qdeDF4uqAkGmkRka0vN9pAZa80PRS8(Y6kp7DmD9PtdhG2DHRxCTkuukK1RyZ55D6KRIE3fgCT3v9pN6(WvwvB)oEDWIZIZ2LKAyt3KU4OmExUYbConTzCw1Njk2(iJyZBilbEHEtuqkQIUMHJHkH5To8U5tjuI7zofU0ZMsSfbO4HSm6HWLZambtaMGVtGPFKwAF9YeS0Ig0gyL6kdhbKId09GQS7g)6mknRsBSokqX6iN(UHc1wAeGWSiwGAEB4nJKu2v4XyskEAP9JRCvzR3KTNkiufHz)tcXybWJcQPKNtt2Z(kT18wRv3qFMhQlj66(nql6HtnGebuMAp3VWBQTCxi0u(xPxW(DiZI)gCQwHzRZFfXz8u4rKMTPKaSHDLO1kZlc12DQAtUWwAKwWqxVpZtlguW4HoogDGwOJJ9Og64yldcD6E0N9kh6FbAQWPl3BKrmyJ5gNemFJVM1BUOQzBU23qQYSIUSoryl074MR5lV1mxZfvnxZ1gyUobUnxOH3E9l7wMbxV1H31ZcqtEY(xfB22M5ZOHxyusJ28x4YNKp2l6F)]] )

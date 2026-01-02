@@ -4111,11 +4111,11 @@ function Hekili:SpecializationChanged()
             -- Create default profile for spec
             Hekili.DB.profile.specs[currentID] = Hekili.DB.profile.specs[currentID] or {}
             -- Copy default settings
-            local defaults = Hekili:GetDefaults()
+            local defaults = Hekili.GetDefaults and Hekili:GetDefaults() or nil
             if defaults and defaults.profile and defaults.profile.specs and defaults.profile.specs["**"] then
-                for k, v in pairs(defaults.profile.specs["**"]) do
-                    if Hekili.DB.profile.specs[currentID][k] == nil then
-                        Hekili.DB.profile.specs[currentID][k] = v
+                for k, v in pairs( defaults.profile.specs["**"] ) do
+                    if Hekili.DB.profile.specs[ currentID ][ k ] == nil then
+                        Hekili.DB.profile.specs[ currentID ][ k ] = v
                     end
                 end
             end
