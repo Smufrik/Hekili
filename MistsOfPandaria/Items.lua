@@ -36,6 +36,7 @@ local items = {
     bad_juju = 94511,
     unerring_vision_of_leishen = 94512,
     spark_of_zandalar = 94513,
+    jinas_arcane_proxies = 94510, -- Confirm ID for ToT Feather trinket
     
     -- Heroic Dungeon Trinkets
     flashing_steel_talisman = 81265,
@@ -93,13 +94,25 @@ class.items.purified_bindings_of_immerseus = {
     cast = 0,
     cooldown = 120,
     gcd = "off",
-    
     item = 104426,
-    toggle = "cooldowns",
     
     handler = function()
         -- Grants Purified Resolve, increasing stats
         applyBuff( "purified_resolve" )
+    end,
+}
+
+-- Jin'ya's Arcane Proxies (Feather trinket) handler
+class.items.jinas_arcane_proxies = {
+    id = 94510,
+    cast = 0,
+    cooldown = 60,
+    gcd = "off",
+    item = 94510,
+    
+    handler = function()
+        -- Grants Jin'ya's Arcane Proxies buff (Feather stacks)
+        applyBuff( "jinas_arcane_proxies" )
     end,
 }
 
@@ -130,9 +143,32 @@ if class and class.specs and class.specs[0] then
 
             gcd = "off",
             cooldown = 55,
-            toggle = "cooldowns",
+            
+        },
+        
+        flashing_steel_talisman = {
+            id = 81265,
+            cast = 0,
+            cooldown = 60,
+            gcd = "off",
+            item = 81265,
+            handler = function() applyBuff("flashing_steel_talisman") end,
         },
     })
+
+    -- Synapse Springs is defined in core (Classes.lua) with:
+    -- - glove-tinker presence checks
+    -- - cooldown driven by glove slot (GetInventoryItemCooldown)
+    -- so we only register a fallback if it's missing.
+    if not ( all.abilities and all.abilities.synapse_springs ) then
+        all:RegisterAbility( "synapse_springs", {
+            id = 126734,
+            cast = 0,
+            cooldown = 60,
+            gcd = "off",
+            handler = function() applyBuff("synapse_springs") end,
+        } )
+    end
 end
 
 Hekili:Debug( "MoP Items module loaded." )

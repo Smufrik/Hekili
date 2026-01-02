@@ -1541,7 +1541,7 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
 
-        toggle = "cooldowns",
+        
 
         startsCombat = false,
         texture = 464593,
@@ -1561,6 +1561,7 @@ spec:RegisterAbilities( {
         startsCombat = false,
         texture = 136009,
 
+        toggle = "defensives",
         handler = function()
             applyBuff( "berserker_rage" )
         end,
@@ -1592,7 +1593,7 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
 
-        toggle = "defensives",
+        
 
         startsCombat = false,
         texture = 132351,
@@ -1611,7 +1612,7 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
 
-        toggle = "defensives",
+        
 
         startsCombat = false,
         texture = 132336,
@@ -1674,11 +1675,12 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
 
-        toggle = "cooldowns",
+        
 
         startsCombat = false,
         texture = 613534,
 
+        toggle = "cooldowns",
         handler = function()
             applyBuff( "avatar" )
         end,
@@ -1693,11 +1695,12 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
 
-        toggle = "cooldowns",
+        
 
         startsCombat = false,
         texture = 236304,
 
+        toggle = "cooldowns",
         handler = function()
             applyBuff( "bloodbath" )
         end,
@@ -1712,11 +1715,12 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
 
-        toggle = "cooldowns",
+        
 
         startsCombat = true,
         texture = 236303,
 
+        toggle = "cooldowns",
         handler = function()
             applyBuff( "bladestorm" )
         end,
@@ -1731,11 +1735,12 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
 
-        toggle = "cooldowns",
+        
 
         startsCombat = true,
         texture = 642418,
 
+        toggle = "cooldowns",
         handler = function()
             applyDebuff( "target", "dragon_roar" )
         end,
@@ -1753,11 +1758,12 @@ spec:RegisterAbilities( {
         end,
         spendType = "rage",
 
-        toggle = "cooldowns",
+        
 
         startsCombat = true,
         texture = 236312,
 
+        toggle = "interrupts",
         handler = function()
             applyDebuff( "target", "shockwave" )
         end,
@@ -1772,11 +1778,12 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
 
-        toggle = "cooldowns",
+        
 
         startsCombat = true,
         texture = 613535,
 
+        toggle = "interrupts",
         handler = function()
             applyDebuff( "target", "storm_bolt" )
         end,
@@ -1791,7 +1798,7 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
 
-        toggle = "cooldowns",
+        
 
         startsCombat = false,
         texture = 236331,
@@ -1863,11 +1870,12 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
 
-        toggle = "interrupts",
+        
 
         startsCombat = true,
         texture = 613534,
 
+        toggle = "interrupts",
         handler = function()
             applyDebuff( "target", "disrupting_shout" )
             setCooldown( "pummel", 15 )
@@ -1884,7 +1892,7 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
 
-        toggle = "interrupts",
+        
 
         startsCombat = true,
         texture = 132938,
@@ -1892,6 +1900,7 @@ spec:RegisterAbilities( {
         debuff = "casting",
         readyTime = state.timeToInterrupt,
 
+        toggle = "interrupts",
         handler = function()
             interrupt()
             setCooldown( "disrupting_shout", 15 )
@@ -2108,8 +2117,8 @@ spec:RegisterAbilities( {
         id = 12975,
         cast = 0,
         cooldown = 180,
-        gcd = "off",
-        toggle = "defensives",
+    gcd = "off",
+        
         spend = 0,
         spendType = "rage",
         startsCombat = false,
@@ -2142,10 +2151,11 @@ spec:RegisterAbilities( {
         cooldown = 300,
         gcd = "off",
         spend = 0,
-        spendType = "rage",
-        toggle = "cooldowns",
+    spendType = "rage",
+        
         startsCombat = true,
         texture = 132109,
+        toggle = "cooldowns",
         handler = function()
             applyBuff( "recklessness" )
         end,
@@ -2157,8 +2167,8 @@ spec:RegisterAbilities( {
         cooldown = 240,
         gcd = "off",
         spend = 0,
-        spendType = "rage",
-        toggle = "defensives",
+    spendType = "rage",
+        
         startsCombat = false,
         texture = 132362,
         handler = function()
@@ -2173,8 +2183,7 @@ spec:RegisterAbilities( {
         gcd = "spell",
         spend = 0,
         spendType = "rage",
-    -- Mark as defensive/utility so the engine treats it as a valid suggested action category.
-    toggle = "defensives",
+    -- Marked previously as defensive/utility; now globally governed.
         startsCombat = true,
         texture = 132366,
         handler = function()
@@ -2189,7 +2198,7 @@ spec:RegisterAbilities( {
         gcd = "spell",
         spend = 0,
         spendType = "rage",
-    toggle = "defensives",
+    
         startsCombat = true,
         texture = 132154,
         handler = function()
@@ -2203,8 +2212,8 @@ spec:RegisterAbilities( {
         cooldown = 60,
         gcd = "off",
         spend = 0,
-        spendType = "rage",
-        toggle = "defensives",
+    spendType = "rage",
+        
         startsCombat = false,
         texture = 132345,
         handler = function()
@@ -2219,7 +2228,7 @@ spec:RegisterAbilities( {
         gcd = "spell",
         spend = 0,
         spendType = "rage",
-    toggle = "defensives",
+    
         startsCombat = true,
         texture = 132342,
         handler = function()
@@ -2234,7 +2243,7 @@ spec:RegisterAbilities( {
         gcd = "spell",
         spend = 0,
         spendType = "rage",
-    toggle = "utility",
+    
         startsCombat = true,
         texture = 134955,
         handler = function()
@@ -2263,8 +2272,8 @@ spec:RegisterAbilities( {
         cooldown = 180,
         gcd = "spell",
         spend = 0,
-        spendType = "rage",
-        toggle = "cooldowns",
+    spendType = "rage",
+        
         startsCombat = false,
         texture = 236303,
         handler = function()
@@ -2446,6 +2455,22 @@ spec:RegisterStateExpr( "tank", function()
     }
 end )
 
-spec:RegisterPack( "Arms", 20250827, [[Hekili:vV1EVTnYr8plgb1i(Ul6OEz7ayzG84k6f0lxqvo0)JKRixzryksw(WkUqGF27S7Yh7BsvlCPfbjWMC3zMD2z(np4e3PUF1DDiQe7(5zoZw6C7SBMmBUZ8fURlFod7Uodf8i6b4hsq7H)9D57lip854uuizVfPv5bWlCxVPkkU8xtC3OJGoZElS2mCG7NVzQ76DrHHy2sXfbUR)6UOIAFYFr1(nSS2pDl87bLrPj1(XrfLWR3MMx7)3WpgfhnbKJ80TrXa3FvTprYQ9)NO88iYAE3x(7nR(3y7KqSVGscr5rO6pbB4pYiIzyTFzkSYOVbmMS1OYNjssrfUO(t1FIX)Ijz54G09BqL)4QFg(3YySxXU0Qs9ROyhSeCEuYdEL7YtpqO0REfW03JkGd2hJkYqLb7WG4rEClnGDgSdL)a(NI2UQmApELZXJLKhuojhL8a((B5xBEvIh738iQNFICfTAF6t494KscjA)5jHWRrjb47xkWluCSkbcstJdtpKumiRWFdhuvYewMqUdJIl3njlO8UzodUFukDVKN)e2dNG3hHlUF1Sb3yrP6(wnD4JwiEloPa2uXWRTQeSXaBH2BUp0PwyxzelOcQrAdnR971C(4Os6TBe8Qq4vOeMPmzzFyDT)HOeyLWUH1CyhoH9uQdWgIvf1OCdzJzzXr4Wj92zDCHi6PXPGPAHxXEuXoIsjeVPA72jIVysoEpceL7MQNmONqWfi7EmMyVWEWeCcAtmo8YxRNQvzhp2sgtCCrNbmXE2Rm1lmcF3SLxPxs2eNMgc(q74eMUN9DqEaF6hJXffjWFnREjmwdvN7y4qIZlW5pIZ9YrmFDkrXjKFDczvVKt48JhJk8A8n9Y2biogoCHyuy8ZEG9)Eo1n3t7u4MKMljs89RU2WbTOmnFV3M04so63)WbjVbXgyk4QMNkyYY90ZGDY9xF1LI4l3TAb1P)9XiiMf5mu7xvqJt9MA)eIZmnaaG3gsIQSpnhE12C8)QceV4NnzV3snbd(2h2Dsy6zcMkicRFSkoMeljjHGX0YEiAygoh4KGGO)IHqbVnucqyCp5Pm4RqKRhXKOM)CT))afeHIz)8xsPrJ1sZQcSxujE)pveNwUQKrIPNStZSLNa5ND2iFg9K1gc9HkVS0dGdAZJBDr5HdovoqHX82wL)SnH2kIbKpXPVxuEakHiD55nPfWGzWBJcIkVF1cNUyC)cd0aUN3rZt51qu8)YvI5OmPbz5Lf9PNiGFcy27va3OpsXcVOHinV4qAvsitzR9fDWE6ioxgkdaHXJvRD)0DxurYB1dGilP7v9HJvCyCDQJw2weJ2pczE2s6pCNbQaj)LtTI7e)subesaYk2JAmcqXqQ2aDoEKsNBhshytv1kZS1Su7AGuIsJcAVRjE0q2tEpeeUIIt8A2EVDPHacel6RoEK(k(Ou8w(9mJpl9wb7ooJ91G3umyK)vQlmySNKM8MMTlBZxu(Ym3P7)CzPVqIUc3ZMXgGJ8V3Usky(xjwdnfj9EI9ae0cLaAjsjd24HvBjwekWyGVEQWksTqKKOzIfScICrYloKMYljVyilc)CwHFvLS0MHKIfLJwRSb8lmSR2SvU8IHaqPB7S49ZeGZwIquYn(mGgjbbNKGhpGEcZlETp7KjMrKa6R)taeq1KL68FJSOOfIyzR5b)BvjFZXGwEF3P9T9WlV73)fatH4q4ZssOqgubk)LOToGXzKgfWui0Qmy8x(netoYE1xRCd5k3byfqIlbXOmUltwYhG3MxZc6UuVimLKZpoRfMPmkGKOHcRMlZQtgpujJ6RLjPce5iveNVKZzYXPNwU4(hVd6GAz5lu5nS4s5lqnXjAUWIXnU4kAVlnPOvmx5bG1DXOcblUXHZPzqvYaiidiA3QiAdHZlRTueibOgvDRsYvSDDyxuEmPrq6UwxYLxkTVHeSiiSjTNJDXt5T3Bn0b9rO2viBJlb(XW86TXvV71cxslMyp6BVzUJUBUg0WFRPtKsqGTnOS)sfmrBWTOfw114YPZ6YksFUnFG240(doRxSYQfsRK)WhBs6HLSXdG4MJiYJw5QVHS0J7SUKhOpxqlPDxYhKB1U(OKsC(tGKq2Yd5PGv3ffW58sf9GJ29p2emgN0ihBtExl7Ux)yFhvfVz7B1kbomc7T5zGEGXZH0CQbpxRIHeYIsG7lI7AiApOM9wwCFZcatRFWzcpEIaPl2fHJd9oGIJLO6svQUqIQlmq0yi3wpYzvwsNRsZ5YsQbAMds4ZK9fWAaa)LmFBZnDqdXqqluC0)McQ16ck7XnBqn5utmambJ2hfcEc2zaNWUaCgATny(MBXqSnEFcbwW6WzOxoU3PtwdVKfks3sP5(zG0pf9qumX4KZ(V7zDM)IEwjporWEXaPzRbCMyENcMdgLMaW37zV8kwIrC75gh2bKFjunwJh1F08DheDNA(AeedEw6aOCWCGMRyJMN)5KGwTph)TSuicz3Zv7y198Me9msVbxlzvF7aPN2tysEyGRLazBUyAW3fF)KU3WYIndiPGnwpPLJqXtwP05BE6U08ei9bVduey(lI)k4WUbQPv5t0PnmyBRzLk8vm6JX0o)r5QMMj8H66YVG)H8G0URHvuaVO5RUEZSPURpGYtaLyH76FDFgKynrcER0xuDs9NCxJQkb1G7617R2cjl5UM(kYx3TjZi4h)m9lf34h5(E31bWbeNhHiFcxlz9x7FxTpimmUcBtyvULGaBKWxarZ13HKA)Jhn8sE(oVNVcvwqy78t88qy6LT5mC)kG4o9uVvpb0DHr6Ql3sknvFHHdbhBwAKn9s4uh9I41V0JoyD2)G7KyeXqMWLBSRi02)OgYZUE7i)TCuVZvGWIBhHsWW10BhXwxQ5un1X4gFnVk6wMkYCpmQ9VIDm10jJE2kuQJ7AUADiEKe5XSFzN(Bb35Gh8YL8N1fL))Q79IZQ7TbBmz)z1frNHL8Om2ZpHESEs(e6C6fmoffJZxhyvKYHrhSdY0Vsc)GTErJtGLRKrcQCUqxndSyS0klU7chKUnAhfYClJgjJ425a4wM637izu3(gfCKrCvZ4eFFWvndG0HREJP4stnNeq3MxkA7lLDQra7ppDWi)qwEokNuwAIuaFOsfuv8aO(K6dQ9bfUdtBYpfAuEClhOpTzh2b7vgfnkrw2tePb9ILeQhBQdB3SoG9oHqAkUeiq33d3EgAktXg9MAMZ4KYrLDgzZ9vi1ITpk6Jshi7nzAVsi0SnsxuQdCDuQ2(6E1bCoks0u)2yslt66qX5qgL7eIqAVun9izSqDmqpnjg0liDiCADlfwyjN9UDxuXUYrDOMoti3jlW2C9BvNNRKVTOQ7m0RvdxTI5d02Iv7j0PtpOfDYSJpTpbT8M0Di6pRvbZz9110w7U82tzyaPxmFbZ((6iZsBrb6gxzDgzc32N0KvpIXQ2S7RGhI8muR4L0dQR5e0D7lwqI4j7pZb41DWsqelPYA0uTJPl1C61M99ziddm4JScReI5Z1QqMxkKc2v9AyMqmKlQ(j597Ki3jh2rfSlvgyfF)g4hxq7yeugXnaWNpfZC2sLhjyr9HWajpeqJPPe2A9cs1iEnNwIJu6YczSaPdhYtelDWA8mv71l)AbWMVMwNYLTGk9jTD3kHgBivgNC(r9w0TF3wjiU)BNicTEVYZ)GCH)o2ZbJBOJLZf7eMOzdzI54QR8ZwE3ooYKmbtl5)9xO7oKbO4rzGzN2vxTUss5SZIujCqPTpsPM2w(YMYzf8iPPDEqo2wSM00t7AVI4H9B7NCAx7fapcs1ni1uszVjvTZinZcJVlQIZunlDes5zwZxVnTwDtzJoKaPsdL32OYqW4CF1MSRHP)YOaX1Vm(jtYE4)rKVJrSWRnMlN1y3NKMwcZvPzYM676)dH6oCaBdrZg4swk(J5GZ6OZcwGz9ZNMCl8LnNmhFw71hxVEvV15SHOZaNUqPJ02rO4)ENZH)8qJmZOMVT2axlD8ZmCZipf3QwLOLUIAgWXy)31DBPVR7w65Q5R88b)kHwI9OtlVusbXNqF3i7PnquhSaFzTsadV854trPlmZEJiSgvBrJVTh9nk)M7mgBo1pDixV)Sg5tQHQnF2h1jvIMzC)0kv7)d1(Kz)IdosAsYSheuIVl1Z3fg4lh2e3uMzpsNehNRNJZnDs75y)iOzpoN(oxj3bB((SZnhA6ITz35y2jDZnL)MtzGHSh2Ym3LoCl6AAO2rrRxcuhWn7r0KVlx2hIX40PXHRPzj2dRzAQ1OS1uhkfMHTgR8EHOJw2d4Py1YhsOB43gi(MerUXPxDjnRB8Yx)lyqkTFlGHYKU5swAQ36YQL9wPzFRrLPw)cPVU8bZ5iQDaMEwPDE4gtA969lmJWiyi0KrHY8Yj8EHPMJpBAXTDc4mmYk9Fpg(3PmvDwIIW(J7)5p]] )
+spec:RegisterPack( "Arms", 20251116, [[Hekili:TR1EVTTrs8pljbNGDBQo9mXPq2aXPb4AW1hOY96)jkAQvw8mfPaFyvFqGF2VzMDj5Y9bjLStUuGd4splsUZm7SZoZV5XIHlUzX8vUPSf)8ObJMoC4W30F04HVBYOfZtFChBX8DUE37Eh8hHUBH)77J3MGp8XGi3v4ItIYI9GxSy(Tz(bP)y4IBntr4t3X8w8ZVD4I5B8xTIX)swI3I53SXpjFj(p38LcoMVmAn8BVu)OW8Lb(jPWRxhfNV8FWU3pWV)I50djHWp8UaMtQB8DSu4b)mTVyHU3gWwT46fZJ2bFe8Q5C6Ty(dUX(4BX)kid()s93cS87YxUIDB26199IcIssYsCs26MSPV7UDb(SvoUPCzo2FhNq)lbHkeoGoGWKV8Se)TzbUP0p(JO9WpHpHyw5soNKdhUM1lXjWnj1jlbe5uq7D0BbsU)3(HUjoUXEUHmNDXr)PplPFskOtLz2AMB6gwSd9IeKDJpA2fdhs9xXw775NMVCw(YrtLzblCfS3DWVcP)ef6xq266zfL7heVmF5C8T05Zg)72WsaoUl2pk2p9X8L73WatKvr7r6bpIbsksjthKXSTU(HjKapS)uu0MAr0IzE3dNsjHW)0eSOaKFaDqRZpmhSurlepxU56zIt8VpF5Va)83t(99)o8jHRYxEDqu0QBPFFxCu2UZLL5ZSz)LTlFzp0(HFi0x2AHVxYxEE(YdhaEdgH0fH(OnTtAKZkFg9ntgu7Jil(RYx(o8XOI4nkkIk5k1nGfM239bxG09fFcjrNQ4wPM5ef5)BBJ)3s6oW0TMiCg9)ovb5jQ3qvx5wPu(WDZfw3nNQOwXOK7ZccCU1nmKrAU3zXeon2p8EwkSYKGOu5F)Cin1UsCdN0WnI9(PBW7eOGnCqZs2ONhjP2UBeXy1qa1oJCwNf)OYg43C98DdKL)Ndrdffvx5pdKTA7WItyX3dUAjwP6gx5Zax(Kd5678pggtbCPayyeEWo)bFiu81fRkF5VXdjd)1pWCxfaED)GBW2AoVOTclKhxaCowC50(MeVr5jCL2KJ6XchudvJIO5HyfjCoEGS1D3u8D)vxMV8ndQuzsKI4TTWeBJIbMdHsJ9VxvZ(t07GWx0lP4x4Ukf(x(YIx(hrzHRsK3mVOuGfeFp9jL6mJVuwHnHKyv)5fsC0dS4Dr7bxhkr1MJg)HWPHC0vqM)LIfWd3DZ6RXpiYRZMY0RsbByMdyK5q3b5Os46D(vwv))LE7sJI36CBuGk4R54laZu4nIOR)aCwII4Vf5gB(MSWqPIMDYoHKp7E0lS(iU7eh1XGKsgBvRKyLnh6jbUBvvcWJKpVwLftGojqjOobrmXnY785v1nIrt5MCY3rOpP17TxjC)nYwia2FY8YsvVYmpdZnGCZGhEFS4Ju8ZKqFMZk8RaEc0SYqt5Ds(ri5XwKbBxlKS(jl)TUHGYylCGRjvnyIpMRhB7Zgvx5wZ5IbDRAOLg9(S2pia3DM9CHKZw4dBQgEubZkeUfdO1F7aI229DxzBnDGIPoUqvhVMw4ftLuVYbbKVKbz8e57v6PgcN6eTETZDERWmgrwzhb8le0gq3LcPAMSjklT(TfcOOuexPpKOn5Dtrus3ehTxMJ4NcQ41UzbgtKvYLdbdf26s80BdcG1u2JYUQimUfx)blrWBb)gufH2LTDllWuEHveAlyuSL86bPH7g6Xbfpvk)PSqh(F7GzQZZxxKDyXInLAOMSUH5ga3K35jYZCq34rH)fdP4vXcCXpWCyHST(ys88OrDI(Urmtzn1LLwVGfgs9P8e1fW5BJkGDclmbe)eUDZoiJ1OTGHNjlhJ2L1VnZH(9hUXySeaj4V(pfyc)jE1xWcY8RqifexkGSBA)j9Vasa6Axcxkg2TSqh3eDd8TXSaSCiUXqyPR9Nli5zVpaCkDdT3toVdxYA2GUyrWwhCerfDO2TtBeTshRSqtM9DbShSD3LHBn(hJvekoABPsr)YRibH0kt1p3LU6R2YnvDw09Yb1oAgdf7XwDO6sXEw8vtLAS7p7ltLAATsr)LQsn2R70PkQsOyuQuJAoeDXXY)RYIKGlBlteZO3fW1RYhPZAZkSCJhiHL70W5RMZYWbeguRvJYAAvucusjauKCftpTKoU7WeQKXmwiA2r61HugQ2TafVyGjG7PnwikzTV(zCQHkl1v47nuZMNB47ALOPvKfDg(EkhU3)p(CtXN)yyswmJx5bQzE8DgM4zm2Xg0D17J(yrrMsA)2JsaC64sfX(mSMenfApzpJTJq3rwoQH3NlEDH)vvFOCxnk0qGk1wnbVnWf4bwIjfMDD5lYxMLqgEs9kIuoIpPQJrZVP(dP2gLaXZE)Vu95af)EKKSIQEjotZxYpu51Ufn1V6smbkdrSlOtTq2QABrPmkdMxgeSUnK8hk57Rw456pxcPUrJw8Y65wAuvRQDjviP6vCJxO5kE81fOdYx(TG()Ecv)18y4NSMBwz1DSLwBvKTk4tYfqvglHWa0wEJPBGO5WPHxG7ofDXn8xbxtH3jsWJ2WcZnX7TbQZb(ihb5RTFr4gryHfy7katK67DpPqTzi1eIO)AHixfM0xAe5AqB(RnK8gGdDQYQDm5A4Ik(q5QYx3cSEFgahXgu426gG1Bcw7E3XKCa37FrqnnCKgcKz1B1eJ43oExmXS1XS65RBshmHFPqXhIEBTSf01lG5(GQ65d0dlIKsy6TRHmQeK8)AgeGwF26OkxoNad4MpXSs1Y0WS5Mo)S3DRoUlUyQgOCBy3n0eHKDm0MHqFQ1(lvzXCsHMo(gBmBgTEs1fBG2tWsR1snBWpvlX3k6UFJFCaItMOB7v)SXeBW)O)w3)KYcz8GMa2H(PBIMc4jLiEKtqtpNjPku3yZmuGcjAXOFOxeonDoRC3c7aNP8oFj(yA)8n5lh0x(6de2X52hbakGCSpk2yUtw57uZ8DIf(or6w0gFwWkN9UbT01efoo2mhhBBNwXrk6g24LvMY9XkdL1vXG0(iYvV4hnLntZwVJoQZOHYNrmiGMBG))Pwj3T7fvvNjrk(4MSYjMDhiCX043zcxCdhaYoPWxb21HmtatTsJ3kHC)bFp4EXJoXzkD4x(f8lhL9aR5(8j6xNCt2gosZZkeMRL(KyIqxif9SS3H2nEPmpla7NaHFKtNPUekPw9dHL)al04CGQHAYYGz0I0lnIifgYkkiJTAfl5ceZb)o(4kpac7oFVBCiyAczx8JB3bWRqr4TkZIC)8pHnClATpwYLxvm3uhBZZ(0REQ9pl)tarE1ROVM39V8L4V)exCt6x2vWV9Y)USh6x7V(Yxy0pVXLQ2LSQLBOXB9SqyUy2uxYmZ8AaGroJ5rmBy5EhvHG2PGIY7Fu0jt7ILD5a53X70n9o7ngxEbkT191yf0US4QmshT(IF10wxVaAIKyu5Iz2ObTUE3iAT1DtF1LJADH1AeDnDMsJN5FEv88sv)CIcf2JcDp88N0GXxzfutab5QibpU8iNL3RJ2Dzcl91ePOt6VRTcU2v2uV2w1zulLzTRSqAC5RtFc7Mym7Nbq6)ePDp6jJ3UCux7GMrnwl2zyDyleIopf8V06yW)YI5G3Uekxjiu(oZwcq9mM()SHNF4Wz6LNy2Kb0lGNC17g0a)5vzHF50qTC6DSIJDovwdejMPv3MEN95rb0GgqUIj2TqAAhtgm6ZiUDwIzscqd2(AC2UVSyW1pnMFu8y0PXdAdQnd5TCutZH(PXpR0TCGWpn6s7JNWeH3QKjMbDu6iztAIX7z1W(WHwM30zJBGZsDuu6ILHzf3(vzENtGet5kOJOL82flnunVWs)6pCOPE1pBsH)4JD(TTlALL1OrJi6Xg7mnH9GeQUoJ2n48PeBV0HNEAcwp7AWUOQcTY2f61TTbAZ3KDFgSByFcePr1TO7DtpCOWASxl3kUQ4cT5PQ2USibi1sf36z65IRIcMAFWP7OHxt2xJpCOrZVEnpd1LAgZdjDhV0w62V(yq3XThEko7TdA3IGFCpTHVSw9vFTuvyVCyfbUyQqNvFclAWJDxsxKmlbOeTkCug4L5nuoPq)6gk5TZG8C(BNRK7QWm8ZhUFBm4jH43icDdS85a5TbY(LgUCfN)8buUIhFTarUsIEMahFsqkQKINlWefoV1MKptmvkmrlrTgpq4754IKueQB4Gb1c12YC5z8yQRHx5o0ioQtLohFAex0NDHrYiP4k0pnjZ6baQ(MNhx)sxWooN(c350SiDgc7tuQ2evF5UrFg9JBI4pDF4h7aTPkpNGd(EifQQH3SlFtHDV6yQPYm1g0wD2zQ1TCI284O9sL5r7LI7DVS(eP9YQrs7tV6PmvAQ7OQ2mwZxV60wPOYG7sG7FlZLg(Yc2Ho2l(BrbRTm5zNZ3zpFtr2ZZoDgGYveYQw5I5ouLNHmHl26Zpwrrz628GPkYYJ)HAOytZiwVxyz6W0p(SdYHZ6V0aC4C9Zh4McBGVoa2i8M88aQrBoPu5t3tb3MzsZdaLk)0GjzZdP2DTjMVVigUP2UEOk9t6zzqNQQMtBtUKw0gAb6mde9E2JdOCSlaCyvRuasY2cBhDLTZX6JbKk9BbLtlY7fAYBhkWHQwCSknQHfuxNRb)JVQYj7XKzX0E6WbfUh6oSm8)GJEX3nEGU2(WbZRueZqAWEkX29tIoAQaOROrNvNo4qiWVftUBkBa6WrgxLuFzvwWfg)(Ybjaxcb5O3lWPqONg)gyC9DTqIDtAmwvJFOQbP1vwvDofD6PmKsO4ifb)nd6PpwnxvnsnFdoYtwiT0GiPq1P6uDIcvNyHOvZAKcnhRtZXQsQfAkp8rku16MtFWHmDhAuRAVH2yGPXjsDlBBTstpKMwYYsKNjiL18wbko95jklDtu8I5Z3MTg8YrdXYI)l]] )
 
 -- Removed duplicate stance aura synthesis block; stance handled by early SyncStance logic.
+
+-- Internal helper: Jin'ya's Arcane Proxies (Feather trinket)
+spec:RegisterAura( "jinas_arcane_proxies", {
+    id = 94510, -- ToT Feather trinket
+    duration = 20,
+    max_stack = 10,
+    internal = true,
+} )
+
+-- Internal helper: Skull Banner (MoP raid cooldown)
+spec:RegisterAura( "skull_banner", {
+    id = 114207, -- Skull Banner spell ID
+    duration = 10,
+    max_stack = 1,
+    internal = true,
+} )

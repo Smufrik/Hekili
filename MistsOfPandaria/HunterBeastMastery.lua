@@ -2,8 +2,9 @@
     -- july 2025 by smufrik
 
 
-    local _, playerClass = UnitClass('player')
-    if playerClass ~= 'HUNTER' then return end
+    if select(2, UnitClass('player')) ~= 'HUNTER' then return end
+
+    if not Hekili or not Hekili.NewSpecialization then return end
 
     local addon, ns = ...
     local Hekili = _G[ addon ]
@@ -15,6 +16,10 @@
     local strformat = string.format
 
 local spec = Hekili:NewSpecialization( 253, true )
+
+spec.role = "DAMAGER"
+spec.primaryStat = "agility"
+spec.name = "Beast Mastery"
 
 
 
@@ -745,7 +750,8 @@ end )
 
             talent = "a_murder_of_crows",
             startsCombat = true,
-            toggle = "cooldowns",
+
+                toggle = "cooldowns",
 
             handler = function ()
                 applyDebuff( "target", "a_murder_of_crows" )
@@ -824,6 +830,7 @@ end )
 
             talent = "barrage",
             startsCombat = true,
+
             toggle = "cooldowns",
 
             start = function ()
@@ -838,7 +845,8 @@ end )
             gcd = "off",
 
             startsCombat = true,
-            toggle = "cooldowns",
+
+                toggle = "cooldowns",
 
             handler = function ()
                 applyBuff( "stampede" )
@@ -854,7 +862,7 @@ end )
 
             startsCombat = false,
 
-            toggle = "cooldowns",
+                toggle = "cooldowns",
 
             handler = function ()
                 applyBuff( "bestial_wrath" )
@@ -870,7 +878,7 @@ end )
 
             talent = "binding_shot",
             startsCombat = false,
-            toggle = "interrupts",
+            
 
             handler = function ()
                 applyDebuff( "target", "binding_shot_stun" )
@@ -959,7 +967,7 @@ end )
 
             startsCombat = false,
 
-            toggle = "defensives",
+            
 
             handler = function ()
                 applyBuff( "deterrence" )
@@ -975,7 +983,8 @@ end )
 
             talent = "dire_beast",
             startsCombat = true,
-            toggle = "cooldowns",
+
+                toggle = "cooldowns",
 
             handler = function ()
                 applyBuff( "dire_beast" )
@@ -1038,34 +1047,53 @@ end )
 
             startsCombat = false,
 
-            toggle = "defensives",
+            
 
             handler = function ()
                 applyBuff( "feign_death" )
             end,
         },
 
+        exhilaration = {
+            id = 109304,
+            cast = 0,
+            cooldown = 120,
+            gcd = "spell",
+            school = "nature",
+
+            startsCombat = false,
+
+            toggle = "defensives",
+
+            handler = function ()
+                -- Heals for 30% of max health
+                gain( health.max * 0.3, "health" )
+            end,
+        },
+
         focus_fire = {
             id = 82692,
             cast = 0,
-            cooldown = 20,
+            cooldown = 0,
             gcd = "spell",
             school = "nature",
 
             startsCombat = false,
 
             usable = function () 
-                return state.should_focus_fire and true or false, "requires pet with frenzy stacks" 
+                return pet.alive and buff.frenzy.stack > 0 and not buff.focus_fire.up, "requires pet with frenzy stacks and no active focus fire" 
             end,
 
             handler = function ()
                 local stacks = buff.frenzy.stack
                 removeBuff( "frenzy" )
                 
-                -- Focus Fire converts frenzy stacks to haste buff
-                -- Each stack provides 3% haste for 20 seconds
+                -- Focus Fire consumes frenzy stacks and grants ranged haste
+                -- Each stack provides 6% ranged haste for 20 seconds
+                -- Pet gains 6 focus per stack consumed
                 if stacks > 0 then
                     applyBuff( "focus_fire", 20, stacks )
+                    -- Pet focus gain is handled by the game
                 end
             end,
         },
@@ -1082,6 +1110,8 @@ end )
 
             talent = "fervor",
             startsCombat = false,
+
+                toggle = "cooldowns",
 
             handler = function ()
                 applyBuff( "fervor" )
@@ -1114,7 +1144,8 @@ end )
 
             talent = "glaive_toss",
             startsCombat = true,
-            toggle = "cooldowns",
+
+                toggle = "cooldowns",
 
             handler = function ()
                 applyDebuff( "target", "glaive_toss" )
@@ -1145,7 +1176,7 @@ end )
 
             talent = "intimidation",
             startsCombat = true,
-            toggle = "interrupts",
+            
 
             usable = function() return pet.alive, "requires a living pet" end,
 
@@ -1161,7 +1192,7 @@ end )
             gcd = "spell",
             school = "physical",
 
-            spend = 25,
+            spend = 40,
             spendType = "focus",
 
             startsCombat = true,
@@ -1169,7 +1200,8 @@ end )
             usable = function() return pet.alive, "requires a living pet" end,
 
             handler = function ()
-                -- Kill Command effects
+                -- Kill Command damage is done by pet
+                -- 40% chance to proc Frenzy stack (handled by pet combat log)
             end,
         },
 
@@ -1268,8 +1300,7 @@ end )
             gcd = "spell",
             school = "physical",
 
-            spend = 25,
-            spendType = "focus",
+            spend = 0,
 
             startsCombat = true,
 
@@ -1289,7 +1320,8 @@ end )
 
             talent = "lynx_rush",
             startsCombat = true,
-            toggle = "cooldowns",
+
+                toggle = "cooldowns",
 
             usable = function() return pet.alive, "requires a living pet" end,
 
@@ -1383,6 +1415,7 @@ end )
 
             talent = "powershot",
             startsCombat = true,
+
             toggle = "cooldowns",
 
             handler = function ()
@@ -1399,6 +1432,7 @@ end )
             school = "physical",
 
             startsCombat = true,
+
             toggle = "cooldowns",
 
             start = function ()
@@ -1452,7 +1486,8 @@ end )
             startsCombat = true,
 
             handler = function ()
-                applyDebuff( "target", "serpent_sting" )
+                -- Apply Serpent Sting DoT (15s duration, 3s tick time, 5 ticks total)
+                applyDebuff( "target", "serpent_sting", 15 )
             end,
         },
 
@@ -1463,8 +1498,8 @@ end )
             gcd = "spell",
             school = "physical",
 
-            startsCombat = true,
             toggle = "interrupts",
+            startsCombat = true,
 
             debuff = "casting",
             readyTime = state.timeToInterrupt,
@@ -1484,6 +1519,7 @@ end )
 
             talent = "silencing_shot",
             startsCombat = true,
+
             toggle = "interrupts",
 
             debuff = "casting",
@@ -1513,6 +1549,51 @@ end )
         },
 
 
+
+        trinket1 = {
+            id = 0,
+            cast = 0,
+            cooldown = 0,
+            gcd = "off",
+
+            startsCombat = false,
+
+            toggle = "cooldowns",
+
+            handler = function ()
+                -- Trinket 1 usage
+            end,
+        },
+
+        trinket2 = {
+            id = 0,
+            cast = 0,
+            cooldown = 0,
+            gcd = "off",
+
+            startsCombat = false,
+
+            toggle = "cooldowns",
+
+            handler = function ()
+                -- Trinket 2 usage
+            end,
+        },
+
+        hands = {
+            id = 0,
+            cast = 0,
+            cooldown = 60,
+            gcd = "off",
+
+            startsCombat = false,
+
+            toggle = "cooldowns",
+
+            handler = function ()
+                -- Hands usage (Synapse Springs)
+            end,
+        },
 
         thrill_of_the_hunt_active = {
             id = 34720, -- Corrected ID to match talent
@@ -1553,9 +1634,9 @@ end )
             gcd = "spell",
             school = "nature",
 
+            toggle = "cooldowns",
             talent = "wyvern_sting",
             startsCombat = true,
-            toggle = "interrupts",
 
             handler = function ()
                 applyDebuff( "target", "wyvern_sting" )
@@ -1669,4 +1750,4 @@ end )
         width = 1.5
     } )
 
-    spec:RegisterPack( "Beast Mastery", 20250914, [[Hekili:D31EZTTTY(plz6CvSpnrvpSCsAT8mUjU9KCZJoXUZzU)JKGjHS41uK6Wh2XD8Op73DXdcasaqkBN0CptN0etrSyxGf7(BFa5zdND(SZcjf0zFC0Grtg8QHh0F04rhmy8SZkUDdD2zBibxrUe(hjK1W))xPK8ITl(a8)Pz3IF8TXPKqKm5PLzbWRm7SlkJIlEBYSlSt7rW7UHgapEcmnRIcdP83LMhm7SZxfLVDb(hY2fIzF7I0LWphueLMSDrCuEb8XltZ2U4FsVkkoQ)SZypezJ0n0eAg8V(it4OjKlIPHZ(1zNXhpmJLjaZNpFnj7k(SMfTH)rF6po9JN(5Tl(8No)KZF7N(42f79BrzOepCW2f50G0KW893U4KnBIVfMDgLEAoUGKD1Z2UOyffyWFLMxerI3U4FLrkwTDXZpE7I)7Oy4bVoD9Assi)rFMSjc(NWeq5p4ScY6n0q5pDBczto8dNTjlk5Y8FQa(RROf5)ugjaiF(pTjLVGGV9ByurS9Gp43Jjrxdp6808CbbPzWAtbopa94p7KSascohRslMDgSqaYtez2z7HsBb(E59X1P5KeqEV7oqejzxsl6hLp)cgLHvJE89MRPZdtl6RV8UDX0TlgWEdX4kIwtNxKopmcMvGbgozwbOjuBRsXiBGXqIzsspCppOeMZJbQozGAh9c(c(8BW1BKEJ7i9UOC5Y(gJUF5gfDbDR45b89mKSh4KSOyXKNjQrNH7VZxcBm4yNStJnxOkGJ8qx6XaxLRtOG004W0Bs6NZvDMNZ1C6NrjHWH18yCtMpmGUVWbDf6zdLdO6NHX8s)JzuTXmchZRWXuTvfNMclkLOXdfDG3A4aJxd0GOzxbCF9xR(PAUDPRJYwttaDsyTyo)CHIyIFghTBfTcsmC4OFiSDn)c8yuF5Rvrh1NXOLBLmbTUKDee02ZZLeRUw8qT9CTxNrF3ABpz7Iqkt3nNFMEEoEu1q314ty0ZTgO1Jb1z1XASkHz2yEoA1a)pGcGvsFgDnokzA09xlzwy3SIGw7sHNUo6VictBBx8NBqNiWkxr62fRjfbRWZTSHCtucOVJlgvKB7I)hWpuJ3aopLHoniWFYtXxd)x3MwUDXkY10M2Szhz4ZzjYwmR2XeMNhWaxuSXOHxb(4OcX7fvG(eOFzdOWe2hT8(VlPjb0Fg8aWmqBoB9Lp2WjboUnK1M2ObANG8un3j3W87W4zheBxTb61OCh1xypPYOKUgayrAnjkjN7cWLELhZ4ItyK5RlZcPzZtxopil9gZZzTyDVXGBXepFkJVn5lZZkZxzmvDzjTAIRiHn)cYxki9ImcFLW84YVXxI5WgaTbGPGNtIraj0VeexgI80YS01vNcqWrpd1vtczm8f3k2PyENap1jaiR1mSbOYf56ueyszodMqyzg7Vn1z1xzaMSmoCUghZSjq)cnOeG)D)SkCkF0v2f2JdGayEAmEIE0G)lqIOK4Iv77w5wG6G)EZ3eaJ)OP4G9RG7Cy1vYpyqhvYh0)W7HAEZvwB6hSv7Iiqt(I0eWuuUVLC952Cf)CGcmyFcRyBYsdmTh3WgaoPdpy(bBcSyayYUS20U9g2Cnz(i1CvTv7gXM7LwDAQX)T6xT(6EiDja8azcpl6HuywZqxa1wZFJC04YDukWDrudmDrjG0a8W8qYA4q68j8LmUMjan)lBx8pWvWd8VcwNmJDqgnL0L0OltMhs3ri14pvScCfHNzqs(sXbXeoAoj5xhLJ4PceqZkuWx9Q(Ac1V2I5PNFYBF)PVb869Pp9(38P)fe)2FE2j)(PG1sdJM5A2cJsCAlenBAyrmA9M0Sc8ucei4Y4OaenqJO92U40K8sCIehgyNMQh9fywLDMcSldlExMGyvWHB42UJrc5wZ1WpBNopc7zJTPlzjQgZvFZWzHvEgSPCm29cQaW1gaBBeqXNXqKfCLuOrtnQaC7audms0kbX8Jne5jgbTAe85rtLrFwx1UrqyMcQwy6cPS4MOa8emQzSm6YvOZ2CgWqwskmWIMBXpt9GIhZ3P2ZbscdzsCeM7JIp09TbKXsqm2m)FW2fNZa6KxpNcczfXolx5bXmcmqWGECbfK1gaP7uewsHLFmemOgfGqPL(x7YEni5tecUlavlPzxNMvhmf7HkPJdKwC4cj6aqgVeczTl4GeciFISkCCTUjcHYXMltkCf0Vh33RYyMoWuLvSIYZoftY(dso3fZf0eyXf1o)FlX9uHznbRfq2SHzIUUtsgHruYazNJP3PMZEuMEzNmUOC27k5dnbLBtlDIMw6jBx8b2q4I(RXb1fdqjGD9eQmWYBiOkh74kZy0ohSrNoS2Wa0HYJRUsSIkwbZ1H3dpF7IpdFGZJM8D7aMUk3mBDxvxucYCyAYtX)IgtU9EgVJFzVTZUc70SLHx5yzqp3i1YEqm40a9QMfDfnxxFxShZjbFVg5EUg0HAAq1svQ9vtqZjItiMsY6Y4IONZ3wV3P(PkTx2a6qYYyjE3uA5pTDZX8nCnypwysXu4Ibp00lKcKu1olYRGuc6zRJOIrnwSt2irDQSXDdnZI9R)q(8hPTGQ5XL8DaFdWfqh9mvwdOd)mf5IOygEDbcVDe(IBtcZ8NDX7hnTLAvBzzu(AQSaRM5hGnoEqaYmDJP9SzYLBKHYA8YOVn8YiE4igeEoewmefOVq8CHR6mmGAKVYO8sKj1xaBO5cv56gMLPTKHO8gWvt0A4vVSmkKWIHSRGQQm9Q95ImB2RDdZSfS2suIlipDI4QJKMW(0lUJa3M3qq9h7dGJdoLBpcEpj8Z0hxBYJzImRNhc35ExZGuDmuDAMAKkEGT1II1NkBucMANqrQDmngZuAlqdC3kux1Jm(Z01PxtzpeleC(8acc9CVsiW3nSyKfrwlJyEF90pEDerJ404Cka72QhkDo0q7sC(oGKZJMUNZcm2s9fFsDSmWM2fe98Sbs2CCnDyv(EiGJhBRRgRGFGeLiPwvYDaXn)wyfBTT6w1bB89Kg9qFtXag(ozWRx9Q2Q7mM93EI3xt(RLG21uGMjb3Ywb11p8U(wvwzKMaNY1Cq8q7AwMmYoBvAqEsRPFhyXquISD638qqw0AsgiFV5podmFNwioPyS0W)H5yUImuGzUxqlpd4nNWC(gUO9e8AsOndaktNTlSn5rnMXMlopXE6LwQS35j6oVuWAw4SfBulht640XlzPLyom9EhvuY22zi(eHsWB2KoPhydI8id(GKsTgiGBACeJeDsidsHvZknxBWYvtdAsFnhmrEbIZq4lUJtLC4wbvRMLUMq7XDCAv5F3gQ5orIAEm9Hk2lDmkbd3xCgv4pXxfzWUHQqMFLGvuAbPE4(8on6NRYgNObS0Qo(7kXW(g9INHLPAeepnehCg95shqSd3kGNEmxZotzLNKUGGxADkYqCFXWgViycVUzTq3vKBUsJOY8Sy8orzWsn7fLe2Xch(o(DH0jMWYBOyb9fGRnkNHJr4hHj3548A1WYaXHh3eFl7rRkMZO55S4RWq4eWYPFztCAolFizKngwOn)iBUoSHtso6k0lfCZOTvPzlzD4d)57p)Tp)8t(8VF65g993jPNUplteVnHvt9C5YdSQFturWkgUZj)iwThMD5FgZdjMrcEFAKZ6DJvyshxfD5kAUbkW9yjJeJUddQJcZ0ONFGoPaeWjHKSqfUdvs8ywaEDmLvHbetqbiWnIl8Ev4BtuwUGxORoP7vAYmNba5SglgTPKv1N61I1RQ6aR8g3PBWTbXWBZgzoQQ02HtFmGnh7JTVWG5AYLeB5eU8fz53YMo7htlWwjswW4)sQfa)ruHcdneEnnop98)PK3q)h83V2l)ZywkwMrZxj120vP5eIvBbCDHxi11r58(ebZJb5I0srjtxs4fJyz)ga2CxqbvsDaMAEaJNmJJVVOIEpX2BYQEsJ08nWVDQ9SRUWNglFylB0moy)VIsdFen7bfB85eRAtwSY2iY7oLa7UmV16Qr3y53PKs3YKktEUf09(HMprA3ZLRlFgFgnWNJnpa81KVx8kNgxzFq3kWMcwIzNg5b9FJwnYdF4k3)6HkyKKnpXdiMxaolj82hHjwJqEJiW8wa0W1Gghkuf0hqFClWNQW4b1RBzDSdEdZ4BJxrHJjlUflCfnUhewQbuVg769EJoeOqYMcvVkIWyYwscmEjm6kpT3hVWuz0K)62(IgkX4uSB0l71P8SorRq9IPPH979THOQslB36r)AUnE0QSrvp)VJvvsZIQQAyIM1spXc3dG3VM1TikWTQ2FZzxFJ4mIPpxcdxnwJ()wRzRfxtN6TEv0sSYWfk0qKyFToT5tfDH9sv4aikOMnLAFmc83U0YSNBhNeSXhtXO1kGDlwc(e33i4uaDzX(Igr)1OHvoBuXz16qCGubLy7gwuvbygsn2koN6V4vvdwNGFZIGO7bk0fBFEax7gFFR1m6qxEZ6uXCeoYFy(RDJATTEsrJK2AZ9wX)zPIEAD7Z4xOz3VQ(CTITRLEjrrtJoK3ncoxv6xpdbYMnWpcSD)2)4gjLBe0orf7SjeCElaovIVe77aYgwcPKMlpj9uS3jqtFFc7EBm11CGvktMIM7hCAI9ypGwfc6lh(KCVycTIOYhwox4Yk0Yx8dm1OFqqhrYnf1vSMHdzAq75khFQuC638MWQOzkYhwpSbWUnCwHb)NPxA2a5gFMFBEnMowV2PRuMttUueQJBBDosTVGVB1QATEEh28UgovHFe)Q9(YXaG5Bizy6hYXorKkR8RO)gEkVSxpftVW)UeVvu41WcHPqklsxZ90haEMUKM3F77EFe6nBe4b)p1lOmNDaQz4n5PWayZ4Y0yWjmtTMuMHjydo7tRUCwYuxiPcV7UzTah)9yqcwMwMy82HHmegKcYfKCauX7yWtm4a4zVZImZkWuxf5VlLa9cA8DRGOUdk6pGDrrmFa)nSjNIA6)DRi2L9kRXR1vjIFGBOZdCkI)DXPn8z8WXCSyqsPDv0)Bqyu54Bh2Fnc467yHRlsIOtb6Qu0M253HUdE7Ajxo8aZ5afiWZAzXk8YiC26YLzrxHvkoDzumab(hKFTs0SyVV7h8wV33H)3p05Y(U9DC2kVFvvQ)XP)KvurplA50N4f0uVNiQiCpEHr7cXX6J6IYIQT27jDRMWDz6QguRZzlLagLv3YOQ6TS5PQ(U2FB9KkIV)EnQO7D3zwn397H0XsDCNoOxZCdDmaXZ6eBMFAgR6mL3wjaV2Rpdlp7u9QZkuc93(BvK0dHqEYAUd6XFQwlWvTgPj5hn9WQfezHW5SM7gxtNTAUpYdsTNTgyB6q9HkBWmCGQXz2YAhnzGqrRrA(KNIT18zn4q(pY6ff(sihPno14IXrdh0(qS0gy449NFuy91Pa02ew5bO9x1(vZS1HXWE7udsSe7U3UAFcaegi5fNffPu)4PJAFKgoYBsJJ6ajKHZHJUrODhpDs7uOQRPqs0SLSow1ow)Jb9h3o9mBHQ2FF9ile7gD87Ej8v)pYV(LuMz5hH)w7DOAwnoTyAdJDAeuWgyzy6j40Cu(TsOOG6QflnFDSn(tETC9(sGI1CWjY6NHfazkR(hg20Sx(L2OJ82Q01xCKTL3QkPyDTxE5CS8HU8uk(cpYYiu5SKTy58UI0CKAjOuBOwYPPuNWQQKrkL0bz0O6LnhRwQWDdfqm5JNimI4(Raa8t)69TaaF2)A(vbGAfQY7zhpR2ZxLooE4GEERrXrJfc3J3973UOyE63629D35htcypZouWHs9Jh4D33oNByqQPr2Xd6TNdXXOgB4D4)OXd2xWQnUp(m97Oh8vY3Um0rlf92Z42AD80dg02MYrtKs0d(Y2BN15fGsJTnRDLGLpcojC3Dw3hQwXFKUb92ztB2ZS2jC9e87lB5K5Xd6FOHUYetDLVoxmEhcx9ImQTD4SgLTDSOw0CYTPVox9D7YvvHi1KNgvXSNYORljQv7wsHBxVo767)hAU))qVw72xrUxad4I29(UR7W3hNEACrTEhuYbhknaBCf2V7obu5QG3gl3eEqxfD7mBvHO1y3g1TwYWhmPYNR)RAUJfMkeME8KA)mMlugsuPpse0oQAwio7e13VhlaaDSNTonJEqtttCK3NoAtXUwbDIo1QEULyP074naHNJ8W0BVwS6mr4p0SZ2oAy)jDGbVxbyTRw8BU96ID6GoVec4J(9XxXDwYK2oGTQATR(T1VxRPIRnwOnmsTob9QH7tpfa2NsvtdGtRVyqoA4O2iM7Kl0MN12OCnyzclW6yVCsyM60xR(yKRQ(DtRmISZ)FRBg1DkOLZvP6KYBCTgD8OPJg0YyTQk2s6WBqP7r2rQtID4q2HUPI9ZaV4vDj(dN08(erGBY1MbmrmtJFHBsSJy5DtOoHLZ9W7O7a3eOZqW5L7QtDkild87CZc2vfZgnsONdfQ(euBK6xperbgFqxCtKcpA3DtKypcxFt1AcjLUJgP0gXoyAQNzeqhnPobnTqzCrrMo0NflRfByqT5tRAzwNpF03KsqSB1LLPhW2xE43vsMY23WRlz91e1f3RczR90gjXw38YgIq6V7UN08Zl3SFvmNn0MmN49QV3D3D71HnH93)bZx3Dx1)SX2Edn2oBBuLEI2j6UKPHwjwZoVOXq65SxmSDUQPDaN(ZRFEFxCWZjDl21BmdnZYcli6Ah7BZMF3ilMiSMw6nNkJsQAXGMRl7NTf(Xnw4)6AVKztJBpYApVR4gztb8J(AOlEZ5yTDN0(c)WgnR1c7A(NunHWqLwCZUH3kvR6LDl07OPV0bNORoAPxia2WjOAEfvS9nWUAUQAucKbR(wChNS26AIdSteTVw1TrLX1OYH2PI(3E6ME6X)f)7F9Jg0)L9eFVRltSP3Vw3yzCCN)MD7xA)B2nLmy2NiGGO)n8MM9vBFXVjpJi(sFZ2rMjEMjNn0LOj10ZKUVFjiOMc9MyPPvxUNA9FbjOvs2DWUBTzPogp10i)DJGTqyQreZJn6KqWP(pZ84(BShKIF)9lTNA5F5VRFV9O2czloEb53s6hKey3ASIwuvhAH(3Ni)7kZVJbX7IS1tIF3)9OZV84(7rNMsyRrolIQV7)6XrnhIFL84vlQLinvKOMEK1XPqXVlM8uZrllgSlJ2S)V]] )
+    spec:RegisterPack( "Beast Mastery", 20251120, [[Hekili:vV1EVTnos8plblqA62U6SKJBUweBG(46TBX2UfR6I9)KeTeDSqSL8Qhnnhc0N9Bgs9GuIuswo9EGIgyloZqYHZ8BEqzhtNV4yhqYOoFYAM1cttRzgwZMF5LlCSZU)a1X(aX)wYnWhIi7H)(gkjnRW7JWFPj3JdF)UysakM048eFGeh715H7Y(LiN1kKT1LMx6ytYZ2gN4yBVpFts4To2BddcOCoOP(o2FzByAHh(FsHx5AOWlEd8D)SW4OcVDHPzWWBItk8(z6TH7cnGLts8MWDWI4hGhMhbRXxv4jVMl(am2FCaxybfE)MFw8AkicZNx4Hlt2WVHKIdItZFg)N2H7Hj6JXFUW71F(xHzo(Mq)cVIpa0ce)5e6p5hVFnjR4d8fxQXHek)rpB5FJKEG6N5gVXnBl1nmjoYDl5UBFE4MLzKD0OmJ6NzqJiR3rdo)S15B2yOHtJ8dJzMQMKZEKNfFYUDUhOzUMmPdFYGSl8Ru1ut)2HDXPWWUzjens8qm7iTuF(rsiO3tIZi8NwYXs9Zl7m7Zu4mEpjcmu2dB3cVl8JJYcJYPbpTwiWKbdgGIbfsTmoh)0wkzx2w3d(zxVmLMb8EdSoHjeha(Y5QE4QzLZ)VGwBj5hYeNm)yMrOB624Ss6(Ju0q(ancT6sP)vonYhEsqEcinWEombnwnNHdc7GGuj5H6a(xDrhGNJELl5sJzqfUNETz1s6Ta1TDyguyRPPzHKDU3LqaLbSLZpGs2poExq8DrgsJBKq3dhxPxV8fLwtYdlydPDcRK8iwBBI9ZtDbve1v4KEq2wNd6uCtmXvijMICJphSJbD9(qA6QLwdZPFmSuRmL7kJRhHi2h)v22e5U6ZgbWWeWUz1YfdlHa6gAe6cIIimcC7aln3aYEqb6UiDf3U3yp5B)4mJ5dlp06)yu)zHGhW64O8uAQOtqygfbwjrauBcXhotGVDxy2weYMDgbWV4He4lt2KH(lClDj)5Ta)PJ6Wnd8WULMzQL4hEOFR8vwZuipRhl5TExCCG7M8K7h12bcBLstUfol7HCM2(NdVb0HhscJtcZUh04RHOLWPIKhhXDFEsaCsbbc8tIVlviavNXQdHCXu34sNHq07Dmms(CMCtl0yz9eehjmGHcmDnV5IoZp4xaw1bsXfejc842FGg03KwU0ruy3Sy3GqkFTZdS9BDa9VqbApljhEOXNYo9Slj)vDDl(PvWW3hroGUtqYpyWPYNwUy5F73rnwH37bvg)bVgcZYor5t3BXZu(iVJrtzkt4d(N7iOIW7lXPLKufxvrqAdUdkZ6uq5ihRLHIdixZuWgZBwXZR8D1pKLQfrThLYvyL)JIbRsjPZaIwb458Qfkis2cvlztYLtHCcWaIRXJmbb08WE48g2HlyRMko3cpT2rV8qZu1(auJWhZCtZkbJolGY8qKgqkHYAEh21tqFL4tIO1afkDcRwOZxuc(9f2EsdO3gAYxJte268hiVRVE58RezA39rFZnjpDRaF1pRM1g79jIrAUqcJ8q8DGbBngjBwRFw7JPlLG3ow7d05GKKab4fOV8jDMPQKnFx8xKY)we58OTpWCjIxNqQpRvYqtYNLRH3dgtaMMGuofd8jyXPLZsAU6LI0ixBKOIrEKQi5)q3ia2y(5nUkksEFsw5Ae0XFqQrqhXHRPv1E)TDkuWOU2HJoIJiNpYjuij7tiRbvIBsHmMkcKywAsRIJfqrI5)tcFYnCEpE8xL(Zh7crzOSUs0XP(5Y2tSv0MeA0)6Ed4a2)2LlkFwndnGtxQPY4ZhydSO2NpNLK4N3ssfIkYkQDCbqRivnMKaUvnLtc2SYlf1Y)EvMHExydEZ7WeizM5swucfh)S(QcWODvaQ5TFTqBwM0EuNWMA05oc6Oc8QtitaNUTigm(vhoocmDmG9WIPUHGLD9OHNQ(GWGIsPr3GDhUK63v1TJgYRBaclM72WDKK6gYiAGjgFqKNak2ApSgmKJH6GsTNaRJKQGBKBGYZgvlvBZY3N2yI5lhIvf(MQ21uTaeBIZZgDxxAZ2JAly0i8tSFmCTWRJ)hcL36DH1Zk84qsPciyKy08yF(USWAdFCmXUeoVn5AHQoxM1R7Wz)tKvDKsieSR)ok5RnrHmnw8WdN1D88dpvfGcF(KHr8Vh4XTujS0SpyL27eigy3KCwz2zcpjizUiMmqmN9jb)YzTB28DmfoVN87LfMo43bTrAGpDS)kSRHHkV)TzZw4yFhjjc99XBydBb7(dXjzL3I2t4fA)eWWN(x5qombfEPX7bYi5zX75xyMp45Fdn1O4d)Ayem0LVQW7pIsZpGccjGVCaPv5o(ed0PsX0j6(ECt68PpPaUobCJoU5Z8QroH)Y(kcmN36MxGXDSXRAdoowm3XM9q8Et5AD4tFIDBSL2zoVHFvOjHhqH4y))bTb0XgwUqOYqIJDtmmVZrDpld8vll8wmZXMRyCSLqHDYandQbQgLfJruHaemxKGQOjTO5sf0y1IMfI000MWwu9cjQQ7xylQUsKkEJdBrXFV1bBJAcXdb9cOwAervjJiNV8O4SPqwKxZz6zEGkgBezhsysUTLAhj3TyWgr2mgtwwdjlf4)TnQmfuccKZK)CTY)ScpnbWeomehHjVl1kVAB(g2fd2Z4EHwUvNjvRn6CHnQqmch8F2SQ3ubKCulr9NhJAD8j967hJZZmewKbH3)gfoBvSxBs0w1ovcVTV3Na9aDYjGx4D9s8MD6MVnJy1daU0cqKv55RsZkTERF)de2TcV9b1aJ64)OFVeAPv5FHDTVDHPUg5KhZZL)Ievg1Rckw3QsXRWW4M3(Z0NFW8c2PayPO01tA5QOnM1biew76xzcYQUzy1bpowjOSFv9hOrZwCuthhxP3OriRnPLYDITgP4HexhiCvBPF94fUu7fgi2vNxVIYmwg5uvX(ar162)aMpFtpek8(racWy(iN26ovOmA3OeHC3fugLBuYrmJELr76I4m9xcKJW6MNjjUGA7Woy43hEaZ0TFSKv4RoOt7uozHymB7F)DCcTyt4KHaeYcgLJEF9HKttEYym22E1sMaAFZuuK2G(BehrXVqdk(rOql8EQt)59A1xEVTERv4HyepMQ7Vntu6bioT9HP26bS0Nz2ysluFEV9SG722NU6fX6DS6fXOZD5RWmr(UnftSeN35x1mVCkzZQEybDxqvD2En5(DYMGMlKmbRNt2supqIUUC1oP6lfSmQjMj7EQp9ylNZQNkwv2qToRsX(dWjLL7BV4iTE5dCo1I8MR3rVVl2OmTsXmWR7ghk1El4G)YlOqHDs1l9P5696pXko)0C9qccc4QxQxa6RgU5yRtVsBeN8qovvhwMouV1h2CVp8dnX2sjEhrmB6toxobDyZLjXxVy2V9UsrgBNATqUHnxkq)lvzSQ2c9Ajz2g7xVjKQfNvl0WUxhbVGqJfCKXZurjAi(0(WgK336sxv2ZEuWcQ1p4SZgrveTv8YBLUHe8inRB1TpYE3dg4A6rfgmGZ0aY1hRrPHEvj6tamONYvLGNgHdrlClEPQka5fMnEh5u02GED2pLKygbw6XecCQrab7vlnraZ6uQ5JEp80b499SXCzc1(xTHAYoQ89tOJTr9Vakvkb5QK08lzRVFgBJ73WMctVo)mXKAsM(FSycolQPzqB0VtlGQ5U37byq7mPlvQfuJ0jR8vlP66GW0tRBb446w)XFjAkL3PwEsZKkxz5rNI5uknuFYM)VtdcgmA)4lKAWi7)3UK0mD9H(imPzloXxKYcp06wySoVqLI5IPR19SbhXUtWGUzIQ8qf7B8aXSB9QkouRFgw54mHuXFuYNCqNSPNp5G(gtlFs9(jtkTh9z9oUsA1NE7j04Gx6mU0nL6)EV2SJTH5FVILORF5tksY0MplNS6)58Vp]] )

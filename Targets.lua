@@ -654,6 +654,7 @@ do
         local FriendCheck = inRaid and UnitInRaid or UnitInParty
 
         local checkPets = spec and spec.petbased and Hekili:PetBasedTargetDetectionIsReady()
+        -- Hybrid mode: keep nameplates active, but when pet detection is ready, filter by pet proximity.
         local checkPlates = showNPs and spec and spec.nameplates and ( spec.nameplateRange or class.specs[ state.spec.id ].nameplateRange or 10 )
 
         if spec then

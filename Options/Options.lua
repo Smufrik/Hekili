@@ -4795,13 +4795,16 @@ found = true end
                 local name = class.itemList[ v.item ] or v.name
                 if name then abilities[ name ] = v.itemKey or v.key end
             end
-        end        for k, v in orderedPairs( abilities ) do
+        end
+
+        for k, v in orderedPairs( abilities ) do
             local ability = class.abilities[ v ]
             -- Safety check: skip if ability doesn't exist
             if ability then
+                local abilityName = ability.name or ability.key or k or "Item"
                 local option = {
                 type = "group",
-                name = function () return ability.name .. ( state:IsDisabled( v, true ) and "|cFFFF0000*|r" or "" ) end,
+                name = function () return abilityName .. ( state:IsDisabled( v, true ) and "|cFFFF0000*|r" or "" ) end,
                 order = 1,
                 set = "SetItemOption",
                 get = "GetItemOption",
@@ -4809,7 +4812,7 @@ found = true end
                     multiItem = {
                         type = "description",
                         name = function ()
-                            return "These settings will apply to |cFF00FF00ALL|r of the " .. ability.name .. " PvP trinkets."
+                            return "These settings will apply to |cFF00FF00ALL|r of the " .. abilityName .. " PvP trinkets."
                         end,
                         fontSize = "medium",
                         width = "full",
@@ -5467,7 +5470,7 @@ found = true end
                                     type = "range",
                                     name = "Frame Budget",
                                     desc = "This setting determines how much time can be used to calculate recommendations.",
-                                    order = 2,
+                                    order = 1,
                                     min = 0.1,
                                     softMin = 0.2,
                                     softMax = 0.9,
@@ -5477,7 +5480,6 @@ found = true end
                                     get = function( _ ) return Hekili.DB.profile.performance.frameBudget or 0.7 end,
                                     set = function( _, v ) Hekili.DB.profile.performance.frameBudget = v end,
                                     width = "full",
-                                    order = 1,
                                 },
                                 frameBudgetInfo = {
                                     type = "description",
@@ -9003,27 +9005,7 @@ do
                         name = "CurseForge",
                         desc = "Find updates on Curseforge.",
                         order = 11,
-                        get = function () return "https://www.curseforge.com/wow/addons/hekili" end,
-                        set = function () end,
-                        width = "full",
-                        dialogControl = "SFX-Info-URL",
-                    },
-                    wago = {
-                        type = "input",
-                        name = "Wago",
-                        desc = "Find updates on Wago.",
-                        order = 12,
-                        get = function () return "https://addons.wago.io/addons/hekili" end,
-                        set = function () end,
-                        width = "full",
-                        dialogControl = "SFX-Info-URL",
-                    },
-                    wowi = {
-                        type = "input",
-                        name = "WoW Interface",
-                        desc = "Find updates on WoW Interface.",
-                        order = 13,
-                        get = function () return "https://www.wowinterface.com/downloads/info24608-HekiliPriorityHelper.html" end,
+                        get = function () return "https://www.curseforge.com/wow/addons/smufriks-hekili-for-mop" end,
                         set = function () end,
                         width = "full",
                         dialogControl = "SFX-Info-URL",
@@ -9040,7 +9022,7 @@ do
                         name = "Report Issue",
                         order = 20,
                         width = "full",
-                        get = function() return "http://github.com/Hekili/hekili/issues" end,
+                        get = function() return "https://github.com/Smufrik/Hekili/issues" end,
                         set = function() end,
                         dialogControl = "SFX-Info-URL"
                     },
@@ -9251,107 +9233,96 @@ do
                         order = 2.1,
                         width = "normal",
                     },
-                    issueReporting_snapshot = {
+                    snapshotInstructions = {
                         type = "group",
-                        name = "What is a snapshot?",
+                        name = "How to Create & Share",
                         order = 4,
                         args = {
-                            issueReporting_snapshot_what = {
+                            snapshotInstructions_info = {
                                 type = "description",
                                 name = function()
-                                    return "Snapshots are logs of the addon's decision-making process for a set of recommendations.  If you have questions about -- or disagree with -- the addon's recommendations, " ..
-                                    "reviewing a snapshot can help identify what factors led to the specific recommendations that you saw.\n\n" ..
-                                    "Snapshots only capture a specific point in time, and explain the current recommendation as well as all future recommendations based on icons shown. So if you show 3 icons in the addon, the snapshot will explain the current recommendation and the next 2." ..
-                                    "\n\nYou can also freeze the addon's recommendations using the |cffffd100Pause|r binding ( |cffffd100" .. ( Hekili.DB.profile.toggles.pause.key or "NOT BOUND" ) .. "|r ).  Doing so will freeze the addon's recommendations, allowing you to mouseover the display " ..
-                                    "and see which conditions were met to display those recommendations.  Press Pause again to unfreeze the addon.\n\n" ..
-                                    "Using the settings at the top of this panel, you can ask the addon to automatically generate a snapshot for you when no recommendations were able to be made.\n\n"
+                                    local snapshotKey = Hekili.DB.profile.toggles.snapshot.key or "NOT BOUND"
+                                    local pauseKey = Hekili.DB.profile.toggles.pause.key or "NOT BOUND"
+                                    return "|cFFFFD100When to Create|r\n" ..
+                                    "Generate snapshots when the issue is actively happening. If recommendations seem wrong, that's the time to capture it.\n\n" ..
+                                    "|cFFFFD100How to Create|r\n" ..
+                                    "• Snapshot keybind: |cffffd100" .. snapshotKey .. "|r\n" ..
+                                    "• Pause keybind: |cffffd100" .. pauseKey .. "|r\n" ..
+                                    "• Auto-generated when no recommendations found (enable above)\n\n" ..
+                                    "|cFFFFD100How to Share|r\n" ..
+                                    "1. Copy snapshot using |cffffd100Open Snapshot Window|r button\n" ..
+                                    "2. Go to Pastebin.com and paste (Ctrl+V)\n" ..
+                                    "3. Click 'Create New Paste' and share the link"
                                 end,
-                                order = 4,
-                                width = "full",
-                                fontSize = "medium",
-                            },
-                        },
-                    },
-
-                    issueReporting_snapshot_how = {
-                        type = "group",
-                        name = "How do I get one?",
-                        order = 5,
-                        args = {
-                            issueReporting_snapshot_how_info = {
-                                type = "description",
-                                name = function()
-                                return "|cFFFFD100When should I do it|r\n" ..
-                                "You should generate the snapshot when the issue is actively happening. If you look at the recommendations and think \"this seems wrong\", that's when you should do it. Most of the time, issues can be recreated at training dummies." ..
-                                "\n\nFor example, if the issue usually happens 20 seconds into your rotation, then an out-of-combat prepull snapshot isn't going to help the Dev or other community members diagnose and fix the issue." ..
-                                "\n\n|cFFFFD100How do I do it|r\n" ..
-                                "You can generate a snapshot one of 3 ways:\n" ..
-                                "• Pressing the snapshot keybind: |cffffd100" .. ( Hekili.DB.profile.toggles.snapshot.key or "NOT BOUND" ) .. "|r" ..
-                                "\n• Pressing the pause keybind: |cffffd100" .. ( Hekili.DB.profile.toggles.pause.key or "NOT BOUND" ) .. "|r" ..
-                                "\n• One can be automatically generated if the addon fails to recommend something, if you allow it to via the checkbox at the top of this window (|cFFFFD100Auto Snapshot|r)" ..
-                                "\n\n|cFFFFD100Okay I made one, where is it?|r\n" ..
-                                "The snapshot can be retrieved by picking it from dropdown list near the top of this window, then copying it from the textbox that appears. Be sure to press |cFFFFD100Ctrl + A|r before copying it so that you get the entire thing. It should be very, very long."
-                                end,
-                                order = 4.1,
-                                fontSize = "medium",
-                                width = "full",
-                                },
-                        },
-                    },
-                    issueReporting_snapshot_next = {
-                        type = "group",
-                        name = "How to Submit",
-                        order = 6,
-                        args = {
-                            issueReporting_snapshot_next_info = {
-                                type = "description",
-                                name = "With the Snapshot Data copied to your clipboard, navigate to Pastebin.",
-                                fontSize = "medium",
                                 order = 1,
                                 width = "full",
+                                fontSize = "medium",
                             },
-                            issueReporting_snapshot_next_info_2 = {
+                            pastebin_link = {
                                 type = "input",
                                 name = "Pastebin",
                                 dialogControl = "SFX-Info-URL",
-                                get = function() return "https://pastebin.org/" end,
+                                get = function() return "https://pastebin.com/" end,
                                 set = function() end,
                                 order = 2,
                                 width = "full",
                             },
-                            issueReporting_snapshot_next_info_3 = {
-                                type = "description",
-                                name = "Paste the Snapshot Data in the large textbox ( |cFFFFD100CTRL+V|r ), then click |cFFFFD100Create New Paste|r.\n\n"
-                                    .. "Copy the link address from your browser and provide it where appropriate, whether Discord or in a GitHub issue report.",
-                                fontSize = "medium",
-                                order = 3,
-                                width = "full"
-                            },
-                            issueReporting_snapshot_next_info_4 = {
+                            discord_link = {
                                 type = "input",
                                 name = "Discord",
                                 dialogControl = "SFX-Info-URL",
                                 get = function() return "https://discord.gg/3cCTFxM" end,
                                 set = function() end,
-                                order = 2,
+                                order = 3,
                                 width = "full",
                             },
-                            issueReporting_snapshot_next_info_5 = {
+                            github_link = {
                                 type = "input",
                                 name = "GitHub Issues",
                                 dialogControl = "SFX-Info-URL",
-                                get = function() return "http://github.com/Hekili/hekili/issues" end,
+                                get = function() return "https://github.com/Smufrik/Hekili/issues" end,
                                 set = function() end,
-                                order = 2,
+                                order = 4,
+                                width = "full",
+                            },
+                        },
+                    },
+
+                    issueReporting_snapshot_what = {
+                        type = "group",
+                        name = "What is a snapshot?",
+                        order = 5,
+                        args = {
+                            issueReporting_snapshot_what_info = {
+                                type = "description",
+                                name = function()
+                                    return "|cFFFFD100What is a snapshot?|r\n" ..
+                                    "A snapshot is a comprehensive diagnostic log that captures your character's complete state at a specific moment in time. It records everything the addon 'sees' when making the recommendations currently displayed on your screen, including:\n\n" ..
+                                    "• |cFF00CCFFCharacter Stats|r: Your current health, resources ( mana/energy/rage ), buffs, debuffs, talents, and equipment\n" ..
+                                    "• |cFF00CCFFCombat State|r: Whether you're in combat, your current target, enemy debuffs, and distance from enemies\n" ..
+                                    "• |cFF00CCFFAbility Information|r: Cooldown timers, charges available, cast times, and resource costs\n" ..
+                                    "• |cFF00CCFFDecision Logic|r: The addon's step-by-step reasoning for each recommendation\n" ..
+                                    "• |cFF00CCFFPriority Lists|r: Which action priority list ( APL ) conditions were checked and their results\n\n" ..
+                                    "|cFFFFD100Why are snapshots important?|r\n" ..
+                                    "When you report a bug like 'the addon should recommend Fireball but it's recommending Frostbolt,' developers need to see exactly what the addon was 'thinking' at that moment. A snapshot doesn't look backwards - it provides information about the recommendations currently visible on your screen. Without a snapshot, it's nearly impossible to reproduce and fix issues because:\n\n" ..
+                                    "• Your character's exact state matters ( talents, gear, buffs, resources )\n" ..
+                                    "• Combat situations are complex and change rapidly\n" ..
+                                    "• The addon's logic involves hundreds of conditions and calculations\n\n" ..
+                                    "|cFFFFD100What makes a good snapshot?|r\n" ..
+                                    "The best snapshots are taken when the issue is actively occurring. If you see a recommendation that looks wrong, generate the snapshot immediately. The snapshot should be very long ( hundreds or thousands of lines ) - if it's only one line, something went wrong.\n\n" ..
+                                    "Think of a snapshot like a 'black box recorder' for the addon - it tells developers exactly what happened so they can understand and fix the problem."
+                                end,
+                                order = 1,
+                                fontSize = "medium",
                                 width = "full",
                             },
                         },
                     },
                     Snapshot = {
                         type = 'input',
-                        name = "Snapshot Data",
-                        desc = "Click here and press CTRL+A, CTRL+C to copy the snapshot.\n\nPaste in a text editor to review or upload to Pastebin to support an issue ticket.",
-                        order = 20,
+                        name = "Alternative: Manual Copy",
+                        desc = "Copy directly from this textbox if preferred.\n\nPaste in a text editor to review or upload to Pastebin to support an issue ticket.",
+                        order = 25,
                         get = function( info )
                             if snapshots.selected == 0 then return "" end
                             return ns.snapshots[ snapshots.selected ].log
@@ -9363,8 +9334,7 @@ do
 
                     SnapshotInstructions = {
                         type = "description",
-                        name = "|cFF00CCFFClick the textbox above and press |cFFFFD100CTRL+A|r to select ALL text and |cFFFFD100CTRL+C|r to copy it to the clipboard.\n\n"
-                            .. "When pasted to a text file or Pastebin.org, the snapshot should be hundreds or thousands of lines long.",
+                        name = "|cFF00CCFFFor easier copying, use the |cFFFFD100Open Snapshot Window|r button above.",
                         order = 30,
                         width = "full",
                         fontSize = "medium",

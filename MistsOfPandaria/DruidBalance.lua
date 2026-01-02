@@ -240,7 +240,7 @@ spec:RegisterResource( 8, { -- LunarPower = 8 in MoP
         value = function ()
             -- Starsurge gives significant eclipse power in current direction
             local power = 15
-            if state.eclipse_direction == "lunar" then
+            if state.eclipse and state.eclipse.direction == "lunar" then
                 power = -15
             end
             return power
@@ -485,21 +485,23 @@ spec:RegisterAuras( {
         id = 112071,
         duration = 15,
         max_stack = 1,
-    },    -- DoTs
+    },    -- DoTs (MoP 5.4 authentic durations - 7 ticks, affected by haste)
     moonfire = {
         id = 8921,
-        duration = 12, -- Authentic MoP duration (6 ticks * 2s = 12s)
-        tick_time = 2, -- Authentic MoP tick frequency
+        duration = 14, -- Authentic MoP 5.4 duration (7 ticks * 2s = 14s base, affected by haste)
+        tick_time = function() return 2 * haste end, -- Tick time affected by haste
         max_stack = 1,
-    },    sunfire = {
+    },
+    sunfire = {
         id = 93402,
-        duration = 12, -- Authentic MoP duration (6 ticks * 2s = 12s)
-        tick_time = 2, -- Authentic MoP tick frequency
+        duration = 14, -- Authentic MoP 5.4 duration (7 ticks * 2s = 14s base, affected by haste)
+        tick_time = function() return 2 * haste end, -- Tick time affected by haste
         max_stack = 1,
-    },    insect_swarm = {
+    },
+    insect_swarm = {
         id = 5570,
-        duration = 12, -- Authentic MoP duration (6 ticks * 2s = 12s)
-        tick_time = 2, -- Authentic MoP tick frequency
+        duration = 14, -- Authentic MoP 5.4 duration (7 ticks * 2s = 14s base, affected by haste)
+        tick_time = function() return 2 * haste end, -- Tick time affected by haste
         max_stack = 1,
     },    hurricane = {
         id = 16914,
@@ -885,21 +887,22 @@ spec:RegisterAbilities( {    starfire = {
             end
             
             -- Eclipse power generation (Starfire moves toward Lunar Eclipse)
-            if not buff.lunar_eclipse.up and not buff.solar_eclipse.up and not buff.celestial_alignment.up then
+            -- Base: 20 Solar Energy, Double (40) when out of Eclipse due to Euphoria passive
+            if not buff.celestial_alignment.up then
                 local power_gain = 20
                 
-                -- Euphoria talent: +5 Eclipse Energy generation
-                if talent.euphoria.enabled then
-                    power_gain = power_gain + 5
+                -- Euphoria passive: Double energy generation out of Eclipse
+                if not buff.lunar_eclipse.up and not buff.solar_eclipse.up then
+                    power_gain = power_gain * 2 -- 40 energy out of eclipse
                 end
                 
-                -- Apply Eclipse power
-                if eclipse.power <= 0 then
+                -- Apply Solar Energy (moves toward Lunar Eclipse at 100)
+                if not buff.solar_eclipse.up then
                     eclipse.power = eclipse.power + power_gain
                     eclipse.direction = "lunar"
                     eclipse.starfire_counter = eclipse.starfire_counter + 1
                     
-                    -- Check for Lunar Eclipse threshold (100 power)
+                    -- Check for Lunar Eclipse threshold (100 Solar Energy)
                     if eclipse.power >= 100 then
                         eclipse.power = 100
                         applyBuff("lunar_eclipse")
@@ -907,16 +910,6 @@ spec:RegisterAbilities( {    starfire = {
                         eclipse.lunar_next = false
                         eclipse.solar_next = true
                     end
-                end
-            end
-            
-            -- Euphoria talent: Extra power when casting against current eclipse
-            if talent.euphoria.enabled and buff.solar_eclipse.up then
-                eclipse.power = eclipse.power + 25 -- Moves faster out of wrong eclipse
-                if eclipse.power >= 100 then
-                    eclipse.power = 100
-                    applyBuff("lunar_eclipse")
-                    removeBuff("solar_eclipse")
                 end
             end
             
@@ -1000,17 +993,28 @@ spec:RegisterAbilities( {    starfire = {
             end
             
             -- Eclipse power generation (Wrath moves toward Solar Eclipse)
-            if not buff.solar_eclipse.up and not buff.celestial_alignment.up then
-                local power_gain = eclipse.wrath_power()
+            -- Base: 15 Lunar Energy, Double (30) when out of Eclipse due to Euphoria passive
+            if not buff.celestial_alignment.up then
+                local power_gain = 15
                 
-                -- Only generate power if not in opposite eclipse
+                -- Euphoria passive: Double energy generation out of Eclipse
+                if not buff.lunar_eclipse.up and not buff.solar_eclipse.up then
+                    power_gain = power_gain * 2 -- 30 energy out of eclipse
+                end
+                
+                -- Apply Lunar Energy (negative, moves toward Solar Eclipse at -100)
                 if not buff.lunar_eclipse.up then
-                    eclipse.power = min(100, eclipse.power + power_gain)
+                    eclipse.power = eclipse.power - power_gain
+                    eclipse.direction = "solar"
                     eclipse.wrath_counter = eclipse.wrath_counter + 1
-                      -- Trigger Solar Eclipse at 100 power
-                    if eclipse.power >= 100 then
+                    
+                    -- Trigger Solar Eclipse at -100 energy
+                    if eclipse.power <= -100 then
+                        eclipse.power = -100
                         applyBuff("solar_eclipse")
-                        eclipse.direction = "lunar" -- Next eclipse will be lunar
+                        removeBuff("lunar_eclipse")
+                        eclipse.solar_next = false
+                        eclipse.lunar_next = true
                     end
                 end
             end
@@ -1038,8 +1042,9 @@ spec:RegisterAbilities( {    starfire = {
         
         startsCombat = true,
         texture = 252188,
-        
+
         toggle = "interrupts",
+        
         debuff = "casting",
         readyTime = state.timeToInterrupt,
         
@@ -1071,18 +1076,28 @@ spec:RegisterAbilities( {    starfire = {
                 removeBuff("shooting_stars")
             end
             
-            -- Starsurge gives 15 Eclipse Energy in current direction
+            -- Starsurge gives 20 Eclipse Energy in current direction (40 out of eclipse)
             if not buff.celestial_alignment.up then
-                local power_gain = eclipse.starsurge_power()
-                eclipse.power = max(-100, min(100, eclipse.power + power_gain))
+                local power_gain = 20
                 
-                -- Check for Eclipse triggers
-                if eclipse.power >= 100 and not buff.solar_eclipse.up then
-                    applyBuff("solar_eclipse")
-                    removeBuff("lunar_eclipse")
-                elseif eclipse.power <= -100 and not buff.lunar_eclipse.up then
-                    applyBuff("lunar_eclipse")
-                    removeBuff("solar_eclipse")
+                -- Euphoria passive: Double energy generation out of Eclipse
+                if not buff.lunar_eclipse.up and not buff.solar_eclipse.up then
+                    power_gain = power_gain * 2 -- 40 energy out of eclipse
+                end
+                
+                -- Generate energy in current direction
+                if eclipse.direction == "lunar" or eclipse.power >= 0 then
+                    eclipse.power = min(100, eclipse.power + power_gain)
+                    if eclipse.power >= 100 then
+                        applyBuff("lunar_eclipse")
+                        removeBuff("solar_eclipse")
+                    end
+                else
+                    eclipse.power = max(-100, eclipse.power - power_gain)
+                    if eclipse.power <= -100 then
+                        applyBuff("solar_eclipse")
+                        removeBuff("lunar_eclipse")
+                    end
                 end
             end
         end,
@@ -1152,7 +1167,7 @@ spec:RegisterAbilities( {    starfire = {
         
         startsCombat = false,
         texture = 136060,
-        
+
         toggle = "cooldowns",
         
         handler = function ()
@@ -1169,11 +1184,262 @@ spec:RegisterAbilities( {    starfire = {
         gcd = "off",
         
         talent = "incarnation",
+
         toggle = "cooldowns",
         
         startsCombat = false,
         texture = 571586,
         
+        handler = function ()
+            applyBuff("incarnation_chosen_of_elune")
+            shift("moonkin")
+        end,
+    },
+
+    -- Skull Bash (interrupt)
+    skull_bash = {
+        id = 106839,
+        cast = 0,
+        cooldown = 15,
+        gcd = "off",
+        school = "physical",
+
+        startsCombat = true,
+
+        toggle = "interrupts",
+
+        handler = function ()
+            interrupt()
+        end,
+    },
+
+    -- Renewal (talent)
+    renewal = {
+        id = 108238,
+        cast = 0,
+        cooldown = 120,
+        gcd = "spell",
+        school = "nature",
+
+        talent = "renewal",
+        startsCombat = false,
+        
+        toggle = "defensives",
+
+        handler = function ()
+            -- Heals for 30% of maximum health
+        end,
+    },
+
+    -- Barkskin
+    barkskin = {
+        id = 22812,
+        cast = 0,
+        cooldown = 60,
+        gcd = "off",
+        school = "nature",
+
+        startsCombat = false,
+
+        toggle = "defensives",
+
+        handler = function ()
+            applyBuff("barkskin")
+        end,
+    },
+
+    -- Healing Touch
+    healing_touch = {
+        id = 5185,
+        cast = function() return buff.natures_swiftness.up and 0 or 2.5 * haste end,
+        cooldown = 0,
+        gcd = "spell",
+        school = "nature",
+
+        spend = 0.09,
+        spendType = "mana",
+
+        startsCombat = false,
+
+        handler = function ()
+            if buff.natures_swiftness.up then
+                removeBuff("natures_swiftness")
+            end
+            if talent.dream_of_cenarius.enabled then
+                applyBuff("dream_of_cenarius")
+            end
+        end,
+    },
+
+    -- Nature's Vigil (talent)
+    natures_vigil = {
+        id = 124974,
+        cast = 0,
+        cooldown = 90,
+        gcd = "spell",
+        school = "nature",
+
+        talent = "natures_vigil",
+        startsCombat = false,
+
+        toggle = "cooldowns",
+
+        handler = function ()
+            applyBuff("natures_vigil")
+        end,
+    },
+
+    -- Force of Nature (talent)
+    force_of_nature = {
+        id = 102693,
+        cast = 0,
+        cooldown = 60,
+        gcd = "spell",
+        school = "nature",
+
+        talent = "force_of_nature",
+        startsCombat = true,
+
+        toggle = "cooldowns",
+
+        handler = function ()
+            -- Summons treants
+        end,
+    },
+
+    -- Hurricane
+    hurricane = {
+        id = 16914,
+        cast = function() return buff.natures_swiftness.up and 0 or 2 * haste end,
+        cooldown = 0,
+        gcd = "spell",
+        school = "nature",
+
+        spend = 0.15,
+        spendType = "mana",
+
+        startsCombat = true,
+
+        handler = function ()
+            if buff.natures_swiftness.up then
+                removeBuff("natures_swiftness")
+            end
+        end,
+    },
+
+    -- Sunfire
+    sunfire = {
+        id = 93402,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        school = "nature",
+
+        spend = 0.08,
+        spendType = "mana",
+
+        startsCombat = true,
+
+        handler = function ()
+            applyDebuff("target", "sunfire")
+            -- Unerring Vision: DoT application crits have 30% chance to proc Shooting Stars
+            if state.buff.unerring_vision_of_lei_shen.up and state.talent.shooting_stars.enabled then
+                if math.random() < 0.30 then
+                    applyBuff("shooting_stars")
+                end
+            end
+        end,
+    },
+
+    -- Moonfire
+    moonfire = {
+        id = 8921,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        school = "arcane",
+
+        spend = 0.08,
+        spendType = "mana",
+
+        startsCombat = true,
+
+        handler = function ()
+            applyDebuff("target", "moonfire")
+            -- Unerring Vision: DoT application crits have 30% chance to proc Shooting Stars
+            if state.buff.unerring_vision_of_lei_shen.up and state.talent.shooting_stars.enabled then
+                if math.random() < 0.30 then
+                    applyBuff("shooting_stars")
+                end
+            end
+        end,
+    },
+
+    -- Mark of the Wild
+    mark_of_the_wild = {
+        id = 1126,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        school = "nature",
+
+        spend = 0.05,
+        spendType = "mana",
+
+        startsCombat = false,
+
+        handler = function ()
+            applyBuff("mark_of_the_wild")
+        end,
+    },
+
+    -- Nature's Swiftness
+    natures_swiftness = {
+        id = 132158,
+        cast = 0,
+        cooldown = 60,
+        gcd = "off",
+        school = "nature",
+
+        startsCombat = false,
+        
+
+        handler = function ()
+            applyBuff("natures_swiftness")
+        end,
+    },
+
+    -- Moonkin Form
+    moonkin_form = {
+        id = 24858,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        school = "nature",
+
+        spend = 0.05,
+        spendType = "mana",
+
+        startsCombat = false,
+
+        handler = function ()
+            applyBuff("moonkin_form")
+        end,
+    },
+
+    -- Incarnation (alias for incarnation_chosen_of_elune)
+    incarnation = {
+        id = 102560,
+        cast = 0,
+        cooldown = 300,
+        gcd = "off",
+        school = "nature",
+
+        talent = "incarnation",
+        
+
+        startsCombat = false,
+
         handler = function ()
             applyBuff("incarnation_chosen_of_elune")
             shift("moonkin")
@@ -1299,6 +1565,16 @@ do
         end
     } )
     
+    -- Register eclipse_direction state expression for SimC access
+    spec:RegisterStateExpr( "eclipse_direction", function ()
+        return state.eclipse.direction or "solar"
+    end )
+    
+    -- Register eclipse power state expression for SimC access
+    spec:RegisterStateExpr( "eclipse_power", function ()
+        return state.eclipse.power or 0
+    end )
+    
     -- Track HOTs for wild mushroom and swiftmend mechanics
     spec:RegisterStateTable( "active_hots", {
         count = function()
@@ -1311,6 +1587,59 @@ do
         end
     } )
 end
+
+-- Eclipse system hooks to ensure proper state management
+spec:RegisterHook( "reset_precast", function()
+    -- Initialize eclipse state if not already set
+    if not state.eclipse then
+        state.eclipse = {
+            power = 0,
+            direction = "solar",
+            solar_next = false,
+            lunar_next = false,
+            wrath_counter = 0,
+            starfire_counter = 0
+        }
+    end
+    
+    -- Update eclipse direction based on current power
+    if state.eclipse.power > 0 then
+        state.eclipse.direction = "lunar"
+    elseif state.eclipse.power < 0 then
+        state.eclipse.direction = "solar"
+    else
+        state.eclipse.direction = "solar" -- Default to solar
+    end
+end )
+
+-- Hook to update eclipse power when spells are cast
+spec:RegisterHook( "runHandler", function( action )
+    if action == "wrath" then
+        -- Wrath moves toward Solar Eclipse (negative power)
+        state.eclipse.power = state.eclipse.power - 15
+        state.eclipse.direction = "solar"
+        state.eclipse.wrath_counter = state.eclipse.wrath_counter + 1
+    elseif action == "starfire" then
+        -- Starfire moves toward Lunar Eclipse (positive power)
+        state.eclipse.power = state.eclipse.power + 20
+        state.eclipse.direction = "lunar"
+        state.eclipse.starfire_counter = state.eclipse.starfire_counter + 1
+    elseif action == "starsurge" then
+        -- Starsurge gives power in current direction
+        if state.eclipse.direction == "lunar" then
+            state.eclipse.power = state.eclipse.power + 20
+        else
+            state.eclipse.power = state.eclipse.power - 20
+        end
+    elseif action == "celestial_alignment" then
+        -- Reset eclipse power during Celestial Alignment
+        state.eclipse.power = 0
+        state.eclipse.direction = "solar"
+    end
+    
+    -- Clamp eclipse power to valid range
+    state.eclipse.power = math.max(-100, math.min(100, state.eclipse.power))
+end )
 
 -- Register default pack for MoP Balance Druid with authentic Eclipse rotation
 spec:RegisterPack( "Balance", 20250812, [[Hekili:nJvBVTTTt8plbfWnbRXtw2jnTZoVOTd4FdwlkGtXEXqLfTeTn)BjrpsQ45Ha9zFhPEIuHu2bODyVOfou397EK3D8cgfCFW8yKah8zFp)R8UzK)qVrEJVACWCXHD4G57qrBrRHFKHsH)FjkbLfPo)qcffl5NtZzYJGVMtseFmlyPDqhb0Udhf85rE(bZ3qIJXL0I5rbZVFdHxek)hQiSsSfH0vWFhji0SIWecxaFEfLve()WBjjKHbZvhQmd8kuEIa(5NvMfodTmbhh8UG5rmIaZiOG5NveUmF1QHPuA2ws2caR0H57cMxkJG56FiqawGeQ6pY3MNKSyjIVrhEGQXof4gmkrSz4Uirr40IWjEfHdkcfOeCMyidNH3JsgwZzJGQ(Ge6jNk0J90ScY6nIf0vlYzCAKeMRovyUsdMLi2wo4nKaC9PcW1xPBh))8haMu)faYRDcsLhjMHrPsfpcOIrY51(gLBRo69eQweJsH0fisQOtr0oggscPSdl47jRezyo3islvBs26fcAE0gPYDJtLtHxeobZfeuYcGV1zPs1vhVLyghZaV1AjyV5ywk4uYzy(IhiRjjgw55vgGDbwe(4JkpreLMet3NzLogofrYGllx0QGgsuQJJ8oMssYIqSYW3)kQOM8ukO7lY4OeYooEbCrHT(qr4SIqpJCKJfUS8DLi9pMpbQmeHLjFL(ZNTF50Ck3kVqB4B6ixLY6UUJsn2tsIxKMZ3WO00HCbuuTSurlQgKOW0Dbh3yoZnMlIXcAMSBGeC3LHKm)GkEMsWshGeZ2BZCAcITOkQBEpoNXirOSsb4Um1reqsEMdbG4cgeK4IQwcJCxfRuv3qPczLfW5W4qifasRhI8WC26s11DnNUj43wNG39dtb7W37u8uMI2DfQNibxIw6cV0u6UDJgs33DPNZTihLyUXH9R(41YllLxWSdW1o5(MswP7eKuYFJJHlAqapJtQc)w1F3vMob3WkuIQaSV7InnfcMQYsRSlRbyxH(oqOvkHNNTIuwcX3DjKEuHUMNR4VBvqoNvJo4UKJTlTtoLCDJQc(pVYotoL05Uvf8Dx5Xsc50zDVtfTbLjh4f(WOJKkB2xypdjuZV47UUKnC6tdU8ikX0UkHkRUmCc16GrVIOPlrwhgxoTpJSRKVpWYjXVTi8D1VRO35WX9mZD9OYnaaZUk7wk2GxiBi1Hw3zeFVMeTNjnDNQCQtVOxms5Y3dZnbYGlFhfedjP7GQyvVv6Lvpn6LfHm8FMdHjWi40uGouUGMcnNHdkd)8Hf39BKm4tJGWYxZ457KijjOu2aC6XMx2q)yN0x9AMwsN4gAJhU0YX19aE7tmAPFKBT3IRvJp3wHXunAC42ySphKgRx5K1MYxAu72hOxlsJHx7KHM0hnQV5zr9BEou779SO2DSRU5PgX(UjUSlNgTUdU1TJ0i2DC1sWX3DO0EWX3D0uvqxJY(dJ1AT6A)kAscDpuhqEZMHG(z7Xm48CUKpcWJqswnaYDNil4iQPlJQQzKNzqDCSKy4X0OLio(Tf3PAqy5Eu1xmAAwDMLxJx9fZXLRpuVXE1zgxNGZUZsLUMop)yR11tbSoTDoLsyg3b(psC8UY1XTJrxrsWL7LlLW5kDQYiQC6RLtfqIaPWizBXcWTgwe(rrjtQacaASuZfBqWX4hWSdsSjuOX3bPkgLKhlh)ctavLvRA)XxHGpGeoL)Txb22gs0gDQrzhALALvJ)RDjKiIiPfxDNqTq)fyGFwTyUVecip4BsqJ1pYxtYqanrZIQGuutQYBOoklpDjUm1lHkGO6htRJ6(MHnzoi0wpxSHYcMppnFfJSvobLYVhm)ffHDMrQ4Uxah(L6e9I7kHJpSj3)NM9Z6PT2PyvcIV1XNO0yhW2j72ovgZ78kYQzhBKQbNDSHPSlOMlosHCwFBE5UsV2hkheQbToEQwy6SFyDgAxcS(PvZ4irODFOtN4nW(QEn0aJzE6GWypDsRxiBhIUYZuvANiQdHxFLoH)aItd6z1R1bH3xTamUHL1S9uPI0BOSLjJnAQzaw3T6GZ7b1hF8StzVCxOlDTLvQjBlRm97UKTqNudmFL2mVb9FLOfVoRwuZACSSZJyrNIbD7yVlQZi(DzPKWpv1AhQKF(NOFb63GL9PjrMgVXyanjlwwl50XozRzy8(4F24A97tqndYLqXM1yJAhndckHrEC7MeUD24b23wJg)6Jg2depzBlvQ1VwnEu49nRRc0vugCvSSlUwrl9kLo3sPtomZSU1BG5btN57DCRTheN2fXBNDznKp16Da55DG4YBEIEE51Ex84JDj86Nq3nqUz4l02jyDZ9whDhTq(QKgFBVQC5RsK0wDty6yqLS69S5tBy6IUDXCcBx1XMF1oS9MGp54H8JLGp5etWF)HizNkJ7ZYxjzjSpDwB0SCm)zJSeZ9U4jrWk3xxkFkExAbWPExOwetW)a]] )

@@ -182,7 +182,10 @@ spec:RegisterResource( 14, {
             -- Immolate generates 0.1 ember per tick (crit doubles) -> 10 ticks (~30s) ~1 ember overall.
             if not state.debuff.immolate.up then return 0 end
             local embers = 0.1
-            if rawget(state, "last_critical_tick") then embers = embers * 2 end
+            -- Unerring Vision: guaranteed crits during 4s window
+            if state.buff.unerring_vision_of_lei_shen.up or rawget(state, "last_critical_tick") then 
+                embers = embers * 2 
+            end
             return embers
         end,
     },
@@ -1059,9 +1062,8 @@ spec:RegisterAbilities( {
         cast = 0,
         cooldown = 0,
         gcd = "off",
-        toggle = "cooldowns",
         startsCombat = false,
-        texture = 135808,
+        texture = 236297,
 
         
 
@@ -1084,7 +1086,7 @@ spec:RegisterAbilities( {
         spendType = "mana",
 
         startsCombat = true,
-        texture = 236253,
+        texture = 135795,
 
         
 
@@ -1148,10 +1150,10 @@ spec:RegisterAbilities( {
         cooldown = 120,
         gcd = "off",
 
-        toggle = "cooldowns",
-
         startsCombat = false,
         texture = 463284,
+
+        toggle = "cooldowns",
 
         
 
@@ -1184,8 +1186,6 @@ spec:RegisterAbilities( {
         cooldown = 600,
         gcd = "spell",
         
-        toggle = "cooldowns",
-        
         spend = 0.02,
         spendType = "mana",
         
@@ -1202,8 +1202,6 @@ spec:RegisterAbilities( {
         cast = 0,
         cooldown = 600,
         gcd = "spell",
-        
-        toggle = "cooldowns",
         
         spend = 0.02,
         spendType = "mana",
@@ -1223,8 +1221,6 @@ spec:RegisterAbilities( {
         cooldown = 180,
         gcd = "off",
         
-        toggle = "defensives",
-        
         startsCombat = false,
         texture = 538038,
         
@@ -1239,10 +1235,10 @@ spec:RegisterAbilities( {
         cooldown = 180,
         gcd = "off",
         
-        toggle = "defensives",
-        
         startsCombat = false,
         texture = 136150,
+
+        toggle = "defensives",
         
         handler = function()
             applyBuff( "unending_resolve" )
@@ -1289,6 +1285,8 @@ spec:RegisterAbilities( {
         
         startsCombat = true,
         texture = 607510,
+
+        toggle = "interrupts",
         
         handler = function()
             -- Fear all enemies in 10 yards
@@ -1350,8 +1348,6 @@ spec:RegisterAbilities( {
         cast = 0,
         cooldown = 600,
         gcd = "spell",
-
-        toggle = "cooldowns",
 
         spend = 1,
         spendType = "burning_embers",
@@ -1486,15 +1482,13 @@ end )
 spec:RegisterStateExpr( "should_cast_chaos_bolt", function()
     local be = state.burning_embers and state.burning_embers.current or 0
     local bd = buff.backdraft.up and (buff.backdraft.stack or 0) or 0
-    return be >= 3.5 and bd <= 2
+    if target.health_pct > 20 and be >= 3.5 and bd <= 2 then return true end 
 end )
 
 spec:RegisterStateExpr( "should_cast_shadowburn", function()
     local be = state.burning_embers and state.burning_embers.current or 0
     local bd = buff.backdraft.up and (buff.backdraft.stack or 0) or 0
     if target.health_pct < 20 and be >= 3.5 and bd <= 2 then return true end
-    if target.health_pct < 35 and be >= 1 then return true end
-    return false
 end )
 
 spec:RegisterStateExpr( "should_cast_rain_of_fire", function()
@@ -1506,6 +1500,11 @@ end )
 spec:RegisterStateExpr( "should_toggle_fnb", function()
     local targets = active_enemies or 1
     local be = state.burning_embers and state.burning_embers.current or 0
+    -- Only toggle Fire and Brimstone if it's not already active and we have 3+ targets
+    -- Or if we have 6+ targets and low embers
+    if buff.fire_and_brimstone.up then
+        return false -- Don't toggle if already active
+    end
     return targets >= 3 or (targets >= 6 and be < 1)
 end )
 

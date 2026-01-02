@@ -217,7 +217,7 @@ spec:RegisterAura( "ret_tier15_2pc", {
 
 spec:RegisterAura( "ret_tier15_4pc", {
     id = 138164,
-    duration = 3600,
+    duration = 6,
     max_stack = 1,
 } )
 
@@ -1467,6 +1467,10 @@ spec:RegisterAbilities( {
             if state.buff.divine_purpose.up then
                 removeBuff("divine_purpose")
             end
+            -- T15 4pc: Consumes the damage buff
+            if state.buff.ret_tier15_4pc.up then
+                removeBuff("ret_tier15_4pc")
+            end
         end
     },
 
@@ -1494,13 +1498,7 @@ spec:RegisterAbilities( {
     },
 
     exorcism = {
-        id = function()
-            -- Use Mass Exorcism spell ID when glyph is active
-            if state.glyph.mass_exorcism.enabled then
-                return 122032
-            end
-            return 879
-        end,
+        id = 879,
         cast = 0,
 		cooldown = 15,
         gcd = "spell",
@@ -1514,15 +1512,14 @@ spec:RegisterAbilities( {
         startsCombat = true,
         texture = 135903,
 
-        copy = { 122032, 879 },
+            -- Exorcism should be considered known if the player knows the spell.
+            -- NOTE: The second parameter to IsSpellKnownOrOverridesKnown is 'isPetSpell'; passing true would incorrectly hide Exorcism.
+            known = function()
+                return state.IsSpellKnownOrOverridesKnown(879) or state.IsSpellKnown(879) or state.buff.art_of_war.up
+            end,
 
         usable = function()
-            -- Debug glyph detection
-            if Hekili.ActiveDebug then
-                Hekili:Debug("Exorcism usability check - Glyph enabled: %s, Current spell ID: %s",
-                    tostring(state.glyph.mass_exorcism.enabled),
-                    tostring(state.glyph.mass_exorcism.enabled and 122032 or 879))
-            end
+            -- Always usable from the engine perspective; range/targeting handled by the client.
             return true
         end,
 
@@ -1575,7 +1572,6 @@ spec:RegisterAbilities( {
         cast = 0,
         cooldown = 180,
         gcd = "off",
-
         toggle = "cooldowns",
 
         startsCombat = false,
@@ -1608,9 +1604,10 @@ spec:RegisterAbilities( {
         cooldown = 180,
         gcd = "off",
 
-        toggle = "cooldowns",
+        
 
         talent = "holy_avenger",
+    toggle = "cooldowns",
 
         startsCombat = false,
         texture = 571555,
@@ -1672,6 +1669,7 @@ spec:RegisterAbilities( {
         talent = "execution_sentence",
 
         startsCombat = function() return not (state.settings and state.settings.execution_sentence_heal) end,
+    toggle = "cooldowns",
         texture = 613954,
 
         handler = function()
@@ -1689,9 +1687,10 @@ spec:RegisterAbilities( {
         end,
         gcd = "spell",
 
-        toggle = "defensives",
+        
 
         startsCombat = false,
+        toggle = "defensives",
         texture = 524354,
 
         handler = function()
@@ -1708,9 +1707,10 @@ spec:RegisterAbilities( {
         end,
         gcd = "off",
 
-        toggle = "defensives",
+        
 
         startsCombat = false,
+        toggle = "defensives",
         texture = 524353,
 
         handler = function()
@@ -1743,7 +1743,7 @@ spec:RegisterAbilities( {
         end,
         gcd = "spell",
 
-        toggle = "defensives",
+        
 
         startsCombat = false,
         texture = 135928,
@@ -1785,7 +1785,7 @@ spec:RegisterAbilities( {
         end,
         gcd = "spell",
 
-        toggle = "defensives",
+        
 
         startsCombat = false,
         texture = 135964,
@@ -1807,7 +1807,7 @@ spec:RegisterAbilities( {
         end,
         gcd = "off",
 
-        toggle = "defensives",
+        
 
         startsCombat = false,
         texture = 135966,
@@ -1848,6 +1848,12 @@ spec:RegisterAbilities( {
 
         handler = function()
             gain(1, "holy_power")
+            -- T15 4pc: 40% chance to make next TV deal 40% more damage
+            if state.set_bonus.tier15_4pc > 0 and state.buff.avenging_wrath.up then
+                if math.random() < 0.40 then
+                    applyBuff("ret_tier15_4pc")
+                end
+            end
         end
     },
 
@@ -2226,11 +2232,12 @@ spec:RegisterRanges( "judgment", "hammer_of_justice", "rebuke", "crusader_strike
 spec:RegisterAbilities({
     rebuke = {
         id = 96231,
+    toggle = "interrupts",
         cast = 0,
         cooldown = 15,
         gcd = "off",
 
-        toggle = "interrupts",
+        
         startsCombat = true,
 
         debuff = "casting",

@@ -744,7 +744,7 @@ spec:RegisterAbilities( {
         cooldown = 120,
         gcd = "spell",
         
-        toggle = "cooldowns",
+        
         
         startsCombat = false,
         texture = 237537,
@@ -837,7 +837,7 @@ spec:RegisterAbilities( {
         cooldown = 180,
         gcd = "off",
         
-        toggle = "cooldowns",
+        
         
         startsCombat = false,
         texture = 135915,
@@ -888,7 +888,7 @@ spec:RegisterAbilities( {
         cooldown = 180,
         gcd = "off",
         
-        toggle = "cooldowns",
+        
         
         startsCombat = false,
         texture = 135875,
@@ -904,7 +904,7 @@ spec:RegisterAbilities( {
         cooldown = 180,
         gcd = "off",
         
-        toggle = "cooldowns",
+        
         
         talent = "holy_avenger",
         
@@ -924,7 +924,7 @@ spec:RegisterAbilities( {
         end,
         gcd = "spell",
         
-        toggle = "defensives",
+        
         
         startsCombat = false,
         texture = 524354,
@@ -943,7 +943,7 @@ spec:RegisterAbilities( {
         end,
         gcd = "off",
         
-        toggle = "defensives",
+        
         
         startsCombat = false,
         texture = 524353,
@@ -961,7 +961,7 @@ spec:RegisterAbilities( {
         end,
         gcd = "spell",
         
-        toggle = "defensives",
+        
         
         startsCombat = false,
         texture = 135928,
@@ -1001,7 +1001,7 @@ spec:RegisterAbilities( {
         end,
         gcd = "spell",
         
-        toggle = "defensives",
+        
         
         startsCombat = false,
         texture = 135964,

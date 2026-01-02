@@ -1,62 +1,61 @@
 -- MageFrost.lua
--- Updated Aug 11, 2025 - Corrected for Mists of Pandaria Classic with real-time event handling.
+-- Updated October 1, 2025 - Modern Structure
 -- Mists of Pandaria module for Mage: Frost spec
 
--- MoP: Use UnitClass instead of UnitClassBase
-local _, playerClass = UnitClass('player')
-if playerClass ~= 'MAGE' then return end
+-- Early return if not a Mage
+if select(2, UnitClass('player')) ~= 'MAGE' then return end
 
 local addon, ns = ...
 local Hekili = _G[ "Hekili" ]
-    
+
 -- Early return if Hekili is not available
 if not Hekili or not Hekili.NewSpecialization then return end
 
-local function RegisterFrostSpec()
-    local class = Hekili.Class
-    local state = Hekili.State
+local class = Hekili.Class
+local state = Hekili.State
 
-    local strformat = string.format
-    local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+local strformat = string.format
+local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+local PTR = ns.PTR
 
-    local spec = Hekili:NewSpecialization( 64, true )
+local spec = Hekili:NewSpecialization( 64, true )
 
-    -- Register resources
-    spec:RegisterResource( 0 ) -- Mana = 0 in MoP
+-- Register resources
+spec:RegisterResource( 0 ) -- Mana = 0 in MoP
 
-    -- ===================
-    -- ENHANCED COMBAT LOG EVENT TRACKING
-    -- ===================
+-- ===================
+-- ENHANCED COMBAT LOG EVENT TRACKING
+-- ===================
 
-    local frostCombatLogFrame = CreateFrame("Frame")
-    local frostCombatLogEvents = {}
+local frostCombatLogFrame = CreateFrame("Frame")
+local frostCombatLogEvents = {}
 
-    local function RegisterFrostCombatLogEvent(event, handler)
-        if not frostCombatLogEvents[event] then
-            frostCombatLogEvents[event] = {}
-            frostCombatLogFrame:RegisterEvent(event)
-        end
-        
-        tinsert(frostCombatLogEvents[event], handler)
+local function RegisterFrostCombatLogEvent(event, handler)
+    if not frostCombatLogEvents[event] then
+        frostCombatLogEvents[event] = {}
+        frostCombatLogFrame:RegisterEvent(event)
     end
+    
+    tinsert(frostCombatLogEvents[event], handler)
+end
 
-    frostCombatLogFrame:SetScript("OnEvent", function(self, event, ...)
-        local handlers = frostCombatLogEvents[event]
-        if handlers then
-            for _, handler in ipairs(handlers) do
-                handler(event, ...)
-            end
+frostCombatLogFrame:SetScript("OnEvent", function(self, event, ...)
+    local handlers = frostCombatLogEvents[event]
+    if handlers then
+        for _, handler in ipairs(handlers) do
+            handler(event, ...)
         end
-    end)
+    end
+end)
 
-    -- Frost-specific tracking variables
-    local frostbolt_casts = 0
-    local brain_freeze_procs = 0
-    local fingers_of_frost_procs = 0
-    local icy_veins_activations = 0
-    local water_elemental_summoned = 0
+-- Frost-specific tracking variables
+local frostbolt_casts = 0
+local brain_freeze_procs = 0
+local fingers_of_frost_procs = 0
+local icy_veins_activations = 0
+local water_elemental_summoned = 0
 
-    -- MageFrost.lua -- REPLACEMENT COMBAT LOG HANDLER
+-- MageFrost.lua -- REPLACEMENT COMBAT LOG HANDLER
 -- This new handler uses more precise logic to track events without relying on the core files.
 
 RegisterFrostCombatLogEvent("COMBAT_LOG_EVENT_UNFILTERED", function(event, ...)
@@ -678,16 +677,16 @@ end)
             duration = 20,
             max_stack = 1,
             generate = function( t )
-                if not IsSpellKnown( 56377 ) then -- Check if glyph is learned (spell id for the glyph effect)
+                if not IsPlayerSpell( 56377 ) then -- Check if glyph is learned (spell id for the glyph effect)
                     t.count = 0
                     t.expires = 0
                     t.applied = 0
                     t.caster = "nobody"
                     return
                 end
-                
+    
                 local name, icon, count, debuffType, duration, expirationTime, caster = FindUnitBuffByID( "player", 12472 )
-                
+    
                 if name then
                     t.name = "Enhanced Icy Veins"
                     t.count = count > 0 and count or 1
@@ -696,7 +695,7 @@ end)
                     t.caster = caster
                     return
                 end
-                
+    
                 t.count = 0
                 t.expires = 0
                 t.applied = 0
@@ -708,7 +707,7 @@ end)
             duration = 0,
             max_stack = 1,
             generate = function( t )
-                if IsSpellKnown( 56372 ) then
+                if IsPlayerSpell( 56372 ) then
                     t.name = "Glyph of Splitting Ice"
                     t.count = 1
                     t.expires = 9999999999
@@ -1057,7 +1056,7 @@ end)
             talent = "frost_bomb",
             
             handler = function()
-                state.applyDebuff( "target", "frost_bomb" )
+                applyDebuff( "target", "frost_bomb" )
             end,
         },
         
@@ -1076,7 +1075,7 @@ end)
             toggle = "cooldowns",
             
             handler = function()
-                state.applyBuff( "frozen_orb" )
+                applyBuff( "frozen_orb" )
             end,
         },
         
@@ -1114,7 +1113,7 @@ end)
             
             usable = function()
                 -- Ensures the pet is active and able to cast.
-                return UnitExists("pet") and not UnitIsDead("pet")
+                return pet.alive
             end,
         },
         
@@ -1133,13 +1132,13 @@ end)
             toggle = "cooldowns",
             
             handler = function()
-                state.applyDebuff( "target", "deep_freeze" )
+                applyDebuff( "target", "deep_freeze" )
             end,
         },
         
         frostfire_bolt = {
             id = 44614,
-            cast = function() return state.buff.brain_freeze.up and 0 or 2 end, -- Instant when Brain Freeze active
+            cast = function() return state.buff.brain_freeze.up and 0 or 2 end,
             cooldown = 0,
             gcd = "spell",
             
@@ -1148,11 +1147,17 @@ end)
             
             startsCombat = true,
             texture = 237520,
-            
-            usable = function() return state.buff.brain_freeze.up, "requires brain freeze proc" end,
+
+            -- In MoP, Frostfire Bolt may be effectively "proc-only" for Frost.
+            -- Treat it as known while Brain Freeze is active so it can be recommended.
+            known = function()
+                return state.buff.brain_freeze.up or state.IsSpellKnownOrOverridesKnown(44614, true)
+            end,
             
             handler = function()
-                state.removeBuff( "brain_freeze" )
+                if buff.brain_freeze.up then
+                    removeBuff( "brain_freeze" )
+                end
             end,
         },
         
@@ -1168,7 +1173,7 @@ end)
             texture = 135838,
             
             handler = function()
-                state.applyBuff( "icy_veins" )
+                applyBuff( "icy_veins" )
             end,
         },
         
@@ -1210,6 +1215,14 @@ end)
             
             essential = true,
             
+            usable = function()
+                -- Primary source of truth is the registered pet token.
+                -- Fall back to the real pet unit, in case pet ID matching fails or the pet model changes.
+                local petUp = (state.pet.water_elemental and state.pet.water_elemental.up)
+                    or (UnitExists("pet") and not UnitIsDead("pet") and UnitHealth("pet") > 0)
+                return not petUp, "water elemental already summoned"
+            end,
+            
             handler = function()
                 state.summonPet( "water_elemental" )
             end,
@@ -1229,7 +1242,7 @@ end)
             -- CRITICAL FIX: The handler tells Hekili the buff is now active.
             handler = function()
                 -- Apply a virtual buff with a 3600-second (1 hour) duration.
-                state.applyBuff("arcane_brilliance", 3600)
+                applyBuff("arcane_brilliance", 3600)
             end,
         },
         
@@ -1245,7 +1258,7 @@ end)
             texture = 607849,
             
             handler = function()
-                state.applyBuff( "alter_time" )
+                applyBuff( "alter_time" )
             end,
         },
         
@@ -1262,7 +1275,7 @@ end)
             texture = 135736,
             
             handler = function()
-                state.applyBuff( "blink" )
+                applyBuff( "blink" )
             end,
         },
         
@@ -1279,7 +1292,24 @@ end)
             texture = 135852,
             
             handler = function()
-                state.applyDebuff( "target", "cone_of_cold" )
+                applyDebuff( "target", "cone_of_cold" )
+            end,
+        },
+        
+        arcane_explosion = {
+            id = 1449,
+            cast = 0,
+            cooldown = 0,
+            gcd = "spell",
+            
+            spend = 0.22,
+            spendType = "mana",
+            
+            startsCombat = true,
+            texture = 136116,
+            
+            handler = function()
+                -- AoE damage around the caster
             end,
         },
         
@@ -1339,7 +1369,7 @@ end)
                 state.gain( 0.6 * state.mana.max, "mana" )
                 
                 if state.talent.invocation.enabled then
-                    state.applyBuff( "invocation" )
+                    applyBuff( "invocation" )
                 end
             end,
         },
@@ -1359,7 +1389,7 @@ end)
             texture = 135848,
             
             handler = function()
-                state.applyDebuff( "target", "frost_nova" )
+                applyDebuff( "target", "frost_nova" )
             end,
         },
         
@@ -1378,7 +1408,7 @@ end)
             talent = "frostjaw",
             
             handler = function()
-                state.applyDebuff( "target", "frostjaw" )
+                applyDebuff( "target", "frostjaw" )
             end,
         },
         
@@ -1397,7 +1427,7 @@ end)
             talent = "ice_barrier",
             
             handler = function()
-                state.applyBuff( "ice_barrier" )
+                applyBuff( "ice_barrier" )
             end,
         },
         
@@ -1413,7 +1443,7 @@ end)
             texture = 135841,
             
             handler = function()
-                state.applyBuff( "ice_block" )
+                applyBuff( "ice_block" )
                 state.setCooldown( "hypothermia", 30 )
             end,
         },
@@ -1432,7 +1462,7 @@ end)
             talent = "ice_floes",
             
             handler = function()
-                state.applyBuff( "ice_floes" )
+                applyBuff( "ice_floes" )
             end,
         },
         
@@ -1448,7 +1478,7 @@ end)
             talent = "incanter_s_ward",
             
             handler = function()
-                state.applyBuff( "incanter_s_ward" )
+                applyBuff( "incanter_s_ward" )
             end,
         },
         
@@ -1464,7 +1494,7 @@ end)
             texture = 132220,
             
             handler = function()
-                state.applyBuff( "invisibility" )
+                applyBuff( "invisibility" )
             end,
         },
         
@@ -1482,7 +1512,7 @@ end)
             talent = "greater_invisibility",
             
             handler = function()
-                state.applyBuff( "greater_invisibility" )
+                applyBuff( "greater_invisibility" )
             end,
         },
         
@@ -1500,7 +1530,7 @@ end)
             talent = "presence_of_mind",
             
             handler = function()
-                state.applyBuff( "presence_of_mind" )
+                applyBuff( "presence_of_mind" )
             end,
         },
         
@@ -1538,7 +1568,7 @@ end)
             talent = "rune_of_power",
             
             handler = function()
-                -- Places Rune of Power on the ground
+                applyBuff( "rune_of_power" )
             end,
         },
         
@@ -1555,7 +1585,7 @@ end)
             texture = 136091,
             
             handler = function()
-                state.applyDebuff( "target", "slow" )
+                applyDebuff( "target", "slow" )
             end,
         },
         
@@ -1572,7 +1602,7 @@ end)
             texture = 135992,
             
             handler = function()
-                state.applyBuff( "slow_fall" )
+                applyBuff( "slow_fall" )
             end,
         },
         
@@ -1605,8 +1635,8 @@ end)
             texture = 458224,
             
             handler = function()
-                state.applyBuff( "time_warp" )
-                state.applyDebuff( "player", "temporal_displacement" )
+                applyBuff( "time_warp" )
+                applyDebuff( "player", "temporal_displacement" )
             end,
         },
         
@@ -1621,9 +1651,9 @@ end)
             texture = 135843,
             
             handler = function()
-                state.removeBuff( "mage_armor" )
-                state.removeBuff( "molten_armor" )
-                state.applyBuff( "frost_armor" )
+                removeBuff( "mage_armor" )
+                removeBuff( "molten_armor" )
+                applyBuff( "frost_armor" )
             end,
         },
         
@@ -1637,9 +1667,9 @@ end)
             texture = 135991,
             
             handler = function()
-                state.removeBuff( "frost_armor" )
-                state.removeBuff( "molten_armor" )
-                state.applyBuff( "mage_armor" )
+                removeBuff( "frost_armor" )
+                removeBuff( "molten_armor" )
+                applyBuff( "mage_armor" )
             end,
         },
         
@@ -1653,9 +1683,9 @@ end)
             texture = 132221,
             
             handler = function()
-                state.removeBuff( "frost_armor" )
-                state.removeBuff( "mage_armor" )
-                state.applyBuff( "molten_armor" )
+                removeBuff( "frost_armor" )
+                removeBuff( "mage_armor" )
+                applyBuff( "molten_armor" )
             end,
         },
         
@@ -1673,7 +1703,7 @@ end)
             texture = 135857,
             
             handler = function()
-                state.applyDebuff( "target", "blizzard" )
+                applyDebuff( "target", "blizzard" )
             end,
         },
         
@@ -1692,13 +1722,39 @@ end)
             talent = "nether_tempest",
             
             handler = function()
-                state.applyDebuff( "target", "nether_tempest" )
+                applyDebuff( "target", "nether_tempest" )
+            end,
+        },
+        
+        living_bomb = {
+            id = 44457,
+            cast = 0,
+            cooldown = 0,
+            gcd = "spell",
+            
+            spend = 0.04,
+            spendType = "mana",
+            
+            startsCombat = true,
+            texture = 236220,
+            
+            talent = "living_bomb",
+            
+            handler = function()
+                applyDebuff( "target", "living_bomb" )
             end,
         },
     } )
 
     -- Water Elemental Abilities
-    spec:RegisterPet( "water_elemental", 78116, "summon_water_elemental", 600 )
+    -- Use a dynamic ID derived from the player's current pet GUID.
+    -- This avoids repeated summon recommendations when the hard-coded NPC id doesn't match MoP Classic.
+    spec:RegisterPet( "water_elemental", function()
+        local guid = UnitGUID("pet")
+        if not guid then return 0 end
+        local pid = guid:match("%-(%d+)%-[0-9A-F]+$")
+        return pid and tonumber(pid) or 0
+    end, "summon_water_elemental", 600 )
 
 
     -- State Functions and Expressions
@@ -1734,37 +1790,7 @@ end)
         package = "Frost",
     } )
 
-    -- SIMC-derived settings from MageFrost.simc
-    spec:RegisterSetting( "time_warp_health_threshold", 25, {
-        name = "Time Warp Health Threshold",
-        desc = "Target health percentage below which Time Warp should be used (default: 25%)",
-        type = "range",
-        min = 10,
-        max = 50,
-        step = 5,
-        width = 1.5
-    } )
-
-    spec:RegisterSetting( "time_warp_time_threshold", 5, {
-        name = "Time Warp Time Threshold",
-        desc = "Time in seconds after which Time Warp should be used regardless of target health (default: 5s)",
-        type = "range",
-        min = 3,
-        max = 15,
-        step = 1,
-        width = 1.5
-    } )
-
-    spec:RegisterSetting( "trinket_icy_veins_threshold", 20, {
-        name = "Trinket Icy Veins Threshold",
-        desc = "Seconds remaining on Icy Veins cooldown above which trinkets should be used (default: 20s)",
-        type = "range",
-        min = 10,
-        max = 30,
-        step = 5,
-        width = 1.5
-    } )
-
+    -- Essential Frost Mage settings
     spec:RegisterSetting( "aoe_enemy_threshold", 3, {
         name = "AoE Enemy Threshold",
         desc = "Number of enemies at which AoE abilities like Blizzard should be used (default: 3)",
@@ -1775,32 +1801,14 @@ end)
         width = 1.5
     } )
 
-    spec:RegisterSetting( "use_racial_abilities", true, {
-        name = "Use Racial Abilities",
-        desc = "If checked, racial abilities like Berserking and Blood Fury will be recommended during Icy Veins or Brain Freeze",
-        type = "toggle",
-        width = "full"
-    } )
-
-    spec:RegisterSetting( "use_trinkets", true, {
-        name = "Use Trinkets",
-        desc = "If checked, trinkets will be recommended during Icy Veins or when Icy Veins cooldown is above threshold",
-        type = "toggle",
-        width = "full"
-    } )
-
-    spec:RegisterSetting( "alter_time_brain_freeze", true, {
-        name = "Alter Time with Brain Freeze",
-        desc = "If checked, Alter Time will be recommended when Brain Freeze is available",
-        type = "toggle",
-        width = "full"
-    } )
-
-    spec:RegisterSetting( "alter_time_fingers_of_frost", true, {
-        name = "Alter Time with Fingers of Frost",
-        desc = "If checked, Alter Time will be recommended when Fingers of Frost has more than 1 stack",
-        type = "toggle",
-        width = "full"
+    spec:RegisterSetting( "evocation_mana_threshold", 45, {
+        name = "Evocation Mana Threshold",
+        desc = "Mana percentage below which Evocation should be used (default: 45%)",
+        type = "range",
+        min = 20,
+        max = 80,
+        step = 5,
+        width = 1.5
     } )
 
     spec:RegisterSetting( "water_elemental_freeze", true, {
@@ -1817,156 +1825,7 @@ end)
         width = "full"
     } )
 
-    -- Enhanced Frost-specific settings (based on Hunter Survival patterns)
-    spec:RegisterSetting( "mana_dump_threshold", 80, {
-        name = "Mana Dump Threshold",
-        desc = "Mana level at which to prioritize spending abilities like Frostbolt and Ice Lance to avoid mana capping.",
-        type = "range",
-        min = 50,
-        max = 120,
-        step = 5,
-        width = 1.5
-    } )
+-- Register default pack for MoP Frost Mage
+-- Updated October 1, 2025 - Use the MageFrost.simc file for optimized priorities
+spec:RegisterPack( "Frost", 20260101, [[Hekili:9M16UTnUs4NLGcyK0M66lrPDxuhGt3tl2g0MwCuX2)PlwMkMisIguuj1bg6z)mdPUqrrzNe0S)OnjuCU9nFd5msEt9(HN7QqbX7QztMD(KPtMnEYKZo3zUNRy7gIN7MWOBcVg(LSWu4))eNLlWv3MWcxHsNZk4rWt8CxwqteFoZBPHkNoE2SjVB65WE3qI8U68Z8CxtxTIO2kjpYZ9hRP5Lb4)cldQSzzalg(7ibLLvgKqZfWJJz8YG)MCdnHo2ZvUi6fHmc8JRKXJscp3yo7EsMpJdwHKfUmHSY7dEcWV03fnAR)TeAwUXMMRVPLj07VpKVYypNH7PDf3iovq40qLG3s8jzKukbC7lwug40QViwgXNf7hXswHkY5PQOqEuiOkYV2KWYXvaLD(GkBzrC84yA21eEoA(ymBoMtaTPdie)KWmiNc66T7xxl5H0mqneY9et9ivEmLt8xYseOYENr2jxiFshmvGmI4Wcy968PM5RfwWPz3qetv0hoDJA5)Ib4j7UmKgLTQmif8obiogmU5jmHMK18GH1(mdzM1qlggq4fQe7g2DeoGiOhaEZ7HSwuyUWxqXQOAdrULffQ(1oXXhRxhQf4ugyITLbVUmOihkkUBnbw))bgsvG8D0uv1olzfIYabRmayea0d7GJWqwOAdjS72pVf364OcoNKjuU9zotMmXMlVxARimb0GbCuTZYGrLbhxgCuzGfmRytzWUDwFKD4Sm4Kw3RJagOApitJEiHxobyY5RRHyKjPaWE4QTYSAxynq9YRPov)rlWevrrh3CUdw3SAReu6xtLlGZcldG4Dw7o6vbxSXiuD3MfUbjlUa)j7AaYUJkGa7ZrGH(hcTPc5dOXkd(K0AWAcPHKwTrOpPmNc6uxaS3tggoeX8Q1NwLxXd3ERJ(XUm2k)4c(wZuzyenmPvz5MLh6bks8RCamzkVmHLDDR0nNn9meooA1olbuKWVbGt0I)XJ4OvtAWX1CLgaQBDtRL6UEUIx4NROfgcHklPqYNullc5xteJXQmFbZFfLOcQPVBcu113tEecB9c4o5y9uytYvsi3hP90oKc1TNNwr2B8X3OY)X0Rxl5YtN80YfdEzx3i5)wKU5qLA00uYkk02uYwPhzEZ3HUehr9rhMooDITl6nbEW9(I6uXHobyO6mS4sVSA6q3XMqVfukGwPq3zrBJsasIKWKJ36d3d9l)UR6o3Y9lAAPZTldX9wX6kJGgDt1LiVSmyUu2JSVnSQTlo9vOjf6RH9kOiBc4OFrkdKQbHuybMwWRnMx7tiofxr9advWRVNNWtPqyIyMzpg1ywgrSMW9fK0neSl8heS5yb26QOoixv0BSd7aWvYnvg8d1UKqqkckGg6g(onHVmahU)JkhuYP7NwrNJO4)TBaV8RtzyfPQJRwrABtmn94O8lPBz2oJPgUhz8FJV0GMBBGduDhOp8ohQ8ekFF8h5uvmxlhchjwRK7vfBEzFxKHMKGnB1VZEz78B4Kia2dT2qFlMu3ny1enl5GwP4HqDsW9EQznjm34F2CgfWh)g8Gu69ibc8R0YGFY(PlnfcYVY(UTHa67rksvipLXTq2KRV)jdoclVfJVdoDN7tsiPaXlmzS6YPw9LxKMYY8n2Mgawn9aWtT0dFTwsPCoJ7ttLtTBk75JDS14ULbsmL0z)JwUVg(hS9CtBmx5DMSTAP3WS7AZS1aNL5mTjNKIElC5gUz8nw4mDgaWU3fYZWwKGRdt3W4cKan34TrmU8suPSyAcOTxauQhf7R8YYlFbi13RDRYlvQpFCJN(QfVPhL)uA8IJgSwXUs04QTI3LyBxq7KsPogMtFAxKEXuh7kxNRAkdWuTludh1uIb2Fhoh647JQAQZ5d5fkUO52NTh0h5Gw2VId8xm88yotOAh4s5sd(YmAScOBOVyFOim9uCGZf1VEJdUdLLldEoFvd6orBwdYadpB)7x0ox)qsR)okE)c57NOky(noHVU1FumOrhFK13QXUDpOO(KQq5zEc(H5hY3ybgKdn37ObgjAXSrdoAsv6536u76Hq7CW7ZZ3TB4(RUyXBD6OXMjOF6A0PMx(V0OS6(FJ70uVznJDC)xJqfrTZRqOAT(V(G6nRn9)UD9N(6IfWu)NOBTdU5kO7ro7Soe0Tb59Idn5PFpt(2nrunLDJdyPaz0(OrtRPrphdCQ7QAJ8EANPixm90EtwUyU2jHwMdFKTe7GZF)Y5JoAGPURc(NYWM6bx3jAFaXNJw8zFGzLlBFu5kV(qZD2JVQq)wl3FsyWQwMbU1E2Ns1WqvZPUVISN00Ip26Vhk1xnJzpTJkUUfQ)d7JyV019WC88x1WdoPTTSqgXab6(KgNW8b1FcqZ11)uEymQoNU(d2DHExPkbm)KDpiHEaNIi)8Bwc0dMdgwq1ytHfI1WiUUUPfXC6nYrM8()d]] )
 
-    spec:RegisterSetting( "frostbolt_mana_threshold", 4, {
-        name = "Frostbolt Mana Threshold",
-        desc = "Minimum mana percentage required to cast Frostbolt (default: 4%)",
-        type = "range",
-        min = 1,
-        max = 10,
-        step = 1,
-        width = 1.5
-    } )
-
-    spec:RegisterSetting( "ice_lance_mana_threshold", 2, {
-        name = "Ice Lance Mana Threshold",
-        desc = "Minimum mana percentage required to cast Ice Lance (default: 2%)",
-        type = "range",
-        min = 1,
-        max = 5,
-        step = 1,
-        width = 1.5
-    } )
-
-    spec:RegisterSetting( "frostfire_bolt_mana_threshold", 4, {
-        name = "Frostfire Bolt Mana Threshold",
-        desc = "Minimum mana percentage required to cast Frostfire Bolt (default: 4%)",
-        type = "range",
-        min = 1,
-        max = 10,
-        step = 1,
-        width = 1.5
-    } )
-
-    spec:RegisterSetting( "blizzard_mana_threshold", 8, {
-        name = "Blizzard Mana Threshold",
-        desc = "Minimum mana percentage required to cast Blizzard (default: 8%)",
-        type = "range",
-        min = 5,
-        max = 15,
-        step = 1,
-        width = 1.5
-    } )
-
-    spec:RegisterSetting( "fingers_of_frost_stacks", 2, {
-        name = "Fingers of Frost Stacks",
-        desc = "Number of Fingers of Frost stacks at which to prioritize Ice Lance (default: 2)",
-        type = "range",
-        min = 1,
-        max = 3,
-        step = 1,
-        width = 1.5
-    } )
-
-    spec:RegisterSetting( "brain_freeze_priority", true, {
-        name = "Brain Freeze Priority",
-        desc = "If checked, Frostfire Bolt will be prioritized when Brain Freeze is active",
-        type = "toggle",
-        width = "full"
-    } )
-
-    spec:RegisterSetting( "frozen_orb_priority", true, {
-        name = "Frozen Orb Priority",
-        desc = "If checked, Frozen Orb will be used on cooldown for AoE damage",
-        type = "toggle",
-        width = "full"
-    } )
-
-    spec:RegisterSetting( "deep_freeze_priority", false, {
-        name = "Deep Freeze Priority",
-        desc = "If checked, Deep Freeze will be used for control and damage",
-        type = "toggle",
-        width = "full"
-    } )
-
-    spec:RegisterSetting( "water_elemental_priority", true, {
-        name = "Water Elemental Priority",
-        desc = "If checked, Water Elemental will be summoned when available",
-        type = "toggle",
-        width = "full"
-    } )
-
-    spec:RegisterSetting( "rune_of_power_priority", true, {
-        name = "Rune of Power Priority",
-        desc = "If checked, Rune of Power will be used for damage amplification",
-        type = "toggle",
-        width = "full"
-    } )
-
-    spec:RegisterSetting( "evocation_mana_threshold", 45, {
-        name = "Evocation Mana Threshold",
-        desc = "Mana percentage below which Evocation should be used (default: 45%)",
-        type = "range",
-        min = 20,
-        max = 80,
-        step = 5,
-        width = 1.5
-    } )
-
-    spec:RegisterSetting( "icy_veins_bloodlust_threshold", 180, {
-        name = "Icy Veins Bloodlust Threshold",
-        desc = "Seconds remaining on Bloodlust/Sated above which Icy Veins should be used (default: 180s)",
-        type = "range",
-        min = 60,
-        max = 300,
-        step = 30,
-        width = 1.5
-    } )
-
-    spec:RegisterSetting( "alter_time_complex_conditions", true, {
-        name = "Alter Time Complex Conditions",
-        desc = "If checked, Alter Time will use complex conditions including Bloodlust/Sated timing",
-        type = "toggle",
-        width = "full"
-    } )
-
-    spec:RegisterSetting( "nether_tempest_targets", 5, {
-        name = "Nether Tempest Targets",
-        desc = "Number of targets at which Nether Tempest should be maintained (default: 5)",
-        type = "range",
-        min = 1,
-        max = 10,
-        step = 1,
-        width = 1.5
-    } )
-
-    spec:RegisterSetting( "frost_bomb_priority", true, {
-        name = "Frost Bomb Priority",
-        desc = "If checked, Frost Bomb will be used when not ticking on target",
-        type = "toggle",
-        width = "full"
-    } )
-
-    spec:RegisterSetting( "cone_of_cold_moving", true, {
-        name = "Cone of Cold While Moving",
-        desc = "If checked, Cone of Cold will be used while moving in AoE situations",
-        type = "toggle",
-        width = "full"
-    } )
-
-    -- Register default pack for MoP Frost Mage
-    spec:RegisterPack( "Frost", 20250727, [[Hekili:1IvBVTTnq4FlbfWjbRq1s2ojDijaBDBynylyyk7RsIsIkMiuKAuujnbg63(os9gfTK9AXgkAH9DhFUx4X75CdCdEiWpfjXb37T0BZYRCx54Uz9M1Ub(YxlWb(fOKNqpcFGHYH)9xe8sPs6RuokvD6sELib0e4hxrOYpZcINcY1RUcSTaNeC)fRd83sstXnMIltc8FylPSos9xuDuRpRJ4zW3tKeoRoIskLG6mUOo6xXprOehioe8mcf8(7QJ(D4iFFDKocRV7DGK)qGt45Xi4RnOu6u0j67U5dircIHdJfekLGyj43tYU5K4QSmN9u5uvmniLv55Cw4lqclcXuCoMjr0PTvubyYZcl4VGfkNbwcM7msUdMHIP4067AsIFcNHQOdPaGtcVIbUdQMuQPCjjhdrIOObBXJyPZwmIk36uKiV2BZUDktUDJ5HYjcbxesYvvCd5KKxdFgtyLMcZe83WSqUi2ukKJLyOiPYHCcl1i1SvnKDdhpgsfS4jc7r1b11)ENd19D70IIficlmtGXVHDey44JWGY5PHzvIx)2XOQehsK483xs5YBKcc7jS0Dg8s4CAk)fMHybohGV8wVLhfvVVnuB6iEGGH3aB(WfWh1vz7ROszym0ZzCnmiS7cyXjssIQMBE2VQg0EewOtKX2OsIrDtm4bL6jsPQb1SdXsZa6nLhlTQNHnvHpXfWeI)Klr65dg(cA4HdO607RYdI0r2IZMPDOTpjdYkOPuLo6kNtPegjDR75JFfstdlzi9RnJNzRwUOn16TyQUEc8OigjeKMkDB6oies1oCmLobs6qmJiaJ4uzFoF4MDfM0UHEtN07DMcSQtsH38hsxPU2BHYwRHIo9D39bLU1(6ht6N29d8FE6l1yk5T3A7CusFghIz4CcU82BwT4KC(Zw9Yj8M(r1LW0hQ7mnE2h(mfREsPMBUx9vvANT(1GuG)ZqPa03Y8DP3Lb(qxld0vQO4a0j5fCHSLg700Mz7NwhjW)DfCdMwhvYZb7qvsEou(abjBrqnU0P(UFJWavUFey5(lwzvHckLfOwkYthUGoDS5FIZGytB8PFf3mqGj5WrMx9zUF5Chvj8Z5DrJNfNnOoWhYNTCrGVFEvMG8uGVwLE7JMAa8X71BJ0C2aFtsUa)22(GFmqcvxLDds8teWawbbb7Syt6vhDnerBQJ2TdYfIQ0Elm7CWn9CMkGxzgaMeJwbWAt76hvBz0gtJgioTS6IdKlhKbDaBBluWE5SWUhRttTzMrgdEzGLwH)v)3JFpdUc)pAHF)1vlR8)cpopxQUhWBjSpkqjBGj4x3Lh2XE)p4ypTJDpwJW(C41rlQJor1xR5Hh1T1AQg6d9E5alGogD9xNHPFWZJ0PD(QJ58zwaOZ9ZSgGX7VX60oD9HBpTwhq7QZMTh1ObEA6o91QBD05db1Gh0XZMzJhRrvRwQdM5wGWC8yRkn(ZpfPVcoAZctNmX2fMd36vQD0rMRCOh4JxtrJ2rMIm9gjJdonhSgm7rghdS2RUR1mwlmE2oMKtBbSHIto6lgZC7zA1es2tng8941oGoLBGl5UE7U9ggMb2SKJgZ5himpM2aAUeKguplsPMfBS5xN)nRTdmVcKAQOMFTBpD(eJs37hx38FcGGu0O38hYpvR8u)48(1c6CY0)UCRe9OZMMCW48t76(tW)m]])
-end
-
--- Immediately register the spec.
-RegisterFrostSpec()

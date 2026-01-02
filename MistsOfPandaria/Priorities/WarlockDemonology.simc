@@ -1,17 +1,33 @@
 # Warlock: Demonology (MoP) — rebuilt from wowtbc.gg + wowsims JSON
 
-# Precombat
+# Precombat - Enhanced from WoWSims MoP
+actions.precombat+=/potion,name=jade_serpent_potion,if=time<1
+actions.precombat+=/hand_of_gul'dan,if=time<1
 actions.precombat+=/dark_intent
 actions.precombat+=/summon_pet
-actions.precombat+=/potion,name=jade_serpent_potion
 actions.precombat+=/shadow_bolt
 
-# Main
-actions+=/run_action_list,name=opener,if=time<10
-actions+=/run_action_list,name=aoe,if=active_enemies>=6
-actions+=/run_action_list,name=meta,if=buff.metamorphosis.up
-actions+=/run_action_list,name=st
-actions+=/fel_flame,moving=1
+# Main - Enhanced from WoWSims MoP
+actions+=/autocast_other_cooldowns
+actions+=/corruption,if=!dot.corruption.ticking
+actions+=/felguard:felstorm
+actions+=/imp_swarm
+actions+=/summon_doomguard,if=target.time_to_die<=61|target.health.pct<=20
+actions+=/alter_time
+actions+=/potion,name=jade_serpent_potion,if=buff.alter_time.up
+actions+=/blood_fury,if=buff.alter_time.up
+
+# Advanced Hand of Gul'dan timing from WoWSims
+actions+=/hand_of_gul'dan,if=charges=1&spell_time_to_charge<=10|charges=1&cooldown.soul_fire.remains<=1|charges=1&buff.shadowflame.remains>=15|charges=1&buff.bloodlust.up>=15|!buff.alter_time.up&buff.bloodlust.up>=15|target.time_to_die<=22
+
+# Advanced Soul Fire management
+actions+=/soul_fire,if=buff.alter_time.up&buff.alter_time.remains>=18&!variable.gcd_drops_sf
+actions+=/metamorphosis,if=!buff.alter_time.up&!buff.metamorphosis.up&buff.bloodlust.up>=15&demonic_fury>=250|target.time_to_die<=30&demonic_fury>=500
+
+# Advanced Shadowflame management from WoWSims
+actions+=/soul_fire,if=buff.shadowflame.up&buff.shadowflame.remains>=10&current_time>=5&!dot.shadowflame.ticking|buff.shadowflame.up&demonic_fury>=200&current_time>=5&current_time<=20|target.time_to_die<=30&demonic_fury>=500
+actions+=/run_action_list,name=meta_gcd,if=buff.metamorphosis.up
+actions+=/run_action_list,name=non_meta_gcd
 
 # Opener (guide-aligned)
 actions.opener+=/hand_of_gul'dan
@@ -32,28 +48,27 @@ actions+=/potion,name=jade_serpent_potion,if=buff.dark_soul.up
 actions+=/blood_fury,if=buff.dark_soul.up
 actions+=/berserking,if=buff.dark_soul.up
 
-# Single target (caster form)
-actions.st+=/curse_of_elements,if=debuff.curse_of_elements.down
-actions.st+=/summon_doomguard,if=active_enemies<=3
-actions.st+=/summon_infernal,if=active_enemies>3
-actions.st+=/imp_swarm,if=toggle.cooldowns
-actions.st+=/grimoire_of_service,if=talent.grimoire_of_service.enabled&toggle.cooldowns
-actions.st+=/felguard:felstorm
-actions.st+=/corruption,if=debuff.corruption.remains<tick_time
-actions.st+=/hand_of_gul'dan,if=charges>=2|debuff.shadowflame.remains<3
-actions.st+=/metamorphosis,if=buff.dark_soul.up&demonic_fury>=250
-actions.st+=/soul_fire,if=buff.molten_core.up&(buff.molten_core.remains<5|buff.molten_core.stack>=9)
-actions.st+=/soul_fire,if=(target.health.pct<25)&buff.molten_core.up
-actions.st+=/metamorphosis,if=demonic_fury>=400
-actions.st+=/metamorphosis,if=target.time_to_die<25&demonic_fury>=200
-actions.st+=/life_tap,if=mana.pct<40
-actions.st+=/shadow_bolt
+# Non-Meta GCD - Advanced from WoWSims MoP
+actions.non_meta_gcd+=/corruption,if=target.time_to_die>6,cycle_targets=1,max_cycle_targets=1
+actions.non_meta_gcd+=/hand_of_gul'dan,if=charges=2|charges=1&spell_time_to_charge<=2.5
+actions.non_meta_gcd+=/soul_fire,if=target.health.pct<=25|buff.molten_core.stack>=1|buff.molten_core.up
+actions.non_meta_gcd+=/life_tap,if=mana.pct<=30&!variable.gcd_drops_sf&!buff.metamorphosis.up
+actions.non_meta_gcd+=/shadow_bolt,if=!variable.sf_drops_sf
+actions.non_meta_gcd+=/corruption,if=dot.corruption.remains<=7&!variable.gcd_drops_sf
+actions.non_meta_gcd+=/life_tap,if=mana<=250000&dot.shadowflame.ticking&!variable.gcd_drops_sf
+actions.non_meta_gcd+=/hand_of_gul'dan,if=dot.shadowflame.ticking
+actions.non_meta_gcd+=/wait_until_gcd_ready
+actions.non_meta_gcd+=/metamorphosis,if=dot.shadowflame.ticking
+actions.non_meta_gcd+=/shadow_bolt
+actions.non_meta_gcd+=/life_tap
 
-# Metamorphosis (meta form)
-actions.meta+=/doom,if=debuff.doom.down|(debuff.doom.remains<15&buff.dark_soul.up)
-actions.meta+=/touch_of_chaos
-actions.meta+=/soul_fire,if=buff.molten_core.up&demonic_fury>=60
-actions.meta+=/cancel_metamorphosis,if=(buff.dark_soul.down&demonic_fury<=80)|(buff.molten_core.stack=0&demonic_fury<=100)
+# Meta GCD - Advanced from WoWSims MoP
+actions.meta_gcd+=/doom,if=dot.doom.percent_increase>=25|dot.doom.percent_increase>=0&dot.doom.remains<=62&buff.bloodlust.up
+actions.meta_gcd+=/doom,cycle_targets=1,max_cycle_targets=1
+actions.meta_gcd+=/corruption,if=dot.corruption.remains<=4|dot.corruption.percent_increase>0
+actions.meta_gcd+=/hand_of_gul'dan,if=charges=2|charges=1&spell_time_to_charge<=2.5
+actions.meta_gcd+=/touch_of_chaos,if=buff.molten_core.up&buff.shadowflame.remains>=cast_time|target.health.pct<=25&demonic_fury>=104
+actions.meta_gcd+=/touch_of_chaos
 
 # AoE (6+ targets)
 actions.aoe+=/felguard:felstorm
@@ -64,3 +79,10 @@ actions.aoe+=/metamorphosis,if=demonic_fury>=300|buff.dark_soul.up&demonic_fury>
 actions.aoe+=/immolation_aura,if=buff.metamorphosis.up&talent.mannoroth_fury.enabled
 actions.aoe+=/hellfire,if=buff.metamorphosis.up&!talent.mannoroth_fury.enabled
 actions.aoe+=/shadow_bolt
+
+# Advanced Variables from WoWSims MoP
+variable,name=sf_has_1_stack,value=buff.shadowflame.stack=1
+variable,name=sf_math_1_3_gcd,value=1.3+gcd_time_to_ready
+variable,name=gcd_drops_sf,value=sf_has_1_stack&dot.shadowflame.remains<=sf_math_1_3_gcd+spell_gcd_haste_duration.corruption
+variable,name=sf_drops_sf,value=sf_has_1_stack&dot.shadowflame.remains<=sf_math_1_3_gcd+cast_time.soul_fire
+variable,name=sb_drops_sf,value=sf_has_1_stack&dot.shadowflame.remains<=sf_math_1_3_gcd+cast_time.shadow_bolt

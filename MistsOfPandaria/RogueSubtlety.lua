@@ -30,7 +30,7 @@ spec:RegisterResource( 3, { -- Energy with Subtlety-specific enhancements
         interval = 2, -- Shadow Techniques procs roughly every 2 seconds
         value = 7, -- Shadow Techniques grants 7 energy per proc
         stop = function () 
-            return not state.combat -- Only active in combat
+            return combat == 0 -- Only active in combat
         end,
     },
     
@@ -244,6 +244,11 @@ spec:RegisterTalents( {
   versatility           = { 6, 2, 108214 }, -- You can apply both Wound Poison and Deadly Poison to your weapons.
   anticipation          = { 6, 3, 114015 }, -- You can build combo points beyond the normal 5. Combo points generated beyond 5 are stored (up to 5) and applied when your combo points reset to 0.
   
+  -- Tier 7
+  premeditation         = { 7, 1, 14183 }, -- When you use Stealth, you also gain 2 combo points.
+  hemorrhage            = { 7, 2, 16511 }, -- An instant strike that causes 110% weapon damage and causes the target to bleed for 40% weapon damage over 24 sec. Awards 1 combo point.
+  shadow_blades         = { 7, 3, 121471 }, -- Your melee attacks have a chance to strike with shadow damage, and your Combo Point-generating abilities generate 1 additional Combo Point.
+  
 } )
 
 -- Auras
@@ -308,8 +313,9 @@ spec:RegisterAuras( {
   },
   rupture = {
     id = 1943,
-    duration = function() return 8 + (4 * min(5, combo_points.current or 0)) end, -- MoP Classic: 8s base + 4s per combo point
-    max_stack = 1
+    duration = function() return 4 + (4 * min(5, combo_points.current or 0)) end, -- MoP: 4s base + 4s per combo point
+    max_stack = 1,
+    tick_time = 2
   },
   -- Poison Debuffs on targets
   deadly_poison_dot = {
@@ -370,16 +376,24 @@ spec:RegisterAuras( {
   
   -- Find Weakness - Subtlety signature debuff/buff
   find_weakness = {
-    id = 91021,
+    id = 91023,
     duration = 10,
     max_stack = 1
   },
   
-  -- Shadow Clone - enhanced Shadow Dance effect
-  shadow_clone = {
-    id = 159621,
-    duration = 8,
+  -- Master of Subtlety - damage bonus after stealth breaks
+  master_of_subtlety = {
+    id = 31223,
+    duration = 6,
     max_stack = 1
+  },
+  
+  -- Sanguinary Vein - bleed damage bonus
+  sanguinary_vein = {
+    id = 91023,
+    duration = 30,
+    max_stack = 1,
+    debuff = true
   },
   
   -- Defensive and Utility Buffs
@@ -493,17 +507,12 @@ spec:RegisterAuras( {
   -- Hemorrhage DoT (target debuff)
   hemorrhage = {
     id = 16511,
-    duration = 15,
+    duration = 24,
     max_stack = 1,
     tick_time = 3
   },
   
-  -- Talents
-  master_of_subtlety = {
-    id = 31665,
-    duration = 6,
-    max_stack = 1
-  },
+  -- Honor Among Thieves - combo point generation from party crits
   honor_among_thieves = {
     id = 51701,
     duration = 2,
@@ -566,6 +575,24 @@ end )
 spec:RegisterAbilities( {
   -- Core Rogue Abilities
   
+  -- Basic combo point generator for when other abilities aren't available
+  sinister_strike = {
+    id = 1752,
+    cast = 0,
+    cooldown = 0,
+    gcd = "totem",
+    school = "physical",
+
+    spend = 40,
+    spendType = "energy",
+
+    startsCombat = true,
+
+    handler = function ()
+      gain( 1, "combo_points" )
+    end
+  },
+
   -- Instantly attack with your off-hand weapon for 280% weapon damage and causes the target to bleed, dealing damage over 18 sec. Must be stealthed. Awards 1 combo point.
   garrote = {
     id = 703,
@@ -613,7 +640,7 @@ spec:RegisterAbilities( {
 
     startsCombat = false,
     
-    toggle = "cooldowns",
+    
 
     handler = function ()
       applyBuff( "vanish", 10 )
@@ -630,8 +657,9 @@ spec:RegisterAbilities( {
     school = "physical",
 
     startsCombat = true,
-
     toggle = "interrupts",
+
+    
 
     debuff = "casting",
     readyTime = state.timeToInterrupt,
@@ -651,7 +679,7 @@ spec:RegisterAbilities( {
 
     startsCombat = false,
     
-    usable = function() return not buff.stealth.up and not state.combat, "cannot stealth in combat or while already stealthed" end,
+    usable = function() return not buff.stealth.up and combat == 0, "cannot stealth in combat or while already stealthed" end,
 
     handler = function ()
       applyBuff( "stealth", 3600 ) -- Long duration until broken
@@ -865,8 +893,9 @@ spec:RegisterAbilities( {
     cooldown = 60,
     gcd = "off",
     startsCombat = false,
-
     toggle = "cooldowns",
+
+    
 
     handler = function ()
       -- Shadow Dance: Subtlety signature ability
@@ -1032,6 +1061,8 @@ spec:RegisterAbilities( {
     startsCombat = false,
     toggle = "defensives",
 
+    
+
     handler = function ()
       applyBuff( "cloak_of_shadows", 5 )
     end
@@ -1047,6 +1078,8 @@ spec:RegisterAbilities( {
 
     startsCombat = false,
     toggle = "defensives",
+
+    
 
     handler = function ()
       applyBuff( "evasion", 5 )
@@ -1180,6 +1213,8 @@ spec:RegisterAbilities( {
     startsCombat = false,
     toggle = "cooldowns",
 
+    
+
     handler = function ()
       applyBuff( "shadow_blades", 12 )
     end
@@ -1241,7 +1276,7 @@ spec:RegisterAbilities( {
     spendType = "energy",
 
     startsCombat = false,
-    toggle = "defensives",
+    
 
     handler = function ()
       applyBuff( "smoke_bomb", 10 )
@@ -1276,7 +1311,7 @@ spec:RegisterAbilities( {
 
     talent = "combat_readiness",
     startsCombat = false,
-    toggle = "defensives",
+    
 
     handler = function ()
       applyBuff( "combat_readiness", 20 )
@@ -1315,7 +1350,7 @@ spec:RegisterAbilities( {
     talent = "prep",
     startsCombat = false,
 
-    toggle = "cooldowns",
+    
 
     handler = function ()
       applyBuff( "preparation" )
@@ -1447,7 +1482,7 @@ spec:RegisterStateExpr("behind_target", function()
     end
     
     -- In group content, assume tank has aggro and we can be behind
-  if state.group then
+    if state.group then
         return true -- Tank should have aggro in groups
     end
     
@@ -1456,10 +1491,8 @@ spec:RegisterStateExpr("behind_target", function()
         return true -- PvE mobs, can usually get behind
     end
     
-    -- PvP or uncertain cases: use time-based deterministic positioning
-    -- This prevents blocking abilities while being somewhat realistic
-    local time_factor = (query_time % 10) / 10 -- 0-1 based on time
-    return time_factor > 0.3 -- 70% of time cycles we're "behind"
+    -- Default to true for solo PvE to prevent rotation blocking
+    return true -- Allow Backstab usage in solo PvE
 end)
 
 -- Proper stealthed state expressions for MoP compatibility
@@ -1514,14 +1547,66 @@ spec:RegisterHook("runHandler", function(action, pool)
     end
 end)
 
--- Additional required state expressions
-spec:RegisterStateExpr("effective_combo_points", function()
-    local cp = combo_points.current or 0
-    -- Account for Anticipation talent
-    if talent.anticipation.enabled and buff.anticipation.up then
-        return cp + buff.anticipation.stack
-    end
-    return cp
+-- Additional state expressions for WoWSims compatibility
+spec:RegisterStateExpr("sanguinary_vein_active", function()
+    return debuff.sanguinary_vein.up or false
+end)
+
+spec:RegisterStateExpr("find_weakness_active", function()
+    return debuff.find_weakness.up or false
+end)
+
+spec:RegisterStateExpr("master_of_subtlety_active", function()
+    return buff.master_of_subtlety.up or false
+end)
+
+spec:RegisterStateExpr("honor_among_thieves_active", function()
+    return buff.honor_among_thieves.up or false
+end)
+
+spec:RegisterStateExpr("shadow_blades_active", function()
+    return buff.shadow_blades.up or false
+end)
+
+spec:RegisterStateExpr("shadow_dance_active", function()
+    return buff.shadow_dance.up or false
+end)
+
+spec:RegisterStateExpr("premeditation_active", function()
+    return buff.premeditation.up or false
+end)
+
+spec:RegisterStateExpr("anticipation_stacks", function()
+    return buff.anticipation.stack or 0
+end)
+
+-- T16H compatibility: anticipation_charges alias
+spec:RegisterStateExpr("anticipation_charges", function()
+    return buff.anticipation.stack or 0
+end)
+
+-- Bleed tracking for Sanguinary Vein
+spec:RegisterStateExpr("bleed_active", function()
+    return debuff.rupture.up or debuff.garrote.up or debuff.hemorrhage.up or debuff.crimson_tempest.up
+end)
+
+-- Stealth state for opener logic
+spec:RegisterStateExpr("opener_ready", function()
+    return (buff.stealth.up or buff.vanish.up or buff.shadow_dance.up) and 
+           (not debuff.garrote.up or debuff.garrote.remains < 3) and
+           (not debuff.rupture.up or debuff.rupture.remains < 3)
+end)
+
+-- Energy pooling for Shadow Dance
+spec:RegisterStateExpr("energy_for_shadow_dance", function()
+    return energy.current >= 75 and not buff.shadow_dance.up and 
+           buff.slice_and_dice.up and debuff.rupture.up and debuff.hemorrhage.up
+end)
+
+-- Combo point efficiency for finishers
+spec:RegisterStateExpr("finisher_ready", function()
+    return combo_points.current >= 5 or 
+           (combo_points.current >= 3 and buff.slice_and_dice.remains < 6)
 end)
 
 spec:RegisterStateExpr("boss", function()
@@ -1579,20 +1664,10 @@ spec:RegisterOptions( {
 
 -- SUBTLETY SETTINGS
 spec:RegisterSetting( "use_shadow_dance", true, {
-    name = strformat( "Use %s", Hekili:GetSpellLinkWithTexture( 185313 ) ), -- Shadow Dance
+    name = strformat( "Use %s", Hekili:GetSpellLinkWithTexture( 51713 ) ), -- Shadow Dance
     desc = "If checked, Shadow Dance will be recommended based on the Subtlety Rogue priority. If unchecked, it will not be recommended automatically.",
     type = "toggle",
     width = "full"
-} )
-
-spec:RegisterSetting( "combo_point_threshold", 4, {
-    name = strformat( "Combo Point Threshold for Finishers" ),
-    desc = "Minimum combo points before using finishers instead of building more (3-5)",
-    type = "range",
-    min = 3,
-    max = 5,
-    step = 1,
-    width = 1.5
 } )
 
 spec:RegisterSetting( "use_shadow_blades", true, {
@@ -1602,25 +1677,21 @@ spec:RegisterSetting( "use_shadow_blades", true, {
     width = "full"
 } )
 
+spec:RegisterSetting( "dance_min_rupture", 10, {
+  name = "Minimum Rupture Time for Dance",
+  desc = "Minimum Rupture remaining (seconds) required before recommending Shadow Dance.",
+  type = "range",
+  min = 0,
+  max = 18,
+  step = 1,
+  width = 1.5
+} )
+
 spec:RegisterSetting( "allow_shadowstep", true, {
-    name = strformat( "Allow %s", Hekili:GetSpellLinkWithTexture( 36554 ) ), -- Shadowstep
-    desc = "If checked, Shadowstep may be recommended for mobility and positioning. If unchecked, it will only be recommended for damage bonuses.",
-    type = "toggle",
-    width = "full"
-} )
-
-spec:RegisterSetting( "use_tricks_of_the_trade", true, {
-    name = strformat( "Use %s", Hekili:GetSpellLinkWithTexture( 57934 ) ), -- Tricks of the Trade
-    desc = "If checked, Tricks of the Trade will be recommended in group content. If unchecked, it will not be recommended automatically.",
-    type = "toggle",
-    width = "full"
-} )
-
-spec:RegisterSetting( "auto_poison_apply", true, {
-    name = strformat( "Auto Apply Poisons" ),
-    desc = "If checked, the addon will recommend applying poisons when they're missing. If unchecked, poison application must be managed manually.",
-    type = "toggle",
-    width = "full"
+  name = strformat( "Allow %s", Hekili:GetSpellLinkWithTexture( 36554 ) ), -- Shadowstep
+  desc = "If checked, Shadowstep will be recommended by the cooldowns list when conditions are met.",
+  type = "toggle",
+  width = "full"
 } )
 
 spec:RegisterSetting( "energy_threshold", 75, {
@@ -1633,7 +1704,21 @@ spec:RegisterSetting( "energy_threshold", 75, {
     width = 1.5
 } )
 
-spec:RegisterPack( "Subtlety", 20250812, [[Hekili:9Qv7UTnUs0NLGciKSBwhh)rA2BTnGtIBRlsTZnYzlU)XwYw0Xcwwsx9rYgGa9SVZqkljkts70gTbOfwIIZqoCMdp8in98PtMQBzgrMoQr9gTRF55nQ1OzRM1VyQE0l(KP6(MlwB(i8dxZnW)RhppYHe9c2WloEMwObc9IdwanovFESTt0q3PZfz16T)t4z9jlGBFX5t1xzBzrypljCXu9jRSdtmW)zMyK63edVLW1lIS9CtmCSdJGMx6fKy8vYABh7At1P3ehgpsCjbMrEb4vJOtnIR5ChI10RMQZSb4vYgVGGv05e63aBFwdDFF)lX46XF)QXjg3nE4OjjgFzWOb33FY471tm2xFFJ)Ly8DtB3i4Fyyz7070eJOve4wxbHYWiZ5jgh7755y7(yIHRxuIra5)hBhqSGamCvZ2jgye8XxGfbOBF37UtMQdXNisGTj8lVnZ9M57bEcwd6KyapVgyZeJJsmS8IQLhzRfzVyn1pV(6oTfq2aJuMjALyCY0iiFO0IvUxNtwz7AnlYm4rse1HsghBh696ItL8175PZE0nnL6MDnQWmgWgTKAJithIBuTWvXb2RjUZI8cdRL(KhYihJh1ZDlNDqp3wsgDOJ9cYmtikzzVOYZQ)EFiDEWO(JUEW7EIm3cF8YL14NACPonfesX1(ZXq1fsxKcjrrqMzynZ4iAhd9CNz6778sHSzQVTiMwoVK(i1I9zjZBBfJW(yTuXh4K8ffQjtBdgrr4YYsZyNivytRHYM)nw)smUF8K(tgoE07(syIXqxiuhe7JliWkxIXnKLe3q7NiH8vlyfDTfMH46HAqGvetNOv18xaiaDax0Gv4y7cl)4sGL5gO6CwtmfiXi9P3y(3jg)wIr9ATYJWKNmdTPRikadSi0LyWM2lORRAzgnBi0SqL6cyJW1Z8wolCLPL3ZHQHjYYaJdjZIcGL8qSVawnCLPfH6Uhd8sDCK9gcDAv0Jc6MiecUmP7cS3ygaP59t3n9w6gN5ZcthNzSlMH7PYnMJOtFIvn4HyB5oJriiTLzHWEje3fervFY9qbdTa2AccEU0O3hpqGASGV9b6GL2U2HRibuhCPuhGD)jYmauEJnj1fnpqxy6rN))5pZ8Va7fkCHFabNRMcbmQwic9hUAYTdM8)qyIV8aaZ)haSXq9jaZLXFgi00F0n9VFyFGHZT911hEDr4eDkxWW)tIbTB)y8pMC111(YxO8jGMt5pcDX7XyiX(XyBmL)ypFC(FwGxKjl7Cfb2(dWgweEsQTEgkTS3eE2gp)IgQ)D3My8nD05hdflyP1zl8CTSr7GDEFt434FvGbV7(b)bYwSpWtuFWKhU7D3hqQgjALPdM6GBRjzJQdAJs4SaEUBnx2(GQrWpCqV9cYjh3g2BUeqvgfj2T3dWCX(YWEzm6GsXneiFIMzULrxUX5AwemSk0RZLYJJIcKJkQG2aBBhyxq3QN(31JhF7nJ)XOQ4um63WojYhB)7BzfFk(JW4acs7Y2XcGVpdM(eli8f7dT(xMiQoRFTY7hqoyjEkhMrd9G1nPPJfdF7CuIpYOAuo1IEtruut31gpZdYbcg55SwPR31ZAx0zIWh5c1LsfhDTAl6Gfidj5J6TPu1koVlmcWXyEU1t04R66UchGPzDEFW6oN1B1MR0X3miRW5ajnLoWN7aicH7BL440wxIhJ8zI5AxcCSmCWXi0Z4xbd9g1tVbJykEF4OxGTiPhnJJFp3yqDrFosQJd0LusIre)Iym53L7iJPdglyNqw6jnhQr5Xb2pvmVaOu31KOZrqgVOIxx(axfZj2EMhjreKqkhyZdHqdG52SL5FG5cBth4klyVCuoGBytcu)MWvEbqn7Kj3iIWxPbEJF5bk38UHAkGICqbbfC88SMTmo4frC9oyRaizKG1SnoJkYovfq))QN0)Zdhnu)RdQybR0DV5S7ziLmuCas767aK9bpzhUaPex8(qUdaMf8SDiP2UbB5QfCHk1cKJ1EepsEMSwcTv7IvSC5GLWutn3EoeQODqysM929(LcDUC4wLNYIKTWOg3J7iZWsqDjJ8S9QOlIWXEI9PwNREj)2S6LDo3PIYgEcAvCvJ(Kb9VDYxrI8)3hgqvj74X0d3ujNf5ZE4MkPNJco1fBUcNxQhT0cCoLieWyIyDc7293mpgPmH)gLlM9RCvIXRsRiNUR8McjdlJfI6QlrfTSnMLuRkNQS6tfG1spAgahUKVgE)vlP96TuTWlESjnyRUqrQ(55MHtd6iMsdkY4bBVbpVgSxSpjmQQZ57pEqfkPOAGjgEOivBATfxbdULIizryLjOseSFpseT00fp06AxQKNkZnpCCw6Q(taic2u6RvRoql6zZaxKC5u9HB8bgvyT4hl9gZQL8nee0BPTdur)H39fOKV9HFjrJODFRUr4fVJshLzUFs1J(wveUQgR(brcjvjEILDfwltJYFV7zf1r6uM6qDzAnDAMCrDxSvTOtTx2vXRIrOheOheNzKiTKgtlDHMmLfbAMJ4pPSWhNBVpQVl2hnL7qk2)C7JHwSiIqVUNxH5kLErqvLBu86GYIjqKaF1x48N)1cv8jsF1n4dLZSSt3gT1299a1l)Da9B1R1QOzk)YAq7v6f(Ov0(nRxS3)s5GAirJEObzfRcFHmCJ1sVWGtXxvq3YuF3jrC)MitwX9)OzhmD3SZ27V3apfSF87y2RBZ93Z83hsfwdOKSEv50QLYEoqt58erayQGS0kUAdfAkT8UizYy3RTdeNcZMY)McqlGfV2Um47DPsdY4JxoxUtBLDkN9D2arWh7s1LMMl6Ev5H3S07F6Ti9EEWnd4btzkOn2oGOfBuJz4ED)yBn(TP1el8RMaXtGmT6AILDVx3lepczQxJJTTJGwTlxvuEePuE9ENxxSNkieEU760SUMeL071QTYGktxAzrvwRYcEhlrV8xFflZ60Oo8JDk760Q(jQgrOc18K(kjgUMuHW1kjcoSs2iTy7NuXzXdumaH26uuR4UBLiphkJxkxHbHMswEfA6gVlMoxoAzMts)YeGwE)Qm4MCPLRkpSpbM)0biWCEGlJe0bVtxADANlKVDxrJMcwLT9sjfNlzK2I23Ri0IetlawStRdX2xk205kuOICi)Ojth3se5VOEPbcGSURGWvyojViwvIx2gqawXiVxEjP2ne2sRmV5wAhPqmRYoGtiQDP8SJ1Bw2a7z9TAcsFqXxoDv5qrF)0F6D47NopGMFCMD4twAv5yj8lF9vXSx60sMB2(PptXOk(DuRvYLBz30S9pXawsx4(8LlCudHFE0IhqaNIkmjR4hYCL4dXHL30UhnLV7bNv5eFZwL0Aq6LWVU5xF9izFxZ4x9qCeqEAQU(M4LWQhvn6P)Z]] )
+spec:RegisterSetting( "auto_poison_apply", true, {
+    name = strformat( "Auto Apply Poisons" ),
+    desc = "If checked, the addon will recommend applying poisons when they're missing. If unchecked, poison application must be managed manually.",
+    type = "toggle",
+    width = "full"
+} )
+
+spec:RegisterSetting( "use_tricks_of_the_trade", true, {
+    name = strformat( "Use %s", Hekili:GetSpellLinkWithTexture( 57934 ) ), -- Tricks of the Trade
+    desc = "If checked, Tricks of the Trade will be recommended based on the Subtlety Rogue priority. If unchecked, it will not be recommended automatically.",
+    type = "toggle",
+    width = "full"
+} )
+
+spec:RegisterPack( "Subtlety", 2025100, [[Hekili:9Iv)RXnot4)wchSKWf87UoR30EKnq7XlxBHwkNl0FZ2AT1M1S2wgl5uwi4)2Vrs(djBjNnT5UFOLn6JN5XZ8mJgPGvbFlWpbXWbFXDPR3QLlFRJR7A3v3e4ZovId8lrXhrpa)OaLd)VF9owgMDIpXPmckHdaLuxfdtg4VRonJ9XIGDgq9M34DlS2sCmm8Mvb(hstsWY1IPXb(F7qkTjI)putuRDBIi7H)oMLskAIYsPmy69KQMOpGpMML6aePISpndm)V1e93KhQX)rtuhnBIU8ZKV2e5545S6QMOMpbl69ikobaga87KV7NMdqkw1WUe40eLJJpGksJ5uQa2Y3wT5dCQXy4QcAZNa4a8(AfoMKVdXAIENGOWmsgtDk7M733()2NHOhVM7w3slRslEiCxgHsj52wpHK0UCmkmh(2dRsJXHfW4zylBcvwMDkSKKsjfxdFmhqzBtWOKStxxqkAhiUkfwgWaZyuseUBZZvHZXjPmeFQRt3VLHYWfmhTXDWfODzGt2ieuggLXoyEYCu1rCsieIdbAZoOyIXt9mwjJ7RGWwyc8dom8PiCxtbJE)2vDHVpJslMg5aeoMgFuA(QhWmNyeLP6Y6Du81SRE)EhiCcrMAkZPcdl6PNA3jlnhhYiarW3TEPka1uCykdNFnnJW2cATeApA0dOeYpctqfXyN6sJO5odAmqIDeZwzhq1r3LHGSWFb74(6BhH)mCFD1jByRTACffxDecrNZQrvXOcUDRQaTfFh4cC1dNUBJgfafvjQQxSFHa2hHAc0daGlIjKmWcfDdbjbGAIE)MLlgYl6ayqVcQU)KubfyQiYegvtwvxek)RqE9UR5fE3IicjmF8hXHavZtXGi(g1ngJYYMUZokQjTNMCi9xAd391C3MftsDuPBjRUYqcM3IlViHa5cYfaX5yEW5PNuhSZeRVAXu5W9R0IfhW5q06aCQGsrHHb7CVTMvzcnlRm(GXvnd(XuAmgczg)Muj)ifv(UA6bBApnx4DEAcx4OokdTBS5UZBHutcXzpr1kUSzC00PpaZJRkgLdhfZ41SG8niLvDYEKV1BXfTfKXjoGcAHjLaWFdrnqjS0mpKPddzv3VDTNUhyR7y72NlP556mLnlPvwrrxOxUPtAyYFixYIlTu0fKJqzjl1YVAosbFELAbb4ReWEyYfACLpsprBTwcKgZPc4PDBvaVJ8)hmkuw4vmBUfoO7GCO7HqOcFjMYMMfSEX46qRxiY5gTZUeVXgy2mSXl(NlTQDZ7rfHK9Hhla2snKFzOEQWj)xCzlcoCqjp7H(X(5AtrJQBxAb4ZTi3OpKFLAE6e4mRgzCV0d1vPhXGaa6RvlzuzCBFcTN)UEzG)JWr5a69xFaUnYpqvf8KOa)pMxsQy8o49gDZaNMpf4l(L4An49O6mg8ZViUMtRzdEFGpOtHo4trWLC06TlWxIxGpV3VagqaR70uhFnrp9ut00kfnr31eX)W6Gx24i3a3mYaDRq0l4e7nUHM5SNlypEdADybgBTfJ11Q45zpJTZDMuP3saB8MNnU)NXgxoB2mFKEKThy7qtQCuU9NfL(Mx5O8gROitseFgBu0t6DZYH4TwH4IwFwFxSnrlAIS0jBt09CljwI9oAve2dtYzXQLJOb)M(WLpLlwVh4bqg1bSk51lydSBBt0nYK(q5luaf(fwECoFh4J7swBZ9hIlG4zs(nF(Qm206thkWjP6QbEOVBH9gxlyWEtrYtyHlBIGWPHUSLjag6ztwkQj6Q2q60meiGVAPAWqSFbbhx)qToQLdQgrZPNqnW0PNs1twL6I9lsWOX1qEExMEd8dap0uIa4xw5adHBG5EkjOIUyeiBVeXuae42LZl06ky2DsDapH3V)TpmDGN8DF4PF8xcsHwkVwuGF)dejiL8fI6peC0rxkOB4uSjcdJppKwzJHP7pPQpvrEpHr20EO)zAeBa4XRy(ZbEzPZmzPidbdlBrV2i0M)RtbNzBIz6gwlaYuzw5mT5Xw60xPmR(cMxKyix1wIP9sq)I5LNBLK(0slhf1HS2vpK6HHELNtwmruQlmgUAYlqYBWpaSD58IJ5RPBXR8VwP(Zv98skBoJAAUBUm33VsdAQn8RHJunm0RXC1iu0Zt6EQB)k026d(mXLCRxx(S2ZWig08tan54ZHEe3k6zyw1KQTx7zYfct4ANtZ(8qt6Ar2f7zD0KXxksys7VwuNuFMlLbTu1EBJN5wHAAEnRmVc16ZkP2S(0NwsTVVUNxQnc6oMh89jeR8dZQzhivb((517bPSyWG)5d]] )
 
 
 

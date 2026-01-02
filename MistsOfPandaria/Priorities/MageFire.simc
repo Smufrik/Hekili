@@ -1,42 +1,83 @@
-# Mage: Fire
+# Mage: Fire - Optimized from WoWSims MoP
 
 ## Precombat
-actions.precombat+=/arcane_brilliance
-actions.precombat+=/molten_armor
-actions.precombat+=/rune_of_power,if=talent.rune_of_power.enabled
-actions.precombat+=/flamestrike,if=active_enemies>=5
+actions.precombat+=/arcane_brilliance,if=!buff.arcane_brilliance.up
+actions.precombat+=/molten_armor,if=!buff.molten_armor.up
+actions.precombat+=/mirror_image,precombat_time=7.5
+actions.precombat+=/evocation,if=mana.pct<80,precombat_time=6
+actions.precombat+=/rune_of_power,if=talent.rune_of_power.enabled,precombat_time=4.5
+actions.precombat+=/potion,precombat_time=3
+actions.precombat+=/fireball,precombat_time=3
 
-## Default
-actions+=/counterspell
-actions+=/time_warp,if=target.health.pct<25|time>5
-actions+=/mirror_image,if=buff.heating_up.up
-actions+=/presence_of_mind,if=talent.presence_of_mind.enabled&target.time_to_die<15
-actions+=/combustion,if=dot.ignite.tick_dmg>=(spell_power*2.5)
-actions+=/use_item,slot=trinket1,if=dot.combustion.ticking|cooldown.combustion.remains>20
-actions+=/use_item,slot=trinket2,if=dot.combustion.ticking|cooldown.combustion.remains>20
-actions+=/berserking,if=!ticking|dot.pyroblast.ticking|dot.ignite.ticking
-actions+=/blood_fury,if=!ticking|dot.pyroblast.ticking|dot.ignite.ticking
-actions+=/arcane_torrent,if=mana.pct<96
+## Variables (State Expressions from Lua)
+# Proc State Variables
+actions+=/variable,name=has_instant,op=set,value=buff.hot_streak.up
+actions+=/variable,name=has_hu,op=set,value=buff.heating_up.up
+actions+=/variable,name=has_instant_hu,op=set,value=buff.hot_streak.up&buff.heating_up.up
+actions+=/variable,name=hu_to_hot,op=set,value=buff.heating_up.up
+actions+=/variable,name=no_ignite,op=set,value=!debuff.ignite.up
+actions+=/variable,name=ignite_active,op=set,value=debuff.ignite.up
+actions+=/variable,name=ignite_expiring,op=set,value=debuff.ignite.up&debuff.ignite.remains<2
 
-## Tier 5/6 Talents
-actions+=/living_bomb,if=talent.living_bomb.enabled&(!ticking|remains<3.6)&target.time_to_die>6
-actions+=/rune_of_power,if=talent.rune_of_power.enabled&!ticking&buff.rune_of_power.down
-actions+=/invocation,if=talent.invocation.enabled&buff.invocation.down
-actions+=/incanter_s_ward,if=talent.incanter_s_ward.enabled&!buff.incanter_s_ward.up
+# Timing Window Variables
+actions+=/variable,name=alter_time_ready,op=set,value=cooldown.alter_time.ready
+actions+=/variable,name=alter_time_soon,op=set,value=cooldown.alter_time.remains<6
+actions+=/variable,name=alter_time_dot_window,op=set,value=cooldown.alter_time.ready|cooldown.alter_time.remains>cooldown.alter_time.duration-8
 
-## AoE Rotation
-actions+=/flamestrike,if=active_enemies>=5
-actions+=/blast_wave,if=active_enemies>=3&talent.blast_wave.enabled
-actions+=/dragon_s_breath,if=active_enemies>=3
+# Combustion Threshold Variables
+actions+=/variable,name=combustion_ready_burst,op=set,value=buff.hot_streak.up&cooldown.alter_time.ready
+actions+=/variable,name=combustion_on_ignite,op=set,value=debuff.ignite.up&debuff.ignite.remains>1
+actions+=/variable,name=combustion_with_invocation,op=set,value=buff.invocation.up&cooldown.combustion.ready
+actions+=/variable,name=combustion_with_potions,op=set,value=0
+actions+=/variable,name=combustion_multidot_value,op=set,value=(debuff.ignite.up)+(debuff.living_bomb.up)+(debuff.nether_tempest.up)
 
-## Core Rotation
-actions+=/pyroblast,if=buff.pyroblast.up|buff.presence_of_mind.up
-actions+=/inferno_blast,if=buff.heating_up.up&(!dot.combustion.ticking|cooldown.combustion.remains>10)
-actions+=/alter_time,if=buff.alter_time.down&buff.pyroblast.react
-actions+=/fire_blast,if=!buff.heating_up.up&!buff.pyroblast.react&target.time_to_die>4
-actions+=/scorch,if=mana.pct<15|moving
+# Additional State Tracking Variables
+actions+=/variable,name=burn_phase_active,op=set,value=cooldown.combustion.remains<5|buff.combustion.up
+actions+=/variable,name=pooling_for_combustion,op=set,value=cooldown.combustion.remains<10&!buff.combustion.up
+
+## Core rotation
+# Cooldowns
+actions+=/time_warp,if=buff.bloodlust.down
+actions+=/use_item,slot=trinket1
+actions+=/use_item,slot=trinket2
+
+# Mana management
+actions+=/evocation,if=buff.rune_of_power.remains<=cast_time
+actions+=/evocation,if=mana.current<=30000
+
+# Rune of Power maintenance
+actions+=/rune_of_power,if=talent.rune_of_power.enabled&(!buff.rune_of_power.up|buff.rune_of_power.remains<=cast_time)
+
+# Synapse Springs with instant+heating up
+actions+=/use_item,slot=hands,if=cooldown.combustion.ready&buff.heating_up.up&buff.hot_streak.up
+
+# Combustion when ready with hot streak + heating up
+actions+=/combustion,if=cooldown.combustion.ready&(buff.hot_streak.up|buff.heating_up.up)|buff.combustion.up
+
+# Pyroblast priority with Heating Up + Hot Streak combo + trinkets
+actions+=/use_item,slot=hands,if=cooldown.combustion.ready&buff.hot_streak.up&buff.heating_up.up
+actions+=/combustion,if=cooldown.combustion.ready&buff.hot_streak.up&buff.heating_up.up,strict_sequence=1
+actions+=/pyroblast,if=cooldown.combustion.ready&buff.hot_streak.up&buff.heating_up.up,strict_sequence=1
+
+# Combustion with intelligent timing based on cooldown state
+actions+=/combustion,if=cooldown.combustion.ready&cooldown.alter_time.remains>=75
+
+# Pyroblast with Heating Up when Combustion available
+actions+=/pyroblast,if=buff.hot_streak.up&buff.heating_up.up&(buff.bloodlust.up|cooldown.combustion.remains<=5)
+
+# Pyroblast dump with Hot Streak only
+actions+=/pyroblast,if=buff.hot_streak.up&!buff.heating_up.up&cooldown.combustion.remains>=10
+actions+=/pyroblast,if=buff.hot_streak.up&!buff.heating_up.up&dot.pyroblast.remains<=2
+
+# Scorch to maintain Heating Up
+actions+=/scorch,if=!buff.heating_up.up&!buff.hot_streak.up
+
+# Multi-dotting
+actions+=/living_bomb,cycle_targets=1,max_cycle_targets=3,if=talent.living_bomb.enabled&!dot.living_bomb.ticking
+actions+=/nether_tempest,cycle_targets=1,max_cycle_targets=5,if=talent.nether_tempest.enabled&!dot.nether_tempest.ticking
+
+# Pyroblast with Hot Streak (primary filler)
+actions+=/pyroblast,if=buff.hot_streak.up
+
+# Fireball filler
 actions+=/fireball
-
-## Movement
-actions+=/fire_blast,moving=1
-actions+=/scorch,moving=1

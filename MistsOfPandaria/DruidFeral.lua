@@ -16,13 +16,82 @@ local Hekili = _G[ addon ]
 local class, state = Hekili.Class, Hekili.State
 
 local floor = math.floor
+local min, max = math.min, math.max
 local strformat = string.format
+local ipairs = ipairs
 
 local spec = Hekili:NewSpecialization(103, true)
 
 spec.name = "Feral"
 spec.role = "DAMAGER"
 spec.primaryStat = 2 -- Agility
+
+local function getSpecConfig()
+    local profile = Hekili.DB and Hekili.DB.profile
+    if not profile or not profile.specs then return nil end
+    profile.specs[ 103 ] = profile.specs[ 103 ] or {}
+    local specConfig = profile.specs[ 103 ]
+    specConfig.settings = specConfig.settings or {}
+    return specConfig
+end
+
+local function getSpecSettingRaw( key )
+    local specConfig = getSpecConfig()
+    if not specConfig then return nil end
+
+    local settings = specConfig.settings
+    if settings and settings[ key ] ~= nil then
+        return settings[ key ]
+    end
+
+    if specConfig[ key ] ~= nil then
+        return specConfig[ key ]
+    end
+
+    return nil
+end
+
+local function getSetting( key, default )
+    local value = getSpecSettingRaw( key )
+    if value == nil then
+        return default
+    end
+    return value
+end
+
+local function settingEnabled( key, default )
+    local value = getSpecSettingRaw( key )
+    if value == nil then
+        if default ~= nil then
+            return default ~= false
+        end
+        return true
+    end
+    return value ~= false
+end
+
+local function isSpellKnown( spellID )
+    if not spellID then return false end
+
+    if type( spellID ) == "table" then
+        for _, id in ipairs( spellID ) do
+            if isSpellKnown( id ) then
+                return true
+            end
+        end
+        return false
+    end
+
+    if IsPlayerSpell and IsPlayerSpell( spellID ) then
+        return true
+    end
+
+    if IsSpellKnown and IsSpellKnown( spellID, false ) then
+        return true
+    end
+
+    return false
+end
 
 -- Use MoP power type numbers instead of Enum
 -- Energy = 3, ComboPoints = 4, Rage = 1, Mana = 0 in MoP Classic
@@ -35,7 +104,7 @@ spec:RegisterResource( 0 ) -- Mana
 -- Add reset_precast hook for state management and form checking
 spec:RegisterHook( "reset_precast", function()
     -- Set safe default values to avoid errors
-    local current_form = GetShapeshiftForm() or 0
+    local current_form = GetShapeshiftForm and GetShapeshiftForm() or 0
     local current_energy = -1
     local current_cp = -1
     
@@ -57,12 +126,21 @@ spec:RegisterHook( "reset_precast", function()
     
     local cat_form_up = "nej"
 
-    -- Hantera form-buffen
-    if current_form == 3 then -- Cat Form
+    -- Handle form buff - check both form index and buff presence
+    if current_form == 3 then -- Cat Form index
+        applyBuff( "cat_form" )
+        cat_form_up = "JA"
+    elseif FindUnitBuffByID( "player", 768 ) then -- Cat Form spell ID as fallback
         applyBuff( "cat_form" )
         cat_form_up = "JA"
     else
         removeBuff( "cat_form" )
+    end
+
+    local eclipse = state.balance_eclipse
+    if eclipse then
+        eclipse.power = eclipse.power or 0
+        eclipse.direction = eclipse.direction or "solar"
     end
     
     -- Removed workaround sync - testing core issue
@@ -70,10 +148,37 @@ end )
 
 -- Additional debugging hook for when recommendations are generated
 spec:RegisterHook( "runHandler", function( ability )
-    -- Only log critical issues
-    if not ability then
-        -- Nil ability passed to runHandler
-        return
+    if not ability then return end
+
+    local action = ability
+    if type( ability ) == "table" then
+        action = ability.key or ability.action or ability[1]
+    end
+
+    local eclipse = state.balance_eclipse
+    if not eclipse then return end
+
+    local function clamp_power( power )
+        if power > 100 then return 100 end
+        if power < -100 then return -100 end
+        return power
+    end
+
+    if action == "wrath" then
+        eclipse.power = clamp_power( ( eclipse.power or 0 ) - 15 )
+        eclipse.direction = "solar"
+    elseif action == "starfire" then
+        eclipse.power = clamp_power( ( eclipse.power or 0 ) + 20 )
+        eclipse.direction = "lunar"
+    elseif action == "starsurge" then
+        if eclipse.direction == "lunar" then
+            eclipse.power = clamp_power( ( eclipse.power or 0 ) + 20 )
+        else
+            eclipse.power = clamp_power( ( eclipse.power or 0 ) - 20 )
+        end
+    elseif action == "celestial_alignment" then
+        eclipse.power = 0
+        eclipse.direction = "solar"
     end
 end )
 
@@ -187,11 +292,11 @@ spec:RegisterAuras( {
         max_stack = 1,
     },
     -- Engineering: Synapse Springs (Agi tinker) for FoN alignment
-    synapse_springs = {
-        id = 96228,
-        duration = 10,
-        max_stack = 1,
-    },
+   -- synapse_springs = {
+    --    id = 96228,
+    --    duration = 15,
+    --    max_stack = 1,
+    --},
     -- Dream of Cenarius damage bonus (used by APL sequences)
     dream_of_cenarius_damage = {
         id = 145152,
@@ -238,11 +343,105 @@ spec:RegisterAuras( {
         max_stack = 1
     },
     berserk = {
-        id = 106951,
+        id = 50334,
         duration = 15,
         max_stack = 1,
-        copy = { 106951, "berserk_cat" },
+        -- MoP clients have used different spell IDs for Berserk across builds.
+        -- Track both so buff/known checks and keybind scanning work reliably.
+        copy = { 106951, 50334 },
         multiplier = 1.5,
+    },
+    enrage = {
+        id = 5229,
+        duration = 10,
+        max_stack = 1,
+    },
+    savage_defense = {
+        id = 62606,
+        duration = 6,
+        max_stack = 3,
+    },
+    demoralizing_roar = {
+        id = 99,
+        duration = 30,
+        max_stack = 1,
+    },
+    -- Persistent display-only aura to indicate Nature's Swiftness availability.
+    -- IMPORTANT: Uses a distinct fake ID to avoid colliding with the real 10s buff (132158).
+    -- The APL only checks buff.natures_swiftness (10s) and remains unaffected by this.
+    natures_swiftness_passive = {
+        id = 1321580, -- fake ID to avoid state collisions
+        duration = 3600,
+        max_stack = 1,
+        name = "Nature's Swiftness (Passive)",
+    },
+    dream_of_cenarius_healing = {
+        id = 108374,
+        duration = 15,
+        max_stack = 2,
+    },
+    tooth_and_claw = {
+        id = 135286,
+        duration = 6,
+        max_stack = 2,
+    },
+    tooth_and_claw_debuff = {
+        id = 135601,
+        duration = 15,
+        max_stack = 1,
+    },
+    pulverize = {
+        id = 80313,
+        duration = 20,
+        max_stack = 1,
+    },
+    celestial_alignment = {
+        id = 112071,
+        duration = 15,
+        max_stack = 1,
+    },
+    incarnation_chosen_of_elune = {
+        id = 102560,
+        duration = 30,
+        max_stack = 1,
+    },
+    lunar_eclipse = {
+        id = 48518,
+        duration = 15,
+        max_stack = 1,
+    },
+    solar_eclipse = {
+        id = 48517,
+        duration = 15,
+        max_stack = 1,
+    },
+    shooting_stars = {
+        id = 93400,
+        duration = 12,
+        max_stack = 3,
+    },
+    lunar_shower = {
+        id = 81192,
+        duration = 6,
+        max_stack = 3,
+    },
+    wild_mushroom_stacks = {
+        id = 138094,
+        duration = 20,
+        max_stack = 3,
+    },
+    dream_of_cenarius = {
+        id = 145152,
+        duration = 30,
+        max_stack = 1,
+        copy = "dream_of_cenarius_damage",
+    },
+
+    natures_vigil = {
+        id = 124974,
+        duration = 30,
+        max_stack = 1,
+        type = "Magic",
     },
 
     incarnation_king_of_the_jungle = {
@@ -392,6 +591,40 @@ spec:RegisterAuras( {
         duration = 3600,
         max_stack = 1
     },
+    stealthed = {
+        id = 5215,
+        duration = 3600,
+        max_stack = 1,
+        generate = function( t )
+            local prowl_buff = buff.prowl
+            local incarnation_buff = buff.incarnation or buff.incarnation_king_of_the_jungle
+            local stealth_up = ( prowl_buff and prowl_buff.up ) or ( incarnation_buff and incarnation_buff.up )
+
+            t.up = stealth_up or false
+            t.down = not stealth_up
+            t.count = stealth_up and 1 or 0
+            t.caster = "player"
+
+            if prowl_buff and prowl_buff.up then
+                t.remains = prowl_buff.remains or 0
+                t.expires = prowl_buff.expires or 0
+                t.applied = prowl_buff.applied or 0
+            elseif incarnation_buff and incarnation_buff.up then
+                t.remains = incarnation_buff.remains or 0
+                t.expires = incarnation_buff.expires or 0
+                t.applied = incarnation_buff.applied or 0
+            else
+                t.remains = 0
+                t.expires = 0
+                t.applied = 0
+            end
+
+            t.all = stealth_up or false
+            t.prowl = prowl_buff and prowl_buff.up or false
+            t.incarnation = incarnation_buff and incarnation_buff.up or false
+            t.value = t.count
+        end,
+    },
     rake = {
         id = 1822, -- Correct Rake ID for MoP
         duration = 15,
@@ -399,6 +632,32 @@ spec:RegisterAuras( {
         mechanic = "bleed",
         max_stack = 1,
         copy = "rake_debuff",
+        meta = {
+            tick_dmg = function( t )
+                -- Return the snapshotted tick damage for the current Rake DoT
+                if not t.up then return 0 end
+                if get_bleed_snapshot_value then
+                    local stored = get_bleed_snapshot_value( "rake", t.unit )
+                    if stored and stored > 0 then
+                        return stored
+                    end
+                end
+                if predict_bleed_value then
+                    return predict_bleed_value( "rake", nil, t.unit )
+                end
+                return 0
+            end,
+            tick_damage = function( t )
+                -- Alias for consistency with SimC
+                return t.tick_dmg
+            end,
+            last_snapshot_contains_tigers_fury = function( t )
+                if not t.up then return false end
+                local snap = get_bleed_snapshot_record( t.unit )
+                if not snap then return false end
+                return snap.rake_has_tf or false
+            end,
+        },
     },
     regrowth = {
         id = 8936,
@@ -414,11 +673,37 @@ spec:RegisterAuras( {
     },
     rip = {
         id = 1079,
-
+        debuff = true,
         duration = function () return 4 + ( combo_points.current * 4 ) end,
         tick_time = 2,
         mechanic = "bleed",
         max_stack = 1,
+        meta = {
+            tick_dmg = function( t )
+                -- Return the snapshotted tick damage for the current Rip DoT
+                if not t.up then return 0 end
+                if get_bleed_snapshot_value then
+                    local stored = get_bleed_snapshot_value( "rip", t.unit )
+                    if stored and stored > 0 then
+                        return stored
+                    end
+                end
+                if predict_bleed_value then
+                    return predict_bleed_value( "rip", nil, t.unit )
+                end
+                return 0
+            end,
+            tick_damage = function( t )
+                -- Alias for consistency with SimC
+                return t.tick_dmg
+            end,
+            last_snapshot_contains_tigers_fury = function( t )
+                if not t.up then return false end
+                local snap = get_bleed_snapshot_record( t.unit )
+                if not snap then return false end
+                return snap.rip_has_tf or false
+            end,
+        },
     },
     shadowmeld = {
         id = 58984,
@@ -438,17 +723,26 @@ spec:RegisterAuras( {
     },
     thrash = {
         id = 106830,
+        debuff = true,
         duration = 15,
         tick_time = 3,
         mechanic = "bleed",
         max_stack = 1,
-        copy = {77758},
+        -- Cat-form Thrash only; bear-form Thrash tracked separately as 'thrash_bear'.
     },
 
+    -- Alias the cat-form Thrash debuff to the base Thrash entry so dot.thrash_cat reflects the in-game aura name.
     thrash_cat = {
-        id = 106830,
-        duration = 15,
-        tick_time = 3,
+        alias = { "thrash" },
+        aliasMode = "first",
+        aliasType = "debuff",
+    },
+    -- Bear-form Thrash (separate aura so we can gate bear exit reliably).
+    thrash_bear = {
+        id = 77758,
+        debuff = true,
+        duration = 16,
+        tick_time = 2,
         mechanic = "bleed",
         max_stack = 1,
     },
@@ -528,6 +822,21 @@ spec:RegisterAuras( {
         duration = 3600,
         max_stack = 1,
     },
+
+    -- Racial ability auras
+    blood_fury = {
+        id = 20572,
+        duration = 15,
+        max_stack = 1,
+        type = "Magic",
+    },
+
+    berserking = {
+        id = 26297,
+        duration = 10,
+        max_stack = 1,
+        type = "Magic",
+    },
 } )
 
 -- Move the spell ID mapping to after all registrations are complete
@@ -547,6 +856,7 @@ spec:RegisterEvent( "PLAYER_ENTERING_WORLD", function ()
             if not Hekili.DB.profile.specs[103] then
                 Hekili.DB.profile.specs[103] = {}
             end
+            Hekili.DB.profile.specs[103].settings = Hekili.DB.profile.specs[103].settings or {}
             Hekili.DB.profile.specs[103].enabled = true
             
             -- Set default package if none exists
@@ -573,7 +883,9 @@ end )
 
 -- Function to remove any form currently active.
 spec:RegisterStateFunction( "unshift", function()
-    if conduit.tireless_pursuit and conduit.tireless_pursuit.enabled and ( buff.cat_form.up or buff.travel_form.up ) then applyBuff( "tireless_pursuit" ) end
+    if conduit and conduit.tireless_pursuit and conduit.tireless_pursuit.enabled and ( buff.cat_form.up or buff.travel_form.up ) then
+        applyBuff( "tireless_pursuit" )
+    end
 
     removeBuff( "cat_form" )
     removeBuff( "bear_form" )
@@ -611,7 +923,7 @@ spec:RegisterHook( "runHandler", function( ability )
     local a = class.abilities[ ability ]
 
     if not a or a.startsCombat then
-        break_stealth()
+        state.break_stealth()
     end
 end )
 
@@ -629,6 +941,7 @@ end )
 local combo_generators = {
     rake              = true,
     shred             = true,
+    ravage            = true,
     swipe_cat         = true,
     thrash_cat        = true,
     mangle_cat        = true,
@@ -652,18 +965,25 @@ spec:RegisterStateTable( "druid", setmetatable( {},{
         -- MoP: No Primal Wrath or Lunar Inspiration
         elseif k == "primal_wrath" then return false
         elseif k == "lunar_inspiration" then return false
-        elseif k == "delay_berserking" then return state.settings.delay_berserking
+        elseif k == "delay_berserking" then return getSetting( "delay_berserking", nil )
         elseif debuff[ k ] ~= nil then return debuff[ k ]
         end
     end
 } ) )
 
--- MoP: Bleeding only considers Rake, Rip, and Thrash (no Thrash Bear for Feral).
+-- MoP: Bleeding considers Rake, Rip, Thrash (Cat), and Thrash (Bear) for gating decisions.
 spec:RegisterStateExpr( "bleeding", function ()
-    return debuff.rake.up or debuff.rip.up or debuff.thrash.up
+    return debuff.rake.up or debuff.rip.up or debuff.thrash_cat.up or debuff.thrash.up or ( debuff.thrash_bear and debuff.thrash_bear.up )
 end )
 
 -- MoP: Effective stealth is only Prowl or Incarnation (no Shadowmeld for snapshotting in MoP).
+spec:RegisterStateExpr( "stealthed_all", function ()
+    if buff.stealthed and buff.stealthed.all ~= nil then
+        return buff.stealthed.all
+    end
+    return buff.prowl.up or ( buff.incarnation and buff.incarnation.up )
+end )
+
 spec:RegisterStateExpr( "effective_stealth", function ()
     return buff.prowl.up or ( buff.incarnation and buff.incarnation.up )
 end )
@@ -671,6 +991,14 @@ end )
 -- Essential state expressions for APL functionality
 spec:RegisterStateExpr( "time_to_die", function ()
     return target.time_to_die or 300
+end )
+
+-- Skip DoTs on very short-lived non-boss targets.
+-- This is intentionally conservative: if time_to_die is unknown (defaults high), DoTs remain allowed.
+spec:RegisterStateExpr( "use_dots", function ()
+    if target.is_boss then return true end
+    local ttd = target.time_to_die or 300
+    return ttd >= 6
 end )
 
 spec:RegisterStateExpr( "spell_targets", function ()
@@ -755,7 +1083,7 @@ end )
 
 -- Check if we should pool energy for upcoming refreshes (based on SimC pool input)
 spec:RegisterStateExpr( "should_pool_energy", function()
-    local poolLevel = state.settings.pool or 0 -- 0=no pooling, 1=light, 2=heavy
+    local poolLevel = getSetting( "pool", 0 ) or 0 -- 0=no pooling, 1=light, 2=heavy
     
     if poolLevel == 0 then
         return false -- No pooling
@@ -916,7 +1244,6 @@ spec:RegisterStateExpr( "cat_excess_energy", function()
     local floatingEnergy = 0
     local simTimeRemain = target.time_to_die or 300
     local regenRate = energy.regen or 10
-    local currentTime = query_time or 0
     
     -- Create pooling actions array (enhanced version of WoWSims PoolingActions)
     local poolingActions = {}
@@ -949,11 +1276,12 @@ spec:RegisterStateExpr( "cat_excess_energy", function()
     table.sort(poolingActions, function(a, b) return a.refreshTime < b.refreshTime end)
     
     -- Calculate floating energy needed (enhanced algorithm from WoWSims)
-    local previousTime = currentTime
+    -- All refreshTime values here are relative offsets ("remains"), not absolute timestamps.
+    local previousTime = 0
     local tfPending = false
     
     for _, action in ipairs(poolingActions) do
-        local elapsedTime = action.refreshTime - previousTime
+        local elapsedTime = math.max( 0, action.refreshTime - previousTime )
         local energyGain = elapsedTime * regenRate
         
         -- Check if Tiger's Fury will be available before this refresh
@@ -1079,70 +1407,159 @@ spec:RegisterStateExpr( "thrash_aoe_efficient", function()
     return active_enemies >= 3 and buff.bear_form.up
 end )
 
--- Sophisticated bleed refresh timing (based on WoWSims calcBleedRefreshTime)
+-- WoWSims calcBleedRefreshTime with DPE clipping logic
 spec:RegisterStateExpr( "rake_refresh_time", function()
-    if not debuff.rake.up then
-        return 0 -- Refresh immediately if not up
-    end
+    if not debuff.rake.up then return 0 end
     
     local currentRemaining = debuff.rake.remains or 0
-    local tickLength = 3 -- Rake ticks every 3 seconds
+    local tickLength = 3
+    local standardRefreshTime = currentRemaining - tickLength
     
-    -- Check for snapshot improvements (simplified)
-    local hasSnapshotImprovement = rake_damage_increase_pct > 0.001
-    
-    if hasSnapshotImprovement then
-        return 0 -- Refresh immediately for snapshot
+    if buff.dream_of_cenarius_damage.up and (rake_damage_increase_pct > 0.001) then
+        return 0
+    end
+
+    -- Rune of Re-Origination: huge mastery spike. If it would improve our snapshot, take it immediately.
+    -- Only applies when Rune is actually equipped.
+    if has_roro_equipped and buff.rune_of_reorigination and buff.rune_of_reorigination.up and (rake_damage_increase_pct > 0.001) then
+        return 0
     end
     
-    -- Standard refresh: 1 tick before expiration, but return as time until refresh needed
-    local standardRefresh = currentRemaining - tickLength
+    -- If Synapse Springs are not actually available (non-engineers), ignore springs conditions entirely.
+    local function has_synapse_springs()
+        local spellName, spellID = GetInventoryItemSpell("player", INVSLOT_HAND)
+        if type(spellName) == "number" and not spellID then
+            spellID = spellName
+        end
+        if spellID == 82174 or spellID == 96228 or spellID == 96229 or spellID == 96230 or spellID == 126734 or spellID == 141330 then
+            return true
+        end
+        return false
+    end
+
+    if not buff.tigers_fury.up and not (has_synapse_springs() and buff.synapse_springs.up) and not (has_roro_equipped and buff.rune_of_reorigination and buff.rune_of_reorigination.up) then
+        return math.max(0, standardRefreshTime)
+    end
     
-    -- Return time until refresh is needed (0 = refresh now)
-    return math.max(0, standardRefresh)
+    local tempBuffRemains = math.huge
+    if buff.tigers_fury.up then tempBuffRemains = math.min( tempBuffRemains, buff.tigers_fury.remains ) end
+    if has_synapse_springs() and buff.synapse_springs.up then tempBuffRemains = math.min( tempBuffRemains, buff.synapse_springs.remains ) end
+    if has_roro_equipped and buff.rune_of_reorigination and buff.rune_of_reorigination.up then
+        tempBuffRemains = math.min( tempBuffRemains, buff.rune_of_reorigination.remains )
+    end
+    if tempBuffRemains == math.huge then tempBuffRemains = 0 end
+    
+    if tempBuffRemains > standardRefreshTime + 0.5 then
+        return math.max(0, standardRefreshTime)
+    end
+    
+    local latestPossibleSnapshot = tempBuffRemains - 0.2
+    if latestPossibleSnapshot <= 0 then return 0 end
+    
+    local numClippedTicks = math.floor((currentRemaining - latestPossibleSnapshot) / tickLength)
+    local targetClipTime = math.max(0, standardRefreshTime - (numClippedTicks * tickLength))
+    local fightRemaining = target.time_to_die or 300
+    local buffedTickCount = math.min(5, math.floor((fightRemaining - targetClipTime) / tickLength))
+    
+    local expectedDamageGain = rake_damage_increase_pct * (buffedTickCount + 1)
+    local shredDamagePerEnergy = 0.025
+    local energyEquivalent = expectedDamageGain / shredDamagePerEnergy
+    local discountedRefreshCost = 35 * (1.0 - (numClippedTicks / 5.0))
+    
+    if buff.berserk.up and buff.berserk.remains > targetClipTime + 0.5 then
+        return (expectedDamageGain > 0) and targetClipTime or math.max(0, standardRefreshTime)
+    else
+        return (energyEquivalent > discountedRefreshCost) and targetClipTime or math.max(0, standardRefreshTime)
+    end
 end )
 
 spec:RegisterStateExpr( "rip_refresh_time", function()
-    if not debuff.rip.up then
-        return 0 -- Refresh immediately
-    end
+    if not debuff.rip.up then return 0 end
     
     local currentRemaining = debuff.rip.remains or 0
-    local tickLength = 2 -- Rip ticks every 2 seconds
+    local tickLength = 2
+    local standardRefreshTime = currentRemaining - tickLength
     
-    -- Standard refresh: 1 tick before expiration
-    local standardRefresh = currentRemaining - tickLength
-    
-    -- Check for snapshot improvements (simplified)
-    local hasSnapshotImprovement = rip_damage_increase_pct > 0.001
-    
-    if hasSnapshotImprovement then
-        return 0 -- Refresh immediately for snapshot
+    if buff.dream_of_cenarius_damage.up and (rip_damage_increase_pct > 0.001) then
+        return 0
+    end
+
+    -- Rune of Re-Origination: huge mastery spike. If it would improve our snapshot, take it immediately.
+    -- Only applies when Rune is actually equipped.
+    if has_roro_equipped and buff.rune_of_reorigination and buff.rune_of_reorigination.up and (rip_damage_increase_pct > 0.001) then
+        return 0
     end
     
-    return math.max(0, standardRefresh)
+    local function has_synapse_springs()
+        local spellName, spellID = GetInventoryItemSpell("player", INVSLOT_HAND)
+        if type(spellName) == "number" and not spellID then
+            spellID = spellName
+        end
+        if spellID == 82174 or spellID == 96228 or spellID == 96229 or spellID == 96230 or spellID == 126734 or spellID == 141330 then
+            return true
+        end
+        return false
+    end
+
+    if not buff.tigers_fury.up and not (has_synapse_springs() and buff.synapse_springs.up) and not (has_roro_equipped and buff.rune_of_reorigination and buff.rune_of_reorigination.up) then
+        return math.max(0, standardRefreshTime)
+    end
+    
+    if combo_points.current < 5 then
+        return math.max(0, standardRefreshTime)
+    end
+    
+    local tempBuffRemains = math.huge
+    if buff.tigers_fury.up then tempBuffRemains = math.min( tempBuffRemains, buff.tigers_fury.remains ) end
+    if has_synapse_springs() and buff.synapse_springs.up then tempBuffRemains = math.min( tempBuffRemains, buff.synapse_springs.remains ) end
+    if has_roro_equipped and buff.rune_of_reorigination and buff.rune_of_reorigination.up then
+        tempBuffRemains = math.min( tempBuffRemains, buff.rune_of_reorigination.remains )
+    end
+    if tempBuffRemains == math.huge then tempBuffRemains = 0 end
+    
+    if tempBuffRemains > standardRefreshTime + 0.5 then
+        return math.max(0, standardRefreshTime)
+    end
+    
+    local latestPossibleSnapshot = tempBuffRemains - 0.2
+    if latestPossibleSnapshot <= 0 then return 0 end
+    
+    local numClippedTicks = math.floor((currentRemaining - latestPossibleSnapshot) / tickLength)
+    local targetClipTime = math.max(0, standardRefreshTime - (numClippedTicks * tickLength))
+    local fightRemaining = target.time_to_die or 300
+    local maxRipTicks = 12
+    local buffedTickCount = math.min(maxRipTicks, math.floor((fightRemaining - targetClipTime) / tickLength))
+    
+    local expectedDamageGain = rip_damage_increase_pct * buffedTickCount
+    local shredDamagePerEnergy = 0.025
+    local energyEquivalent = expectedDamageGain / shredDamagePerEnergy
+    local discountedRefreshCost = 20 * (numClippedTicks / maxRipTicks)
+    
+    if buff.berserk.up and buff.berserk.remains > targetClipTime + 0.5 then
+        return (expectedDamageGain > 0) and targetClipTime or math.max(0, standardRefreshTime)
+    else
+        return (energyEquivalent > discountedRefreshCost) and targetClipTime or math.max(0, standardRefreshTime)
+    end
 end )
 
--- Tiger's Fury energy threshold with reaction time (based on WoWSims calcTfEnergyThresh)
+-- WoWSims calcTfEnergyThresh
 spec:RegisterStateExpr( "tf_energy_threshold_advanced", function()
-    local reactionTime = 0.1 -- 100ms reaction time
+    local reactionTime = 0.1
     local clearcastingDelay = buff.clearcasting.up and 1.0 or 0.0
     local totalDelay = reactionTime + clearcastingDelay
-    
-    -- Energy threshold: 40 - (delay_time * regen_rate)
-    local threshold = 40 - (totalDelay * energy.regen)
-    
-    return math.max(0, threshold)
+    local threshold = math.max( 0, 40 - (totalDelay * (energy.regen or 0)) )
+
+    if settingEnabled( "use_healing_touch", true ) and buff.dream_of_cenarius_damage.up and ( combo_points.current == 5 ) then
+        return 100
+    end
+
+    return threshold
 end )
 
--- Advanced Tiger's Fury timing logic
 spec:RegisterStateExpr( "tf_timing", function()
     if cooldown.tigers_fury.ready then
-        -- Use advanced energy threshold
         return energy.current <= tf_energy_threshold_advanced
     end
-    
-    -- Don't wait too long for TF if we need energy now
     return energy.current <= 20 and cooldown.tigers_fury.remains <= 3
 end )
 
@@ -1196,6 +1613,144 @@ end )
 
 spec:RegisterStateExpr( "behind_target", function ()
     return UnitExists("target") and UnitExists("targettarget") and UnitGUID("targettarget") ~= UnitGUID("player")
+end )
+
+
+spec:RegisterStateExpr( "shred_position_ok", function ()
+    if behind_target then return true end
+
+    local stealthed = buff.stealthed.up or buff.prowl.up or buff.shadowmeld.up
+    if stealthed then return true end
+
+    local incarnation = buff.incarnation_king_of_the_jungle or buff.incarnation
+    if incarnation and incarnation.up then
+        return true
+    end
+
+    if debuff.mighty_bash.up or debuff.maim.up or debuff.incapacitating_roar.up or debuff.pulverize.up then
+        return true
+    end
+
+    return false
+end )
+
+-- Missing state expressions for APL functionality
+-- combo_points_for_rip defined later with execute-phase logic
+
+spec:RegisterStateExpr( "rake_stronger", function ()
+    if not debuff.rake.up then return true end
+    -- Check if new Rake would be stronger (TF buff active)
+    return buff.tigers_fury.up and not debuff.rake.last_snapshot_contains_tigers_fury
+end )
+
+spec:RegisterStateExpr( "rip_stronger", function ()
+    if not debuff.rip.up then return true end
+    -- Check if new Rip would be stronger (TF buff active)
+    return buff.tigers_fury.up and not debuff.rip.last_snapshot_contains_tigers_fury
+end )
+
+spec:RegisterStateExpr( "delay_rip_for_tf", function ()
+    -- Don't delay if TF is on cooldown or already up
+    if has_roro_equipped and buff.rune_of_reorigination and buff.rune_of_reorigination.up then return false end
+    if cooldown.tigers_fury.remains > 3 or buff.tigers_fury.up then return false end
+    -- Delay if TF is coming up soon
+    return cooldown.tigers_fury.remains < 1.5
+end )
+
+spec:RegisterStateExpr( "delay_rake_for_tf", function ()
+    -- Don't delay if TF is on cooldown or already up
+    if has_roro_equipped and buff.rune_of_reorigination and buff.rune_of_reorigination.up then return false end
+    if cooldown.tigers_fury.remains > 3 or buff.tigers_fury.up then return false end
+    -- Delay if TF is coming up soon
+    return cooldown.tigers_fury.remains < 1.5
+end )
+
+spec:RegisterStateExpr( "clip_rip_with_snapshot", function ()
+    -- Allow clipping Rip if we have a better snapshot (Dream of Cenarius, etc)
+    return buff.dream_of_cenarius_damage.up and (rip_damage_increase_pct > 0.001)
+end )
+
+spec:RegisterStateExpr( "clip_rake_with_snapshot", function ()
+    -- Allow clipping Rake if we have a better snapshot
+    return buff.dream_of_cenarius_damage.up and (rake_damage_increase_pct > 0.001)
+end )
+
+spec:RegisterStateExpr( "disable_shred_when_solo", function ()
+    return getSetting( "disable_shred_when_solo", false )
+end )
+
+spec:RegisterStateExpr( "should_wrath_weave", function ()
+    -- Check if we should wrath weave (Heart of the Wild active)
+    return buff.heart_of_the_wild.up and getSetting( "wrath_weaving_enabled", false )
+end )
+
+-- Removed simplistic bear weave expression (energy.current > 80). Advanced logic defined later at bottom of file.
+-- This placeholder prevents duplicate registration from creating conflicting behavior.
+-- See the later spec:RegisterStateExpr("should_bear_weave") near bearweave_trigger_ok for actual conditions.
+
+
+spec:RegisterStateExpr( "berserk_clip_for_hotw", function ()
+    -- Allow Berserk clipping for Heart of the Wild alignment
+    if not talent.heart_of_the_wild.enabled then return false end
+    return cooldown.heart_of_the_wild.remains < 5 and buff.berserk.remains < 5
+end )
+
+-- Setting-based state expressions
+spec:RegisterStateExpr( "maintain_ff", function ()
+    return getSetting( "maintain_ff", false )
+end )
+
+spec:RegisterStateExpr( "opt_bear_weave", function ()
+    return getSetting( "opt_bear_weave", true )
+end )
+
+spec:RegisterStateExpr( "opt_wrath_weave", function ()
+    return getSetting( "opt_wrath_weave", false )
+end )
+
+spec:RegisterStateExpr( "opt_snek_weave", function ()
+    return getSetting( "opt_snek_weave", false )
+end )
+
+spec:RegisterStateExpr( "opt_use_ns", function ()
+    return getSetting( "opt_use_ns", true )
+end )
+
+spec:RegisterStateExpr( "opt_melee_weave", function ()
+    return getSetting( "opt_melee_weave", false )
+end )
+
+spec:RegisterStateExpr( "use_trees", function ()
+    return getSetting( "use_trees", true )
+end )
+
+spec:RegisterStateExpr( "use_hotw", function ()
+    return getSetting( "use_hotw", true )
+end )
+
+-- Damage increase calculations for snapshot comparisons
+spec:RegisterStateExpr( "rake_damage_increase_pct", function ()
+    if not debuff.rake.up then return 1.0 end
+    local current_tf = debuff.rake.last_snapshot_contains_tigers_fury and 1.15 or 1.0
+    local new_tf = buff.tigers_fury.up and 1.15 or 1.0
+    return (new_tf - current_tf) / current_tf
+end )
+
+spec:RegisterStateExpr( "rip_damage_increase_pct", function ()
+    if not debuff.rip.up then return 1.0 end
+    local current_tf = debuff.rip.last_snapshot_contains_tigers_fury and 1.15 or 1.0
+    local new_tf = buff.tigers_fury.up and 1.15 or 1.0
+    return (new_tf - current_tf) / current_tf
+end )
+
+-- Tiger's Fury prediction (based on WoWSims)
+spec:RegisterStateFunction( "tf_expected_before", function( seconds )
+    if seconds == nil then seconds = 0 end
+    if buff.tigers_fury.up then return true end
+    if cooldown.tigers_fury.remains > seconds then return false end
+    
+    -- Simple prediction: TF is expected if it's off cooldown or will be within the window
+    return cooldown.tigers_fury.remains <= seconds
 end )
 
 
@@ -1260,25 +1815,13 @@ end )
 
 -- Abilities (MoP version, updated)
 spec:RegisterAbilities( {
-    -- Maintain armor debuff (controlled by maintain_ff toggle)
-    faerie_fire= {
-        id = 16857,
-        copy = { 770 },
-        cast = 0,
-        cooldown = 6,
-        gcd = "spell",
-        school = "physical",
-        texture = 136033,
-        startsCombat = true,
-        handler = function()
-            applyDebuff("target", "faerie_fire")
-        end,
-    },
+    -- Maintain armor debuff (controlled by maintain_ff toggle).
+    -- In MoP/Classic this can appear as 770 (Faerie Fire) and/or 16857 (Faerie Fire (Feral)).
     -- Debug ability that should always be available for testing
     savage_roar = {
         -- Use dynamic ID so keybinds match action bar (glyphed vs base)
         id = function()
-            if IsSpellKnown and IsSpellKnown(127568) then return 127568 end
+            if IsSpellKnown and IsSpellKnown(127568, false) then return 127568 end
             return 52610
         end,
         copy = { 52610, 127568, 127538, 127539, 127540, 127541 },
@@ -1309,17 +1852,28 @@ spec:RegisterAbilities( {
         spendType = "energy",
         startsCombat = true,
         form = "cat_form",
+        known = function()
+            return isSpellKnown( { 33876, 33917 } )
+        end,
         handler = function()
             gain(1, "combo_points")
         end,
     },
     faerie_fire_feral = {
         id = 770,
+        copy = { 16857 },
         cast = 0,
         cooldown = 6,
         gcd = "spell",
         school = "physical",
+        texture = 136033,
         startsCombat = true,
+        usable = function()
+            if not settingEnabled( "maintain_ff", true ) then
+                return false, "maintain_ff disabled"
+            end
+            return true
+        end,
 
         handler = function()
             applyDebuff("target", "faerie_fire")
@@ -1327,12 +1881,21 @@ spec:RegisterAbilities( {
     },
     -- Alias for SimC import token
     faerie_fire = {
+        key = "faerie_fire_feral",
         id = 770,
+        copy = { 16857 },
         cast = 0,
         cooldown = 6,
         gcd = "spell",
         school = "physical",
+        texture = 136033,
         startsCombat = true,
+        usable = function()
+            if not settingEnabled( "maintain_ff", true ) then
+                return false, "maintain_ff disabled"
+            end
+            return true
+        end,
         handler = function()
             applyDebuff("target", "faerie_fire")
         end,
@@ -1350,6 +1913,7 @@ spec:RegisterAbilities( {
     },
     healing_touch = {
         id = 5185,
+        texture = function() return GetSpellTexture( 5185 ) end,
         cast = function()
             if buff.natures_swiftness.up or buff.predatory_swiftness.up then return 0 end
             return 2.5 * haste
@@ -1366,6 +1930,7 @@ spec:RegisterAbilities( {
         end,
         handler = function()
             if buff.natures_swiftness.up then removeBuff("natures_swiftness") end
+            if buff.predatory_swiftness.up then removeBuff("predatory_swiftness") end
             -- no HoT; just consume NS on CD and return to cat
             if talent.dream_of_cenarius and talent.dream_of_cenarius.enabled then
                 applyBuff( "dream_of_cenarius_damage" )
@@ -1393,7 +1958,9 @@ spec:RegisterAbilities( {
         cooldown = 60,
         gcd = "off",
         school = "nature",
+        toggle = "defensives",
         startsCombat = false,
+
         handler = function ()
             applyBuff( "barkskin" )
         end
@@ -1425,12 +1992,17 @@ spec:RegisterAbilities( {
         gcd = "off",
         school = "physical",
         startsCombat = false,
-        toggle = "cooldowns",
+        texture = 236149,
+
+        known = function()
+            return isSpellKnown( { 106951, 50334, 106952 } )
+        end,
+
         handler = function ()
             if buff.cat_form.down then shift( "cat_form" ) end
             applyBuff( "berserk" )
         end,
-        copy = { "berserk_cat" }
+        copy = { 50334, 106952 }
     },
 
     -- Cat Form: Shapeshift into Cat Form.
@@ -1549,8 +2121,9 @@ spec:RegisterAbilities( {
         gcd = "off",
         school = "physical",
         talent = "incarnation_king_of_the_jungle",
-        startsCombat = false,
         toggle = "cooldowns",
+        startsCombat = false,
+    
         handler = function ()
             if buff.cat_form.down then shift( "cat_form" ) end
             applyBuff( "incarnation_king_of_the_jungle" )
@@ -1648,13 +2221,24 @@ spec:RegisterAbilities( {
         spendType = "energy",
         startsCombat = true,
         form = "cat_form",
+        -- Prevent unnecessary reapplications: only recommend when we're refreshing or have a stronger snapshot.
+        usable = function ()
+            -- If Rake is already up, only allow if it's time to refresh or our new snapshot would be stronger.
+            if debuff.rake.up then
+                -- Allow early clip if the calculated refresh time is now or sooner.
+                if rake_refresh_time <= 0 then return true end
+                -- Allow explicit snapshot clipping (e.g., DoC snapshot logic).
+                if clip_rake_with_snapshot then return true end
+                -- Otherwise, block the reapplication.
+                return false, "rake not ready to refresh"
+            end
+            return true
+        end,
 
         handler = function ()
             applyDebuff( "target", "rake" )
             gain( 1, "combo_points" )
-            local snap = bleed_snapshot[ target.unit ]
-            snap.rake_mult = current_bleed_multiplier()
-            snap.rake_time = query_time
+            store_bleed_snapshot( "rake" )
         end,
     },
 
@@ -1687,6 +2271,7 @@ spec:RegisterAbilities( {
         cooldown = 60,
         gcd = "off",
         school = "nature",
+        toggle = "cooldowns",
         startsCombat = false,
         handler = function()
             applyBuff( "natures_swiftness" )
@@ -1726,11 +2311,13 @@ spec:RegisterAbilities( {
             return combo_points.current > 0
         end,
         handler = function ()
+            local cp = combo_points.current or 0
+            local snapshot_cp = max( cp, 1 )
             applyDebuff( "target", "rip" )
-            spend( combo_points.current, "combo_points" )
-            local snap = bleed_snapshot[ target.unit ]
-            snap.rip_mult = current_bleed_multiplier()
-            snap.rip_time = query_time
+            if cp > 0 then
+                spend( cp, "combo_points" )
+            end
+            store_bleed_snapshot( "rip", snapshot_cp )
         end,
     },
 
@@ -1747,6 +2334,30 @@ spec:RegisterAbilities( {
         spendType = "energy",
         startsCombat = true,
         form = "cat_form",
+        usable = function ()
+            if shred_position_ok then
+                return true
+            end
+
+            return false, "requires position or control"
+        end,
+        handler = function ()
+            gain( 1, "combo_points" )
+        end,
+    },
+
+    -- Ravage: High-damage opener used from stealth or Incarnation.
+    ravage = {
+        id = 6785,
+        copy = { 102545 }, -- Ravage! free-cast variant
+        cast = 0,
+        cooldown = 0,
+        gcd = "totem",
+        school = "physical",
+        spend = 60,
+        spendType = "energy",
+        startsCombat = true,
+        form = "cat_form",
         handler = function ()
             gain( 1, "combo_points" )
         end,
@@ -1754,22 +2365,31 @@ spec:RegisterAbilities( {
 
     -- Skull Bash: Interrupts spellcasting.
     skull_bash = {
-        id = 80965,
+        id = 106839,
+        copy = { 80965, 80964 },
         cast = 0,
         cooldown = 10,
         gcd = "off",
         school = "physical",
-        startsCombat = false,
         toggle = "interrupts",
+        startsCombat = false,
+    
         interrupt = true,
         form = function ()
             return buff.bear_form.up and "bear_form" or "cat_form"
         end,
         debuff = "casting",
         readyTime = state.timeToInterrupt,
+        known = function()
+            return isSpellKnown( { 106839, 80965, 80964 } )
+        end,
         handler = function ()
             interrupt()
         end,
+    },
+
+    skull_bash_cat = {
+        copy = "skull_bash",
     },
 
     -- Survival Instincts: Reduces all damage taken by 50% for 6 sec.
@@ -1779,7 +2399,9 @@ spec:RegisterAbilities( {
         cooldown = 180,
         gcd = "off",
         school = "physical",
+        toggle = "defensives",
         startsCombat = false,
+
         handler = function ()
             applyBuff( "survival_instincts" )
         end,
@@ -1795,12 +2417,23 @@ spec:RegisterAbilities( {
         spend = 40,
         spendType = "energy",
         startsCombat = true,
+        -- Use a fixed icon so the recommendation never falls back to a question mark.
+        texture = 451161,
         form = "cat_form",
+
+        known = function()
+            return isSpellKnown( { 106830, 106832, 77758 } )
+        end,
+
         handler = function ()
+            -- Apply the in-game Thrash aura; thrash_cat is aliased to thrash for dot checks.
             applyDebuff( "target", "thrash" )
             applyDebuff( "target", "weakened_blows" )
             gain( 1, "combo_points" )
+            store_bleed_snapshot( "thrash" )
         end,
+        -- Expose the cat-form Thrash spell ID (106832 is an alternate ID for Thrash in some sources).
+        copy = { 106832 },
     },
     thrash_bear = {
         id = 77758,
@@ -1813,11 +2446,20 @@ spec:RegisterAbilities( {
         startsCombat = true,
         form = "bear_form",
         handler = function ()
-            applyDebuff( "target", "thrash" )
+            applyDebuff( "target", "thrash_bear" )
             applyDebuff( "target", "weakened_blows" )
-            gain( 1, "combo_points" )
+            -- Snapshot the bear Thrash separately for weave timing logic.
+            store_bleed_snapshot( "thrash_bear" )
+            state.last_bear_thrash_time = query_time
+            state.bear_thrash_casted = true
         end,
     },
+
+    -- Simple alias so any references to "thrash" resolve to the cat-form ability by default.
+    -- thrash = {
+        --copy = "thrash_cat",
+    --},
+
     -- Tiger's Fury: Instantly restores 60 Energy and increases damage done by 15% for 6 sec.
     tigers_fury = {
         id = 5217,
@@ -1825,10 +2467,12 @@ spec:RegisterAbilities( {
         cooldown = 30,
         gcd = "off",
         school = "physical",
+        toggle = "cooldowns",
+        texture = function() return GetSpellTexture( 5217 ) end,
         spend = -60,
         spendType = "energy",
         startsCombat = false,
-        
+
         usable = function()
             return not buff.berserk.up, "cannot use while Berserk is active"
         end,
@@ -1837,15 +2481,14 @@ spec:RegisterAbilities( {
             shift( "cat_form" )
             applyBuff( "tigers_fury" )
         end,
-    },
-
-    -- Swipe (Cat): Swipe nearby enemies, dealing damage and awarding 1 combo point.
+    },    -- Swipe (Cat): Swipe nearby enemies, dealing damage and awarding 1 combo point.
     swipe_cat = {
         id = 62078,
         cast = 0,
         cooldown = 0,
         gcd = "totem",
         school = "physical",
+        texture = 62078,
         spend = 45,
         spendType = "energy",
         startsCombat = true,
@@ -1905,6 +2548,8 @@ spec:RegisterAbilities( {
         gcd = "off",
         school = "nature",
         talent = "heart_of_the_wild",
+        toggle = "cooldowns",
+    
         startsCombat = false,
         handler = function ()
             applyBuff( "heart_of_the_wild" )
@@ -1919,6 +2564,7 @@ spec:RegisterAbilities( {
         gcd = "off",
         school = "nature",
         talent = "renewal",
+        toggle = "defensives",
         startsCombat = false,
         handler = function ()
             -- Healing handled by game
@@ -1927,16 +2573,21 @@ spec:RegisterAbilities( {
 
     -- Force of Nature (MoP talent): Summons treants to assist in combat.
     force_of_nature = {
-        id = 102703,
+        id = 106737,
         cast = 0,
         cooldown = 60,
+        charges = 3,
+        recharge = 20,
         gcd = "spell",
         school = "nature",
         talent = "force_of_nature",
+        toggle = "cooldowns",
+    
         startsCombat = true,
         handler = function ()
             -- Summon handled by game
         end,
+        copy = 102703, -- Alternative spell ID for MoP Classic
     },
 
     -- Shadowmeld: Night Elf racial ability
@@ -1947,8 +2598,45 @@ spec:RegisterAbilities( {
         gcd = "off",
         school = "physical",
         startsCombat = false,
+        known = function()
+            return isSpellKnown( 58984 )
+        end,
         handler = function ()
             applyBuff( "shadowmeld" )
+        end,
+    },
+
+    -- Blood Fury: Orc racial ability
+    blood_fury = {
+        id = 20572,
+        cast = 0,
+        cooldown = 120,
+        gcd = "off",
+        school = "physical",
+        toggle = "cooldowns",
+        startsCombat = false,
+        known = function()
+            return isSpellKnown( 20572 )
+        end,
+        handler = function ()
+            applyBuff( "blood_fury" )
+        end,
+    },
+
+    -- Berserking: Troll racial ability
+    berserking = {
+        id = 26297,
+        cast = 0,
+        cooldown = 180,
+        gcd = "off",
+        school = "physical",
+        toggle = "cooldowns",
+        startsCombat = false,
+        known = function()
+            return isSpellKnown( 26297 )
+        end,
+        handler = function ()
+            applyBuff( "berserking" )
         end,
     },
 
@@ -1971,10 +2659,10 @@ spec:RegisterAbilities( {
     mangle_bear = {
         id = 33878,
         cast = 0,
-        cooldown = 0,
-        gcd = "totem",
+        cooldown = 6,
+        gcd = "spell",
         school = "physical",
-        spend = 20,
+        spend = -5, -- generates rage in Bear
         spendType = "rage",
         startsCombat = true,
         form = "bear_form",
@@ -2002,9 +2690,9 @@ spec:RegisterAbilities( {
         id = 33745,
         cast = 0,
         cooldown = 0,
-        gcd = "totem",
+        gcd = "spell",
         school = "physical",
-        spend = 15,
+        spend = 0,
         spendType = "rage",
         startsCombat = true,
         form = "bear_form",
@@ -2033,44 +2721,6 @@ spec:RegisterAuras( {
         max_stack = 1,
     },
 } )
-
--- Auras for advanced techniques
-spec:RegisterAuras( {
-    lacerate = {
-        id = 33745,
-        duration = 15,
-        tick_time = 3,
-        mechanic = "bleed",
-        max_stack = 3,
-    },
-
-    -- Bear Form specific auras
-    bear_form_weaving = {
-        duration = 3600,
-        max_stack = 1,
-    },
-} )
-
--- State expressions for advanced techniques
-spec:RegisterStateExpr( "should_bear_weave", function()
-    if not state.settings.bear_weaving_enabled then return false end
-    
-    -- Bear-weave when energy is high and we're not in immediate danger
-    return energy.current >= 80 and 
-           not buff.berserk.up and 
-           not buff.incarnation_king_of_the_jungle.up and
-           target.time_to_die > 10
-end )
-
-spec:RegisterStateExpr( "should_wrath_weave", function()
-    if not state.settings.wrath_weaving_enabled then return false end
-    
-    -- Wrath-weave during Heart of the Wild when not in combat forms
-    return buff.heart_of_the_wild.up and 
-           not buff.cat_form.up and 
-           not buff.bear_form.up and
-           mana.current >= 0.06 * mana.max
-end )
 
 -- Settings for advanced techniques
 spec:RegisterSetting( "bear_weaving_enabled", false, {
@@ -2111,14 +2761,7 @@ spec:RegisterSetting( "opt_use_ns", false, {
     width = "full"
 } )
 
-spec:RegisterSetting( "opt_melee_weave", true, {
-    name = "Melee-Weave Focus ",
-    desc = "Prefer Cat Form melee time; monocat keeps this on while other weaves are off.",
-    type = "toggle",
-    width = "full"
-} )
-
-spec:RegisterRanges( "rake", "shred", "skull_bash", "growl", "moonfire" )
+spec:RegisterRanges( "rake", "shred", "ravage", "skull_bash", "growl", "moonfire" )
 
 spec:RegisterOptions( {
     enabled = true,
@@ -2148,7 +2791,7 @@ spec:RegisterSetting( "disable_shred_when_solo", false, {
 } )
 
 -- Feature toggles
-spec:RegisterSetting( "use_trees", false, {
+spec:RegisterSetting( "use_trees", true, {
     type = "toggle",
     name = "Use Force of Nature",
     desc = "If checked, Force of Nature will be used on cooldown.",
@@ -2167,6 +2810,14 @@ spec:RegisterSetting( "pool", 1, {
     desc = "Controls how aggressively the rotation pools energy for optimal timing.\n0 = No pooling (cast immediately)\n1 = Light pooling (pool for major abilities)\n2 = Heavy pooling (optimal rotation timing)",
     type = "select",
     values = { [0] = "No Pooling", [1] = "Light Pooling", [2] = "Heavy Pooling" },
+    width = "full",
+} )
+
+-- Use Healing Touch (WoWSims parity)
+spec:RegisterSetting( "use_healing_touch", true, {
+    name = "Use Healing Touch (DoC)",
+    desc = "Enable Healing Touch usage for Dream of Cenarius snapshotting logic.",
+    type = "toggle",
     width = "full",
 } )
 
@@ -2190,12 +2841,33 @@ spec:RegisterSetting( "regrowth", true, {
     width = "full",
 } )
 
+-- Enable/disable Ferocious Bite in rotation (mapped to user's setting key)
+spec:RegisterSetting( "ferociousbite_enabled", true, {
+    name = "Enable Ferocious Bite",
+    desc = "If checked, Ferocious Bite can be recommended when conditions are met.",
+    type = "toggle",
+    width = "full",
+} )
+
+-- Expose Ferocious Bite enable flag and bite thresholds for APL expressions
+spec:RegisterStateExpr( "ferociousbite_enabled", function()
+    return settingEnabled( "ferociousbite_enabled", true )
+end )
+
+spec:RegisterStateExpr( "min_bite_rip_remains", function()
+    return getSetting( "min_bite_rip_remains", 11 ) or 11
+end )
+
+spec:RegisterStateExpr( "min_bite_sr_remains", function()
+    return getSetting( "min_bite_sr_remains", 11 ) or 11
+end )
+
 spec:RegisterVariable( "regrowth", function()
-    return state.settings.regrowth ~= false
+    return settingEnabled( "regrowth", true )
 end )
 
 spec:RegisterStateExpr( "filler_regrowth", function()
-    return state.settings.regrowth ~= false
+    return settingEnabled( "regrowth", true )
 end )
 
 spec:RegisterSetting( "solo_prowl", false, {
@@ -2242,14 +2914,23 @@ spec:RegisterVariable( "pool_energy", function()
 end )
 
 spec:RegisterVariable( "lazy_swipe", function()
-    return state.settings.lazy_swipe ~= false
+    return settingEnabled( "lazy_swipe", false )
 end )
 
 spec:RegisterVariable( "solo_prowl", function()
-    return state.settings.solo_prowl ~= false
+    return settingEnabled( "solo_prowl", false )
 end )
 
 -- Bleed snapshot tracking (minimal: Tiger's Fury multiplier)
+spec:RegisterStateTable( "balance_eclipse", {
+    power = 0,
+    direction = "solar",
+    reset = function( t )
+        t.power = 0
+        t.direction = "solar"
+    end
+} )
+
 spec:RegisterStateTable( "bleed_snapshot", setmetatable( {
     cache = {},
     reset = function( t )
@@ -2260,79 +2941,331 @@ spec:RegisterStateTable( "bleed_snapshot", setmetatable( {
         if not t.cache[ k ] then
             t.cache[ k ] = {
                 rake_mult = 0,
+                rake_value = 0,
+                rake_ap = 0,
                 rip_mult = 0,
+                rip_value = 0,
+                rip_ap = 0,
+                rip_cp = 0,
                 rake_time = 0,
                 rip_time = 0,
+                thrash_mult = 0,
+                thrash_value = 0,
+                thrash_ap = 0,
+                thrash_time = 0,
             }
         end
         return t.cache[ k ]
     end
 } ) )
 
+local function resolve_bleed_snapshot_unit( unit )
+    if unit ~= nil then
+        return unit
+    end
+    if state.target and state.target.unit then
+        return state.target.unit
+    end
+    return "target"
+end
+
+local function get_bleed_snapshot_record( unit )
+    unit = resolve_bleed_snapshot_unit( unit )
+    local container = state and state.bleed_snapshot
+    if not container then return nil, unit end
+    return container[ unit ], unit
+end
+
 spec:RegisterStateFunction( "current_bleed_multiplier", function()
-    -- Primary MoP snapshot driver is Tiger's Fury (1.15)
-    local tf = ( buff.tigers_fury and buff.tigers_fury.up ) and 1.15 or 1
-    return tf
+    local mult = 1.0
+    
+    if buff.tigers_fury and buff.tigers_fury.up then
+        mult = mult * 1.15
+    end
+    
+    if buff.savage_roar and buff.savage_roar.up then
+        mult = mult * 1.45
+    end
+    
+    if buff.dream_of_cenarius_damage and buff.dream_of_cenarius_damage.up then
+        mult = mult * 1.30
+    end
+
+    if buff.synapse_springs and buff.synapse_springs.up then
+        mult = mult * 1.065
+    end
+
+    if buff.natures_vigil and buff.natures_vigil.up then
+        mult = mult * 1.12
+    end
+    
+    return mult
+end )
+
+local function resolve_attack_power()
+    if state.stat and state.stat.attack_power and state.stat.attack_power > 0 then
+        return state.stat.attack_power
+    end
+
+    if UnitAttackPower then
+        local base, pos, neg = UnitAttackPower( "player" )
+        if base then
+            return ( base or 0 ) + ( pos or 0 ) - ( neg or 0 )
+        end
+    end
+
+    return 0
+end
+
+local function current_mastery_value()
+    if state.stat and state.stat.mastery_value and state.stat.mastery_value > 0 then
+        return state.stat.mastery_value
+    end
+
+    if GetMasteryEffect then
+        local mastery = GetMasteryEffect()
+        if mastery then return mastery end
+    end
+
+    return 0
+end
+
+-- MoP coefficients derived from wowsims/mop feral implementation.
+local CLASS_SPELL_SCALING = 112.7582 / 0.10300000012
+local RAKE_BASE_TICK = 0.09000000358 * CLASS_SPELL_SCALING
+local RAKE_AP_COEFF = 0.30000001192
+local RIP_BASE_TICK = 0.10300000012 * CLASS_SPELL_SCALING
+local RIP_CP_BASE = 0.29199999571 * CLASS_SPELL_SCALING
+local RIP_AP_COEFF = 0.0484
+local RIP_DAMAGE_MULT = 1.2
+local THRASH_BASE_TICK = 0.62699997425 * CLASS_SPELL_SCALING
+local THRASH_AP_COEFF = 0.141
+
+spec:RegisterStateFunction( "predict_bleed_value", function( kind, cp, unit )
+    kind = kind or "rake"
+    local ap = max( resolve_attack_power(), 0 )
+    local mastery_bonus = 1 + ( current_mastery_value() * 0.01 )
+    local multiplier = current_bleed_multiplier()
+
+    if kind == "rake" then
+        return ( RAKE_BASE_TICK + RAKE_AP_COEFF * ap ) * mastery_bonus * multiplier
+    elseif kind == "rip" then
+        cp = cp or combo_points.current or 0
+        local points = max( cp, 1 )
+        local tick = RIP_BASE_TICK + RIP_CP_BASE * points + RIP_AP_COEFF * points * ap
+        return tick * mastery_bonus * multiplier * RIP_DAMAGE_MULT
+    elseif kind == "thrash" or kind == "thrash_cat" or kind == "thrash_bear" then
+        return ( THRASH_BASE_TICK + THRASH_AP_COEFF * ap ) * mastery_bonus * multiplier
+    end
+
+    return 0
+end )
+
+spec:RegisterStateFunction( "store_bleed_snapshot", function( kind, cp, unit )
+    kind = kind or "rake"
+    local snap, resolved = get_bleed_snapshot_record( unit )
+    if not snap then return end
+
+    local value = predict_bleed_value( kind, cp, resolved )
+    local mult = current_bleed_multiplier()
+    local ap = resolve_attack_power()
+    local now = query_time or state.now or 0
+    local tf_active = buff.tigers_fury.up
+    local roro_active = buff.rune_of_reorigination and buff.rune_of_reorigination.up
+    local springs_active = buff.synapse_springs and buff.synapse_springs.up
+    local doc_active = buff.dream_of_cenarius_damage and buff.dream_of_cenarius_damage.up
+    local mastery_at_cast = current_mastery_value()
+
+    if kind == "rake" then
+        snap.rake_mult = mult
+        snap.rake_value = value
+        snap.rake_ap = ap
+        snap.rake_time = now
+        snap.rake_has_tf = tf_active
+        snap.rake_has_roro = roro_active
+        snap.rake_has_springs = springs_active
+        snap.rake_has_doc = doc_active
+        snap.rake_mastery = mastery_at_cast
+    elseif kind == "rip" then
+        snap.rip_mult = mult
+        snap.rip_value = value
+        snap.rip_ap = ap
+        snap.rip_cp = cp or combo_points.current or 0
+        snap.rip_time = now
+        snap.rip_has_tf = tf_active
+        snap.rip_has_roro = roro_active
+        snap.rip_has_springs = springs_active
+        snap.rip_has_doc = doc_active
+        snap.rip_mastery = mastery_at_cast
+    elseif kind == "thrash" or kind == "thrash_cat" then
+        snap.thrash_mult = mult
+        snap.thrash_value = value
+        snap.thrash_ap = ap
+        snap.thrash_time = now
+        snap.thrash_has_tf = tf_active
+    elseif kind == "thrash_bear" then
+        snap.thrash_bear_mult = mult
+        snap.thrash_bear_value = value
+        snap.thrash_bear_ap = ap
+        snap.thrash_bear_time = now
+        snap.thrash_bear_has_tf = tf_active
+    end
+end )
+
+spec:RegisterStateFunction( "get_bleed_snapshot_value", function( kind, unit )
+    local snap = get_bleed_snapshot_record( unit )
+    if not snap then return 0 end
+    kind = kind or "rake"
+
+    if kind == "rake" then
+        return snap.rake_value or 0
+    elseif kind == "rip" then
+        return snap.rip_value or 0
+    elseif kind == "thrash" or kind == "thrash_cat" then
+        return snap.thrash_value or 0
+    elseif kind == "thrash_bear" then
+        return snap.thrash_bear_value or 0
+    end
+
+    return 0
+end )
+
+spec:RegisterStateExpr( "has_roro_equipped", function()
+    -- Rune of Re-Origination (ToT). Gate Rune-specific snapshot logic behind actual equip state.
+    return equipped[ 94535 ] and true or false
 end )
 
 spec:RegisterStateExpr( "rake_stronger", function()
-    local snap = bleed_snapshot[ target.unit ]
-    local now_mult = current_bleed_multiplier()
-    return now_mult > ( snap.rake_mult or 0 ) + 0.001
+    local predicted = predict_bleed_value and predict_bleed_value( "rake" ) or 0
+    local stored = get_bleed_snapshot_value and get_bleed_snapshot_value( "rake" ) or 0
+
+    local snap = get_bleed_snapshot_record and select( 1, get_bleed_snapshot_record() )
+    if snap then
+        if (buff.rune_of_reorigination and buff.rune_of_reorigination.up) and not snap.rake_has_roro then return true end
+        if (buff.tigers_fury and buff.tigers_fury.up) and not snap.rake_has_tf then return true end
+        if (buff.synapse_springs and buff.synapse_springs.up) and not snap.rake_has_springs then return true end
+        if (buff.dream_of_cenarius_damage and buff.dream_of_cenarius_damage.up) and not snap.rake_has_doc then return true end
+        local mastery_now = current_mastery_value()
+        if snap.rake_mastery and mastery_now > snap.rake_mastery + 0.5 then return true end
+    end
+
+    if stored <= 0 then
+        return predicted > 0
+    end
+
+    return predicted > stored * 1.001
 end )
 
 spec:RegisterStateExpr( "rip_stronger", function()
-    local snap = bleed_snapshot[ target.unit ]
-    local now_mult = current_bleed_multiplier()
-    return now_mult > ( snap.rip_mult or 0 ) + 0.001
+    local predicted = predict_bleed_value and predict_bleed_value( "rip" ) or 0
+    local stored = get_bleed_snapshot_value and get_bleed_snapshot_value( "rip" ) or 0
+
+    local snap = get_bleed_snapshot_record and select( 1, get_bleed_snapshot_record() )
+    if snap then
+        if (buff.rune_of_reorigination and buff.rune_of_reorigination.up) and not snap.rip_has_roro then return true end
+        if (buff.tigers_fury and buff.tigers_fury.up) and not snap.rip_has_tf then return true end
+        if (buff.synapse_springs and buff.synapse_springs.up) and not snap.rip_has_springs then return true end
+        if (buff.dream_of_cenarius_damage and buff.dream_of_cenarius_damage.up) and not snap.rip_has_doc then return true end
+        local mastery_now = current_mastery_value()
+        if snap.rip_mastery and mastery_now > snap.rip_mastery + 0.5 then return true end
+    end
+
+    if stored <= 0 then
+        return predicted > 0
+    end
+
+    return predicted > stored * 1.001
 end )
 
--- Percent increase if we were to reapply the bleed now (0.05 = 5%).
 spec:RegisterStateExpr( "rake_damage_increase_pct", function()
-    local snap = bleed_snapshot[ target.unit ]
-    local last = snap.rake_mult or 0
-    local now = current_bleed_multiplier()
-    if last <= 0 then return 0 end
-    return max( 0, ( now / last ) - 1 )
+    local predicted = predict_bleed_value and predict_bleed_value( "rake" ) or 0
+    local stored = get_bleed_snapshot_value and get_bleed_snapshot_value( "rake" ) or 0
+
+    if stored <= 0 or predicted <= 0 then
+        return 0
+    end
+
+    return max( 0, ( predicted / stored ) - 1 )
 end )
 
 spec:RegisterStateExpr( "rip_damage_increase_pct", function()
-    local snap = bleed_snapshot[ target.unit ]
-    local last = snap.rip_mult or 0
-    local now = current_bleed_multiplier()
-    if last <= 0 then return 0 end
-    return max( 0, ( now / last ) - 1 )
+    local predicted = predict_bleed_value and predict_bleed_value( "rip" ) or 0
+    local stored = get_bleed_snapshot_value and get_bleed_snapshot_value( "rip" ) or 0
+
+    if stored <= 0 or predicted <= 0 then
+        return 0
+    end
+
+    return max( 0, ( predicted / stored ) - 1 )
 end )
 
--- Bear-weave trigger logic mirroring the provided APL conditions.
+-- Prevent bad bleed clipping with weaker snapshots when substantial duration remains.
+-- These are simple, conservative heuristics to support APL flags used by WoWSims imports.
+-- If the new snapshot isn't stronger, and the DoT has more than ~2 ticks left, we avoid clipping.
+spec:RegisterStateExpr( "clip_rake_with_snapshot", function()
+    -- Allow clipping when we have a stronger snapshot during a temporary buff window.
+    if not rake_stronger then return false end
+    return (has_roro_equipped and buff.rune_of_reorigination and buff.rune_of_reorigination.up)
+        or buff.tigers_fury.up
+        or buff.synapse_springs.up
+        or buff.dream_of_cenarius_damage.up
+end )
+
+spec:RegisterStateExpr( "clip_rip_with_snapshot", function()
+    -- Allow clipping when we have a stronger snapshot during a temporary buff window.
+    if not rip_stronger then return false end
+    return (has_roro_equipped and buff.rune_of_reorigination and buff.rune_of_reorigination.up)
+        or buff.tigers_fury.up
+        or buff.synapse_springs.up
+        or buff.dream_of_cenarius_damage.up
+end )
+
+-- Provide SimC-style action.<spell>.tick_damage hooks without replacing the core state.action table.
+do
+    local function rake_tick_damage()
+        return predict_bleed_value and predict_bleed_value( "rake" ) or 0
+    end
+    setfenv( rake_tick_damage, state )
+
+    local function rip_tick_damage()
+        return predict_bleed_value and predict_bleed_value( "rip" ) or 0
+    end
+    setfenv( rip_tick_damage, state )
+
+    if spec.abilities and spec.abilities.rake then
+        spec.abilities.rake.tick_damage = rake_tick_damage
+    end
+
+    if spec.abilities and spec.abilities.rip then
+        spec.abilities.rip.tick_damage = rip_tick_damage
+    end
+end
+
 spec:RegisterStateExpr( "bearweave_trigger_ok", function()
+    -- Enter Bear if energy is low, no urgent bleed refresh, TF not imminent, and Thrash needed.
     if not buff.cat_form.up then return false end
     if active_enemies > 1 then return false end
-    if energy.current >= 15 then return false end
-    if debuff.rake.remains < 8 or debuff.rip.remains < 8 then return false end
-    if cooldown.tigers_fury.remains < 7 then return false end
-    if buff.berserk.up then return false end
-
-    -- Predatory Swiftness window OR minimal expected rake snapshot gain
-    if buff.predatory_swiftness.up and buff.predatory_swiftness.remains >= 5 then return true end
-    if buff.predatory_swiftness.down and rake_damage_increase_pct <= 0.05 then return true end
-
-    return false
+    if energy.current > 60 then return false end
+    if buff.berserk.up or buff.incarnation_king_of_the_jungle.up then return false end
+    if cooldown.tigers_fury.remains < 3 and not buff.tigers_fury.up then return false end
+    local urgent_bleed = ( debuff.rake.up and debuff.rake.remains < 4 ) or ( debuff.rip.up and debuff.rip.remains < 5 and combo_points.current == 5 )
+    if urgent_bleed then return false end
+    local need_thrash = not debuff.thrash_bear.up or debuff.thrash_bear.remains < 4
+    return need_thrash and ( cooldown.thrash_bear and cooldown.thrash_bear.ready )
 end )
 
--- State expressions for advanced techniques
 spec:RegisterStateExpr( "should_bear_weave", function()
     if not opt_bear_weave then return false end
-    -- Avoid immediate flip-flop right after swapping to Cat
-    if query_time <= ( action.cat_form.lastCast + gcd.max ) then return false end
-    -- Don't start a weave if any core timers need attention soon
-    local urgent_refresh = ( (debuff.rip.remains > 0 and debuff.rip.remains <= 3)
-        or (debuff.rake.remains > 0 and debuff.rake.remains <= 3)
-        or (buff.savage_roar.up and buff.savage_roar.remains <= 4)
-        or cooldown.tigers_fury.remains <= 2 )
-    if urgent_refresh then return false end
-    -- Trigger bear-weave when energy is LOW to pool (e.g., <= 35)
-    return energy.current <= 35 and not buff.berserk.up and not buff.incarnation_king_of_the_jungle.up and target.time_to_die > 10
+    if buff.bear_form.up then return true end
+    if not buff.cat_form.up then return false end
+    if query_time <= ( ( action.cat_form.lastCast or -math.huge ) + gcd.max ) then return false end
+    if buff.berserk.up or buff.incarnation_king_of_the_jungle.up then return false end
+    if energy.current > 60 then return false end
+    if cooldown.tigers_fury.remains < 3 and not buff.tigers_fury.up then return false end
+    if ( debuff.rake.up and debuff.rake.remains < 4 ) or ( debuff.rip.up and debuff.rip.remains < 5 and combo_points.current == 5 ) then return false end
+    local thrashReady = cooldown.thrash_bear and cooldown.thrash_bear.ready
+    local needThrash = not debuff.thrash_bear.up or debuff.thrash_bear.remains < 4
+    return thrashReady and needThrash
 end )
 
 spec:RegisterStateExpr( "should_wrath_weave", function()
@@ -2363,6 +3296,27 @@ spec:RegisterStateExpr( "should_wrath_weave", function()
     if should_delay_bleed_for_tf( debuff.rip, 2, true ) or should_delay_bleed_for_tf( debuff.rake, 3, false ) then return false end
 
     return mana.current >= 0.06 * mana.max
+end )
+
+spec:RegisterStateExpr( "bear_thrash_pending", function()
+    if buff.bear_form.down then return false end
+
+    local lastBear = action.bear_form and action.bear_form.lastCast or -math.huge
+    if lastBear <= 0 then
+        return debuff.thrash_bear.down
+    end
+
+    local lastThrash = action.thrash_bear and action.thrash_bear.lastCast or -math.huge
+
+    return lastThrash < lastBear
+end )
+
+-- Used to gate cat_form recommendation until Thrash has landed and at least 1 GCD has passed.
+spec:RegisterStateExpr( "bear_thrash_done", function()
+    if buff.bear_form.down then return false end
+    if not debuff.thrash_bear.up then return false end
+    local lastThrash = action.thrash_bear and action.thrash_bear.lastCast or -math.huge
+    return ( query_time - lastThrash ) >= gcd.max * 0.8
 end )
 
 spec:RegisterStateFunction( "tf_expected_before", function( future_time )
@@ -2417,73 +3371,61 @@ spec:RegisterStateExpr( "berserk_clip_for_hotw", function()
 end )
 
 -- Expose SimC-style toggles directly in state for APL expressions
-spec:RegisterStateExpr( "maintain_ff", function() return state.settings.maintain_ff ~= false end )
+spec:RegisterStateExpr( "maintain_ff", function()
+    return settingEnabled( "maintain_ff", true )
+end )
+spec:RegisterStateExpr( "faerie_fire_auto", function()
+    local value = getSetting( "faerie_fire_auto", nil )
+    if value ~= nil then
+        return value
+    end
+    return settingEnabled( "maintain_ff", true )
+end )
+spec:RegisterStateExpr( "auto_pulverize", function()
+    local value = getSetting( "auto_pulverize", nil )
+    if value ~= nil then
+        return value
+    end
+    return settingEnabled( "bear_weaving_enabled", false )
+end )
+spec:RegisterStateExpr( "should_spend_rage", function()
+    local threshold = getSetting( "rage_dump_threshold", 80 ) or 80
+    return rage.current >= threshold
+end )
+spec:RegisterStateExpr( "can_spend_rage_on_maul", function()
+    local floor_threshold = getSetting( "maul_rage_floor", 30 ) or 30
+    local rage_after = rage.current - 30
+    return rage_after >= floor_threshold and rage.current >= 30
+end )
+spec:RegisterStateExpr( "eclipse_power", function()
+    local eclipse = state.balance_eclipse
+    return eclipse and eclipse.power or 0
+end )
+spec:RegisterStateExpr( "eclipse_direction", function()
+    local eclipse = state.balance_eclipse
+    return eclipse and eclipse.direction or "solar"
+end )
+spec:RegisterStateExpr( "lunar", function() return "lunar" end )
+spec:RegisterStateExpr( "solar", function() return "solar" end )
 -- Map APL variables to consolidated settings.
-spec:RegisterStateExpr( "opt_bear_weave", function() return state.settings.bear_weaving_enabled ~= false end )
-spec:RegisterStateExpr( "opt_wrath_weave", function() return state.settings.wrath_weaving_enabled ~= false end )
-spec:RegisterStateExpr( "opt_snek_weave", function() return state.settings.opt_snek_weave ~= false end )
-spec:RegisterStateExpr( "opt_use_ns", function() return state.settings.opt_use_ns ~= false end )
-spec:RegisterStateExpr( "opt_melee_weave", function() return state.settings.opt_melee_weave ~= false end )
-spec:RegisterStateExpr( "use_trees", function() return state.settings.use_trees ~= false end )
-spec:RegisterStateExpr( "use_hotw", function() return state.settings.use_hotw ~= false end )
+spec:RegisterStateExpr( "opt_bear_weave", function() return settingEnabled( "bear_weaving_enabled", false ) end )
+spec:RegisterStateExpr( "opt_wrath_weave", function() return settingEnabled( "wrath_weaving_enabled", false ) end )
+spec:RegisterStateExpr( "opt_snek_weave", function() return settingEnabled( "opt_snek_weave", true ) end )
+spec:RegisterStateExpr( "opt_use_ns", function() return settingEnabled( "opt_use_ns", false ) end )
+spec:RegisterStateExpr( "opt_melee_weave", function()
+    local bear = settingEnabled( "bear_weaving_enabled", false )
+    local wrath = settingEnabled( "wrath_weaving_enabled", false )
+    return not bear and not wrath
+end )
+spec:RegisterStateExpr( "use_trees", function() return settingEnabled( "use_trees", true ) end )
+spec:RegisterStateExpr( "use_hotw", function() return settingEnabled( "use_hotw", false ) end )
 spec:RegisterStateExpr( "disable_shred_when_solo", function()
-    return state.settings.disable_shred_when_solo ~= false
+    return settingEnabled( "disable_shred_when_solo", false )
 end )
 -- Provide in_group for APL compatibility in emulated environment
 spec:RegisterStateExpr( "in_group", function()
     -- Avoid calling globals in the sandbox; treat as solo in emulation
     return false
-end )
-
--- Missing variables for bearweave and other APL logic
-spec:RegisterStateExpr( "bearweave_trigger_ok", function()
-    -- Check if bearweave is appropriate (low health, need survivability)
-    return health.pct <= 50 or incoming_damage_3s > (health.current * 0.3)
-end )
-
-spec:RegisterStateExpr( "thrash_aoe_efficient", function()
-    -- Thrash is efficient for AoE when there are 2+ enemies
-    return active_enemies >= 2
-end )
-
-spec:RegisterStateExpr( "energy_time_to_max", function()
-    -- Calculate time to reach max energy
-    if energy.current >= energy.max then return 0 end
-    local deficit = energy.max - energy.current
-    local regen_rate = energy.regen or 10
-    return deficit / regen_rate
-end )
-
-spec:RegisterStateExpr( "clip_rip_with_snapshot", function()
-    if not debuff.rip.up then return false end
-    if buff.dream_of_cenarius_damage.up and buff.dream_of_cenarius_damage.remains <= gcd.max then
-        return true
-    end
-    if not buff.dream_of_cenarius_damage.up then return false end
-    if combo_points.current <= 3 then return true end
-    return false
-end )
-
-spec:RegisterStateExpr( "clip_rake_with_snapshot", function()
-    if not debuff.rake.up then return false end
-    if buff.dream_of_cenarius_damage.up and buff.dream_of_cenarius_damage.remains <= gcd.max then
-        return true
-    end
-    if not buff.dream_of_cenarius_damage.up then return false end
-    if combo_points.current <= 3 then return true end
-    return false
-end )
-
-spec:RegisterStateExpr( "clip_roar_for_min_offset", function()
-    if buff.savage_roar.down then return false end
-    if not debuff.rip.up then return false end
-    local roar_end = buff.savage_roar.remains or 0
-    local rip_refresh = debuff.rip.remains or 0
-    local min_offset = 40
-    if player.level >= 90 and talent.dream_of_cenarius and talent.dream_of_cenarius.enabled then min_offset = 30 end
-    if roar_end >= rip_refresh + min_offset then return false end
-    if roar_end >= target.time_to_die then return false end
-    return true
 end )
 
 spec:RegisterStateExpr( "combo_points_for_rip", function()
@@ -2513,13 +3455,19 @@ spec:RegisterStateExpr( "bear_weave_ready", function()
 end )
 
 spec:RegisterStateExpr( "should_bite", function()
+    if not ferociousbite_enabled then return false end
     if combo_points.current < 5 then return false end
     if not debuff.rip.up or buff.savage_roar.down then return false end
-    if target.health.pct <= 25 then return true end
-    local rip_refresh = debuff.rip.remains or 0
-    local roar_refresh = buff.savage_roar.remains or 0
-    local bite_time = buff.berserk.up and 3 or 4
-    return min( rip_refresh, roar_refresh ) >= bite_time
+
+    -- Execute phase: always okay to bite if Rip and Roar are maintained.
+    if target.health.pct <= 25 then
+        return true
+    end
+
+    -- Non-execute: respect user-configurable minimum remaining times.
+    local rip_ok = (debuff.rip.remains or 0) >= (min_bite_rip_remains or 11)
+    local roar_ok = (buff.savage_roar.remains or 0) >= (min_bite_sr_remains or 11)
+    return rip_ok and roar_ok
 end )
 
-spec:RegisterPack( "Feral", 20250927, [[Hekili:vZrApQns2Fl8flqjI1anjtKGwk7Uz1oJ025dKpJXTPOXQn2iBt3tlH43((QdBxhVQSn0zIMJmjDD8UQx9olN1tw)J1R2gwsw)Wu)PZ9)Y0pp2FI)SzFE9QY3oswV6yy0ZHpb)H0WdW)))qYdtOJ(wsw4w6UlYoLhbZSE1JNItk)901pQbYpnE605)28VaR9ijA9da8xVAF82Te(AjfrRx9J9Xfx2q)v4LncKEzt2o4NJkJZsVSjjUOeMExw(Ln)xYZXjXJxVIniLm(63)g8BpWyisA4JjKTR)NRxLDeWkPC9kouwV6LW8y6S0)uYj438zJfWzVdHXPLWVc2TBDjWa9gAtKHw2XYGhjWp(kj8fcfGZ0ayfCIctsc4)qaLL4mMamrHLbaOIpas(s4F5ujg3gLhxsakQHWglXrx24DzZwYJN2TB8UqyDKGDX5KXBZEnLnhLaEHeqsjhIjGOEXYlBMYMHThkDas)dJpDSHYLaeMeRHIkdZFIucaPOmo9Pgau88jG3FmSypN5OcmU8QBmOQqMtTvGiOmp(PNi5bzp3Gq2IP8HB6LXY1Rf4zgOZb1YXrNYZjPLx2CpvanNnXaqRnN8Y4Y95aRWOOgukpiIwqBivS9Wm4Sz3U4OygYTqnwX6D9eRgAdx2mdbRlur6HW0Nsi1iD(phK2cR(PEIvtGpZxsVpbwVqVT5YI4apiB3UGNI2cx0oLyLfKLpNO3IF4Z9KenPeXe216QUVsr3V1t01gtOCi)L3vGNegbozkzMtM43tqp8YgaS5p9wayVeU)NfCi8p5wYOhsK)KeDQeSsC(mykmRCCE4ZKX5eQvsHbVzstgFuDU585IYYsO6bJlJbJlfb7oL)M6cbRMJqpiadCBZICBARmmb0dhVnNeEauVcIGvLhFQySy1vmQIjWIuYZvMaP0OYKNkibusBKQms6smqZ35lTGHcnoq7c8LNL)wqXRX7ktjffkAKyZBij4uuhGkDzSfKgwEkNuOn9O2UtYrru2HhZcoMbo(kuVvFx1QQoD57e)8MT8rYKFTcJ22u1HyQqJK(pN(p3tctaEa0upfTVnpODqVa9C3ZMqHRt7jPsBk5R5myX(vM(CCkDLbsyaSo4P0queSn8a1wUGoWzAXTCxEBStM0d7o4n9xaLjmkdZ1bhVxh9vFf6kiVkbxl(M)fqyXh7Gd5RMUMFJ0vlEU)fqxIdYw863gHPJ5g7Z2rnyB4yTgEBXg8ZGaeXzXPGs1uZU9Spl3f8yw6Pcm3anXs4itrEIHxDEMcFafy23Sdbl5K9ked3ErMVYyHnoMfQEJbPuRLrqtcKiwB6csAZpRc2OrZHy9Ol4bvbub4qgFyMa60PzHqf9hF7H)93F460oN8RS2iTdqFDakRZHOd3oeNm329XURTkDguss3clQx6HUk8dvFWzQdqqQard7acPuKRcadYFgbXtfWd6h0ZUSzYCLitFeYIHK)CtG0oIX2HXXMSHChiBlwElcFbmthKNfM3Gw7b1pbLSydsbrWlSykb)gBP1ZS2vsdsChOjnc)gZ(2lwMdMOocA7KRfxmocZ89f)SbhYcT3qOvL0lAeRmaoYIlA7bHEnu)IQKi6RUG1tD7XIQtFlQPpzKtrqaeNgBcSmi)8yofpGw41KW3OlMTPYDvJhLadrh(1yW2vrA4XI9zLQHbUk6n4YyaVeQfuda86aNLMrL0xLTDdJNQwJ7V592Sg)oyFVPihCbGW(Af)3yuvuVfj050G0ae1ohQnZKrMSvpv8DN8YeMy1wI(feoR(sC(bsArWJa9bAACaubiXpxP9wRMqJkxf42ZOX(fO5QkEoZ)Otqzhjplko7eNB4hB8qa7E59LuKy3AGliNs2QgHzf(QcVeqZXCcLeXVGyE4Fim)zA4EL7jWDXKTAjxRojM(KP6NesmSj50Ptn7xKLaI48Sxt4wHHWV48eVCmsQf0142Jr)0YlLtiWPaSU2rfVrTErckoMdHmqRCu423AG)(W0TfaAsOM34)GdPyjaJNjLtQ2q9p7i9gXAMQTNPM3gtYY2IDNDoYDww7QuwvR9xGhovvjnfT(QQI0BJjIsI9PEEJ3(nArolXPrH5PH01RuvqgzjxTA5ZDPn5(cVEvJHaj)IVn43P4ivvfXRirhQDyLX1sxvLO(ofTQOL5ecVWOcjhaZic9goVoKDx6PTrkn4OYekeb4N)vzAypiNkvmbjtfdrdwNvYC(ibSqjOrxWbSuuzgqMFbFlzx4PKRmac58bFpttup1(33CgnknX7CgKAHP4kagdV)Dd68I6RdzXOigN6gupqsieCIwEkeJqTd)6lCYqUzqeBoDdMu1CDqYgdXoq7qCBCb9Ndk2NtGGl2tsdOEFLrGTLGDNVDe24BxghsJsbR(9YMGm6tHdkAjgO)Eu3aPoiAwJG6EhIN7ip5qrV8ebqYt9cwh(ObhHyuaVqrv887wENDiWV(8UDObwWoE8VApOApJh7brATmaZRCsH0Lu6pgKt2Ltk2hWP2f8UjwplV28bqSiquJW94Jr8am8h7RQZ1sHnWyE8oAurVgr1q3HOt)dQ1kocb5wFtWr9qww1YBpbJrRKcZCbRskk1cGonwXaOJBRAaIMVyVYkTCa9tqg6(879JNTh1T1AYG2QFAXwSRmct(RtxeRgsukIKUfcDJsXqQwQpyboFnstmFvLzYzggcQZOuOv0I0eMVfcuxdY5i0IK0qUCFDhmnFbgn1sS7hasEJuQ)Q9KHej1rF)gL7hZuryx(NRqWLXrpZ8PAJj4KJJsP0zz01WSgvNXr(tcdHSuujhadHK0O36cM7zPODrDoYSsI8Q05RgQoLH)QPw7bCzjigRQclRSKAh)QV)JjDkmkS7JAxMR1GBEhuo1whjfkMCHqg1fHVUjXbQp0nlXFJc56tSbSQM9uEgJkKIjJceMOYE4yDXzQrqW9NhB0qd0QzM2HQ94YWct5w0MyacC4WFD)SKi(FF)HV)V(6pWYKOtzLu1UIRQQagnpwlR0R7fpOLNem7lWPjDJvF8c3TE1RH5P06zUE1VF4ywEjTEm0eH4qv8Hjm(YFai9u5(S81RwD40U84NzvLDxmLl4RT4dl)hvC2hPKWsPW8)iJtLh5YFyBBQvcrStTxcVZnlvNdPDlxODNBVPogs7w6jO6CZ8sviTrXZu05MKoUL2P0O23EDLgeBSP(Fo3cTscs7GvtnRBWILjX(Tz3Yk4AkcGacs9b4pQ3246oCaaqVdfFmE3sExhqASboiQmeGplNCaO(IzZjoFUUXel9X3UKZUgstR(VsSwDVhGTsf)GDUdFKwv)LSohqbH7(o0fqv1tHES2P4RTPHcwMVUvc4ZZRXp)WhPzau2vZJ65ZMTvyXYPFch(s14Ncl7TlWJHgTs57ILOGtnf67)Ipgu8mJ4GckpefbpvxOaB5z46eLM0kgVI2A91Ep3L8V7saJQQBGpQrdV2QUV3qJ4ioFgTM(JKVHWCuq55Ms3OGFjhjEwQEuVKZv4R5d2IRjj)zDjtFBZI4YOM33UKQN1xxN3WxK79BJtLZNvMG70yK3qvLVflVZhgKlsX)od8SoNiEFqom68zNWaoGOtI9c4hztrF4qSOXUF5DEdLtM)8zTefxC3ik5OuxnXIKY7DXSrW)448JFEyqXD6mbrY7HXmlN71(xsWsFVbwLE9sLKZsuPqTbshV6xukEXYz6OCwRySjQ8)AX7nXPGEw)ry8X)(GV5xb(Ujb6vGW6NhxNWQk4PwkAd(njU)UHGguu)YQzE)fF5Dk(CutbXd7dXfhCsFaJsX6ew)X95j)jAE)YPZ9gO)HpELag7JR1aB4Ww6ZGeh2gQhYWDHnW2kj7eSUi3tjDr4oZ3MhSbgFXRg0coQRuOWrVj2Gb72XBVpcWbt13C6Tad38Oimf5pl1flL(KurCOVCMzOalNF(SRp)uAOlYxzzz0deh73nUQkLVVN5JQtgof0i)KWhfudRBzmqt6Tl((jZfbJihxRZCaqnRvGK7OiYm9YNkIjdPaUlwobIGsV)UMJu3X3rOg8VF5K2O0BjyCQQX9(9kaigoRCIHgMXCp9ahnAg7IL(IrrA8190MEnYmjnHKLks0jytVG6bPd2ya94bM1SKQCJfR00rEgnt1BGrlf9gyPzI9tIDJmRDr5TqY8iJW60PE6d693KF(I3xZ3PJxDZug9SSXsgLghvliQ7tzLCqVdL6MGuIVzishj5yYSBKq(r4oACX7A819qiF6MPV3moxerKUzcLEfjLhDt7exqdYrRnIM0ZmlgQUvL4wPx0UbAdWwiJBbPEdm6U37l2rYXt3HdEwb(TbzMfmj)y6kK4nGJwcalN1JeE(Ako4OoCe7nyyBnwtdkGqBqvR0g5uC5YWQs8aDHmBoHd0QSldZkDQsslrYTs3pOAGnKqWVOqE4ywlMhvbvDMADsLetB3JfVJYN5LoRRyQfXsRTSh799nbdlNA8TbAVHdmyplHwmz0Tl4R8WmTZsFDCs9UR8nETCIjUxa4g1)VU33ppEAFCW2qmuku0p0pO3sQQpgwrdP8TTl9gUk1NZ(TL6kT3VT1AMo9dC1z45Ooh9dIBZI4o8B5Vnx6fqb1iuL1(bLcfTbr)6n0eqB(SF32NzFN74gn64SVmPY)qa)awlmRNQtnG0yxsoaqMvyOhzMwAOhYoObvInSzG)sU(r2Gzytw3B9UTFjSrRrwE)1V)nJtjZNYGV7nGQhnrFp9IUeprf7MH4AyyBOlp5GjDhtwiq(FBm0bz3Kw3tBIphBZ5Tql7tZ()K5i7axuW1m78YLKCSNKZ6))]] )
+spec:RegisterPack( "Feral", 20260101, [[Hekili:TZXAVTnYXFlgfqN0LCQ6HLtVcldCpsWDbOjfNs)QOOPwzXAksbsk76cd9BVZ(ICFm7ssz7KCxpu024LCNz259JvC54LFA5I1HLKLFyYOjxmA8OXdNm(8PJMTCr5d7jlxSpm62WBG)rA4o4)9DK8We6QpKKfUMU7ISd5rWtwU46dXjL)A6YRXb55lxeEOCBw(Yfl2DytE8TlxSnE9AcFhKIOLl(024IJRO)3WJReO(4QSnWFhvgNLECvsCrj84nz5hx9lKBJtIhcKtE2M4eGi4VvXRM)xVlmpo86eYRP098DHXPLW)nyZMxFxyYbTvo(ExBlBFzW1KW8G7jH3re7uFr)B((8WYTw7wzv)BViLCR1URx0)Mpuqcslu2iFH2EAdkiLLXP380o1iq5eo9iqPBCbea0gUXoscHyjauw192PGVmNqKcGQ)2)w2MvEVYoO)P7nSoUG(hbfBZjRdUFljnOiljtSFhp1n4OpnamLUpraH6fo((QTnCFojkB31HLaa2fMFBq2MGYTadjoz9RJ3m)SRpSzZqZNm8W(JV)VCC1)mpl64QFoNeUJBy)tKuGkoa20xtaRAWCNd9JR6)PXx8ldWr8wsycipdkZoeTTgRRPWLI2ibub02RmmHKwI8m4)ho8RFDfGdkJb(WSHtWr6(m6ACM1DX57iGI11XLKa(dW3ueaw4CTRMiLRa0MjQNm8cCOueEh4kmiplmVgqklspNnb8XoovmjoauP2WWA5EVZapK3KNHaDvvIOSSK1z3Z0POQTapz3RlsYkNxMhNElPCChE3j4V71jzzRd2Ci)bkTYOMY4Bi5fS1yee62G3GKFl12hFBp(iBX8dPeQYrojlp(M40qkOCc1g0eQqLa7m0ugMFdPCivuaQTbRJjxoFYf4WponkmNtduyj0GvwvQ72RRmc3Cb(ZdIsI3tLXcFpGj77IPwLlEinCFb9FShKt3a2RzPjpabM3usGyXG6sueSoyBN9tWQPRpU6(4YThx9BX7pUQmoIjdoUQid(RTaC(eypMsJLVopdEJ4D7iRJH8gQa69H5vaHTJcGDd)Vu6aiUHTrNAlqifAk3voIL(fGZAet0dC2d5KkoReOwVq0wQKSy(0E4(CcwhUdSlPMKRbYmpE)qXXVxF3kGQQkE1ihWekFCpOifM83b(9HDugSKBsD0d5hDiHYh5KAfxKjAOa)1wIfMaB9HCMi86d5fL0nLcmGcQNykf)nW)6Du7VJR(rHYeOeaY(FJ8DFSMe56cdWLog8Y)ikzExysY1qQRGO5FrTxQKmU4UK7OsmQek7qPqifVriHO5cdM0R6lSZY2tsj5FH5UNeZBqpQRVRMpzeJn92DeaAPrpqvHZs)gkhjSOKivAHZ93bhDkhKYmOjemv5zm91WRzCSsWLsu4E6IzGJI8VSmhNVceZL9sSOXxoFMjBeNSHmDYlnZXsJWPoQL0T1Bxr591ehuO7WNpxlEXH87IH0aPPJjigrvxakUdCTWnLWP5cXMdItlG0UJkzUGP5SvUD4(OYlNFXOhFeEq2oAsCCqfmR4k57Sl8)8TJgoBKJqzqULfahZeOVbbOtnb60rQzUWkdKsX3comdUoSylpElluDuiL6Vbj1hZTVjKKhtc2eBOxPuLzV1egCuEvMuWBIvSQCGK12d4GRfbLYCF8MYusrHsMboZTTxfPyxme2ZQ1ETqhO)spofZh1JN(P9Bitt0iXu6PbkIdCCTlMuaz9yDMD4bPIyuFGGmUC(0b4mkRAdAKj1xJtyx35Jp6HnoW52r32auwuFodaobRdlZYFqNPsZvhYipduMalHd55WX5YzdE8X(UfeNghDWapA70tgWFbxwvzr6leBdmvxph90cElBHM1uBflGyH40Ba2ZwHF3r9OccW3BH9jl8wYN9J2LN8rdO22F2k3MdE3caa8IEc1j7RMFoITonUxn5iIfzSyLo55dNbwyYJ1JpAIGjdSoQGDWEYxbNuvp50ENXQclmVQDaAq2UZB9C88E9HYFoKSwzjAO8WC(UHYOVbSTdYUDqT3CbNL(waRnC9dwuMYBOu(QGAP8PZaNt3PcOxxaOkQuTVccyP2ZdBa13eqAcFgjkYice822VtF8ren)PI8nvTIQ0HaniAwZ38G0M7Q5tNzr17cpKGtX5uvL6TosiPtG3rKJapuoJfbQzBcUjA9qk8SmJrWA6njep89gHqsyejhkC(e3(ZOWYMTqJ5CwR1xbjRL4EcQ4EIpX95duT8y9BgoNS)FlZoKEv3Z1l0tCo06GTAPmhxvqs28D0eqKLC)pLr0HuQLHNvCyH2ltFPcOMV7mzMyyT90ajkX7POOF5gkNKLBdvbG8FIaeeWTsUA8mrAaQLly7ix3M6snBQI221sSqIxnYxwiiq2TUW0tebQj54QE)UKPcAIjGd0SuqUGf1U0mFeNur7qh1gQr8Xp0QhlwzHW68O20Qv5HRrYRYo1rus7S1KKWhOWKb7YnnD65yg(djQrY7PJ4Mcb)ixpDPULYYueQPTzWyJBmNQDmhQNxcY61FQP4nT9j4Xk2MKNffNDG3YDkfjJVq7apr6mUjlCVGPPnZgQgtZqZpzvBVAsEXRfdXXeKRcMW6AY2401b8gtiWHY4acObGLT95FFGMrrnTOo2GQflkzbsiRvwABiiN2rs4Rj6xXU4B2w(aR1iAlhgVt9VPizFyuCzi9iln4QE8(dj3rYJ)VuYAqVZQRy2XuknsBz(46jrzQoisGsOC6RcR2iofX0wt2edhMlNpEenbgPVVkvw)5FWv1zUSuRT(pLRDrU(82tnnqVhklcIGWV6kkw(S15Aa4X2XsBOg2Hze7mTSts6vvhfijSRZspu0IKTmXIrcqMonNksgxv)K7e2E9A9wh5k5TPqId9tiC55T29phxS8cIEaCXkSBa1iBEWLZVONzMd2wLaULOglHbludji1cmRZiDLcLLtL3G3BW2KWKqPWQXho0uPlNXNG4RmVgisLsXLaHpTg2KS(ngDjhXyLNgXn1aB2uAOjNT9601v8u5AlrHjjb8hfqV5xk3MRAYsB4KhxbbEPJ(movsqgd3mpRKpNsh48fOsPUD8Q6Lnf9FD176UDqQNCuN2gLi(9(r)fQzdDHeKDu6zTlJCv96(d1r2c4McnAv3GsrP2i8YsZIy3KjD)y6hNAVzTzF23BZwUrRBSP20gljPRZsFvDp3qEul6zcYUuCAH8uHZjKN06R0w1oOXpXw2U1bk10GSb7YVCU3QD72ttTwJk)(h(4BTKs2xf4r(3aQE04M3JLQG1E60z5F8Xp8XF6h(K7GICTsSnytB2xS1XThtoiWp92p8ZF8dTGFpUX90el3Z28A56yFgz8mEgYoWzfCT5w)6kCULlG6MkGhZUM8Zgpz83VCX9q9CGl5ILl(1D7ZYlP5wn(cJl)(WJVF5II9KOLFy8OPlxWwKEt85ih(xFGDT(frjx(JlxKTh2bPuE)4bClo)0)fCKxUymBTakvUCHIiBzjqFpnOPlmPaCANb4itaQiMPq88odXXZubPudGcRzgWscctrkNZlbatrGU9loLTRQyuc)NfWZrKJsyPnXa(VDcW)l)zDDyeaYZbhWa7H(l4yJRbpCCvp2v)rm8HJRUC(XvZgXw(m(LkeDmeykq1iS)XvvPxFC1JpsVhxgPyFC1vGrWSJRgWWLvY21RQMWnDr9kV5u80z1CrLyMyAL1uP88zefMIdSywmkEekDvJCfyHPaBitqkxxCEEwPctvFdQW5DK2nnqvsQPbegiQKtD2iSfKf8wt5WRGzT1fkUBKK68tCrtW7qjQ34KOWAladyGHGAZb42cMZyHlYhPzkysNUouGoSzBe8Zz)B(mA16RIGynNkZZd1wpPMgy6FFt0Rr)O4unEpPQST8q69RjgoOOeuDrnG5haIjaiuC4uHikbpEKFDxJriOQM8v3rXmqv9rXbO8qkpTd4t)S4oAf6yMAWdREzome4oqJcc6oyDhcPVrytkVMYA6GAMCloI0WDZpOjTmTPDOqdnoXd83v)bA9tuzz1PFiuKWMaI(J4tbrBn8jHO9kQtdrYloJDYRAYIRFvE0x1uvf4QJLWqoLennxgqycF3rUXLyxQfxgvfREUAmm4osB)QuTetnJBsoEeN3CMw0nnR2jQYjxP4CET1VAV7vT7)tTUVmADUt0PcZk1sYaQJj21K7U6xNHy3jNypjpgODMDAtziRnQqETzSJew5z1uH(pGGgqr9V9a)fl9IYtHZfTiD)hRgALmdHoEhPXOvtLfgnixhqPUS7lXA9HPQN0ySq(9uLEWmZXsTv2sDEZl8OvIcSf9wWioS7BdBReBuVqLkP0GxjWuVzEpTnoxRQR2Sy5RmkwwQc1IIvTo4QxFwbKvn7mVgTQccTltlQ7kis2u1GwhsArLSwKytqT6o62IIo7iWLxFx)vo(SRszZ7LHvo7KmuzAIOQPt8QM22CagGQlsBvMCCPn5s2)0eTDEPpVqxpx3fLZF1ukbBKTtc7NTtTzbsvXw6rnwlfBDJFD4I84D)7aQoZQAwUfT6puvRy29n4N2dWLtREfkdAauobHwwJim7(1mqpDe1x21cJI(njUF6Yjpjb7QPXmtNiL2oFsJnyKRMOBQAiHa)oGy0Y6UC5sSBnQsc4yrLRDA4P)78u6qcTvf6xPxXie)jEfuw(zOv4(Jg(7dd1wkfRJeCYZHrEJv8hm(pCCTLEB4Rg4rUdl2HgvV0k0hAFxwAjXX2XsVT39fSOe7CUAltvMQONM8AgnNLxClbFygVoyxdi0VaVK79)h(4BFg86)13WITayT5Ipx8DBaTujG38nXN(4XvVsrBugXSlUZrdj5nzmufnTmpmVLW6jU4lRCNPaDLC0pnLwIXiiDxu9PoAGZF2gnGlnh2iO8WWPuXfssaz0z4T2SIURjA80vbuRELKPkLiX8Ri249nrR2Y1MNvjA)DFttjz38ujXoAnu)nUAM8QrZnFf3wQNb)F2ES6UlWMUElD3hOfe18bwwDHvKN)ANGIsRvqNxNl43nc)M3yEW0X35QVMWNOXRyQFZpQi3HXAaj(BPgKU5RgWB3e8ngaMUnM3mQAfuSMXxjT0JnHhsor9w1q1pNrWnmbEMdNBAp43uP73emdRdV5oyQ01oOZZi3eYIvr8N1oO2goUmjymD62HL2X5vXJPwF7WtBKaQyXSEG2HfFscvOBL2E7aVY1Q1ehQpclZ9MraLkzFJYubD9ILixDH2bu6h9ltyYwRe5Yk0miDmRrvm46vkrUgdnJW6pxPQ4qz1sKbKxhWRlz9x9DtfZbSDqrKpcU1y28Hy(E160uN)05IrsOFQiOPC1upnQjCJBFQ(xz2LlMnCcMJ(ofF29eMoZxTe1zVysutgEbM)7MYJPd1UyHYgsvvQgR812vMsC9u39IDPYD5sL(w55wdl)w8c0DswPYFJO4zSNjg7bvcBKgUE7SvsNR6d5RFjTZEIZEGRB2PvAJcp6US)L6GwtAt)Qsz)X7vm(Ll8Pz7vbW9h13A5UlEOYM8NUQBMib5t)ODo3iXZRCdq)06k1le)bI6DvekvVmBW)8AkQ70)Nyt2K0MwZJ88T9I9sYktRgbAp)JCbv(7vNJ1Yanx1FT(jtglZPQYn0z3gNOV6)Ed))ZkFyzS2oX6NLpwXF2fnpzUoVRv8lPaRRGJqtAVD84xWV0XF25ST7JBC1DlYwwGwNIJdb7lqVYzW5h3ynbSEl0DgRtRpVwqgT2NQ0(S(8gBiXB5hpz1dU5pTQle3Ew7psYCnY6VPXhx9Thxr)yjJw(KBm8ghyyQlmmDKs(bIpbZ80p5tPR9xDWN9zikhtyPyCMEjLw54wJuWgDR73ryOCs)COOhiZRkgAzaSfD(deQNNFypUn((cYyU8zMX48hJeoNr8BiQHkAEPznMNXRQMfd6H8Khi2WzVyJe7RwoMI3B9jbj(1U7RWz)xDiXKKqSSAU1vwJQ2OnHN0LzYSRv8)ZY)3d]] )

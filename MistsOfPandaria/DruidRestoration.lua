@@ -561,8 +561,10 @@ spec:RegisterAbilities( {
         
         spend = 0.32,  -- 32% base mana cost (verified from WoW sims)
         spendType = "mana",
-        
+
         toggle = "cooldowns",
+        
+        
         
         startsCombat = false,
         texture = 136107,
@@ -631,8 +633,10 @@ spec:RegisterAbilities( {
         cast = 0,
         cooldown = 180,  -- 3 minute cooldown
         gcd = "spell",
-        
+
         toggle = "cooldowns",
+        
+        
         
         startsCombat = false,
         texture = 136062,
@@ -648,6 +652,8 @@ spec:RegisterAbilities( {
         cast = 0,
         cooldown = 60,
         gcd = "off",
+
+        toggle = "cooldowns",
         
         startsCombat = false,
         texture = 136076,
@@ -752,8 +758,10 @@ spec:RegisterAbilities( {
         cast = 0,
         cooldown = 60,
         gcd = "off",
-        
+
         toggle = "defensives",
+        
+        
         
         startsCombat = false,
         texture = 136097,
@@ -791,6 +799,8 @@ spec:RegisterAbilities( {
         
         spend = 0.08,
         spendType = "mana",
+
+        toggle = "defensives",
         
         startsCombat = false,
         texture = 572025,
@@ -807,7 +817,7 @@ spec:RegisterAbilities( {
         cooldown = 360,  -- 6 minute cooldown
         gcd = "spell",
         
-        toggle = "cooldowns",
+        
         talent = "heart_of_the_wild",
         
         startsCombat = false,
@@ -825,7 +835,7 @@ spec:RegisterAbilities( {
         cooldown = 90,
         gcd = "spell",
         
-        toggle = "cooldowns",
+        
         talent = "natures_vigil",
         
         startsCombat = false,
@@ -877,7 +887,7 @@ spec:RegisterAbilities( {
         cooldown = 180,
         gcd = "off",
         
-        toggle = "defensives",
+        
         
         startsCombat = false,
         texture = 236169,
@@ -1080,7 +1090,7 @@ spec:RegisterAbilities( {
         cooldown = 120,
         gcd = "off",
         
-        toggle = "defensives",
+        
         
         startsCombat = false,
         texture = 236153,

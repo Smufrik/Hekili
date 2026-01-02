@@ -3271,7 +3271,15 @@ local mt_stat = {
 		elseif k == "mp5" then
 			t[k] = state.mana and state.mana.regen or 0
 		elseif k == "attack_power" then
-			t[k] = UnitAttackPower("player") + UnitWeaponAttackPower("player")
+			local base, pos, neg = UnitAttackPower("player")
+			local ap = (base or 0) + (pos or 0) + (neg or 0)
+			if UnitWeaponAttackPower then
+				local wBase, wPos, wNeg = UnitWeaponAttackPower("player")
+				if wBase then
+					ap = ap + (wBase or 0) + (wPos or 0) + (wNeg or 0)
+				end
+			end
+			t[k] = ap
 		elseif k == "crit_rating" then
 			t[k] = GetCombatRating(CR_CRIT_MELEE)
 		elseif k == "haste_rating" then
@@ -3635,9 +3643,7 @@ local mt_toggle = {
 		then
 			return true
 		end
-		if k == "cooldowns" and toggle.override then
-			return true
-		end
+
 		-- Do not auto-enable potions based on the cooldowns toggle; require the potions toggle itself.
 		if k == "potions" and toggle.override and state.toggle.cooldowns then
 			return toggle.value
@@ -8037,22 +8043,26 @@ function state.advance(time)
 	for k in pairs(class.resources) do
 		local resource = state[k]
 
-		if not resource.regenModel then
-			local override = ns.callHook("advance_resource_regen", false, k, time)
+		-- Some specs may temporarily expose a numeric value for a resource token;
+		-- only apply regen logic when the resource is a table/state model.
+		if type(resource) == "table" then
+			if not resource.regenModel then
+				local override = ns.callHook("advance_resource_regen", false, k, time)
 
-			local regen = resource.regen
-			if regen == 0.001 then
-				regen = 0
-			end
+				local regen = resource.regen
+				if regen == 0.001 then
+					regen = 0
+				end
 
-			if not override and resource.regen and regen ~= 0 then
-				resource.actual = min(resource.max, max(0, resource.actual + (regen * time)))
+				if not override and resource.regen and regen ~= 0 then
+					resource.actual = min(resource.max, max(0, resource.actual + (regen * time)))
+				end
+			else
+				-- revisit this, may want to forecastResources( k ) instead.
+				state.delay = time
+				resource.actual = resource.current
+				state.delay = 0
 			end
-		else
-			-- revisit this, may want to forecastResources( k ) instead.
-			state.delay = time
-			resource.actual = resource.current
-			state.delay = 0
 		end
 	end
 
@@ -8319,24 +8329,28 @@ function state:IsKnown(sID)
 		return false, "equipment [ " .. ability.equipped .. " ] missing"
 	end
 
-	if ability.item and not ability.bagItem and not state.equipped[ability.item] then
-		return false, "item [ " .. ability.item .. " ] missing"
+	if ability.item and not ability.bagItem then
+		local item = ability.item
+		if type(item) == "function" then item = item() end
+		if item and item ~= 0 and not state.equipped[item] then
+			return false, "item [ " .. item .. " ] missing"
+		end
 	end
 
-	if ability.noOverride and IsSpellKnownOrOverridesKnown(ability.noOverride) then
+	if ability.noOverride and IsSpellKnownOrOverridesKnown(ability.noOverride, true) then
 		return false, "override [ " .. ability.noOverride .. " ] disallowed"
 	end
 
 	if ability.known ~= nil then
 		if type(ability.known) == "number" then
 			return IsPlayerSpell(ability.known)
-				or IsSpellKnownOrOverridesKnown(ability.known)
+				or IsSpellKnownOrOverridesKnown(ability.known, true)
 				or IsSpellKnown(ability.known, true)
 		end
 		return ability.known
 	end
 
-	return IsPlayerSpell(sID) or IsSpellKnownOrOverridesKnown(sID) or IsSpellKnown(sID, true)
+	return IsPlayerSpell(sID) or IsSpellKnownOrOverridesKnown(sID, true) or IsSpellKnown(sID, true)
 end
 
 do
@@ -8390,8 +8404,12 @@ do
 			if ability.id < -100 or ability.id > 0 or toggleSpells[spell] then
 				if state.filter ~= "none" and state.filter ~= toggle and not ability[state.filter] then
 					return true, "display"
-				elseif ability.item and not ability.bagItem and not state.equipped[ability.item] then
-					return false
+				elseif ability.item and not ability.bagItem then
+					local item = ability.item
+					if type(item) == "function" then item = item() end
+					if item and item ~= 0 and not state.equipped[item] then
+						return false
+					end
 				end
 			end
 		end
@@ -8497,8 +8515,12 @@ do
 		if state.filter ~= "none" and state.filter ~= toggle and not ability[state.filter] then
 			return true, "display"
 		end
-		if ability.item and not ability.bagItem and not state.equipped[ability.item] then
-			return false, "not equipped"
+		if ability.item and not ability.bagItem then
+			local item = ability.item
+			if type(item) == "function" then item = item() end
+			if item and item ~= 0 and not state.equipped[item] then
+				return false, "not equipped"
+			end
 		end
 		if toggleSpells[spell] and toggle and toggle ~= "none" then
 			if
@@ -8561,8 +8583,12 @@ do
 		end
 
 		if ability.item then
-			if not ability.bagItem and not self.equipped[ability.item] then
-				return false, "item not equipped"
+			if not ability.bagItem then
+				local item = ability.item
+				if type(item) == "function" then item = item() end
+				if item and item ~= 0 and not self.equipped[item] then
+					return false, "item not equipped"
+				end
 			end
 		end
 

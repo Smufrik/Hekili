@@ -1,90 +1,52 @@
-# ===============================================================================
-# SUBTLETY ROGUE - MISTS OF PANDARIA CLASSIC ROTATION
-# Sources:
-#  - WOWTBC.GG MoP Subtlety Rogue guide (opener/rotation heuristics)
-#  - wowsims/mop Subtlety APL JSON (timings/conditions)
-# ===============================================================================
+# Rogue: Subtlety (MoP 5.5.1) 
+# Based on WoWSims MoP Subtlety Rogue mechanics and T16H patterns
 
-# ===============================================================================
-# PRE-COMBAT SETUP
-# ===============================================================================
-actions.precombat+=/apply_poison,lethal=deadly,nonlethal=crippling,if=settings.auto_poison_apply
-actions.precombat+=/tricks_of_the_trade,if=settings.use_tricks_of_the_trade&group
-actions.precombat+=/stealth,if=!stealthed.all
-actions.precombat+=/premeditation,if=stealthed.all&talent.premeditation.enabled
+## Precombat Actions
+actions.precombat+=/flask,type=spring_blossoms
+actions.precombat+=/food,type=sea_mist_rice_noodles
+actions.precombat+=/potion
+actions.precombat+=/premeditation,if=talent.premeditation.enabled
+actions.precombat+=/stealth
+actions.precombat+=/marked_for_death,if=talent.marked_for_death.enabled
 actions.precombat+=/slice_and_dice,if=combo_points>=1
 
-# ===============================================================================
-# MAIN ROTATION
-# ===============================================================================
-# Interrupts and Defensives
+## Main Actions
 actions+=/kick,if=target.casting
-actions+=/evasion,if=health.pct<=25&incoming_damage_3s>health.max*0.4
-actions+=/cloak_of_shadows,if=debuff.magic.up&health.pct<=30
-actions+=/tricks_of_the_trade,if=settings.use_tricks_of_the_trade&group&time>30
-
-# Primary Action Lists
-actions+=/call_action_list,name=stealth_sequence,if=stealthed.all
+actions+=/potion,if=buff.bloodlust.react|target.time_to_die<40
+actions+=/use_item,slot=hands,if=buff.shadow_dance.up|target.time_to_die<20
+actions+=/use_item,slot=trinket1,if=buff.shadow_dance.up|buff.shadow_blades.up|target.time_to_die<20
+actions+=/use_item,slot=trinket2,if=buff.shadow_dance.up|buff.shadow_blades.up|target.time_to_die<20
+actions+=/blood_fury,if=buff.shadow_dance.up
+actions+=/berserking,if=buff.shadow_dance.up
+actions+=/arcane_torrent,if=energy<60
+actions+=/preparation,if=!buff.vanish.up&cooldown.vanish.remains>60&talent.preparation.enabled
+# Core rotation
+actions+=/run_action_list,name=aoe,if=active_enemies>=3
 actions+=/call_action_list,name=cooldowns
-actions+=/call_action_list,name=finishers,if=combo_points>=5
-actions+=/call_action_list,name=aoe,if=active_enemies>=3
-actions+=/call_action_list,name=generators
+actions+=/slice_and_dice,if=buff.slice_and_dice.remains<6&combo_points>=1
+actions+=/rupture,if=combo_points>=5&(!dot.rupture.ticking|dot.rupture.remains<4)&target.time_to_die>10
+actions+=/hemorrhage,if=talent.hemorrhage.enabled&(!dot.hemorrhage.ticking|dot.hemorrhage.remains<4)
+actions+=/eviscerate,if=combo_points>=5&dot.rupture.up
+actions+=/ambush,if=buff.shadow_dance.up&combo_points<5
+actions+=/backstab,if=combo_points<5&energy>=35
 
-# ===============================================================================
-# STEALTH SEQUENCE (Openers)
-# ===============================================================================
-# Follow guide: premed -> SnD (if needed) -> Ambush -> Hemo -> Backstab -> Rupture
-actions.stealth_sequence+=/premeditation,if=talent.premeditation.enabled&combo_points<=2
-actions.stealth_sequence+=/slice_and_dice,if=buff.slice_and_dice.down&combo_points>=1
-actions.stealth_sequence+=/garrote,if=!dot.garrote.ticking&target.time_to_die>8
-actions.stealth_sequence+=/ambush,if=combo_points<5
-actions.stealth_sequence+=/hemorrhage,if=!dot.hemorrhage.ticking
-
-# ===============================================================================
-# COOLDOWNS
-# ===============================================================================
-# SD at 75+ energy, ensure builders/bleeds up; Vanish at 45+ energy if no SD soon.
-actions.cooldowns+=/shadow_dance,if=settings.use_shadow_dance&energy>=75&!stealthed.all&buff.slice_and_dice.up&dot.rupture.remains>=10&dot.hemorrhage.remains>=6
+# Cooldowns
+actions.cooldowns+=/shadow_dance,if=settings.use_shadow_dance&energy>=75&!stealthed.all&buff.slice_and_dice.up&dot.rupture.remains>=10
+actions.cooldowns-=/shadow_dance,if=settings.use_shadow_dance&energy>=75&!stealthed.all&buff.slice_and_dice.up&dot.rupture.remains>=10
+actions.cooldowns+=/shadow_dance,if=settings.use_shadow_dance&energy>=settings.energy_threshold&!stealthed.all&buff.slice_and_dice.up&dot.rupture.remains>=settings.dance_min_rupture
 actions.cooldowns+=/vanish,if=energy>=45&combo_points<=2&!stealthed.all&cooldown.shadow_dance.remains>10
-actions.cooldowns+=/preparation,if=energy<30&cooldown.vanish.remains>45
-actions.cooldowns+=/shadow_blades,if=settings.use_shadow_blades&buff.slice_and_dice.up&(buff.find_weakness.down|time<20|target.time_to_die<40)
+actions.cooldowns+=/shadow_blades,if=talent.shadow_blades.enabled&settings.use_shadow_blades&(buff.shadow_dance.up|time<20|target.time_to_die<40)
 actions.cooldowns+=/shadowstep,if=settings.allow_shadowstep&talent.shadowstep.enabled&target.distance>=12
 
-# Use items and racials during Dance or short TTD
-actions.cooldowns+=/use_item,slot=trinket1,if=buff.shadow_dance.up|target.time_to_die<30
-actions.cooldowns+=/use_item,slot=trinket2,if=buff.shadow_dance.up|target.time_to_die<30
-actions.cooldowns+=/use_item,slot=hands,if=buff.shadow_dance.up|target.time_to_die<30
-actions.cooldowns+=/blood_fury,if=buff.shadow_dance.up
-actions.cooldowns+=/berserking,if=buff.shadow_dance.up
-
-# ===============================================================================
-# FINISHERS
-# ===============================================================================
-# Maintain SnD/Rupture at 5 CP; Eviscerate at 5 CP otherwise.
-actions.finishers+=/slice_and_dice,if=buff.slice_and_dice.remains<6&combo_points>=1
-actions.finishers+=/rupture,if=!dot.rupture.ticking&combo_points>=5&target.time_to_die>10
-actions.finishers+=/rupture,if=dot.rupture.remains<4&combo_points>=5&target.time_to_die>8
-actions.finishers+=/eviscerate,if=combo_points>=5
-actions.finishers+=/recuperate,if=health.pct<60&combo_points>=2&!buff.recuperate.up
-
-# ===============================================================================
-# AOE ROTATION
-# ===============================================================================
+# AoE
+actions.aoe+=/slice_and_dice,if=buff.slice_and_dice.remains<6&combo_points>=1
 actions.aoe+=/crimson_tempest,if=combo_points>=4&active_enemies>=4&!dot.crimson_tempest.ticking
-actions.aoe+=/fan_of_knives,if=combo_points<5&active_enemies>=3
 actions.aoe+=/eviscerate,if=combo_points>=5
+actions.aoe+=/ambush,if=buff.shadow_dance.up&combo_points<5
+actions.aoe+=/fan_of_knives,if=combo_points<5&active_enemies>=3
 
-# ===============================================================================
-# COMBO POINT GENERATORS
-# ===============================================================================
-# Maintain Hemorrhage; then Backstab (pooling not required at 35 energy in MoP)
-actions.generators+=/hemorrhage,if=combo_points<5&(!dot.hemorrhage.ticking|dot.hemorrhage.remains<4)
-actions.generators+=/backstab,if=behind_target&combo_points<5&energy>=35
-actions.generators+=/hemorrhage,if=combo_points<5
+# Generators
+actions.generators+=/marked_for_death,if=talent.marked_for_death.enabled&combo_points=0
+actions.generators+=/hemorrhage,if=talent.hemorrhage.enabled&combo_points<5&(!dot.hemorrhage.ticking|dot.hemorrhage.remains<4)
+actions.generators+=/backstab,if=combo_points<5&energy>=35
 actions.generators+=/shuriken_toss,if=talent.shuriken_toss.enabled&combo_points<5&energy<40
-
-# ===============================================================================
-# MAINTENANCE
-# ===============================================================================
-actions.generators+=/slice_and_dice,if=buff.slice_and_dice.remains<3&combo_points>=1
-actions.generators+=/apply_poison,if=settings.auto_poison_apply&(!buff.deadly_poison.up|!buff.crippling_poison.up)

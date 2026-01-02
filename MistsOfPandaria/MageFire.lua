@@ -1,42 +1,24 @@
 -- MageFire.lua
--- Updated May 28, 2025 - Modern Structure
+-- Updated October 1, 2025 - Modern Structure
 -- Mists of Pandaria module for Mage: Fire spec
 
--- MoP: Use UnitClass instead of UnitClassBase
-local _, playerClass = UnitClass('player')
-if playerClass ~= 'MAGE' then return end
+-- Early return if not a Mage
+if select(2, UnitClass('player')) ~= 'MAGE' then return end
 
 local addon, ns = ...
 local Hekili = _G[ "Hekili" ]
+
+-- Early return if Hekili is not available
+if not Hekili or not Hekili.NewSpecialization then return end
+
 local class = Hekili.Class
 local state = Hekili.State
 
-local function getReferences()
-    -- Legacy function for compatibility
-    return class, state
-end
-
-local spec = Hekili:NewSpecialization( 63 ) -- Fire spec ID for MoP
-
--- No longer need custom spec detection - WeakAuras system handles this in Constants.lua
-
 local strformat = string.format
-local FindUnitBuffByID = ns.FindUnitBuffByID
-local FindUnitDebuffByID = ns.FindUnitDebuffByID
-local function UA_GetPlayerAuraBySpellID(spellID)
-    for i = 1, 40 do
-        local name, _, count, _, duration, expires, caster, _, _, id = UnitBuff("player", i)
-        if not name then break end
-        if id == spellID then return name, _, count, _, duration, expires, caster end
-    end
-    for i = 1, 40 do
-        local name, _, count, _, duration, expires, caster, _, _, id = UnitDebuff("player", i)
-        if not name then break end
-        if id == spellID then return name, _, count, _, duration, expires, caster end
-    end
-    return nil
-end
+local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
+local PTR = ns.PTR
 
+local spec = Hekili:NewSpecialization( 63, true )
 -- Register resources
 spec:RegisterResource( 0 ) -- Mana = 0 in MoP
 
@@ -219,11 +201,132 @@ spec:RegisterStateExpr( "spell_power", function()
 end )
 
 spec:RegisterStateExpr( "hot_streak_bonus", function()
-    return buff.hot_streak.up and 0.25 or 0 -- 25% damage bonus
+    if buff.hot_streak.up then return 0.25 end
+    return 0
 end )
 
 spec:RegisterStateExpr( "heating_up_bonus", function()
-    return buff.heating_up.up and 0.15 or 0 -- 15% damage bonus
+    if buff.heating_up.up then return 0.15 end
+    return 0
+end )
+
+-- ===================
+-- FIRE MAGE VARIABLE LOGIC (From WoWSims APL)
+-- ===================
+
+-- Proc State Variables
+spec:RegisterStateExpr( "has_instant", function()
+    -- True if we have Hot Streak proc (instant Pyroblast)
+    if buff.hot_streak.up then return 1 end
+    return 0
+end )
+
+spec:RegisterStateExpr( "has_hu", function()
+    -- True if we have Heating Up (need one more crit for Hot Streak)
+    if buff.heating_up.up then return 1 end
+    return 0
+end )
+
+spec:RegisterStateExpr( "has_instant_hu", function()
+    -- True if we have both Hot Streak and Heating Up (rare case from Ignite spreading)
+    if buff.hot_streak.up and buff.heating_up.up then return 1 end
+    return 0
+end )
+
+spec:RegisterStateExpr( "hu_to_hot", function()
+    -- Optimization: Can convert Heating Up to Hot Streak with next crit
+    -- This helps with predictive ability weighting
+    if buff.heating_up.up then return 1 end
+    return 0
+end )
+
+spec:RegisterStateExpr( "no_ignite", function()
+    -- True if target doesn't have Ignite debuff
+    if not debuff.ignite.up then return 1 end
+    return 0
+end )
+
+spec:RegisterStateExpr( "ignite_active", function()
+    -- True if target has Ignite debuff
+    if debuff.ignite.up then return 1 end
+    return 0
+end )
+
+spec:RegisterStateExpr( "ignite_expiring", function()
+    -- True if Ignite will expire soon (within 2 seconds)
+    if debuff.ignite.up and debuff.ignite.remains < 2 then return 1 end
+    return 0
+end )
+
+-- Timing Window Variables
+spec:RegisterStateExpr( "alter_time_ready", function()
+    -- True if Alter Time is ready (with 6 second leeway for planning)
+    if cooldown.alter_time.ready then return 1 end
+    return 0
+end )
+
+spec:RegisterStateExpr( "alter_time_soon", function()
+    -- True if Alter Time will be ready soon (within 6 seconds)
+    if cooldown.alter_time.remains < 6 then return 1 end
+    return 0
+end )
+
+spec:RegisterStateExpr( "alter_time_dot_window", function()
+    -- True if we're in a window where Alter Time cooldown allows burning cooldowns
+    -- Essentially: Alter Time is ready OR recently used (allows burst planning)
+    if cooldown.alter_time.ready then return 1 end
+    if cooldown.alter_time.remains > 172 then return 1 end -- 172 = 180 - 8
+    return 0
+end )
+
+-- Combustion Threshold Variables (for intelligent Combustion timing)
+spec:RegisterStateExpr( "combustion_ready_burst", function()
+    -- True if we should use Combustion when all buffs align for burst damage
+    -- Requires: Hot Streak/Pyroblast, Alter Time cooldown ready, and sufficient cooldowns
+    if buff.hot_streak.up and cooldown.alter_time.ready then return 1 end
+    return 0
+end )
+
+spec:RegisterStateExpr( "combustion_on_ignite", function()
+    -- True if Combustion should be used to snapshot high Ignite DoT
+    -- Used for single-target sustained damage when short-term burst unavailable
+    if debuff.ignite.up and debuff.ignite.remains > 1 then return 1 end
+    return 0
+end )
+
+spec:RegisterStateExpr( "combustion_with_invocation", function()
+    -- True if Combustion should be used when Invocation buff active (15% spell power increase)
+    if buff.invocation.up and cooldown.combustion.ready then return 1 end
+    return 0
+end )
+
+spec:RegisterStateExpr( "combustion_with_potions", function()
+    -- True if Combustion should sync with damage potion for peak burst
+    return 0 -- Would need potion detection from combat log
+end )
+
+spec:RegisterStateExpr( "combustion_multidot_value", function()
+    -- Estimate total damage spread from Combustion to multiple DoTs
+    -- Used to determine if multi-target Combustion is worth the cooldown
+    local dot_value = 0
+    if debuff.ignite.up then dot_value = dot_value + 1 end
+    if debuff.living_bomb.up then dot_value = dot_value + 1 end
+    if debuff.nether_tempest.up then dot_value = dot_value + 1 end
+    return dot_value
+end )
+
+-- Additional State Tracking Variables
+spec:RegisterStateExpr( "burn_phase_active", function()
+    -- True if in a burn phase (Combustion recently used or about to be used)
+    -- Used for resource pooling and cooldown alignment decisions
+    if cooldown.combustion.remains < 5 or buff.combustion.up then return 1 end
+    return 0
+end )
+
+spec:RegisterStateExpr( "pooling_for_combustion", function()
+    -- True if we should pool resources for upcoming Combustion window
+    if cooldown.combustion.remains < 10 and not buff.combustion.up then return 1 end
+    return 0
 end )
 
 -- Talents (MoP 6-tier system)
@@ -677,7 +780,7 @@ spec:RegisterAuras( {
         duration = 0,
         max_stack = 1,
         generate = function( t )
-            if IsSpellKnown( 56368 ) then
+            if IsPlayerSpell( 56368 ) then
                 t.name = "Glyph of Combustion"
                 t.count = 1
                 t.expires = 9999999999
@@ -698,7 +801,7 @@ spec:RegisterAuras( {
         duration = 0,
         max_stack = 1,
         generate = function( t )
-            if IsSpellKnown( 56375 ) then
+            if IsPlayerSpell( 56375 ) then
                 t.name = "Glyph of Living Bomb"
                 t.count = 1
                 t.expires = 9999999999
@@ -719,7 +822,7 @@ spec:RegisterAuras( {
         duration = 0,
         max_stack = 1,
         generate = function( t )
-            if IsSpellKnown( 56374 ) then
+            if IsPlayerSpell( 56374 ) then
                 t.name = "Glyph of Inferno Blast"
                 t.count = 1
                 t.expires = 9999999999
@@ -810,7 +913,7 @@ spec:RegisterAuras( {
         duration = 0,
         max_stack = 1,
         generate = function( t )
-            if IsSpellKnown( 140468 ) then
+            if IsPlayerSpell( 140468 ) then
                 t.name = "Flameglow"
                 t.count = 1
                 t.expires = 9999999999
@@ -1075,7 +1178,7 @@ spec:RegisterAbilities( {
     -- Fire Core Abilities
     fireball = {
         id = 133,
-        cast = 2.25,
+        cast = function() return 2.25 * haste end,
         cooldown = 0,
         gcd = "spell",
         
@@ -1085,9 +1188,11 @@ spec:RegisterAbilities( {
         startsCombat = true,
         texture = 135812,
         
+        velocity = 24,
+        
         handler = function()
-            -- Chance to proc Heating Up or convert to Hot Streak
-            -- Use simulation rather than trying to model RNG here
+            -- Heating Up mechanic handled by combat log events
+            -- On crit: gain Heating Up or convert to Hot Streak
         end,
     },
     
@@ -1102,48 +1207,79 @@ spec:RegisterAbilities( {
         
         startsCombat = true,
         texture = 135813,
-          handler = function()
-            -- Guaranteed crit
-            -- Proc Hot Streak on Heating Up
+        
+        handler = function()
+            -- Guaranteed crit - always converts Heating Up to Hot Streak
             if buff.heating_up.up then
                 removeBuff( "heating_up" )
-                applyBuff( "hot_streak" ) -- Correct MoP mechanic
+                applyBuff( "hot_streak" )
+            else
+                -- If no Heating Up, gain Heating Up from guaranteed crit
+                applyBuff( "heating_up" )
             end
+            
+            -- Spreads Pyroblast, Combustion, and Ignite DoTs to nearby targets
+            -- (actual spread handled by game mechanics)
         end,
     },
-      pyroblast = {
+    
+    pyroblast = {
         id = 11366,
-        cast = function() return buff.hot_streak.up and 0 or 4.5 end,
+        cast = function() 
+            if buff.hot_streak.up then return 0 end
+            return 3.5 * haste 
+        end,
         cooldown = 0,
         gcd = "spell",
         
-        spend = 0.03,
+        spend = function()
+            if buff.hot_streak.up then return 0 end
+            return 0.05
+        end,
         spendType = "mana",
         
         startsCombat = true,
         texture = 135808,
         
+        velocity = 24,
+        
         handler = function()
-            if buff.hot_streak.up then
+            local had_hot_streak = buff.hot_streak.up
+            
+            if had_hot_streak then
                 removeBuff( "hot_streak" )
             end
+            
+            -- Apply Pyroblast DoT (18s, 6 ticks every 3s)
             applyDebuff( "target", "pyroblast" )
+            
+            -- Instant Pyroblast DoT gets 25% damage bonus
+            -- Heating Up mechanic handled by combat log events
         end,
     },
     
     combustion = {
         id = 11129,
         cast = 0,
-        cooldown = 45,
+        cooldown = function()
+            return glyph.glyph_of_combustion.enabled and 90 or 45
+        end,
         gcd = "spell",
-        
+
         toggle = "cooldowns",
-        
-        startsCombat = false,
-        texture = 135824,
+
+        startsCombat = true,
+        texture = 135824,        usable = function()
+            return debuff.ignite.up, "requires ignite on target"
+        end,
         
         handler = function()
-            applyBuff( "combustion" )
+            -- Direct damage based on Ignite
+            -- Apply Combustion DoT (10 ticks, 20 ticks with glyph)
+            applyDebuff( "target", "combustion" )
+            
+            -- Resets Inferno Blast cooldown
+            setCooldown( "inferno_blast", 0 )
         end,
     },
     
@@ -1259,7 +1395,6 @@ spec:RegisterAbilities( {
         gcd = "off",
         
         toggle = "cooldowns",
-        
         startsCombat = false,
         texture = 607849,
         
@@ -1347,11 +1482,8 @@ spec:RegisterAbilities( {
         gcd = "spell",
         
         toggle = "cooldowns",
-        
         startsCombat = false,
         texture = 136075,
-        
-        talent = function() return not talent.rune_of_power.enabled end,
         
         handler = function()
             -- Restore 60% mana over 6 sec
@@ -1425,7 +1557,7 @@ spec:RegisterAbilities( {
         cast = 0,
         cooldown = 300,
         gcd = "spell",
-        
+
         toggle = "defensives",
         
         startsCombat = false,
@@ -1477,8 +1609,6 @@ spec:RegisterAbilities( {
         cooldown = 300,
         gcd = "spell",
         
-        toggle = "defensives",
-        
         startsCombat = false,
         texture = 132220,
         
@@ -1493,8 +1623,7 @@ spec:RegisterAbilities( {
         cooldown = 90,
         gcd = "spell",
         
-        toggle = "defensives",
-        
+        toggle = "cooldowns",
         startsCombat = false,
         texture = 606086,
         
@@ -1512,7 +1641,6 @@ spec:RegisterAbilities( {
         gcd = "off",
         
         toggle = "cooldowns",
-        
         startsCombat = false,
         texture = 136031,
         
@@ -1621,7 +1749,6 @@ spec:RegisterAbilities( {
         gcd = "off",
         
         toggle = "cooldowns",
-        
         startsCombat = false,
         texture = 458224,
         
@@ -1679,11 +1806,107 @@ spec:RegisterAbilities( {
             applyBuff( "molten_armor" )
         end,
     },
+
+    nether_tempest = {
+        id = 114923,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        school = "arcane",
+
+        spend = 0.03,
+        spendType = "mana",
+
+        talent = "nether_tempest",
+        startsCombat = true,
+
+        handler = function ()
+            applyDebuff( "target", "nether_tempest" )
+        end,
+    },
+
+    frost_bomb = {
+        id = 112948,
+        cast = 0,
+        cooldown = 0,
+        gcd = "spell",
+        school = "frost",
+
+        spend = 0.03,
+        spendType = "mana",
+
+        talent = "frost_bomb",
+        startsCombat = true,
+
+        handler = function ()
+            applyDebuff( "target", "frost_bomb" )
+        end,
+    },
+
+    alter_time_activate = {
+        id = 108978,
+        cast = 0,
+        cooldown = 0,
+        gcd = "off",
+
+        startsCombat = false,
+        buff = "alter_time",
+
+        handler = function ()
+            -- Activates Alter Time, returning to previous state
+            removeBuff( "alter_time" )
+        end,
+    },
+
+    strictsequence = {
+        id = 0, -- Placeholder
+        cast = 0,
+        cooldown = 0,
+        gcd = "off",
+
+        startsCombat = false,
+
+        handler = function ()
+            -- Strict sequence action - handled by SimC
+        end,
+    },
+
+    mirror_image = {
+        id = 55342,
+        cast = 0,
+        cooldown = 180,
+        gcd = "spell",
+
+        toggle = "cooldowns",
+        
+        startsCombat = false,
+        texture = 135994,
+        
+        handler = function()
+            applyBuff( "mirror_image" )
+        end,
+    },
 } )
 
 -- State Functions and Expressions
 spec:RegisterStateExpr( "hot_streak", function()
-    return buff.pyroblast_clearcasting.up
+    if buff.pyroblast_clearcasting.up then return 1 end
+    return 0
+end )
+
+spec:RegisterStateExpr( "combustion_dot_value", function()
+    -- Calculate total DoT value for Combustion timing
+    local value = 0
+    if debuff.ignite.up then
+        value = value + (debuff.ignite.damage * debuff.ignite.ticks_remain)
+    end
+    if debuff.living_bomb.up then
+        value = value + (debuff.living_bomb.damage * debuff.living_bomb.ticks_remain)
+    end
+    if debuff.nether_tempest.up then
+        value = value + (debuff.nether_tempest.damage * debuff.nether_tempest.ticks_remain)
+    end
+    return value
 end )
 
 -- Range
@@ -1706,7 +1929,5 @@ spec:RegisterOptions( {
     package = "Fire",
 } )
 
--- Register default pack for MoP Fire Mage
-spec:RegisterPack( "Fire", 20250517, [[Hekili:TzvBVTTn04FldjH0cbvgL62TG4I3KRlvnTlSynuRiknIWGQ1W2jzlkitIhLmzImzkKSqu6Mi02Y0YbpYoWoz9ogRWEJOJTFYl(S3rmZXRwKSWNrx53Ntta5(S3)8dyNF3BhER85x(jym5nymTYnv0drHbpz5IW1vZgbo1P)MM]] )
-
--- Register pack selector for Fire
+-- Register default pack for MoP Fire Mage  
+spec:RegisterPack( "Fire", 20260101, [[Hekili:9MvBVTTUv4FlgxaJeuxF9lXP5oevGTIn0BXUDftzRFts020XersuJIkPziq)23HK6fkAsfjFZDfnbosKNZZ5WZB8XbldUlWFpIJd(6QfRUEXYfRMVyXvxV8MaF(Zz4a)m0Uhq3dFifLa)(VryYh(CmfTxS5CAbBh8Oa)TfKy(VMgS1Me3S6kyTz4DbF961b(hj73JvlfNVlW)UJK8YiXpOYOkvwgrpa)9ooHMwgftY5WRpqzLrFg)ajMmpWx(qPjGpGkI5Wh)Q0KWPOTX49b)LaFAgOympWxjPa)hrmI4TIpfxGfa)WH5hP8WCodJEyErMcwmsMAhFJr3vg5ZbRQm6FxT9CPKcvULJO8qsAohLYd4GLFMyaJ4K07dlYKyOR4pwiK86ZuY6wxz00YOxxHv2tLIV6mvStnueYPHaUecFZOf(KYO9yPgi3Ns4ydPNsdvpxi9RhT07t0Qhgk27JsX)HF3IxEG09HmCccoakJUTmALf1J)rgHbowbaUz0ayhLgVN(u6CumhZc5KeHgr7F2iW)oscOJYOVtsHL7i2VvgHkzaq6xEJGuRt4AhQmNcId04YfVrQeSGYOxEPmQxe9r7VFFbdPQx9(YOBCa59qY4tspQe4VffSKrqd9u9t0KTf5kyE3rgo)iSphhU7AwR6WnCBblxMZUC8f5gtCp4Gx6aiW)BtUxEMvejPps3jpRoX91QQA3Nvy8eHFmSvmsWm(QKl6t6zuXNZLIE81iV40AKLrxwg9UYO2xftEuuFElOzRVpfZpkcMWjz4CUAjoGCc0bMicUv6xa6Xx61(PqBDGnQKtj20wYj9S)Z73teFcf305(ogmyHSEM1qDiYonmd68PxCF54RU)AwWYfYWTj2nIw8KbYrC0aJ8e2UijOmR4xJfz5LNqmtNXNQGeyVWdHIdeuvAW2ykDFmi65I3lfUzT7gHd9BEaZHSY8yOTD7Flg4XS6RXMwzSPvYnzw5REt4MCQUMXVHsHXdtGFFpobdJAzAnSIuCi9aK38eMP509GSBuoxwsuQzZAxTYjBh)2BwydlI9zwSPEvDuSbQ)NW7uZY(nXBfgajLdcjvm3CRM5OyWMmSHkDjJyUOnOP7IejLnjfdXhiYHfMJz5QAZ5ikDFE9rw1F0cuNfkDmyP2J7ziB)Ntrz5a08Zed2aqwuceUuGAm03vjYYiyNcSBwpSg7APkUB790rm87kqR0dGTYif4KLa113Gn(lSzOAhog(LlDwmtyHMfpF7oDg0Tb6EfONz0TXq8dC9mgHcARXX95Ah1)kt64(SWr6x5ifGGkFCvMVSz2kZQQaAi7aqH)pfyzAXY)qmjlXic0ywo9)ZOjR23kbJRYVdlUUkLHJJJj3dLta)E1m8BHgBqDeXQQTar8U4M6d246FKyOcZh2iVKQRUbTwQZOllXuQKvDZe9iIeRA6A0byiE(ozQTnaRtu7V)TNCeez5Z1U6FnaZCFrswJXQNWqtJFEaw1eNgwVWxCgb3usaE3TahTkHz(M3yZD9vRCeMV2vN08Du2UJM9gKpeILPvDpHF6eKOdF34CI12qc04QrO20XGkEExmoKJy3lkJ9vOOqc6hHDFQ)AlT01NXwVH(eLRt)1CICevZbFetw)EyT8QR8V2v3VUJRpqmVXcMnM73cSnwrnYfOZvNRbKyyjL4cOJtcIbLGoqIJXSl7pyvIaZgmDuNGeZTO44Ab2cWdvVjqeKcdIGfjriR8kwVfeBhcM4AldefrntNXqR3J)tLrcDkzf4FKjQi)Ff(YdmAsz03PF3NKa5l)g9B2IJprb1Zh4mbUENjuOmDAiILqzD64O)cP7YHTLqym42hG3xWaCJ7qnhT)hMlR2BM70IdXK6ZHbQLx7X(q1Ni0RfI0m6Eydj7CCCtDCLc4oJsP2H2AXMmdSojYX62KHtpIz5I1wtmoKmc3vlvmSBG)VMKrzCruXkdsVNx(fHqPqSkiTFcItgtev5xk)YpbB6B1OQ8lkPNpVbOVZ7NpjiBg5G3eNXF2fIEyv7(nIcDSvTiTzD9GEqCM9n1egjuwDWgC7ntbCT9T3jkriI(cUmL5vUaLk6XC5RTV46OgllxDS1WubugSIgJ)6pGfNlIKYRpW)7fOlH1loLT9nv0OBqJ10vmtqYGNgp)ZOzE5y(mjlgEwMbOxHCSW2(70bEiGWHC0XX0rj66VLHZhDnFvcDfXKtOwZPe68ng0vkJwi18(3VyMALu1BxjJQkJCsRVB1BsYFx97Mj9Hiqbf(drEkJ46bjZwo2hIKbK(Yl9O0p2hx)V)Mk36RXRUBG3oQUol7VAMWz4210udn6NtS0hxoiDyWrUflQdp8tDF9ZbRTkoZ7QQfdA)DjWUReUW0VC57UWkf6Tp)eQZVSkqzyCt7gYNWuTJy8tVb4TBE5fj20EvFvDSZb9Wv3YftNytFQMBFIkMGHr5QVZmvouft16yQHwBrtAJBTl5XqBTfGtboGsMjOhZRMJ6xDf1LgnPywFJDg3qcdRCTERxlpRU2TCyLDfmgOIB9wVa(xfa6JTyDXnQHxMEXel4TiRky41mJ642rqrRBhUKWsbGDMRBPd)uBZJCsr3XXQRoe1IT7fzxCkoQ8HDG7L2ZYuJO9MXK6BGpEedwnux0Ge8mdkw96KH2qtWFqA60aNZH20ZX503mgEFyZPHiJJouNoXb5QQIU1zevBQilv392C5PiUxMnhdaNybH9GMp6TCXVxXBLiZB9QBo8Q0qQRFfrMTxdURMM4SGwhU(0fO2ygZ6qGN3YzNqQN3ATEcw4FC6ehmpQRXUdWmaLUrtP2jquPx7uh6m6VxYahXzELcmP)txcT04Gk4hPSaF)KIdmYdskCc(F]] )

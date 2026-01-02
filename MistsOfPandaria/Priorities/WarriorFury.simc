@@ -1,92 +1,105 @@
-# Warrior: Fury
-## Precombat
-actions.precombat+=/battle_shout,if=!buff.str_agi_int.up&!buff.battle_shout.up
-actions.precombat+=/commanding_shout,if=!buff.stamina.up&!buff.commanding_shout.up
-actions.precombat+=/stance,choose=battle
-actions.precombat+=/snapshot_stats
-actions.precombat+=/flask,type=winters_bite
-actions.precombat+=/food,type=black_pepper_ribs_and_shrimp
+# Fury Warrior APL for Mists of Pandaria
+# Based on Wowsims ToT Preliminary BiS APL
+### Precombat ###
+actions.precombat+=/battle_shout,if=!buff.battle_shout.up
+actions.precombat+=/commanding_shout,if=!buff.commanding_shout.up&!buff.battle_shout.up
+actions.precombat+=/berserker_stance,if=!buff.berserker_stance.up
+# Prepull actions from Wowsims
+actions.precombat+=/bloodthirst,if=time<1.5
+actions.precombat+=/colossus_smash,if=time<1
 
-## Default actions
-actions+=/run_action_list,name=opener,if=time<8
-actions+=/charge,if=time=0|movement.distance>8
+### Base Actions ###
+actions+=/charge,if=time=0
+actions+=/berserker_rage,if=buff.enrage.down
 actions+=/pummel,if=target.debuff.casting.react
 actions+=/run_action_list,name=movement,if=movement.distance>5
-actions+=/berserker_rage,if=!buff.enrage.up
-actions+=/use_item,slot=hands,if=(debuff.colossus_smash.up|cooldown.colossus_smash.remains<2)&(buff.recklessness.up|cooldown.recklessness.remains>20)
-actions+=/use_item,name=trinket1,if=(debuff.colossus_smash.up|cooldown.colossus_smash.remains<2)&(buff.recklessness.up|cooldown.recklessness.remains>20)
-actions+=/use_item,name=trinket2,if=(debuff.colossus_smash.up|cooldown.colossus_smash.remains<2)&(buff.recklessness.up|cooldown.recklessness.remains>20)
-actions+=/blood_fury,if=debuff.colossus_smash.up
-actions+=/berserking,if=debuff.colossus_smash.up
-actions+=/arcane_torrent,if=rage<rage.max-40
-actions+=/lights_judgment,if=debuff.colossus_smash.down&cooldown.bloodthirst.remains
-actions+=/bag_of_tricks,if=debuff.colossus_smash.down&cooldown.bloodthirst.remains
-actions+=/potion,name=mogu_power_potion,if=buff.recklessness.up|target.time_to_die<25
-actions+=/run_action_list,name=single_target,if=active_enemies=1
-actions+=/run_action_list,name=aoe,if=active_enemies>=2
+actions+=/run_action_list,name=aoe,if=active_enemies>1
+actions+=/run_action_list,name=single_target
+actions+=/call_action_list,name=defensives
 
-## Opener (first few seconds)
-actions.opener+=/charge,if=time=0
-actions.opener+=/colossus_smash,if=debuff.colossus_smash.down
-actions.opener+=/recklessness,if=debuff.colossus_smash.up|(target.time_to_die<20&debuff.colossus_smash.up)
-actions.opener+=/avatar,if=debuff.colossus_smash.up|(target.time_to_die<20&debuff.colossus_smash.up)
-actions.opener+=/bloodbath,if=debuff.colossus_smash.up|(target.time_to_die<20&debuff.colossus_smash.up)
-actions.opener+=/use_item,slot=hands,if=debuff.colossus_smash.up&(buff.recklessness.up|cooldown.recklessness.remains>20)
-actions.opener+=/use_item,name=trinket1,if=debuff.colossus_smash.up&(buff.recklessness.up|cooldown.recklessness.remains>20)
-actions.opener+=/use_item,name=trinket2,if=debuff.colossus_smash.up&(buff.recklessness.up|cooldown.recklessness.remains>20)
-actions.opener+=/bloodthirst
-actions.opener+=/raging_blow,if=buff.raging_blow.stack=2
-actions.opener+=/wild_strike,if=buff.bloodsurge.up
+### Single Target ###
+# Variables for timing (simulating Wowsims valueVariables)
+actions.single_target+=/variable,name=cs_last_used,op=set,value=time-debuff.colossus_smash.applied_at
+actions.single_target+=/variable,name=feather_stacks,op=set,value=buff.jinas_arcane_proxies.stack
 
-## Single-target rotation
-actions.single_target+=/recklessness,if=debuff.colossus_smash.remains>4|(target.time_to_die<20&debuff.colossus_smash.up)
-actions.single_target+=/avatar,if=debuff.colossus_smash.remains>4|(target.time_to_die<20&debuff.colossus_smash.up)
-actions.single_target+=/bloodbath,if=debuff.colossus_smash.remains>4|(target.time_to_die<20&debuff.colossus_smash.up)
-actions.single_target+=/berserker_rage,if=!buff.enrage.up
-actions.single_target+=/colossus_smash
-actions.single_target+=/bloodthirst,if=!buff.enrage.up
-actions.single_target+=/storm_bolt,if=debuff.colossus_smash.up
-actions.single_target+=/dragon_roar,if=debuff.colossus_smash.up
-actions.single_target+=/execute,if=target.health.pct<20|buff.sudden_death.up
+# Colossus Smash - highest priority when down
+actions.single_target+=/colossus_smash,if=debuff.colossus_smash.remains<1.5
+
+# Cooldowns on CS application (Wowsims: "On UsUwU and BloodbUwU" group)
+actions.single_target+=/recklessness,if=debuff.colossus_smash.up&variable.cs_last_used<1
+actions.single_target+=/avatar,if=talent.avatar.enabled&debuff.colossus_smash.up&variable.cs_last_used<1
+actions.single_target+=/bloodbath,if=talent.bloodbath.enabled&debuff.colossus_smash.up&variable.cs_last_used<1
+
+# Trinkets with CS or Recklessness
+actions.single_target+=/use_item,slot=trinket1,if=(debuff.colossus_smash.up&variable.cs_last_used<1)|buff.recklessness.up
+actions.single_target+=/use_item,slot=trinket2,if=(debuff.colossus_smash.up&variable.cs_last_used<1)|buff.recklessness.up
+
+# Racials with CS
+actions.single_target+=/blood_fury,if=debuff.colossus_smash.up&variable.cs_last_used<1
+actions.single_target+=/berserking,if=debuff.colossus_smash.up&variable.cs_last_used<1
+
+# Enrage maintenance
+actions.single_target+=/berserker_rage,if=buff.enrage.down&(debuff.colossus_smash.up|cooldown.colossus_smash.remains<3)
+actions.single_target+=/bloodthirst,if=buff.enrage.down|buff.enrage.remains<1.5
+
+# CS window priority
+actions.single_target+=/bloodthirst,if=debuff.colossus_smash.up
+actions.single_target+=/raging_blow,if=debuff.colossus_smash.up&buff.raging_blow.stack>=2
+actions.single_target+=/storm_bolt,if=talent.storm_bolt.enabled&debuff.colossus_smash.up
+actions.single_target+=/dragon_roar,if=talent.dragon_roar.enabled&debuff.colossus_smash.up
+
+# Execute/Bloodsurge procs
+actions.single_target+=/execute,if=buff.sudden_death.react&buff.sudden_death.remains<3
+actions.single_target+=/wild_strike,if=buff.bloodsurge.react&buff.bloodsurge.remains<3
+
+# Raging Blow - use stacks
+actions.single_target+=/raging_blow,if=buff.raging_blow.stack>=2|debuff.colossus_smash.up
+
+# Bloodthirst filler
 actions.single_target+=/bloodthirst
-actions.single_target+=/wild_strike,if=buff.bloodsurge.up
-actions.single_target+=/raging_blow,if=buff.raging_blow.stack=2
-actions.single_target+=/raging_blow,if=cooldown.colossus_smash.remains>=1
-actions.single_target+=/heroic_strike,if=rage>=80
+
+# Rage spenders
 actions.single_target+=/wild_strike,if=rage>=70
-actions.single_target+=/battle_shout,if=rage<rage.max-20
+actions.single_target+=/heroic_strike,if=rage>=90
+actions.single_target+=/battle_shout,if=rage<30
 actions.single_target+=/heroic_throw
 
-## AoE rotation
-actions.aoe+=/recklessness,if=debuff.colossus_smash.up
-actions.aoe+=/avatar,if=debuff.colossus_smash.up
-actions.aoe+=/bloodbath,if=debuff.colossus_smash.up
-actions.aoe+=/use_item,slot=hands,if=debuff.colossus_smash.up
-actions.aoe+=/use_item,name=trinket1,if=debuff.colossus_smash.up
-actions.aoe+=/use_item,name=trinket2,if=debuff.colossus_smash.up
-actions.aoe+=/berserker_rage,if=!buff.enrage.up
-actions.aoe+=/colossus_smash,if=debuff.colossus_smash.remains<1
-actions.aoe+=/bladestorm
-actions.aoe+=/dragon_roar
-actions.aoe+=/whirlwind,if=!buff.meat_cleaver.up
-actions.aoe+=/bloodthirst,if=!buff.enrage.up|rage<40
-actions.aoe+=/wild_strike,if=buff.bloodsurge.up
-actions.aoe+=/raging_blow,if=buff.raging_blow.stack=2
-actions.aoe+=/bloodthirst
-actions.aoe+=/whirlwind,if=rage>60
-actions.aoe+=/raging_blow
-actions.aoe+=/battle_shout,if=rage<rage.max-20
+### AOE ###
+# Bladestorm usage (Wowsims: use with feather stacks or rage>=20)
+actions.aoe+=/bladestorm,if=talent.bladestorm.enabled&((variable.feather_stacks>=3&rage>=20)|(rage>=20&!buff.jinas_arcane_proxies.up))
 
-## Movement actions
-actions.movement+=/heroic_leap
-actions.movement+=/charge
-actions.movement+=/storm_bolt
+# CS and cooldowns
+actions.aoe+=/colossus_smash,if=debuff.colossus_smash.remains<1.5
+actions.aoe+=/recklessness,if=debuff.colossus_smash.up&variable.cs_last_used<1
+actions.aoe+=/avatar,if=talent.avatar.enabled&debuff.colossus_smash.up&variable.cs_last_used<1
+actions.aoe+=/bloodbath,if=talent.bloodbath.enabled&debuff.colossus_smash.up&variable.cs_last_used<1
+actions.aoe+=/dragon_roar,if=talent.dragon_roar.enabled&debuff.colossus_smash.up
+
+# Whirlwind for Meat Cleaver
+actions.aoe+=/whirlwind,if=buff.meat_cleaver.down|buff.meat_cleaver.remains<1.5
+
+# Enrage maintenance
+actions.aoe+=/bloodthirst,if=buff.enrage.down|buff.enrage.remains<1.5
+
+# Priority abilities
+actions.aoe+=/bloodthirst,if=debuff.colossus_smash.up
+actions.aoe+=/raging_blow,if=buff.meat_cleaver.up&buff.raging_blow.stack>=2
+actions.aoe+=/wild_strike,if=buff.bloodsurge.react&buff.meat_cleaver.up
+actions.aoe+=/raging_blow,if=buff.meat_cleaver.up
+actions.aoe+=/whirlwind
+actions.aoe+=/heroic_strike,if=rage>=70&active_enemies<=4&buff.meat_cleaver.up
+actions.aoe+=/battle_shout,if=rage<50
+
+### Movement ###
+actions.movement+=/heroic_leap,if=target.distance>12
+actions.movement+=/charge,if=target.distance>8
+actions.movement+=/storm_bolt,if=talent.storm_bolt.enabled&target.distance>8
 actions.movement+=/heroic_throw
 
-## Defensive cooldowns
-actions.defensives+=/die_by_the_sword,if=incoming_damage_5s>health.max*0.2
-actions.defensives+=/rallying_cry,if=health.pct<25&incoming_damage_5s>health.max*0.3
+### Defensives ###
+actions.defensives+=/die_by_the_sword,if=health.pct<60&incoming_damage_5s>health.max*0.25
+actions.defensives+=/rallying_cry,if=health.pct<30
 actions.defensives+=/demoralizing_shout,if=incoming_damage_5s>health.max*0.15
-actions.defensives+=/enraged_regeneration,if=health.pct<30
-actions.defensives+=/healthstone,if=health.pct<35
-actions.defensives+=/second_wind,if=health.pct<35
+actions.defensives+=/enraged_regeneration,if=health.pct<35
+actions.defensives+=/healthstone,if=health.pct<30
+actions.defensives+=/victory_rush,if=health.pct<70&buff.victory_rush.up

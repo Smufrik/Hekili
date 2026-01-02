@@ -2,6 +2,9 @@
 -- Updated August 11, 2025
 -- Mists of Pandaria module for Shaman: Enhancement spec
 
+-- WoW API declarations for linter
+local UnitClass, UnitBuff, GetTime = UnitClass, UnitBuff, GetTime
+
 -- MoP: Use UnitClass instead of UnitClassBase
 local _, playerClass = UnitClass('player')
 if playerClass ~= 'SHAMAN' then return end
@@ -18,6 +21,94 @@ end
 local spec = Hekili:NewSpecialization( 263 ) -- Enhancement spec ID for MoP
 
 local strformat = string.format
+
+local function getSwingRemains(hand)
+    local timers = state.swing
+    if not timers then return 999 end
+
+    local timer = timers[hand]
+    if not timer then return 999 end
+
+    local remains = timer.remains
+    if remains == nil then
+        return 999
+    end
+
+    if remains < 0 then
+        return 0
+    end
+
+    return remains
+end
+
+local function getMaelstromStacks()
+    local aura = state.buff and state.buff.maelstrom_weapon
+    if not aura then return 0 end
+    return aura.stack or 0
+end
+
+local function canFitHardcast(baseCast, stacks)
+    local cfg = spec.settings
+    if not cfg or not cfg.swing_weave_hardcasts then
+        return true
+    end
+
+    local count = stacks
+    if count == nil then
+        count = getMaelstromStacks()
+    end
+
+    if count >= (cfg.swing_weave_instant_stacks or 5) then
+        return true
+    end
+
+    local hasteMult = state.haste or 1
+    if hasteMult <= 0 then
+        hasteMult = 1
+    end
+
+    local castTime = baseCast * hasteMult * math.max(0, 1 - count * 0.2)
+    if castTime <= 0 then
+        return true
+    end
+
+    local remains = getSwingRemains("mh")
+    if remains == 999 then
+        -- No swing data yet - BLOCK hardcasts to avoid clipping first swing
+        -- This happens at combat start before first auto-attack lands
+        return false
+    end
+
+    local buffer = (cfg.swing_weave_buffer or 0.2) + (cfg.swing_weave_latency or 0.1)
+    return (castTime + buffer) <= remains
+end
+
+function spec:CanFitHardcastBeforeSwing(baseCast, stacks)
+    return canFitHardcast(baseCast, stacks)
+end
+
+spec:RegisterStateExpr( "mh_swing_remains", function()
+    return getSwingRemains("mh")
+end )
+
+spec:RegisterStateExpr( "oh_swing_remains", function()
+    return getSwingRemains("oh")
+end )
+
+spec:RegisterStateExpr( "swing_hardcast_safe", function()
+    return canFitHardcast( 2 )
+end )
+
+spec:RegisterStateExpr( "swing_hardcast_time", function()
+    local remains = getSwingRemains( "mh" )
+    if remains == 999 then
+        return 999
+    end
+
+    local cfg = spec.settings
+    local buffer = ((cfg and cfg.swing_weave_buffer) or 0.2) + ((cfg and cfg.swing_weave_latency) or 0.1)
+    return remains - buffer
+end )
 local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
 local function GetTargetDebuffByID( spellID )
     return FindUnitDebuffByID( "target", spellID )
@@ -115,6 +206,11 @@ local function setupEnhancementCombatTracking()
         elseif enchantType == "FLAMETONGUE" then
             lastFlametongueProc = timestamp
         end
+    end
+
+    -- Unleash Elements usage tracking
+    local function trackUnleashElementsUsage(timestamp, effects)
+        -- Track Unleash Elements cast for rotation optimization
     end
 
     -- Combat event handler
@@ -1397,6 +1493,13 @@ spec:RegisterAbilities( {
         spend = 0.10,
         spendType = "mana",
 
+        usable = function()
+            if canFitHardcast( 2 ) then
+                return true
+            end
+            return false, "waiting_for_swing"
+        end,
+
         handler = function()
             -- Tier 15 4pc: 30% chance for LB/CL not to consume Maelstrom Weapon stacks.
             local hasT15 = (state.set_bonus and (state.set_bonus.tier15_4pc or 0) > 0) or (buff.tier15_4pc_enhancement and buff.tier15_4pc_enhancement.up)
@@ -1419,6 +1522,13 @@ spec:RegisterAbilities( {
 
         spend = 0.10,
         spendType = "mana",
+
+        usable = function()
+            if canFitHardcast( 2.5 ) then
+                return true
+            end
+            return false, "waiting_for_swing"
+        end,
 
         handler = function()
             local hasT15 = (state.set_bonus and (state.set_bonus.tier15_4pc or 0) > 0) or (buff.tier15_4pc_enhancement and buff.tier15_4pc_enhancement.up)
@@ -1812,6 +1922,13 @@ spec:RegisterAbilities( {
         spend = 0.15,
         spendType = "mana",
 
+        usable = function()
+            if canFitHardcast( 2 ) then
+                return true
+            end
+            return false, "waiting_for_swing"
+        end,
+
         handler = function()
             local hasT15 = (state.set_bonus and (state.set_bonus.tier15_4pc or 0) > 0) or (buff.tier15_4pc_enhancement and buff.tier15_4pc_enhancement.up)
             local consume = true
@@ -2038,7 +2155,47 @@ spec:RegisterOptions( {
     package = "Enhancement",
 } )
 
+spec:RegisterSetting( "swing_weave_hardcasts", true, {
+    name = "Swing-Weave Hardcasts",
+    desc = strformat( "Delay %s, %s, and %s casts until there is enough time before your next main-hand swing.",
+        Hekili:GetSpellLinkWithTexture( 403 ),
+        Hekili:GetSpellLinkWithTexture( 421 ),
+        Hekili:GetSpellLinkWithTexture( 117014 ) ),
+    type = "toggle",
+    width = "full",
+} )
+
+spec:RegisterSetting( "swing_weave_instant_stacks", 5, {
+    name = "Instant Cast Stack Threshold",
+    desc = "Treat Maelstrom Weapon stacks at or above this value as instant casts that ignore swing-weave checks.",
+    type = "range",
+    min = 1,
+    max = 5,
+    step = 1,
+    width = 1.5,
+} )
+
+spec:RegisterSetting( "swing_weave_buffer", 0.2, {
+    name = "Swing Buffer (s)",
+    desc = "Reserve this amount of time before the next main-hand swing when fitting a hardcast.",
+    type = "range",
+    min = 0,
+    max = 0.6,
+    step = 0.05,
+    width = 1.5,
+} )
+
+spec:RegisterSetting( "swing_weave_latency", 0.1, {
+    name = "Latency Cushion (s)",
+    desc = "Additional safety window added on top of the swing buffer for latency and reaction time.",
+    type = "range",
+    min = 0,
+    max = 0.3,
+    step = 0.01,
+    width = 1.5,
+} )
+
 -- Default pack for MoP Enhancement Shaman
-spec:RegisterPack( "Enhancement", 20250911, [[Hekili:fR16UnoUv4NLGbiWgDwvl7ypjfXby22fO7a0DlGNFljAzABHOBqIobPWqp79qszrkksr6jtAXS7SjIKN7NVVJ0Ya)GVhSzhIGd(J5ZMVC2d((EZxmZF(dbBiVvId2uIIFgDa(HCug83)w(ruEmodNtOR9wAbAhvg1fNQIH13KK93Rq7jnrlV7(F5(GnBpLKs(98GTd1Z8LpSCrWg0jYXIk4OzN2xL8CWMJj72H5NaxhhS57htQBIO)lQjQ1EAIk2d)EmjPiVjknPMalVVOQj6FIFojnXdSUQI9jPGn9PMOnhrzO8)wtKK938n6c9T3MOFPj6Fv8VHF1B5NN1e9NLKKSK)dExZ3A(gxD1ELv44ISTiYFz9F91K8D7pv9w4Ryuzr(Nt2V(gCEmOfI3L184RPxa7tHalPi)WjSoziT8OIjn5WrsEs(HW6Jj40DuHS90(9EQl4TR4vdYOSG(SptZ0RFjPccs1HBtiyQVt)ZN(0FwIZXvsXc4uBtlk2LEQMqvjbvDat8oIrPKJELXKhNV88zigIdjfH7sWpTyM8HpvJdbnKvl)WAsrvwkQ(iCgynMCP)GNYcmx5wMxQDLjSL6SpVtL9nL1RMnvwVM8)W2fO2bC8Nwn72jLGxwwLKHsd3NuHdXPSIkuQhvEVGpFMUJdvyOOVY0wKmMhvngMzhslFKFkQkgLtptvfRewA)4QAC1ZqIw(PD6mmdvdwYB8Kuk8mVbR5HZrBtX7UDs7oADWUncTzD75q6BLh967yTb)oXexuKsZe63wfodLKxVE25ZoTXNwF)SPt))U3TlP(dY9w(tX9gX7Uy6YkrNjj64ukC7HDqlhRJX57OiQ0J05MSUXAcGMJfE3c5dMMShZQWPNBIl1s)eA4Mo985BSRlz7S6uEi)3cPrqo2qn0KLY8yUCdbqXSeC9AFRhfvO5Cp5Zrx)h49OtPax0x5cPjAYxtFf9g8dF9fusk166vGqjyayDmQsc7DhMb7fdLfGDcXFy)9qxltQsiVIsFgqmcpuH4jVSIxGTZrtfP1HzC4HqMfIz1VMSNKJRR7OAYq4uyTISwImOoayRH66l0hBybUMOVZSuzkvEiLADGZqjRur(LFmhD3EbQqQNYtXuYH2nYm5lWaTRH5GTxkcoFM5sKeCL)QW7kJHKv3OdatYunArupTfOIiA7wzR0vvpAyZxJkeS5BlsjwI80a)ajShZsESIGUZZCZLACtDziAZDNdQwVy(iC8aDNXqslf9ckKYP7SEydlbnefXp3DMlPE2AWXU9MDfTJvX3j48X9OnD0cmz16ZqTr45dIWJxdC34nKxNRdOFU776AzC1wQkQjcBPfXv8W(L)SiZDdQ9UUWRP43cxJFgW1A7F1SQl9Wpo3DpqNk0wKdiHKJIO7KHH3l08YyyddWagMRbhTyg2pg3snoBHYYstZBx0VdsmRzcd1s(gelNA7Rf)MmFgWZFz2Q8IxqsC(kDGqlU6PEfbr5AC86(JnsLZLPPgvE3A(CpoZB1xu1xg6qgsKCuMnzzlrR0USW)ERjkBvfpGRVVQFC9sJIYQ2vnxvD3dA3aQ4GeUC)ixmFCu(C5hFesBHDfQAYpRNpUixOkYRhyVTywIHj(T4u4TqzJXbJ9sfHDQL2KUZJp8osuATFxAgheTE)jat4gAclUoIuBTxFIaLMhBto0guUkKDz9EDW6o)gWoz1Vh0)ROyWpyZlGcGJ1(zlV3hE0ROkALqDWMFpRSOIaVWy0DkFlsVMVfSPUehdhC1IGnShs)oPG2H)ZFW(URTicb)AWMyWDWvjiydATLMONwdAHVmyoB6S)acOcfPbChGinsciKcLPXzL3eDBtKzP2e9yteLEHArlS5FTvPGOBIwYKSbyBXs6EtpXQdPieUPKqPg3DoBCpUUV1PHsZv7t1XewxpHsTVLgTptqSu1mejvOIomuQ4xzu8JZCj0IEKoEzIVqRkYHQ7V4CONkR5UPYfcvQGwtv59gvPoCcHOuPjPY6bfz11nkYjYk4MMidzmyxYmOuabq8(ZC2wLZUcgvMqmJTCnLp9dg9kG8vXBCdazHb0l)RaSW9IcFh8knvl(Mbhgxws83m5yUjEaiZfS1XvGeBptbMBJhxoYm(mbzUN0mFUgUadC68SXYzo7HkYHzIM7H5u(oiCnJmWeTAlTB1Y(6RLbYu(lxooh)pgzYimgMBiNacCSpZzt05ZTHoJFQZMOPJdlAUb(JNrXs)QjbtRjLG369HagNdweR099sn3N5E)QzSDZTQxf4K7uIghIWCBdteQF5rwMEm6qDmPxhJ4yewMBfLZMd)2SUvG6c69WkSryrnecPDQ)iXqZTNx)eqJWpA8Z8kcpJ8PELmFHeSWKAnZS4hlZyDczQym85GTxYa89ZfQxJOSWkZDhnwqVM1HEL5UEGKW8hrwLHq3hsgyiCisRobJfmeNNGzUzqcltW4I9QzEK5MXtEVZJm3cQGXQD3M4DqzbHEjRy)FDEWilB7x4RCVE41Xl5vhs3JfMPSyMqLDx)MUbv6WxUC3FKD4XhNGp4KM76JW3nU6K2niFFG0z(aUXQz9M5rrK6g74Yw53uOE2miCwqz1SlMHTRYa3QSEDg0y8pkmE(91tZ1yQB8MEzi2uHkjIvY7Q)npszNFPN86Ujsk7Ymc0G5evUulxICeR3Ch2oD4oE0kqhFhgiSoJhUD8a0QO7NXWfNQB(1w)B8rP(Fxura2)Xhww6wyzKr)CkUmsq5I3AZcS9gCJ(sA6cewM7BS7p1GVHIaJ3YqEtUM(HFAqttz)t7iR21Vmfv7ndZY4MCfj(mk9FtrLlFf)lWhYXeBFf9XNTuv8p5S4PFIFBtrA8IAjuH4UDzzEW37ihJmyO1bSxABqw6Te)YnmEWeg)AFVv6AuZV63vjL8v1E9TD)UBl7sq1OHRND38jAdfsNB4vYoO)7E172Cp(enSiS2ROTUH24lRB(JHS9dMjH09NG)7]] )
+spec:RegisterPack( "Enhancement", 20251026, [[Hekili:fR1EVnoUr8pllcGrm6EQw(vYvyhG9ApGElWDxb8(3wIwM2wi6HHeDcsHH(S3HK6bjfPiDsAlUB312ICMHZJFZpZXB93(JTB2Ji4T)X0jtx4pz6sVPZMpD2dB3qE7mE7MZOONrhHxKHsH)(xZoHYIWP4mc9zVLKJ2tLrz(LIi45B3S7sCc53Y2UtVGxcR9moc(4LZ2U5u8(9y(AXLrB38JtXLvH0)GQcRvDvy(b49rK48SQWK4sc84d5fvH)t8ZXjXEB3W(qQzGYXW)8hSJfodTlbVF7VSDturmbxeJGfaI5fCW(CI3He4efuEkp65QWNwxfoN)48STBoexGdYYFbTLawQI0kbZFtuEEY(8xZ8AxQxboffNv2jLxrXeNvEv4OQqZsTkCvv4eVLpqTOz2oF4mCAmg20tvHlysMKtWPEPOJPOa(RP6r4rmnItyHwuI6tlXOI4SJcBT7ykiuQXn3zJB1AzRRVsC2(upyDwNKqP23cJ2NsGXJeh9mSvMA2D5WbpuzeoBpTaW7Y5ovKGEbfKGkprf)sJIhmBW29Apdb7G9aVNV2oTKIWjLKI80GxXOZ5zELeutAIFNwvKdv3p4SRNkRPUPYzDQm6eKkgKeF8ejdCmuv(OrvQ6XKdlxYsWGhRjIwsL1pRiR2QXUyIOc(svOHigSQ3IsWbeuXrmiBaqaeV)eNTvXOBjjViT1f7BgB5wsFKDgsjq(Q4nUbGmZa6L)naw4EsHVdNknzl(MbhgwwSGaymXpJzYXCrCpqMgS1HvaGsqovNJrvG5Y4HLZbCburwEogwptqMRj5OvCfRbytUxqx1oFBTTfOrJftC(eQihMjAUgon)f3YG5h4xrjpJlkdowGI4Xj1sA3YL91NldntlbZjXsp(3xZKb6yyUG8EqGCu9A8m8(GdxkERdu)61Axhjgx4Vmy(5ii3SLefG0ufoEyyrZfWFkDuyl7Ehw5c(PP8vQZ5eQyFeOSGs0bS0rqtFjlv9MukvNcGKnajb7Ytid3j36zzMDNZQgYjAoWdzvwqoy5bl0KhygdXmeI79TEV9PvaEnxp7mbjBTHBkbyOcS6digmuVED0egUt9Nt3yXW5unL12sW6O9RZEEpPEd0R3GRLwq)E8TV3(46W3gOz(XK3oFY7qro9WZSSEyBSaW8E1tkDL7KGlD3De54ZiIna9ao4ov8GTqbeEn(ajdxw6oapGHnTt9AeLL()8JPglqQ6U)PYmmb0OPFqDFCP22L9dRS2LoWhrHo3u3P(pmDUP2ODyKoNl2RgYztnJ)8rjNn1cAHXQa3O)3lTGqVLNdOlWBu5VTtoXN(T28oHrjKtENJi884A6hKyaiIKhSpgZmLzt6u5UK889jx4D8yoUwCNsCai)0sXd8WCR4SiPT)O9cu5rYo7gFAdDQwdQfSv28b8KLtKypPisDSNAw65C()kyZGWzoLLtAmJZGN8CrCkKtPq6LtaNBv0vDSaJa5m0YKm(vDgp)UbFjUa2tzWoWCcQnUgwAsrigfzLaXsXvHkIqzunvuWUOrPv(GK8GmACbVxL0QmJP1J0CkauJf5SZ9C1RR251U8yfc21Oz6(oAkc0XVqh4wNWD3oUbAw0Jty4IAPHxF(gM(2)78kDG9)33TSWn3YausDYVmGtP50AZcS1xzWVXQohHfYRTorbc(Y(oHluQdJ3clZ7VL6HpnOPXS)VMkRD9l2I6aMHizHtlxrD3PK8vuuCjlG)6aAiNpoIaoMy99vmmlxvX)KZINoVJH5Zw3mDpM1pIYjfSiiqdsStfaN19azjGeIfoPFukh2OAo41pyJilDIuf4O80DO(mm(f5tlTduTo4ZEQi(m)PBoHsrz)TQqHrDvfUjo9VxGoaVAX8h)PhRc)PQWFp)FbV1BUh82)e2DA8)MMC1DKGSrCweifIxJo9Q1jzOBvsyFSV3fjp74fCZwL)oz8Nf0jwlK66yLvEkgNS3iPn(J1X)OF3(ECsQP79ce8PVLndWj)maYT5vubv8apSFl9CEbHchmxz8EEvFhK4fYP8ciEKE5aaorJT5hIHAPn3bHdDbPVF3neNQ(E135kT0RnR5VS(VQKC814dR)IHGOEb0pQijJ(bu9IrnqqfI5aOEzWdgFLgVwlgUOND6)D3D)5za0PqWxa7QLZkvL94IVA6IRxf4b(0SjIBULNT4hQWPLjxJSRhzKz9O77XPw2uwVCYyr9A68xtoLzhW2FA5Kr3BRz01RwBejzmRunMoMVIFQmtxP13YSv8t7rEGhKgMJYO7TZABK9(MJU3jMxRNC9Qtl8P1poz84)VF6AyO95F8w8PC8CGCPOs0zsDvC6MIUy6yB)C6wgIJ4tRNjUXwMu09DVl5sFcfCJhF96xSRlr7uHmfhBGtsJA5C52WeBTV1TceW6VVN85OR)d(TDuf(nUqawVFl5v0BWl(2lO4eQ1jLG0Xdta7vh1nj01(uTO7MtvBK2lQumI3NkvBRg9SXG86M2hByoUQWFWSuXwQCxk16ehMMaYFVPZnYEcANuvVgzwwhzOjXD9A31kQBkCJ1OLU8j2yu0wTknXTrd628RBGz0TE9QMBpwNHjF1AwIx0W1htcqT(qNSvlgPBMG9vQ4LP2QsJZdtxYu7iTA3U0eNmTfo0LU9yi)QDeqoRhHbK0Uh1XTm6lM(jICJwGjRwFq14iQgoDDUwSdxd1o4oaWB39h6Q4D0TimPb6UmotPrDEl9ZtYDxUL6O3Np1aunX6CIgS4DQ7Nk9dcshWz30xe5dOzIpIWY6M2Z4HBGzbBX(20o3LU2u6MMJRw0hOVS1iHH8lFdIL3T(B5)QylAG6sdDr6VVgbAmkvLauG6UO)Yw)AjoAT5FWQdkVrM33k6pYvv9j8Z7udDRf1Chu)rGAMsXitSquvCp6lYQE16fgfLvT37hJRIULAbyaPSxaxSEKlMpBwmQYx5N5NM4Z6PdlYzQI82b7RtMf66i9laDTpve2B3uh0DMMXhiqP1(DPySN36JhamHBOXT4kvQ6Cp5gbkfp6zy0ZPCti7I692G1D(l17Kv)rq)VHKbF2fTU9)a]] )
 
 -- Register pack selector for Enhancement

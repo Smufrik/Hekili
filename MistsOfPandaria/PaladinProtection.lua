@@ -821,8 +821,11 @@ spec:RegisterAbilities( {
         cast = 0,
         cooldown = 180,
         gcd = "off",
+    toggle = "defensives",
+    toggle = "defensives",
+    toggle = "cooldowns",
         
-        toggle = "defensives",
+        
         
         startsCombat = false,
             texture = GetSpellTexture(86659),
@@ -838,7 +841,7 @@ spec:RegisterAbilities( {
         cooldown = 180,
         gcd = "off",
         
-        toggle = "defensives",
+        
         
         startsCombat = false,
             texture = GetSpellTexture(31850),
@@ -990,7 +993,7 @@ spec:RegisterAbilities( {
         cooldown = 120,
         gcd = "spell",
         
-        toggle = "cooldowns",
+        
         
         startsCombat = false,
             texture = GetSpellTexture(54428),
@@ -1006,7 +1009,7 @@ spec:RegisterAbilities( {
         cooldown = 180,
         gcd = "off",
         
-        toggle = "cooldowns",
+        
         
         startsCombat = false,
         --texture = 135875,  my test on getspelltexture below. better solution than using static id in case of typo
@@ -1022,9 +1025,10 @@ spec:RegisterAbilities( {
         cooldown = 180,
         gcd = "off",
         
-        toggle = "cooldowns",
+        
         
         talent = "holy_avenger",
+    toggle = "cooldowns",
         
         startsCombat = false,
             texture = GetSpellTexture(105809),
@@ -1042,9 +1046,10 @@ spec:RegisterAbilities( {
         end,
         gcd = "spell",
         
-        toggle = "defensives",
+        
         
         startsCombat = false,
+        toggle = "defensives",
             texture = GetSpellTexture(642),
         
         handler = function()
@@ -1061,9 +1066,10 @@ spec:RegisterAbilities( {
         end,
         gcd = "off",
         
-        toggle = "defensives",
+        
         
         startsCombat = false,
+        toggle = "defensives",
             texture = GetSpellTexture(498),
         
         handler = function()
@@ -1079,7 +1085,7 @@ spec:RegisterAbilities( {
         end,
         gcd = "spell",
         
-        toggle = "defensives",
+        
         
         startsCombat = false,
             texture = GetSpellTexture(633),
@@ -1121,7 +1127,7 @@ spec:RegisterAbilities( {
         end,
         gcd = "spell",
         
-        toggle = "defensives",
+        
         
         startsCombat = false,
             texture = GetSpellTexture(1022),
@@ -1423,11 +1429,12 @@ spec:RegisterRanges( "judgment", "avengers_shield", "hammer_of_justice", "rebuke
 spec:RegisterAbilities({
     rebuke = {
         id = 96231,
+    toggle = "interrupts",
         cast = 0,
         cooldown = 15,
         gcd = "off",
 
-        toggle = "interrupts",
+        
         startsCombat = true,
 
         debuff = "casting",

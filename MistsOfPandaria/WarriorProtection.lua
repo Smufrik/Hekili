@@ -1375,8 +1375,6 @@ spec:RegisterStateTable( "protection", {
 
         spend = 0,
         spendType = "rage",
-
-        toggle = "cooldowns",
         startsCombat = false,
         texture = 464593,
 
@@ -1430,8 +1428,6 @@ spec:RegisterStateTable( "protection", {
             return 0
         end,
         spendType = "rage",
-
-        toggle = "cooldowns",
         startsCombat = true,
         texture = 236312,
 
@@ -1465,8 +1461,6 @@ spec:RegisterStateTable( "protection", {
 
         spend = 0,
         spendType = "rage",
-
-        toggle = "cooldowns",
         startsCombat = true,
         texture = 132109,
 
@@ -1483,8 +1477,6 @@ spec:RegisterStateTable( "protection", {
 
         spend = 0,
         spendType = "rage",
-
-        toggle = "cooldowns",
         startsCombat = false,
         texture = 236303,
 
@@ -1713,8 +1705,6 @@ spec:RegisterAbilities( {
         
         spend = 60,
         spendType = "rage",
-        
-        toggle = "defensives",
         requires = "shield",
         
         startsCombat = false,
@@ -1738,8 +1728,6 @@ spec:RegisterAbilities( {
             return 20
         end,
         spendType = "rage",
-        
-        toggle = "defensives",
         requires = "shield",
         
         startsCombat = false,
@@ -1758,10 +1746,10 @@ spec:RegisterAbilities( {
         cooldown = function() return glyph.shield_wall.enabled and 180 or 300 end,
         gcd = "off",
         
-        toggle = "defensives",
-        
         startsCombat = false,
         texture = 132362,
+        
+        toggle = "defensives",
         
         handler = function()
             applyBuff( "shield_wall" )
@@ -1778,10 +1766,10 @@ spec:RegisterAbilities( {
         cooldown = 180,
         gcd = "off",
         
-        toggle = "defensives",
-        
         startsCombat = false,
         texture = 135871,
+        
+        toggle = "defensives",
         
         handler = function()
             applyBuff( "last_stand" )
@@ -1939,6 +1927,8 @@ spec:RegisterAbilities( {
         startsCombat = false,
         texture = 136009,
         
+        toggle = "defensives",
+        
         handler = function()
             applyBuff( "berserker_rage" )
         end,
@@ -1964,10 +1954,10 @@ spec:RegisterAbilities( {
         cooldown = 180,
         gcd = "spell",
         
-        toggle = "defensives",
-        
         startsCombat = false,
         texture = 132351,
+        
+        toggle = "defensives",
         
         handler = function()
             applyBuff( "rallying_cry" )
@@ -1984,10 +1974,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "cooldowns",
-        
         startsCombat = false,
         texture = 613534,
+        
+        toggle = "cooldowns",
         
         handler = function()
             applyBuff( "avatar" )
@@ -2003,10 +1993,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "cooldowns",
-        
         startsCombat = false,
         texture = 236304,
+        
+        toggle = "cooldowns",
         
         handler = function()
             applyBuff( "bloodbath" )
@@ -2022,10 +2012,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "cooldowns",
-        
         startsCombat = true,
         texture = 236303,
+        
+        toggle = "cooldowns",
         
         handler = function()
             applyBuff( "bladestorm" )
@@ -2041,10 +2031,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "cooldowns",
-        
         startsCombat = true,
         texture = 642418,
+        
+        toggle = "cooldowns",
         
         handler = function()
             applyDebuff( "target", "dragon_roar" )
@@ -2063,10 +2053,10 @@ spec:RegisterAbilities( {
         end,
         spendType = "rage",
         
-        toggle = "cooldowns",
-        
         startsCombat = true,
         texture = 236312,
+        
+        toggle = "interrupts",
         
         handler = function()
             applyDebuff( "target", "shockwave" )
@@ -2082,10 +2072,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "cooldowns",
-        
         startsCombat = true,
         texture = 613535,
+        
+        toggle = "interrupts",
         
         handler = function()
             applyDebuff( "target", "storm_bolt" )
@@ -2100,8 +2090,6 @@ spec:RegisterAbilities( {
         
         spend = 0,
         spendType = "rage",
-        
-        toggle = "cooldowns",
         
         startsCombat = false,
         texture = 236331,
@@ -2172,10 +2160,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "interrupts",
-        
         startsCombat = true,
         texture = 132117,
+        
+        toggle = "interrupts",
         
         handler = function()
             applyDebuff( "target", "disrupting_shout" )
@@ -2222,10 +2210,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "defensives",
-        
         startsCombat = false,
         texture = 132345,
+        
+        toggle = "defensives",
         
         handler = function()
             local instant_heal = health.max * 0.1
@@ -2243,10 +2231,10 @@ spec:RegisterAbilities( {
         spend = 0,
         spendType = "rage",
         
-        toggle = "defensives",
-        
         startsCombat = false,
         texture = 132361,
+        
+        toggle = "defensives",
         
         handler = function()
             applyBuff( "spell_reflection" )
@@ -2261,8 +2249,6 @@ spec:RegisterAbilities( {
         
         spend = 0,
         spendType = "rage",
-        
-        toggle = "defensives",
         
         startsCombat = false,
         texture = 132361,
@@ -2280,8 +2266,6 @@ spec:RegisterAbilities( {
         
         spend = 0,
         spendType = "rage",
-        
-        toggle = "cooldowns",
         
         startsCombat = false,
         texture = 603532,

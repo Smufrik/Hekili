@@ -1,6 +1,6 @@
 -- WarlockAffliction.lua
--- Updated Sep 28, 2025
-
+-- Updated October 1, 2025 - Modern Structure
+-- Mists of Pandaria module for Warlock: Affliction spec
 
 -- MoP: Use UnitClass instead of UnitClassBase
 local _, playerClass = UnitClass('player')
@@ -15,6 +15,15 @@ local function getReferences()
     -- Legacy function for compatibility
     return class, state
 end
+
+local spec = Hekili:NewSpecialization( 265, true ) -- Affliction spec ID for MoP
+
+-- Spec configuration for MoP
+spec.role = "DAMAGER"
+spec.primaryStat = "intellect"
+spec.name = "Affliction"
+
+-- No longer need custom spec detection - WeakAuras system handles this in Constants.lua
 
 local strformat = string.format
 local FindUnitBuffByID, FindUnitDebuffByID = ns.FindUnitBuffByID, ns.FindUnitDebuffByID
@@ -605,8 +614,8 @@ spec:RegisterAuras( {
     -- Core Affliction DoTs with enhanced tracking
     corruption = {
         id = 146739,
-        duration = 18,
-        tick_time = 3,
+        duration = 18, -- 9 ticks * 2s = 18s duration
+        tick_time = 2,
         max_stack = 1,
         debuff = true,
         pandemic = true,
@@ -647,7 +656,7 @@ spec:RegisterAuras( {
 
             -- Calculate ticks_remain and refreshable with level-appropriate pandemic mechanics
             local remains = math.max(0, (t.expires or 0) - now)
-            t.ticks_remain = remains / 3
+            t.ticks_remain = remains / 2
 
             local has_pandemic = UnitLevel("player") >= 90
             local pandemic_threshold = (t.duration or 18) * (has_pandemic and 0.5 or 0.1)
@@ -662,7 +671,7 @@ spec:RegisterAuras( {
 
     agony = {
         id = 980,
-        duration = 24,
+        duration = 24, -- 12 ticks * 2s = 24s duration
         tick_time = 2,
         max_stack = 10,
         debuff = true,
@@ -885,6 +894,7 @@ spec:RegisterAuras( {
         id = 113860,
         duration = 20,
         max_stack = 1,
+        -- Increases haste and cast speed by 30%
     },
 
     -- Channeled abilities
@@ -1150,7 +1160,7 @@ spec:RegisterAbilities( {
     haunt = {
         id = 48181,
         cast = function() return 1.5 * haste end,
-        cooldown = 8,
+        cooldown = 0,
         gcd = "spell",
 
         spend = 1,
@@ -1159,7 +1169,10 @@ spec:RegisterAbilities( {
         startsCombat = true,
         texture = 236298,
 
-    handler = function() applyDebuff( "target", "haunt" ) end,
+        handler = function() 
+            applyDebuff( "target", "haunt" )
+            state.last_ability = "haunt"
+        end,
     },
 
     agony = {
@@ -1220,11 +1233,11 @@ spec:RegisterAbilities( {
 
     unstable_affliction = {
         id = 30108,
-        cast = 1.5,
+        cast = function() return 1.5 * haste end,
         cooldown = 0,
         gcd = "spell",
 
-        spend = 0.15,
+        spend = 0.015,
         spendType = "mana",
 
         startsCombat = true,
@@ -1246,13 +1259,14 @@ spec:RegisterAbilities( {
 
     malefic_grasp = {
         id = 103103,
-        cast = function() return 3 * haste end,
+        cast = function() return 4 * haste end,
         cooldown = 0,
         gcd = "spell",
 
         channeled = true,
+        tick_time = function() return 1 * haste end,
 
-        spend = 0.04, -- Per tick
+        spend = 0.015, -- Base mana cost
         spendType = "mana",
 
         startsCombat = true,
@@ -1260,6 +1274,11 @@ spec:RegisterAbilities( {
 
         handler = function()
             applyDebuff( "target", "malefic_grasp" )
+            state.last_ability = "malefic_grasp"
+        end,
+
+        tick = function()
+            -- Malefic Grasp increases DoT damage by 30% per tick
         end,
 
         finish = function()
@@ -1269,13 +1288,14 @@ spec:RegisterAbilities( {
 
     drain_soul = {
         id = 1120,
-        cast = function() return 6 * haste end,
+        cast = function() return 12 * haste end,
         cooldown = 0,
         gcd = "spell",
 
         channeled = true,
+        tick_time = function() return 2 * haste end,
 
-        spend = 0.04, -- Per tick
+        spend = 0.015, -- Base mana cost
         spendType = "mana",
 
         startsCombat = true,
@@ -1283,14 +1303,15 @@ spec:RegisterAbilities( {
 
         handler = function()
             applyDebuff( "target", "drain_soul" )
+            state.last_ability = "drain_soul"
+        end,
+
+        tick = function()
+            -- Every 2nd tick generates a soul shard (handled by resource system)
         end,
 
         finish = function()
             removeDebuff( "target", "drain_soul" )
-            -- Target died while channeling?
-            if target.health.pct <= 0 then
-                gain( 1, "soul_shards" )
-            end
         end,
     },
 
@@ -1431,13 +1452,17 @@ spec:RegisterAbilities( {
         cooldown = 120,
         gcd = "off",
 
-        toggle = "cooldowns",
+        spend = 0.05,
+        spendType = "mana",
 
         startsCombat = false,
         texture = 463284,
 
+        toggle = "cooldowns",
+
         handler = function()
             applyBuff( "dark_soul_misery" )
+            state.last_ability = "dark_soul_misery"
         end,
     },
 
@@ -1464,8 +1489,6 @@ spec:RegisterAbilities( {
         cooldown = 600,
         gcd = "spell",
 
-        toggle = "cooldowns",
-
         spend = 1,
         spendType = "soul_shards",
 
@@ -1482,8 +1505,6 @@ spec:RegisterAbilities( {
         cast = 0,
         cooldown = 600,
         gcd = "spell",
-
-        toggle = "cooldowns",
 
         spend = 1,
         spendType = "soul_shards",
@@ -1503,8 +1524,6 @@ spec:RegisterAbilities( {
         cooldown = 180,
         gcd = "off",
 
-        toggle = "defensives",
-
         startsCombat = false,
         texture = 538038,
 
@@ -1519,10 +1538,10 @@ spec:RegisterAbilities( {
         cooldown = 180,
         gcd = "off",
 
-        toggle = "defensives",
-
         startsCombat = false,
         texture = 136150,
+
+        toggle = "defensives",
 
         handler = function()
             applyBuff( "unending_resolve" )
@@ -1569,6 +1588,8 @@ spec:RegisterAbilities( {
 
         startsCombat = true,
         texture = 607510,
+
+        toggle = "interrupts",
 
         handler = function()
             -- Fear all enemies in 10 yards
@@ -1647,8 +1668,6 @@ spec:RegisterAbilities( {
         cast = 0,
         cooldown = 600,
         gcd = "spell",
-
-        toggle = "cooldowns",
 
         spend = 1,
         spendType = "soul_shards",
@@ -1859,25 +1878,50 @@ spec:RegisterStateExpr( "crit_pct_current", function()
     return crit
 end )
 
--- Expose options to APL via state expressions
+-- Expose settings to APL via state expressions
 spec:RegisterStateExpr( "soc_spread", function()
-    return state.settings and state.settings.soc_spread and 1 or 0
+    return state.settings and state.settings.soc_spread or false
+end )
+
+spec:RegisterStateExpr( "dot_refresh_threshold", function()
+    return state.settings and state.settings.dot_refresh_threshold or 15
+end )
+
+spec:RegisterStateExpr( "soul_shard_pool", function()
+    return state.settings and state.settings.soul_shard_pool or 1
 end )
 
 -- Pet management settings exposure
-spec:RegisterStateExpr( "auto_resummon_pet", function()
-    return state.settings and state.settings.auto_resummon_pet and 1 or 0
+spec:RegisterStateExpr( "auto_summon_pet", function()
+    return state.settings and state.settings.auto_summon_pet or true
+end )
+
+spec:RegisterStateExpr( "preferred_pet", function()
+    return state.settings and state.settings.preferred_pet or "felhunter"
 end )
 
 spec:RegisterStateExpr( "need_pet", function()
-    -- Returns 1 if auto-resummon is enabled and we need to summon or swap to preferred pet.
-    if not ( state.settings and state.settings.auto_resummon_pet ) then return 0 end
-    if not ( pet and pet.alive ) then return 1 end
+    -- Returns true if auto-summon is enabled and we need to summon or swap to preferred pet
+    if not ( state.settings and state.settings.auto_summon_pet ) then return false end
+    if not ( pet and pet.alive ) then return true end
     local pref = ( state.settings and state.settings.preferred_pet ) or "felhunter"
     local fam = UnitCreatureFamily and UnitCreatureFamily( "pet" ) or nil
-    if not fam then return 1 end
-    local desired = ({ imp = "Imp", voidwalker = "Voidwalker", succubus = "Succubus", felhunter = "Felhunter" })[ pref ] or "Felhunter"
-    return fam ~= desired and 1 or 0
+    if not fam then return true end
+    local desired = ({ 
+        imp = "Imp", 
+        voidwalker = "Voidwalker", 
+        succubus = "Succubus", 
+        felhunter = "Felhunter",
+        observer = "Observer"
+    })[ pref ] or "Felhunter"
+    return fam ~= desired
+end )
+
+-- Dark Soul pooling logic
+spec:RegisterStateExpr( "should_pool_shards", function()
+    local pool_threshold = state.settings and state.settings.soul_shard_pool or 1
+    local ds_soon = cooldown.dark_soul_misery.remains <= 15
+    return ds_soon and soul_shards.current <= pool_threshold
 end )
 
 -- Range
@@ -1903,36 +1947,68 @@ spec:RegisterOptions( {
 } )
 
 -- Settings
--- APL currently doesn't support these options, will need tweaks
--- spec:RegisterSetting( "soc_spread", true, {
---     name = strformat( "Enable %s Spread", Hekili:GetSpellLinkWithTexture( 27243 ) ),
---     desc = strformat( "When enabled, the APL may use %s with %s to spread DoTs in AoE. Disable to avoid SoC spread on cleave.",
---         Hekili:GetSpellLinkWithTexture( 27243 ), Hekili:GetSpellLinkWithTexture( 74434 ) ),
---     type = "toggle",
---     width = "full",
--- } )
+spec:RegisterSetting( "soc_spread", false, {
+    name = strformat( "Enable %s Spread in AoE", Hekili:GetSpellLinkWithTexture( 27243 ) ),
+    desc = strformat( "When enabled, the APL may use %s with %s to spread DoTs on 6+ enemies. "..
+        "Disable if you prefer manual DoT application or want to save Soul Shards.\n\n"..
+        "Note: This is primarily useful in large AoE situations (dungeons).",
+        Hekili:GetSpellLinkWithTexture( 27243 ), Hekili:GetSpellLinkWithTexture( 74434 ) ),
+    type = "toggle",
+    width = "full",
+} )
 
--- spec:RegisterSetting( "preferred_pet", "felhunter", {
---     name = "Preferred Demon (Precombat)",
---     desc = "Which demon to keep active outside combat.",
---     type = "select",
---     width = 1.5,
---     values = function()
---         return {
---             imp = "Imp",
---             voidwalker = "Voidwalker",
---             succubus = "Succubus",
---             felhunter = "Felhunter",
---         }
---     end,
--- } )
+spec:RegisterSetting( "dot_refresh_threshold", 15, {
+    name = strformat( "DoT Snapshot Refresh Threshold (%%)" ),
+    desc = strformat( "The minimum spell power/crit/mastery increase required to refresh DoTs early. "..
+        "Lower values = more frequent refreshes during cooldowns.\n\n"..
+        "Default: 15%% (refreshes when stats increase by 15%% or more)\n"..
+        "Aggressive: 10%% (more frequent refreshes)\n"..
+        "Conservative: 20%% (fewer refreshes, more filler time)" ),
+    type = "range",
+    min = 5,
+    max = 30,
+    step = 1,
+    width = "full",
+} )
 
--- spec:RegisterSetting( "auto_resummon_pet", true, {
---     name = "Auto Resummon Preferred Pet (OOC)",
---     desc = "If enabled, precombat recommendations will summon or swap to your preferred demon.",
---     type = "toggle",
---     width = 1.5,
--- } )
+spec:RegisterSetting( "preferred_pet", "felhunter", {
+    name = "Preferred Demon",
+    desc = "Which demon to summon in precombat and maintain when possible.\n\n"..
+        "Felhunter: Best for PvE (interrupt, spell lock)\n"..
+        "Observer: With Grimoire of Supremacy talent\n"..
+        "Imp: More personal DPS, less utility",
+    type = "select",
+    width = 1.5,
+    values = {
+        felhunter = "Felhunter",
+        imp = "Imp",
+        voidwalker = "Voidwalker",
+        succubus = "Succubus",
+        observer = "Observer (Supremacy)",
+    },
+} )
 
--- Default pack for MoP Affliction Warlock
-spec:RegisterPack( "Affliction", 20250928, [[Hekili:TR1wVTTVv8plbfqWgTZZ2nojDioaB7L28qFrfyVjjAzkBHOlgusPiag6Z(oKusKI6qzL2KUh2)hAJdVCUXFNRXER8(HN7Esj177RxUEZYVS(UfR285BU(wp3Yxor9CprcFICa(qgjf())zuusCyzCEgFRxsYj75KOiVIfcB7gN(VzKOY6GnxF3F7op3DvXjLFlZBhkBw(f4QNOHWY3SXZ9y8(9u5zPfHEU)4yCrDa)FK6GgbPoipc(DHiuhKexucBhLZQd(k9P4K4fEUIf5sfjNc)47cLK0i0fvPP5z(XzruwgjXZLMr2Lq379V8kbXGFu1kQBLxLSRIbFkKfxszXeUQffTODJf7Z)jipo1bxvhSpVSBd)ckDVFEKFyoJvDItUfLXHpfNDO94sMm6nIZ8b7(HJL(L5(Le2bAP42874xCKW2dwHhQdwcc4lHj0MZuWvEqT(SHAztjQoPRcKd5zVykS8ngQk9Tu(f)KCIZ3RhXCkp0LefC2zvkXv)n2eJbgAD5zwDG9NyBpiWwDY486GZNRdgqN(w5)aaL54MLBSywosQYk1TeJOV7PcDtCLfmAkjodqI3xheskGZgNcoSFeSjmYZ0KMFF642BTIBtjzKfNclf862LkHpjoItfb87olkyeikrjI4zxsjrLRsEaQisvszx4fuHSX4Ksoeh6)CvsgLr2bXOkFrGLucuyfRGYFjPj0uAgWhKyrgEk7sYZ3NuvukWtCGMugxCKsskp2yC2whSwZ6Ckx8Z2qcTlxbChiEAHr4WR1pe3YkyQXH2OFODuqtysxXENYeS1ZWxssaTEbHfEmgIodr)93typLrlkw0CNoFPjDwhXrdpYTiacJBfASrS4SNaJ0jwEi4SustsOHAMWMTlkjcppFBNd3uVAPWRFUYEWfnFbApngmmVmoQUr3oWanlMjqefey7O4qApL7eWCss8ZufNqVeMxGID8R(m1NMrtJPshXBueKvL5l)SppJQmVQVSmaEMvG0F5vPjvN4bicFPvtgKugUllNDOcclWP(QLtaZ864W(88uf9T75AgW2s(Tv29rBJ63bagGX(fHGH5qOw5BLaSjH6QmHmAeJcHwbrssqJuOO7xLbSdwXN0vFx)dohpSTy1HzjrkCIBTSxgYm7IbphyHVm1sJxgQEn65ufjm4iJPzwJO(60BZYGg1dCvFAlWAQsp(dbRSH3TwjfwbDtv5AQhAMbq(efAPiRekvpKrjfujb20vwicCxvXLb44s0YM)rFcIbpVeLNINLfiiEnrRgntQOqm)Uczee2EzzRwSXgR7xmiNV2tBPEnK4unt2V7tPHll47PenXTeIM9uCgpUdKV3omYysQwdgCX1EAtBiMbY97fu8sAccne1QApv9mrRlDfS01L0ul1zIP619vF7PDBqlCskFDMpOAdOpJJG3dLjmr2R2yG9zkc1aULVdkW85gMDHMhuPp6YSy0ur36960AJLoTwpi1(ra845UYZLNIrG(9JJAtuiI0S9ATYKzWXfcK2fexxVKYXsg3legiPxleRbzETiwZgq873UE55ZZWlE4(1ZB2ZsbiQdCPsAuNepu5dR24GgIercSDx8ixTeOxV733mJb5IDzl(iKPy(CNbwPh0BUmfqTG)G)bgP4KX7i)XWS4b5h9tZFM3UO927VB5qG4ajbbx62qzzEZ1I8MQLgYEKXdOKwofU1SDyjB0peihGFAyE6oc6Wb61xi3cLvkN2jlUzau)hcljp8P)rDGAwR1bdgSAVOhkFAjj5DSm6ee(RGYY4K27i5TpMS9UaMSP5102FVXY0m3hdOka9azRGVt3C59C)jHLbEefEUFl9uoRKZ7pBmY9f1pYb65rXjGS8H6auu7JFyaWT(X6hLuQyrNJYh3(31aVFkoA7viiA8lA(QYV9SR6muoxnfJl(PmFD5bmF7OMZfWUZhvFBbwcJLsBNcJXPlQGWP(K0yLRckXLWpT3EyTbZ8KZSlmXu97lPj)sdgh65ZOPZ1VD3ep1xSBcN6lQMOP(QMZ1t8omHrtQGqJDkNznJUC7AqxS1yVAl7JRe1uSA5856kZB9BpqsJHh(j(yd3sYfuLVUAUapCJ(9gojqBYHvyTIkDt7t)1z6ePDafDym9)coghKVSi0ZGPZ8B9akMkZd3m3zgAnGNpBV8o5ExONV5oA1n)WshK)Gx2u0jvC72vder09rkXE7ktHd1PEcIC3JObWBLdYu2CENEbXfQEd4z7QPiKvNCM9)0(fMYOhAP0LGFgpX6gjrhichxJzA502QsVUtStiHLqKCP3yQ(L76QF3B9sP1z3AzNXONEdEcSZDeBDRyyBKsVdVOJjH)FqTAVTvO1utcVnZUKq9hDJdYyBCA7u((n9Ceudz5tD9MdXCeZeHh7rBIiB7nNgzkySGVAh7(R15vVzbCz29xZF5xE(lOGf5qnKju6qd3TuHmgomnnY0naKo6GXe9w5Gk72A8nRQ3M6fpGKZByoCNR4MM2Lg57gJZvnwSXolYxSdl5l0ewR1(jLTEFVJKlH8n3XkDVOva4donry)a2mWeGXVzyMDmt1vnSHJyXngVJpuZnvozHbi6dQSJ9fusRYbTVysJJi0Jd35fD7GJPCDMOa65sQkpMZ8C)kideXuz8(Vd]] )
+spec:RegisterSetting( "auto_summon_pet", true, {
+    name = "Auto Summon Pet in Precombat",
+    desc = "If enabled, the addon will recommend summoning your preferred demon before combat.",
+    type = "toggle",
+    width = 1.5,
+} )
+
+spec:RegisterSetting( "soul_shard_pool", 1, {
+    name = "Soul Shard Pooling Threshold",
+    desc = strformat( "Minimum Soul Shards to maintain before cooldowns. "..
+        "The addon will avoid spending shards on %s when below this threshold and Dark Soul is coming up soon.\n\n"..
+        "Default: 1 (always keep 1 shard for Dark Soul windows)\n"..
+        "Aggressive: 0 (spend freely)\n"..
+        "Conservative: 2 (pool more for burst)",
+        Hekili:GetSpellLinkWithTexture( 48181 ) ),
+    type = "range",
+    min = 0,
+    max = 3,
+    step = 1,
+    width = "full",
+} )
+
+-- Default pack for MoP Affliction Warlock - Optimized from WoWSims
+spec:RegisterPack( "Affliction", 20251001, [[Hekili:fRvBVTnos4FlglGHdAQxlf7w3dXbyVDxCTfx3wCoh63SeTeTTqKe1rr1S(qG(TFdj1RuKYkoo3If7M1uKZ8mVYzgPnwBUFZAFedV5pSNzVWA2mRP23ynBXYnRzhtWBwNG8EaTh(FIrrW)9x2TlmWJfqI5p6yib5ZjrkjJ6bpEDq0Vsr7y5UlMV8Tar2MfeY(u8MTDzJ9I5ZHDKMG9GLF3InRpe47JL7fN6Tz99hcsZD5)lk3Tai5UKDWVfqi3nmiLbpEhHM7(r8dbHbt3SwSihvicg(ZFiesCmABi2FZFFZApAadtdqWgaY8dSdoghfGb6C3QC3BKlZfW0SOisStq8omngfUHb40iTsXmwq8(0PPepN0ekg5N7oo3DuU72SD7GLZcD2MrJNMLiEGyH0diQFbNTflRdtVRbMGtXPIuhrdsKlVgJ9LQMFLqPzjs1tjmMqX)NSakNCfWm3TqiUIlv38SLk9IeiR(e20sm6KcOYHSZXRcttzbEpi4VC7bXoGd1(dmhgXHHO7XSgYANJdq7OxiUyNPCBla)5pB4xc0))GVfk4R88hqzXmnhrX0YqX(GxsUBuwil4TaW5YulXSLRuLroDA9dCsiKqHu5JfgpbZNsXrOGy4u3Y98bS(odyfTNeFuhwJq)Pt7vxVOj2ku1IZ3s7w4Ox9qbgwWXW7nGHE1Z6aYsnaPRTMZYLgDHIqXOPjEmb8MpRgnHb74SkHF8py846LDdaPI2rOq8UapN9uuQGbwZmOt2HdbpurUznUEG3ve5hNilOHerg9tMR6b3BEr92)NEQ5Y1uh4(Ep)PGTu11R30ugTT1CQXZ6NDn8Y6n3slhJLgCmeH(ASv1uuyK8X7qqWTo7u5Hz0G4hWmWrpnKWA(7wzlUxUCUBwQ42YhdyhYD)ne9HC31GHgsoCm2RPCiSYqcMhCeocrbPy6rrgDUQt6obQZimpfOFawiV2l63QFUevvCTvex7(9dol2ATSMTBXu4iYGXw61)fYlabAp0wOidgCZC)ohVCGesi(o7YOh1DdYa8crupumN8ukwgJQMA)fI2BAWSeI8VTuzFtSyHNOU861aqhlUJNUDWiOOwnFcjAFgKkt9suXJHaHYN)ZFQrvDMZ(ZGeXq6V90Gicuaf)2(0SeEceVJtloHiB5e9OCicrU7vDKdG9ucvkj9E)YKIAXe(lHzPSAZMmIzAcL4nniMHddXEmvR6bmkKDOWdIN7Ndhn1NAUOIASR6bPydQtc93YD)Iyh5UVL7FuLNYdONp5rEUzEj9Clg(pXEzmyhtE8ag(DmbqkNVawUs7vJTUwyi1EFIcMkvXMdqmRPVQ66(Hweq1JYItzCzYbv1Zv3cfm1oqXY5UVPmT)6hrjfDkLgJsspqkAeWpJk(BdDVrvT5Ii0RNFDfCN0hL3YA1B5hdXfa88Tkn2MRy5eLzm6K4V0HWqQcRzN0Y(7ry4OXEhBBxd2Xnxq(TVEpVDzkUS(AqIqHpIocR6Hsb7jfVhK5qCAQSFXw23tCZAhL4RU2YKb38nV6WtN2yAPs)umCHo)U9FJCpO2ssayGepIZjZx9AUHcd1sAz(g4tRmQjQMnjOENRxpav5UznuHipNKaiIF1oPmf2uPVuqZ8Tjhq8eZ8egYSgYQhpiAffCbXuuHqQEnUU7uuJ449r8kNIWNlAIe2c1J5l5bLVOrgNQU97VbOjYyjhE4RidlJI(buBF1VTMU45El6RSUOyudTm9FKVM4gyUOXe(bYe)6YIqX8j1XQ8aAL3WC9jg0TDY((A7m0VcODksEY0sSjucEqsbSOqmBZfBuJ9em1dlezpkweeXLWklpSrhkEhOqp4WoW)dCXBVTeBzROD0ZHf9NNtKERGXLfC1LqHK9bEG9gQkR54cfPaQqRWQBBUAatMLxMMrhfBPNEFV(eNuPziXQT5Qlu8mFzINPju8bDbbNuyAF1JT5B2B0bj3vBHMbz02p6FclN7EFv5KCci)V7Xrf9AA35c6HCz0xKJ9k39FWN7fe8XNTFaunnvFG2LjjHyp1AH74xyTX8O4SvRiWKYHJ(WIAUsjuM2jebRcTt6rI2I0o(NUvYkAdHReJ5TyO09LCDfm9DenK49a01v9RVrK27RWgIc(V8wy3rjr5UFN891braU)c5B5U)7e(7SbE4x9yKTyWuBDnx5CQH)u5WJYGIBl6OnbxK5V8HGydDGtX(Yhb(E7WHhY4EhInoINDcS0HI7FKlORDCeWyWaHB1oUH9Q26EN(URGG6Sm4quUhHhZwiKZx2GAPa1)KPoxDsquYFDAdG59pMRELQj9kyKTqp0)GBRLtJ40WRSKQMQIoqUKS9p1SbR50WiThQA(AQteRM99oaSUZGxT0f5)SgeTu(QvVi1nqdG0yHd46pfLa5z4qFUY7iDA(N5jAiq2uqu(jis)8Yj85FQV0c5Fg2aSJVvMrl)ZsuiCaKl9Mv)CJmvxhSB1inP1emAabD6zGAWmNlMCvhR3hDv1HhpQYjy8OH44OFxD8M7d5qG35Gz4y)vG2YyUEH8edyU8Wp90qWXvnKp9ysRWYr2GugNG4YOA9pteMkub1XY3TYMhti8Mh2BMPI2afHsWDGeerxZFfiRkFHpCwyAEKCLO6KLULhxEcIAFweviwDEXinzw9Rt5zZaRLTiu1Rd5fsO2VweoXkR872LZkePwV4IMhwA(F2i4MscB(Tq0KlQVkdPZRkvVB(mJmRdTA86emfkOgPnEYZHNxviHVcZ4VP4OQX5cZKoV)daJMMiFf8RNr1TRSND14MbTgNrtHv8YpC9wMScYxF1yZXUoiGoEsp(NMunxnUtJvJ13u14t1qLI0igBBvutlP5YXsHP5vB64NPbAL14jJ6iJp90i9szXd6roVASMOsRzpdn(fgpfkEJZqVvUxotfATUTW3yB14OAVAASV5vADXx1jpTpZlEc4TsqvnZ5RRMZXkRRft)yLvJm5TZ)00P525x6OIlZGEBkMv16msz4UJ1n08BNunU830yu5VXA6IHL49cQqAPog0yFhMC3kQ)IBbVKJUvBeznEvj7DR6F(Lp9u9zlT3RSSh3hfxmGOxtkMZdF9m64Bx9EJwHta92zQuSWNhq7oe4Bx9bvNhTWs4OCQzZ2e9LtHSvrWRSkjL5HX2KiTgpQPCExQOHXLW8o7zDfy15TQtwlNqXxi)qQpC)gnGqdyhRBQJ)ftAUFo9z4M3549CzN2qM9E(DOXGUj0SFJosQ1OVCwN9v9TkwQX(fYV3qz5o5M3u(zmKwNszkIGR76O8dNNZl51lLFw73T6gzP0N9NTEhw2OOmnF13JpvHA2Jvr476WIoFU3x36tUv6RRJ5D5TWwwI5E(o5hpsZxG(Ldysy8C5o3WP)JsxfzYyiDGzq36Rls7gvEid0u5rNVg8vl0hmwA3REWTlu5qp61USz5qkATGWAdgNptDBk5yhE(uvcvfuRkhBwJYyhi0nR)iuygsmQ5n)Vp]] )

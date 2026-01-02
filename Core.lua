@@ -17,6 +17,7 @@ local formatKey = ns.formatKey
 local getSpecializationID = ns.getSpecializationID
 local getResourceName = ns.getResourceName
 local orderedPairs = ns.orderedPairs
+local SnapshotUtil = ns.SnapshotUtil
 local tableCopy = ns.tableCopy
 local timeToReady = ns.timeToReady
 
@@ -134,10 +135,16 @@ function Hekili:OnInitialize()
 	end
 
 	if LDB then
-		---@class MinimapDataObject
-		---@field text string
+		---@class MinimapDataObject : LibDataBroker.DataDisplay
 		---@field RefreshDataText fun(self: MinimapDataObject)
 
+		-- Declare a local class name for the minimap object and annotate the variable so
+		-- fields can be injected safely into ns.UI.Minimap (avoids modifying the LDB union type).
+		---@class HekiliMinimap : MinimapDataObject
+		---@field OnClick fun(self: table, button: string)
+		---@field OnEnter fun(self: table)
+		---@field OnLeave fun(self: table)
+		---@type HekiliMinimap
 		ns.UI.Minimap = ns.UI.Minimap
 			or LDB:NewDataObject("Hekili", {
 				type = "data source",
@@ -2284,9 +2291,12 @@ function Hekili.Update()
 		return
 	end
 
-	local profile = Hekili.DB.profile
+	local profile = Hekili.DB and Hekili.DB.profile
+	if not profile or not profile.specs then
+		return
+	end
 
-	local specID = state.spec.id
+	local specID = state and state.spec and state.spec.id
 	if not specID then
 		return
 	end
@@ -2433,35 +2443,42 @@ function Hekili.Update()
 					Hekili:Debug(1, "Ignoring %d events for [ %s ] display.", #events, dispName)
 				end
 
-				if isMain and #events > 0 then
-					if debug then
-						Hekili:Debug(1, "There are %d queued events to review.", #events)
+			if isMain and #events > 0 then
+				if debug then
+					-- Display consolidated events list using SnapshotUtil
+					SnapshotUtil.DebugEventQueue()
+				end
+
+				local event = events[1]
+				local n = 1
+				local lastEvent = nil
+
+				while event do
+					local eStart
+
+					if event == lastEvent then
+						lastEvent = event
+						-- We failed to process an event via advance; let's remove it.
 					end
 
-					local event = events[1]
-					local n = 1
-					local lastEvent = nil
+					if debug then
+						eStart = debugprofilestop()
 
-					while event do
-						local eStart
+						-- Display resources using SnapshotUtil
+						-- Determine if we need deltas (for recommendation slots 2+)
+						local includeDeltas = i > 1
+						local previousResources = nil
 
-						if event == lastEvent then
-							lastEvent = event
-							-- We failed to process an event via advance; let's remove it.
+						if includeDeltas and ns.lastSnapshotResources then
+							previousResources = ns.lastSnapshotResources
 						end
 
-						if debug then
-							eStart = debugprofilestop()
+						SnapshotUtil.DebugResourcesTable(includeDeltas, previousResources)
 
-							local resources
-
-							for k in orderedPairs(class.resources) do
-								resources = (resources and (resources .. ", ") or "")
-									.. string.format("%s[ %.2f / %.2f ]", k, state[k].current, state[k].max)
-							end
-							Hekili:Debug(1, "Resources: %s\n", resources)
-
-							if state.channeling then
+						-- Capture current resource state for next delta calculation
+						if i == 1 then
+							ns.lastSnapshotResources = SnapshotUtil.CaptureResourceState()
+						end							if state.channeling then
 								Hekili:Debug(
 									1,
 									"Currently channeling ( %s ) until ( %.2f ).\n",
@@ -2593,51 +2610,30 @@ function Hekili.Update()
 										channeling and "Yes" or "No",
 										shouldBreak and "Yes" or "No",
 										shouldCheck and "Yes" or "No"
-									)
-								end
-								if t >= 0 then
-									state.advance(t)
+								)
+							end
+							if t >= 0 then
+								state.advance(t)
 
-									local resources
+								-- Display compact resource format using SnapshotUtil
+								SnapshotUtil.DebugResourcesCompact()
+							end
+							event = events[1]
+						else
+							state:SetConstraint(0, (overrideTime or t) - 0.01)
 
-									for k in orderedPairs(class.resources) do
-										local res = rawget(state, k) or state[k]
-										local cur, maxv = 0, 0
-										if type(res) == "table" then
-											local okc, c = pcall(function()
-												return res.current
-											end)
-											local okm, m = pcall(function()
-												return res.max
-											end)
-											cur = okc and c or (rawget(res, "actual") or 0)
-											maxv = okm and m or (rawget(res, "max") or 0)
-										elseif type(res) == "number" then
-											cur = res
-										end
-										resources = (resources and (resources .. ", ") or "")
-											.. string.format("%s[ %.2f / %.2f ]", k, cur, maxv)
-									end
-									Hekili:Debug(1, "Resources: %s\n", resources)
-								end
-								event = events[1]
-							else
-								state:SetConstraint(0, (overrideTime or t) - 0.01)
+							hadProj = true
 
-								hadProj = true
-
-								if debug then
-									Hekili:Debug(
-										1,
-										"Queued event #%d (%s %s) due at %.2f; checking pre-event recommendations.\n",
-										overrideIndex or n,
-										overrideAction or event.action,
-										overrideType or event.type,
-										overrideTime or t
-									)
-								end
-
-								if casting or channeling then
+							if debug then
+								Hekili:Debug(
+									1,
+									"Processing event #%d (%s %s) at +%.2f",
+									overrideIndex or n,
+									overrideAction or event.action,
+									overrideType or event.type,
+									overrideTime or t
+								)
+							end								if casting or channeling then
 									state:ApplyCastingAuraFromQueue()
 									if debug then
 										Hekili:Debug(
@@ -2769,34 +2765,27 @@ function Hekili.Update()
 						Hekili:Debug(
 							"[ ** ] No recommendation before queued event(s), checking recommendations after %.2f.",
 							state.offset
-						)
-					end
+				)
+			end
 
-					if debug then
-						local resources
+			if debug then
+				-- Display resources using SnapshotUtil
+				-- Determine if we need deltas (for recommendation slots 2+)
+				local includeDeltas = i > 1
+				local previousResources = nil
 
-						for k in orderedPairs(class.resources) do
-							local res = rawget(state, k) or state[k]
-							local cur, maxv = 0, 0
-							if type(res) == "table" then
-								local okc, c = pcall(function()
-									return res.current
-								end)
-								local okm, m = pcall(function()
-									return res.max
-								end)
-								cur = okc and c or (rawget(res, "actual") or 0)
-								maxv = okm and m or (rawget(res, "max") or 0)
-							elseif type(res) == "number" then
-								cur = res
-							end
-							resources = (resources and (resources .. ", ") or "")
-								.. string.format("%s[ %.2f / %.2f ]", k, cur, maxv)
-						end
-						Hekili:Debug(1, "Resources: %s", resources or "none")
-						ns.callHook("step")
+				if includeDeltas and ns.lastSnapshotResources2 then
+					previousResources = ns.lastSnapshotResources2
+				end
 
-						if state.channeling then
+				SnapshotUtil.DebugResourcesTable(includeDeltas, previousResources)
+
+				-- Capture current resource state for next delta calculation
+				if i == 1 then
+					ns.lastSnapshotResources2 = SnapshotUtil.CaptureResourceState()
+				end
+
+				ns.callHook("step")						if state.channeling then
 							Hekili:Debug(" - Channeling ( %s ) until ( %.2f ).", state.channel, state.channel_remains)
 						end
 					end
@@ -2872,7 +2861,12 @@ function Hekili.Update()
 					slot.time = state.offset + wait
 					slot.exact_time = state.now + state.offset + wait
 					slot.delay = i > 1 and wait or (state.offset + wait)
-					slot.since = i > 1 and slot.time - Queue[i - 1].time or 0
+					local previous_time = i > 1 and Queue[i - 1].time or nil
+					if previous_time then
+						slot.since = slot.time - previous_time
+					else
+						slot.since = 0
+					end
 					slot.resources = slot.resources or {}
 					slot.depth = chosen_depth
 

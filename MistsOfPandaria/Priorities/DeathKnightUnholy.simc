@@ -1,64 +1,125 @@
-# Death Knight: Unholy (MoP)
-# Based on MoP simulation files and APL structure
+﻿# Death Knight: Unholy (MoP 5.5.1)
+# Updated for Festerblight and User Options
+# To use this priority: Open Hekili Options -> Priorities -> Import -> Select this file
 
-### Precombat Actions ###
-actions.precombat+=/unholy_presence
-actions.precombat+=/army_of_the_dead
-actions.precombat+=/horn_of_winter,if=!buff.horn_of_winter.up|buff.horn_of_winter.remains<6
-actions.precombat+=/potion
+## Precombat
+actions.precombat+=/flask,type=winters_bite
+actions.precombat+=/horn_of_winter
+actions.precombat+=/unholy_presence,if=!buff.unholy_presence.up
+actions.precombat+=/army_of_the_dead,if=time<0.5
+actions.precombat+=/raise_dead
+actions.precombat+=/potion,if=time<0.5
 
-### Utility and Interrupts ###
+## Core Flow
 actions+=/mind_freeze
-actions+=/antimagic_shell,damage=100000,if=settings.dps_shell
-
-### Cooldowns and Major Abilities ###
-actions+=/raise_dead,if=!pet.ghoul.active
-actions+=/summon_gargoyle,if=pet.ghoul.active&(buff.dark_transformation.up|cooldown.dark_transformation.remains>20)
-actions+=/dark_transformation,if=buff.dark_transformation.down&pet.ghoul.active
-actions+=/synapse_springs,if=(buff.dark_transformation.up|cooldown.dark_transformation.remains>10)
-actions+=/blood_fury,if=(buff.dark_transformation.up|cooldown.dark_transformation.remains>10)
-actions+=/berserking,if=(buff.dark_transformation.up|cooldown.dark_transformation.remains>10)
-actions+=/use_item,name=trinket1,if=buff.dark_transformation.up|cooldown.dark_transformation.remains>20
-actions+=/use_item,name=trinket2,if=buff.dark_transformation.up|cooldown.dark_transformation.remains>20
-actions+=/potion,if=buff.dark_transformation.up|cooldown.dark_transformation.remains>20
-actions+=/use_items
-
-### Disease Management ###
-actions+=/unholy_blight,if=talent.unholy_blight.enabled&(dot.frost_fever.remains<3|dot.blood_plague.remains<3)
-actions+=/plague_leech,if=talent.plague_leech.enabled&((dot.blood_plague.remains<3&dot.frost_fever.remains<3)|(rune_deficit>=2&(dot.frost_fever.ticking|dot.blood_plague.ticking)))
-actions+=/outbreak,if=!dot.blood_plague.ticking|!dot.frost_fever.ticking
-actions+=/festering_strike,if=!dot.blood_plague.ticking|!dot.frost_fever.ticking
-
-### Proc Management ###
-actions+=/death_coil,if=buff.sudden_doom.react
-actions+=/death_coil,if=buff.shadow_infusion.stack<5&buff.dark_transformation.down&runic_power>=40
-
-### Execute Phase ###
-actions+=/soul_reaper,if=target.health.pct<=35
-
-### AoE Setup ###
-actions+=/blood_boil,if=active_enemies>=2&(dot.blood_plague.ticking&dot.frost_fever.ticking)&blood>=1&(active_dot.blood_plague<active_enemies|active_dot.frost_fever<active_enemies)
-actions+=/death_and_decay,if=active_enemies>=2&(settings.dnd_while_moving|!moving)
-
-### Rotation Branching ###
+actions+=/cancel_buff,name=unholy_blight,if=variable.advanced_icd&variable.cds_running_out
+actions+=/antimagic_shell,damage=health.max*0.30
+actions+=/call_action_list,name=variables
+actions+=/call_action_list,name=cooldowns,if=variable.use_cds
 actions+=/run_action_list,name=aoe,if=active_enemies>=4
-actions+=/run_action_list,name=single_target,if=active_enemies<4
+actions+=/run_action_list,name=cleave,if=active_enemies=3
+actions+=/run_action_list,name=single_target
+actions+=/wait,sec=1
 
-### Single Target Rotation ###
-actions.single_target+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.stack>=5&(runes.blood.count=0|runes.frost.count=0|runes.unholy.count=0)
-actions.single_target+=/scourge_strike,if=unholy>=1
-actions.single_target+=/death_coil,if=runic_power>=50
-actions.single_target+=/horn_of_winter,if=runic_power<=60&(buff.horn_of_winter.down|buff.horn_of_winter.remains<6)
-actions.single_target+=/empower_rune_weapon,if=unholy=0&blood=0&frost=0&runic_power<60
-actions.single_target+=/blood_strike,if=blood>=1&frost>=1&unholy=0
+actions.variables+=/variable,name=use_cds,op=set,value=1
+actions.variables+=/variable,name=execute,op=set,value=target.health.pct<=settings.unholy_execute_threshold
+actions.variables+=/variable,name=dots_up,op=set,value=dot.blood_plague.ticking&dot.frost_fever.ticking
+actions.variables+=/variable,name=need_dots,op=set,value=!dot.blood_plague.ticking|!dot.frost_fever.ticking
+actions.variables+=/variable,name=proc_window,op=set,value=buff.unholy_strength.up|buff.dark_transformation.up|buff.bloodlust.up|buff.heroism.up|buff.time_warp.up|buff.ancient_hysteria.up|buff.blood_fury.up|buff.berserking.up|buff.synapse_springs.up
+actions.variables+=/variable,name=shadow_infusion_ready,op=set,value=buff.shadow_infusion.stack>=4|buff.dark_transformation.up
+actions.variables+=/variable,name=runic_overcap,op=set,value=runic_power>=90
+actions.variables+=/variable,name=pool_for_gargoyle,op=set,value=cooldown.summon_gargoyle.remains<=14|target.time_to_die<=35
+actions.variables+=/variable,name=gargoyle_soon,op=set,value=cooldown.summon_gargoyle.remains<=20
+actions.variables+=/variable,name=early_gargoyle,op=set,value=time<5
+actions.variables+=/variable,name=long_fight_or_execute,op=set,value=fight_remains>=190|variable.execute
+actions.variables+=/variable,name=cooldown_window,op=set,value=variable.proc_window|(variable.gargoyle_soon&(target.time_to_die<=60|variable.execute))
+actions.variables+=/variable,name=holy_moly,op=set,value=!(variable.execute&(cooldown.soul_reaper.remains<=gcd.max*2))
+actions.variables+=/variable,name=advanced_icd,op=set,value=1
+actions.variables+=/variable,name=cds_running_out,op=set,value=buff.synapse_springs.remains<=1.5|buff.blood_fury.remains<=1.5|buff.unholy_strength.remains<=1.5
+actions.variables+=/variable,name=snap_window,op=set,value=variable.advanced_icd&(variable.proc_window|(variable.gargoyle_soon&(target.time_to_die<=60|variable.execute)))
 
-### AoE Rotation ###
-actions.aoe+=/pestilence,if=dot.blood_plague.ticking&(active_dot.blood_plague<active_enemies)
-actions.aoe+=/blood_boil,if=dot.blood_plague.ticking&dot.frost_fever.ticking&(active_dot.blood_plague<active_enemies|active_dot.frost_fever<active_enemies)
-actions.aoe+=/death_and_decay,if=settings.dnd_while_moving|!moving
-actions.aoe+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.stack>=5&(runes.blood.count=0|runes.frost.count=0|runes.unholy.count=0)
-actions.aoe+=/scourge_strike,if=unholy>=1
-actions.aoe+=/death_coil,if=runic_power>=60|buff.sudden_doom.react|buff.dark_transformation.down&buff.shadow_infusion.stack<5&runic_power>=40
-actions.aoe+=/horn_of_winter,if=runic_power<=60&(buff.horn_of_winter.down|buff.horn_of_winter.remains<6)
-actions.aoe+=/empower_rune_weapon,if=unholy=0&blood=0&frost=0&runic_power<60
-actions.aoe+=/death_coil,if=runic_power>=30
+# Festerblight Variable: Check if we are in a state where we should extend dots
+actions.variables+=/variable,name=festerblight,op=set,value=dot.blood_plague.remains>15&dot.frost_fever.remains>15
+
+actions.cooldowns+=/army_of_the_dead,if=time=0
+actions.cooldowns+=/blood_fury,if=variable.cooldown_window
+actions.cooldowns+=/berserking,if=variable.cooldown_window
+actions.cooldowns+=/arcane_torrent,if=runic_power.deficit>=20
+actions.cooldowns+=/unholy_frenzy,if=variable.proc_window&variable.dots_up
+actions.cooldowns+=/summon_gargoyle,if=(variable.pool_for_gargoyle&(variable.cooldown_window|variable.early_gargoyle|variable.long_fight_or_execute|target.time_to_die<=35))&variable.dots_up
+actions.cooldowns+=/dark_transformation,if=pet.ghoul.active&buff.shadow_infusion.stack>=5&variable.holy_moly&fight_remains>=15&!(variable.execute&cooldown.summon_gargoyle.ready)
+actions.cooldowns+=/dark_transformation,if=settings.dark_transformation_auto&pet.ghoul.active&buff.shadow_infusion.stack>=5
+actions.cooldowns+=/death_coil,if=pet.ghoul.active&buff.shadow_infusion.stack>=4&buff.dark_transformation.down&cooldown.dark_transformation.remains<=gcd&(buff.sudden_doom.react|runic_power>=40)
+actions.cooldowns+=/use_item,slot=hands,if=variable.cooldown_window&cooldown.synapse_springs.ready
+actions.cooldowns+=/use_item,slot=trinket1,if=variable.cooldown_window|target.time_to_die<=25
+actions.cooldowns+=/use_item,slot=trinket2,if=variable.cooldown_window|target.time_to_die<=25
+actions.cooldowns+=/potion,if=variable.cooldown_window&target.time_to_die<=60
+actions.cooldowns+=/empower_rune_weapon,if=variable.execute&(runes.unholy.count+runes.death.count=0)&runic_power.deficit>=40
+
+actions.single_target+=/plague_leech,if=talent.plague_leech.enabled&variable.dots_up&(dot.blood_plague.remains<3|dot.frost_fever.remains<3)&(runes.unholy.count=0|runes.death.count=0|rune_deficit>=2)
+actions.single_target+=/unholy_blight,if=talent.unholy_blight.enabled&variable.need_dots
+actions.single_target+=/outbreak,if=variable.need_dots
+actions.single_target+=/plague_strike,if=!dot.blood_plague.ticking
+actions.single_target+=/icy_touch,if=!dot.frost_fever.ticking
+
+# Snapshotting / Festerblight Logic
+# Only suggest Outbreak for snapshotting if NOT glyphed (CD exists) or if we really want to overwrite weak dots
+actions.single_target+=/unholy_blight,if=talent.unholy_blight.enabled&variable.snap_window&variable.dots_up&!variable.festerblight
+actions.single_target+=/outbreak,if=variable.snap_window&variable.dots_up&!glyph.outbreak.enabled&!variable.festerblight
+
+actions.single_target+=/soul_reaper,if=variable.execute&(runes.unholy.count>=1|runes.death.count>=1)
+actions.single_target+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.stack>=settings.unholy_blood_tap_threshold
+actions.single_target+=/death_and_decay,if=runes.unholy.count>=1&(active_enemies>=2|variable.pool_for_gargoyle)
+actions.single_target+=/scourge_strike,if=runes.unholy.count>=1&!variable.festerblight
+
+# Festering Strike to extend dots (Festerblight)
+# If we have good procs, start extending
+actions.single_target+=/festering_strike,if=variable.proc_window&variable.dots_up&(runes.blood.count>=1|runes.death.count>=1)&(runes.frost.count>=1|runes.death.count>=1)
+# If we are already in festerblight mode (long dots), keep extending
+actions.single_target+=/festering_strike,if=variable.festerblight&(runes.blood.count>=1|runes.death.count>=1)&(runes.frost.count>=1|runes.death.count>=1)
+# Standard Festering Strike usage
+actions.single_target+=/festering_strike,if=runes.blood.count>=1&runes.frost.count>=1
+
+# Death Coil Priorities
+# 1. Prevent capping
+actions.single_target+=/death_coil,if=variable.runic_overcap
+# 2. Sudden Doom (if prioritized)
+actions.single_target+=/death_coil,if=settings.unholy_sudden_doom_priority&buff.sudden_doom.react
+# 3. Build Shadow Infusion (High Priority) - This fixes the "barely recommends death coil" issue
+actions.single_target+=/death_coil,if=settings.unholy_shadow_infusion_priority&buff.dark_transformation.down&buff.shadow_infusion.stack<5&runic_power>=40
+# 4. Spend RP (Standard)
+actions.single_target+=/death_coil,if=variable.holy_moly&runic_power>=settings.unholy_runic_power_threshold
+
+actions.single_target+=/horn_of_winter,if=buff.horn_of_winter.down
+actions.single_target+=/empower_rune_weapon,if=runic_power.deficit>=60&(runes.unholy.count+runes.death.count=0)
+
+actions.cleave+=/unholy_blight,if=talent.unholy_blight.enabled&variable.need_dots
+actions.cleave+=/outbreak,if=variable.need_dots
+actions.cleave+=/blood_boil,if=talent.roiling_blood.enabled&dot.blood_plague.ticking&dot.frost_fever.ticking
+actions.cleave+=/pestilence,if=!talent.roiling_blood.enabled&dot.blood_plague.ticking&dot.frost_fever.ticking
+actions.cleave+=/plague_leech,if=talent.plague_leech.enabled&variable.dots_up&(dot.blood_plague.remains<3|dot.frost_fever.remains<3)&(runes.unholy.count=0|runes.death.count=0|rune_deficit>=2)
+actions.cleave+=/unholy_blight,if=talent.unholy_blight.enabled&variable.snap_window&variable.dots_up
+actions.cleave+=/outbreak,if=variable.snap_window&variable.dots_up
+actions.cleave+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.stack>=8
+actions.cleave+=/death_and_decay,if=runes.unholy.count>=1
+actions.cleave+=/blood_boil,if=runes.blood.count>=1|runes.death.count>=1
+actions.cleave+=/soul_reaper,cycle_targets=1,if=variable.execute&(runes.unholy.count>=1|runes.death.count>=1)
+actions.cleave+=/scourge_strike,cycle_targets=1,if=runes.unholy.count>=1
+actions.cleave+=/festering_strike,cycle_targets=1,if=runes.blood.count>=1&runes.frost.count>=1
+actions.cleave+=/death_coil,if=variable.runic_overcap|buff.sudden_doom.react
+actions.cleave+=/horn_of_winter
+
+actions.aoe+=/unholy_blight,if=talent.unholy_blight.enabled
+actions.aoe+=/outbreak,if=!dot.blood_plague.ticking|!dot.frost_fever.ticking
+actions.aoe+=/blood_boil,if=talent.roiling_blood.enabled&dot.blood_plague.ticking&dot.frost_fever.ticking
+actions.aoe+=/pestilence,if=!talent.roiling_blood.enabled&dot.blood_plague.ticking&dot.frost_fever.ticking
+actions.aoe+=/blood_tap,if=talent.blood_tap.enabled&buff.blood_charge.stack>=6
+actions.aoe+=/unholy_blight,if=talent.unholy_blight.enabled&variable.snap_window&variable.dots_up
+actions.aoe+=/outbreak,if=variable.snap_window&variable.dots_up
+actions.aoe+=/death_and_decay,if=runes.unholy.count>=1
+actions.aoe+=/blood_boil
+actions.aoe+=/soul_reaper,cycle_targets=1,if=variable.execute&(runes.unholy.count>=1|runes.death.count>=1)
+actions.aoe+=/death_coil,if=variable.runic_overcap|buff.sudden_doom.react
+actions.aoe+=/scourge_strike,cycle_targets=1,if=runes.unholy.count>=1
+actions.aoe+=/festering_strike,cycle_targets=1,if=runes.blood.count>=1&runes.frost.count>=1
+actions.aoe+=/horn_of_winter

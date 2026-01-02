@@ -1107,6 +1107,12 @@ spec:RegisterAbilities( {
         texture = 136122,
         handler = function()
             applyDebuff( "target", "doom" )
+            -- Unerring Vision: Doom crits proc double ember generation
+            if state.buff.unerring_vision_of_lei_shen.up then
+                if state.soul_shards and state.soul_shards.generate then 
+                    state.soul_shards.generate( 2 ) -- Double shards from crit proc
+                end
+            end
         end,
     },
 
@@ -1195,7 +1201,9 @@ spec:RegisterAbilities( {
         spend = 1,
         spendType = "soul_shards",
         startsCombat = false,
+
         toggle = "cooldowns",
+
         handler = function()
             applyBuff("metamorphosis")
             applyBuff("demonic_fury")
@@ -1268,7 +1276,9 @@ spec:RegisterAbilities( {
         gcd = "off",
         school = "shadow",
         startsCombat = false,
+
         toggle = "cooldowns",
+
         handler = function()
             applyBuff("dark_soul_knowledge")
             if set_bonus.tier15_2pc > 0 then
@@ -1306,7 +1316,6 @@ spec:RegisterAbilities( {
         gcd = "spell",
         school = "shadow",
         startsCombat = false,
-        toggle = "cooldowns",
         handler = function()
             -- Simplified: no separate pet modeling, assume immediate damage gain.
         end,
@@ -1320,7 +1329,6 @@ spec:RegisterAbilities( {
         gcd = "spell",
         school = "shadow",
         startsCombat = true,
-        toggle = "cooldowns",
         handler = function() end,
     },
 
@@ -1365,7 +1373,6 @@ spec:RegisterAbilities( {
         spend = 1,
         spendType = "soul_shards",
         startsCombat = false,
-        toggle = "cooldowns",
         handler = function()
             -- Placeholder aura to reflect active guardian if needed
         end,
@@ -1560,7 +1567,6 @@ spec:RegisterAbilities( {
         spend = 1,
         spendType = "soul_shards",
         startsCombat = false,
-        toggle = "cooldowns",
         handler = function()
             applyBuff( "doomguard" ) -- placeholder aura to reflect active guardian.
         end,
@@ -1697,4 +1703,4 @@ end )
 
 
 -- TODO: Re-export / update pack after ability additions if needed.
-spec:RegisterPack( "Demonology", 20250812, [[Hekili:TI16koUnu4NLHcPjmBtTNmjD2LKb62wO7a7fil0)zBfB5e1yBfKLNHbcM(q0NW(K0JKVljBNz2LLDij(OVJo3)o2X25RoBdqCSZNUX6MLw3zVyULT9cRvoB5pFc7S9eY)iAp8Heum83FhhttOr09plE0ZruuGaIuAgZhESZ2DzKi(hsC2zg3foBrz8duMZ2TXzHmYrNThibb4ItGt9D2(1dK0CpX)r5EL6p3JgcF3NtOj5ErKuo84qkl37pXhjrK5oBL)O4YqpHtWm4tFsAE4e0UiCGZ7lWNrojaXz7NLIL7nDFgja)tOiY(eCWm4c6xiWbusGln0DFw0pgGsC4GXiaS65bi2rxWYJARdqOfkAfujhZiiH(3Lfgo3NYyzYBX8a6tjni28abo32loCueoHpFpJetjmS4sMIzps8XZRKVgtdcjaFzBljehTpdXcEh8HuoLfRyrRAlmj(KB6tinH(L2cLMfdjkUbuASezfzVRTSQ(5UI(22IgJ5Oyk70bAkjvrqBRX87IBJIhx8tYdRMQy(WmCmIKaPERZ927h089RZ9S1qLloCiklIpAY4hbyAopllXT4ZUIS6oHEsmwQEWCLP8UffMLj9v5OgTebKpIDbbJjy4sF)MCVvdO1wWJO4HtTL(OoHN5zNUmSfNYu((LC2uEDYCm9rsYEHFUee3YF59Ds0DdJKNupb3GQZsXUGfgNQeU(nknsKiboXPPhqmzFdfNrD7bHJOQ(WGoorll(h44LDF)BuawuedXAUB55QQM6pQ0fPk1UlIsdCdZypxxL9IHaZGlZrHpwMSFIH9PX7qJNU)xiwe1)47Y9AgOaUYps)YSCV)7F(3CpgwojbAYZOX5EprFIVZF((9Ysn4BPKyW5)W2p)PCVVuR3U9MjjCWrnCnXvWigmFo09)rSw7l4jMY6)(f5UTtpZdiiNYDhf6x0j9KxwJyWR2PJJslL2fJGZvaHCMz8SH6nM7D(miDUxF99SxM7nj3tZuZ9MPnIKtZ8pi6T7FarvBypwZeWpGtCHzIyj6texjiQq8LzTLTVSA5)G7HBimQB4HNt1U7fMTg(Rb8VZcmRAxI29kLd0tY9abT6baBlbcTgXJs8HMqDhKjdXPglBQpxguRj8K4iCmKeP2rAlufgbtg4i2Emu2m1hLYf0B6lGRbyXKXx0aeHbUyGH(dgK1MgzclssiMLGIgHpeDpy8aVQYUYMiRunM4vsOsgE7xp9WYQdXPXyzPoGyiEJTli5e)JUcEbTYw6qKS)5dqzjKUusf4MI88sLv0nsoSSJ2w0pXTx2CKEQOHTf6JV3WK86RPHP622g0YcZUVABXD6TDkH70NzaIJtRQgNFaJI4hMFYNl14nlLnvMyqPThV2vp9xvQ7dV1AqFy)1KL3xrYKlN6gqW1xyZbRHvu)vSXOeuT)42wGercbvJKmMSxEPJhf0thJZXVs)dizy11vrL0zdvAoyFWoLn2dwq0VV(ICb9XjUvb(RPpH)Z(rcDi9dc)2GDh1J7let1QRA(MRQvPFpYAff9IlAzdEXekJYpivM(6Veymses8zxugdnCF2(12vxScpGJIQkAV7cZFHF4rGlTqSQ3xYnoBHXwjWuDykZhIprzCXqOvkVeK55paiFc7dhC1kbfCAijcIW)qU33vs2pK)Wp0IPD(dfxJ051K(VEZp3I1TzbA4v)gs4MRQzEBw6cEYVrWGEJbc0ci0Z)mR3gFFPLiw4UwwqcLLmluAXs1c9ikBwBBn6jGgrcX7YT5(nRg9GISUAdslfCStNYBls9wUVPyd4n2LgDpVYRgFwHbdqO0jZGe1oDdpRPbKWKm)wVmCmdKOK((XjNPJLwhDdYuto0WZu5Y(Q8rDIJM8Ha6T8qn7GDzIw2CFDR3e11vHAdVHI2Pi1VyJHlI(wlcHZ38Eggx063NqpIkTSH30PX1Lkk812YPDcPXnGuaqnpqV6E9MfMpt1UlgAiOEI6mrz(UYwgkY(QRsMmcWduYu4lhPQUkDSMNHY5vQxeGusK6(n3C(C)7DSw1D1PUYyUYK2uqa4xAPgJQix300Tdn8jt7BPH1lpF28Yc3V5TQ5FDuZuT1bwFZYztmT4Yi2BxRdO7p2b0j2dQw1jPbtftubcv0vxFRMRuF4A)V6PMZk(Xb6bE(8ut96SxorlyRdA337K2Jhn431XSYsdbtVghziw5YjSKoOTEZDwZaBZCg0glfHTTSMv6u13FP5wb0ogUaUqGHQaTvfE0GFHyT6k0zRIn2V4UefaosYoS6rz93LwVxaRYIa9Y1AYG8818OLS97hUREr41EjbX)C()p]])
+spec:RegisterPack( "Demonology", 20251006, [[Hekili:fRv)UnUXr8NfJa4RhSpvszlzNaldKMKMeJExcGs79FICf5kjwtYvLFyxdyq0hI(e2NKo7Yp2D5UdfLRY1aKdYKZoZUZ8B(C5k3v)2QLHKc6Qpn1z6mxhN5tMo152P3UAzXl7PRwUNe8izl8Jusc8VFpnHLYIzBFH)QxIzKqolYzLzbWRxTCDzuCXpNUATn(EZ1aP7PbWtNpF1YDrHH0AsP5bRw(B7IYR85)pPYVrWv(SnWFhueXsR8JJYlGxVHLv5)t0hJIJMSAP4H8DbBpnLMb)6tIZfnLSoMgU6pvZ)SO9CMSA5ViiRY)pSTmkK(bsC02uA47xTSwkW(IKg6X24TTm(DHK0vfW(LZW23hsYE0doYXQYai6QEsfezbnlIWL)6YnBMeWYYkf7IjHSNtLCu(coFUgLpfKyAAXKTzrjSOmkFtMtZEkkGoPL(oEAHioZNPEs2qJ3wsYc)g4h5fSSKENO5QehLS3l)zIbr3OsuEzcGq8czSebN7r7TQ02xpRt6xRsAcTGKWY2VJLhL3JqxNdP357MEAC(JelUpuX(IZOjKOua6DxL)2Gq5FFrLVRbxla3fqjW30Ea12qKQ20ST0IjfrjuVcMxyeG5VVYh8pcEjigEM495CwSmH8p90F6sxROiDe)NyPF4JWMPY)h)UVVY)dv(FB4tK0aAi4lLXsQ8)m7ZG9fopFK9RD4DRB3GDCjduUOYFAL)RVw5R(i3k)ZR8bN84yV2Ju97bDhFjtMnOJgUpuJEAhLexSBY(GIggoREtiSvjS4cAQhOiOtYlGiiGQSEtzLKY9kaxWF2Bd4VmShycjLif(voIJ7zv(prGxdKpbS3EHzS95E5BAFzTGvHWAIooAd3GUVZ90QKvfs(MozOCc2ramU3A4a257AhyZkudfjX2Wj6MbpqyrSUzq9vRHYb(pb75BG6D7MyiTcG9dEmkD7ifTQ662bpKwKXGGpTqoptIk8ktlII5(WEzus4lhrKNdjE9iADrISzm7juTCrDkdnIk4ba2qkHfFOSHFeS9Iqc)q6o8qcDYJuwWci5fESID0mWnIfZdSMpCqJZQT5kGod9HoG6QJjl11JjlfUJLTaWCa78MWgybECgiRx)CNWsbTfxe2sEQSTAxWEwJAPBBkcIi5JicsDrz)DsiLNIhQRPWRzHd6ByJvTcEDmJf6TPm7LopclBpJu3Aykz2LFcORUeUFSMsqDgLi811qzyzyou6exhSuqTiZjDb21d05ITqHYr11TBzIujZgCDcTxCzEbOt1xqBAan1(ywig8C6uRHGmZNHzBwcuu5)NbsQ85HP3staa0W4e5gw5X6kOBhom(W1CHRLWsJEivipDdVPLOabOU(fqUOHvUnj2nxjKeBOy49dbEewdjIt1CmGFIbqvvzGdGRpzbLzz8Wf8tEZjRvnJMDURgklc1Io2zyjP)86iQ)pyu4AF8IhpqfyzLPE1)2J3nzDpLE1rx7QINlH(fgoggO1kaNj9tf1YKYCQhSH5wznqY31MKf6zfu9zIMv7D266jLFU4cPF5FhiXI26hoVIlE1EwyL98kUhi5ecpOzW2ru3GOgN9z0awYAYHRY5ZKSywWJFtLVCcgG2ekT59v()N)1)UYpJkgDrR)2ZSNlwhmz7wrlEWFLlQf6HL)YNQ8)1w5oIcNWvLQLGu7dO1lPuHJxxLT1H1uv77fQ2O0crSE86OAkPzpTpvZgvzQfkoowmoDBgEdZ9kiD8nQ2REBrN67PzbCLCuAauYEoTnGFDOLdqMS9KED9ZlhCQ9un2Sqd3NE9H2O7(b7(DOE2UwE2uiXYjeoGyfCJ3X7VZn8JxxUL21hr(nrZj1(fdv8owLbUoxl3UfSYGD89lCGy5gf13719X)eg9GXL(w2paHHMFr7gn)9d12ZGXc6mkIJXHJhyLjkJ3aWvkOf1MUXscQo)PG(JrZk4L3nqWJn9fzZHahDyA6UYXrPgf1mi4vboqTC4ZpbVo0M5ZcAXuwg0HSqyMJMnccTgt4)2JuMrS1h4yK2zJwG7aVZ2zBD7iJFdp4jiFlNmXq8DUfQUDj0zDkK)nNpTEWfd62MLv0mr(3vpa(3XtM(pkbXbrTZzCpr(udsif8haW0uaMoP6H)suk8kxiN8FnnVCpNrCcQ3Aa36bCFx3sUcDjsqMK6RrP2YeYLlBg6Ym8lLlAo6I6glHK4Bp(t(xJUenaICbUoORGNfsHqC7qlHcd(gwCm7zr7aCOl4e)mL3aju7kSg(OKk4K1UyEzWChYIw6szc0szQg1HHCIdjfK1qMQVP6brUFP1S5b8Dc8ZhSa9ulY(ubaTHMME8gnC4AxxHJb2P4QogaNTn)jfXzB(OJc4HbvXne9o6FXbIA742Njlmbbs2mb2tfAeBYRJbBAdmGdlhiahEWulb4WbNYX7mgKgk4CaqMfxRbayyqsCnQg))IdiL6VbqOkLiJGq76F(4WON0yGkTJogyMST03qmtRkHtDwd98Q46kD6ov10GAbWvs6TXmg3xZv8f3dqp874G7qdzNkJ8aHiFdEh4MtBgFCljsySHQkvRre5sUb)q00kXyQQ4)35TnkGSFyYh(5K2n9CDzYbb8bmY2efd9M(vv(N0ricI(RoM5iw9q9MlFsxm7lw8hRhr4L8rmUWYegVmAZcEoI7CTV8E4XdrUsKA7eiJnJ8EjCOrbmQlFUJzalWkcsLgPvNFIoZ(fpRUadNz1x2vxJ6d7FFVcvNXTwC3I5UV(QXeOUBXuhTZKsYC5thHT1YnLPWa5a3XOvyco(7QvviwGqnZHAH752gk4DlCDE9vjn4xtlqPkHyt97(fUZmOtD(S1eCMPcaJuBgYPtnux2V(unus7rYUb4CK7rf2f3E(z2)GIu4UwSmbs3IioZ60JSFYpxDcz3Vy6mh76IRC6r5mhhtTZOUoZH1w6xZ4qiaNZvVnryhD(zi3I5RVAJ19o5oM8t9V5oWhJQrEg7DnH1E3TfG2DUng23H4G6WpASeiFKRYaZ1ZQZ0f2cfDJs1Y70d2A)7C1YYSm6T6yOh67B1cVWdFlPXmkU8D9dM)M0r9QSWuhcCxrd19fPossBJjQ8TNEHBJP2Y1dRIy6Uv5o8L2OXFdPCWwVLmoOK2DtUiKkozh33TQuvQ6pyGrn9BVF(LA39Wc3lnUaVfUOSFGCGtvZmzpD40jZq5SwirB1rmRjCMX39698KN2Uanmr1E)oCj1EjqI4z2teHKyb)Kil9tKQY2xY6iTF2Vj07wCZHYzEOJmxFY)evphj1XXYFl4cSpTgmwyBgROeBuqWXknT6ZpGsRTa(3G3Pc36c1HDT83lW4d86ARLwmYfZNAwGdU4pkx)JgvED9UFG7L)EhRS)egvrHR6tUrwXHwqIbQ0Q721T3xt)AiDDUEeBJ2IhnUlC5Ajm6Wz6RjaxPDVQvSMyRH8U2Ppzk25(qfRv80A67Uz7(m00pvtNDLJttOB1mIMfN3NT9MLdA1KNp4DgBOrBg3do7o7O4N5maKbn(BnHxZTh)On6BDbkqIJDKCpxpr(UlFIexsnBBq8sUP3yXjeyN66DLOY76v7o5Ql4HzBDMAc3QVu1q)nRtFRyK(OlwqpPErTRlNHWYlOEHGztaHuNBLXg)ej8opzzN3gcB9Vdct9doGuwSJLTA5YKYnzrpk(Odw9F)d]])

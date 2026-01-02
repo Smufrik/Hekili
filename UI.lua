@@ -1345,6 +1345,7 @@ do
             end
 
             local postRecs = debugprofilestop()
+ 
 if self.HasRecommendations then
                 if fullUpdate and conf.glow.enabled then
                     madeUpdate = true
