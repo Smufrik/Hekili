@@ -1462,7 +1462,11 @@ spec:RegisterAbilities( {
     },
 
     exorcism = {
-        id = 879,
+        id = function()
+            return state.glyph.mass_exorcism.enabled and 122032 or 879
+        end,
+        -- Map both spellIDs to this same ability key.
+        copy = { 879, 122032 },
         cast = 0,
 		cooldown = 15,
         gcd = "spell",
@@ -1479,7 +1483,11 @@ spec:RegisterAbilities( {
             -- Exorcism should be considered known if the player knows the spell.
             -- NOTE: The second parameter to IsSpellKnownOrOverridesKnown is 'isPetSpell'; passing true would incorrectly hide Exorcism.
             known = function()
-                return state.IsSpellKnownOrOverridesKnown(879) or state.IsSpellKnown(879) or state.buff.art_of_war.up
+                return state.IsSpellKnownOrOverridesKnown(879)
+                    or state.IsSpellKnown(879)
+                    or state.IsSpellKnownOrOverridesKnown(122032)
+                    or state.IsSpellKnown(122032)
+                    or state.buff.art_of_war.up
             end,
 
         usable = function()
