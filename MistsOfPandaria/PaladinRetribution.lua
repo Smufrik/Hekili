@@ -179,17 +179,9 @@ spec:RegisterResource( 9, { -- HolyPower = 9 in MoP
 } )
 
 -- Comprehensive Tier sets with MoP gear progression
-spec:RegisterGear( "tier14", 85339, 85340, 85341, 85342, 85343 ) -- T14 White Tiger Battlegear
-spec:RegisterGear( "tier14_lfr", 86679, 86680, 86681, 86682, 86683 ) -- LFR versions
-spec:RegisterGear( "tier14_heroic", 87099, 87100, 87101, 87102, 87103 ) -- Heroic versions
-
-spec:RegisterGear( "tier15", 95280, 95281, 95282, 95283, 95284 ) -- T15 Battlegear of the Lightning Emperor
-spec:RegisterGear( "tier15_lfr", 95910, 95911, 95912, 95913, 95914 ) -- LFR versions
-spec:RegisterGear( "tier15_heroic", 96654, 96655, 96656, 96657, 96658 ) -- Heroic versions
-
-spec:RegisterGear( "tier16", 99132, 99136, 99137, 99138, 99139 ) -- T16 Battlegear of Winged Triumph
-spec:RegisterGear( "tier16_lfr", 98985, 98986, 98987, 99002, 99052 ) -- LFR versions
-spec:RegisterGear( "tier16_heroic", 99372, 99373, 99374, 99379, 99380 ) -- Heroic versions
+spec:RegisterGear( "tier14", 85339, 85340, 85341, 85342, 85343, 86679, 86680, 86681, 86682, 86683, 87099, 87100, 87101, 87102, 87103 )
+spec:RegisterGear( "tier15", 95280, 95281, 95282, 95283, 95284, 95910, 95911, 95912, 95913, 95914, 96654, 96655, 96656, 96657, 96658 )
+spec:RegisterGear( "tier16", 99132, 99136, 99137, 99138, 99139, 98985, 98986, 98987, 99002, 99052, 99372, 99373, 99374, 99379, 99380 )
 
 -- Notable MoP Paladin items and legendary
 spec:RegisterGear( "legendary_cloak", 102249 ) -- Qian-Ying, Fortitude of Niuzao
@@ -992,43 +984,66 @@ spec:RegisterAuras({
         end
     },
 
---    ret_tier14_4pc = {
---        id = 70762,
---       duration = 3600,
---        max_stack = 1,
---        generate = function( t )
---            local name, icon, count, debuffType, duration, expirationTime, caster = GetPlayerAuraBySpellID(105516)
---
---            if name and state.set_bonus.tier14_4pc > 0 then
---                t.name = name
---                t.count = 1
---               t.expires = expirationTime
---                t.applied = expirationTime - duration
---                t.caster = caster
---                t.up = true
---                t.down = false
---                t.remains = expirationTime - GetTime()
---                return
---            end
---
---            t.count = 0
---            t.expires = 0
---            t.applied = 0
---            t.caster = "nobody"
---            t.up = false
---            t.down = true
---            t.remains = 0
---        end
---    },
-
+    -- T15 2pc: Target takes 6% increased Holy damage from your attacks for 6 sec after Exorcism.
     ret_tier15_2pc = {
         id = 138159,
         duration = 6,
         max_stack = 1,
         generate = function( t )
-            local name, icon, count, debuffType, duration, expirationTime, caster = GetPlayerAuraBySpellID(138159)
+            -- Only relevant if you own the set bonus.
+            if ( state.set_bonus.tier15_2pc or 0 ) <= 0 then
+                t.count = 0
+                t.expires = 0
+                t.applied = 0
+                t.caster = "nobody"
+                t.up = false
+                t.down = true
+                t.remains = 0
+                return
+            end
 
-            if name and state.set_bonus.tier15_2pc > 0 then
+            local name, icon, count, debuffType, duration, expirationTime, caster = GetTargetDebuffByID( 138159, "player" )
+            if name then
+                t.name = name
+                t.count = 1
+                t.expires = expirationTime
+                t.applied = expirationTime - duration
+                t.caster = caster
+                t.up = true
+                t.down = false
+                t.remains = expirationTime - GetTime()
+                return
+            end
+
+            t.count = 0
+            t.expires = 0
+            t.applied = 0
+            t.caster = "nobody"
+            t.up = false
+            t.down = true
+            t.remains = 0
+        end,
+    },
+
+    -- T15 4pc: Your next Templar's Verdict is dealt as holy damage.
+    ret_tier15_4pc = {
+        id = 138164,
+        duration = 6,
+        max_stack = 1,
+        generate = function( t )
+            if ( state.set_bonus.tier15_4pc or 0 ) <= 0 then
+                t.count = 0
+                t.expires = 0
+                t.applied = 0
+                t.caster = "nobody"
+                t.up = false
+                t.down = true
+                t.remains = 0
+                return
+            end
+
+            local name, icon, count, debuffType, duration, expirationTime, caster = GetPlayerAuraBySpellID( 138169 )
+            if name then
                 t.name = name
                 t.count = 1
                 t.expires = expirationTime
@@ -1416,7 +1431,7 @@ spec:RegisterAbilities( {
             if state.buff.divine_purpose.up then
                 removeBuff("divine_purpose")
             end
-            -- T15 4pc: Consumes the damage buff
+            -- T15 4pc: Consumes the proc damage buff (if emulated/predicted).
             if state.buff.ret_tier15_4pc.up then
                 removeBuff("ret_tier15_4pc")
             end
@@ -1447,7 +1462,11 @@ spec:RegisterAbilities( {
     },
 
     exorcism = {
-        id = 879,
+        id = function()
+            return state.glyph.mass_exorcism.enabled and 122032 or 879
+        end,
+        -- Map both spellIDs to this same ability key.
+        copy = { 879, 122032 },
         cast = 0,
 		cooldown = 15,
         gcd = "spell",
@@ -1464,7 +1483,11 @@ spec:RegisterAbilities( {
             -- Exorcism should be considered known if the player knows the spell.
             -- NOTE: The second parameter to IsSpellKnownOrOverridesKnown is 'isPetSpell'; passing true would incorrectly hide Exorcism.
             known = function()
-                return state.IsSpellKnownOrOverridesKnown(879) or state.IsSpellKnown(879) or state.buff.art_of_war.up
+                return state.IsSpellKnownOrOverridesKnown(879)
+                    or state.IsSpellKnown(879)
+                    or state.IsSpellKnownOrOverridesKnown(122032)
+                    or state.IsSpellKnown(122032)
+                    or state.buff.art_of_war.up
             end,
 
         usable = function()
@@ -1476,6 +1499,9 @@ spec:RegisterAbilities( {
             -- Exorcism mechanic
             if state.buff.art_of_war.up then
                 removeBuff("art_of_war")
+            end
+            if state.set_bonus.tier15_2pc > 0 then
+                applyDebuff("target", "ret_tier15_2pc")
             end
 
             gain(1, "holy_power")
@@ -1800,7 +1826,7 @@ spec:RegisterAbilities( {
             -- T15 4pc: 40% chance to make next TV deal 40% more damage
             if state.set_bonus.tier15_4pc > 0 and state.buff.avenging_wrath.up then
                 if math.random() < 0.40 then
-                    applyBuff("ret_tier15_4pc")
+                    applyBuff("ret_tier15_4pc", 6)
                 end
             end
         end
@@ -2241,4 +2267,4 @@ spec:RegisterSetting("seal_of_righteousness_threshold", 4, {
 } )
 
 -- Register default pack for MoP Retribution Paladin
-spec:RegisterPack( "Retribution", 20251228, [[Hekili:9Q1xVTTnq8plfdWOPRtZw2zjBikpS9sBFOyyApljAjABUilPrsLmdyOp77iLLfjfPKslArr7sipE3V7V8oQfTk6VJcZqCC0N9x6F7kF)79899x5VokKFQchfwHsFcTh(Hc0r4F)lmNs2wZjLfI9oLxIYe8GvwttH9djh)dkAhVj52n3)t3hfUTMKZ)yr0w7YXhoAfon6Z3Tmk8ajld3skMLgf(3hiSMeXFrnjxasts5o43tfiOjjNW4W27kPnjFa)ejN4bWIwUJKdG5hAs(tuokJu8BnjkiV5tTNN5vrXPLh3I4)yWpVnhZyKI9XL7IFc(VS3t2fSTE3opghXzEzLVuSq(7DukxAAMDKS)a)kZoIyCm90RJDvLI1EVWheCSCFDCv5lyAC7Y2pY)uNT)iUG38jXFUqbSodJYfOItR5h6vr1vBXM4ipJJXf4Jem7HokOcTbxwZkauhZpqXSdL5zlAf8BcwUqccq0zXIZWcaEITHanonajA7AdrpgmfKMciJAvfa6Tx8pLLz51mUhfdh(852LrfPeW(2EiV6QwNj6zCXEHJ)fkcSK1v3C(mhr3J5ECYrCmVmoJGFiyZYBuHcP4FRjmIUGvwuAaoFEWYu8rePG9qG)nlElO0NAHZJbRTk2EkEN)YlSlJ8mPahxvtRkz4wDudB6Q0vhLkmQRupW(AenJGke(MoRKEgL7ZkrOuIyQGCokhoUN6YE4ceKZKTyOvc8c9QOWOOY6AgoMWXhBD4q1GINW8vcH8mIseS07YIXStfPXS8sEWQf2eITiafpK(gq5J0NcwndW4pby8)gbgzeE8UA6jTvXugMkCCArd0uuHiGIsLvx63b)F4uz9viDRGJlsXkoWHBoUB8ltP00QCrzbw8beudqnwsB9V5O4s6fdmyhfGWSiMVAEBWTJKu2v4rlxqlIhs7hx4Q8oLwZqzalKmFHkiuzbeJwLJOS4NXqsDQ8ImlaEuqnf)CQYlSVtBnVnA1nKEtrfhzvk1TEbr4VNHtdslHBfaVNNbXDCuaLPO5XLlMIKhcw65)f6fSFhYSSFdovlZOqfeobtxDB8MQudM1jDaBuYt4r4fdyZ2YIAMxpZaBHnrO1gZRcX2DO8d4(R4TLcPfi013Z8KIHby8WgdITg24Gg1WghKmiSb)FL0ucZrvd9vGgkg4l8LU7f7ZpvDq02jlUJJDf9Sz3g3e0rLvD3CtvL2CVVIKKzfBzRAInJ74Q7vdMn11Ctv11CVbQRtGpiF10tV51D7YGR16q7MzbNjpzBHE6L4u121Kl2fQffcCMbNPDcWL35dd89cIwi6lmk8JhRkPCiImX3y6oVMpffIGPskPrHFa6Lfffk3qo6kEhQoNd)4NLJY2jSFpkmLcTxbDsjgbDNTbCAsw0kQE7vtYdnjtmvH8yTd70K8MGMKLYvmM1Ojb2rmVbGDP2aZ5QIGioyhMhIhoiKvK)yW8G(8bQgxeaETbG7oq7atQkWBBsK6GXOtnjNp3K0TP5aus45OKDYnTND4mnGpd0GnGx4MUhPyWSCcWVXP1UdpMJB1krxzbTY1xISfsLQVLNwVX6rGSo1Vdy0sfXzT4Lq)6S4k4rOB3oEKKEtT9Cr3mly0V8LXiNd8j45Do55iZ21ztTiw5wQwVo)qpEu5Oac37iWTBgqvq5E8lzQYQ(OulWYEOTrWKLPgAzTVsm8vObW)xhh((Vc47)9f((c4VAPa)DGUFwtvDsq2knYUo8Pjz(QKPpnQjPMfSge65EQ0Pca)6nvArSdbIubCx0ASzz)oJDnmiHT76r2U1Y3wbuy9BNSIO6TjgdGoOkXLkY6qxT9jjYNOaO9(rnfLa7Jid3fehXaml1tP0Gr)CsbBwg0UYzyJx4Yd0DliC57eY9xvZyngA2iL1FPbgH2XbGoXe39Cx0cVQIn1jbdxxhCttQ4IgOnEjoNODt3bk2BWXD4I)eTjAPxPoPmyuIX9t(UlxoIKS9WakwvBaryL7HIX4WsK4UU3uMpRk2RRE0gBbRApcHKPtuQyem2nlSKn3PMCyAlmsomtG1toC8UcZi5WXjTLC4Ku1KdZgwMt9FZDKD1BneQ9DnKBnYBBOE3A7oYry06f5QJq3oV2m5w3oB(ugZWaBEeBw2H0OysxprvaR1BCxuz9eP62Uky8CS1BunSxn5ggwZerDdR5JMmddR5rSzyhsJQHDI04HpFQ1G1jVeCT7B9DNtmObovTCZiU3jUPFgS0Qo4oVEK395AT0R7fj4w41pwDKLxVP7qBn)O8T))gaLu1UV1VV)a9T)d43Bw3Q(v3LvTg3MP(D7DXfRWw(5)LMpdb46XkUYfJhVy8QwD)j6))d]] )
+spec:RegisterPack( "Retribution", 20260102, [[Hekili:9Q1xVTTnq8plfdWOPRttw2P)zikpS9sBFOyyUpljAjABUilPrsLudyOp77iLLfjfPKslArqBsipE3V7V8o6eTm6lrBYqCC0Nd8dEJ)s)vE(((3g8UOn8tv4OnvO0hq7HFOaDe())bZPKT1CszHyVt5LOmbpyL10uy)nKJ)ffTJ3KC7639Bax2wtY5FSiARv5SmaoAfon6ZV1pAZbswgULumlnAZxoqynjI)HAsUaKMKYDWVNkqqtsoHXHT3vsBs(a(bsoXdGfTChjhaZV0K83OCugP4pAsuqEZNAppZRIItlpUfX)1WFFBoMXif7Jl3f)a8D2Rj7c3wVBNhJJ4mVSYNkwi)9okLlnnZos2FGFLzhrmoME65XUQsXAVw4dcpwUVoUQ8jmnUDz7h5FRZ2FexWB(K4RluaRZWOCbQ40A(HEvuD1wSjoYJ4yCb(ibZURJcQqBWL1Sca1X8dum7qzE2Iwb)Iq)fsqaIolwCgwiWtSneOXPbirBxBi6(WPG0uazuRQaqV8I)PSmlVMX9Oy4WNp3UmQiLa232d5vx16mrpIl2lC8prrGLSU6MZN5i6Em3JtoIJ5LXze8DHR9VrfkKI)RMWi6cwzrPb485bltXhrKc2DHb3S4LGsFQfo3hUYQy7P4vb(xyxg5rsboUQMwvYWT6Og20vPRokvyuxPEG91iAgbvi8nDwj9mk3NvIqPeXub5CuoCCp1L9WfiiNjBXqRe4f6vrHrrL11mCmHJp26WHQbfpG5lfc5reLiyP3LfJzNksJz5L8WLlSjeBrakEi9nGYhPpeUCgGjycWe8dcmYi84D10tARIPmmv440IgOPOcrafLkRU0Vd(R4uz9viDRGJlsXkoWHBoUB8BtP00QCrzbw8beudqnwsB9F4O4s6fdmyhfGWSiwGAEB4TJKu2v4rlxqlIhs7hx4Q8oLwZqzalKmFHkiuzbeJwLJOS4hXqsDQ8ImlaEuqnf)CQYlSVtBnV1A1nKEtrfhzvk1TEcr4VMHtdtlHBfaVNNbXDCuaLPO5E)ftrYDH(EbFJEb73Hml73Gt1YmkubHtW0L3gVUk1GzDshWgL8aEeEXa2STSOM51ZmWwyteATX8SqSDhk)aU)kEBPqAbcD99mpPyyagpSXGyRHnoOrnSXbjdcBWFTKMsyoQAOVc0qXImSP3i4I3aK((8tvhenFYI74BxPpBwVXneDuz1cyUPQQBU33rQYSIWSvtXMjEC19QbZM6AUPQ6AU3a11jWhK1A6Vx)8UJzWLBDOD9SGZKNSTCp9s0QAtBYf7c1I2aCMbN56CGWaGpHOfIUdJ28XJvLuoerMeymJNxZNI2GGztkPrB(a0rlkAJCd5aS4DO6Co8JFwoqBNW(ZOnPuOjlOFkXGO7SnMttYIwr1BVAsURjzIzlKhRDKNMKxe2K4lxXyIJMeyhXuha2LAdmTRkcI4GDyEiE44qwr(9HZd6ZhOACra4vgaU7aTJnPQaVSjrQdgdq1KC(Cts3MMJrjHNJc3j30E2Ht2a(mqdwdEHB6EQIbt0ja)ANw7o8yo0vReDLf0k3ajYwivQ(gFA9gRgbY6u)kGr(kIZAXlH(1zXvWJq3UD8ij9wB75IUzwWO38TXiNJ9j45BDYZrMWRZMArSYTuTED(HE8OYrbeENJa3UjbvbL7HWKPkl7JsTal7H2gbtwMDOL1bkXWxHga)3po8dEgWp4Nl8deWFPVa)DGUFItvDsq2snYUocQjzbQKPptQjPMfSge65E20Pca)(nvArSdbIubCx0ASjA)jJDnmiHT76r2U1kWwbuy9BNSIO6TjgJHoOkXLkY6qxT9jjYNOaO9(rnfLa7Jid3fehXaml1tP0Gr)CsbBwg0UYzyJx4Yd0DliC57eY99QzSgJoBKYg4BGrODCaOtm3Dp3fTWRQytDsWW11b30KkUObAJxIZjA30DGI9gCChUemrBIw6vQtkdgLyC)uG7YLJijBppGIv1gqew5EOymuSejUR7nL5ZQI98QhT2wWQ2triz6eLkgbJDZclzZBvtomTfgjhMjW6jhoEDHzKC44K2soCsQAYHzdlZP(V5oYU6L74(1nua4iVYH6TST7ihMrRRKRUeDl(kZ0CDlU5JAmdtT5rSzJhsJIXD1e1dSw5XD5LvtK0B7sHXZ2wTw1WE1KByyntj1nSMpFYmmSMhXMHDinQg2jsOh(CQwdBN86WvUV)3D2XGw5u1Y1J4EN4o)zWsR6G7m8rEbORvvVUxKGBBU(Hxhz5DC6o0wZpK(2)wbOKQ29T(59pqF7)a97nRBv)u4L1Vg3MP(547IlwHT8phaP5ZqaUE2IRCX4zmgVQv3xr))p]] )

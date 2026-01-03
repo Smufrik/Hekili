@@ -40,6 +40,9 @@ local function GetTargetDebuffByID(spellID)
     return FindUnitDebuffByID("target", spellID, "PLAYER")
 end
 
+
+local spec = Hekili:NewSpecialization( 265 ) -- Affliction spec ID for MoP
+
 -- Affliction-specific combat log event tracking
 local afflictionCombatLogFrame = CreateFrame("Frame")
 local afflictionCombatLogEvents = {}
@@ -284,9 +287,9 @@ RegisterAfflictionCombatLogEvent("SPELL_AURA_APPLIED", function(timestamp, subev
         -- Track Corruption application for pandemic refresh
         local remaining = select(6, FindUnitDebuffByID("target", 172, "PLAYER"))
         if remaining then
-            -- Pandemic refresh: if remaining duration is less than 30% of base duration, extend it
+            -- Pandemic refresh: if remaining duration is less than 50% of base duration, extend it
             local base_duration = 18 -- Corruption base duration in MoP
-            if remaining < (base_duration * 0.3) then
+            if remaining < (base_duration * 0.5) then
                 -- Note: Extension handled by default aura system
             end
         end
@@ -294,9 +297,9 @@ RegisterAfflictionCombatLogEvent("SPELL_AURA_APPLIED", function(timestamp, subev
         -- Track UA application for pandemic refresh
         local remaining = select(6, FindUnitDebuffByID("target", 30108, "PLAYER"))
         if remaining then
-            -- Pandemic refresh: if remaining duration is less than 30% of base duration, extend it
+            -- Pandemic refresh: if remaining duration is less than 50% of base duration, extend it
             local base_duration = 15 -- UA base duration in MoP
-            if remaining < (base_duration * 0.3) then
+            if remaining < (base_duration * 0.5) then
                 -- Note: Extension handled by default aura system
             end
         end
