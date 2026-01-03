@@ -984,43 +984,26 @@ spec:RegisterAuras({
         end
     },
 
---    ret_tier14_4pc = {
---        id = 70762,
---       duration = 3600,
---        max_stack = 1,
---        generate = function( t )
---            local name, icon, count, debuffType, duration, expirationTime, caster = GetPlayerAuraBySpellID(105516)
---
---            if name and state.set_bonus.tier14_4pc > 0 then
---                t.name = name
---                t.count = 1
---               t.expires = expirationTime
---                t.applied = expirationTime - duration
---                t.caster = caster
---                t.up = true
---                t.down = false
---                t.remains = expirationTime - GetTime()
---                return
---            end
---
---            t.count = 0
---            t.expires = 0
---            t.applied = 0
---            t.caster = "nobody"
---            t.up = false
---            t.down = true
---            t.remains = 0
---        end
---    },
-
+    -- T15 2pc: Target takes 6% increased Holy damage from your attacks for 6 sec after Exorcism.
     ret_tier15_2pc = {
         id = 138159,
         duration = 6,
         max_stack = 1,
         generate = function( t )
-            local name, icon, count, debuffType, duration, expirationTime, caster = GetPlayerAuraBySpellID(138159)
+            -- Only relevant if you own the set bonus.
+            if ( state.set_bonus.tier15_2pc or 0 ) <= 0 then
+                t.count = 0
+                t.expires = 0
+                t.applied = 0
+                t.caster = "nobody"
+                t.up = false
+                t.down = true
+                t.remains = 0
+                return
+            end
 
-            if name and state.set_bonus.tier15_2pc > 0 then
+            local name, icon, count, debuffType, duration, expirationTime, caster = GetTargetDebuffByID( 138159, "player" )
+            if name then
                 t.name = name
                 t.count = 1
                 t.expires = expirationTime
@@ -1039,39 +1022,12 @@ spec:RegisterAuras({
             t.up = false
             t.down = true
             t.remains = 0
-        end
+        end,
     },
 
+    -- T15 4pc: Your next Templar's Verdict is dealt as holy damage.
     ret_tier15_4pc = {
         id = 138164,
-        duration = 3600,
-        max_stack = 1,
-        generate = function( t )
-            if state.set_bonus.tier15_4pc > 0 then
-                t.name = "Retribution T15 4-Piece Bonus"
-                t.count = 1
-                t.expires = query_time + 3600
-                t.applied = query_time
-                t.caster = "player"
-                t.up = true
-                t.down = false
-                t.remains = 3600
-                return
-            end
-
-            t.count = 0
-            t.expires = 0
-            t.applied = 0
-            t.caster = "nobody"
-            t.up = false
-            t.down = true
-            t.remains = 0
-        end
-    },
-
-    -- T15 4-Piece Aura
-    templars_verdict = {
-        id = 138169,
         duration = 6,
         max_stack = 1,
         generate = function( t )
@@ -1086,8 +1042,7 @@ spec:RegisterAuras({
                 return
             end
 
-            local name, icon, count, debuffType, duration, expirationTime, caster = GetPlayerAuraBySpellID(138169)
-
+            local name, icon, count, debuffType, duration, expirationTime, caster = GetPlayerAuraBySpellID( 138169 )
             if name then
                 t.name = name
                 t.count = 1
@@ -1109,7 +1064,6 @@ spec:RegisterAuras({
             t.remains = 0
         end
     },
-
 
     ret_tier16_2pc = {
         id = 144586,
@@ -1478,8 +1432,8 @@ spec:RegisterAbilities( {
                 removeBuff("divine_purpose")
             end
             -- T15 4pc: Consumes the proc damage buff (if emulated/predicted).
-            if state.buff.templars_verdict.up then
-                removeBuff("templars_verdict")
+            if state.buff.ret_tier15_4pc.up then
+                removeBuff("ret_tier15_4pc")
             end
         end
     },
@@ -1537,6 +1491,9 @@ spec:RegisterAbilities( {
             -- Exorcism mechanic
             if state.buff.art_of_war.up then
                 removeBuff("art_of_war")
+            end
+            if state.set_bonus.tier15_2pc > 0 then
+                applyDebuff("target", "ret_tier15_2pc")
             end
 
             gain(1, "holy_power")
@@ -1861,7 +1818,7 @@ spec:RegisterAbilities( {
             -- T15 4pc: 40% chance to make next TV deal 40% more damage
             if state.set_bonus.tier15_4pc > 0 and state.buff.avenging_wrath.up then
                 if math.random() < 0.40 then
-                    applyBuff("templars_verdict", 6)
+                    applyBuff("ret_tier15_4pc", 6)
                 end
             end
         end
@@ -2302,4 +2259,4 @@ spec:RegisterSetting("seal_of_righteousness_threshold", 4, {
 } )
 
 -- Register default pack for MoP Retribution Paladin
-spec:RegisterPack( "Retribution", 20260102, [[Hekili:9IvBVTTnq4FlfdqiPRtZw2PPDikFy7lR9dfdZfyFtY0s02CrVnsQKgad9BFhPSSiPiLuAxhkABIi5Dp3Z9cpErlJ(C0Muehh9PGfbVDXYfb(lV5M3TmiAd)5kC0MkuYdOdWpuGYH)9pXCkzxnNuwiw75SsuQqgSYAAcS(gs(Vrr75nBVz97(P3fTzxnjJ)HIOD20ZTRwbhTcNe9PBxeT5ijnf3UvmljAZNpsynBf)f1S9mqA2wUh(9ebcA2MryCy59L0MT)o(bsgXpAJ8JsddVhvNXHF8tsdfxG2LHtJ(1Onjuchtjiba3V3NHrzXL7J50A(r)0YNaz71QMhXX4cCobd65UMTD7KsoCKJlRzfyglMFKIzhlZsLhlPmFhcOGxf2SDH8lum8TCCrAS48GKGvaDbewRLaSGkcI4apnpeRHd3i)(W5b95dunPia8kda3DGQY2)V3aUQzR0g2LvwMMvZ4(umS7MTNo1STBrurcbxWJRkFct9RRKWRDLhXfhifhIFIIaVLyPRBplhrpG5(CsooMxgNsGWL7alyn4fUUleoV8qDRuJpdna8RDY2D4Hu8p1egrCGZ0SqJdwIIZrKcwREdKiZtAuaf)CRAB9gRgbY67(1GGwOOUuYJKcCCvnTQKH74UR7zCf8iSTBgpssf91v9srNMfc6TFDc6qnIMsqfIOMoV6dGGLrn36uMCugStFjtiXcegCEJDCQf1kxsL968d94rvIci8ohbUqLUIhW8LQG6re8FWg9pVym75IKywwjxMQSSpk1cSShABemPViJdL9AfDGsm8fObW)9Jd)Gxa8d()f(bc4VCHa)DGwwsiEFn9zvBsSTLABdtzyQiiYCBbQBdrtqfI8kkfWK5wnlyni0d)fCI8QoOyybhxKGNBa43ovPfXoeisdWDrRZgqMOgnl(ickPp7KN)JXUggKW2D9iB3AfyRak89BMSIO6TjAvrSuL4CfzDOFwSmi(jxI8jkaEE)j0Agkf0ZzC4ne7JOd3fehHaML5PuAaNxLHOS4hXqL5eUuXMLbTBCgCSNlpq3TGWLVtO33RMX2gMiUPO9wh9u2GfgyKbToUjPe6Ebcp9noChk6L(ticx1WM6KaX11b30BvCrZcFznTGjA30DGI9gCChUemrBIw6vQtlModn9yZtf4UG5i6Ib3YSRSOMb94GPlVjEDvIcVAhkcMUhmD8ey2uYdYAFbUR9nffA10Ez1KwBlGLFe33uSuOtuUyem(31PhYfxzjeZTQjiMCHrcIzsSEcIXHFbjiooPTeeNBvnbXSPL5ChG5kYo7hnEwU4HSNRo6NJG36G)sjnHWY7Uku9g22vKpKrRJKlUcDMELzkUot3DQxafBEeBC7W9OqQRMOwG1QoUlTSAI0DBximEw2Q1Qe7fk3Gyntf1j2lUW5tSMhXgXoCpQe7ejYUI8geWo5LHRCF7V78IbnYPANRhXbpXn(ZqKwTb352QpPRIAnrSFTiH02ujNiXoK1P40Di43zmrLuOmC7llLtqIsQAx)pqzOusXV0SvB(vMJuHJ4kJqr(Toj3EJeFYXYaLzGF95rLIvyNlU5qsFgkW1qlUifJHymEDljNcolMypxMfNi5Hw0sCFiVQKYfptiWyoB(nFu4pk3tYae9dnBTsRnFS9qm)lUUFm8Nh4HEdzFObR7nKRMwysE7IWuP)zlUwc8ncIoCapB)iDKBZhf)58oGVRnfVEtCW0f90ZMVBIrZ51Q4xfUWZyaDHIHZzdbAsAasgo1qdeDF4uqAkGmkRka0vN9pAZa80PRS8(Y6kp7DmD9PtdhG2DHRxCTkuukK1RyZ55D6KRIE3fgCT3v9pN6(WvwvB)oEDWIZIZ2LKAyt3KU4OmExUYbConTzCw1Njk2(iJyZBilbEHEtuqkQIUMHJHkH5To8U5tjuI7zofU0ZMsSfbO4HSm6HWLZambtaMGVtGPFKwAF9YeS0Ig0gyL6kdhbKId09GQS7g)6mknRsBSokqX6iN(UHc1wAeGWSiwGAEB4nJKu2v4XyskEAP9JRCvzR3KTNkiufHz)tcXybWJcQPKNtt2Z(kT18wRv3qFMhQlj66(nql6HtnGebuMAp3VWBQTCxi0u(xPxW(DiZI)gCQwHzRZFfXz8u4rKMTPKaSHDLO1kZlc12DQAtUWwAKwWqxVpZtlguW4HoogDGwOJJ9Og64yldcD6E0N9kh6FbAQWPl3BKrmyJ5gNemFJVM1BUOQzBU23qQYSIUSoryl074MR5lV1mxZfvnxZ1gyUobUnxOH3E9l7wMbxV1H31ZcqtEY(xfB22M5ZOHxyusJ28x4YNKp2l6F)]] )
+spec:RegisterPack( "Retribution", 20260102, [[Hekili:9Q1xVTTnq8plfdWOPRtZw2jTDikpS9sBFOyyQpljAjABUilPrsLudyOp77iLLfjfPKshwrr7sipE3V7V8oQfTk6RrHzioo6l(l9VB5QL(E(R3C367Ic5NQWrHvO0hr7HFOaDe(3)cZPKT1CszHyVt5LOmbpyL10uy)qYX)GI2XBsUDZ7)L3hfUTMKZ)ur0wRYXhKdRcNg9L3Tmk8ajld3skMLgf(1dewtI4VOMKlaPjPCh87Pce0KKtyCy7DL0MKpIFKKt8ayrl3rYbW8tnj)jkhLrk(TMefK3852ZZ8QO40YJBr8Fo4x3MJzmsX(4YDXpc)x2Bj7c2wVBNhJJ4mVSYNlwi)9okLlnnZos2FGFLzhrmoME6LXUQsXAVv4dcowUVoUQ8zmnUDz7h5VRZ2FexWB(S4pxOawNHr5cuXP18d9QO6QTytCKNWX4c8rcMDFhfuH2GlRzfaQJ5hOy2HY8SfTc(vblxibbi6SyXzybapX2qGgNgGeTDTHOhcMcstbKrTQca96l(NYYS8Ag3JIHdF(C7YOIucyFBpKxDvRZe9eUyVWX)mfbwY6QBoFMJO7XCpo5ioMxgNrW3hSz5nQqHu8p1egrxWklknaNppyzk(iIuWUpW)MfVgu6tTW5HG1wfBpfVXF5f2LrEIuGJRQPvLmCRoQHnDv6QJsfg1vQhyFnIMrqfcFtNvspJY9zLiukrmvqohLdh3tDzpCbcYzYwm0kbEHEvuyuuzDndht44JToCOAqXJy(kHqEcrjcw6DzXy2PI0ywEjpy1cBcXweGIhsFdO8r6JbRMby8Nam()pbgzeE8UA6jTvXugMkCCArd0uuHiGIsLvx63b)nCQS(kKUvWXfPyfh4Wnh3n(9PuAAvUOSal(acQbOglPT()7O4s6fdmyhfGWSiMVAEBWTJKu2v4rlxqlIhs7hx4Q8oLwZqzalKmFHkiuzbeJwLJOS4NWqsDQ8ImlaEuqnf)CQYlSVtBnVnA1nKEtrfhzvk1TEgr4VLHtdslHBfaVNNbXDCuaLPO5HLlMIK7dw65)D6fSFhYSSFdovlZOqfeobtxDB8MQudM1jDaBuYJ4r4fdyZ2YIAMxpZaBHnrO1gZlcX2DO8d4(R4TLcPfi013Z8KIHby8WgdITg24Gg1WghKmiSb)TsAkH5OQH(kqdfkUifhIV0nTp)u1brRNS4oU2v4ZMTBCZqhvw1FZnvvCZ9(pKOmR4lBvuSzGhxDVAWSPUMBQQUM7nqDDc8b5SME7nVSBygC1whA3ml4m5jBl2tVeRQ2YMCXUqTOqGZm4m9tbgf(mIwi6nmk8thRkPCiImX3ycpVMphfk)j58Q4DO6Co8JFro)Ah3)9OWuk0tf0(KyUZD2MQPjzrlV7nqnj33KmXOeYJ1oHttYRcAswkxXyaJMeyhXqgrHTWhgUvfbrCqXNhIho9JvK)qW8G(8bQgxeaETbG7oq7usQkWRBsK6GX8snjNp3K0TP5uts45OoDYnTND4GmGpd0GnGx4MUxMyWaCcWVXP1UdpMZy1krxH9TY1xISfsLQVpNwVX6rGSo1Vby0sfXzTALq)6S4k4rOB3oEKKENS9Cr3mly0DFFmY5uEcE(oN8CKb66SPweRClvRxNFOhpQCuaH37iWTBWpvq5EMlzQYQ(OulWYEOTrWKLrfAzTVsm8vObW)dJdF)xa89)XcFFb8xTuG)oq3pGPQojiBLgzxN40KmFvY0hb1KuZcwdc9Cpk6ubG)3nvArSdbIubCx0ASby)bJDnmiHT76r2U1Y3wbuy9BNSIO6TjgtDoOkXLkY6qxTFjjYNOaO9gqnfLa7Jid3fehXaml1tP0GrdCsbBwg0UYzyJx4Yd0DliC57eY9dQzSgtkBKY6V0aJq)3aqNym7EUl6zxvXM6KGHRRdUPjvCrd03UeNt0UP7af7n44oCXFI2eT0RuNugm7W4(jF3Llhrs2EnafRQnGiSY9qXygyjsCx3BkZNvf7LvpAJTGvTxEqY0jkvmcg7g(vYM3PMCyAlmsomtG1toC8ycZi5WXjTLC4Ku1KdZgwMt9FZDKD1BeHP)ygkWBKh1q9o22DKJYO1tYvhIU9ETzsUU928nmMHH28i2SWdPrX0UEIQbwR74U4Y6js5TDLW45AR3OAyVAYnmSMjK6gwZxlzggwZJyZWoKgvd7ePZdF7uRbTtEz4A33(7o3yqJCQA5MrCVtCJ)myPvDWD(9ip4Z1AQx3lsWTWRFP6ilVIt3H2A(f5B)FmakPQDFRFC)b6B)xVV3SUv9tUlREnUnt9J27IlwHT8B)lnFgcW1JwCLlgpIX4vTK2uun)qjnk8JKJyKCPO)9]] )
