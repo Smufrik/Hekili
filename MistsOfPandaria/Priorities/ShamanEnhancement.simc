@@ -37,26 +37,26 @@ actions+=/ancestral_swiftness,if=buff.maelstrom_weapon.stack>=5
 actions.single+=/searing_totem,if=totem.searing_totem.down&totem.fire_elemental.down
 actions.single+=/unleash_elements,if=(talent.unleashed_fury.enabled|buff.tier16_4pc_enhancement.up)
 actions.single+=/elemental_blast,if=talent.elemental_blast.enabled&buff.maelstrom_weapon.stack>=1&(buff.maelstrom_weapon.stack>=5|swing_hardcast_safe)
-actions.single+=/lightning_bolt,if=buff.maelstrom_weapon.stack=5
-actions.single+=/lightning_bolt,if=buff.maelstrom_weapon.stack>=3&buff.maelstrom_weapon.stack<5&swing_hardcast_safe
+actions.single+=/lightning_bolt,if=buff.maelstrom_weapon.stack=5&(buff.ascendance.up|cooldown.ascendance.remains>gcd)
+actions.single+=/lightning_bolt,if=buff.maelstrom_weapon.stack>=3&buff.maelstrom_weapon.stack<5&swing_hardcast_safe&(buff.ascendance.up|cooldown.ascendance.remains>gcd)
 actions.single+=/feral_spirit,if=buff.tier15_4pc_enhancement.up
 actions.single+=/stormblast,if=buff.ascendance.up
 actions.single+=/stormstrike,if=buff.ascendance.down
 actions.single+=/lava_lash,if=buff.ascendance.up
 actions.single+=/flame_shock,if=buff.unleash_flame.up&!dot.flame_shock.ticking
 actions.single+=/lava_lash,if=buff.ascendance.down
-actions.single+=/lightning_bolt,if=buff.tier15_2pc_enhancement.up&buff.maelstrom_weapon.stack>=4&buff.ascendance.down&swing_hardcast_safe
+actions.single+=/lightning_bolt,if=buff.tier15_2pc_enhancement.up&buff.maelstrom_weapon.stack>=4&buff.ascendance.down&swing_hardcast_safe&(cooldown.ascendance.remains>gcd)
 actions.single+=/flame_shock,if=buff.unleash_flame.up|!dot.flame_shock.ticking
 actions.single+=/unleash_elements,if=buff.ascendance.down
 actions.single+=/frost_shock,if=glyph.frost_shock.enabled&buff.tier14_4pc_enhancement.down
-actions.single+=/lightning_bolt,if=buff.maelstrom_weapon.stack>=3&buff.ascendance.down&swing_hardcast_safe
+actions.single+=/lightning_bolt,if=buff.maelstrom_weapon.stack>=3&buff.ascendance.down&swing_hardcast_safe&(cooldown.ascendance.remains>gcd)
 actions.single+=/ancestral_swiftness,if=talent.ancestral_swiftness.enabled&buff.maelstrom_weapon.stack<2
 actions.single+=/lightning_bolt,if=buff.ancestral_swiftness.up
 actions.single+=/earth_shock,if=(glyph.frost_shock.disabled|buff.tier14_4pc_enhancement.up)&buff.ascendance.down
 actions.single+=/feral_spirit,if=buff.ascendance.down
 actions.single+=/earth_elemental_totem,if=totem.earth_elemental.down&buff.ascendance.down
 actions.single+=/spiritwalkers_grace,if=moving&buff.ascendance.down
-actions.single+=/lightning_bolt,if=buff.maelstrom_weapon.stack>1&buff.ascendance.down
+actions.single+=/lightning_bolt,if=buff.maelstrom_weapon.stack>1&buff.ascendance.down&(cooldown.ascendance.remains>gcd)
 
 
 ##AoE
