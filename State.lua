@@ -8279,55 +8279,39 @@ function state:IsKnown(sID)
 	end
 
 	z = ability.talent
-	if type(z) == "table" then
-		for _, v in ipairs(z) do
-			if not state.talent[v].enabled then
-				return false, "talent [ " .. v .. " ] missing"
+	if type( z ) == "table" then
+		for _, v in ipairs( z ) do
+			if not state.talent[ v ].enabled then
+				return false, "talent [ " .. tostring( v ) .. " ] missing"
 			end
 		end
-	elseif z and not state.talent[z].enabled then
-		return false, "talent [ " .. z .. " ] missing"
+	elseif z and not state.talent[ z ].enabled then
+		return false, "talent [ " .. tostring( z ) .. " ] missing"
 	end
 
 	z = ability.notalent
-	if type(z) == "table" then
-		for _, v in ipairs(z) do
-			if state.talent[v].enabled then
-				return false, "talent [ " .. v .. " ] disallowed"
+	if type( z ) == "table" then
+		for _, v in ipairs( z ) do
+			if state.talent[ v ].enabled then
+				return false, "talent [ " .. tostring( v ) .. " ] disallowed"
 			end
 		end
-	elseif z and state.talent[z].enabled then
-		return false, "talent [ " .. z .. " ] disallowed"
+	elseif z and state.talent[ z ].enabled then
+		return false, "talent [ " .. tostring( z ) .. " ] disallowed"
 	end
 
 	z = ability.pvptalent
-	if type(z) == "table" then
-		for _, v in ipairs(z) do
-			if not state.pvptalent[v].enabled then
-				return false, "PvP talent [ " .. v .. " ] missing"
+	if type( z ) == "table" then
+		for _, v in ipairs( z ) do
+			if not state.pvptalent[ v ].enabled then
+				return false, "PvP talent [ " .. tostring( v ) .. " ] missing"
 			end
 		end
-	elseif z and not state.pvptalent[z].enabled then
-		return false, "PvP talent [ " .. z .. " ] missing"
+	elseif z and not state.pvptalent[ z ].enabled then
+		return false, "PvP talent [ " .. tostring( z ) .. " ] missing"
 	end
 
-	z = ability.nopvptalent
-	if type(z) == "table" then
-		for _, v in ipairs(z) do
-			if state.pvptalent[v].enabled then
-				return false, "PvP talent [ " .. v .. " ] disallowed"
-			end
-		end
-	elseif z and state.pvptalent[z].enabled then
-		return false, "PvP talent [ " .. z .. " ] disallowed"
-	end -- MoP: Commented out artifact trait check (Legion feature not in MoP)
-	-- if ability.trait and not state.artifact[ ability.trait ].enabled then
-	--     return false, "trait [ " .. ability.trait .. " ] missing"
-	-- end
-
-	if ability.equipped and not state.equipped[ability.equipped] then
-		return false, "equipment [ " .. ability.equipped .. " ] missing"
-	end
+	-- MoP: artifact traits not used here
 
 	if ability.item and not ability.bagItem then
 		local item = ability.item

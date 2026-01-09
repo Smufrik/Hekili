@@ -266,6 +266,14 @@ spec:RegisterAuras( {
         name = "Faerie Fire",
     },
 
+    -- Actual armor-reduction debuff applied by Faerie Fire/Swarm in MoP.
+    weakened_armor = {
+        id = 113746,
+        duration = 30,
+        max_stack = 3,
+        name = "Weakened Armor",
+    },
+
     mangle = {
         id = 33876, -- Mangle (Cat) debuff
         duration = 60,
@@ -304,11 +312,11 @@ spec:RegisterAuras( {
         max_stack = 1,
     },
     armor = {
-        alias = { "faerie_fire" },
+        alias = { "weakened_armor", "faerie_fire" },
         aliasMode = "first",
         aliasType = "debuff",
-        duration = 300,
-        max_stack = 1,
+        duration = 30,
+        max_stack = 3,
     },
     mark_of_the_wild = {
         id = 1126,
@@ -1834,6 +1842,13 @@ spec:RegisterAbilities( {
         spendType = "energy",
         startsCombat = true,
         form = "cat_form",
+        usable = function()
+            -- Avoid spamming Roar when a healthy buff is already running unless we are ready to extend with more combo points.
+            if buff.savage_roar.up and ( buff.savage_roar.remains or 0 ) > 4 and ( combo_points.current or 0 ) < 4 then
+                return false, "roar active"
+            end
+            return true
+        end,
         handler = function()
             applyBuff("savage_roar")
             -- Spend combo points only if we actually have some (glyph allows 0 CP pre-pull)
@@ -1860,8 +1875,15 @@ spec:RegisterAbilities( {
         end,
     },
     faerie_fire_feral = {
-        id = 770,
-        copy = { 16857 },
+        -- In MoP, the Faerie Swarm talent replaces/modifies Faerie Fire.
+        -- Track both spell IDs to ensure the recommendation and debuff tracking works with or without the talent.
+        id = function()
+            if talent.faerie_swarm and talent.faerie_swarm.enabled and isSpellKnown( { 106707, 102355 } ) then
+                return 106707
+            end
+            return 770
+        end,
+        copy = { 16857, 102355 },
         cast = 0,
         cooldown = 6,
         gcd = "spell",
@@ -1876,7 +1898,9 @@ spec:RegisterAbilities( {
         end,
 
         handler = function()
-            applyDebuff("target", "faerie_fire")
+            -- Apply both for maximum compatibility: some logs show 770/16857 while the actual armor reduction is 113746.
+            applyDebuff( "target", "faerie_fire" )
+            applyDebuff( "target", "weakened_armor" )
         end,
     },
     -- Alias for SimC import token
@@ -1897,7 +1921,8 @@ spec:RegisterAbilities( {
             return true
         end,
         handler = function()
-            applyDebuff("target", "faerie_fire")
+            applyDebuff( "target", "faerie_fire" )
+            applyDebuff( "target", "weakened_armor" )
         end,
     },
     mark_of_the_wild = {
@@ -1926,7 +1951,19 @@ spec:RegisterAbilities( {
         startsCombat = false,
         usable = function()
             -- Disallow hardcasting in Cat; require an instant proc (NS or PS)
-            return (talent.dream_of_cenarius and talent.dream_of_cenarius.enabled) and (buff.natures_swiftness.up or buff.predatory_swiftness.up)
+            if not ( talent.dream_of_cenarius and talent.dream_of_cenarius.enabled ) then
+                return false, "doc only"
+            end
+
+            -- Prefer to hold PS for bleed snapshots unless it is about to expire.
+            if buff.predatory_swiftness.up then
+                local cp = combo_points.current or 0
+                if cp < 4 and ( buff.predatory_swiftness.remains or 0 ) > 3 then
+                    return false, "pool cp before HT"
+                end
+            end
+
+            return buff.natures_swiftness.up or buff.predatory_swiftness.up
         end,
         handler = function()
             if buff.natures_swiftness.up then removeBuff("natures_swiftness") end
@@ -1992,10 +2029,16 @@ spec:RegisterAbilities( {
         gcd = "off",
         school = "physical",
         startsCombat = false,
+        toggle = "cooldowns",
         texture = 236149,
 
         known = function()
             return isSpellKnown( { 106951, 50334, 106952 } )
+        end,
+
+        usable = function()
+            if buff.berserk.up then return false, "already berserking" end
+            return true
         end,
 
         handler = function ()
@@ -2068,7 +2111,9 @@ spec:RegisterAbilities( {
 
     -- Faerie Swarm (MoP talent): Reduces target's movement speed and prevents stealth.
     faerie_swarm = {
-        id = 102355,
+        -- Talent version. Some sources list 106707 for player cast; keep 102355 as a fallback.
+        id = 106707,
+        copy = { 102355 },
         cast = 0,
         cooldown = 0,
         gcd = "spell",
@@ -2076,7 +2121,9 @@ spec:RegisterAbilities( {
         talent = "faerie_swarm",
         startsCombat = true,
         handler = function ()
-            -- Debuff application handled elsewhere if needed
+            -- Should satisfy Maintain Faerie Fire tracking by applying the armor reduction debuff.
+            applyDebuff( "target", "faerie_fire" )
+            applyDebuff( "target", "weakened_armor" )
         end,
     },
 
@@ -2225,6 +2272,10 @@ spec:RegisterAbilities( {
         usable = function ()
             -- If Rake is already up, only allow if it's time to refresh or our new snapshot would be stronger.
             if debuff.rake.up then
+                -- If the current Rake has plenty of time and we do not have a stronger snapshot, skip.
+                if ( debuff.rake.remains or 0 ) > 4.5 and not rake_stronger then
+                    return false, "rake active"
+                end
                 -- Allow early clip if the calculated refresh time is now or sooner.
                 if rake_refresh_time <= 0 then return true end
                 -- Allow explicit snapshot clipping (e.g., DoC snapshot logic).
@@ -2273,9 +2324,11 @@ spec:RegisterAbilities( {
         school = "nature",
         toggle = "cooldowns",
         startsCombat = false,
-        handler = function()
-            applyBuff( "natures_swiftness" )
+        usable = function()
+            -- Treat as passive/utility: do not actively recommend casting.
+            return false, "passive"
         end,
+        handler = function() end,
     },
 
     -- Rejuvenation: Heals the target over time.
@@ -2425,6 +2478,14 @@ spec:RegisterAbilities( {
             return isSpellKnown( { 106830, 106832, 77758 } )
         end,
 
+        usable = function()
+            -- Don't recommend reapplying if the bleed is healthy unless Clearcasting would be wasted.
+            if debuff.thrash.up and ( debuff.thrash.remains or 0 ) > 4 and not buff.clearcasting.up then
+                return false, "thrash active"
+            end
+            return true
+        end,
+
         handler = function ()
             -- Apply the in-game Thrash aura; thrash_cat is aliased to thrash for dot checks.
             applyDebuff( "target", "thrash" )
@@ -2467,14 +2528,15 @@ spec:RegisterAbilities( {
         cooldown = 30,
         gcd = "off",
         school = "physical",
-        toggle = "cooldowns",
         texture = function() return GetSpellTexture( 5217 ) end,
         spend = -60,
         spendType = "energy",
         startsCombat = false,
 
         usable = function()
-            return not buff.berserk.up, "cannot use while Berserk is active"
+            if buff.tigers_fury.up then return false, "buff active" end
+            if buff.berserk.up then return false, "cannot use while Berserk is active" end
+            return true
         end,
         
         handler = function ()

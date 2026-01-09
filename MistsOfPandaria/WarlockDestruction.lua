@@ -943,6 +943,19 @@ spec:RegisterAbilities( {
         startsCombat = true,
         texture = 135817,
 
+        usable = function()
+            if not debuff.immolate.up then return true end
+
+            local base = 15
+            local has_pandemic = ( level or UnitLevel( "player" ) or 0 ) >= 90
+            local threshold = base * ( has_pandemic and 0.5 or 0.3 ) -- MoP pandemic: 50% at 90; fall back to 30% pre-90
+            if ( debuff.immolate.remains or 0 ) > threshold then
+                return false, "immolate healthy"
+            end
+
+            return true
+        end,
+
         
 
         handler = function()
@@ -977,11 +990,6 @@ spec:RegisterAbilities( {
             
             -- Generate Burning Embers
             gain( 0.1, "burning_embers" )
-            
-            -- Remove Immolate if not using the glyph
-            if not glyph.conflagrate.enabled then
-                removeDebuff( "target", "immolate" )
-            end
         end,
     },
     

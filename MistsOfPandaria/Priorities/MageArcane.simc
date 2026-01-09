@@ -1,60 +1,47 @@
-# Mage: Arcane - Optimized from WoWSims MoP
-# Updated October 1, 2025
+# Mage: Arcane - Updated from WoWSims export (Jan 2026)
 
 ## Precombat
 actions.precombat+=/arcane_brilliance,if=!buff.arcane_brilliance.up
 actions.precombat+=/mage_armor,if=!buff.mage_armor.up
-actions.precombat+=/rune_of_power,if=talent.rune_of_power.enabled
-actions.precombat+=/potion
-actions.precombat+=/arcane_blast,if=time<2
+actions.precombat+=/mirror_image,precombat_time=4.5
+actions.precombat+=/rune_of_power,if=talent.rune_of_power.enabled,precombat_time=3
+actions.precombat+=/potion,name=jade_serpent,precombat_time=1.5
+actions.precombat+=/arcane_blast,precombat_time=1.5
 
+## Core Rotation
+# Rune of Power upkeep
+actions+=/rune_of_power,if=talent.rune_of_power.enabled&(!buff.rune_of_power.up|buff.rune_of_power.remains<=cast_time)
 
-# Maintain Rune of Power
-actions+=/rune_of_power,if=talent.rune_of_power.enabled&(buff.rune_of_power.down|buff.rune_of_power.remains<=cast_time)
+# Dump Arcane Charges as Alter Time expires
+actions+=/arcane_barrage,if=buff.alter_time.up&buff.alter_time.remains<=cast_time
 
-# Dump Arcane Charges when Alter Time is about to expire
-actions+=/arcane_barrage,if=buff.alter_time.remains<=cast_time&buff.alter_time.up
-
-# Multi-dotting
-actions+=/living_bomb,cycle_targets=1,max_cycle_targets=3,if=talent.living_bomb.enabled&target.time_to_die>=dot.living_bomb.duration*3
+# Multi-dot maintenance
+actions+=/living_bomb,cycle_targets=1,max_cycle_targets=3,if=talent.living_bomb.enabled&target.time_to_die>=dot.living_bomb.tick_time*3&!dot.living_bomb.ticking
 actions+=/nether_tempest,cycle_targets=1,max_cycle_targets=5,if=talent.nether_tempest.enabled&!dot.nether_tempest.ticking
 actions+=/frost_bomb,if=talent.frost_bomb.enabled&!debuff.frost_bomb.up
 
-# Arcane Missiles proc usage - burn at 4 Arcane Charges
-actions+=/call_action_list,name=burn,if=arcane_charge=4&buff.arcane_missiles.react
+# Cooldowns synced with 4 Arcane Charges and Arcane Missiles ready
+actions+=/berserking,if=arcane_charge=4&buff.arcane_missiles.react
+actions+=/blood_fury,if=arcane_charge=4&buff.arcane_missiles.react
+actions+=/arcane_power,if=arcane_charge=4&buff.arcane_missiles.react
+actions+=/synapse_springs,if=arcane_charge=4&buff.arcane_missiles.react
+actions+=/potion,name=jade_serpent,if=arcane_charge=4&buff.arcane_missiles.react&buff.arcane_power.up
+actions+=/alter_time,if=arcane_charge=4&buff.arcane_missiles.react&buff.arcane_power.up&time>=10
 
-# Cooldown sequence
-actions.burn+=/berserking,if=arcane_charge=4&buff.arcane_missiles.react
-actions.burn+=/blood_fury,if=arcane_charge=4&buff.arcane_missiles.react
-actions.burn+=/arcane_power,if=arcane_charge=4&buff.arcane_missiles.react
-actions.burn+=/use_item,slot=trinket1,if=arcane_charge=4&buff.arcane_missiles.react&buff.arcane_power.up
-actions.burn+=/use_item,slot=trinket2,if=arcane_charge=4&buff.arcane_missiles.react&buff.arcane_power.up
-actions.burn+=/rune_of_power,if=arcane_charge=4&buff.arcane_missiles.react
-actions.burn+=/alter_time,if=arcane_charge=4&buff.arcane_missiles.react&buff.arcane_power.up&(time>=10|trinket.proc.all.react)
+# Mana gem / Mana management
+actions+=/mana_gem,if=mana.pct<=40|buff.arcane_power.up&cooldown.alter_time.ready
 
-# Alter Time active - continue burning
+# Alter Time window priority
+actions+=/arcane_missiles,if=arcane_charge=4&buff.arcane_missiles.react&buff.alter_time.remains>cast_time
 actions+=/arcane_blast,if=arcane_charge=4&!buff.arcane_missiles.react&buff.alter_time.remains>cast_time
-actions+=/arcane_missiles,if=arcane_charge=4&buff.arcane_missiles.stack=2
 
-# End of fight optimization
-actions+=/arcane_barrage,if=target.time_to_die<=cast_time&target.time_to_die>travel_time
-actions+=/fire_blast,if=target.time_to_die<=cast_time&target.time_to_die<=travel_time
-
-# Mana management with Mana Gem
-actions+=/mana_gem,if=arcane_charge>=2&mana.pct<=25
-
-# Burn phase - maintain 4 Arcane Charges
-actions+=/arcane_blast,if=target.time_to_die<=25&!buff.arcane_missiles.react
-actions+=/arcane_missiles,if=target.time_to_die<=25&buff.arcane_missiles.react
-
-# Conservation phase with Arcane Missiles procs
+# Proc spending and charge maintenance
+actions+=/arcane_missiles,if=arcane_charge=4&buff.arcane_missiles.stack>=2
 actions+=/arcane_blast,if=arcane_charge=4&buff.arcane_missiles.stack=1&mana.pct>=95
 actions+=/arcane_missiles,if=arcane_charge=4&buff.arcane_missiles.stack=1&mana.pct<95
 actions+=/arcane_blast,if=arcane_charge=4&!buff.arcane_missiles.react&mana.pct>=95
 actions+=/arcane_barrage,if=arcane_charge=4&!buff.arcane_missiles.react&mana.pct<90
 
-# Conservation phase - lower stacks
-actions+=/arcane_missiles,if=arcane_charge<=3&buff.arcane_missiles.stack=2
-
-# Filler
+# Lower stacks and fillers
+actions+=/arcane_missiles,if=arcane_charge<=3&buff.arcane_missiles.stack>=2
 actions+=/arcane_blast

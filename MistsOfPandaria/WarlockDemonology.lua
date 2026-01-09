@@ -14,6 +14,11 @@ local addon, ns = ...
 local Hekili = _G[ addon ]
 local class, state = Hekili.Class, Hekili.State
 
+-- Ensure last_cast_time exists (aligns with other warlock specs) to avoid nil lookups during resource calcs.
+if not state.last_cast_time then
+    state.last_cast_time = setmetatable( {}, { __index = function() return 0 end } )
+end
+
 local floor = math.floor
 local strformat = string.format
 

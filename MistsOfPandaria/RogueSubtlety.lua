@@ -16,6 +16,15 @@ local floor = math.floor
 
 local spec = Hekili:NewSpecialization( 261 )
 
+-- Pandemic helper for MoP: 50% extension at level 90, 30% before.
+local function pandemic_threshold( base, per_cp, cp_cap )
+  local cp = math.min( combo_points and combo_points.current or 0, cp_cap or 5 )
+  local duration = base + per_cp * cp
+  local has_pandemic = ( level or UnitLevel( "player" ) or 0 ) >= 90
+  local pct = has_pandemic and 0.5 or 0.3
+  return duration * pct
+end
+
 spec.name = "Subtlety"
 spec.role = "DAMAGER"
 spec.primaryStat = 2 -- Agility
@@ -212,6 +221,34 @@ spec:RegisterResource( 4, { -- Combo Points = 4 in MoP
     end,
 } )
 
+-- MoP Classic combat start handling: purge pre-pull cheese, allow only the intended 2 CP carry if Premed is on cooldown, and reset Premed to a full 20s CD at pull.
+spec:RegisterHook( "reset", function()
+  if combat == 0 then
+    state.subtlety_combat_initialized = false
+    return
+  end
+
+  if state.subtlety_combat_initialized then return end
+
+  local premed_cd = cooldown.premeditation and cooldown.premeditation.remains or 0
+  local can_carry_cp = premed_cd > 0
+
+  if not can_carry_cp then
+    -- No Premed on cooldown: wipe pre-pull combo points per MoP rules.
+    state.combo_points.current = 0
+  else
+    -- Premed was used before pull: cap to the allowed 2 CP carry-in.
+    state.combo_points.current = math.min( state.combo_points.current or 0, 2 )
+  end
+
+  -- Premed CD is fully reset to 20s on pull in ToT/Phase 3.
+  if talent.premeditation and talent.premeditation.enabled then
+    cooldown.premeditation.remains = math.max( cooldown.premeditation.remains or 0, 20 )
+  end
+
+  state.subtlety_combat_initialized = true
+end )
+
 -- Talents
 spec:RegisterTalents( {
   -- Tier 1
@@ -296,12 +333,47 @@ spec:RegisterAuras( {
   },
   stealth = {
     id = 1784,
+    copy = { 115191 },
     duration = 3600,
     max_stack = 1
   },
   vanish = {
     id = 1856, -- Standardized to match other specs
     duration = 10,
+    max_stack = 1
+  },
+
+  -- Cross-spec buffs referenced by imported priorities/scripts.
+  -- These do not affect Subtlety recommendations directly, but keeping them defined avoids
+  -- "Unknown buff" warnings when other rogue packages are syntax-checked under a Subtlety state.
+  blade_flurry = {
+    id = 13877,
+    duration = 15,
+    max_stack = 1
+  },
+  bandits_guile = {
+    id = 84654,
+    duration = 3600,
+    max_stack = 12
+  },
+  shallow_insight = {
+    id = 84745,
+    duration = 15,
+    max_stack = 1
+  },
+  moderate_insight = {
+    id = 84746,
+    duration = 15,
+    max_stack = 1
+  },
+  deep_insight = {
+    id = 84747,
+    duration = 15,
+    max_stack = 1
+  },
+  envenom = {
+    id = 32645,
+    duration = function() return combo_points.current or 0 end,
     max_stack = 1
   },
   
@@ -818,7 +890,12 @@ spec:RegisterAbilities( {
     spendType = "energy",
 
     startsCombat = true,
-    usable = function () return combo_points.current > 0, "requires combo points" end,
+    usable = function ()
+      if combo_points.current <= 0 then return false, "requires combo points" end
+      if not debuff.rupture.up then return true end
+      local threshold = pandemic_threshold( 8, 4, 5 )
+      return debuff.rupture.remains <= threshold, "rupture healthy"
+    end,
 
     handler = function ()
       local cp = combo_points.current
@@ -843,11 +920,10 @@ spec:RegisterAbilities( {
 
     startsCombat = false,
     usable = function ()
-      -- Keep SnD rolling; refresh early when it is down or about to expire (<3s) with any CP.
-      if buff.slice_and_dice.remains < 3 and combo_points.current >= 1 then return true end
-      -- Or use at threshold CP if it's down.
-      if not buff.slice_and_dice.up and combo_points.current >= 1 then return true end
-      return false, "slice_and_dice ok"
+      if combo_points.current < 1 then return false, "need cp" end
+      if not buff.slice_and_dice.up then return true end
+      local threshold = pandemic_threshold( 6, 6, 5 )
+      return buff.slice_and_dice.remains <= threshold, "slice_and_dice healthy"
     end,
 
     handler = function ()
@@ -1017,7 +1093,12 @@ spec:RegisterAbilities( {
     spendType = "energy",
 
     startsCombat = true,
-    usable = function () return combo_points.current > 0, "requires combo points" end,
+    usable = function ()
+      if combo_points.current <= 0 then return false, "requires combo points" end
+      if not debuff.crimson_tempest.up then return true end
+      local threshold = pandemic_threshold( 4, 2, 5 )
+      return debuff.crimson_tempest.remains <= threshold, "crimson tempest healthy"
+    end,
 
     handler = function ()
       local cp = combo_points.current
@@ -1718,7 +1799,7 @@ spec:RegisterSetting( "use_tricks_of_the_trade", true, {
     width = "full"
 } )
 
-spec:RegisterPack( "Subtlety", 2025100, [[Hekili:9Iv)RXnot4)wchSKWf87UoR30EKnq7XlxBHwkNl0FZ2AT1M1S2wgl5uwi4)2Vrs(djBjNnT5UFOLn6JN5XZ8mJgPGvbFlWpbXWbFXDPR3QLlFRJR7A3v3e4ZovId8lrXhrpa)OaLd)VF9owgMDIpXPmckHdaLuxfdtg4VRonJ9XIGDgq9M34DlS2sCmm8Mvb(hstsWY1IPXb(F7qkTjI)putuRDBIi7H)oMLskAIYsPmy69KQMOpGpMML6aePISpndm)V1e93KhQX)rtuhnBIU8ZKV2e5545S6QMOMpbl69ikobaga87KV7NMdqkw1WUe40eLJJpGksJ5uQa2Y3wT5dCQXy4QcAZNa4a8(AfoMKVdXAIENGOWmsgtDk7M733()2NHOhVM7w3slRslEiCxgHsj52wpHK0UCmkmh(2dRsJXHfW4zylBcvwMDkSKKsjfxdFmhqzBtWOKStxxqkAhiUkfwgWaZyuseUBZZvHZXjPmeFQRt3VLHYWfmhTXDWfODzGt2ieuggLXoyEYCu1rCsieIdbAZoOyIXt9mwjJ7RGWwyc8dom8PiCxtbJE)2vDHVpJslMg5aeoMgFuA(QhWmNyeLP6Y6Du81SRE)EhiCcrMAkZPcdl6PNA3jlnhhYiarW3TEPka1uCykdNFnnJW2cATeApA0dOeYpctqfXyN6sJO5odAmqIDeZwzhq1r3LHGSWFb74(6BhH)mCFD1jByRTACffxDecrNZQrvXOcUDRQaTfFh4cC1dNUBJgfafvjQQxSFHa2hHAc0daGlIjKmWcfDdbjbGAIE)MLlgYl6ayqVcQU)KubfyQiYegvtwvxek)RqE9UR5fE3IicjmF8hXHavZtXGi(g1ngJYYMUZokQjTNMCi9xAd391C3MftsDuPBjRUYqcM3IlViHa5cYfaX5yEW5PNuhSZeRVAXu5W9R0IfhW5q06aCQGsrHHb7CVTMvzcnlRm(GXvnd(XuAmgczg)Muj)ifv(UA6bBApnx4DEAcx4OokdTBS5UZBHutcXzpr1kUSzC00PpaZJRkgLdhfZ41SG8niLvDYEKV1BXfTfKXjoGcAHjLaWFdrnqjS0mpKPddzv3VDTNUhyR7y72NlP556mLnlPvwrrxOxUPtAyYFixYIlTu0fKJqzjl1YVAosbFELAbb4ReWEyYfACLpsprBTwcKgZPc4PDBvaVJ8)hmkuw4vmBUfoO7GCO7HqOcFjMYMMfSEX46qRxiY5gTZUeVXgy2mSXl(NlTQDZ7rfHK9Hhla2snKFzOEQWj)xCzlcoCqjp7H(X(5AtrJQBxAb4ZTi3OpKFLAE6e4mRgzCV0d1vPhXGaa6RvlzuzCBFcTN)UEzG)JWr5a69xFaUnYpqvf8KOa)pMxsQy8o49gDZaNMpf4l(L4An49O6mg8ZViUMtRzdEFGpOtHo4trWLC06TlWxIxGpV3VagqaR70uhFnrp9ut00kfnr31eX)W6Gx24i3a3mYaDRq0l4e7nUHM5SNlypEdADybgBTfJ11Q45zpJTZDMuP3saB8MNnU)NXgxoB2mFKEKThy7qtQCuU9NfL(Mx5O8gROitseFgBu0t6DZYH4TwH4IwFwFxSnrlAIS0jBt09CljwI9oAve2dtYzXQLJOb)M(WLpLlwVh4bqg1bSk51lydSBBt0nYK(q5luaf(fwECoFh4J7swBZ9hIlG4zs(nF(Qm206thkWjP6QbEOVBH9gxlyWEtrYtyHlBIGWPHUSLjag6ztwkQj6Q2q60meiGVAPAWqSFbbhx)qToQLdQgrZPNqnW0PNs1twL6I9lsWOX1qEExMEd8dap0uIa4xw5adHBG5EkjOIUyeiBVeXuae42LZl06ky2DsDapH3V)TpmDGN8DF4PF8xcsHwkVwuGF)dejiL8fI6peC0rxkOB4uSjcdJppKwzJHP7pPQpvrEpHr20EO)zAeBa4XRy(ZbEzPZmzPidbdlBrV2i0M)RtbNzBIz6gwlaYuzw5mT5Xw60xPmR(cMxKyix1wIP9sq)I5LNBLK(0slhf1HS2vpK6HHELNtwmruQlmgUAYlqYBWpaSD58IJ5RPBXR8VwP(Zv98skBoJAAUBUm33VsdAQn8RHJunm0RXC1iu0Zt6EQB)k026d(mXLCRxx(S2ZWig08tan54ZHEe3k6zyw1KQTx7zYfct4ANtZ(8qt6Ar2f7zD0KXxksys7VwuNuFMlLbTu1EBJN5wHAAEnRmVc16ZkP2S(0NwsTVVUNxQnc6oMh89jeR8dZQzhivb((517bPSyWG)5d]] )
+spec:RegisterPack( "Subtlety", 20260109, [[Hekili:nN1EVTnos8plbhGqCBIQ8ZR9U4a0n3E7UfODlovG(FsIwI2wWYIgsuniab6Z(nKupiPivCFKU7F0uB(yMFZW5TdMg8Pa)eefh8HzEZw5n17nUZMUy20vb(0hoHd8pHIpG2bFihDe(RF1gAgM(aBJhYiOegbkjvfXWMb(BQsZO)rEWgduD(QfVbo7jCmS8QPb(7ttsWIZIlJd8)0(0Y6i2)q1rn8ToISf(EmnLKxhLLwsHT3skQJ(D8H0SuxaifKTPza7)h1r)pYUk8)QoQfM1rx(EYhRJw6U0D6K6O63bh6xqL4eGWab)m5Z(PhbsYpv)T40Po6ioEpkpnMbPC4kFA6QFNbnkfxKxYjMpgo37z46p3(r4qOIu0R(yrkPiLMIlFfNsTeo8EY9La)CH)e3ihGSMKwGJP1rVZ)p)W1uY1aKURoIwGYlZqmj3T(DaZaU9r4GKJBqWHFlxNiabh93LHkltbYkoX1LuubCUIQmCjOsEGubBHYZju2)xuaIjO6IlVQr4UdObQaKM7tpX0pv5Wfl588iojLIeVbS3h2)htizjK7HpDjDpoVHbnm9(u6(6OzXNM8VBjG4Mf4smSpLa761qPtvzzUGMKl1Ti8ijbNbhCFdGEvZnf6QShauVPc(o5eohxWi8ruAEzp3UfOy()PrjFcEwOpWvJcBPs3tTQYxU(vNiCzZ8EYI)vPBxtrz4CQRY6U4C0MmGTgjrjfJYO7zx(IMpJtCrzzMp(ruXbCsia8WemsCVgMQV1tW3S0yCi84gMaFGrg2wKWtK0CA5TRN6OdhHv27bnPKbwdPbcEin(Ganf7Wu3yujnnFN8jeAs2z2uTDR7MmcjjRQK6wGHd94Jn3KMEehsjaUW3SWtMavL4Wuk(4vLze6AW7lPSJAL7rGfxyckpg7wDYi1Mnc1OfP5hW0P2jO8QBYqqCPVd(m7hpF46ZWTvfpyJ2kNgxuIloaprNZPrfGVhJVffGPg7gmpRDpCZkfiagyG3uN3WfCY(fikz5EGGoTHfAxQXV82vEo9ooTeO38fS6UJWc(uqAc0iXYIQ8qX3czzaUILkAnIWTOzR)fCia1Jq42Bxpx(IXGr9WB2cXsU9ExsaiG5dzywimUlrDeZ4lduEn5tWfBR4jKAI4WdAIZtUMS9AU(K9nMcRoAhI5x4kdLDqexcLdziogBB4jhSAAw3H9MV2ZXC4b2RZXnvL7T9o6mCXgf)nRN6U0raSBxR6RPtZoHKrX2Rm41)8Jg6CPI4OA23c9joYbLUz9cz2nmcMAelh9aAxkyHY1Czp2TmxDNoL0LRE5QxitSjVWZD5evRWt0QcdHrx6C5fjeieN4aG7BmZN7XhLxSNtlE5cdCYzOV)Ttvu97XhbxZ9qrrs69(f7v6CWiTHcEKwVfsluet8xslJXG)PrjvwK0cFmUbQYJ8sLOuqLEqzdB0z3n9MTZx24QExVRBBcVoVzM5Ieth4PjVzhLFTNwoqNrmtaNbNln8OcgEE20US9M4KG5KDBkqX7XOd5qLv9MeZ1CbM)Js66oHyHq6EOkQ9afphHgE0mkRDeLZRWJP5HnNXmSfjc6ZNWv6Qc8mD80LfXuinMk955Dym9(rCwctikqasYt3TNgIZ2kfM87xMSL78Ve5TPUePynQ1R0gUXKvO4i6kGlmgyWiezqrYh9zgNJxuQbEcY1jfpqq8aY1VPJcuyR0HJgMLaLJWubW70SMGBVL8R9mfkV5SQG)5kHxdaIlGkJGQNGABpHlPdrWch9kWwiSv1UzdMmTJCQXzNbMgndL(H)2sl1C5TO8qY2Wd5GawAi)KHIp5VK)gZ0fbvslLNAx3AV8BQfpfOU2ZcHp3Ie0eKVNAgubWzMn34Dl3xvKEadwgKsvhAP1TjcnnRSWlW)lqFpa15tFA5upyL7rf5mh1a))44jsbLnGGLAZvckxpWN)j(qXWBrvzu4JFGpKSgUg8lb(G9luNCkkWxTp4aFb9c8z9jhqb(B9MM6oUo6XhRJggmQo6M6iMC1sErt2mgmxJbTNG338a(P383y8BgWpwZST0cy2clmRTT6ZJFgB99mHshNa0SCC0m7NgAMXqZQXFP14DpA7BONrL)53kv6A0NrLxBLkT9NcIXkj7j1o)zK4nwjXfn6SUo(RJC6hgOwLl8PWbnqYoI9U)LmS73KHIPEAWGnN4I0tIdRoVGEIOnTazWRgVgq366O5cN(qX8TH4(CoR7Z3sC9jkOC5Ucf4Kq35VLenD8RjnpBdHqw(nn5bXJdyKxhbAdXBLsDBCHrpqZt5B5O6APuRly)bCAQ7s(XAHl7TqoiNiXnN56bE0zU8ClgqZvMPPE4d5G6JmFxg1VutbnmssVEysJ7rFQkH0VqXOVNrCSzpyYfdy9aQZK5PT40wXHYq2ybIcucuyvD0l5)9f6mAcFnp2Z4KEPrLCCXXEuTHiFzlYbj1Wmve42qRqD4DbhVlEc82erAyaEiE1up5yjCUWfd7HvTwMLMWmS(QE5zynwI0(kk3(dXrK9O02uSQJVPNW9LuZlBrpU7z4TRzIdm0KB3m71snKadCLNlrZ26mdy5R87(vpmvVMsC2N8xi8h3pp4pRFBW)o)Z)D1FN(5)mvbT9s0hlpWirVTNPup4TuqtXYMkYEaES1Fyp10pHPQLhluHi7XiOvpepvU0hdoGDxukUXGI5AVVTYvKV8GidV2ZiMLQdXswoEfcTHPnMxHRr8gpqD7ze5vgBOBI8uZTuvW8XTipF9H1b)(1PMAITBvVyFuWwE0h1)WWd6qv0m7sWOdyT)r6N9BDVQq0C04E5QJx2q1SpN6f7TX9xUURFi8JhoBSzaZ5Q95aBxdEHTY7TjfImJdcsnWRqW4XhGW3ReDgduAaASxYU1rE3WllJ9wgjTJ(UXEyMooy3tKvH1n(y5tutePMr5TKF9CsZ9ZSjPrdUpeGl4a00mlwi7jgByq79UH67AUFPzpf07haIk9gpIUH2qS1ZXt1J)3ClhNBLpDDCyzirTuw53eqyM2pe7XSwhuwMQ9A)VzWxrrFg0daA9oRcBT0UQfTYZwxSNR1ZxthHpDv0g)jfgt(LgDQAKtj6WTgyHTQO7jfb()xYUeCE5wurjIVtW))d]] )
 
 
 

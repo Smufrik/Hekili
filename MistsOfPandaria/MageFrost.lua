@@ -387,6 +387,12 @@ end)
             duration = 20,
             max_stack = 1
         },
+
+        invokers_energy = {
+            id = 116257, -- Invocation damage buff after Evocation
+            duration = 40,
+            max_stack = 1
+        },
         
         incanter_s_ward = {
             id = 1463,
@@ -1218,8 +1224,32 @@ end)
             usable = function()
                 -- Primary source of truth is the registered pet token.
                 -- Fall back to the real pet unit, in case pet ID matching fails or the pet model changes.
-                local petUp = (state.pet.water_elemental and state.pet.water_elemental.up)
-                    or (UnitExists("pet") and not UnitIsDead("pet") and UnitHealth("pet") > 0)
+                -- Prefer the tracked pet state (same pattern hunters use).
+                local pet = state.pet
+                local petUp = (pet.water_elemental and pet.water_elemental.up) or pet.alive
+
+                if not petUp then
+                    -- Fallback to direct unit queries when the tracker is not populated.
+                    local hasUnitExists = type( UnitExists ) == "function"
+                    local hasUnitHealth = type( UnitHealth ) == "function"
+
+                    if hasUnitExists and hasUnitHealth then
+                        local hasUnitIsDeadOrGhost = type( UnitIsDeadOrGhost ) == "function"
+                        local hasUnitIsDead = type( UnitIsDead ) == "function"
+
+                        local petDead = false
+                        if hasUnitIsDeadOrGhost then
+                            petDead = UnitIsDeadOrGhost( "pet" )
+                        elseif hasUnitIsDead then
+                            petDead = UnitIsDead( "pet" )
+                        end
+
+                        if not petDead then
+                            petUp = UnitExists( "pet" ) and UnitHealth( "pet" ) > 0
+                        end
+                    end
+                end
+
                 return not petUp, "water elemental already summoned"
             end,
             
@@ -1369,7 +1399,7 @@ end)
                 state.gain( 0.6 * state.mana.max, "mana" )
                 
                 if state.talent.invocation.enabled then
-                    applyBuff( "invocation" )
+                    applyBuff( "invokers_energy", 40 )
                 end
             end,
         },
@@ -1827,5 +1857,5 @@ end)
 
 -- Register default pack for MoP Frost Mage
 -- Updated October 1, 2025 - Use the MageFrost.simc file for optimized priorities
-spec:RegisterPack( "Frost", 20260101, [[Hekili:9M16UTnUs4NLGcyK0M66lrPDxuhGt3tl2g0MwCuX2)PlwMkMisIguuj1bg6z)mdPUqrrzNe0S)OnjuCU9nFd5msEt9(HN7QqbX7QztMD(KPtMnEYKZo3zUNRy7gIN7MWOBcVg(LSWu4))eNLlWv3MWcxHsNZk4rWt8CxwqteFoZBPHkNoE2SjVB65WE3qI8U68Z8CxtxTIO2kjpYZ9hRP5Lb4)cldQSzzalg(7ibLLvgKqZfWJJz8YG)MCdnHo2ZvUi6fHmc8JRKXJscp3yo7EsMpJdwHKfUmHSY7dEcWV03fnAR)TeAwUXMMRVPLj07VpKVYypNH7PDf3iovq40qLG3s8jzKukbC7lwug40QViwgXNf7hXswHkY5PQOqEuiOkYV2KWYXvaLD(GkBzrC84yA21eEoA(ymBoMtaTPdie)KWmiNc66T7xxl5H0mqneY9et9ivEmLt8xYseOYENr2jxiFshmvGmI4Wcy968PM5RfwWPz3qetv0hoDJA5)Ib4j7UmKgLTQmif8obiogmU5jmHMK18GH1(mdzM1qlggq4fQe7g2DeoGiOhaEZ7HSwuyUWxqXQOAdrULffQ(1oXXhRxhQf4ugyITLbVUmOihkkUBnbw))bgsvG8D0uv1olzfIYabRmayea0d7GJWqwOAdjS72pVf364OcoNKjuU9zotMmXMlVxARimb0GbCuTZYGrLbhxgCuzGfmRytzWUDwFKD4Sm4Kw3RJagOApitJEiHxobyY5RRHyKjPaWE4QTYSAxynq9YRPov)rlWevrrh3CUdw3SAReu6xtLlGZcldG4Dw7o6vbxSXiuD3MfUbjlUa)j7AaYUJkGa7ZrGH(hcTPc5dOXkd(K0AWAcPHKwTrOpPmNc6uxaS3tggoeX8Q1NwLxXd3ERJ(XUm2k)4c(wZuzyenmPvz5MLh6bks8RCamzkVmHLDDR0nNn9meooA1olbuKWVbGt0I)XJ4OvtAWX1CLgaQBDtRL6UEUIx4NROfgcHklPqYNullc5xteJXQmFbZFfLOcQPVBcu113tEecB9c4o5y9uytYvsi3hP90oKc1TNNwr2B8X3OY)X0Rxl5YtN80YfdEzx3i5)wKU5qLA00uYkk02uYwPhzEZ3HUehr9rhMooDITl6nbEW9(I6uXHobyO6mS4sVSA6q3XMqVfukGwPq3zrBJsasIKWKJ36d3d9l)UR6o3Y9lAAPZTldX9wX6kJGgDt1LiVSmyUu2JSVnSQTlo9vOjf6RH9kOiBc4OFrkdKQbHuybMwWRnMx7tiofxr9advWRVNNWtPqyIyMzpg1ywgrSMW9fK0neSl8heS5yb26QOoixv0BSd7aWvYnvg8d1UKqqkckGg6g(onHVmahU)JkhuYP7NwrNJO4)TBaV8RtzyfPQJRwrABtmn94O8lPBz2oJPgUhz8FJV0GMBBGduDhOp8ohQ8ekFF8h5uvmxlhchjwRK7vfBEzFxKHMKGnB1VZEz78B4Kia2dT2qFlMu3ny1enl5GwP4HqDsW9EQznjm34F2CgfWh)g8Gu69ibc8R0YGFY(PlnfcYVY(UTHa67rksvipLXTq2KRV)jdoclVfJVdoDN7tsiPaXlmzS6YPw9LxKMYY8n2Mgawn9aWtT0dFTwsPCoJ7ttLtTBk75JDS14ULbsmL0z)JwUVg(hS9CtBmx5DMSTAP3WS7AZS1aNL5mTjNKIElC5gUz8nw4mDgaWU3fYZWwKGRdt3W4cKan34TrmU8suPSyAcOTxauQhf7R8YYlFbi13RDRYlvQpFCJN(QfVPhL)uA8IJgSwXUs04QTI3LyBxq7KsPogMtFAxKEXuh7kxNRAkdWuTludh1uIb2Fhoh647JQAQZ5d5fkUO52NTh0h5Gw2VId8xm88yotOAh4s5sd(YmAScOBOVyFOim9uCGZf1VEJdUdLLldEoFvd6orBwdYadpB)7x0ox)qsR)okE)c57NOky(noHVU1FumOrhFK13QXUDpOO(KQq5zEc(H5hY3ybgKdn37ObgjAXSrdoAsv6536u76Hq7CW7ZZ3TB4(RUyXBD6OXMjOF6A0PMx(V0OS6(FJ70uVznJDC)xJqfrTZRqOAT(V(G6nRn9)UD9N(6IfWu)NOBTdU5kO7ro7Soe0Tb59Idn5PFpt(2nrunLDJdyPaz0(OrtRPrphdCQ7QAJ8EANPixm90EtwUyU2jHwMdFKTe7GZF)Y5JoAGPURc(NYWM6bx3jAFaXNJw8zFGzLlBFu5kV(qZD2JVQq)wl3FsyWQwMbU1E2Ns1WqvZPUVISN00Ip26Vhk1xnJzpTJkUUfQ)d7JyV019WC88x1WdoPTTSqgXab6(KgNW8b1FcqZ11)uEymQoNU(d2DHExPkbm)KDpiHEaNIi)8Bwc0dMdgwq1ytHfI1WiUUUPfXC6nYrM8()d]] )
+spec:RegisterPack( "Frost", 20260109, [[Hekili:1MvBVTPou4Flvtk32T2S8YO7fTuPTDx1DvAttx6v7BaoGj1lagzG2LQi(TFphmqmogA6E5dDlX2NNZl(X2NhfNPox7yhqYPoFz2KzNpz6KxpE2mRxn9Lo25BsPo2Pe)1KvWhsiXW)EPGNLJJUjItcqRZ4fcFygh7LfSO8pL4S0eKtMzbRnL678LZFHJ9nSGaQCP0mFh7RVHLv6H)rk9Q9zPhpe(UFoJNu6fXYYHPd5IsV)HUMfXg7yxnigfeof(VVuLpslCSdf87PjUCb4fAczzenW59o5qCPUkM)g3BPSKmTfnxDrlJy3FpreOTMxGRz3i2(cwovWisdVL6stOXmke2xSO0ZAhE(8eQlp01NhfGaz9Zcer4taOO)inINHJaGDEVGTSimCCilzfvKHUpe3nhlOaAQfeQBejb2tbSE5WyTuqyjamu69uDCQapKjOUl5r5iyVsB3jlVAMo10CKreskGXB2pvCpsweSujcVRiNFwUGTcshGRKCwrgWzOHHuFGu06iyfjRP5tb6xepx57nmbf81SzMMnZAjggSHEl3Ni)yNW8JnJ)MsVyOCLd)v69PKMHFo(X1uXFb7UFmHkwTbsgiHeuF(TyMftsi7v5zsJYqMbycu8rSbiElqq8jz5U5Sy6WKue4X(fcbnjxA4lSMmzIPuYahTzrIcjxoLFhvOL7)lmN8y8xXzl9ksxtPPQbrojcC)4oOmU2nLEJk9oU07OsVQKU7Iksl92U14uMRgLENy68H8MTVtcOUzurkenAzXxf0ZwwiYGIukxEBejITkbdWCEP37IYXC76kx8SsVaEbGDP3L8lR((7fvB5xwDmrn395W5F(DjJjicvXiEkkytvIB(0AwoC7yPhKxZ2TQoNdls3T5iJxtNKnC)xNK(ZKVJSWMqelJWn2(qAre8IKGoP9bMu4UL5PR3UWB3EPv7DfgzT)Q4BPqWZ2KqsZG99u4a(Qm0XV(rE7P((XX1BjT11U80LrCEGByHyJ24aOuXAa9UJl3a7oMwuBWbrfqKHdFsNyQ7COjbujIW71bDlttF1e88YUxAAlNyvA6KEPtnVEOFgI7x6bnaKeaX8JQSw5p9xcg6Him5gDamHPtg61QP994qe7wiAH1fdnw4VXpI6MteROWJoWdwWTQ)WT7O2Z1kg)n)663ca4Rot9C47WBESZcWNB272rfx25UrPhgJPMBo3nGrLzgGshBYz(RRVc8PLEZRS9iZld3DWSVVN5sO53GvtACkfBf8GkawgYPUa1jTQdnTvOgD9)Own6v7N7xWoQLYRSa1lm3nCLF0F0RZ24hAVBmGex1WkbVxmKffbCzJnIIy(a9N9NGk)aTXT3PVFg32PVXPhyVEPyxoXljg72tRj3LcOWYmC3YNHA)BW3x54t0Nv69FPOaeCRqWJl9(g)B2SyiKH2K5cyjhFfb20q5jNOwlAAZyp)HmedDlUVLs2dreZfgyvvJpulKzfXX8e37iy1MgrJbMmjsZrPWbETvmwQsqPCkVO2EQLPoaBCxmti4cxwCLapDBpFS1qT9P0URULwM6YQN2fpSgb33hZLrxFD1u33JXE70HAMP(nmqDnzxfjg6sVs7vJGx4oW7iIKQokS)umY5qY4CnXSJlVcbLd3xaO9KsVFfEC5vLx9eaJV2eKLxjDw2424(zlE(Eu7tzHloQxwVzquyZ7mVl13SHM53vy0pR(0U19ftTmdUkBw3gGlB2OwwSUf9S(oStmWhI1QJ58(IcjB9uKSUqLRQdWSb2pqoQH1lzf2axevKCD1dYvTB8Hik5wkmn0i)qcPBDj4iyCx44A8POQ4fncPFWviddqD7VdLWQEB3UhStmKS43UyNiW(Sxvn8BxuPeUoU7rfRkspkEXOJpYOC2TB7xkRsgCsDy9BvwQAY0lDeYREvFnAG(4xmBKXwBK5XJsPPAC2kXAWaB72bAJ5IfV0sfsnPv)kaBnrf4DROLR2BT649eqwZm6iESzmvHJ1J1kAS(77lyufWAbHNu7x1X2U1KaXlwaId3Xcvf21D7PUHWhmJvTQB3RTMQrDgnyPFAZj3HfAP6wfzqN2r8YIPNUNGMfZvoIBqB2O91LDXIE1K905JoQhLyQryx1qhqqAPeKMfBj9Rzzw7TNiRn7GCFfwaCg0wvVvmSyjnVvlx6pbV4rXpFCa2(oCZZUVJ)r8acJdn5cVLD88N1izp7KDpLt4uZzD9mTxeOprZVkH(4Q)6cyUj7JQ53q4c1EBKgO)RiCqgDaLVQFradj6dUr2VHYwXjf53asPSTJlcfS1vTH78)d]] )
 
