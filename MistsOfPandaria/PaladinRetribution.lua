@@ -1579,10 +1579,8 @@ spec:RegisterAbilities( {
         cooldown = 180,
         gcd = "off",
 
-        
-
         talent = "holy_avenger",
-    toggle = "cooldowns",
+        toggle = "cooldowns",
 
         startsCombat = false,
         texture = 571555,
@@ -1644,7 +1642,7 @@ spec:RegisterAbilities( {
         talent = "execution_sentence",
 
         startsCombat = function() return not (state.settings and state.settings.execution_sentence_heal) end,
-    toggle = "cooldowns",
+        toggle = "cooldowns",
         texture = 613954,
 
         handler = function()
