@@ -311,9 +311,9 @@ function Hekili:BootstrapSpellFlashCore()
 	local function SafeCall(method)
 		local fn = sfc[method]
 		if type(fn) == "function" then
-			local ok = pcall(fn, sfc)
-			if not ok then
-				pcall(fn)
+			local ok, err = pcall(fn, sfc)
+			if not ok and self.DebugSpellFlashCore then
+				print("Hekili: SpellFlashCore method '" .. tostring(method) .. "' failed: " .. tostring(err))
 			end
 		end
 	end

@@ -31,7 +31,7 @@ local Buttons = {}
 Buttons.Spell = {}
 Buttons.Macro = {}
 Buttons.Item = {}
-SpellFlashCore.Buttons = SpellFlashCore.Buttons or {}
+
 local Frames = {}
 Frames.Spell = {}
 Frames.Macro = {}
@@ -841,24 +841,46 @@ for event in pairs(Event) do
 end
 
 -- Public bootstrap helpers for embedded usage.
+--
+-- Initialize()
+--   Primary entry point for embedded addons. Performs full setup by
+--   registering all frames and scanning all buttons (via RegisterAll()).
+--   Safe to call multiple times; later calls act as refreshes.
 function SpellFlashCore.Initialize()
     RegisterAll()
     return true
 end
 
+-- Init()
+--   Backwards‑compatible alias for Initialize(), kept for older addons
+--   that call SpellFlashCore.Init() during their load sequence.
+--   New code should prefer SpellFlashCore.Initialize().
 function SpellFlashCore.Init()
     return SpellFlashCore.Initialize()
 end
 
+-- Startup()
+--   Alias for Initialize(), provided for callers that prefer a
+--   "Startup"‑style lifecycle name. Intended to be called after the
+--   game has loaded (e.g. in response to PLAYER_ENTERING_WORLD) or on
+--   demand to (re)initialize SpellFlashCore.
 function SpellFlashCore.Startup()
     return SpellFlashCore.Initialize()
 end
 
+-- CreateFrames()
+--   Only (re)creates and registers SpellFlashCore's frames. Use this
+--   when you need to update frame state/layout without rescanning
+--   action buttons.
 function SpellFlashCore.CreateFrames()
     RegisterFrames()
     return true
 end
 
+-- ScanButtons()
+--   Only (re)scans and registers action buttons. Use this after addons
+--   modify action bars or when buttons change, without rebuilding all
+--   frames.
 function SpellFlashCore.ScanButtons()
     RegisterButtons()
     return true
@@ -1043,9 +1065,10 @@ function SpellFlashCore.FlashAction(SpellName, color, size, brightness, blink, N
                 for frame in pairs(Frames.Spell[SpellName]) do
                     SpellFlashCore.FlashFrame(frame, color, size, brightness, blink, texture, fixedSize, fixedBrightness)
                 end
-            end
-            if Frames.Item[SpellName] then
-                for frame in pairs(Frames.Item[SpellName]) do
+                    if mName and SpellName == mName then
+                        for frame in pairs(Table) do
+                            SpellFlashCore.FlashFrame(frame, color, size, brightness, blink, texture, fixedSize, fixedBrightness)
+                        end
                     SpellFlashCore.FlashFrame(frame, color, size, brightness, blink, texture, fixedSize, fixedBrightness)
                 end
             end
