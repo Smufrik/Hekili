@@ -31,6 +31,7 @@ local Buttons = {}
 Buttons.Spell = {}
 Buttons.Macro = {}
 Buttons.Item = {}
+SpellFlashCore.Buttons = SpellFlashCore.Buttons or {}
 local Frames = {}
 Frames.Spell = {}
 Frames.Macro = {}
@@ -52,6 +53,15 @@ local EmptyTable = {}
 
 -- MoP: Use legacy spell and item APIs
 local GetSpellInfo, GetSpellSubtext = GetSpellInfo, GetSpellSubtext or function() return nil end
+
+local function GetSpellInfoNameAndIcon(spellID)
+    local name, _, icon = GetSpellInfo(spellID)
+    if type(name) == "table" then
+        local info = name
+        return info.name, info.iconID
+    end
+    return name, icon
+end
 local LegacyGetItemInfo = GetItemInfo
 
 local ItemCache = setmetatable({}, {__index = function(t, v) 
@@ -71,9 +81,8 @@ local GetItemInfo = SpellFlashCore.GetItemInfo
 
 function SpellFlashCore.SpellName(GlobalSpellID, NoSubName)
     if type(GlobalSpellID) == "number" then
-        local sInfo = GetSpellInfo(GlobalSpellID)
-        if not sInfo then return GlobalSpellID end
-        local SpellName = sInfo.name
+        local SpellName = GetSpellInfoNameAndIcon(GlobalSpellID)
+        if not SpellName then return GlobalSpellID end
         local SubName = GetSpellSubtext(GlobalSpellID)
         if not NoSubName and SubName and SubName ~= "" then
             return SpellName.."("..SubName..")"
@@ -169,9 +178,12 @@ local function RegisterButtons()
     Frames.Spell = a:CreateTable(Frames.Spell, 1)
     Frames.Macro = a:CreateTable(Frames.Macro, 1)
     Frames.Item = a:CreateTable(Frames.Item, 1)
+    SpellFlashCore.Buttons = SpellFlashCore.Buttons or {}
+    wipe(SpellFlashCore.Buttons)
     SpellFlashCore.debug("-     Button Slots Found:")
     for i = 1, 180 do
         if HasAction(i) then
+            SpellFlashCore.Buttons[i] = 1
             local Type, ID = GetActionInfo(i)
             local name = GetActionText(i)
             if Type == "macro" then
@@ -184,8 +196,21 @@ local function RegisterButtons()
                     SpellFlashCore.debug(i, Type, ID, "=", GetActionText(i))
                 end
             elseif Type == "item" then
-                local item = Item:CreateFromItemID(ID)
-                item:ContinueOnItemLoad(function()
+                if Item and Item.CreateFromItemID then
+                    local item = Item:CreateFromItemID(ID)
+                    if item and item.ContinueOnItemLoad then
+                        item:ContinueOnItemLoad(function()
+                            local Name = SpellFlashCore.ItemName(ID)
+                            if type(Name) == "string" and Name ~= "" then
+                                if not Buttons.Item[Name] then
+                                    Buttons.Item[Name] = a:CreateTable()
+                                end
+                                Buttons.Item[Name][i] = 1
+                                SpellFlashCore.debug(i, Type, ID, "=", Name)
+                            end
+                        end)
+                    end
+                else
                     local Name = SpellFlashCore.ItemName(ID)
                     if type(Name) == "string" and Name ~= "" then
                         if not Buttons.Item[Name] then
@@ -194,20 +219,31 @@ local function RegisterButtons()
                         Buttons.Item[Name][i] = 1
                         SpellFlashCore.debug(i, Type, ID, "=", Name)
                     end
-                end)
+                end
             elseif Type == "spell" then
-                local spell = Spell:CreateFromSpellID(ID)
-                if not spell:IsSpellEmpty() then
-                    spell:ContinueOnSpellLoad(function()
-                        local Name = SpellFlashCore.SpellName(ID) or ID
-                        if Name then
-                            if not Buttons.Spell[Name] then
-                                Buttons.Spell[Name] = a:CreateTable()
+                if Spell and Spell.CreateFromSpellID then
+                    local spell = Spell:CreateFromSpellID(ID)
+                    if spell and not spell:IsSpellEmpty() and spell.ContinueOnSpellLoad then
+                        spell:ContinueOnSpellLoad(function()
+                            local Name = SpellFlashCore.SpellName(ID) or ID
+                            if Name then
+                                if not Buttons.Spell[Name] then
+                                    Buttons.Spell[Name] = a:CreateTable()
+                                end
+                                Buttons.Spell[Name][i] = 1
+                                SpellFlashCore.debug(i, Type, ID, "=", Name)
                             end
-                            Buttons.Spell[Name][i] = 1
-                            SpellFlashCore.debug(i, Type, ID, "=", Name)
+                        end)
+                    end
+                else
+                    local Name = SpellFlashCore.SpellName(ID) or ID
+                    if Name then
+                        if not Buttons.Spell[Name] then
+                            Buttons.Spell[Name] = a:CreateTable()
                         end
-                    end)
+                        Buttons.Spell[Name][i] = 1
+                        SpellFlashCore.debug(i, Type, ID, "=", Name)
+                    end
                 end
             elseif Type == "flyout" then
                 if not Buttons.Spell[ID] then
@@ -690,16 +726,41 @@ function SpellFlashCore.FlashFrame(frame, color, size, brightness, blink, textur
 end
 
 local function FlashActionButton(button, color, size, brightness, blink, texture, fixedSize, fixedBrightness)
-    if FRAMESREGISTERED and button then
+    if not button then return end
+    if FRAMESREGISTERED then
         for frame in pairs(ButtonFrames.Action) do
             if frame._state_action then
                 if frame._state_action == button then
                     SpellFlashCore.FlashFrame(frame, color, size, brightness, blink, texture, fixedSize, fixedBrightness)
+                    return
                 end
             elseif frame.action == button then
                 SpellFlashCore.FlashFrame(frame, color, size, brightness, blink, texture, fixedSize, fixedBrightness)
+                return
             end
         end
+    end
+
+    -- Fallback: direct Blizzard button lookup for core action bar slots.
+    local function GetBlizzardActionButton(slot)
+        if type(slot) ~= "number" then return nil end
+        if slot >= 1 and slot <= 12 then
+            return _G["ActionButton" .. slot]
+        elseif slot >= 13 and slot <= 24 then
+            return _G["MultiBarBottomLeftButton" .. (slot - 12)]
+        elseif slot >= 25 and slot <= 36 then
+            return _G["MultiBarBottomRightButton" .. (slot - 24)]
+        elseif slot >= 37 and slot <= 48 then
+            return _G["MultiBarRightButton" .. (slot - 36)]
+        elseif slot >= 49 and slot <= 60 then
+            return _G["MultiBarLeftButton" .. (slot - 48)]
+        end
+        return nil
+    end
+
+    local fallback = GetBlizzardActionButton(button)
+    if fallback then
+        SpellFlashCore.FlashFrame(fallback, color, size, brightness, blink, texture, fixedSize, fixedBrightness)
     end
 end
 
@@ -779,6 +840,50 @@ for event in pairs(Event) do
     EventFrame:RegisterEvent(event)
 end
 
+-- Public bootstrap helpers for embedded usage.
+function SpellFlashCore.Initialize()
+    RegisterAll()
+    return true
+end
+
+function SpellFlashCore.Init()
+    return SpellFlashCore.Initialize()
+end
+
+function SpellFlashCore.Startup()
+    return SpellFlashCore.Initialize()
+end
+
+function SpellFlashCore.CreateFrames()
+    RegisterFrames()
+    return true
+end
+
+function SpellFlashCore.ScanButtons()
+    RegisterButtons()
+    return true
+end
+
+function SpellFlashCore.BuildButtonList()
+    RegisterButtons()
+    return true
+end
+
+function SpellFlashCore.UpdateButtons()
+    RegisterButtons()
+    return true
+end
+
+function SpellFlashCore.Refresh()
+    RegisterAll()
+    return true
+end
+
+function SpellFlashCore.Update()
+    RegisterAll()
+    return true
+end
+
 
 local function SlashHandler(msg)
     if msg:lower():match("event") or msg:lower():match("register") then
@@ -848,8 +953,7 @@ function SpellFlashCore.Flashable(SpellName, NoMacros)
     elseif FRAMESREGISTERED and BUTTONSREGISTERED then
         local SpellName, PlainName = SpellName, SpellName
         if type(SpellName) == "number" then
-            local sInfo = GetSpellInfo(SpellName)
-            local name = sInfo and sInfo.name
+            local name = GetSpellInfoNameAndIcon(SpellName)
             local second =  GetSpellSubtext(SpellName)
             if name then
                 PlainName = name
@@ -863,19 +967,20 @@ function SpellFlashCore.Flashable(SpellName, NoMacros)
         if SpellName then
             if Buttons.Spell[SpellName] or Buttons.Item[SpellName] or Frames.Spell[SpellName] or Frames.Item[SpellName] then
                 return true
-            end            local sInfo = GetSpellInfo(SpellName)
-            if not NoMacros and type(SpellName) == "string" and ( sInfo and sInfo.name or GetItemCount(SpellName, true) > 0 ) then
-                local SpellTexture = sInfo and sInfo.iconID
+            end
+            local sName, sIcon = GetSpellInfoNameAndIcon(SpellName)
+            if not NoMacros and type(SpellName) == "string" and ( sName or GetItemCount(SpellName, true) > 0 ) then
+                local SpellTexture = sIcon
                 local ItemTexture = GetItemIcon(SpellName)
                 for ID in pairs(Buttons.Macro) do
-                    local mInfo = GetSpellInfo(ID)
-                    if mInfo and SpellName == mInfo.name then
+                    local mName = GetSpellInfoNameAndIcon(ID)
+                    if mName and SpellName == mName then
                         return true
                     end
                 end
                 for ID in pairs(Frames.Macro) do
-                    local mInfo = GetSpellInfo(ID)
-                    if mInfo and SpellName == mInfo.name then
+                    local mName = GetSpellInfoNameAndIcon(ID)
+                    if mName and SpellName == mName then
                         return true
                     end
                 end
@@ -902,11 +1007,17 @@ function SpellFlashCore.FlashAction(SpellName, color, size, brightness, blink, N
         for _, SpellName in ipairs(SpellName) do
             SpellFlashCore.FlashAction(SpellName, color, size, brightness, blink, NoMacros, texture, fixedSize, fixedBrightness)
         end
+    elseif type(SpellName) == "number" and HasAction and HasAction(SpellName) then
+        if not FRAMESREGISTERED and SpellFlashCore.CreateFrames then
+            pcall(SpellFlashCore.CreateFrames, SpellFlashCore)
+        end
+        if FRAMESREGISTERED then
+            FlashActionButton(SpellName, color, size, brightness, blink, texture, fixedSize, fixedBrightness)
+        end
     elseif FRAMESREGISTERED and BUTTONSREGISTERED then
         local SpellName, PlainName = SpellName, SpellName
         if type(SpellName) == "number" then
-            local sInfo = GetSpellInfo(SpellName)
-            local name = sInfo and sInfo.name
+            local name = GetSpellInfoNameAndIcon(SpellName)
             local second =  GetSpellSubtext(SpellName)
             if name then
                 PlainName = name
@@ -937,24 +1048,25 @@ function SpellFlashCore.FlashAction(SpellName, color, size, brightness, blink, N
                 for frame in pairs(Frames.Item[SpellName]) do
                     SpellFlashCore.FlashFrame(frame, color, size, brightness, blink, texture, fixedSize, fixedBrightness)
                 end
-            end            local sInfo = GetSpellInfo(SpellName)
-            if not NoMacros and type(SpellName) == "string" and ( sInfo and sInfo.name or GetItemCount(SpellName, true) > 0 ) then
-                local SpellTexture = sInfo and sInfo.iconID
+            end
+            local sName, sIcon = GetSpellInfoNameAndIcon(SpellName)
+            if not NoMacros and type(SpellName) == "string" and ( sName or GetItemCount(SpellName, true) > 0 ) then
+                local SpellTexture = sIcon
                 local ItemTexture = GetItemIcon(SpellName)
                 for ID, Table in pairs(Buttons.Macro) do
-                    local mInfo = GetSpellInfo(ID)
-                    if mInfo and mInfo.name then
+                    local mName = GetSpellInfoNameAndIcon(ID)
+                    if mName then
                         for button in pairs(Table) do
-                            if SpellName == mInfo.name then
+                            if SpellName == mName then
                                 FlashActionButton(button, color, size, brightness, blink, texture, fixedSize, fixedBrightness)
                             end
                         end
                     end
                 end
                 for ID, Table in pairs(Frames.Macro) do
-                    local mInfo = GetSpellInfo(ID)
+                    local mName = GetSpellInfoNameAndIcon(ID)
 
-                    if mInfo and SpellName == mInfo.name then
+                    if mName and SpellName == mName then
                         SpellFlashCore.FlashFrame(frame, color, size, brightness, blink, texture, fixedSize, fixedBrightness)
                     end
                 end

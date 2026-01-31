@@ -263,6 +263,87 @@ function Hekili:ReInitialize()
 	end
 end
 
+local function CountSpellFlashButtons(sfc)
+	if type(sfc) ~= "table" or type(sfc.Buttons) ~= "table" then
+		return 0
+	end
+	local count = 0
+	for k, v in pairs(sfc.Buttons) do
+		if type(k) == "number" then
+			count = count + 1
+		elseif type(v) == "table" then
+			for _ in pairs(v) do
+				count = count + 1
+			end
+		else
+			count = count + 1
+		end
+	end
+	return count
+end
+
+function Hekili:BootstrapSpellFlashCore()
+	if self.SpellFlashCoreBootstrapped then
+		return
+	end
+
+	local sfc = SpellFlashCore
+	if not sfc then
+		return
+	end
+
+	self.SpellFlashCoreBootstrapped = true
+
+	local methods = {
+		"OnInitialize",
+		"Initialize",
+		"Init",
+		"Startup",
+		"CreateFrames",
+		"RegisterEvents",
+		"ScanButtons",
+		"BuildButtonList",
+		"UpdateButtons",
+		"Refresh",
+		"Update",
+	}
+
+	local function SafeCall(method)
+		local fn = sfc[method]
+		if type(fn) == "function" then
+			local ok = pcall(fn, sfc)
+			if not ok then
+				pcall(fn)
+			end
+		end
+	end
+
+	local function RunPass(label)
+		local before = CountSpellFlashButtons(sfc)
+		if before == 0 then
+			for _, method in ipairs(methods) do
+				SafeCall(method)
+			end
+		end
+		local after = CountSpellFlashButtons(sfc)
+		if self.DebugSpellFlashCore then
+			print("Hekili: SpellFlashCore bootstrap (" .. label .. ") mapped buttons:", after)
+		end
+	end
+
+	RunPass("initial")
+
+	if not self.SpellFlashCoreBootstrapScheduled then
+		self.SpellFlashCoreBootstrapScheduled = true
+		C_Timer.After(1, function()
+			RunPass("delayed-1")
+		end)
+		C_Timer.After(2, function()
+			RunPass("delayed-2")
+		end)
+	end
+end
+
 function Hekili:OnEnable()
 	ns.StartEventHandler()
 	self:TotalRefresh(true)
@@ -279,6 +360,8 @@ function Hekili:OnEnable()
 				.. "."
 		)
 	end
+
+	self:BootstrapSpellFlashCore()
 end
 
 Hekili:ProfileCPU("StartEventHandler", ns.StartEventHandler)
