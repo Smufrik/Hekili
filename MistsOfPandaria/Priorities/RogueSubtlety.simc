@@ -32,7 +32,7 @@ actions+=/ambush,if=buff.subterfuge.up&energy>=60
 actions+=/premeditation,if=talent.premeditation.enabled&(stealthed.all|buff.shadow_dance.up)&combo_points<=4
 actions+=/slice_and_dice,if=!stealthed.all&combo_points>=1&(buff.slice_and_dice.down|buff.slice_and_dice.remains<=(6+6*combo_points)*0.5)
 actions+=/rupture,if=combo_points>=5&(!dot.rupture.ticking|dot.rupture.remains<=(4+4*combo_points)*0.5)&target.time_to_die>10
-actions+=/hemorrhage,if=talent.hemorrhage.enabled&(!dot.hemorrhage.ticking|dot.hemorrhage.remains<4)
+actions+=/hemorrhage,if=settings.use_hemorrhage&talent.hemorrhage.enabled&!stealthed.all&!buff.shadow_dance.up&combo_points<5&(!dot.hemorrhage.ticking|dot.hemorrhage.remains<4)&!dot.garrote.ticking&!dot.rupture.ticking
 actions+=/eviscerate,if=combo_points>=5&dot.rupture.up
 actions+=/ambush,if=buff.shadow_dance.up&combo_points<5
 actions+=/backstab,if=combo_points<5&energy>=35
@@ -55,6 +55,6 @@ actions.aoe+=/fan_of_knives,if=combo_points<5&active_enemies>=3
 
 # Generators
 actions.generators+=/marked_for_death,if=talent.marked_for_death.enabled&combo_points=0
-actions.generators+=/hemorrhage,if=talent.hemorrhage.enabled&combo_points<5&(!dot.hemorrhage.ticking|dot.hemorrhage.remains<4)
+actions.generators+=/hemorrhage,if=settings.use_hemorrhage&talent.hemorrhage.enabled&!stealthed.all&!buff.shadow_dance.up&combo_points<5&(!dot.hemorrhage.ticking|dot.hemorrhage.remains<4)&!dot.garrote.ticking&!dot.rupture.ticking
 actions.generators+=/backstab,if=combo_points<5&energy>=35
 actions.generators+=/shuriken_toss,if=talent.shuriken_toss.enabled&combo_points<5&energy<40

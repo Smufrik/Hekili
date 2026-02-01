@@ -76,6 +76,10 @@ local function canFitHardcast(baseCast, stacks)
     if remains == 999 then
         -- No swing data yet - BLOCK hardcasts to avoid clipping first swing
         -- This happens at combat start before first auto-attack lands
+        -- Exception: during Shamanistic Rage, allow hardcasts to avoid dead time.
+        if state.buff.shamanistic_rage and state.buff.shamanistic_rage.up then
+            return true
+        end
         return false
     end
 

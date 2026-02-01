@@ -1485,6 +1485,8 @@ spec:RegisterAbilities( {
         startsCombat = false,
         texture = 136075,
         
+        talent = function() return not talent.rune_of_power.enabled end,
+        
         handler = function()
             -- Restore 60% mana over 6 sec
             gain( 0.6 * mana.max, "mana" )

@@ -146,6 +146,16 @@ spec:RegisterHook( "reset_precast", function()
     -- Removed workaround sync - testing core issue
 end )
 
+-- Berserk reduces energy costs by 50% in Cat Form; adjust energy spends accordingly.
+spec:RegisterHook( "prespend", function( amount, resource )
+    if resource == "energy" and amount and amount > 0 then
+        if buff.berserk and buff.berserk.up then
+            amount = amount * 0.5
+        end
+    end
+    return amount, resource
+end )
+
 -- Additional debugging hook for when recommendations are generated
 spec:RegisterHook( "runHandler", function( ability )
     if not ability then return end

@@ -1356,8 +1356,8 @@ if self.HasRecommendations then
                         local a = b.Ability
 
                         if i == 1 or conf.glow.queued then
-								local overlayAPI = _G.C_SpellActivationOverlay
-								local glowing = a.id > 0 and overlayAPI and overlayAPI.IsSpellOverlayed and overlayAPI.IsSpellOverlayed( a.id )
+                                local overlayAPI = _G.C_SpellActivationOverlay
+                                local glowing = a and a.id and a.id > 0 and overlayAPI and overlayAPI.IsSpellOverlayed and overlayAPI.IsSpellOverlayed( a.id )
 
                             if glowing and not b.glowing then
                                 b.glowColor = b.glowColor or {}
@@ -2152,7 +2152,7 @@ if self.HasRecommendations then
 
         if d.forceElvUpdate then
             local E = _G.ElvUI and ElvUI[1]
-            E:UpdateCooldownOverride( 'global' )
+            -- E:UpdateCooldownOverride( 'global' )
             d.forceElvUpdate = nil
         end        if d.flashReady == nil then
             -- MoP compatibility: Use simple timer
@@ -2713,9 +2713,12 @@ if self.HasRecommendations then
             local E = unpack( ElvUI )
 
             local cd = b.Cooldown.CooldownSettings or {}
-            cd.font = E.Libs.LSM:Fetch( "font", E.db.cooldown.fonts.font )
-            cd.fontSize = E.db.cooldown.fonts.fontSize
-            cd.fontOutline = E.db.cooldown.fonts.fontOutline
+            -- cd.font = E.Libs.LSM:Fetch( "font", E.db.cooldown.fonts.font )
+            -- cd.fontSize = E.db.cooldown.fonts.fontSize
+            -- cd.fontOutline = E.db.cooldown.fonts.fontOutline
+            cd.font = E.Libs.LSM:Fetch( "font", E.db.actionbar.font )
+            cd.fontSize = E.db.cooldown.actionbar.fontSize
+            cd.fontOutline = E.db.cooldown.actionbar.fontOutline
             b.Cooldown.CooldownSettings = cd
 
             E:RegisterCooldown( b.Cooldown )

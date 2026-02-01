@@ -1592,6 +1592,34 @@ spec:RegisterAbilities( {
         end
     },
 
+    trinket1 = {
+        id = 0,
+        cast = 0,
+        cooldown = 0,
+        gcd = "off",
+
+        startsCombat = false,
+        toggle = "cooldowns",
+
+        handler = function()
+            -- Trinket 1 usage
+        end,
+    },
+
+    trinket2 = {
+        id = 0,
+        cast = 0,
+        cooldown = 0,
+        gcd = "off",
+
+        startsCombat = false,
+        toggle = "cooldowns",
+
+        handler = function()
+            -- Trinket 2 usage
+        end,
+    },
+
     holy_prism = {
         id = 114852,
         cast = 0,

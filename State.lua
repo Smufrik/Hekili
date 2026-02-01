@@ -8241,6 +8241,11 @@ function state:IsKnown(sID)
 	end
 
 	local ability = class.abilities[sID]
+	if not ability then
+		local spec = class.specs and state.spec and class.specs[state.spec.id]
+		ability = spec and spec.abilities and spec.abilities[sID]
+			or (class.specs and class.specs[0] and class.specs[0].abilities and class.specs[0].abilities[sID])
+	end
 
 	if not ability then
 		Error(
@@ -8325,16 +8330,18 @@ function state:IsKnown(sID)
 		return false, "override [ " .. ability.noOverride .. " ] disallowed"
 	end
 
+	local isPetSpell = not (Hekili and Hekili.IsMoP and Hekili.IsMoP())
+
 	if ability.known ~= nil then
 		if type(ability.known) == "number" then
 			return IsPlayerSpell(ability.known)
-				or IsSpellKnownOrOverridesKnown(ability.known, true)
-				or IsSpellKnown(ability.known, true)
+				or IsSpellKnownOrOverridesKnown(ability.known, isPetSpell)
+				or IsSpellKnown(ability.known, isPetSpell)
 		end
 		return ability.known
 	end
 
-	return IsPlayerSpell(sID) or IsSpellKnownOrOverridesKnown(sID, true) or IsSpellKnown(sID, true)
+	return IsPlayerSpell(sID) or IsSpellKnownOrOverridesKnown(sID, isPetSpell) or IsSpellKnown(sID, isPetSpell)
 end
 
 do

@@ -14,15 +14,13 @@ local addon, ns = ...
 local Hekili = _G[ addon ]
 local class, state = Hekili.Class, Hekili.State
 
--- Ensure last_cast_time exists (aligns with other warlock specs) to avoid nil lookups during resource calcs.
-if not state.last_cast_time then
-    state.last_cast_time = setmetatable( {}, { __index = function() return 0 end } )
-end
-
 local floor = math.floor
 local strformat = string.format
 
 local spec = Hekili:NewSpecialization(266, true)
+
+-- Ensure last_cast_time exists across State:reset (must be registered, not set ad-hoc).
+spec:RegisterStateTable( "last_cast_time", setmetatable( {}, { __index = function() return 0 end } ) )
 
 spec.name = "Demonology"
 spec.role = "DAMAGER"

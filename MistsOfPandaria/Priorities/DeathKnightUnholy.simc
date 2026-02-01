@@ -11,7 +11,7 @@ actions.precombat+=/raise_dead
 actions.precombat+=/potion,if=time<0.5
 
 ## Core Flow
-actions+=/mind_freeze
+actions+=/mind_freeze,if=target.debuff.casting.react
 actions+=/cancel_buff,name=unholy_blight,if=variable.advanced_icd&variable.cds_running_out
 actions+=/antimagic_shell,damage=health.max*0.30
 actions+=/call_action_list,name=variables

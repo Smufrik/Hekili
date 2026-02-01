@@ -159,10 +159,10 @@ do
 					return buildTypeCounter({ 1, 2 }, 1)
 				end
 				if k == "frost" then
-					return buildTypeCounter({ 5, 6 }, 2)
+					return buildTypeCounter({ 3, 4 }, 3)
 				end
 				if k == "unholy" then
-					return buildTypeCounter({ 3, 4 }, 3)
+					return buildTypeCounter({ 5, 6 }, 2)
 				end
 				if k == "death" then
 					return buildTypeCounter({}, 4)
@@ -324,9 +324,9 @@ spec:RegisterResource(
 	reset = function()
 		local t = state.frost_runes
 		local count = 0
-		-- Frost runes are in slots 5 and 6
+		-- Frost runes are in slots 3 and 4
 		-- Death runes in these slots can also be used as frost runes
-		for i = 5, 6 do
+		for i = 3, 4 do
 			local start, duration, ready = GetRuneCooldown(i)
 			local runeType = GetRuneType(i)
 			start = start or 0
@@ -421,9 +421,9 @@ spec:RegisterResource(
 	reset = function()
 		local t = state.unholy_runes
 		local count = 0
-		-- Unholy runes are in slots 3 and 4
+		-- Unholy runes are in slots 5 and 6
 		-- Death runes in these slots can also be used as unholy runes
-		for i = 3, 4 do
+		for i = 5, 6 do
 			local start, duration, ready = GetRuneCooldown(i)
 			local runeType = GetRuneType(i)
 			start = start or 0
@@ -513,6 +513,63 @@ local mastery_value = (state and (state.mastery_value or (state.stat and state.s
 local bloodCombatLogFrame = CreateFrame("Frame")
 local bloodCombatLogEvents = {}
 
+-- Separate handler table for events where the player is the DESTINATION (incoming damage / aura changes).
+local bloodCombatLogEventsIncoming = {}
+
+-- Rolling incoming-damage window (last 5s) for proactive Death Strike prediction.
+local function Blood_RecordIncomingDamage(amount, absorbed, now)
+	amount = tonumber(amount) or 0
+	absorbed = tonumber(absorbed) or 0
+	if amount <= 0 then return end
+
+	now = now or GetTime()
+
+	-- In emulation, 'state' is strict about unknown keys; use rawget/rawset for our cache.
+	local w = rawget(state, "shiego_incoming_damage_window")
+	if not w then
+		w = { events = {}, head = 1 }
+		rawset(state, "shiego_incoming_damage_window", w)
+	end
+
+	-- Track "incoming damage pressure" including absorbs.
+	-- In CLEU payloads, 'amount' is post-absorb damage and 'absorbed' is the absorbed portion.
+	-- For DS prediction we want the pre-absorb total: amount + absorbed.
+	local effective = math.max(0, amount + absorbed)
+	if effective <= 0 then return end
+
+	local events = w.events
+	events[#events + 1] = { t = now, a = effective }
+end
+
+local function Blood_GetIncomingDamage5s(now)
+	now = now or (state.query_time or GetTime())
+	local w = rawget(state, "shiego_incoming_damage_window")
+	if not w or not w.events then
+		state.incoming_damage_5s = 0
+		return 0
+	end
+
+	local cutoff = now - 5
+	local events = w.events
+	local head = w.head or 1
+
+	-- Advance head past expired entries (do not shift the array).
+	while events[head] and events[head].t < cutoff do
+		events[head] = nil
+		head = head + 1
+	end
+	w.head = head
+
+	local sum = 0
+	for i = head, #events do
+		local e = events[i]
+		if e then sum = sum + (e.a or 0) end
+	end
+
+	state.incoming_damage_5s = sum
+	return sum
+end
+
 local function RegisterBloodCombatLogEvent(event, handler)
 	if not bloodCombatLogEvents[event] then
 		bloodCombatLogEvents[event] = {}
@@ -520,12 +577,22 @@ local function RegisterBloodCombatLogEvent(event, handler)
 	table.insert(bloodCombatLogEvents[event], handler)
 end
 
+local function RegisterBloodIncomingCombatLogEvent(event, handler)
+	if not bloodCombatLogEventsIncoming[event] then
+		bloodCombatLogEventsIncoming[event] = {}
+	end
+	table.insert(bloodCombatLogEventsIncoming[event], handler)
+end
+
 bloodCombatLogFrame:SetScript("OnEvent", function(self, event, ...)
 	if event == "COMBAT_LOG_EVENT_UNFILTERED" then
 		local timestamp, subevent, hideCaster, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags =
 			CombatLogGetCurrentEventInfo()
 
-		if sourceGUID == UnitGUID("player") then
+		local playerGUID = UnitGUID("player")
+
+		-- Outgoing (player as source).
+		if sourceGUID == playerGUID then
 			local handlers = bloodCombatLogEvents[subevent]
 			if handlers then
 				for _, handler in ipairs(handlers) do
@@ -545,6 +612,70 @@ bloodCombatLogFrame:SetScript("OnEvent", function(self, event, ...)
 				end
 			end
 		end
+
+		-- Incoming (player as dest).
+		if destGUID == playerGUID then
+			local handlers = bloodCombatLogEventsIncoming[subevent]
+			if handlers then
+				for _, handler in ipairs(handlers) do
+					handler(
+						timestamp,
+						subevent,
+						sourceGUID,
+						sourceName,
+						sourceFlags,
+						sourceRaidFlags,
+						destGUID,
+						destName,
+						destFlags,
+						destRaidFlags,
+						select(12, CombatLogGetCurrentEventInfo())
+					)
+				end
+			end
+		end
+	end
+end)
+
+-- Track last-5s incoming damage using CLEU payloads.
+RegisterBloodIncomingCombatLogEvent("SWING_DAMAGE", function(timestamp, subevent, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, amount, overkill, school, resisted, blocked, absorbed)
+	Blood_RecordIncomingDamage(amount, absorbed, timestamp)
+end)
+
+local function Blood_RecordSpellDamage(timestamp, amount, absorbed)
+	Blood_RecordIncomingDamage(amount, absorbed, timestamp)
+end
+
+RegisterBloodIncomingCombatLogEvent("RANGE_DAMAGE", function(timestamp, _, _, _, _, _, _, _, _, _, spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed)
+	Blood_RecordSpellDamage(timestamp, amount, absorbed)
+end)
+
+RegisterBloodIncomingCombatLogEvent("SPELL_DAMAGE", function(timestamp, _, _, _, _, _, _, _, _, _, spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed)
+	Blood_RecordSpellDamage(timestamp, amount, absorbed)
+end)
+
+RegisterBloodIncomingCombatLogEvent("SPELL_PERIODIC_DAMAGE", function(timestamp, _, _, _, _, _, _, _, _, _, spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed)
+	Blood_RecordSpellDamage(timestamp, amount, absorbed)
+end)
+
+RegisterBloodIncomingCombatLogEvent("ENVIRONMENTAL_DAMAGE", function(timestamp, _, _, _, _, _, _, _, _, _, environmentalType, amount, overkill, school, resisted, blocked, absorbed)
+	Blood_RecordSpellDamage(timestamp, amount, absorbed)
+end)
+
+-- Queue Rune Tap when Vampiric Blood aura is applied/refreshed (covers manual casts too).
+RegisterBloodCombatLogEvent("SPELL_AURA_APPLIED", function(timestamp, subevent, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, spellID)
+	if spellID == 55233 and destGUID == UnitGUID("player") then
+		local baseGCD = (gcd and (gcd.duration or gcd.base)) or 1.5
+		local windowGCDs = (settings and settings.vamp_tap_window_gcds) or 2
+		state.vamp_tap_expires = (state.query_time or GetTime()) + (windowGCDs * baseGCD)
+	end
+end)
+
+RegisterBloodCombatLogEvent("SPELL_AURA_REFRESH", function(timestamp, subevent, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, spellID)
+	if spellID == 55233 and destGUID == UnitGUID("player") then
+		local baseGCD = (gcd and (gcd.duration or gcd.base)) or 1.5
+		local windowGCDs = (settings and settings.vamp_tap_window_gcds) or 2
+		state.vamp_tap_expires = (state.query_time or GetTime()) + (windowGCDs * baseGCD)
 	end
 end)
 
@@ -756,8 +887,8 @@ spec:RegisterStateTable(
 
 			local runeMapping = {
 				blood = { 1, 2 },
-				frost = { 5, 6 },
-				unholy = { 3, 4 },
+				frost = { 3, 4 },
+				unholy = { 5, 6 },
 			}
 
 			for _, runeIndex in ipairs(usedRunes) do
@@ -815,8 +946,8 @@ spec:RegisterStateTable(
 			-- /run for i=1,6 do local t=GetRuneType(i); local s,d,r=GetRuneCooldown(i); print(i,"type",t,"ready",r) end
 			local runeMapping = {
 				blood = { 1, 2 },
-				frost = { 5, 6 },
-				unholy = { 3, 4 }, --
+				frost = { 3, 4 },
+				unholy = { 5, 6 },
 				any = { 1, 2, 3, 4, 5, 6 },
 			}
 
@@ -1040,6 +1171,31 @@ spec:RegisterHook("reset_precast", function()
 	if state.death_runes and state.death_runes.reset then
 		state.death_runes.reset()
 	end
+end)
+
+-- Shiego-style simple booleans for older SimC parser compatibility.
+-- These are intentionally *simple* state keys so APL lines can be just: if=shiego_panic, etc.
+spec:RegisterHook("reset_precast", function()
+	-- Prefer internal resource tables; avoid external APIs (e.g., UnitThreatSituation).
+	local blood = (state.blood_runes and state.blood_runes.current) or 0
+	local frost = (state.frost_runes and state.frost_runes.current) or 0
+	local unholy = (state.unholy_runes and state.unholy_runes.current) or 0
+	local death = (state.death_runes and state.death_runes.count) or 0
+
+	-- Provide very simple rune aliases for legacy APLs that expect state.blood/state.frost/etc.
+	rawset(state, "blood", blood)
+	rawset(state, "frost", frost)
+	rawset(state, "unholy", unholy)
+	rawset(state, "death", death)
+
+	local rp = (runic_power and runic_power.current) or (state.runic_power and state.runic_power.current) or 0
+	local hp = (health and health.pct) or (state.health and state.health.pct) or 100
+
+	rawset(state, "shiego_panic", hp < 60)
+	rawset(state, "shiego_bank_full", (unholy >= 2 and frost >= 2) or (death >= 2))
+	rawset(state, "shiego_should_dump_rp", rp >= 35)
+	rawset(state, "shiego_free_proc", (buff.crimson_scourge and buff.crimson_scourge.up) or false)
+	rawset(state, "shiego_vamp_combo", (buff.vampiric_blood and buff.vampiric_blood.up) or false)
 end)
 
 spec:RegisterGear("resolve_of_undying", 104769, {
@@ -1321,6 +1477,29 @@ spec:RegisterAuras({
 			t.caster = "nobody"
 		end,
 	},
+
+		runic_corruption = {
+			id = 51460,
+			duration = 3,
+			max_stack = 1,
+			generate = function(t)
+				local name, icon, count, debuffType, duration, expirationTime, caster = FindUnitBuffByID("player", 51460)
+
+				if name then
+					t.name = name
+					t.count = count or 1
+					t.expires = expirationTime
+					t.applied = expirationTime - duration
+					t.caster = caster
+					return
+				end
+
+				t.count = 0
+				t.expires = 0
+				t.applied = 0
+				t.caster = "nobody"
+			end,
+		},
 
 	horn_of_winter = {
 		id = 57330,
@@ -2071,7 +2250,7 @@ spec:RegisterAbilities({
 		gcd = "off",
 
 		spend = 20,
-		spendType = "runicpower",
+		spendType = "runic_power",
 
 		startsCombat = true,
 
@@ -2088,7 +2267,7 @@ spec:RegisterAbilities({
 		gcd = "spell",
 
 		spend = 20,
-		spendType = "runicpower",
+		spendType = "runic_power",
 
 		startsCombat = false,
 
@@ -2320,12 +2499,13 @@ spec:RegisterAbilities({
 		gcd = "off",
 
 		toggle = "interrupts",
+		debuff = "casting",
+		readyTime = state.timeToInterrupt,
 
 		startsCombat = true,
 
 		handler = function()
-			if active_enemies > 1 and talent.asphyxiate.enabled then
-			end
+			interrupt()
 		end,
 	},
 
@@ -2342,6 +2522,27 @@ spec:RegisterAbilities({
 
 		handler = function()
 			applyDebuff("target", "necrotic_strike")
+		end,
+	},
+
+	death_siphon = {
+		id = 108196,
+		cast = 0,
+		cooldown = 0,
+		gcd = "spell",
+
+		spend = 1,
+		spendType = "death_runes",
+
+		toggle = "defensives",
+		startsCombat = true,
+
+		usable = function()
+			return talent.death_siphon.enabled and runes.death.count > 0
+		end,
+
+		handler = function()
+			-- Damage/heal modeling omitted.
 		end,
 	},
 
@@ -2421,7 +2622,7 @@ spec:RegisterAbilities({
 		cooldown = 600,
 
 		spend = 30,
-		spendType = "runicpower",
+		spendType = "runic_power",
 	},
 
 	raise_dead = {
@@ -2447,7 +2648,7 @@ spec:RegisterAbilities({
 		gcd = "spell",
 
 		spend = 30,
-		spendType = "runicpower",
+		spendType = "runic_power",
 
 		startsCombat = true,
 		-- texture = 237518, -- THIS ISN'T NEEDED? Removing for now
@@ -2467,6 +2668,7 @@ spec:RegisterAbilities({
 
 		handler = function()
 			-- Rune Tap base functionality
+			state.vamp_tap_expires = 0
 		end,
 	},
 
@@ -2533,6 +2735,11 @@ spec:RegisterAbilities({
 
 		handler = function()
 			applyBuff("vampiric_blood")
+			-- Shiego "Vamp-Tap" combo: after casting Vampiric Blood, force Rune Tap as
+			-- a near-immediate follow-up (within a small, fixed GCD window).
+			local baseGCD = (gcd and (gcd.duration or gcd.base)) or 1.5
+			local windowGCDs = (settings and settings.vamp_tap_window_gcds) or 2
+			state.vamp_tap_expires = (state.query_time or GetTime()) + (windowGCDs * baseGCD)
 		end,
 	},
 
@@ -2680,10 +2887,11 @@ spec:RegisterStateExpr("runes", function()
 		return c
 	end
 
-	local blood = readyCount({1,2})
-	local frost = readyCount({5,6})
-	local unholy = readyCount({3,4})
-	local death = readyCount({1,2,3,4,5,6}, 4)
+	local all = { 1, 2, 3, 4, 5, 6 }
+	local blood = readyCount(all, 1)
+	local frost = readyCount(all, 2)
+	local unholy = readyCount(all, 3)
+	local death = readyCount(all, 4)
 
 	return {
 		blood = { count = blood },
@@ -2863,12 +3071,101 @@ spec:RegisterStateExpr("rune_max", function()
 	return 6
 end)
 
+spec:RegisterStateExpr("is_tanking", function()
+	-- Threat check on current target: >=2 means tanking (secure threat).
+	if not UnitThreatSituation then return true end
+	local t = UnitThreatSituation("player", "target") or 0
+	return t >= 2
+end)
+
+spec:RegisterStateExpr("incoming_damage_5s", function()
+	-- Rolling window from CLEU (last 5 seconds).
+	local now = state.query_time or GetTime()
+	return Blood_GetIncomingDamage5s(now)
+end)
+
 spec:RegisterStateExpr("death_strike_heal", function()
-	-- Estimate Death Strike healing based on recent damage taken
-	local base_heal = health.max * 0.07 -- Minimum 7%
-	local max_heal = health.max * 0.25 -- Maximum 25%
-	-- In actual gameplay, this would track damage taken in last 5 seconds
-	return math.min(max_heal, math.max(base_heal, health.max * 0.15)) -- Estimate 15% average
+	-- MoP Death Strike: heal is based on damage taken in the last 5 seconds with a minimum floor.
+	-- Use combat-log-tracked incoming damage for the prediction.
+	local dmg5 = state.incoming_damage_5s
+	if dmg5 == nil then
+		dmg5 = Blood_GetIncomingDamage5s(state.query_time or GetTime())
+	end
+	local min_heal = health.max * 0.07
+	local from_damage = dmg5 * 0.20
+	local heal = math.max(min_heal, from_damage)
+	local cap = health.max * 0.25
+	return math.min(cap, heal)
+end)
+
+spec:RegisterStateExpr("death_strike_expected_mitigation", function()
+	local heal = state.death_strike_heal or 0
+	local mastery = state.mastery_value or (state.stat and state.stat.mastery_value) or 0
+	return heal * (1 + mastery)
+end)
+
+spec:RegisterStateExpr("blood_shield_current", function()
+	-- Current Blood Shield absorb amount, if detectable.
+	return state.blood_shield_absorb or (buff.blood_shield and buff.blood_shield.v1) or 0
+end)
+
+spec:RegisterStateExpr("death_strike_total_mitigation", function()
+	-- Current shield plus predicted mitigation from a Death Strike cast now.
+	return (state.blood_shield_current or 0) + (state.death_strike_expected_mitigation or 0)
+end)
+
+spec:RegisterStateExpr("shiego_ds_panic", function()
+	local thresh = (settings and settings.shiego_panic_health_pct) or 60
+	return health.pct < thresh
+end)
+
+spec:RegisterStateExpr("shiego_ds_proactive", function()
+	local threshold = (settings and settings.shiego_ds_mitigation_threshold) or 150000
+	return (state.death_strike_expected_mitigation or 0) >= threshold
+end)
+
+spec:RegisterStateExpr("vamp_tap_window", function()
+	local expires = rawget(state, "vamp_tap_expires") or 0
+	return expires > (state.query_time or GetTime())
+end)
+
+spec:RegisterStateExpr("vamp_tap_remains", function()
+	local now = (state.query_time or GetTime())
+	local expires = rawget(state, "vamp_tap_expires") or 0
+	return math.max(0, expires - now)
+end)
+
+spec:RegisterStateExpr("shiego_rp_reserve", function()
+	local reserve = (settings and settings.shiego_rp_emergency_reserve) or 20
+	if cooldown.icebound_fortitude and cooldown.icebound_fortitude.ready then
+		return reserve
+	end
+	return 0
+end)
+
+spec:RegisterStateExpr("shiego_should_rune_strike", function()
+	local dump = (settings and settings.shiego_rp_dump_threshold) or 35
+	local reserve = state.shiego_rp_reserve or 0
+	local rp = runic_power.current or 0
+
+	-- Shiego does not pool RP; he dumps to fish for Runic Corruption.
+	if rp <= (reserve + dump) then return false end
+
+	-- If Runic Corruption is down, treat Rune Strike as higher urgency.
+	if buff.runic_corruption and buff.runic_corruption.down then
+		return true
+	end
+
+	-- Even if RC is up, keep cycling above the threshold.
+	return true
+end)
+
+spec:RegisterStateExpr("shiego_should_blood_boil", function()
+	return (buff.crimson_scourge and buff.crimson_scourge.up) or active_enemies >= 3
+end)
+
+spec:RegisterStateExpr("shiego_should_heart_strike", function()
+	return active_enemies < 3 and (buff.crimson_scourge and buff.crimson_scourge.down)
 end)
 
 -- Vengeance state expressions
@@ -3000,7 +3297,64 @@ spec:RegisterSetting("use_army_of_the_dead", true, {
 	width = "full",
 })
 
+spec:RegisterSetting("save_drw_for_boss_phase", false, {
+	name = strformat("Save %s for boss phase", Hekili:GetSpellLinkWithTexture(49028)),
+	desc = "If checked, Dancing Rune Weapon will not be recommended automatically.",
+	type = "toggle",
+	width = "full",
+})
+
+spec:RegisterSetting("shiego_ds_mitigation_threshold", 150000, {
+	name = "Proactive DS Mitigation",
+	desc = "Cast Death Strike proactively when predicted mitigation exceeds this value.",
+	type = "range",
+	min = 0,
+	max = 500000,
+	step = 5000,
+	width = "full",
+})
+
+spec:RegisterSetting("shiego_panic_health_pct", 60, {
+	name = "Panic Health %",
+	desc = "Force Death Strike when health percent drops below this threshold.",
+	type = "range",
+	min = 0,
+	max = 100,
+	step = 1,
+	width = "full",
+})
+
+spec:RegisterSetting("shiego_rp_dump_threshold", 35, {
+	name = "RP Dump Threshold",
+	desc = "If Runic Power exceeds reserve + this value, recommend Rune Strike to fish for Runic Corruption.",
+	type = "range",
+	min = 0,
+	max = 100,
+	step = 1,
+	width = "full",
+})
+
+spec:RegisterSetting("shiego_rp_emergency_reserve", 20, {
+	name = "Emergency RP Reserve",
+	desc = "Keep this much RP in reserve when Icebound Fortitude is ready.",
+	type = "range",
+	min = 0,
+	max = 60,
+	step = 1,
+	width = "full",
+})
+
+spec:RegisterSetting("vamp_tap_window_gcds", 2, {
+	name = "Vamp-Tap Window (GCDs)",
+	desc = "After casting Vampiric Blood, force Rune Tap within this many GCDs.",
+	type = "range",
+	min = 1,
+	max = 4,
+	step = 1,
+	width = "full",
+})
+
 -- Register default pack for MoP Blood Death Knight
 spec:RegisterPack(
-	"Blood", 20251026, [[Hekili:9Q1EVTnos8plflqq62C6SJJttpuhGUB372Tl2IcOE3FkjAjABErsuqIkz9cd9z)gsQhKuIskUPhkABmFmV4m)MhoEl9(QNBeIH9(81lUE9YfxFRZ1RwD3Y78CzhZWEUzOWhq7HFifLa)7pftPr8vpgtrr8BxqlZdHD8C3wsIz)wQ32Hj5BHZMHdHLxVWZ9ajkclplUi0Z9Rhifvb8)IQcQzAvaDh85qgHMwfetkyW27O5vb)k(bsmXbeKC6osmW(FOk4Jye7qvWVNs2FG9pQceYAvWL)b9lVU6tvF6hGZ8LCCinzlIv9jjDlCYAw6nB(7B5xXhwPaNgIVISBZR2wUBNJ(6oLzwUonf7xCGGJJ43vE1U1CIOpLo8npqZt9P78FIKYW5TxwF5rUFoIuG9JWibJFvgM5S)aTm2HF4hXdFPmQWYwBA(zAoyX)NX0NApnCMesAK)UCm(VWQlJszKe0EsiOA444RIqWNWBoGrXSdojO)8hx4SAH6ncrXX(Yp6ZFkVI7qT5ruobTngxm9rdP0yUbOGRHn3ZPeu7WOzC9i8oCAbyl0oBEzA)JIOINEPPZhNIti4I73CZKxSGKUpg7Zq57XSg76)PvfdiPfzKCm4uU9yvWN)W)QkaSEz48ozYP1IamP5NLuVwvVIMTPaZU6ruCjEZY5Ct8FIdlzy9BkLsN6NSSq273SA9COwkgh5hrzgsYRGLAcuIr7lXoms4dGf50jXw7YPfm)D4hbh56DMd3simYEKWqdrbGdGoxjPG7mqkFPhO)A4HYWl80jfDC9IM3L)a9F5qjnUvWtbknkwtQAD5opObTR)SGg6Z4DL5h1C87zxoDQDV63Bl0dC3W5CZ)ld9EeLao1asGqqhNMdtbsiElTKJZqZzewzKW8o5l7n6VSkWnAu3eQAoK(61dtliQNhENntIOlFwOzeknKtgbTFcJYOPt9WyImTYIMNNCKN9GDOl1aylWBadxD0p)J(mQFebF)ML3zXeYrEimCsXWBlZJm1lVmQ7JnWWvbqiJO2HQGIekLDql0RdUMBI4z29ly5KholxJBxmtcFj)rOWPm9an(iOJLPmWSCHCvbaw7IV(0P6tlisZ6x)AlSsggx77WqX40g0synhCk3SfDHcKs4b(tKtbdkgc43IlQzNyxj74pK9KTUfvvJnlSjysWA)ymo8GISPUCR4zbh)cBq)xCP5nYXjiiniKR50PE3sDtr4aiOKqsTzv6a5kYXwf8vzs2Gp(fxOgVL)TvvbsF6cffvlHmOR0s22Cm6bnF128z2VxTXOZrXAYo70GeEeI0kLgz7zebv8Fxa63pNtsk4196cVF58IHHADd5frKKGJiqb2XhRRgMxEwvGmwWo)L(6qooWQgIo2MfkuYi)cjF0YGzsdPgVLsIpRRdX7X(G9ptwIRz(Ll65GFVA9nMut4H09KaFeW4ZOpHZVFZ7wmLHq7IZmM3onbWMCwpAQRjnHLA4fNP(D7i6350lHjnWjcgzMusrgCAJnVPfAsXA9MjGGEok7Q2A2(a9xG8guMiZce2FZBgkQhQF)zeRlpTUNDngyo8rEAg57Oki4GGDtwLRKvz4cg0ZAtvKVW8s0KlHMdjG)RXGruqoewvt4dPSEoGgdzqN5LmyNDAAUZlr8NQi8THoiP0yU0QvAvRbAHNphATAHNl4cuahVDMlR9CFcLNcEefEU)gemNZ4TD(wJXP4u9jpxujdyUNRBs5oGbEUITeZ2rnifw4ZI5fv7B69tEUWlkiSeeia9IWaclyLNBtKOhdKpRu4vGpOfV9osPLiMtVvtrVbcs6ixBozoPUXGunhYWPuoXQCsMC3VLK1QIRLieUGT2QoA7sTYExedNq3o9ZxtREbxaaTMbrvb3VPkyzh5vsOZP)BTsFfhwjrE3IoQO4CZPYDJrfJyXAjsrCvIj7jUQX2Co9Uj4uFvVk40PgoPGJ0JtQ4rCoTCX8nn3A30S0EaOTC8kYK2McYzpACGm9sP7MfcJ9LdAVFtZQ6VrW1GB96orzGYleYJ9O5EwPvwTsm(d9ouzChKvZbvMMPkFgaxQ5ggtpGpABzKRXqMgclQHgMdKuIW6lNOE7KVgccAGa06PaotQ32M(q4iZIcD9koocc)(DZKO2xr7jYklGuCdHEmNRQNHs823oH7HsyPJl2m1odi9X(IemYWm8iahpr3GZ(tr062z8eCNteVDhmqzm)wduEcA)6fA9JAZitRdPvIMyQoEJw2GDtOTNQ)VyAhzowIeaMPlnLw(0ANz88ZNdTZVD8AdSZHoAPp72XdW7p0nzqEhqyvWpca9o8meCvOBaCvbVxhWU)eFhV8HzZBEHV2GUhT0INbhgw7wBKoIHYgVeJP8agcqDLsTm9hB8efAWN1BtUyod6pc46YyUt5LYCgYDvH0CI2HdBKrDKIlMJRznUIamHNG47C3hJ1fUOGhRd8RzZrB0qVo8rBA57SK0n9HHaOA9UgTNNVHbm0dTEGUxgfw7CA5XQwP5W(w1JQqf9tnv3jVC9mmv3jVC9b9C6o5UP6oXsXhZgC4zxPFt5PJIqmB8DlzVuBkZ08zxxUC4(HM(Tc6wskgxA1Z5AToQmLj7qm2(UNeYJLV)PAPYO1pnx9U8kdOtMBor7HTY241qnY3u1yyHtdIEz)7w)vtb(cCpsPUy77Vs7qcpwToO1F4uLEPlDxhHd4rtbKUcmtTeo5P5)uCj8FlfRv3Fut3Id4LonL69BisTITwLdn1NoGp30CyKz(jTEJneVozOlR)a(ltlfZgBy1Wyd8FF26eM(10WA)J3)l]]
+	"Blood", 20260201, [[Hekili:nJ1(UTTnx8NLKa45Et1xQ7(wrsbwswrx3wrqv22)jrAjAlIijkisf)LIa9ySxO9ITZHuYIswYoDlDyiOPrK8CHNZVZn6n17Ap3qQI59XztM96jZMm1z2K5ZxmZZvDxgZZnJgCdDn8hP0e43NhleH4Q3flOHi1srrEaSJN7YcES6ht9w2hlNoBkC2mwaS8IjEUr8WqM5SmzGN71rCzjb)hTKuj0sIyf8DGIlsljXCPc2ELiVK8E2n8yUdOi5Iv8yq8NusUKrvrLKFkLVos9MsIwxljJ)fXvpPK8Isciu2Arj5NfR5bWgF)615mPKFliPFHR4RPOKEs5hk)Wja)UkNfiswsvLFWOdsNS6LE2zVCjYEFyfjlnG9C(QZoAzXQvoTx3PiBaYfPmFjOrXHiTgsBwZjuSjTFkJe5P(Iv(B4Pkw(wIBV8EOptOnOv3Yle5W1)DXInBpnCMeEAO)QCg7Z6BMIMVMPCczAjfqLkE6ANCgqGnvb04yFZN(O765iO5Sq2kwkALLh(SbcrmQ5ToAEr6UNKk0AgU(TmFwklHZKV9S5hKqjO6XmFZvQ2kCzJosgFvoxKZvWUKtMQro)5FCllpMDBkneGhN0bk9geRimAsjjzlsQKWsxZtzoAsa2CfnvFAadhaN8sxaXdi83Fvj50sIKPqZQ0rQzUFgEA)ignwf5NfOAytTWawTKMEdqQgZinSd81H8aflSTU82Z2veHs)MJ4RIaqBe4aCAaonopWEgIry(svo)gTX3(BFWyZK(0BP8y6Yy2OXnYqFtU)ERfQVbpz)sINfjsnaWywkcaBw2HLIYjCKT5s7pljhFoywoUK8juNGuhvEPlfPFd4udOzLeT6(C4drk4BHvvrSe43cJZvBnVLt1EPhM1OspqpI)QI44MiSAmnzCnU5AEclgGgg00LF63bT7xLaMGUnNu8Dvj7UIMNd)9iGkWbbPJiJHtaMdoecbBGo3lUSKuKgdRdqcHSkvkpjPi12gVn8cvFAAaGf0(n)nmAMXs3nGA6OJAqnuyNW8n(GE5JIXplIkzJ4PqYfKxH0eiVT)c5BnWwNe6))PtCMUOFv4llhOnLfsMpeHMiRC4xhb2UJVasXjogmLxJgm0vkvqPedoawf97B4yrIFJMKXZXQavvjWaNTy3(L5Tv04RZWJkC1LeInpDXK(jsBDv0m84idW)gtrhALVDqcS4)RMuDt15qa1UqPewPjBXdEaBPOaZGlYvCvriRd3MpG2YsYeBy5DXewuoBYi91)0PJwLlKk4)lsHCg3D60(zjfWPaOamBYiwCmYUdbxMnPo057f)a48eQQuyJN)m0lIjULTQOhl0zUR8LNl4XwGEOsbOhIc1si65gDH6qHQUoDmDDbZrXdUb0O7VxVL(M5VIbjgQ3Pl7muVeKKvOpwWeZTf090MufuWJeYcO31pj6wo0vE4FgqRsiponefnjKlzqCMC)kXqxQrdED9HK(umr1b12JoOzWKiRibcX(0vMGVvCzuvomiaerTqZg5fzM2pAZinIBNCPq1OIyqna26NNvJkC1vWRrcLKxcmoMrXIVJN(IzBHiwyGwf9FmrdDzm0oCSpW5mtNzvnozh6TO3gi0j)TWVqADqEyNUuS4KR2YystDroprIHdUbqV3yBYyUEOptY43bOjWlKSEpx92GgtdDgo6lnmSvpRDjVhWXG8WCtvWHP5HwbYhG5nWanNLbqToSZwTM7OtPB3O3oCjcTz2CbPdQKnmfpm03GYRvN3EUGJtchupa0IPWqqEUBO5Pyjup3FesXMRBo71DMTb66YZLwOa2556MuScuhpx9w6bTSLkSWh1dVv1eK35EUbypR5CQN7rqkJbW0LK7VVKuDGEq2GgO1jp36qepfCrguu7aW1TYoFrdFSIiqwnVdRWX)Y5zMZ(1oQWwZha12O4nbkOE)QbnbhKrDczqUTyVwHDIy2rC9ftyAXFEx5AG1OqF9WxbJjgPFAd92Xri9F7G03BatdJScVq(8)q(SviDcEA4Vc(bUdROfXhaVVNXtBeK1iT9bPRpw35snrG(MN)OP))(GYpiwST3O9dQqYBAdFhxBNjBBjbOGAFqShcPTZXODaBF5G(CbTGTpwV)sNmz9)OkDdtR3A)zR6Dcdlw1StF(3o8PNhCzqyDTVUEBZBWSdAVbCCqJ9x3rgpeuCQM5hz)Ic9pBO(C72WpWLsstt)LKNwsW5eTsET74Pp6(2692onzBhYoHNT8a6ro1tC(pFGt77rNsP4JLwRNTNaTVG8g20zyZojJHn2FfHoAXRM0pd6wsOLfQ9OQ7H7ZT4(UZUUTKXdrrHzhrexvbTtRrQ6oDS(2mZQzHgz3Z4VOW)Ubf(dfypZ6c2zG4TL5QlSCOi)VWNE8X4Dh)35rhTnS77Lf1oWXg5B9(IMoB75ngljpz4EI2xNTd(KJAnW2ATd)1h)GT7EU2o(48iL90o22xICWRVY0TW)vgMO7BI0TiFDV4dxyEyo0tt47n9(bEkMwG1bnpJ2AD2ZZVm0TC4C7ap3Xc3Z971214S4D7IC7nf(d)bD(Bpoq9pE)1d]]
 )

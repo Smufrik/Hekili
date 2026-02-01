@@ -5800,7 +5800,7 @@ found = true end
         end
 
         if option == "newPackSpec" and packControl[ option ] == "" then
-            packControl[ option ] = GetCurrentSpec()
+            packControl[ option ] = tostring(GetCurrentSpec())
         end
 
         if packControl[ option ] ~= nil then return packControl[ option ] end
@@ -10106,6 +10106,12 @@ do
                 -- First element is the action, if supported.
                 if a == 1 then
                     local ability = str:trim()
+
+                    -- SimC uses 'health_stone'; Hekili uses 'healthstone'.
+                    if ability == "health_stone" then
+                        ability = "healthstone"
+                        insert( warnings, "Line " .. line .. ": Converted 'health_stone' to 'healthstone'." )
+                    end
 
                     if ability and ( ability == "use_item" or class.abilities[ ability ] ) then
                         if ability == "pocketsized_computation_device" then ability = "cyclotronic_blast"

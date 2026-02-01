@@ -12,8 +12,6 @@ actions.precombat+=/lightning_bolt,if=time<1
 
 # Main rotation
 actions+=/run_action_list,name=opener,if=time<12
-# Pause all actions during Shamanistic Rage - mana regen window
-actions+=/wait,sec=buff.shamanistic_rage.remains,if=buff.shamanistic_rage.up
 actions+=/spiritwalkers_grace,if=movement.distance>0
 actions+=/call_action_list,name=cooldowns
 actions+=/call_action_list,name=aoe,if=active_enemies>=3
