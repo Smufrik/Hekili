@@ -1569,7 +1569,6 @@ spec:RegisterAbilities( {
         
         requires = "shield",
         startsCombat = true,
-        texture = 132357,
         
         handler = function()
             -- Shield Slam is Protection's signature ability

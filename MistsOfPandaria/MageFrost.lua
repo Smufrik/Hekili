@@ -453,11 +453,16 @@ end)
         
         -- Core Frost Procs and Mechanics
         brain_freeze = {
-            id = 44549,
+            id = 57761,
+            copy = 44549,
             duration = 15,
             max_stack = 1,
             generate = function( t )
-                local name, icon, count, debuffType, duration, expirationTime, caster = FindUnitBuffByID( "player", 44549 )
+                local name, icon, count, debuffType, duration, expirationTime, caster = FindUnitBuffByID( "player", 57761 )
+                
+                if not name then
+                    name, icon, count, debuffType, duration, expirationTime, caster = FindUnitBuffByID( "player", 44549 )
+                end
                 
                 if name then
                     t.name = name
@@ -1158,6 +1163,10 @@ end)
             -- Treat it as known while Brain Freeze is active so it can be recommended.
             known = function()
                 return state.buff.brain_freeze.up or state.IsSpellKnownOrOverridesKnown(44614, true)
+            end,
+
+            usable = function()
+                return state.buff.brain_freeze.up
             end,
             
             handler = function()

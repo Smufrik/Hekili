@@ -1399,6 +1399,11 @@ spec:RegisterAbilities( {
         texture = 460857,
 
         usable = function()
+            -- Soulburn-empowered Soul Swap must be usable immediately after Soulburn.
+            if buff.soul_burn.up then
+                return true
+            end
+
             -- Check if there are DoTs on the target
             if not (debuff.agony.up or debuff.corruption.up or debuff.unstable_affliction.up) then
                 return false, "target has no affliction DoTs to swap"
@@ -1407,11 +1412,18 @@ spec:RegisterAbilities( {
         end,
 
         handler = function()
+            local soulburned = buff.soul_burn.up
+
             -- Store target's DoTs
             applyBuff( "soul_swap" )
 
-            -- Remove DoTs from target if not using Exhale
-            if buff.soul_swap_exhale.down then
+            -- Soulburn is consumed by Soul Swap in MoP behavior.
+            if soulburned then
+                removeBuff( "soul_burn" )
+            end
+
+            -- Remove DoTs from target only for non-Soulburn inhale flow.
+            if not soulburned and buff.soul_swap_exhale.down then
                 removeDebuff( "target", "agony" )
                 removeDebuff( "target", "corruption" )
                 removeDebuff( "target", "unstable_affliction" )

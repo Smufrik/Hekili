@@ -2015,6 +2015,10 @@ local function CLEU_HANDLER( event, timestamp, subtype, hideCaster, sourceGUID, 
 
         if damage and damage > 0 then
             ns.storeDamage( time, damage, bit.band( damageType, 0x1 ) == 1 )
+
+            if state.role and state.role.tank and state.vengeance and state.vengeance.add_damage then
+                state.vengeance:add_damage( damage )
+            end
         end
     end    local minion = ns.isMinion( sourceGUID )
 

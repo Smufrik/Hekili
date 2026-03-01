@@ -1965,6 +1965,11 @@ spec:RegisterAbilities( {
                 return false, "doc only"
             end
 
+            -- Precombat DoC setup: allow hardcast Healing Touch before entering combat.
+            if ( state.time or 0 ) <= 0 then
+                return true
+            end
+
             -- Prefer to hold PS for bleed snapshots unless it is about to expire.
             if buff.predatory_swiftness.up then
                 local cp = combo_points.current or 0

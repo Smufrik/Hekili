@@ -365,11 +365,27 @@ state.vengeance = state.vengeance or {
     
     -- Get current vengeance attack power
     get_attack_power = function(self)
-        return self:calculate_attack_power()
+		local stacks = self:get_stacks()
+		if stacks <= 0 then
+			return 0
+		end
+
+		-- Prefer explicitly tracked value when available.
+		if state.damage and state.damage.vengeance_attack_power and state.damage.vengeance_attack_power > 0 then
+			return state.damage.vengeance_attack_power
+		end
+
+		-- Fallback: calculated AP from recent damage model.
+		return self:calculate_attack_power()
     end,
     
     -- Check if vengeance is active
     is_active = function(self)
+		local aura = state and state.buff and state.buff.vengeance
+		if aura and aura.up then
+			return true
+		end
+
         local current_time = GetTime()
         return self.current_stacks > 0 and 
                (current_time - self.last_stack_time) <= self.stack_duration
@@ -377,13 +393,39 @@ state.vengeance = state.vengeance or {
     
     -- Get vengeance stacks for state expressions
     get_stacks = function(self)
-        return self.current_stacks or 0
+		local aura = state and state.buff and state.buff.vengeance
+		if aura and aura.up then
+			local live = aura.stack or aura.count or 1
+			if live < 1 then live = 1 end
+
+			self.current_stacks = live
+			self.last_stack_time = GetTime()
+
+			if state.damage then
+				state.damage.vengeance_stacks = live
+				state.damage.vengeance_value = live
+			end
+
+			return live
+		end
+
+		local current_time = GetTime()
+		if self.current_stacks > 0 and (current_time - self.last_stack_time) > self.stack_duration then
+			self.current_stacks = 0
+			if state.damage then
+				state.damage.vengeance_stacks = 0
+				state.damage.vengeance_value = 0
+				state.damage.vengeance_attack_power = 0
+			end
+		end
+
+		return self.current_stacks or 0
     end,
     
     -- Check if high vengeance (configurable threshold)
     is_high_vengeance = function(self, threshold)
         threshold = threshold or 5
-        return self.current_stacks >= threshold
+		return self:get_stacks() >= threshold
     end
 }
 

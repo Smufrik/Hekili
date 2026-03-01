@@ -56,3 +56,10 @@ Warrior: ⁠Warrior - Mop Discussion
 Arms⚠️
 Fury ❌
 Protection ⚠️
+
+## Project-Wide Editing Workflow
+
+- Rotation and priority order are edited in .simc files.
+- Core spell behavior and engine logic are implemented in .lua files.
+- Exception: spec-specific spell edge cases may require targeted .lua logic.
+- State calls needed by APL/rotation conditions must be exposed from Lua (state expressions/functions) so .simc files can reference runtime state without moving rotation logic into Lua.

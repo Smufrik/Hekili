@@ -199,3 +199,12 @@ To use these files in-game:
 ## Notes
 
 These priorities are designed to work with the corresponding Lua files in the parent directory. The encoded priority lists in the Lua files will be updated automatically when importing these .simc files in-game.
+
+## Editing Rules (Source of Truth)
+
+Project-wide contribution rules are documented in `CONTRIBUTING.md` (repository root).
+
+- Rotation and priority order must be edited in `.simc` files.
+- Core spell behavior and engine logic must be handled in `.lua` files.
+- Exception: spec-specific spell edge cases may still require targeted logic in `.lua`.
+- State calls used by rotations should be exposed for `.simc` conditions (via state expressions/functions registered in Lua), so APL conditions can reference runtime state without moving rotation logic out of `.simc`.
