@@ -4619,6 +4619,7 @@ found = true end
 
                             local options = Hekili:GetActiveSpecOption( "abilities" )
                             options[ v ].icon = val
+                            options[ v ].iconOverride = val and true or nil
                         end,
                         hidden = function()
                             local options = Hekili:GetActiveSpecOption( "abilities" )
@@ -4653,6 +4654,7 @@ found = true end
 
                             local options = Hekili:GetActiveSpecOption( "abilities" )
                             options[ v ].icon = val
+                            options[ v ].iconOverride = val and true or nil
                         end,
                         hidden = function()
                             local options = Hekili:GetActiveSpecOption( "abilities" )

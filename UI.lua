@@ -1240,7 +1240,8 @@ do
                                 image = b.Recommendation.texture or ability.texture or select( 5, GetItemInfoInstant( ability.item ) )
                             else
                                 local override = options and rawget( options, action )
-                                image = override and override.icon or b.Recommendation.texture or ability.texture or GetSpellTexture( ability.id )
+                                local customIcon = override and override.iconOverride and override.icon
+                                image = customIcon or b.Recommendation.texture or ability.texture or GetSpellTexture( ability.id )
                             end
 
                             if action ~= b.lastAction or image ~= b.lastImage or self.NewRecommendations or not b.Image then

@@ -953,10 +953,12 @@ spec:RegisterAuras( {
         end
     },
     
-    ice_floes = {
+    ice_floes_buff = {
+        -- Keep aura key distinct from the castable ability key (`ice_floes`) to avoid key collisions.
         id = 108839,
         duration = 15,
         max_stack = 3,
+        copy = "ice_floes",
         generate = function( t )
             local name, icon, count, debuffType, duration, expirationTime, caster = FindUnitBuffByID( "player", 108839 )
             
@@ -1344,7 +1346,7 @@ spec:RegisterAbilities( {
         spendType = "mana",
         
         startsCombat = true,
-        texture = 236220,
+        texture = select( 3, GetSpellInfo( 44457 ) ) or 236220,
         
         talent = "living_bomb",
         
@@ -1382,6 +1384,9 @@ spec:RegisterAbilities( {
         
         startsCombat = false,
         texture = 135932,
+        usable = function()
+            return not ( buff.arcane_brilliance.up or FindUnitBuffByID( "player", 1459 ) )
+        end,
         
         handler = function()
             applyBuff( "arcane_brilliance" )
@@ -1396,7 +1401,7 @@ spec:RegisterAbilities( {
         
         toggle = "cooldowns",
         startsCombat = false,
-        texture = 607849,
+        texture = select( 3, GetSpellInfo( 108978 ) ) or 607849,
         
         handler = function()
             applyBuff( "alter_time" )

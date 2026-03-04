@@ -1,56 +1,106 @@
-# Mage: Frost - Updated from WoWSims export (Jan 2026)
+# Mage: Frost (MoP) - WoWSims-aligned, gameplay-realistic (Jan 2026)
+# - Movement-safe with Ice Floes
+# - Proc spending is not suppressed by Alter Time timing
+# - Light FoF pooling only near Alter Time
+# - On-use items gated (WoWSims-style autocast approximation)
+# - Supports LB / NT / FB branches
 
 ## Precombat
 actions.precombat+=/arcane_brilliance,if=!buff.arcane_brilliance.up
 actions.precombat+=/frost_armor,if=!buff.frost_armor.up
 actions.precombat+=/summon_water_elemental,if=!pet.water_elemental.active,precombat_time=15
 actions.precombat+=/mirror_image,precombat_time=6.5
-actions.precombat+=/evocation,precombat_time=5
+actions.precombat+=/evocation,if=talent.invocation.enabled,precombat_time=5
 actions.precombat+=/rune_of_power,if=talent.rune_of_power.enabled,precombat_time=3.5
 actions.precombat+=/potion,name=jade_serpent,precombat_time=2
 actions.precombat+=/frostbolt,precombat_time=2
 
+## Action List Dispatch
+# Movement list first (Ice Floes enables Frostbolt while moving).
+actions+=/call_action_list,name=movement,if=moving
+
+# On-use items: approximate WoWSims autocastOtherCooldowns (don't spam off-cycle).
+actions+=/use_item,slot=trinket1,if=buff.icy_veins.up|buff.bloodlust.up|cooldown.alter_time.ready
+actions+=/use_item,slot=trinket2,if=buff.icy_veins.up|buff.bloodlust.up|cooldown.alter_time.ready
+
+# Route to AoE list at 3+ targets, otherwise use ST/Cleave list.
+actions+=/call_action_list,name=aoe,if=active_enemies>=3
+actions+=/call_action_list,name=st
+
+## Movement (Ice Floes)
+# Prioritize true instants, then enable movement casting with Ice Floes,
+# then cast Frostbolt while Ice Floes buff is up.
+actions.movement+=/ice_lance,if=buff.fingers_of_frost.up
+actions.movement+=/frostfire_bolt,if=buff.brain_freeze.up
+
+# Use cooldown.ice_floes.ready rather than charges.* (more reliable in some Hekili forks).
+actions.movement+=/ice_floes,if=talent.ice_floes.enabled&cooldown.ice_floes.ready&!buff.ice_floes.up
+actions.movement+=/frostbolt,if=buff.ice_floes.up
+actions.movement+=/frozen_orb
+
+# Bomb maintenance while moving (kept after Ice Floes so Floes actually shows when needed).
+actions.movement+=/living_bomb,cycle_targets=1,max_cycle_targets=3,if=talent.living_bomb.enabled&target.time_to_die>=dot.living_bomb.tick_time*3&!dot.living_bomb.ticking
+actions.movement+=/nether_tempest,cycle_targets=1,max_cycle_targets=5,if=talent.nether_tempest.enabled&!dot.nether_tempest.ticking
+actions.movement+=/frost_bomb,if=talent.frost_bomb.enabled&!debuff.frost_bomb.up
+
 ## Single Target / Cleave
-# Auto-trigger on-use effects
-actions+=/use_item,slot=trinket1
-actions+=/use_item,slot=trinket2
+# Maintain Invocation and recover mana proactively.
+actions.st+=/evocation,if=buff.invokers_energy.remains<=cast_time
+actions.st+=/evocation,if=mana.current<=45000
 
-# Evocation: maintain Invocation/Invoker's Energy or recover mana
-actions+=/evocation,if=buff.invokers_energy.remains<=cast_time
-actions+=/evocation,if=mana.current<=45000
+# Keep Rune of Power active when talented.
+actions.st+=/rune_of_power,if=talent.rune_of_power.enabled&(!buff.rune_of_power.up|buff.rune_of_power.remains<=cast_time)
 
-# Rune of Power upkeep
-actions+=/rune_of_power,if=talent.rune_of_power.enabled&(!buff.rune_of_power.up|buff.rune_of_power.remains<=cast_time)
+## Burst planning (Alter Time)
+# Cooldown cadence aligned with Alter Time windows (WoWSims intent).
+actions.st+=/icy_veins,if=cooldown.alter_time.ready|cooldown.alter_time.remains>=75
+actions.st+=/synapse_springs,if=cooldown.alter_time.ready|cooldown.alter_time.remains>=50
 
-# Pre-burst potion aligned to Alter Time + double FoF + Brain Freeze
-actions+=/potion,name=jade_serpent,if=cooldown.alter_time.ready&buff.fingers_of_frost.stack=2&buff.brain_freeze.up
+# Potion: align to burst, but don't demand perfect double-proc every time.
+actions.st+=/potion,name=jade_serpent,if=cooldown.alter_time.ready&(buff.fingers_of_frost.stack>=1)&(buff.brain_freeze.up|buff.fingers_of_frost.stack=2|buff.synapse_springs.up|buff.icy_veins.up|buff.bloodlust.up)
 
-# Major cooldown cadence around Alter Time
-actions+=/icy_veins,if=cooldown.alter_time.ready|cooldown.alter_time.remains>=75
-actions+=/synapse_springs,if=cooldown.alter_time.ready|cooldown.alter_time.remains>=50
-actions+=/alter_time,if=buff.fingers_of_frost.stack=2&(buff.icy_veins.up|buff.blood_fury.up|buff.berserking.up|buff.potion.up|buff.synapse_springs.up|buff.bloodlust.up)&(buff.bloodlust.up|debuff.sated.remains>=180)
+# Alter Time: prefer 2x FoF (WoWSims), but allow 1x FoF + BF so it doesn't rot unused.
+actions.st+=/alter_time,if=cooldown.alter_time.ready&((buff.fingers_of_frost.stack=2)|(buff.fingers_of_frost.stack>=1&buff.brain_freeze.up))&(buff.icy_veins.up|buff.bloodlust.up|buff.potion.up|buff.synapse_springs.up|buff.blood_fury.up|buff.berserking.up)
 
-# Proc spending
-actions+=/ice_lance,if=buff.fingers_of_frost.stack=2
-actions+=/frostfire_bolt,if=buff.brain_freeze.up&cooldown.alter_time.remains>=10
+## Proc spending (realistic, anti-waste)
+# Always spend Brain Freeze (do not suppress it behind Alter Time timing).
+actions.st+=/frostfire_bolt,if=buff.brain_freeze.up
 
-# DoT maintenance / multi-dot
-actions+=/living_bomb,cycle_targets=1,max_cycle_targets=3,if=talent.living_bomb.enabled&target.time_to_die>=dot.living_bomb.tick_time*3&!dot.living_bomb.ticking
-actions+=/nether_tempest,cycle_targets=1,max_cycle_targets=5,if=talent.nether_tempest.enabled&!dot.nether_tempest.ticking
-actions+=/frost_bomb,if=talent.frost_bomb.enabled&!debuff.frost_bomb.up
+# Anti-cap: dump at 2 stacks immediately.
+actions.st+=/ice_lance,if=buff.fingers_of_frost.stack=2
 
-# Cooldown damage and fillers
-actions+=/frozen_orb
-actions+=/frostfire_bolt,if=buff.brain_freeze.up&cooldown.alter_time.remains>=10
-actions+=/ice_lance,if=buff.fingers_of_frost.up&cooldown.alter_time.remains>=10
-actions+=/frostbolt
+# Spend 1-stack FoF normally; only pool in a short window right before Alter Time.
+# (Tune the window: 6 is a good starting point; lower if it still hoards too much.)
+actions.st+=/ice_lance,if=buff.fingers_of_frost.up&(!cooldown.alter_time.ready|cooldown.alter_time.remains>6)
+
+## Talent DoT maintenance with multidot limits.
+actions.st+=/living_bomb,cycle_targets=1,max_cycle_targets=3,if=talent.living_bomb.enabled&target.time_to_die>=dot.living_bomb.tick_time*3&!dot.living_bomb.ticking
+actions.st+=/nether_tempest,cycle_targets=1,max_cycle_targets=5,if=talent.nether_tempest.enabled&!dot.nether_tempest.ticking
+actions.st+=/frost_bomb,if=talent.frost_bomb.enabled&!debuff.frost_bomb.up
+
+## Core priority filler sequence.
+actions.st+=/frozen_orb
+
+# Filler: never recommend Frostbolt while moving unless Ice Floes is active (movement list handles moving case first).
+actions.st+=/frostbolt
 
 ## AoE Priority (3+ targets)
+# Movement first (Ice Floes), then AoE priorities.
+actions.aoe+=/call_action_list,name=movement,if=moving
+
+# Major AoE throughput cooldowns first.
 actions.aoe+=/frozen_orb
 actions.aoe+=/icy_veins
+
+# Maintain talent bombs in multi-target.
+actions.aoe+=/living_bomb,cycle_targets=1,max_cycle_targets=3,if=talent.living_bomb.enabled&target.time_to_die>=dot.living_bomb.tick_time*3&!dot.living_bomb.ticking
+actions.aoe+=/nether_tempest,cycle_targets=1,max_cycle_targets=5,if=talent.nether_tempest.enabled&!dot.nether_tempest.ticking
+actions.aoe+=/frost_bomb,if=talent.frost_bomb.enabled&!debuff.frost_bomb.up
+
+# Proc spenders in AoE too (consistent with ST).
+actions.aoe+=/frostfire_bolt,if=buff.brain_freeze.up
+actions.aoe+=/ice_lance,if=buff.fingers_of_frost.up
+
+# AoE fillers (keep conservative; remove CoC/AE unless you explicitly want them).
 actions.aoe+=/blizzard
-actions.aoe+=/cone_of_cold,if=active_enemies>=5
-actions.aoe+=/arcane_explosion,if=active_enemies>=5
-actions.aoe+=/ice_lance,if=buff.fingers_of_frost.react
-actions.aoe+=/frostfire_bolt,if=buff.brain_freeze.react
 actions.aoe+=/frostbolt
