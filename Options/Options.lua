@@ -10,16 +10,15 @@ local state = Hekili.State
 
 local format, lower, match = string.format, string.lower, string.match
 local insert, remove, sort, wipe = table.insert, table.remove, table.sort, table.wipe
-local UnitBuff, UnitDebuff, SkeletonHandler = ns.UnitBuff, ns.UnitDebuff, ns.SkeletonHandler
 local callHook = ns.callHook
 local SpaceOut = ns.SpaceOut
-local formatKey, orderedPairs, tableCopy, GetItemInfo, RangeType = ns.formatKey, ns.orderedPairs, ns.tableCopy, ns.CachedGetItemInfo, ns.RangeType
+local formatKey, orderedPairs, tableCopy = ns.formatKey, ns.orderedPairs, ns.tableCopy
 
 -- Atlas/Textures
 local AtlasToString, GetAtlasFile, GetAtlasCoords = ns.AtlasToString, ns.GetAtlasFile, ns.GetAtlasCoords
 
 -- Options Functions
-local TableToString, StringToTable, SerializeActionPack, DeserializeActionPack, SerializeDisplay, DeserializeDisplay, SerializeStyle, DeserializeStyle
+local TableToString, StringToTable, SerializeActionPack, DeserializeActionPack, SerializeStyle, DeserializeStyle
 
 local ACD = LibStub( "AceConfigDialog-3.0" )
 local LDBIcon = LibStub( "LibDBIcon-1.0", true )
@@ -32,18 +31,23 @@ local RedX = "Interface\\AddOns\\Hekili\\Textures\\RedX"
 local BlizzBlue = "|cFF00B4FF"
 
 -- MoP: AtlasToString function not available, provide fallback
-local AtlasToString = function(atlas)
+AtlasToString = AtlasToString or function(atlas)
     return "• " -- Simple bullet point fallback
 end
 local Bullet = AtlasToString( "characterupdate_arrow-bullet-point" )
 
 -- MoP: C_ClassColor not available, use RAID_CLASS_COLORS
-local ClassColor = RAID_CLASS_COLORS and class and class.file and RAID_CLASS_COLORS[class.file] or { r = 1, g = 1, b = 1, colorStr = "FFFFFFFF", GenerateHexColor = function() return "FFFFFFFF" end }
+local ClassColor = RAID_CLASS_COLORS and class and class.file and RAID_CLASS_COLORS[ class.file ] or {
+    r = 1,
+    g = 1,
+    b = 1,
+    colorStr = "FFFFFFFF",
+    GenerateHexColor = function()
+        return "FFFFFFFF"
+    end,
+}
 
 local GetSpellInfo = ns.GetUnpackedSpellInfo
-
--- MoP: C_Spell.GetSpellDescription not available, use GetSpellDescription
-local GetSpellDescription = GetSpellDescription or function(spellID) return "" end
 
 -- MoP: Specialization system fallbacks (similar to Wrath)
 local GetSpecialization = _G.GetSpecialization or function() return GetActiveTalentGroup() end
@@ -51,7 +55,7 @@ local GetSpecialization = _G.GetSpecialization or function() return GetActiveTal
 -- Force override GetSpecializationInfo for MoP since the native one is incomplete
 local GetSpecializationInfo = function(index)
     -- MoP spec mapping based on class and talent group
-    local className, classFile, classID = UnitClass("player")
+    local className, classFile = UnitClass("player")
     if not className then return nil end
     
     -- Basic spec info for each class in MoP
@@ -150,7 +154,9 @@ local oneTimeFixes = {
                 Hekili:RestoreDefault( name )
             end
         end
-    end,    forceReloadClassDefaultOptions_20220306 = function( p )
+    end,
+
+    forceReloadClassDefaultOptions_20220306 = function( p )
         local sendMsg = false
         if class and class.specs then
             for spec, data in pairs( class.specs ) do
@@ -274,7 +280,7 @@ function Hekili:RunOneTimeFixes()
     for k, v in pairs( oneTimeFixes ) do
         if not profile.runOnce[ k ] then
             profile.runOnce[k] = true
-            local ok, err = pcall( v, profile )
+            local _, err = pcall( v, profile )
             if err then
                 Hekili:Error( "One-time update failed: " .. k .. ": " .. err )
                 profile.runOnce[ k ] = nil
@@ -543,58 +549,6 @@ local displayTemplate = {
 
 }
 
-local actionTemplate = {
-    action = "auto_shot",
-    enabled = true,
-    criteria = "",
-    caption = "",
-    description = "",
-
-    -- Shared Modifiers
-    early_chain_if = "",  -- NYI
-
-    cycle_targets = 0,
-    max_cycle_targets = 3,
-    max_energy = 0,
-
-    interrupt = 0,  --NYI
-    interrupt_if = "",  --NYI
-    interrupt_immediate = 0,  -- NYI
-
-    travel_speed = nil,
-
-    enable_moving = false,
-    moving = nil,
-    sync = "",
-
-    use_while_casting = 0,
-    use_off_gcd = 0,
-    only_cwc = 0,
-
-    wait_on_ready = 0, -- NYI
-
-    -- Call/Run Action List
-    list_name = nil,
-    strict = nil,
-    strict_if = "",
-
-    -- Pool Resource
-    wait = "0.5",
-    for_next = 0,
-    extra_amount = "0",
-
-    -- Variable
-    op = "set",
-    condition = "",
-    default = "",
-    value = "",
-    value_else = "",
-    var_name = "unnamed",
-
-    -- Wait
-    sec = "1",
-}
-
 local packTemplate = {
     spec = 0,
     builtIn = false,
@@ -605,7 +559,9 @@ local packTemplate = {
     date = tonumber( date("%Y%M%D.%H%M") ),
     warnings = "",
 
-    hidden = false,    lists = {
+    hidden = false,
+
+    lists = {
         precombat = {
             {
                 enabled = false,
@@ -878,7 +834,9 @@ do
                 },
 
                 filterCasts = true,
-                castRemainingThreshold = 0.25,                iconStore = {
+                castRemainingThreshold = 0.25,
+
+                iconStore = {
                     hide = false,
                 },
             },
@@ -924,9 +882,14 @@ do
         local n = #info
         local option = info[ n ]
 
-        if type(val) == 'string' then val = val:trim() end
-        if shareDB[ option ] then shareDB[ option ] = val
-return end
+        if type( val ) == 'string' then
+            val = val:trim()
+        end
+
+        if shareDB[ option ] then
+            shareDB[ option ] = val
+            return
+        end
 
         shareDB.displays[ option ] = val
         shareDB.export = ""
@@ -967,26 +930,28 @@ return end
     end
 
     local multiSet = false
-    local timer    local function QueueRebuildUI()
+    local timer
+
+    local function QueueRebuildUI()
         -- Use appropriate timer method
-        if timer then 
+        if timer then
             if Hekili.CancelTimer then
                 Hekili:CancelTimer( timer )
-            elseif type(timer) == "function" then
+            elseif type( timer ) == "function" then
                 -- C_Timer handle
                 timer = nil
             end
         end
-        
+
         if Hekili.ScheduleTimer then
             timer = Hekili:ScheduleTimer( function ()
                 Hekili:BuildUI()
             end, 0.5 )
         elseif C_Timer and C_Timer.After then
             -- Fallback to C_Timer
-            timer = C_Timer.After(0.5, function()
+            timer = C_Timer.After( 0.5, function()
                 Hekili:BuildUI()
-            end)
+            end )
         else
             -- Last resort - direct call
             Hekili:BuildUI()
@@ -1194,18 +1159,6 @@ return end
         tab.args.y.softMin = -1 * height * 0.5
         tab.args.y.softMax = height * 0.5
     end
-
-
-    local function setWidth( info, field, condition, if_true, if_false )
-        local tab = getOptionTable( info )
-
-        if condition then
-            tab.args[ field ].width = if_true or "full"
-        else
-            tab.args[ field ].width = if_false or "full"
-        end
-    end
-
 
     local function rangeIcon( info )
         local tab = getOptionTable( info )
@@ -2840,7 +2793,8 @@ return "Position" end,
                         type = "group",
                         name =  "Empowerment",
                         desc = "Empowerment stages are shown with additional text placed on the recommendation icon and can glow upon reaching the desired stage.",
-                        order = 9.1,                        hidden = function()
+                        order = 9.1,
+                        hidden = function()
                             local spec = class and class.specs and state and state.spec and class.specs[ state.spec.id ]
                             return not spec or not spec.can_empower
                         end,
@@ -4077,27 +4031,6 @@ local snapshots = {
     selected = 0
 }
 
-local config = {
-    qsDisplay = 99999,
-
-    qsShowTypeGroup = false,
-    qsDisplayType = 99999,
-    qsTargetsAOE = 3,
-
-    displays = {}, -- auto-populated and recycled.
-    displayTypes = {
-        [1] = "Primary",
-        [2] = "AOE",
-        [3] = "Automatic",
-        [99999] = " "
-    },
-
-    expanded = {
-        cooldowns = true
-    },
-    adding = {},
-}
-
 local specs = {}
 local activeSpec
 
@@ -4319,7 +4252,8 @@ self:ForceUpdate( "SPEC_PACKAGE_CHANGED" )
                 name = "Require Toggle",
                 desc = "Specify a required toggle for this action to be used in the addon action list.  When toggled off, abilities are treated " ..
                     "as unusable and the addon will pretend they are on cooldown (unless specified otherwise).",
-                width = 1.5,                order = 2,
+                width = 1.5,
+                order = 2,
                 values = function ()
                     table.wipe( toggles )
 
@@ -4390,7 +4324,8 @@ self:ForceUpdate( "SPEC_PACKAGE_CHANGED" )
     end
 
     local testFrame = CreateFrame( "Frame" )
-    testFrame.Texture = testFrame:CreateTexture()    function Hekili:EmbedAbilityOptions( db )
+    testFrame.Texture = testFrame:CreateTexture()
+    function Hekili:EmbedAbilityOptions( db )
         db = db or self.Options
         if not db then return end
 
@@ -4454,7 +4389,8 @@ self:ForceUpdate( "SPEC_PACKAGE_CHANGED" )
                         name = "Require Toggle",
                         desc = "Specify a required toggle for this action to be used in the addon action list.  When toggled off, abilities are treated " ..
                             "as unusable and the addon will pretend they are on cooldown (unless specified otherwise).",
-                        width = 1.5,                        order = 1.2,
+                        width = 1.5,
+                        order = 1.2,
                         values = function ()
                             table.wipe( toggles )
 
@@ -4619,6 +4555,7 @@ found = true end
 
                             local options = Hekili:GetActiveSpecOption( "abilities" )
                             options[ v ].icon = val
+                            options[ v ].iconOverride = val and true or nil
                         end,
                         hidden = function()
                             local options = Hekili:GetActiveSpecOption( "abilities" )
@@ -4653,6 +4590,7 @@ found = true end
 
                             local options = Hekili:GetActiveSpecOption( "abilities" )
                             options[ v ].icon = val
+                            options[ v ].iconOverride = val and true or nil
                         end,
                         hidden = function()
                             local options = Hekili:GetActiveSpecOption( "abilities" )
@@ -4660,7 +4598,8 @@ found = true end
                         end,
                         width = 1.3,
                         order = 3.2,
-                    },                    showIcon = {
+                    },
+                    showIcon = {
                         type = 'description',
                         name = "",
                         image = function()
@@ -4904,10 +4843,6 @@ found = true end
 
         self.NewItemInfo = false
     end
-    local ToggleCount = {}
-    local tAbilities = {}
-    local tItems = {}
-
     -- Options table constructors.
     function Hekili:EmbedSpecOptions( db )
         db = db or self.Options
@@ -5022,7 +4957,8 @@ found = true end
                                     desc = "Unless otherwise specified in the priority, the selected potion will be recommended.",
                                     order = 3,
                                     width = 1.5,
-                                    values = class.potionList,                                    get = function()
+                                    values = class.potionList,
+                                    get = function()
                                         local p = self.DB.profile.specs[ id ].potion or (class and class.specs and class.specs[ id ] and class.specs[ id ].options.potion) or "default"
                                         if not class.potionList[ p ] then p = "default" end
                                         return p
@@ -5537,8 +5473,6 @@ found = true end
                         }
                     },
                 }                local specCfg = class and class.specs and class.specs[ id ] and class.specs[ id ].settings
-                local specProf = self.DB.profile.specs[ id ]
-
                 if specCfg and #specCfg > 0 then
                     options.args.core.plugins.settings.prefSpacer = {
                         type = "description",
@@ -5674,58 +5608,100 @@ found = true end
         return actions
     end
 
-    local function GetListEntry( pack )
-        local entry = rawget( Hekili.DB.profile.packs, pack )
+    local emptyListEntry = { action = "" }
 
-        if rawget( entry.lists, packControl.listName ) == nil then
+    local function GetProfilePacks( db )
+        local profile = db and db.profile
+        return profile and profile.packs
+    end
+
+    local function GetPackLists( pack, packs )
+        local packData = packs and rawget( packs, pack )
+        return packData and packData.lists
+    end
+
+    local function GetSelectedPackList( pack, packs )
+        local lists = GetPackLists( pack, packs )
+        if type( lists ) ~= "table" then return nil end
+
+        if rawget( lists, packControl.listName ) == nil then
             packControl.listName = "default"
         end
 
-        if entry then entry = entry.lists[ packControl.listName ] else return end
+        local list = rawget( lists, packControl.listName )
+        if type( list ) ~= "table" then return nil end
 
-        if rawget( entry, tonumber( packControl.actionID ) ) == nil then
+        return list
+    end
+
+    local function GetListEntry( pack )
+        local packs = GetProfilePacks( Hekili.DB )
+
+        if not packs then
+            packControl.listName = "default"
+            packControl.actionID = "0001"
+            return emptyListEntry
+        end
+
+        local list = GetSelectedPackList( pack, packs )
+        if type( list ) ~= "table" then
+            packControl.listName = "default"
+            packControl.actionID = "0001"
+            return emptyListEntry
+        end
+
+        local listPos = tonumber( packControl.actionID ) or 1
+        if listPos < 1 or rawget( list, listPos ) == nil then
+            listPos = 1
             packControl.actionID = "0001"
         end
 
-        local listPos = tonumber( packControl.actionID )
-        if entry and listPos > 0 then entry = entry[ listPos ] else return end
+        local selected = rawget( list, listPos )
+        if type( selected ) ~= "table" then
+            return emptyListEntry
+        end
 
-        return entry
+        return selected
     end
 
     function Hekili:GetActionOption( info )
         local n = #info
         local pack, option = info[ 2 ], info[ n ]
-
-        if rawget( self.DB.profile.packs[ pack ].lists, packControl.listName ) == nil then
-            packControl.listName = "default"
-        end
-
-        local actionID = tonumber( packControl.actionID )
-        local data = self.DB.profile.packs[ pack ].lists[ packControl.listName ]
+        local actionID = tonumber( packControl.actionID ) or 1
 
         if option == 'position' then return actionID
         elseif option == 'newListName' then return packControl.newListName end
 
-        if not data then return end
+        local packs = GetProfilePacks( self.DB )
+        local data = GetSelectedPackList( pack, packs )
 
-        if not data[ actionID ] then
+        if type( data ) ~= "table" then
+            packControl.listName = "default"
+            packControl.actionID = "0001"
+            return
+        end
+
+        if actionID < 1 or rawget( data, actionID ) == nil then
             actionID = 1
             packControl.actionID = "0001"
         end
-        data = data[ actionID ]
+
+        data = rawget( data, actionID )
+        if type( data ) ~= "table" then
+            return
+        end
 
         if option == "inputName" or option == "selectName" then
-            option = nameMap[ data.action ]
-            if not data[ option ] then data[ option ] = defaultNames[ option ] end
+            option = nameMap[ data.action ] or option
+            if defaultNames[ option ] and not data[ option ] then data[ option ] = defaultNames[ option ] end
         end
 
         if option == "op" and not data.op then return "set" end
 
         if option == "potion" then
             if not data.potion then return "default" end
-            if not class.potionList[ data.potion ] then
-                return class.potions[ data.potion ] and class.potions[ data.potion ].key or data.potion
+            if not ( class and class.potionList and class.potionList[ data.potion ] ) then
+                return class and class.potions and class.potions[ data.potion ] and class.potions[ data.potion ].key or data.potion
             end
         end
 
@@ -5747,19 +5723,21 @@ found = true end
     function Hekili:SetActionOption( info, val )
         local n = #info
         local pack, option = info[ 2 ], info[ n ]
-
-        local actionID = tonumber( packControl.actionID )
-        local data = self.DB.profile.packs[ pack ].lists[ packControl.listName ]
+        local actionID = tonumber( packControl.actionID ) or 1
 
         if option == 'newListName' then
-            packControl.newListName = val:trim()
+            packControl.newListName = type( val ) == 'string' and val:trim() or val
             return
         end
 
-        if not data then return end
-        data = data[ actionID ]
+        local packs = GetProfilePacks( self.DB )
+        local data = GetSelectedPackList( pack, packs )
 
-        if option == "inputName" or option == "selectName" then option = nameMap[ data.action ] end
+        if type( data ) ~= "table" then return end
+        data = rawget( data, actionID )
+        if type( data ) ~= "table" then return end
+
+        if option == "inputName" or option == "selectName" then option = nameMap[ data.action ] or option end
 
         if toggleToNumber[ option ] then
             if review_options[ option ] and not val then val = nil
@@ -5770,7 +5748,7 @@ found = true end
             if val:len() == 0 then val = nil end
         end
 
-        if option == "caption" then
+        if option == "caption" and type( val ) == "string" then
             val = val:gsub( "||", "|" )
         end
 
@@ -5794,8 +5772,10 @@ found = true end
     function Hekili:GetPackOption( info )
         local n = #info
         local category, subcat, option = info[ 2 ], info[ 3 ], info[ n ]
+        local packs = GetProfilePacks( self.DB )
 
-        if rawget( self.DB.profile.packs, category ) and rawget( self.DB.profile.packs[ category ].lists, packControl.listName ) == nil then
+        local selectedList = GetSelectedPackList( category, packs )
+        if selectedList == nil then
             packControl.listName = "default"
         end
 
@@ -5807,7 +5787,7 @@ found = true end
 
         if subcat == 'lists' then return self:GetActionOption( info ) end
 
-        local data = rawget( self.DB.profile.packs, category )
+        local data = packs and rawget( packs, category )
         if not data then return end
 
         if option == 'date' then return tostring( data.date ) end
@@ -5818,6 +5798,7 @@ found = true end
     function Hekili:SetPackOption( info, val )
         local n = #info
         local category, subcat, option = info[ 2 ], info[ 3 ], info[ n ]
+        local packs = GetProfilePacks( self.DB )
 
         if packControl[ option ] ~= nil then
             packControl[ option ] = val
@@ -5828,7 +5809,7 @@ found = true end
         if subcat == 'lists' then return self:SetActionOption( info, val ) end
         -- if subcat == 'newActionGroup' or ( subcat == 'actionGroup' and subtype == 'entry' ) then self:SetActionOption( info, val ); return end
 
-        local data = rawget( self.DB.profile.packs, category )
+        local data = packs and rawget( packs, category )
         if not data then return end
 
         if type( val ) == 'string' then val = val:trim() end
@@ -6027,89 +6008,95 @@ found = true end
                                             set = function () end,
                                             width = "full",
                                             disabled = true,
-                                        },                        packSpec = {
-                            type = "input",
-                            order = 3,
-                            name = "Pack Specialization",
-                            get = function () 
-                                if shareDB.imported.payload and shareDB.imported.payload.spec then
-                                    return select( 2, GetSpecializationInfoByID( shareDB.imported.payload.spec ) ) or "No Specialization Set"
-                                else
-                                    return "No Specialization Set"
-                                end
-                            end,
-                            set = function () end,
-                            width = "full",
-                            disabled = true,
-                        },                        guide = {
-                            type = "description",
-                            name = function ()
-                                local listNames = {}
+                                        },
 
-                                if shareDB.imported.payload and shareDB.imported.payload.lists then
-                                    for k, v in pairs( shareDB.imported.payload.lists ) do
-                                        insert( listNames, k )
-                                    end
-                                end
+                                        packSpec = {
+                                            type = "input",
+                                            order = 3,
+                                            name = "Pack Specialization",
+                                            get = function ()
+                                                if shareDB.imported.payload and shareDB.imported.payload.spec then
+                                                    return select( 2, GetSpecializationInfoByID( shareDB.imported.payload.spec ) ) or "No Specialization Set"
+                                                else
+                                                    return "No Specialization Set"
+                                                end
+                                            end,
+                                            set = function () end,
+                                            width = "full",
+                                            disabled = true,
+                                        },
 
-                                table.sort( listNames )
+                                        guide = {
+                                            type = "description",
+                                            name = function ()
+                                                local listNames = {}
 
-                                local o
+                                                if shareDB.imported.payload and shareDB.imported.payload.lists then
+                                                    for k, v in pairs( shareDB.imported.payload.lists ) do
+                                                        insert( listNames, k )
+                                                    end
+                                                end
 
-                                if #listNames == 0 then
-                                    o = "The imported Priority has no lists included."
-                                elseif #listNames == 1 then
-                                    o = "The imported Priority has one action list:  " .. listNames[1] .. "."
-                                elseif #listNames == 2 then
-                                    o = "The imported Priority has two action lists:  " .. listNames[1] .. " and " .. listNames[2] .. "."
-                                else
-                                    o = "The imported Priority has the following lists included:  "
-                                    for i, name in ipairs( listNames ) do
-                                        if i == 1 then o = o .. name
-                                        elseif i == #listNames then o = o .. ", and " .. name .. "."
-                                        else o = o .. ", " .. name end
-                                    end
-                                end
+                                                table.sort( listNames )
 
-                                return o
-                            end,
-                            order = 4,
-                            width = "full",
-                            fontSize = "medium",
-                        },
+                                                local o
+
+                                                if #listNames == 0 then
+                                                    o = "The imported Priority has no lists included."
+                                                elseif #listNames == 1 then
+                                                    o = "The imported Priority has one action list:  " .. listNames[1] .. "."
+                                                elseif #listNames == 2 then
+                                                    o = "The imported Priority has two action lists:  " .. listNames[1] .. " and " .. listNames[2] .. "."
+                                                else
+                                                    o = "The imported Priority has the following lists included:  "
+                                                    for i, name in ipairs( listNames ) do
+                                                        if i == 1 then o = o .. name
+                                                        elseif i == #listNames then o = o .. ", and " .. name .. "."
+                                                        else o = o .. ", " .. name end
+                                                    end
+                                                end
+
+                                                return o
+                                            end,
+                                            order = 4,
+                                            width = "full",
+                                            fontSize = "medium",
+                                        },
 
                                         separator = {
                                             type = "header",
                                             name = "Apply Changes",
                                             order = 10,
-                                        },                        apply = {
-                            type = "execute",
-                            name = "Apply Changes",
-                            order = 11,
-                            confirm = function ()
-                                if rawget( self.DB.profile.packs, shareDB.imported.name ) then
-                                    return "You already have a \"" .. shareDB.imported.name .. "\" Priority.\nOverwrite it?"
-                                end
-                                return "Create a new Priority named \"" .. shareDB.imported.name .. "\" from the imported data?"
-                            end,
-                            func = function ()
-                                if shareDB.imported.payload then
-                                    self.DB.profile.packs[ shareDB.imported.name ] = shareDB.imported.payload
-                                    shareDB.imported.payload.date = shareDB.imported.date
-                                    shareDB.imported.payload.version = shareDB.imported.date
-                                end
+                                        },
 
-                                shareDB.import = ""
-                                shareDB.imported = {}
-                                shareDB.importStage = 2
+                                        apply = {
+                                            type = "execute",
+                                            name = "Apply Changes",
+                                            order = 11,
+                                            confirm = function ()
+                                                if rawget( self.DB.profile.packs, shareDB.imported.name ) then
+                                                    return "You already have a \"" .. shareDB.imported.name .. "\" Priority.\nOverwrite it?"
+                                                end
+                                                return "Create a new Priority named \"" .. shareDB.imported.name .. "\" from the imported data?"
+                                            end,
+                                            func = function ()
+                                                if shareDB.imported.payload then
+                                                    self.DB.profile.packs[ shareDB.imported.name ] = shareDB.imported.payload
+                                                    shareDB.imported.payload.date = shareDB.imported.date
+                                                    shareDB.imported.payload.version = shareDB.imported.date
+                                                end
 
-                                self:LoadScripts()
-                                self:EmbedPackOptions()
-                            end,
-                            disabled = function ()
-                                return not shareDB.imported.payload
-                            end,
-                        },
+                                                shareDB.import = ""
+                                                shareDB.imported = {}
+                                                shareDB.importStage = 2
+
+                                                self:LoadScripts()
+                                                self:EmbedPackOptions()
+                                            end,
+                                            disabled = function ()
+                                                return not shareDB.imported.payload
+                                            end,
+                                        },
 
                                         reset = {
                                             type = "execute",
@@ -6241,7 +6228,8 @@ found = true end
                         local p = rawget( Hekili.DB.profile.packs, pack )
                         if p.builtIn then return '|cFF00B4FF' .. pack .. '|r' end
                         return pack
-                    end,                    icon = function()
+                    end,
+                    icon = function()
                         return class and class.specs and class.specs[ data.spec ] and class.specs[ data.spec ].texture or ""
                     end,
                     iconCoords = { 0.15, 0.85, 0.15, 0.85 },
@@ -6584,7 +6572,8 @@ found = true end
                                         if not p.lists[ packControl.listName ][ id ] then packControl.actionID = "zzzzzzzzzz" end
 
                                         self:LoadScripts()
-                                    end,                                    disabled = function()
+                                    end,
+                                    disabled = function()
                                         local p = rawget( Hekili.DB.profile.packs, pack )
                                         -- Removed spec check for MoP Classic - allow all imports
                                         return false
@@ -6595,8 +6584,10 @@ found = true end
                                     name = " ",
                                     width = 0.1,
                                     order = 5.11
-                                },                                importWarning = {
-                                    type = "description",                                    name = function()
+                                },
+                                importWarning = {
+                                    type = "description",
+                                    name = function()
                                         local p = rawget( Hekili.DB.profile.packs, pack )
                                         if class and class.specs and p and p.spec and class.specs[ p.spec ] then
                                             local spec = class.specs[ p.spec ]
@@ -6623,7 +6614,8 @@ found = true end
                                     imageCoords = GetAtlasCoords( "Ping_Chat_Warning" ),
                                     fontSize = "medium",
                                     width = 2.2,
-                                    order = 5.12,                                    hidden = function()
+                                    order = 5.12,
+                                    hidden = function()
                                         local p = rawget( Hekili.DB.profile.packs, pack )
                                         -- Removed spec check for MoP Classic - hide warning
                                         return true
@@ -7310,9 +7302,11 @@ packControl.actionID = format( "%04d", id ) end
                                         for_next = {
                                             type = "toggle",
                                             name = function ()
-                                                local n = packControl.actionID
-n = tonumber( n ) + 1
-                                                local e = Hekili.DB.profile.packs[ pack ].lists[ packControl.listName ][ n ]
+                                                local n = ( tonumber( packControl.actionID ) or 0 ) + 1
+                                                local profile = Hekili.DB and Hekili.DB.profile
+                                                local packData = profile and profile.packs and profile.packs[ pack ]
+                                                local list = packData and packData.lists and packData.lists[ packControl.listName ]
+                                                local e = list and list[ n ]
 
                                                 local ability = e and e.action and class.abilities[ e.action ]
                                                 ability = ability and ability.name or "Not Set"
@@ -8504,7 +8498,8 @@ do
                                     name = "",
                                     width  = 0.15,
                                     order = 7.1,
-                                },                                reactiveDesc = {
+                                },
+                                reactiveDesc = {
                                     type = "description",
                                     name = function() 
                                         local specID = state.spec and state.spec.id or 0
@@ -9469,8 +9464,8 @@ function Hekili:GetOption( info, input )
 
             -- This is a display (or a hook).
         else
-            local dispKey, dispID = info[2], tonumber( match( info[2], "^D(%d+)" ) )
-            local hookKey, hookID = info[3], tonumber( match( info[3] or "", "^P(%d+)" ) )
+            local dispID = tonumber( match( info[2], "^D(%d+)" ) )
+            local hookID = tonumber( match( info[3] or "", "^P(%d+)" ) )
             local display = profile.displays[ dispID ]
 
             -- This is a specific display's settings.
@@ -9514,17 +9509,18 @@ function Hekili:GetOption( info, input )
             return nil
 
         else
-            local listKey, listID = info[2], tonumber( match( info[2], "^L(%d+)" ) )
-            local actKey, actID = info[3], tonumber( match( info[3], "^A(%d+)" ) )
+            local listID = tonumber( match( info[2], "^L(%d+)" ) )
+            local actID = tonumber( match( info[3], "^A(%d+)" ) )
             local list = listID and profile.actionLists[ listID ]
 
             -- This is a specific action list.
             if depth == 3 or not actID then
-                return list[ option ]
+                return list and list[ option ] or nil
 
                 -- This is a specific action.
             elseif listID and actID then
-                local action = list.Actions[ actID ]
+                local actions = list and list.Actions
+                local action = actions and actions[ actID ]
 
                 if option == 'ConsumableArgs' then option = 'Args' end
 
@@ -9532,7 +9528,7 @@ function Hekili:GetOption( info, input )
                     return actID
 
                 else
-                    return action[ option ]
+                    return action and action[ option ] or nil
 
                 end
 
@@ -9546,24 +9542,6 @@ function Hekili:GetOption( info, input )
 
     ns.Error( "GetOption() - should never see." )
 
-end
-
-local getUniqueName = function( category, name )
-    local numChecked, suffix, original = 0, 1, name
-
-    while numChecked < #category do
-        for i, instance in ipairs( category ) do
-            if name == instance.Name then
-                name = original .. ' (' .. suffix .. ')'
-                suffix = suffix + 1
-                numChecked = 0
-            else
-                numChecked = numChecked + 1
-            end
-        end
-    end
-
-    return name
 end
 
 
@@ -9626,17 +9604,6 @@ end
 local bit_band, bit_lshift, bit_rshift = bit.band, bit.lshift, bit.rshift
 local string_char = string.char
 
-local bytetoB64 = {
-    [0]="a","b","c","d","e","f","g","h",
-    "i","j","k","l","m","n","o","p",
-    "q","r","s","t","u","v","w","x",
-    "y","z","A","B","C","D","E","F",
-    "G","H","I","J","K","L","M","N",
-    "O","P","Q","R","S","T","U","V",
-    "W","X","Y","Z","0","1","2","3",
-    "4","5","6","7","8","9","(",")"
-}
-
 local B64tobyte = {
     a = 0, b = 1, c = 2, d = 3, e = 4, f = 5, g = 6, h = 7,
     i = 8, j = 9, k = 10, l = 11, m = 12, n = 13, o = 14, p = 15,
@@ -9647,35 +9614,6 @@ local B64tobyte = {
     W = 48, X = 49, Y = 50, Z = 51,["0"]=52,["1"]=53,["2"]=54,["3"]=55,
     ["4"]=56,["5"]=57,["6"]=58,["7"]=59,["8"]=60,["9"]=61,["("]=62,[")"]=63
 }
-
--- This code is based on the Encode7Bit algorithm from LibCompress
--- Credit goes to Galmok (galmok@gmail.com)
-local encodeB64Table = {}
-
-local function encodeB64(str)
-    local B64 = encodeB64Table
-    local remainder = 0
-    local remainder_length = 0
-    local encoded_size = 0
-    local l=#str
-    local code
-    for i=1,l do
-        code = string.byte(str, i)
-        remainder = remainder + bit_lshift(code, remainder_length)
-        remainder_length = remainder_length + 8
-        while(remainder_length) >= 6 do
-            encoded_size = encoded_size + 1
-            B64[encoded_size] = bytetoB64[bit_band(remainder, 63)]
-            remainder = bit_rshift(remainder, 6)
-            remainder_length = remainder_length - 6
-        end
-    end
-    if remainder_length > 0 then
-        encoded_size = encoded_size + 1
-        B64[encoded_size] = bytetoB64[remainder]
-    end
-    return table.concat(B64, "", 1, encoded_size)
-end
 
 local decodeB64Table = {}
 
@@ -9748,18 +9686,6 @@ StringToTable = function( inString, fromChat )
     if not success then return "Unable to deserialized decompressed string: " .. deserialized end
 
     return deserialized
-end
-
-SerializeDisplay = function( display )
-    local serial = rawget( Hekili.DB.profile.displays, display )
-    if not serial then return end
-
-    return TableToString( serial, true )
-end
-
-DeserializeDisplay = function( str )
-    local display = StringToTable( str, true )
-    return display
 end
 
 SerializeActionPack = function( name )
@@ -9930,13 +9856,6 @@ do
             ["-"] = true,
             ["%%"] = true,
             ["*"] = true
-        }
-
-        local maths = {
-            ['+'] = true,
-            ['-'] = true,
-            ['*'] = true,
-            ['%%'] = true
         }
 
         local times = 0
@@ -10228,8 +10147,6 @@ do
 end
 
 -- End APL Parsing
-
-local warnOnce = false
 
 -- Begin Toggles
 function Hekili:TogglePause( ... )

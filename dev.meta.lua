@@ -6,10 +6,19 @@
 
 -- WoW UI object stubs
 ---@class Frame: table
+---@field Texture any
 local Frame = {}
 ---@return AnimationGroup
 function Frame:CreateAnimationGroup() return {} end
+---@return Texture
+function Frame:CreateTexture() return {} end
 function Frame:SetScript(event, handler) end
+
+---@class Texture: table
+---@param texture any
+function Texture:SetTexture(texture) end
+---@return any
+function Texture:GetTexture() end
 
 ---@class Animation: table
 local Animation = {}

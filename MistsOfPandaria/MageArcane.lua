@@ -1296,6 +1296,9 @@ spec:RegisterAbilities( {
         
         startsCombat = false,
         texture = 135932,
+        usable = function()
+            return not ( buff.arcane_brilliance.up or FindUnitBuffByID( "player", 1459 ) )
+        end,
         
         handler = function()
             applyBuff( "arcane_brilliance" )
@@ -1311,7 +1314,7 @@ spec:RegisterAbilities( {
         toggle = "cooldowns",
         
         startsCombat = false,
-        texture = 607849,
+        texture = select( 3, GetSpellInfo( 108978 ) ) or 607849,
         
         handler = function()
             applyBuff( "alter_time" )

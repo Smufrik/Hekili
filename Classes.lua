@@ -4253,6 +4253,12 @@ function Hekili:SpecializationChanged()
     self.currentSpec = nil
     self.currentSpecOpts = nil
 
+    -- Rebuild per-active-spec spell/aura/power registries each time specialization is initialized.
+    -- Without this reset, stale keys from previously processed specs can leak into icon/spell resolution.
+    for k in pairs( class.abilities ) do class.abilities[ k ] = nil end
+    for k in pairs( class.auras ) do class.auras[ k ] = nil end
+    for k in pairs( class.powers ) do class.powers[ k ] = nil end
+
     for i, specID in ipairs( specs ) do
         local spec = class.specs[ specID ]
 
@@ -4313,16 +4319,18 @@ if spec then
             end
 
 
-            for k, v in pairs( spec.auras ) do
-                if not class.auras[ k ] then class.auras[ k ] = v end
-            end
+            if specID == currentID or specID == 0 then
+                for k, v in pairs( spec.auras ) do
+                    class.auras[ k ] = v
+                end
 
-            for k, v in pairs( spec.powers ) do
-                if not class.powers[ k ] then class.powers[ k ] = v end
-            end
+                for k, v in pairs( spec.powers ) do
+                    class.powers[ k ] = v
+                end
 
-            for k, v in pairs( spec.abilities ) do
-                if not class.abilities[ k ] then class.abilities[ k ] = v end
+                for k, v in pairs( spec.abilities ) do
+                    class.abilities[ k ] = v
+                end
             end
 
             for k, v in pairs( spec.gear ) do
