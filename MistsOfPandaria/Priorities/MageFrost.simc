@@ -102,5 +102,5 @@ actions.aoe+=/frostfire_bolt,if=buff.brain_freeze.up
 actions.aoe+=/ice_lance,if=buff.fingers_of_frost.up
 
 # AoE fillers (keep conservative; remove CoC/AE unless you explicitly want them).
-actions.aoe+=/blizzard
+actions.aoe+=/blizzard,if=active_enemies>=5
 actions.aoe+=/frostbolt
