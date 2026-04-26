@@ -766,7 +766,7 @@ spec:RegisterAbilities({
         end,
     },
     
-    -- Dispatch - Assassination finisher that can be used with 1+ combo points or on low health targets
+    -- Dispatch - Assassination generator that can be used on low health targets or with Blindside
     dispatch = {
         id = 111240, -- MoP Dispatch spell ID
         cast = 0,
@@ -778,7 +778,7 @@ spec:RegisterAbilities({
             local cost = 30 -- MoP: Dispatch costs 30 energy
             
             -- Shadow Focus reduces cost while stealthed
-            if talent.shadow_focus.enabled and (buff.stealth.up or buff.vanish.up) then
+            if talent.shadow_focus and talent.shadow_focus.enabled and (buff.stealth.up or buff.vanish.up) then
                 cost = cost * 0.25
             end
             
@@ -788,36 +788,28 @@ spec:RegisterAbilities({
         
         startsCombat = true,
         
-                usable = function()
-            return (combo_points.current or 0) > 0 or target.health.pct < 35, "requires combo points or target below 35% health"
+        usable = function()
+            return target.health.pct <= 35 or buff.blindside.up, "requires target below 35% health or blindside proc"
         end,
         
         handler = function()
-            local cp = combo_points.current or 0
+            gain(1, "combo_points")
             
-            -- Dispatch can be used as a combo point generator when target is below 35% health
-            if target.health.pct < 35 and cp == 0 then
-                gain(1, "combo_points")
-                
-                -- Seal Fate proc chance on crit
-                if (state.crit_chance or 0) > math.random() then
-                    -- state.last_ability_crit removed for Hekili compatibility
-                    if math.random() <= 0.5 then
-                        gain(1, "combo_points")
-                    end
-                else
-                    -- state.last_ability_crit removed for Hekili compatibility
+            -- Seal Fate proc chance on crit
+            if (state.crit_chance or 0) > math.random() then
+                if math.random() <= 0.5 then
+                    gain(1, "combo_points")
                 end
-                
-                -- state.last_ability removed for Hekili compatibility
-            else
-                -- Used as finisher - consume combo points
-                spend(cp, "combo_points")
-                
-                -- Apply poisons on finisher
-                if buff.deadly_poison.up then
-                    applyDebuff("target", "deadly_poison_dot", 12, min(5, debuff.deadly_poison_dot.stack + 1))
-                end
+            end
+            
+            -- Consume Blindside
+            if target.health.pct > 35 and buff.blindside.up then
+                removeBuff("blindside")
+            end
+            
+            -- Apply poisons
+            if buff.deadly_poison.up then
+                applyDebuff("target", "deadly_poison_dot", 12, min(5, debuff.deadly_poison_dot.stack + 1))
             end
         end,
     },

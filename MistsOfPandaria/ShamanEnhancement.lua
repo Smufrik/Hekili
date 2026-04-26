@@ -343,34 +343,7 @@ spec:RegisterResource( 0, { -- Mana = 0 in MoP
         end,
     },
 
-    -- Shamanistic Rage mana regeneration
-    shamanistic_rage = {
-        resource = "mana",
-        aura = "shamanistic_rage",
 
-        last = function ()
-            local app = state.buff.shamanistic_rage.applied
-            local t = state.query_time
-
-            return app + floor( ( t - app ) / 1 ) * 1
-        end,
-
-        interval = 1, -- Per second during Shamanistic Rage
-
-        value = function ()
-            if not state.buff.shamanistic_rage.up then return 0 end
-
-            -- 15% of maximum mana per second during Shamanistic Rage
-            local rage_regen = state.mana.max * 0.15
-
-            -- Glyph removes damage reduction but keeps mana regen
-            if glyph.shamanistic_rage.enabled then
-                rage_regen = rage_regen * 1.1 -- 10% bonus without damage reduction
-            end
-
-            return rage_regen
-        end,
-    },
 } )
 
 -- Comprehensive Tier Sets and Gear Registration for Enhancement Shaman

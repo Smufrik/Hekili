@@ -1,4 +1,4 @@
-﻿-- UI.lua
+-- UI.lua
 -- Dynamic UI Elements
 
 local addon, ns = ...
@@ -2152,7 +2152,13 @@ if self.HasRecommendations then
 
         if d.forceElvUpdate then
             local E = _G.ElvUI and ElvUI[1]
-            -- E:UpdateCooldownOverride( 'global' )
+            if E then
+                if E.UpdateCooldownOverride then
+                    E:UpdateCooldownOverride( 'global' )
+                elseif E.UpdateCooldownSettings then
+                    E:UpdateCooldownSettings( 'global' )
+                end
+            end
             d.forceElvUpdate = nil
         end        if d.flashReady == nil then
             -- MoP compatibility: Use simple timer
@@ -2713,12 +2719,18 @@ if self.HasRecommendations then
             local E = unpack( ElvUI )
 
             local cd = b.Cooldown.CooldownSettings or {}
-            -- cd.font = E.Libs.LSM:Fetch( "font", E.db.cooldown.fonts.font )
-            -- cd.fontSize = E.db.cooldown.fonts.fontSize
-            -- cd.fontOutline = E.db.cooldown.fonts.fontOutline
-            cd.font = E.Libs.LSM:Fetch( "font", E.db.actionbar.font )
-            cd.fontSize = E.db.cooldown.actionbar.fontSize
-            cd.fontOutline = E.db.cooldown.actionbar.fontOutline
+            
+            if E.db.cooldown and E.db.cooldown.fonts and E.db.cooldown.fonts.font then
+                cd.font = E.Libs.LSM:Fetch( "font", E.db.cooldown.fonts.font )
+                cd.fontSize = E.db.cooldown.fonts.fontSize
+                cd.fontOutline = E.db.cooldown.fonts.fontOutline
+            else
+                -- Fallback for newer ElvUI versions where cooldown fonts were moved
+                cd.font = E.Libs.LSM:Fetch( "font", E.db.actionbar and E.db.actionbar.font or "PT Sans Narrow" )
+                cd.fontSize = E.db.cooldown and E.db.cooldown.actionbar and E.db.cooldown.actionbar.fontSize or 18
+                cd.fontOutline = E.db.cooldown and E.db.cooldown.actionbar and E.db.cooldown.actionbar.fontOutline or "OUTLINE"
+            end
+            
             b.Cooldown.CooldownSettings = cd
 
             E:RegisterCooldown( b.Cooldown )

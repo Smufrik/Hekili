@@ -412,6 +412,20 @@ spec:RegisterGlyphs( {
 
 -- Destruction Warlock specific auras
 spec:RegisterAuras( {    -- Core DoT/Debuff Mechanics with Advanced Generate Functions
+    -- Unerring Vision of Lei Shen proc
+    perfect_aim = {
+        id = 138963, 
+        duration = 10,
+        max_stack = 1
+    },
+
+    -- Wushoolay's Final Choice proc (wushoolays_lightning)
+    wushoolays_lightning = {
+        id = 138786,
+        duration = 20,
+        max_stack = 10
+    },
+
     immolate = {
         id = 348,
         duration = 15,
