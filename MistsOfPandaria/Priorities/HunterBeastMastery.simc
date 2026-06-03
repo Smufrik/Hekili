@@ -1,5 +1,4 @@
 # Hunter: Beast Mastery
-# Updated October 1, 2025
 # Based on WoWSims MoP APL logic 
 
 ## Pre-combat
@@ -106,6 +105,8 @@ actions.burst+=/glaive_toss,if=talent.glaive_toss.enabled&focus>=15
 ## Core Rotation (Single Target)
 actions.core_rotation+=/kill_shot,if=target.health.pct<=20
 actions.core_rotation+=/kill_command,if=pet.alive
+actions.core_rotation+=/fervor,if=talent.fervor.enabled&focus<=50
+actions.core_rotation+=/dire_beast,if=talent.dire_beast.enabled
 actions.core_rotation+=/glaive_toss,if=talent.glaive_toss.enabled&focus>=15
 actions.core_rotation+=/powershot,if=talent.powershot.enabled&focus>=45
 actions.core_rotation+=/barrage,if=talent.barrage.enabled&focus>=40

@@ -22,10 +22,11 @@ actions+=/healing_touch,if=talent.dream_of_cenarius.enabled&!buff.dream_of_cenar
 
 ## Cooldowns
 # Use cooldowns when at or near 100 Lunar Energy for maximum benefit
-actions+=/use_items,if=buff.celestial_alignment.up|(eclipse_power>=80&buff.lunar_eclipse.up)
+actions+=/use_items,if=buff.celestial_alignment.up|(eclipse_power>=80&buff.lunar_eclipse.up)|trinket.proc.intellect.up
 actions+=/berserking,if=buff.celestial_alignment.up
 actions+=/blood_fury,if=buff.celestial_alignment.up  
 actions+=/arcane_torrent,if=buff.celestial_alignment.up
+actions+=/celestial_alignment,if=trinket.proc.intellect.up&(buff.lunar_eclipse.up|buff.solar_eclipse.up)
 actions+=/celestial_alignment,if=eclipse_power>=80&buff.lunar_eclipse.up
 actions+=/incarnation,if=talent.incarnation.enabled&(buff.celestial_alignment.up|(eclipse_power>=80&buff.lunar_eclipse.up&cooldown.incarnation.remains>=86))
 actions+=/natures_vigil,if=talent.natures_vigil.enabled&(buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up)
@@ -43,6 +44,8 @@ actions+=/moonfire,if=active_enemies>=3&!ticking&buff.lunar_eclipse.up
 
 ## Single Target Priority
 # Maintain DoTs - refresh within 1 tick to maximize uptime
+actions+=/moonfire,if=trinket.proc.intellect.up&debuff.moonfire.remains<=6
+actions+=/sunfire,if=trinket.proc.intellect.up&debuff.sunfire.remains<=6
 actions+=/sunfire,if=remains<=tick_time|(buff.lunar_eclipse.up&remains<=3)|(buff.lunar_eclipse.up&buff.lunar_eclipse.remains<=3&remains<=6)
 actions+=/moonfire,if=remains<=tick_time|(buff.solar_eclipse.up&remains<=3)|(buff.solar_eclipse.up&buff.solar_eclipse.remains<=3&remains<=6)
 

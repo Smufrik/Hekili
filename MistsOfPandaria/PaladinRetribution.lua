@@ -183,6 +183,15 @@ spec:RegisterGear( "tier14", 85339, 85340, 85341, 85342, 85343, 86679, 86680, 86
 spec:RegisterGear( "tier15", 95280, 95281, 95282, 95283, 95284, 95910, 95911, 95912, 95913, 95914, 96654, 96655, 96656, 96657, 96658 )
 spec:RegisterGear( "tier16", 99132, 99136, 99137, 99138, 99139, 98985, 98986, 98987, 99002, 99052, 99372, 99373, 99374, 99379, 99380 )
 
+spec:RegisterSetBonus( "tier15_2pc", 138159 )
+spec:RegisterSetBonus( "tier15_4pc", 138164 )
+spec:RegisterSetBonus( "ret_tier15_2pc", 138159 )
+spec:RegisterSetBonus( "ret_tier15_4pc", 138164 )
+spec:RegisterSetBonus( "tier16_2pc", 144586 )
+spec:RegisterSetBonus( "tier16_4pc", 144593 )
+spec:RegisterSetBonus( "ret_tier16_2pc", 144586 )
+spec:RegisterSetBonus( "ret_tier16_4pc", 144593 )
+
 -- Notable MoP Paladin items and legendary
 spec:RegisterGear( "legendary_cloak", 102249 ) -- Qian-Ying, Fortitude of Niuzao
 spec:RegisterGear( "kor_kron_dark_shaman_gear", 105369, 105370, 105371 ) -- SoO specific items
@@ -214,14 +223,14 @@ spec:RegisterAura( "ret_tier15_4pc", {
 } )
 
 spec:RegisterAura( "ret_tier16_2pc", {
-    id = 144586,
+    id = 144587,
     duration = 6,
     max_stack = 1,
 } )
 
 spec:RegisterAura( "ret_tier16_4pc", {
-    id = 144593,
-    duration = 3600,
+    id = 144595,
+    duration = 12,
     max_stack = 1,
 } )
 
@@ -337,6 +346,22 @@ local function GetTargetDebuffByID(spellID, caster)
         return name, icon, count, debuffType, duration, expirationTime, unitCaster
     end
     return nil
+end
+
+local function hasRetTier16Bonus( pieces )
+    if pieces == 2 then
+        return state.set_bonus.ret_tier16_2pc > 0 or state.set_bonus.tier16_2pc > 0
+    end
+    if pieces == 4 then
+        return state.set_bonus.ret_tier16_4pc > 0 or state.set_bonus.tier16_4pc > 0
+    end
+    return false
+end
+
+local function applyRetTier16DivineCrusader()
+    if hasRetTier16Bonus( 4 ) and math.random() < 0.25 then
+        applyBuff( "divine_crusader", 12 )
+    end
 end
 
 -- Advanced Retribution Paladin Auras with Enhanced Generate Functions
@@ -905,7 +930,7 @@ spec:RegisterAuras({
         duration = 12,
         max_stack = 1,
         generate = function( t )
-            local name, icon, count, debuffType, duration, expirationTime, caster = GetPlayerAuraBySpellID(144595)
+            local name, icon, count, debuffType, duration, expirationTime, caster = GetPlayerAuraBySpellID( 144595 )
 
             if name then
                 t.name = name
@@ -991,7 +1016,7 @@ spec:RegisterAuras({
         max_stack = 1,
         generate = function( t )
             -- Only relevant if you own the set bonus.
-            if ( state.set_bonus.tier15_2pc or 0 ) <= 0 then
+            if not ( state.set_bonus.ret_tier15_2pc > 0 or state.set_bonus.tier15_2pc > 0 ) then
                 t.count = 0
                 t.expires = 0
                 t.applied = 0
@@ -1031,7 +1056,7 @@ spec:RegisterAuras({
         duration = 6,
         max_stack = 1,
         generate = function( t )
-            if ( state.set_bonus.tier15_4pc or 0 ) <= 0 then
+            if not ( state.set_bonus.ret_tier15_4pc > 0 or state.set_bonus.tier15_4pc > 0 ) then
                 t.count = 0
                 t.expires = 0
                 t.applied = 0
@@ -1065,14 +1090,31 @@ spec:RegisterAuras({
         end
     },
 
+    templars_verdict = {
+        alias = { "ret_tier15_4pc" },
+        aliasMode = "first",
+        aliasType = "buff",
+    },
+
     ret_tier16_2pc = {
-        id = 144586,
+        id = 144587,
         duration = 6,
         max_stack = 1,
         generate = function( t )
-            local name, icon, count, debuffType, duration, expirationTime, caster = GetPlayerAuraBySpellID(144586)
+            if not hasRetTier16Bonus( 2 ) then
+                t.count = 0
+                t.expires = 0
+                t.applied = 0
+                t.caster = "nobody"
+                t.up = false
+                t.down = true
+                t.remains = 0
+                return
+            end
 
-            if name and state.set_bonus.tier16_2pc > 0 then
+            local name, icon, count, debuffType, duration, expirationTime, caster = GetPlayerAuraBySpellID( 144587 )
+
+            if name then
                 t.name = name
                 t.count = 1
                 t.expires = expirationTime
@@ -1083,7 +1125,8 @@ spec:RegisterAuras({
                 t.remains = expirationTime - GetTime()
                 return
             end
-              t.count = 0
+
+            t.count = 0
             t.expires = 0
             t.applied = 0
             t.caster = "nobody"
@@ -1091,6 +1134,12 @@ spec:RegisterAuras({
             t.down = true
             t.remains = 0
         end
+    },
+
+    ret_tier16_4pc = {
+        alias = { "divine_crusader" },
+        aliasMode = "first",
+        aliasType = "buff",
     },
 } )
 
@@ -1428,12 +1477,17 @@ spec:RegisterAbilities( {
 
         handler = function()
             -- Templar's Verdict mechanic
+            local spentHolyPower = true
             if state.buff.divine_purpose.up then
                 removeBuff("divine_purpose")
+                spentHolyPower = false
             end
             -- T15 4pc: Consumes the proc damage buff (if emulated/predicted).
             if state.buff.ret_tier15_4pc.up then
                 removeBuff("ret_tier15_4pc")
+            end
+            if spentHolyPower then
+                applyRetTier16DivineCrusader()
             end
         end
     },
@@ -1445,6 +1499,7 @@ spec:RegisterAbilities( {
         gcd = "spell",
 
         spend = function()
+            if state.buff.divine_crusader.up then return 0 end
             if state.buff.divine_purpose.up then return 0 end
             return 3
         end,
@@ -1455,8 +1510,17 @@ spec:RegisterAbilities( {
 
         handler = function()
             -- Divine Storm mechanic
+            local spentHolyPower = true
             if state.buff.divine_purpose.up then
                 removeBuff("divine_purpose")
+                spentHolyPower = false
+            end
+            if state.buff.divine_crusader.up then
+                removeBuff("divine_crusader")
+                spentHolyPower = false
+            end
+            if spentHolyPower then
+                applyRetTier16DivineCrusader()
             end
         end
     },
@@ -1500,8 +1564,11 @@ spec:RegisterAbilities( {
             if state.buff.art_of_war.up then
                 removeBuff("art_of_war")
             end
-            if state.set_bonus.tier15_2pc > 0 then
+            if state.set_bonus.ret_tier15_2pc > 0 or state.set_bonus.tier15_2pc > 0 then
                 applyDebuff("target", "ret_tier15_2pc")
+            end
+            if hasRetTier16Bonus( 2 ) then
+                applyBuff("ret_tier16_2pc", 6)
             end
 
             gain(1, "holy_power")
@@ -1539,6 +1606,7 @@ spec:RegisterAbilities( {
             end
 
             applyBuff("inquisition", duration)
+            applyRetTier16DivineCrusader()
         end
     },
 
@@ -1852,7 +1920,7 @@ spec:RegisterAbilities( {
         handler = function()
             gain(1, "holy_power")
             -- T15 4pc: 40% chance to make next TV deal 40% more damage
-            if state.set_bonus.tier15_4pc > 0 and state.buff.avenging_wrath.up then
+            if ( state.set_bonus.ret_tier15_4pc > 0 or state.set_bonus.tier15_4pc > 0 ) and state.buff.avenging_wrath.up then
                 if math.random() < 0.40 then
                     applyBuff("ret_tier15_4pc", 6)
                 end
@@ -1996,8 +2064,10 @@ spec:RegisterAbilities( {
 
         handler = function()
             -- Word of Glory mechanic - consumes all Holy Power
+            local spentHolyPower = true
             if state.buff.divine_purpose.up then
                 removeBuff("divine_purpose")
+                spentHolyPower = false
             else
                 -- Modify healing based on Holy Power consumed
                 -- Word of Glory's base healing amount is multiplied per Holy Power
@@ -2011,6 +2081,9 @@ spec:RegisterAbilities( {
             -- Eternal Flame talent application instead of direct heal
             if state.talent.eternal_flame.enabled then
                 applyBuff("eternal_flame")
+            end
+            if spentHolyPower then
+                applyRetTier16DivineCrusader()
             end
         end
     },
@@ -2295,4 +2368,4 @@ spec:RegisterSetting("seal_of_righteousness_threshold", 4, {
 } )
 
 -- Register default pack for MoP Retribution Paladin
-spec:RegisterPack( "Retribution", 20260102, [[Hekili:9Q1xVTTnq8plfdWOPRttw2P)zikpS9sBFOyyUpljAjABUilPrsLudyOp77iLLfjfPKslArqBsipE3V7V8o6eTm6lrBYqCC0Nd8dEJ)s)vE(((3g8UOn8tv4OnvO0hq7HFOaDe())bZPKT1CszHyVt5LOmbpyL10uy)nKJ)ffTJ3KC7639Bax2wtY5FSiARv5SmaoAfon6ZV1pAZbswgULumlnAZxoqynjI)HAsUaKMKYDWVNkqqtsoHXHT3vsBs(a(bsoXdGfTChjhaZV0K83OCugP4pAsuqEZNAppZRIItlpUfX)1WFFBoMXif7Jl3f)a8D2Rj7c3wVBNhJJ4mVSYNkwi)9okLlnnZos2FGFLzhrmoME65XUQsXAVw4dcpwUVoUQ8jmnUDz7h5FRZ2FexWB(K4RluaRZWOCbQ40A(HEvuD1wSjoYJ4yCb(ibZURJcQqBWL1Sca1X8dum7qzE2Iwb)Iq)fsqaIolwCgwiWtSneOXPbirBxBi6(WPG0uazuRQaqV8I)PSmlVMX9Oy4WNp3UmQiLa232d5vx16mrpIl2lC8prrGLSU6MZN5i6Em3JtoIJ5LXze8DHR9VrfkKI)RMWi6cwzrPb485bltXhrKc2DHb3S4LGsFQfo3hUYQy7P4vb(xyxg5rsboUQMwvYWT6Og20vPRokvyuxPEG91iAgbvi8nDwj9mk3NvIqPeXub5CuoCCp1L9WfiiNjBXqRe4f6vrHrrL11mCmHJp26WHQbfpG5lfc5reLiyP3LfJzNksJz5L8WLlSjeBrakEi9nGYhPpeUCgGjycWe8dcmYi84D10tARIPmmv440IgOPOcrafLkRU0Vd(R4uz9viDRGJlsXkoWHBoUB8BtP00QCrzbw8beudqnwsB9F4O4s6fdmyhfGWSiwGAEB4TJKu2v4rlxqlIhs7hx4Q8oLwZqzalKmFHkiuzbeJwLJOS4hXqsDQ8ImlaEuqnf)CQYlSVtBnV1A1nKEtrfhzvk1TEcr4VMHtdtlHBfaVNNbXDCuaLPO5E)ftrYDH(EbFJEb73Hml73Gt1YmkubHtW0L3gVUk1GzDshWgL8aEeEXa2STSOM51ZmWwyteATX8SqSDhk)aU)kEBPqAbcD99mpPyyagpSXGyRHnoOrnSXbjdcBWFTKMsyoQAOVc0qXImSP3i4I3aK((8tvhenFYI74BxPpBwVXneDuz1cyUPQQBU33rQYSIWSvtXMjEC19QbZM6AUPQ6AU3a11jWhK1A6Vx)8UJzWLBDOD9SGZKNSTCp9s0QAtBYf7c1I2aCMbN56CGWaGpHOfIUdJ28XJvLuoerMeymJNxZNI2GGztkPrB(a0rlkAJCd5aS4DO6Co8JFwoqBNW(ZOnPuOjlOFkXGO7SnMttYIwr1BVAsURjzIzlKhRDKNMKxe2K4lxXyIJMeyhXuha2LAdmTRkcI4GDyEiE44qwr(9HZd6ZhOACra4vgaU7aTJnPQaVSjrQdgdq1KC(Cts3MMJrjHNJc3j30E2Ht2a(mqdwdEHB6EQIbt0ja)ANw7o8yo0vReDLf0k3ajYwivQ(gFA9gRgbY6u)kGr(kIZAXlH(1zXvWJq3UD8ij9wB75IUzwWO38TXiNJ9j45BDYZrMWRZMArSYTuTED(HE8OYrbeENJa3UjbvbL7HWKPkl7JsTal7H2gbtwMDOL1bkXWxHga)3po8dEgWp4Nl8deWFPVa)DGUFItvDsq2snYUocQjzbQKPptQjPMfSge65E20Pca)(nvArSdbIubCx0ASjA)jJDnmiHT76r2U1kWwbuy9BNSIO6TjgJHoOkXLkY6qxT9jjYNOaO9(rnfLa7Jid3fehXaml1tP0Gr)CsbBwg0UYzyJx4Yd0DliC57eY99QzSgJoBKYg4BGrODCaOtm3Dp3fTWRQytDsWW11b30KkUObAJxIZjA30DGI9gCChUemrBIw6vQtkdgLyC)uG7YLJijBppGIv1gqew5EOymuSejUR7nL5ZQI98QhT2wWQ2triz6eLkgbJDZclzZBvtomTfgjhMjW6jhoEDHzKC44K2soCsQAYHzdlZP(V5oYU6L74(1nua4iVYH6TST7ihMrRRKRUeDl(kZ0CDlU5JAmdtT5rSzJhsJIXD1e1dSw5XD5LvtK0B7sHXZ2wTw1WE1KByyntj1nSMpFYmmSMhXMHDinQg2jsOh(CQwdBN86WvUV)3D2XGw5u1Y1J4EN4o)zWsR6G7m8rEbORvvVUxKGBBU(Hxhz5DC6o0wZpK(2)wbOKQ29T(59pqF7)a97nRBv)u4L1Vg3MP(547IlwHT8phaP5ZqaUE2IRCX4zmgVQv3xr))p]] )
+spec:RegisterPack( "Retribution", 20260603, [[Hekili:9Qv3UTTnu4NLIbi0015jlB30neLl2UzRxumm1RLeTeTnxKL0iPsAam0Z(oKYYIKIuYjdTOOTj8Nd)o)9XZHqXlJ)sCuoIJJ)CGFWh8)G)QfblxUEZTXr8NRXXr1OShq7HFOeDe(3)gZPKTnCsvPyUNlQq5czWQAOzW8rKJ)ofTJ3MUz9h)PpghTTHuW)ZY4TwpN1BGTwJZI)8T(Xrhi554ULIzzXrF5aH1Mk(lQn9mqAtR2b)EMabTPfeghMExfTn9pWpqkilayrR2rkaW8dTP)fQaLtk)12ufK3(PU9ZwutXzvh3I4)y4pVTaZyKY9jv7sEa(F27j7c32SB3cghXzlYREQ0t(79Ruo08c7iz)b(fHDeX4y6ZVmXvxjg79cFq4XQ9nj1vpHPjDdBFl)tt((J4s(LzHXyyuHarCAd)WG6PoAhUeB5rCcUeFKGz31VcQqtWvnSsaXj8dum7qvrUx3H(MqFpjaGJnprShwiitSneOjPrirBwBi6(W5G0CazslQaqV9SVPQkVOHXxqXWMpDQByuzgbSTDBArtDNJe9iUCVWP)efbwYM6BoDIJO7X8fCYrCcVkjNGVlCT)nQqHu(Vnegr)GvguAaoDA0Wu8rePKDxyWnEVfu6N7GZ9HRSESdR4Db(Nfxo5rsjoPUHwxXWD6Og20vPlokvy0uRUH9niAobvk8n9wj9Sj37vIq5jIPILZrfW2xOo8cCjcYxY9gBLaVWGkkmkQIUHHtiC8XohoWeu(aMVuCipIOeHixCEWe2ZLzjSIkE4spBhITiafpK(ea1r2dHlVcWemdyc(gbgzeEYUg6ZAJIPmmv440IgOzOsrafLAWSG)kotYTcPBLCCzgwXboEYPDJVoLstRke0cSKdiGdqnwsB8V5O4C6fdmyhfGWKelqnVnCZejL9epA5cAr8qA)0hUC)uiMItW0LFizDDwNSTcIrluHRXgkvSmU3Qk8G4)6ceLL8igimYKxqAbhtQWZjpNMtp7Z0b01ACsYifbBMKbuDQNqe(7z4SWSk4ghq)xyS4EjkGYCR5EFV5wYDH(lcEDEy7xpDvMVr7Yt)y2ipgDHLrByOCqfyap2d4jKfdeZ2QYgMHabZHTJrRcPxeQT7t5hWdvqyldvlwOVKQR7ummcth5ySyRroowJAKJJLmkYb)1kAgH5GusFeOEfVCSP3i4S3WBFXZ1hev1Ys6LApVQRt0Qtpq60N4GoxsZbOCoWwxNXVlW3AGTzqITkHh7b6xLvtV5KQ2CZ5E9PPxvKTn6mBg6P12lUkBAR5KQAR5CJ0wNaFeJHzC26x2vNJUZUhTRVk4m7o7UPHEoMvTwu5G9b5XrGKzWEo3A7s)G4ONq0srrVXr)5X6kkhYfsdmABDr7NIJqqlxv04O)akuhfhjNq2toEhQPGd)4NL9O3Fy)wCugfQDektu0B9oBDV1M61Dud2R207AtNPLj5266KRn9nHTP(YrmAKQnfMr0mfGDP2anWRIGyoyhUoepUlpRi)(WRd6xpq1KIaWRmaC)g66guvbEBBQuhm6lSn90P20(jn7oucphxyKEt3Eh3Wg4Zanyn4fUP)1xg1OQa8RDAT7XJzVKDNORSGUZnqImpPsnuZvN3y1eqwF1VdeKVYXzL8sOF9wCf8i0TnthjPxX(Gu0nZcb9HxNGC2nRqM36uMt04AVn1YXkNs1617hgWJQefq4JocC7BWvfuU7TuMQSCik1cSShABemzPLOorhOedFbAa8)LPHFWla(bFFHFGa(l9f4Vh0dnsRQtILTuBzx6S2CzbQltVvBZLAsynk0ZDl3Zfa()3uPfXogisfWnP1unQ)Dg7AyqcB38r2U1kWgbkm(MzzevVnXOd4rSeNzK1HUA5tsKpdbO1YrNh92B1F8ni2uvd3YCIAcDZnr8eq)QmRkusg1rkpyt6xdJQDFRNlpFVcdx6pZ5(lQmfgVwGbvrGVbgH2aaGoZtnmiDrRdQk2C7emC9voo)sf(wO9bjoNPmxNbO2RRYD0sWmvNAPenpZq0(oyM2nf4MLEItY1lIOyyTbgHHEaogVdGenUPCNZeAv5EzuHRTfVQ96lsHodl1eySVlCPyUvn)W0wyKFyMdRNF44bvUI8dh70w(HZLQMFywR01C1J5mYgkKZ4(DwKtpXJ6OE1E3mYoOmPzgGNRx7rXsmdAg9YpssYaFN5)6jdA4uRwSlbn6XeRmPi0JjmFWNRiyWCl2IcgVgf3)Qz4sSrp6MdC1mCb2U4AA6GvBuTRxS4g2vZ0BD7Q5tlDf2vZTyZUoEnQ2v31oyNY3EE1SxzVYDPcUtFhvMRQwUEc3RBUIRvK20H1UZXN41XUq7FzUyH0IU8TkeB5nU630wZVjJUpnekPUBERFEhJ03HVFJbZ6w1p6cjb702m1pBdxsXkSLF9hsVIXb46jDUifJN4zAsR()e)Fp]] )

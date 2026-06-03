@@ -1,4 +1,5 @@
-# Hunter Survival - MoP
+
+/# Hunter Survival - MoP
 
 # PRECOMBAT PREPARATION
 actions.precombat+=/aspect_of_the_cheetah,if=!buff.aspect_of_the_cheetah.up&!mounted&moving
@@ -104,6 +105,7 @@ actions.cooldowns+=/rapid_fire,if=cooldown.rapid_fire.ready&!buff.rapid_fire.up
 actions.cooldowns+=/fervor,if=talent.fervor.enabled&cooldown.fervor.ready&focus<50
 actions.cooldowns+=/a_murder_of_crows,if=talent.a_murder_of_crows.enabled&cooldown.a_murder_of_crows.ready&focus>=60
 actions.cooldowns+=/stampede,if=cooldown.stampede.ready
+actions.cooldowns+=/dire_beast,if=talent.dire_beast.enabled
 
 # Glaive Toss should be used on cooldown
 actions.cooldowns+=/glaive_toss,if=talent.glaive_toss.enabled&cooldown.glaive_toss.ready&focus>=15

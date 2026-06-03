@@ -57,8 +57,8 @@ actions.masterfrost+=/obliterate,if=runes.unholy.count>=1&runes.frost.count>=1&r
 actions.masterfrost+=/howling_blast,if=runes.frost.count>=1|runes.death.count>=1
 actions.masterfrost+=/frost_strike,if=runic_power>=60
 actions.masterfrost+=/plague_leech,if=talent.plague_leech.enabled&dot.blood_plague.remains<=3&time>=25
-actions.masterfrost+=/horn_of_winter,if=buff.horn_of_winter.down
 actions.masterfrost+=/empower_rune_weapon,if=runic_power.deficit>=40&(runes.frost.count=0|runes.death.count=0)
+actions.masterfrost+=/horn_of_winter,if=buff.horn_of_winter.down&runic_power<20
 
 ## Cleave (3 targets)
 actions.cleave+=/unholy_blight,if=talent.unholy_blight.enabled&variable.need_dots

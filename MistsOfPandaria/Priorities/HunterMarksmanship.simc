@@ -78,6 +78,7 @@ actions.sustain_phase+=/aimed_shot,if=buff.master_marksman.react
 actions.sustain_phase+=/multi_shot,if=active_enemies>=4
 actions.sustain_phase+=/kill_shot,if=target.health.pct<=20
 actions.sustain_phase+=/fervor,if=talent.fervor.enabled&focus<=50
+actions.sustain_phase+=/dire_beast,if=talent.dire_beast.enabled
 actions.sustain_phase+=/glaive_toss,if=talent.glaive_toss.enabled&cooldown.glaive_toss.ready&focus>=15
 actions.sustain_phase+=/arcane_shot,if=buff.thrill_of_the_hunt.react
 actions.sustain_phase+=/aimed_shot,if=variable.aimed

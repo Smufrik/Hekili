@@ -66,7 +66,7 @@ actions+=/corruption,if=dot.corruption.percent_increase>=settings.dot_refresh_th
 actions+=/life_tap,if=mana.pct<=15
 
 # Malefic Grasp as filler
-actions+=/malefic_grasp,interrupt=1,chain=1,if=dot.agony.ticking&dot.corruption.ticking&dot.unstable_affliction.ticking&mana.pct>20
+actions+=/malefic_grasp,interrupt=1,chain=1,if=dot.agony.ticking&dot.corruption.ticking&dot.unstable_affliction.ticking&mana.pct>20&dot.agony.remains>gcd
 
 # Life Tap as last resort
 actions+=/life_tap

@@ -25,7 +25,7 @@ actions.variables+=/variable,name=use_cds,op=set,value=1
 actions.variables+=/variable,name=execute,op=set,value=target.health.pct<=settings.unholy_execute_threshold
 actions.variables+=/variable,name=dots_up,op=set,value=dot.blood_plague.ticking&dot.frost_fever.ticking
 actions.variables+=/variable,name=need_dots,op=set,value=!dot.blood_plague.ticking|!dot.frost_fever.ticking
-actions.variables+=/variable,name=proc_window,op=set,value=buff.unholy_strength.up|buff.dark_transformation.up|buff.bloodlust.up|buff.heroism.up|buff.time_warp.up|buff.ancient_hysteria.up|buff.blood_fury.up|buff.berserking.up|buff.synapse_springs.up
+actions.variables+=/variable,name=proc_window,op=set,value=buff.unholy_strength.up|buff.dark_transformation.up|trinket.proc.strength.up|trinket.proc.haste.up|buff.bloodlust.up|buff.heroism.up|buff.time_warp.up|buff.ancient_hysteria.up|buff.blood_fury.up|buff.berserking.up|buff.synapse_springs.up
 actions.variables+=/variable,name=shadow_infusion_ready,op=set,value=buff.shadow_infusion.stack>=4|buff.dark_transformation.up
 actions.variables+=/variable,name=runic_overcap,op=set,value=runic_power>=90
 actions.variables+=/variable,name=pool_for_gargoyle,op=set,value=cooldown.summon_gargoyle.remains<=14|target.time_to_die<=35

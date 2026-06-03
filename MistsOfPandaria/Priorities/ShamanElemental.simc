@@ -1,5 +1,5 @@
-# Shaman: Elemental - MoP 5.5.0 Rotation
-# Based on Wowhead guide and authentic MoP priorities
+# Shaman: Elemental - MoP 5.5.4 P5 Rotation
+# Based on Wowhead guide plus portable WoWSims P5 APL updates
 
 # Precombat preparation
 actions.precombat+=/lightning_shield,if=!buff.lightning_shield.up
@@ -23,7 +23,7 @@ actions.cooldowns+=/blood_fury,if=buff.ascendance.up|buff.elemental_mastery.up
 actions.cooldowns+=/berserking,if=buff.ascendance.up|buff.elemental_mastery.up
 actions.cooldowns+=/fire_elemental_totem,if=!totem.fire_elemental.up&(target.time_to_die>150|target.time_to_die<35|cooldown.ascendance.remains>120)
 actions.cooldowns+=/earth_elemental_totem,if=!totem.earth_elemental.up&(target.time_to_die>150|target.time_to_die<35|cooldown.ascendance.remains>120)
-actions.cooldowns+=/elemental_mastery,if=cooldown.ascendance.remains>85|cooldown.ascendance.remains<4|buff.ascendance.up
+actions.cooldowns+=/elemental_mastery,if=time<5|cooldown.ascendance.remains>85|cooldown.ascendance.remains<4|buff.ascendance.up|(talent.elemental_mastery.enabled&cooldown.ascendance.remains<=2&debuff.flame_shock.remains<=16)
 actions.cooldowns+=/stormlash_totem,if=buff.bloodlust.up|target.time_to_die<20
 # Fallback: if no Bloodlust on pull, drop Stormlash during first major burst window
 actions.cooldowns+=/stormlash_totem,if=!totem.stormlash_totem.up&(buff.ascendance.up|buff.elemental_mastery.up)&time<15
@@ -56,14 +56,14 @@ actions.opener+=/lightning_bolt
 
 # Single target rotation
 
-actions.single_target+=/flame_shock,if=!debuff.flame_shock.up|debuff.flame_shock.remains<=2
-actions.single_target+=/unleash_elements,if=talent.unleashed_fury.enabled
+actions.single_target+=/unleash_elements,if=talent.unleashed_fury.enabled&!buff.ascendance.up
+actions.single_target+=/flame_shock,if=!debuff.flame_shock.up|dot.flame_shock.remains<dot.flame_shock.tick_time|cooldown.ascendance.remains<2&debuff.flame_shock.remains<16
 # During Ascendance: spam Lava Burst (no FS gate)
 actions.single_target+=/lava_burst,if=buff.ascendance.up
 actions.single_target+=/lava_burst,if=buff.lava_surge.up
 actions.single_target+=/searing_totem,if=!totem.searing_totem.up&!totem.fire_elemental.up&!totem.magma_totem.up
 actions.single_target+=/earth_elemental_totem,if=!totem.earth_elemental.up&(target.time_to_die>150|target.time_to_die<35|cooldown.ascendance.remains>120)
-actions.single_target+=/ascendance,if=debuff.flame_shock.up
+actions.single_target+=/ascendance,if=debuff.flame_shock.remains>15
 actions.single_target+=/elemental_blast,if=talent.elemental_blast.enabled
 actions.single_target+=/lava_burst,if=debuff.flame_shock.up&cooldown.lava_burst.ready
 # Spend Fulmination at 7 stacks; avoid during Ascendance; wait until FS is stable (>6s)

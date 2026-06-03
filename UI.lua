@@ -998,7 +998,6 @@ do
 
         -- These re-register flash frames in SpellFlash (after 0.5 - 1.0s).
         ACTIONBAR_HIDEGRID = 1,
-        LEARNED_SPELL_IN_TAB = 1,
         CHARACTER_POINTS_CHANGED = 1,
         ACTIVE_TALENT_GROUP_CHANGED = 1,
         UPDATE_MACROS = 1,
