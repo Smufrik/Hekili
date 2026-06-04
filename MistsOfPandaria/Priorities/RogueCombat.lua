@@ -2942,12 +2942,11 @@ spec:RegisterSetting("use_tricks_of_the_trade", true, {
 -----------------------------------------------------------------------
 -- PACK UPDATED TO CURRENT TOP-END ROGUE ROTATION
 -----------------------------------------------------------------------
-
 spec:RegisterPack("Combat", 20260604, [[
 # =========================
 #   PRECOMBAT
 # =========================
-actions.precombat+=/potion
+actions.precombat+=/jade_serpent_potion
 actions.precombat+=/stealth
 
 # =========================
@@ -2966,8 +2965,8 @@ actions.stealth_opener+=/slice_and_dice,if=buff.slice_and_dice.remains<2
 # Use opener if stealthed
 actions+=/call_action_list,name=stealth_opener,if=stealthed.all
 
-# Shadowstep gap closer
-actions+=/shadowstep,if=target.distance>5&target.distance<=25&!stealthed.all
+# Shadowstep gap closer (Hekili-safe)
+actions+=/shadowstep,if=!stealthed.all
 
 # Blade Flurry auto-toggle
 actions+=/blade_flurry,if=settings.auto_blade_flurry&((active_enemies>=2&!buff.blade_flurry.up)|(active_enemies<2&buff.blade_flurry.up))
@@ -2985,13 +2984,11 @@ actions+=/call_action_list,name=generators
 #   COOLDOWNS
 # =========================
 
-# Potion / racials / trinkets
-actions.cooldowns+=/potion,if=buff.bloodlust.react|target.time_to_die<40
+# Potion / racials
+actions.cooldowns+=/jade_serpent_potion,if=buff.bloodlust.react
 actions.cooldowns+=/blood_fury
 actions.cooldowns+=/berserking
 actions.cooldowns+=/arcane_torrent,if=energy<60
-actions.cooldowns+=/use_item,slot=trinket1
-actions.cooldowns+=/use_item,slot=trinket2
 
 # Killing Spree (never during AR)
 actions.cooldowns+=/killing_spree,if=energy<50&buff.adrenaline_rush.down
