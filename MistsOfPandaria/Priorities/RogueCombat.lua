@@ -1005,10 +1005,6 @@ spec:RegisterAbilities({
     -------------------------------------------------------------------
     -- EVISCERATE (primary finisher)
     -------------------------------------------------------------------
-   -- RogueCombat.lua
--- Updated for MoP Classic (SoO 2026)
--- Original by Smufrik, updated by Jonathan + Copilot
-
 -- MoP: Use UnitClass instead of UnitClassBase
 local _, playerClass = UnitClass("player")
 if playerClass ~= "ROGUE" then return end
