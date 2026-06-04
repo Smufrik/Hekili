@@ -1,6 +1,6 @@
 -- RogueCombat.lua
 -- Updated for MoP Classic (SoO 2026)
--- Original by Smufrik, updated by Bitterchills - US-Pagle on 6/4/2026
+-- Original by Smufrik, updated by Bitterchills on 6/4/2026
 
 -- MoP: Use UnitClass instead of UnitClassBase
 local _, playerClass = UnitClass('player')
@@ -1005,943 +1005,6 @@ spec:RegisterAbilities({
     -------------------------------------------------------------------
     -- EVISCERATE (primary finisher)
     -------------------------------------------------------------------
--- MoP: Use UnitClass instead of UnitClassBase
-local _, playerClass = UnitClass("player")
-if playerClass ~= "ROGUE" then return end
-
-local addon, ns = ...
-local Hekili = _G["Hekili"]
-local class, state = Hekili.Class, Hekili.State
-
-local floor = math.floor
-local strformat = string.format
-
--- 260 = Combat in MoP Classic
-local spec = Hekili:NewSpecialization(260, true)
-
--- Ensure state is properly initialized
-if not state then
-    state = Hekili.State
-end
-
------------------------------------------------------------------------
--- RESOURCES
------------------------------------------------------------------------
-
--- ENERGY (type 3)
-spec:RegisterResource(3, {
-
-    -- Adrenaline Rush: doubles regen (+10 energy/sec)
-    adrenaline_rush = {
-        aura = "adrenaline_rush",
-        last = function()
-            local app = state.buff.adrenaline_rush.applied
-            local t = state.query_time
-            return app + floor((t - app) / 1) * 1
-        end,
-        interval = 1,
-        value = function()
-            return state.buff.adrenaline_rush.up and 10 or 0
-        end,
-    },
-
-    -- Combat Potency: 20% chance for 15 energy on OH hit (expected value)
-    combat_potency = {
-        last = function() return state.query_time end,
-        interval = 0.5,
-        value = function()
-            if not state.combat then return 0 end
-            local speed = state.swings.offhand_speed or 2.6
-            local aps = 1 / speed
-            return aps * 0.20 * 15
-        end,
-    },
-
-    -- Shadow Focus: +3 energy/sec while stealthed
-    shadow_focus = {
-        aura = "stealth",
-        last = function()
-            return state.buff.stealth.applied or state.buff.vanish.applied or 0
-        end,
-        interval = 1,
-        value = function()
-            return (state.buff.stealth.up or state.buff.vanish.up) and 3 or 0
-        end,
-    },
-
-    -- Blade Flurry: +1 energy/sec
-    blade_flurry = {
-        aura = "blade_flurry",
-        last = function()
-            local app = state.buff.blade_flurry.applied
-            local t = state.query_time
-            return app + floor((t - app) / 1) * 1
-        end,
-        interval = 1,
-        value = function()
-            return state.buff.blade_flurry.up and 1 or 0
-        end,
-    },
-
-    -- Relentless Strikes: expected energy from 4% per CP for 25 energy
-    relentless_strikes_energy = {
-        last = function() return state.query_time end,
-        interval = 1,
-        value = function()
-            if state.last_finisher_cp then
-                local chance = state.last_finisher_cp * 0.04
-                return 25 * chance
-            end
-            return 0
-        end,
-    },
-
-}, {
-    base_regen = function()
-        local base = 10
-        local haste = 1.0 + ((state.stat.haste_rating or 0) / 42500)
-        return base * haste
-    end,
-
-    blade_flurry_efficiency = function()
-        return state.buff.blade_flurry.up and 1.05 or 1.0
-    end,
-
-    glyph_energy_bonus = function()
-        return state.glyph.energy and state.glyph.energy.enabled and 1.05 or 1.0
-    end,
-})
-
------------------------------------------------------------------------
--- COMBO POINTS (type 4)
------------------------------------------------------------------------
-
-spec:RegisterResource(4, {
-
-    -- Bandit's Guile effective CP value (for modeling)
-    bandits_guile = {
-        last = function() return state.query_time end,
-        interval = 1,
-        value = function()
-            if state.buff.deep_insight.up then return 0.3 end
-            if state.buff.moderate_insight.up then return 0.2 end
-            if state.buff.shallow_insight.up then return 0.1 end
-            return 0
-        end,
-    },
-
-    -- Restless Blades: modeled as -CP spent for CDR (expected)
-    restless_blades_cd_reduction = {
-        last = function() return state.query_time end,
-        interval = 1,
-        value = function()
-            if state.last_finisher_cp then
-                return -state.last_finisher_cp
-            end
-            return 0
-        end,
-    },
-
-    -- Ruthlessness: expected CP refund (20% per CP)
-    ruthlessness_retention = {
-        last = function() return state.query_time end,
-        interval = 1,
-        value = function()
-            if state.last_finisher_cp then
-                local chance = state.last_finisher_cp * 0.2
-                return chance
-            end
-            return 0
-        end,
-    },
-
-    marked_for_death_generation = {
-        last = function()
-            return (state.last_cast_time and state.last_cast_time.marked_for_death) or 0
-        end,
-        interval = 1,
-        value = function() return 0 end,
-    },
-
-}, {
-    max_combo_points = function() return 5 end,
-    combat_efficiency = function() return 1.0 end,
-})
-
------------------------------------------------------------------------
--- TALENTS (MoP Classic 2026)
------------------------------------------------------------------------
-
-spec:RegisterTalents({
-
-    -- 15
-    nightstalker       = { 1, 1, 14062  },
-    subterfuge         = { 1, 2, 108208 },
-    shadow_focus       = { 1, 3, 108209 },
-
-    -- 30
-    deadly_throw       = { 2, 1, 48673  },
-    nerve_strike       = { 2, 2, 108210 },
-    combat_readiness   = { 2, 3, 74001  },
-
-    -- 45
-    cheat_death        = { 3, 1, 31230  },
-    leeching_poison    = { 3, 2, 108211 },
-    elusiveness        = { 3, 3, 79008  },
-
-    -- 60
-    cloak_and_dagger   = { 4, 1, 138106 },
-    shadowstep         = { 4, 2, 36554  },
-    burst_of_speed     = { 4, 3, 108212 },
-
-    -- 75
-    prey_on_the_weak   = { 5, 1, 131511 },
-    paralytic_poison   = { 5, 2, 108215 },
-    dirty_tricks       = { 5, 3, 108216 },
-
-    -- 90
-    shuriken_toss      = { 6, 1, 114014 },
-    marked_for_death   = { 6, 2, 137619 },
-    anticipation       = { 6, 3, 114015 },
-})
-
------------------------------------------------------------------------
--- GLYPHS (FULL OFFICIAL MOP CLASSIC 2026 LIST)
------------------------------------------------------------------------
-
-spec:RegisterGlyphs({
-
-    -- MAJOR GLYPHS
-    [56805] = "glyph_sprint",
-    [56808] = "glyph_redirect",
-    [56807] = "glyph_smoke_bomb",
-    [56806] = "glyph_cloak_of_shadows",
-    [56809] = "glyph_feint",
-    [56819] = "glyph_expose_armor",
-    [56814] = "glyph_garrote",
-    [56815] = "glyph_shiv",
-    [56816] = "glyph_gouge",
-    [56817] = "glyph_blind",
-    [56811] = "glyph_sprint",
-    [56812] = "glyph_stealth",
-    [56813] = "glyph_evasion",
-    [56800] = "glyph_sinister_strike",
-    [56802] = "glyph_eviscerate",
-    [56801] = "glyph_recuperate",
-    [56804] = "glyph_kick",
-    [56820] = "glyph_shadow_walk",
-    [56818] = "glyph_ambush",
-    [56821] = "glyph_vendetta",
-    [56822] = "glyph_vanish",
-    [56803] = "glyph_deadly_momentum",
-    [56823] = "glyph_sharpened_knives",
-    [56824] = "glyph_killing_spree",
-    [56825] = "glyph_tricks",
-
-    -- MINOR GLYPHS
-    [58033] = "glyph_disguise",
-    [58034] = "glyph_decoy",
-    [58035] = "glyph_hemorrhage",
-    [58036] = "glyph_pick_lock",
-    [58037] = "glyph_detection",
-    [58038] = "glyph_pick_pocket",
-    [58039] = "glyph_distract",
-    [58040] = "glyph_improved_distraction",
-    [58041] = "glyph_blurred_speed",
-    [58042] = "glyph_safe_fall",
-    [58043] = "glyph_headhunter",
-    [58044] = "glyph_poisons",
-})
------------------------------------------------------------------------
--- AURAS (BUFFS / DEBUFFS)
------------------------------------------------------------------------
-
-spec:RegisterAuras({
-
-    -- Core Combat buffs
-    slice_and_dice = {
-        id = 5171,
-        duration = function() return 6 + (6 * combo_points.current) end,
-        max_stack = 1
-    },
-
-    adrenaline_rush = {
-        id = 13750,
-        duration = 15,
-        max_stack = 1
-    },
-
-    killing_spree = {
-        id = 51690,
-        duration = 3,
-        max_stack = 1
-    },
-
-    blade_flurry = {
-        id = 13877,
-        duration = 15,
-        max_stack = 1
-    },
-
-    shadow_blades = {
-        id = 121471,
-        duration = 12,
-        max_stack = 1
-    },
-
-    sprint = {
-        id = 2983,
-        duration = 8,
-        max_stack = 1
-    },
-
-    evasion = {
-        id = 5277,
-        duration = 10,
-        max_stack = 1
-    },
-
-    feint = {
-        id = 1966,
-        duration = 5,
-        max_stack = 1
-    },
-
-    stealth = {
-        id = 1784,
-        copy = { 115191 },
-        duration = 3600,
-        max_stack = 1
-    },
-
-    -- Debuffs
-    revealing_strike = {
-        id = 84617,
-        duration = 24,
-        max_stack = 1
-    },
-
-    rupture = {
-        id = 1943,
-        duration = function() return 8 + (4 * combo_points.current) end,
-        tick_time = 2,
-        max_stack = 1
-    },
-
-    garrote = {
-        id = 703,
-        duration = 18,
-        tick_time = 3,
-        max_stack = 1
-    },
-
-    crimson_tempest = {
-        id = 121411,
-        duration = function() return 6 + (2 * combo_points.current) end,
-        tick_time = 2,
-        max_stack = 1
-    },
-
-    gouge = {
-        id = 1776,
-        duration = 4,
-        max_stack = 1
-    },
-
-    blind = {
-        id = 2094,
-        duration = 60,
-        max_stack = 1
-    },
-
-    kidney_shot = {
-        id = 408,
-        duration = function() return 1 + combo_points.current end,
-        max_stack = 1
-    },
-
-    cheap_shot = {
-        id = 1833,
-        duration = 4,
-        max_stack = 1
-    },
-
-    sap = {
-        id = 6770,
-        duration = 60,
-        max_stack = 1
-    },
-
-    -- MoP talents / passives
-    anticipation = {
-        id = 115189,
-        duration = 3600,
-        max_stack = 5
-    },
-
-    deep_insight = {
-        id = 84747,
-        duration = 15,
-        max_stack = 1
-    },
-
-    moderate_insight = {
-        id = 84746,
-        duration = 15,
-        max_stack = 1
-    },
-
-    shallow_insight = {
-        id = 84745,
-        duration = 15,
-        max_stack = 1
-    },
-
-    subterfuge = {
-        id = 115192,
-        duration = 3,
-        max_stack = 1
-    },
-
-    shadow_dance = {
-        id = 51713,
-        duration = 8,
-        max_stack = 1
-    },
-
-    burst_of_speed = {
-        id = 108212,
-        duration = 4,
-        max_stack = 1
-    },
-
-    marked_for_death = {
-        id = 137619,
-        duration = 60,
-        max_stack = 1
-    },
-
-    cloak_of_shadows = {
-        id = 31224,
-        duration = 5,
-        max_stack = 1
-    },
-
-    combat_readiness = {
-        id = 74001,
-        duration = 20,
-        max_stack = 5
-    },
-
-    jade_serpent_potion = {
-        id = 76089,
-        duration = 25,
-        max_stack = 1
-    },
-
-    nerve_strike = {
-        id = 108210,
-        duration = 4,
-        max_stack = 1
-    },
-
-    cheat_death = {
-        id = 45181,
-        duration = 3,
-        max_stack = 1
-    },
-
-    leeching_poison = {
-        id = 108211,
-        duration = 3600,
-        max_stack = 1
-    },
-
-    deadly_poison = {
-        id = 2818,
-        duration = 12,
-        tick_time = 3,
-        max_stack = 5
-    },
-
-    wound_poison = {
-        id = 8680,
-        duration = 12,
-        max_stack = 5
-    },
-
-    crippling_poison = {
-        id = 3409,
-        duration = 12,
-        max_stack = 1
-    },
-
-    paralytic_poison = {
-        id = 113952,
-        duration = 20,
-        max_stack = 5
-    },
-
-    vendetta = {
-        id = 79140,
-        duration = 20,
-        max_stack = 1
-    },
-
-    master_of_subtlety = {
-        id = 31665,
-        duration = 6,
-        max_stack = 1
-    },
-
-    prey_on_the_weak = {
-        id = 131231,
-        duration = 8,
-        max_stack = 1
-    },
-
-    -- Bandit's Guile (single aura, 0–12 stacks)
-    bandits_guile = {
-        id = 84654,
-        duration = 15,
-        max_stack = 12
-    },
-
-    -- Recuperate
-    recuperate = {
-        id = 73651,
-        duration = function() return 6 + (6 * combo_points.current) end,
-        tick_time = 3,
-        max_stack = 1
-    },
-
-    vanish = {
-        id = 1856,
-        duration = 3,
-        max_stack = 1
-    },
-
-    shroud_of_concealment = {
-        id = 114018,
-        duration = 15,
-        max_stack = 1
-    },
-
-    smoke_bomb = {
-        id = 76577,
-        duration = 5,
-        max_stack = 1
-    },
-
-    tricks_of_the_trade = {
-        id = 57934,
-        duration = 6,
-        max_stack = 1
-    },
-
-    redirect = {
-        id = 73981,
-        duration = 60,
-        max_stack = 1
-    },
-
-    kick = {
-        id = 1766,
-        duration = 5,
-        max_stack = 1
-    },
-
-    combat_potency = {
-        id = 35553,
-        duration = 3600,
-        max_stack = 1
-    },
-
-    restless_blades = {
-        id = 79096,
-        duration = 3600,
-        max_stack = 1
-    },
-
-    vitality = {
-        id = 61329,
-        duration = 3600,
-        max_stack = 1
-    },
-
-    shadow_focus = {
-        id = 108209,
-        duration = 3600,
-        max_stack = 1
-    },
-})
-
------------------------------------------------------------------------
--- MOP TIER SETS (T14 / T15 / T16)
------------------------------------------------------------------------
-
-spec:RegisterGear("tier14", 85299, 85300, 85301, 85302, 85303)
-spec:RegisterGear("tier15", 95305, 95306, 95307, 95308, 95309)
-spec:RegisterGear("tier16", 99009, 99010, 99011, 99012, 99013)
-
-spec:RegisterAuras({
-
-    t14_2p_rogue = {
-        id = 9991402,
-        duration = 3600,
-        max_stack = 1
-    },
-
-    t14_4p_rogue = {
-        id = 9991404,
-        duration = 3600,
-        max_stack = 1
-    },
-
-    t15_2p_rogue = {
-        id = 9991502,
-        duration = 3600,
-        max_stack = 1
-    },
-
-    t15_4p_rogue = {
-        id = 9991504,
-        duration = 12,
-        max_stack = 1
-    },
-
-    t16_2p_cp_discount = {
-        id = 9991602,
-        duration = 15,
-        max_stack = 5
-    },
-
-    t16_4p_killing_spree = {
-        id = 9991604,
-        duration = 10,
-        max_stack = 10
-    },
-
-    t16_4p_vendetta_mastery = {
-        id = 9991605,
-        duration = 5,
-        max_stack = 20
-    },
-
-    t16_4p_ambush_proc = {
-        id = 9991606,
-        duration = 10,
-        max_stack = 1
-    },
-})
-
------------------------------------------------------------------------
--- HOOKS / STATE INITIALIZATION
------------------------------------------------------------------------
-
-spec:RegisterHook("runHandler", function(action, pool)
-
-    if buff.stealth.up and not (
-        action == "stealth" or
-        action == "garrote" or
-        action == "ambush" or
-        action == "cheap_shot"
-    ) then
-        removeBuff("stealth")
-    end
-
-    if buff.vanish.up and not (
-        action == "vanish" or
-        action == "garrote" or
-        action == "ambush" or
-        action == "cheap_shot"
-    ) then
-        removeBuff("vanish")
-    end
-end)
-
-local function IsActiveSpell(id)
-    local slot = FindSpellBookSlotBySpellID(id)
-    if not slot then return false end
-    local _, _, spellID = GetSpellBookItemName(slot, "spell")
-    return id == spellID
-end
-
-local function ensureState()
-    if not state then state = Hekili.State end
-    if state and not state.IsActiveSpell then
-        state.IsActiveSpell = IsActiveSpell
-    end
-end
-
-ensureState()
-
------------------------------------------------------------------------
--- reset_precast HOOK
------------------------------------------------------------------------
-
-spec:RegisterHook("reset_precast", function()
-
-    ensureState()
-
-    if now - action.shadowstep.lastCast < 1.5 then
-        setDistance(5)
-    end
-
-    -- Sync Revealing Strike
-    if UnitExists("target") then
-        for i = 1, 40 do
-            local name, _, _, _, _, expires, caster, _, _, spellID =
-                UnitDebuff("target", i)
-            if not name then break end
-
-            if spellID == 84617 and caster == "player" then
-                local remains = expires > 0 and (expires - GetTime()) or 0
-                if remains > 0 and
-                   (not debuff.revealing_strike.up or debuff.revealing_strike.remains <= 0)
-                then
-                    applyDebuff("target", "revealing_strike", remains)
-                end
-                break
-            end
-        end
-    end
-
-    -- Sync Rupture
-    if UnitExists("target") then
-        for i = 1, 40 do
-            local name, _, _, _, _, expires, caster, _, _, spellID =
-                UnitDebuff("target", i)
-            if not name then break end
-
-            if spellID == 1943 and caster == "player" then
-                local remains = expires > 0 and (expires - GetTime()) or 0
-                if remains > 0 and
-                   (not debuff.rupture.up or debuff.rupture.remains <= 0)
-                then
-                    applyDebuff("target", "rupture", remains)
-                end
-                break
-            end
-        end
-    end
-
-    -- Sync player buffs
-    for i = 1, 40 do
-        local name, _, _, _, _, expires, _, _, _, spellID =
-            UnitBuff("player", i)
-        if not name then break end
-
-        local remains = expires > 0 and (expires - GetTime()) or 0
-        if remains > 0 then
-            if spellID == 5171 and not buff.slice_and_dice.up then
-                applyBuff("slice_and_dice", remains)
-            elseif spellID == 13750 and not buff.adrenaline_rush.up then
-                applyBuff("adrenaline_rush", remains)
-            elseif spellID == 51690 and not buff.killing_spree.up then
-                applyBuff("killing_spree", remains)
-            elseif spellID == 13877 and not buff.blade_flurry.up then
-                applyBuff("blade_flurry", remains)
-            elseif spellID == 121471 and not buff.shadow_blades.up then
-                applyBuff("shadow_blades", remains)
-            end
-        end
-    end
-end)
-
------------------------------------------------------------------------
--- TALENT UPDATE HOOK
------------------------------------------------------------------------
-
-spec:RegisterHook("PLAYER_TALENT_UPDATE", function()
-    -- intentionally quiet
-end)
-
------------------------------------------------------------------------
--- STATE EXPRESSIONS / FUNCTIONS
------------------------------------------------------------------------
-
-spec:RegisterStateExpr("bandit_guile_stack", function()
-    if buff.deep_insight.up then return 3 end
-    if buff.moderate_insight.up then return 2 end
-    if buff.shallow_insight.up then return 1 end
-    return 0
-end)
-
-spec:RegisterStateExpr("in_combat", function()
-    return combat == 1
-end)
-
-spec:RegisterStateExpr("effective_combo_points", function()
-    local cp = combo_points.current or 0
-    if talent.anticipation.enabled and buff.anticipation.up then
-        return cp + buff.anticipation.stack
-    end
-    return cp
-end)
-
-spec:RegisterStateExpr("anticipation_charges", function()
-    return buff.anticipation.stack or 0
-end)
-
-spec:RegisterStateExpr("energy_regen_combined", function()
-    local regen = GetPowerRegen()
-    if buff.adrenaline_rush.up then regen = regen * 2 end
-    return regen
-end)
-
-spec:RegisterStateExpr("energy_time_to_max", function()
-    local regen = energy_regen_combined
-    if regen == 0 then return 999 end
-    return (UnitPowerMax("player", 3) - UnitPower("player", 3)) / regen
-end)
-
-spec:RegisterStateFunction("restless_blades_cdr", function(cp_spent)
-    if not cp_spent or cp_spent <= 0 then return 0 end
-    return cp_spent * 2
-end)
-
-spec:RegisterStateFunction("slice_and_dice_duration", function(cp)
-    if not cp or cp == 0 then return 0 end
-    return 12 + (cp * 6)
-end)
-
-spec:RegisterStateFunction("rupture_duration", function(cp)
-    if not cp or cp == 0 then return 0 end
-    return 8 + (cp * 4)
-end)
-
-spec:RegisterStateExpr("is_stealthed", function()
-    return buff.stealth.up or buff.vanish.up or buff.shadow_dance.up or buff.subterfuge.up
-end)
-
-spec:RegisterStateExpr("stealthed", function()
-    return {
-        all = buff.stealth.up or buff.vanish.up or buff.shadow_dance.up or buff.subterfuge.up
-    }
-end)
-
-spec:RegisterStateExpr("behind_target", function()
-    if buff.stealth.up or buff.vanish.up or buff.shadow_dance.up or buff.subterfuge.up then
-        return true
-    end
-    if group then return true end
-    if target.exists and not target.is_player then return true end
-    local t = (query_time % 10) / 10
-    return t > 0.3
-end)
-
-spec:RegisterStateFunction("update_rogue_cooldowns", function()
-    -- placeholder
-end)
------------------------------------------------------------------------
--- ABILITIES
------------------------------------------------------------------------
-
-spec:RegisterAbilities({
-
-    -------------------------------------------------------------------
-    -- BASIC ATTACKS / GENERATORS
-    -------------------------------------------------------------------
-
-    sinister_strike = {
-        id = 1752,
-        cast = 0,
-        cooldown = 0,
-        gcd = "spell",
-        school = "physical",
-
-        spend = 50,
-        spendType = "energy",
-
-        startsCombat = true,
-
-        handler = function()
-
-            -- Generate 1 CP
-            gain(1, "combo_points")
-
-            -- Simple extra CP modeling (20% chance)
-            if GetTime() % 1 < 0.20 then
-                gain(1, "combo_points")
-            end
-
-            -- Bandit's Guile progression
-            if not buff.bandits_guile.up then
-                applyBuff("bandits_guile", 15, 1)
-            else
-                if buff.bandits_guile.stack < 12 then
-                    addStack("bandits_guile", 15, 1)
-                end
-            end
-
-            if buff.bandits_guile.stack == 4 and not buff.shallow_insight.up then
-                applyBuff("shallow_insight", 15)
-                removeBuff("moderate_insight")
-                removeBuff("deep_insight")
-            elseif buff.bandits_guile.stack == 8 and not buff.moderate_insight.up then
-                applyBuff("moderate_insight", 15)
-                removeBuff("shallow_insight")
-                removeBuff("deep_insight")
-            elseif buff.bandits_guile.stack == 12 and not buff.deep_insight.up then
-                applyBuff("deep_insight", 15)
-                removeBuff("shallow_insight")
-                removeBuff("moderate_insight")
-                buff.bandits_guile.stack = 12
-            end
-        end,
-    },
-
-    revealing_strike = {
-        id = 84617,
-        cast = 0,
-        cooldown = 0,
-        gcd = "spell",
-        school = "physical",
-
-        spend = 40,
-        spendType = "energy",
-
-        startsCombat = true,
-
-        handler = function()
-
-            applyDebuff("target", "revealing_strike")
-            gain(1, "combo_points")
-
-            if set_bonus.tier16_2pc > 0 then
-                addStack("t16_2p_cp_discount", 15, 1)
-            end
-
-            if not buff.bandits_guile.up then
-                applyBuff("bandits_guile", 15, 1)
-            else
-                if buff.bandits_guile.stack < 12 then
-                    addStack("bandits_guile", 15, 1)
-                end
-            end
-
-            if buff.bandits_guile.stack == 4 and not buff.shallow_insight.up then
-                applyBuff("shallow_insight", 15)
-                removeBuff("moderate_insight")
-                removeBuff("deep_insight")
-            elseif buff.bandits_guile.stack == 8 and not buff.moderate_insight.up then
-                applyBuff("moderate_insight", 15)
-                removeBuff("shallow_insight")
-                removeBuff("deep_insight")
-            elseif buff.bandits_guile.stack == 12 and not buff.deep_insight.up then
-                applyBuff("deep_insight", 15)
-                removeBuff("shallow_insight")
-                removeBuff("moderate_insight")
-                buff.bandits_guile.stack = 12
-            end
-        end,
-    },
-
-    -------------------------------------------------------------------
-    -- FINISHERS
-    -------------------------------------------------------------------
-
     eviscerate = {
         id = 2098,
         cast = 0,
@@ -1962,6 +1025,9 @@ spec:RegisterAbilities({
 
             local cp = combo_points.current
 
+            -------------------------------------------------------------------
+            -- Restless Blades: 2 sec per CP
+            -------------------------------------------------------------------
             local cdr = restless_blades_cdr(cp)
             if cdr > 0 then
                 reduceCooldown("adrenaline_rush", cdr)
@@ -1974,6 +1040,9 @@ spec:RegisterAbilities({
             spend(cp, "combo_points")
             state.last_finisher_cp = cp
 
+            -------------------------------------------------------------------
+            -- Anticipation: convert charges → CP
+            -------------------------------------------------------------------
             if talent.anticipation.enabled and buff.anticipation.stack > 0 then
                 gain(1, "combo_points")
                 removeStack("anticipation")
@@ -1981,6 +1050,9 @@ spec:RegisterAbilities({
         end,
     },
 
+    -------------------------------------------------------------------
+    -- RUPTURE (not used in Combat DPS APL but kept for completeness)
+    -------------------------------------------------------------------
     rupture = {
         id = 1943,
         cast = 0,
@@ -2021,6 +1093,9 @@ spec:RegisterAbilities({
         end,
     },
 
+    -------------------------------------------------------------------
+    -- SLICE AND DICE
+    -------------------------------------------------------------------
     slice_and_dice = {
         id = 5171,
         cast = 0,
@@ -2064,6 +1139,7 @@ spec:RegisterAbilities({
     -- MAJOR COOLDOWNS
     -------------------------------------------------------------------
 
+    -- ADRENALINE RUSH
     adrenaline_rush = {
         id = 13750,
         cast = 0,
@@ -2078,12 +1154,16 @@ spec:RegisterAbilities({
 
             applyBuff("adrenaline_rush")
 
+            -------------------------------------------------------------------
+            -- T15 2p: AR grants +40% crit (modeled as buff)
+            -------------------------------------------------------------------
             if set_bonus.tier15_2pc > 0 then
                 applyBuff("t15_2p_rogue")
             end
         end,
     },
 
+    -- BLADE FLURRY
     blade_flurry = {
         id = 13877,
         cast = 0,
@@ -2102,6 +1182,7 @@ spec:RegisterAbilities({
         end,
     },
 
+    -- KILLING SPREE
     killing_spree = {
         id = 51690,
         cast = 0,
@@ -2116,12 +1197,16 @@ spec:RegisterAbilities({
 
             applyBuff("killing_spree")
 
+            -------------------------------------------------------------------
+            -- T16 4p: KS ramp (+10% per hit)
+            -------------------------------------------------------------------
             if set_bonus.tier16_4pc > 0 then
                 applyBuff("t16_4p_killing_spree", 10, 1)
             end
         end,
     },
 
+    -- SHADOW BLADES
     shadow_blades = {
         id = 121471,
         cast = 0,
@@ -2133,9 +1218,12 @@ spec:RegisterAbilities({
 
         handler = function()
 
+            -------------------------------------------------------------------
+            -- T14 4p: Shadow Blades duration extended
+            -------------------------------------------------------------------
             local duration = 12
             if set_bonus.tier14_4pc > 0 then
-                if true then
+                if talent.restless_blades.enabled then
                     duration = duration + 12
                 else
                     duration = duration + 6
@@ -2144,6 +1232,9 @@ spec:RegisterAbilities({
 
             applyBuff("shadow_blades", duration)
 
+            -------------------------------------------------------------------
+            -- T15 4p: Shadow Blades reduces ability costs by 15%
+            -------------------------------------------------------------------
             if set_bonus.tier15_4pc > 0 then
                 applyBuff("t15_4p_rogue", duration)
             end
@@ -2168,7 +1259,7 @@ spec:RegisterAbilities({
         end,
 
         handler = function()
-            -- CP per target not tracked
+            -- Hekili does not track CP per target
         end,
     },
 
@@ -2417,7 +1508,7 @@ spec:RegisterAbilities({
     },
 
     -------------------------------------------------------------------
-    -- MOP-SPECIFIC / TALENTED / MISC
+    -- MoP-SPECIFIC / TALENTED / MISC
     -------------------------------------------------------------------
 
     crimson_tempest = {
@@ -2449,8 +1540,10 @@ spec:RegisterAbilities({
                 reduceCooldown("redirect", cdr)
             end
 
+            -- Consume combo points
             spend(cp, "combo_points")
 
+            -- Anticipation: convert charges → CP
             if talent.anticipation.enabled and buff.anticipation.stack > 0 then
                 gain(1, "combo_points")
                 removeStack("anticipation")
@@ -2849,6 +1942,7 @@ spec:RegisterAbilities({
 })
 
 spec:RegisterRanges("shuriken_toss", "throw", "deadly_throw")
+
 -----------------------------------------------------------------------
 -- OPTIONS / SETTINGS / PACK
 -----------------------------------------------------------------------
@@ -2936,91 +2030,7 @@ spec:RegisterSetting("use_tricks_of_the_trade", true, {
 })
 
 -----------------------------------------------------------------------
--- PACK UPDATED TO CURRENT TOP-END ROGUE ROTATION
+-- PACK (UNCHANGED FROM ORIGINAL FILE)
 -----------------------------------------------------------------------
-spec:RegisterPack("Combat", 20260604, [[
-# =========================
-#   PRECOMBAT
-# =========================
-actions.precombat+=/jade_serpent_potion
-actions.precombat+=/stealth
 
-# =========================
-#   STEALTH OPENER
-# =========================
-# Ambush → RvS → SS spam → SnD
-actions.stealth_opener+=/ambush
-actions.stealth_opener+=/revealing_strike,if=!debuff.revealing_strike.up
-actions.stealth_opener+=/sinister_strike
-actions.stealth_opener+=/slice_and_dice,if=buff.slice_and_dice.remains<2
-
-# =========================
-#   MAIN ACTION LIST
-# =========================
-
-# Use opener if stealthed
-actions+=/call_action_list,name=stealth_opener,if=stealthed.all
-
-# Shadowstep gap closer (Hekili-safe)
-actions+=/shadowstep,if=!stealthed.all
-
-# Blade Flurry auto-toggle
-actions+=/blade_flurry,if=settings.auto_blade_flurry&((active_enemies>=2&!buff.blade_flurry.up)|(active_enemies<2&buff.blade_flurry.up))
-
-# Cooldowns
-actions+=/call_action_list,name=cooldowns
-
-# Finishers
-actions+=/call_action_list,name=finishers
-
-# Generators
-actions+=/call_action_list,name=generators
-
-# =========================
-#   COOLDOWNS
-# =========================
-
-# Potion / racials
-actions.cooldowns+=/jade_serpent_potion,if=buff.bloodlust.react
-actions.cooldowns+=/blood_fury
-actions.cooldowns+=/berserking
-actions.cooldowns+=/arcane_torrent,if=energy<60
-
-# Killing Spree (never during AR)
-actions.cooldowns+=/killing_spree,if=energy<50&buff.adrenaline_rush.down
-
-# Shadow Blades (prefer before AR)
-actions.cooldowns+=/shadow_blades,if=time>5
-
-# Adrenaline Rush (no pooling)
-actions.cooldowns+=/adrenaline_rush,if=energy<35|buff.shadow_blades.up
-
-# Vanish → Ambush during Deep Insight
-actions.cooldowns+=/vanish,if=buff.deep_insight.up&energy<=50
-
-# =========================
-#   MAINTENANCE
-# =========================
-
-# Slice and Dice (simple, modern rule)
-actions+=/slice_and_dice,if=buff.slice_and_dice.remains<6
-
-# =========================
-#   GENERATORS
-# =========================
-
-# Revealing Strike (refresh only when needed)
-actions.generators+=/revealing_strike,if=!debuff.revealing_strike.up|debuff.revealing_strike.remains<3
-
-# Sinister Strike (main generator)
-actions.generators+=/sinister_strike
-
-# =========================
-#   FINISHERS
-# =========================
-
-# Eviscerate (only finisher in MoP Classic Combat)
-actions.finishers+=/eviscerate,if=combo_points>=5
-]])
-
-
+spec:RegisterPack("Combat", 20251111, [[Hekili:9MvBpUnUr4FlgbWDn6gfzzlNMcRfOxlYD3wCPb13NLeTfTTGLLeKO2ClGH(T3zi1lK0uYEtABqswTIKZ8mVpdL)C)F3FteHr9)IJTJ7C4pwo22RM74VH9Ao1Ftoz3jYb4HuYz4))7zN3sy4RFnjJeHhVmRQyhSK)MTvXjSFn1FRknTxz544(r7fWEZP7GxVY2FZX4OiQyV0YD(B(9JXL1H4)i1HnCTomBp877yXzP1HjXLmy59zf1H)c9uCsSL)g(lrySponU8iTaE(lCXIMs2MqJ8)jbhkIZrYamA(QFPoefKS6WVMfNYQd)CZHl93aBKrlIjO4SFVvzs8oAajnkicEWQGEMeNcOyTxDiOKeydemLT5ZaHudd90LfV7uzGGsaHa6uhoToKrkoqzwS4Z0awgqhq8Fc5Yk(YpiueVqdOP0ZX0Y2JE5sD4K6qoA3MqIOb7tQkkE1QkVoCwpelQYzvfCSTyqSPZceaFKZ)OmMfSVZLzPbm65CAjIvfjrvLOTzKVlr(2Uo9L4YD0c0rrcl4(2Ca4pSqMrJz753tsdY2hCkfaCj6iKsd2f5VX9wYZY7WH4NBrq5nSLKeAkZ6mP4enkaCndIOe2rRMnZ1C7qkhKJegqaaa7EHq)GJBDqBqb9fkbe2dbLSI4tAUKlKS3AB8kdqj60duUDDDRqeDpPkHzYgOfKSnjllkPQerhqDHpPj)zWJDPK0NNX)zRgU91Na3kv0mIoP11)fcgcZD6568SKOSVL2(6oL0t1HRKrqbnNag6gySuJnz5GAIY63)leGPWQ4tjvWpMJudEBGi)ijpVi7pq)TIdVIITBo3Z39nt42xyzIK1HFOou8gq0GWL6W3xho3XYvgmNj)rqR6VbhREZ4OttcjCfEtGotYRd4Bhu1zOewG8e7IcIHqwimTlxnGOpoq49rizAPAAZZur4JW)sKE(ibaxapVxjy8XmXzS2tdK)VmsA47IET4H7JhSVQ4vKSF6)AKfk6qlobkwKSZThKUcRnpes2bMuSJKIk8IcireNgdLWeIYtprzZVUgNg6KaojcilHNBTOQj8AWGBm)VDRfOJBiK0tGQbjN)VcjhoKgoJcepWa7rPfPcOJCj12cXgQfZRuZxF4AXcCoyH8PJCWzYoI9lZLe9KwsscdQaWosJSijjs(mN3cko(z1ZlPzgIO0CiOTm(WrwBQ1ohrqIDTLZCGb1CQQNLrp6ascp3UvzQwEeufl60tnvxjPqJgX58S0kvwLxiy3r0bOJe9ABdouycTb5)YFC(Vuy0A)BNxtdbBaZ(SDvLke0OdEhyLsb4yllHTKTAlOM3xDGQq02JHUOFs5CtUnIM8wO(kBDNvjNc9e9gtT5AlPT6deFjlokqPauquvb(lKIBP4M11I89sVzYTIiThUyCRckGVTRupwYUD8ZpCLdj1Wc37Q4HMaZBKA4kiDLPnwlwev6oU2CCwpCxI)GSwwMVsJ6OxCXqZ9BWXZW4vWN9FWF8BXSJ1H)e8My2FccA)zy2v41qsa6HM(bV7rb7gdRlzZW7uwm3Y5EzWbK3wLmyOxENdZNByUb(Klk(MgM5uVOMbvr3KnF4ZDQ)Y8KywRo5VjLutAAIQ0aXZb4i3YkNRsG6(JMaviQISpgN5bh8e(vU6aHtttM9ZnIkJHRlo5giRl07Q6F4kDDeRgyQmhgAcX9AwaBSLdxFQPu7WNEH2O9AghjDICV2odxUVlnUilUznGiHQ51KNWYLpwGSFX9Hvz7hJpC2oX9n1ocQ2GJQZio8u6teQyr3qQzteVB8rmVzBuJ6PnWP1AJJlWVaddGlkU4mB7p5V5BKIuSML)MF9CEwbdDpxQDNyw1pJkRS9X4CBVRo8FNDOI(xf3PbbcSF43Y(kyvSCTCGQH1px)87GD91w1leZZjxz9Zc6wA1P6)ZEFyFcP80J41b6bLbXOqywOYYSZdSFHXX8AnkJhJ37nrrXyE7cvmU77yZYAutmqi1)g)UQ0f4oyJh00DAC5Y1ZxSEPTmbWRTqHG93TahoQxtX0bUIINGWpoqFEZ)6l9ZwJ3jk4v9AZ9F(p3aPWIpZZbskYQWcBqjvy12K6saPLgpIrzEMUpHh5d77nFL9WNtB4(MJm61u8b5RO4941tmm5n2zqdtg)oiE)q3)GmZQkPbqq55hXrb94xpaAuWD7zF5I5CWsNVF8)32X6gV)nDm1P6XJk0KRvnqQcv7e3DUW6COHXx3DLrNBpNBZlN)3Wl9i5HNiF6dpGhRFy6N8CMoX0y0ZUCrBRRDMACJZuSe3ide3pgDw70eA9mmTXY55AB(qOE4P52tFqUE56faChPhLPMAny9cuihyCxn6V87H(lNb)bu5Jm040bNDOvr4ypRN3xpuzZ2EY7t89nzmEn52uzLTQ9ujdIuGLlyaE4(gqCyrea8K7JgkysXy15sOKRuJBsaFH79Kp56Jp(izpn3DyXCuS)DsxeVqrVV)X1uaLYKr95Omow2ANUGgZR3czdJR5nF(u5WQN8wotsoEtZAjlaAnjlQq21DmkqkbZUFpbZElNozSHRMDta1vLg7Uze(34GQLy8YLXhKAnOCVCXe0bTS58Cq2wZ7FXTfgfTBt2Jv2MGocztVVTbo33Rmr8Zsoed9rg7BOTdgyJ3YFHZhB(aNEUia1l6T0mf0)8I8KlJ)jlv8N9SntxDFgKUJ9Xjx7TWmH0(gKJOS6(e99eQ1)7nhX75yKinFHCrg4(VSn0NW1TSa9zSA6vnua5)n2sHr2P9bYnzw)40B9z3hswK)66qxthHzQ385Sdr00u(SM()Np]] )
