@@ -337,6 +337,7 @@ local function SetPlayerAuraState( t, name, count, duration, expirationTime, cas
     t.expires = expirationTime and expirationTime > 0 and expirationTime or now + remains
     t.applied = t.expires - remains
     t.caster = caster
+    t.stacks = t.count
     t.up = true
     t.down = false
     t.remains = remains
@@ -404,15 +405,7 @@ spec:RegisterAuras({
             local name, icon, count, debuffType, duration, expirationTime, caster = GetPlayerAuraBySpellID(84963)
 
             if name then
-                t.name = name
-                t.count = count > 0 and count or 1
-                t.expires = expirationTime
-                t.applied = expirationTime - duration
-                t.caster = caster
-                t.stacks = count
-                t.up = true
-                t.down = false
-                t.remains = expirationTime - GetTime()
+                SetPlayerAuraState( t, name, count, duration, expirationTime, caster )
                 return
             end
 
@@ -436,14 +429,7 @@ spec:RegisterAuras({
             local name, icon, count, debuffType, duration, expirationTime, caster = GetPlayerAuraBySpellID(86172)
 
             if name then
-                t.name = name
-                t.count = 1
-                t.expires = expirationTime
-                t.applied = expirationTime - duration
-                t.caster = caster
-                t.up = true
-                t.down = false
-                t.remains = expirationTime - GetTime()
+                SetPlayerAuraState( t, name, count, duration, expirationTime, caster )
                 return
             end
 
@@ -466,14 +452,7 @@ spec:RegisterAuras({
             local name, icon, count, debuffType, duration, expirationTime, caster = GetPlayerAuraBySpellID(59578)
 
             if name then
-                t.name = name
-                t.count = 1
-                t.expires = expirationTime
-                t.applied = expirationTime - duration
-                t.caster = caster
-                t.up = true
-                t.down = false
-                t.remains = expirationTime - GetTime()
+                SetPlayerAuraState( t, name, count, duration, expirationTime, caster )
                 return
             end
 
@@ -528,15 +507,7 @@ spec:RegisterAuras({
             local name, icon, count, debuffType, duration, expirationTime, caster = GetPlayerAuraBySpellID(86700)
 
             if name then
-                t.name = name
-                t.count = count > 0 and count or 1
-                t.expires = expirationTime
-                t.applied = expirationTime - duration
-                t.caster = caster
-                t.stacks = count
-                t.up = true
-                t.down = false
-                t.remains = expirationTime - GetTime()
+                SetPlayerAuraState( t, name, count, duration, expirationTime, caster )
                 return
             end
 
@@ -569,14 +540,7 @@ spec:RegisterAuras({
             local name, icon, count, debuffType, duration, expirationTime, caster = GetPlayerAuraBySpellID(31884)
 
             if name then
-                t.name = name
-                t.count = 1
-                t.expires = expirationTime
-                t.applied = expirationTime - duration
-                t.caster = caster
-                t.up = true
-                t.down = false
-                t.remains = expirationTime - GetTime()
+                SetPlayerAuraState( t, name, count, duration, expirationTime, caster )
                 return
             end
 
@@ -599,14 +563,7 @@ spec:RegisterAuras({
             local name, icon, count, debuffType, duration, expirationTime, caster = GetPlayerAuraBySpellID(86659)
 
             if name then
-                t.name = name
-                t.count = 1
-                t.expires = expirationTime
-                t.applied = expirationTime - duration
-                t.caster = caster
-                t.up = true
-                t.down = false
-                t.remains = expirationTime - GetTime()
+                SetPlayerAuraState( t, name, count, duration, expirationTime, caster )
                 return
             end
 
@@ -635,14 +592,7 @@ spec:RegisterAuras({
             local name, icon, count, debuffType, duration, expirationTime, caster = GetPlayerAuraBySpellID(498)
 
             if name then
-                t.name = name
-                t.count = 1
-                t.expires = expirationTime
-                t.applied = expirationTime - duration
-                t.caster = caster
-                t.up = true
-                t.down = false
-                t.remains = expirationTime - GetTime()
+                SetPlayerAuraState( t, name, count, duration, expirationTime, caster )
                 return
             end
 
@@ -671,14 +621,7 @@ spec:RegisterAuras({
             local name, icon, count, debuffType, duration, expirationTime, caster = GetPlayerAuraBySpellID(642)
 
             if name then
-                t.name = name
-                t.count = 1
-                t.expires = expirationTime
-                t.applied = expirationTime - duration
-                t.caster = caster
-                t.up = true
-                t.down = false
-                t.remains = expirationTime - GetTime()
+                SetPlayerAuraState( t, name, count, duration, expirationTime, caster )
                 return
             end
 
@@ -908,14 +851,7 @@ spec:RegisterAuras({
             local name, icon, count, debuffType, duration, expirationTime, caster = GetPlayerAuraBySpellID(105809)
 
             if name then
-                t.name = name
-                t.count = count
-                t.expires = expirationTime
-                t.applied = expirationTime - duration
-                t.caster = caster
-                t.up = true
-                t.down = false
-                t.remains = expirationTime - GetTime()
+                SetPlayerAuraState( t, name, count, duration, expirationTime, caster )
                 return
             end
 
@@ -937,14 +873,7 @@ spec:RegisterAuras({
             local name, icon, count, debuffType, duration, expirationTime, caster = GetPlayerAuraBySpellID( 144595 )
 
             if name then
-                t.name = name
-                t.count = count
-                t.expires = expirationTime
-                t.applied = expirationTime - duration
-                t.caster = caster
-                t.up = true
-                t.down = false
-                t.remains = expirationTime - GetTime()
+                SetPlayerAuraState( t, name, count, duration, expirationTime, caster )
                 return
             end
 
