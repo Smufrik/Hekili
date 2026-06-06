@@ -1181,8 +1181,8 @@ return end
         local resolution = GetCVar( "gxWindowedResolution" ) or "1280x720"
         local width, height = resolution:match( "(%d+)x(%d+)" )
 
-        width = tonumber( width )
-        height = tonumber( height )
+        width = tonumber( width ) or ( GetScreenWidth and tonumber( GetScreenWidth() ) ) or 1280
+        height = tonumber( height ) or ( GetScreenHeight and tonumber( GetScreenHeight() ) ) or 720
 
         tab.args.x.min = -1 * width
         tab.args.x.max = width

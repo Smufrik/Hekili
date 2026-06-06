@@ -1262,7 +1262,9 @@ function SpellFlashCore.RegisterDebugEvent(event)
         SpellFlashCoreAddonConfig.AllDebugEventsEnabled = nil
         SpellFlashCoreAddonConfig.DebugEvents = nil
     end
-    DebugEventFrame:RegisterEvent(event)
+    if not SafeRegisterEvent(DebugEventFrame, event) then
+        return
+    end
     if not SpellFlashCoreAddonConfig.DebugEvents then
         SpellFlashCoreAddonConfig.DebugEvents = {}
     end
