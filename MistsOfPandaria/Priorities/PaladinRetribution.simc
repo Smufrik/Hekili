@@ -26,9 +26,9 @@ actions+=/templars_verdict,if=buff.divine_purpose.react&buff.divine_purpose.rema
 actions+=/hammer_of_wrath
 actions+=/wait,sec=cooldown.hammer_of_wrath.remains,if=cooldown.hammer_of_wrath.remains>0&cooldown.hammer_of_wrath.remains<=0.2
 actions+=/divine_storm,if=buff.ret_tier16_4pc.react&buff.avenging_wrath.up
-actions+=/templars_verdict,if=buff.avenging_wrath.up&buff.ret_tier15_4pc.up
+actions+=/templars_verdict,if=buff.avenging_wrath.up&buff.ret_tier15_4pc.up&active_enemies<2
 actions+=/crusader_strike,if=buff.avenging_wrath.up&set_bonus.ret_tier15_4pc>0&buff.ret_tier15_4pc.down
-actions+=/templars_verdict,if=buff.avenging_wrath.up
+actions+=/templars_verdict,if=buff.avenging_wrath.up&active_enemies<2
 actions+=/hammer_of_the_righteous,if=active_enemies>=4
 actions+=/judgment,if=buff.avenging_wrath.up
 actions+=/crusader_strike
@@ -41,7 +41,7 @@ actions+=/divine_storm,if=buff.ret_tier16_4pc.react
 actions+=/templars_verdict,if=buff.divine_purpose.react
 actions+=/exorcism
 actions+=/wait,sec=cooldown.exorcism.remains,if=cooldown.exorcism.remains>0&cooldown.exorcism.remains<=0.2
-actions+=/templars_verdict,if=buff.ret_tier15_4pc.up&active_enemies<4
+actions+=/templars_verdict,if=buff.ret_tier15_4pc.up&active_enemies<2
 actions+=/divine_storm,if=active_enemies>=2&buff.inquisition.remains>4
 actions+=/templars_verdict,if=buff.inquisition.remains>4
 actions+=/holy_prism,if=talent.holy_prism.enabled
