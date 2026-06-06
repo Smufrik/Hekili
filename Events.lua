@@ -757,6 +757,8 @@ RegisterEvent( "PLAYER_ENTERING_WORLD", function( event, login, reload )
         state.instance_id = instanceID or -1
 
         Hekili:BuildUI()
+        Hekili:After( 0.1, Hekili.UpdateDisplayVisibility, Hekili )
+        Hekili:After( 0.2, Hekili.ForceUpdate, Hekili, "PLAYER_ENTERING_WORLD_DISPLAY_INIT", true )
     end
 end )
 

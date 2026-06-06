@@ -1215,9 +1215,9 @@ do
             local madeUpdate = false
 
             self.timer = pulseDisplay
-            self.NewRecommendations = nil
 
-            local now = GetTime()            if fullUpdate then
+            local now = GetTime()
+            if fullUpdate then
                 madeUpdate = true
 
                 local alpha = self.alpha
@@ -1225,6 +1225,8 @@ do
                 if not Hekili or not Hekili.GetActiveSpecOption or Hekili.PendingSpecializationChange then
                     return
                 end
+
+                self.NewRecommendations = nil
                 local options = Hekili:GetActiveSpecOption( "abilities" )
 
                 if self.HasRecommendations and self.RecommendationsStr and self.RecommendationsStr:len() == 0 then

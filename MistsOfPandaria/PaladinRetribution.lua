@@ -328,6 +328,20 @@ local function GetPlayerAuraBySpellID(spellID)
     return FindUnitBuffByID("player", spellID)
 end
 
+local function SetPlayerAuraState( t, name, count, duration, expirationTime, caster )
+    local now = GetTime()
+    local remains = expirationTime and expirationTime > 0 and expirationTime - now or duration and duration > 0 and duration or 3600
+
+    t.name = name
+    t.count = count and count > 0 and count or 1
+    t.expires = expirationTime and expirationTime > 0 and expirationTime or now + remains
+    t.applied = t.expires - remains
+    t.caster = caster
+    t.up = true
+    t.down = false
+    t.remains = remains
+end
+
 -- Enhanced target debuff detection
 local function GetTargetDebuffByID(spellID, caster)
     caster = caster or "player"
@@ -1059,14 +1073,7 @@ spec:RegisterAuras({
 
             local name, icon, count, debuffType, duration, expirationTime, caster = GetPlayerAuraBySpellID( 138169 )
             if name then
-                t.name = name
-                t.count = 1
-                t.expires = expirationTime
-                t.applied = expirationTime - duration
-                t.caster = caster
-                t.up = true
-                t.down = false
-                t.remains = expirationTime - GetTime()
+                SetPlayerAuraState( t, name, count, duration, expirationTime, caster )
                 return
             end
 
@@ -1105,14 +1112,7 @@ spec:RegisterAuras({
             local name, icon, count, debuffType, duration, expirationTime, caster = GetPlayerAuraBySpellID( 144587 )
 
             if name then
-                t.name = name
-                t.count = 1
-                t.expires = expirationTime
-                t.applied = expirationTime - duration
-                t.caster = caster
-                t.up = true
-                t.down = false
-                t.remains = expirationTime - GetTime()
+                SetPlayerAuraState( t, name, count, duration, expirationTime, caster )
                 return
             end
 

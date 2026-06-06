@@ -42,9 +42,46 @@ local function AuraDataToLegacyTuple( aura )
         aura.points and aura.points[2], aura.points and aura.points[3]
 end
 
+local function FindUnitAuraBySingleID( unit, id, filter, defaultFilter, playerOrPet )
+    local unitAuras = C_UnitAuras
+    if not unitAuras or type( id ) == "table" then return nil end
+
+    local aura
+    if unit == "player" and defaultFilter == "HELPFUL" and unitAuras.GetPlayerAuraBySpellID then
+        local ok, result = pcall( unitAuras.GetPlayerAuraBySpellID, id )
+        if ok then aura = result end
+    end
+
+    if not aura and unitAuras.GetUnitAuraBySpellID then
+        local ok, result = pcall( unitAuras.GetUnitAuraBySpellID, unit, id )
+        if ok then aura = result end
+    end
+
+    if not aura then return nil end
+
+    if defaultFilter == "HELPFUL" and aura.isHelpful == false then
+        return nil
+    elseif defaultFilter == "HARMFUL" and aura.isHarmful == false then
+        return nil
+    end
+
+    local sourceUnit = aura.sourceUnit
+    if filter and filter:find( "PLAYER", 1, true ) and not ( sourceUnit and UnitIsUnit( sourceUnit, "player" ) ) then
+        return nil
+    end
+
+    if playerOrPet and not ( sourceUnit and ( UnitIsUnit( sourceUnit, "player" ) or UnitIsUnit( sourceUnit, "pet" ) ) ) then
+        return nil
+    end
+
+    return AuraDataToLegacyTuple( aura )
+end
+
 local function FindUnitAuraByID( unit, id, filter, defaultFilter, playerOrPet )
     local unitAuras = C_UnitAuras
     if not unitAuras or not unitAuras.GetAuraDataByIndex then return nil end
+
+    if type( id ) ~= "table" then return nil end
 
     local auraFilter = defaultFilter
     if filter and filter ~= "" then
@@ -61,7 +98,7 @@ local function FindUnitAuraByID( unit, id, filter, defaultFilter, playerOrPet )
         local caster = aura.sourceUnit
         local matches = type( id ) == "table" and id[ spellID ] or spellID == id
 
-        if matches and ( not playerOrPet or UnitIsUnit( caster, "player" ) or UnitIsUnit( caster, "pet" ) ) then
+        if matches and ( not playerOrPet or ( caster and ( UnitIsUnit( caster, "player" ) or UnitIsUnit( caster, "pet" ) ) ) ) then
             return AuraDataToLegacyTuple( aura )
         end
 
@@ -79,7 +116,12 @@ function ns.FindUnitBuffByID( unit, id, filter )
         filter = nil
     end
 
-    local name, icon, count, debuffType, duration, expirationTime, caster, stealable, nameplateShowPersonal, spellID, canApplyAura, isBossDebuff, nameplateShowAll, timeMod, value1, value2, value3 = FindUnitAuraByID( unit, id, filter, "HELPFUL", playerOrPet )
+    local name, icon, count, debuffType, duration, expirationTime, caster, stealable, nameplateShowPersonal, spellID, canApplyAura, isBossDebuff, nameplateShowAll, timeMod, value1, value2, value3 = FindUnitAuraBySingleID( unit, id, filter, "HELPFUL", playerOrPet )
+    if name then
+        return name, icon, count, debuffType, duration, expirationTime, caster, stealable, nameplateShowPersonal, spellID, canApplyAura, isBossDebuff, nameplateShowAll, timeMod, value1, value2, value3
+    end
+
+    name, icon, count, debuffType, duration, expirationTime, caster, stealable, nameplateShowPersonal, spellID, canApplyAura, isBossDebuff, nameplateShowAll, timeMod, value1, value2, value3 = FindUnitAuraByID( unit, id, filter, "HELPFUL", playerOrPet )
     if name then
         return name, icon, count, debuffType, duration, expirationTime, caster, stealable, nameplateShowPersonal, spellID, canApplyAura, isBossDebuff, nameplateShowAll, timeMod, value1, value2, value3
     end
@@ -113,7 +155,12 @@ function ns.FindUnitDebuffByID( unit, id, filter )
         filter = nil
     end
 
-    local name, icon, count, debuffType, duration, expirationTime, caster, stealable, nameplateShowPersonal, spellID, canApplyAura, isBossDebuff, nameplateShowAll, timeMod, value1, value2, value3 = FindUnitAuraByID( unit, id, filter, "HARMFUL", playerOrPet )
+    local name, icon, count, debuffType, duration, expirationTime, caster, stealable, nameplateShowPersonal, spellID, canApplyAura, isBossDebuff, nameplateShowAll, timeMod, value1, value2, value3 = FindUnitAuraBySingleID( unit, id, filter, "HARMFUL", playerOrPet )
+    if name then
+        return name, icon, count, debuffType, duration, expirationTime, caster, stealable, nameplateShowPersonal, spellID, canApplyAura, isBossDebuff, nameplateShowAll, timeMod, value1, value2, value3
+    end
+
+    name, icon, count, debuffType, duration, expirationTime, caster, stealable, nameplateShowPersonal, spellID, canApplyAura, isBossDebuff, nameplateShowAll, timeMod, value1, value2, value3 = FindUnitAuraByID( unit, id, filter, "HARMFUL", playerOrPet )
     if name then
         return name, icon, count, debuffType, duration, expirationTime, caster, stealable, nameplateShowPersonal, spellID, canApplyAura, isBossDebuff, nameplateShowAll, timeMod, value1, value2, value3
     end

@@ -1997,6 +1997,12 @@ return "Position" end,
                                 desc = "If checked, options are provided to fine-tune display visibility and transparency.",
                                 width = "full",
                                 order = 1,
+                                set = function( info, val )
+                                    data.visibility.advanced = val
+                                    QueueRebuildUI()
+                                    Hekili:UpdateDisplayVisibility()
+                                    Hekili:ForceUpdate( "DISPLAY_VISIBILITY_ADVANCED_CHANGED", true )
+                                end,
                             },
 
                             simple = {
@@ -2017,6 +2023,8 @@ return "Position" end,
                                     elseif option == 'pvpAlpha' then data.visibility.pvp.alpha = val end
 
                                     QueueRebuildUI()
+                                    Hekili:UpdateDisplayVisibility()
+                                    Hekili:ForceUpdate( "DISPLAY_VISIBILITY_CHANGED", true )
                                 end,
                                 order = 2,
                                 args = {
@@ -2057,6 +2065,8 @@ return "Position" end,
 
                                     data.visibility.pve[ option ] = val
                                     QueueRebuildUI()
+                                    Hekili:UpdateDisplayVisibility()
+                                    Hekili:ForceUpdate( "DISPLAY_VISIBILITY_CHANGED", true )
                                 end,
                                 hidden = function() return not data.visibility.advanced end,
                                 order = 2,
