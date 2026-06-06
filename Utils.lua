@@ -32,6 +32,45 @@ end
 
 
 -- Duplicate spell info lookup.
+local function AuraDataToLegacyTuple( aura )
+    if not aura then return nil end
+
+    return aura.name, aura.icon, aura.applications or aura.count or 0, aura.dispelType,
+        aura.duration or 0, aura.expirationTime or 0, aura.sourceUnit, aura.isStealable,
+        aura.nameplateShowPersonal, aura.spellId or aura.spellID, aura.canApplyAura,
+        aura.isBossAura, aura.nameplateShowAll, aura.timeMod, aura.points and aura.points[1],
+        aura.points and aura.points[2], aura.points and aura.points[3]
+end
+
+local function FindUnitAuraByID( unit, id, filter, defaultFilter, playerOrPet )
+    local unitAuras = C_UnitAuras
+    if not unitAuras or not unitAuras.GetAuraDataByIndex then return nil end
+
+    local auraFilter = defaultFilter
+    if filter and filter ~= "" then
+        auraFilter = filter:find( defaultFilter, 1, true ) and filter or ( defaultFilter .. "|" .. filter )
+    end
+
+    local i = 1
+    while true do
+        local ok, aura = pcall( unitAuras.GetAuraDataByIndex, unit, i, auraFilter )
+        if not ok then return nil end
+        if not aura then break end
+
+        local spellID = aura.spellId or aura.spellID
+        local caster = aura.sourceUnit
+        local matches = type( id ) == "table" and id[ spellID ] or spellID == id
+
+        if matches and ( not playerOrPet or UnitIsUnit( caster, "player" ) or UnitIsUnit( caster, "pet" ) ) then
+            return AuraDataToLegacyTuple( aura )
+        end
+
+        i = i + 1
+    end
+
+    return nil
+end
+
 function ns.FindUnitBuffByID( unit, id, filter )
     local playerOrPet = false
 
@@ -40,8 +79,13 @@ function ns.FindUnitBuffByID( unit, id, filter )
         filter = nil
     end
 
+    local name, icon, count, debuffType, duration, expirationTime, caster, stealable, nameplateShowPersonal, spellID, canApplyAura, isBossDebuff, nameplateShowAll, timeMod, value1, value2, value3 = FindUnitAuraByID( unit, id, filter, "HELPFUL", playerOrPet )
+    if name then
+        return name, icon, count, debuffType, duration, expirationTime, caster, stealable, nameplateShowPersonal, spellID, canApplyAura, isBossDebuff, nameplateShowAll, timeMod, value1, value2, value3
+    end
+
     local i = 1
-    local name, icon, count, debuffType, duration, expirationTime, caster, stealable, nameplateShowPersonal, spellID, canApplyAura, isBossDebuff, nameplateShowAll, timeMod, value1, value2, value3 = UnitBuff( unit, i, filter )
+    name, icon, count, debuffType, duration, expirationTime, caster, stealable, nameplateShowPersonal, spellID, canApplyAura, isBossDebuff, nameplateShowAll, timeMod, value1, value2, value3 = UnitBuff( unit, i, filter )
 
     if type( id ) == "table" then
         while( name ) do
@@ -69,8 +113,13 @@ function ns.FindUnitDebuffByID( unit, id, filter )
         filter = nil
     end
 
+    local name, icon, count, debuffType, duration, expirationTime, caster, stealable, nameplateShowPersonal, spellID, canApplyAura, isBossDebuff, nameplateShowAll, timeMod, value1, value2, value3 = FindUnitAuraByID( unit, id, filter, "HARMFUL", playerOrPet )
+    if name then
+        return name, icon, count, debuffType, duration, expirationTime, caster, stealable, nameplateShowPersonal, spellID, canApplyAura, isBossDebuff, nameplateShowAll, timeMod, value1, value2, value3
+    end
+
     local i = 1
-    local name, icon, count, debuffType, duration, expirationTime, caster, stealable, nameplateShowPersonal, spellID, canApplyAura, isBossDebuff, nameplateShowAll, timeMod, value1, value2, value3 = UnitDebuff( unit, i, filter )
+    name, icon, count, debuffType, duration, expirationTime, caster, stealable, nameplateShowPersonal, spellID, canApplyAura, isBossDebuff, nameplateShowAll, timeMod, value1, value2, value3 = UnitDebuff( unit, i, filter )
 
     if type( id ) == "table" then
         while( name ) do
