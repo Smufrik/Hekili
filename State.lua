@@ -5770,6 +5770,8 @@ local mt_set_bonuses = {
 
 		-- Aliases to account for syntax differences across specs in SimC
 		local aliasMap = {
+			ret_tier15 = "tier15",
+			ret_tier16 = "tier16",
 			thewarwithin_season_2 = "tww2",
 			-- room for more in future tiers
 		}
@@ -5780,10 +5782,8 @@ local mt_set_bonuses = {
 			local set = aliasMap[rawSet] or rawSet
 			pieces = tonumber(pieces)
 
-			if not t[set] then
-				return 0
-			end
-			return t[set] >= pieces and 1 or 0
+			local equipped = rawget( t, set ) or 0
+			return equipped >= pieces and 1 or 0
 		end
 
 		-- Non-matching or malformed key
