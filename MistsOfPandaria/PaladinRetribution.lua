@@ -330,7 +330,20 @@ end
 
 local function SetPlayerAuraState( t, name, count, duration, expirationTime, caster )
     local now = GetTime()
-    local remains = expirationTime and expirationTime > 0 and expirationTime - now or duration and duration > 0 and duration or 3600
+    local fallbackDuration = 3600
+    local aura = class.auras and class.auras[ t.key ]
+
+    if aura and aura.duration then
+        fallbackDuration = aura.duration
+        if type( fallbackDuration ) == "function" then
+            local ok, value = pcall( fallbackDuration )
+            fallbackDuration = ok and type( value ) == "number" and value or 3600
+        end
+    end
+
+    duration = duration and duration > 0 and duration or fallbackDuration
+
+    local remains = expirationTime and expirationTime > 0 and expirationTime - now or duration
 
     t.name = name
     t.count = count and count > 0 and count or 1
