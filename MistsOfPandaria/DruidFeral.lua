@@ -19,6 +19,8 @@ local floor = math.floor
 local min, max = math.min, math.max
 local strformat = string.format
 local ipairs = ipairs
+local GetInventoryItemSpell = rawget( _G, "GetInventoryItemSpell" ) or function() return nil, nil end
+local INVSLOT_HAND = rawget( _G, "INVSLOT_HAND" ) or 10
 
 local spec = Hekili:NewSpecialization(103, true)
 
@@ -91,6 +93,20 @@ local function isSpellKnown( spellID )
     end
 
     return false
+end
+
+local function hasSynapseSprings()
+    local spellName, spellID = GetInventoryItemSpell( "player", INVSLOT_HAND )
+    if type( spellName ) == "number" and not spellID then
+        spellID = spellName
+    end
+
+    return spellID == 82174
+        or spellID == 96228
+        or spellID == 96229
+        or spellID == 96230
+        or spellID == 126734
+        or spellID == 141330
 end
 
 -- Use MoP power type numbers instead of Enum
@@ -1443,25 +1459,13 @@ spec:RegisterStateExpr( "rake_refresh_time", function()
         return 0
     end
     
-    -- If Synapse Springs are not actually available (non-engineers), ignore springs conditions entirely.
-    local function has_synapse_springs()
-        local spellName, spellID = GetInventoryItemSpell("player", INVSLOT_HAND)
-        if type(spellName) == "number" and not spellID then
-            spellID = spellName
-        end
-        if spellID == 82174 or spellID == 96228 or spellID == 96229 or spellID == 96230 or spellID == 126734 or spellID == 141330 then
-            return true
-        end
-        return false
-    end
-
-    if not buff.tigers_fury.up and not (has_synapse_springs() and buff.synapse_springs.up) and not (has_roro_equipped and buff.rune_of_reorigination and buff.rune_of_reorigination.up) then
+    if not buff.tigers_fury.up and not (hasSynapseSprings() and buff.synapse_springs.up) and not (has_roro_equipped and buff.rune_of_reorigination and buff.rune_of_reorigination.up) then
         return math.max(0, standardRefreshTime)
     end
     
     local tempBuffRemains = math.huge
     if buff.tigers_fury.up then tempBuffRemains = math.min( tempBuffRemains, buff.tigers_fury.remains ) end
-    if has_synapse_springs() and buff.synapse_springs.up then tempBuffRemains = math.min( tempBuffRemains, buff.synapse_springs.remains ) end
+    if hasSynapseSprings() and buff.synapse_springs.up then tempBuffRemains = math.min( tempBuffRemains, buff.synapse_springs.remains ) end
     if has_roro_equipped and buff.rune_of_reorigination and buff.rune_of_reorigination.up then
         tempBuffRemains = math.min( tempBuffRemains, buff.rune_of_reorigination.remains )
     end
@@ -1508,18 +1512,7 @@ spec:RegisterStateExpr( "rip_refresh_time", function()
         return 0
     end
     
-    local function has_synapse_springs()
-        local spellName, spellID = GetInventoryItemSpell("player", INVSLOT_HAND)
-        if type(spellName) == "number" and not spellID then
-            spellID = spellName
-        end
-        if spellID == 82174 or spellID == 96228 or spellID == 96229 or spellID == 96230 or spellID == 126734 or spellID == 141330 then
-            return true
-        end
-        return false
-    end
-
-    if not buff.tigers_fury.up and not (has_synapse_springs() and buff.synapse_springs.up) and not (has_roro_equipped and buff.rune_of_reorigination and buff.rune_of_reorigination.up) then
+    if not buff.tigers_fury.up and not (hasSynapseSprings() and buff.synapse_springs.up) and not (has_roro_equipped and buff.rune_of_reorigination and buff.rune_of_reorigination.up) then
         return math.max(0, standardRefreshTime)
     end
     
@@ -1529,7 +1522,7 @@ spec:RegisterStateExpr( "rip_refresh_time", function()
     
     local tempBuffRemains = math.huge
     if buff.tigers_fury.up then tempBuffRemains = math.min( tempBuffRemains, buff.tigers_fury.remains ) end
-    if has_synapse_springs() and buff.synapse_springs.up then tempBuffRemains = math.min( tempBuffRemains, buff.synapse_springs.remains ) end
+    if hasSynapseSprings() and buff.synapse_springs.up then tempBuffRemains = math.min( tempBuffRemains, buff.synapse_springs.remains ) end
     if has_roro_equipped and buff.rune_of_reorigination and buff.rune_of_reorigination.up then
         tempBuffRemains = math.min( tempBuffRemains, buff.rune_of_reorigination.remains )
     end

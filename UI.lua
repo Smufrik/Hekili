@@ -440,39 +440,58 @@ function ns.StartConfiguration( external )
     end
 
     if not external then
-        if not Hekili.OptionsReady then Hekili:RefreshOptions() end
+        local ok, err = pcall( function()
+            if not Hekili.OptionsReady then Hekili:RefreshOptions() end
 
-        local ACD = LibStub( "AceConfigDialog-3.0" )
-        ACD:SetDefaultSize( "Hekili", 800, 608 )
-        ACD:Open( "Hekili" )
+            local ACD = LibStub( "AceConfigDialog-3.0" )
+            ACD:SetDefaultSize( "Hekili", 800, 608 )
+            ACD:Open( "Hekili" )
 
-        local oFrame = ACD.OpenFrames["Hekili"].frame
-        oFrame:SetResizeBounds( 800, 120 )
-
-        ns.OnHideFrame = ns.OnHideFrame or CreateFrame( "Frame" )
-        ns.OnHideFrame:SetParent( oFrame )
-        ns.OnHideFrame:SetScript( "OnHide", function(self)
-            ns.StopConfiguration()
-            self:SetScript( "OnHide", nil )
-            self:SetParent( nil )
-            if not InCombatLockdown() then
-                collectgarbage()
-                Hekili:UpdateDisplayVisibility()
-            else
-                -- MoP compatibility: Use simple timer instead of C_Timer.After
-                C_Timer.After(0, function() Hekili:UpdateDisplayVisibility() end)
+            local openFrame = ACD.OpenFrames and ACD.OpenFrames["Hekili"]
+            local oFrame = openFrame and openFrame.frame
+            if not oFrame then
+                error( "AceConfigDialog did not return an options frame." )
             end
+
+            if oFrame.SetResizeBounds then
+                oFrame:SetResizeBounds( 800, 120 )
+            elseif oFrame.SetMinResize then
+                oFrame:SetMinResize( 800, 120 )
+            end
+
+            ns.OnHideFrame = ns.OnHideFrame or CreateFrame( "Frame" )
+            ns.OnHideFrame:SetParent( oFrame )
+            ns.OnHideFrame:SetScript( "OnHide", function(self)
+                ns.StopConfiguration()
+                self:SetScript( "OnHide", nil )
+                self:SetParent( nil )
+                if not InCombatLockdown() then
+                    collectgarbage()
+                    Hekili:UpdateDisplayVisibility()
+                else
+                    -- MoP compatibility: Use simple timer instead of C_Timer.After
+                    C_Timer.After(0, function() Hekili:UpdateDisplayVisibility() end)
+                end
+            end )
+
+            if not ns.OnHideFrame.firstTime then
+                ACD:SelectGroup( "Hekili", "packs" )
+                ACD:SelectGroup( "Hekili", "displays" )
+                ACD:SelectGroup( "Hekili", "displays", "Multi" )
+                ACD:SelectGroup( "Hekili", "general" )
+                ns.OnHideFrame.firstTime = true
+            end
+
+            Hekili:ProfileFrame( "CloseOptionsFrame", ns.OnHideFrame )
         end )
 
-        if not ns.OnHideFrame.firstTime then
-            ACD:SelectGroup( "Hekili", "packs" )
-            ACD:SelectGroup( "Hekili", "displays" )
-            ACD:SelectGroup( "Hekili", "displays", "Multi" )
-            ACD:SelectGroup( "Hekili", "general" )
-            ns.OnHideFrame.firstTime = true
+        if not ok then
+            ns.StopConfiguration()
+            if Hekili.Print then
+                Hekili:Print( "Unable to open options: " .. tostring( err ) )
+            end
+            return
         end
-
-        Hekili:ProfileFrame( "CloseOptionsFrame", ns.OnHideFrame )
     end
 
     Hekili:UpdateDisplayVisibility()

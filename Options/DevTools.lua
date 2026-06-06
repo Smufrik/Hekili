@@ -19,9 +19,9 @@ local ResourceInfo = ns.ResourceInfo or {}
 -- Atlas/Textures
 local AtlasToString, GetAtlasFile, GetAtlasCoords = ns.AtlasToString, ns.GetAtlasFile, ns.GetAtlasCoords
 
-local IsPassiveSpell = C_Spell.IsSpellPassive or _G.IsPassiveSpell
-local IsHarmfulSpell = C_Spell.IsSpellHarmful or _G.IsHarmfulSpell
-local IsHelpfulSpell = C_Spell.IsSpellHelpful or _G.IsHelpfulSpell
+local IsPassiveSpell = C_Spell and C_Spell.IsSpellPassive or _G.IsPassiveSpell or function() return false end
+local IsHarmfulSpell = C_Spell and C_Spell.IsSpellHarmful or _G.IsHarmfulSpell or function() return false end
+local IsHelpfulSpell = C_Spell and C_Spell.IsSpellHelpful or _G.IsHelpfulSpell or function() return false end
 local IsPressHoldReleaseSpell = C_Spell and C_Spell.IsPressHoldReleaseSpell or _G.IsPressHoldReleaseSpell
 
 -- MoP: GetSpellBookItemInfo compatibility function
@@ -502,12 +502,12 @@ function SkeletonGen:PrepareSpecData()
     end
 
     -- 2. Talents (Class, Spec, Hero)
-    local configID = C_ClassTalents.GetActiveConfigID()
-    local configInfo = configID and C_Traits.GetConfigInfo( configID )
+    local configID = C_ClassTalents and C_ClassTalents.GetActiveConfigID and C_ClassTalents.GetActiveConfigID()
+    local configInfo = configID and C_Traits and C_Traits.GetConfigInfo and C_Traits.GetConfigInfo( configID )
     local specID = self.specID
 
     local validHeroTrees = {}
-    local heroTreeIDs = C_ClassTalents.GetHeroTalentSpecsForClassSpec( configID, specID )
+    local heroTreeIDs = configID and C_ClassTalents and C_ClassTalents.GetHeroTalentSpecsForClassSpec and C_ClassTalents.GetHeroTalentSpecsForClassSpec( configID, specID )
     if heroTreeIDs then
         for _, treeID in ipairs( heroTreeIDs ) do
             validHeroTrees[ treeID ] = true
@@ -679,7 +679,7 @@ function SkeletonGen:EmbedSpellData( spellID, token, ability )
     end
 
     local cost, spendPerSec, resource
-    local costs = C_Spell.GetSpellPowerCost( spellID )
+    local costs = C_Spell and C_Spell.GetSpellPowerCost and C_Spell.GetSpellPowerCost( spellID )
 
     if costs then
         for _, v in ipairs( costs ) do

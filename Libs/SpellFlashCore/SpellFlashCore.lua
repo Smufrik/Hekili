@@ -777,6 +777,11 @@ local function OnEvent(self, event, ...)
 end
 local EventFrame = CreateFrame("Frame")
 EventFrame:SetScript("OnEvent", OnEvent)
+local function SafeRegisterEvent(frame, event)
+    if frame and event then
+        return pcall(frame.RegisterEvent, frame, event)
+    end
+end
 
 function Event.ACTIONBAR_SHOWGRID()
     BUTTONSREGISTERED = nil
@@ -789,7 +794,7 @@ local function RegisterAll()
     a:SetTimer("RegisterButtons", 1, 0, RegisterButtons)
 end
 Event.ACTIONBAR_HIDEGRID = RegisterAll
-Event.LEARNED_SPELL_IN_TAB = RegisterAll
+Event.SPELLS_CHANGED = RegisterAll
 Event.CHARACTER_POINTS_CHANGED = RegisterAll
 Event.ACTIVE_TALENT_GROUP_CHANGED = RegisterAll
 function Event.ACTIONBAR_SLOT_CHANGED(event, arg1)
@@ -837,7 +842,7 @@ function Event.ADDON_LOADED(event, arg1)
 end
 
 for event in pairs(Event) do
-    EventFrame:RegisterEvent(event)
+    SafeRegisterEvent(EventFrame, event)
 end
 
 -- Public bootstrap helpers for embedded usage.

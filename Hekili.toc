@@ -1,5 +1,5 @@
 ## Interface: 50504
-## Version: v5.5.4-1
+## Version: v5.5.4
 ## Title: Hekili
 ## Author: Hekili, modified to mop by Smufrik
 ## X-Flavor: MoP

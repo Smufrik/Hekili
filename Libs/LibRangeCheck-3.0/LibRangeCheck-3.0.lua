@@ -4462,6 +4462,12 @@ function lib:scheduleAuraCheck()
   self.frame:Show()
 end
 
+local function safeRegisterEvent(frame, event)
+  if frame and event then
+    return pcall(frame.RegisterEvent, frame, event)
+  end
+end
+
 
 -- << load-time initialization
 
@@ -4470,22 +4476,25 @@ function lib:activate()
     local frame = CreateFrame("Frame")
     self.frame = frame
 
-    frame:RegisterEvent("LEARNED_SPELL_IN_TAB")
-    frame:RegisterEvent("CHARACTER_POINTS_CHANGED")
-    frame:RegisterEvent("SPELLS_CHANGED")
+    safeRegisterEvent(frame, "SPELLS_CHANGED")
+    safeRegisterEvent(frame, "CHARACTER_POINTS_CHANGED")
 
     if isEra or isCata then
-      frame:RegisterEvent("CVAR_UPDATE")
+      safeRegisterEvent(frame, "CVAR_UPDATE")
     end
 
     if isRetail or isCata then
-      frame:RegisterEvent("PLAYER_TALENT_UPDATE")
+      safeRegisterEvent(frame, "PLAYER_TALENT_UPDATE")
     end
 
     local _, playerClass = UnitClass("player")
     if playerClass == "MAGE" or playerClass == "SHAMAN" then
       -- Mage and Shaman gladiator gloves modify spell ranges
-      frame:RegisterUnitEvent("UNIT_INVENTORY_CHANGED", "player")
+      if frame.RegisterUnitEvent then
+        pcall(frame.RegisterUnitEvent, frame, "UNIT_INVENTORY_CHANGED", "player")
+      else
+        safeRegisterEvent(frame, "UNIT_INVENTORY_CHANGED")
+      end
     end
   end
 

@@ -5677,11 +5677,14 @@ found = true end
     local function GetListEntry( pack )
         local entry = rawget( Hekili.DB.profile.packs, pack )
 
+        if not entry or not entry.lists then return end
+
         if rawget( entry.lists, packControl.listName ) == nil then
             packControl.listName = "default"
         end
 
-        if entry then entry = entry.lists[ packControl.listName ] else return end
+        entry = entry.lists[ packControl.listName ]
+        if not entry then return end
 
         if rawget( entry, tonumber( packControl.actionID ) ) == nil then
             packControl.actionID = "0001"
@@ -5696,13 +5699,16 @@ found = true end
     function Hekili:GetActionOption( info )
         local n = #info
         local pack, option = info[ 2 ], info[ n ]
+        local apack = self.DB.profile.packs[ pack ]
 
-        if rawget( self.DB.profile.packs[ pack ].lists, packControl.listName ) == nil then
+        if not apack or not apack.lists then return end
+
+        if rawget( apack.lists, packControl.listName ) == nil then
             packControl.listName = "default"
         end
 
         local actionID = tonumber( packControl.actionID )
-        local data = self.DB.profile.packs[ pack ].lists[ packControl.listName ]
+        local data = apack.lists[ packControl.listName ]
 
         if option == 'position' then return actionID
         elseif option == 'newListName' then return packControl.newListName end
@@ -5902,6 +5908,11 @@ found = true end
                         return packControl.newPackName == "" or packControl.newPackSpec == ""
                     end,
                     func = function ()
+                        Hekili.DB.profile.packs[ packControl.newPackName ] = Hekili.DB.profile.packs[ packControl.newPackName ] or {
+                            lists = {
+                                default = {}
+                            }
+                        }
                         Hekili.DB.profile.packs[ packControl.newPackName ].spec = packControl.newPackSpec
                         Hekili:EmbedPackOptions()
                         ACD:SelectGroup( "Hekili", "packs", packControl.newPackName )
