@@ -42,6 +42,28 @@ local function AuraDataToLegacyTuple( aura )
         aura.points and aura.points[2], aura.points and aura.points[3]
 end
 
+local function FindLegacyUnitAuraByID( unit, id, filter, defaultFilter, playerOrPet )
+    if type( id ) == "table" then return nil end
+
+    local auraFunc = defaultFilter == "HARMFUL" and UnitDebuff or UnitBuff
+    if type( auraFunc ) ~= "function" then return nil end
+
+    local i = 1
+    while true do
+        local name, icon, count, debuffType, duration, expirationTime, caster, stealable, nameplateShowPersonal,
+            spellID, canApplyAura, isBossDebuff, nameplateShowAll, timeMod, value1, value2, value3 = auraFunc( unit, i, filter )
+
+        if not name then return nil end
+
+        if spellID == id and ( not playerOrPet or ( caster and ( UnitIsUnit( caster, "player" ) or UnitIsUnit( caster, "pet" ) ) ) ) then
+            return name, icon, count, debuffType, duration, expirationTime, caster, stealable, nameplateShowPersonal,
+                spellID, canApplyAura, isBossDebuff, nameplateShowAll, timeMod, value1, value2, value3
+        end
+
+        i = i + 1
+    end
+end
+
 local function FindUnitAuraBySingleID( unit, id, filter, defaultFilter, playerOrPet )
     local unitAuras = C_UnitAuras
     if not unitAuras or type( id ) == "table" then return nil end
@@ -74,7 +96,22 @@ local function FindUnitAuraBySingleID( unit, id, filter, defaultFilter, playerOr
         return nil
     end
 
-    return AuraDataToLegacyTuple( aura )
+    local name, icon, count, debuffType, duration, expirationTime, caster, stealable, nameplateShowPersonal,
+        spellID, canApplyAura, isBossDebuff, nameplateShowAll, timeMod, value1, value2, value3 = AuraDataToLegacyTuple( aura )
+
+    if ( count or 0 ) <= 1 or ( duration or 0 ) <= 0 or ( expirationTime or 0 ) <= 0 then
+        local legacyName, legacyIcon, legacyCount, legacyDebuffType, legacyDuration, legacyExpirationTime, legacyCaster, legacyStealable, legacyNameplateShowPersonal, legacySpellID = FindLegacyUnitAuraByID( unit, id, filter, defaultFilter, playerOrPet )
+
+        if legacyName and not ( caster and legacyCaster and not UnitIsUnit( legacyCaster, caster ) ) then
+            if legacyCount and legacyCount > ( count or 0 ) then count = legacyCount end
+            if legacyDuration and legacyDuration > 0 and ( not duration or duration <= 0 ) then duration = legacyDuration end
+            if legacyExpirationTime and legacyExpirationTime > 0 and ( not expirationTime or expirationTime <= 0 ) then expirationTime = legacyExpirationTime end
+            spellID = spellID or legacySpellID
+        end
+    end
+
+    return name, icon, count, debuffType, duration, expirationTime, caster, stealable, nameplateShowPersonal,
+        spellID, canApplyAura, isBossDebuff, nameplateShowAll, timeMod, value1, value2, value3
 end
 
 local function FindUnitAuraByID( unit, id, filter, defaultFilter, playerOrPet )
