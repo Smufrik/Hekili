@@ -121,25 +121,23 @@ local function RegisterWindwalkerSpec()
             end
         },
         tigereye_brew_use = {
-            -- Tigereye Brew (consumed/active damage buff).  Often 116740, allow fallbacks.
+            -- Tigereye Brew (consumed/active damage buff).  Keep this exact;
+            -- the stacking aura is 125195 and must not make the use buff look active.
             id = 116740,
             duration = 15,
             max_stack = 1,
             generate = function( t )
-                local ids = { 116740, 125195, 124727 }
-                for _, spellID in ipairs(ids) do
-                    local name, icon, count, debuffType, duration, expirationTime, caster = FindUnitBuffByID( "player", spellID )
-                    if name then
-                        t.name = name
-                        t.count = 1
-                        t.expires = expirationTime or 0
-                        t.applied = (expirationTime and duration) and (expirationTime - duration) or 0
-                        t.caster = caster or "player"
-                        t.up = true
-                        t.down = false
-                        t.remains = (expirationTime or 0) - GetTime()
-                        return
-                    end
+                local name, icon, count, debuffType, duration, expirationTime, caster = FindUnitBuffByID( "player", 116740 )
+                if name then
+                    t.name = name
+                    t.count = (count and count > 0) and count or 1
+                    t.expires = expirationTime or 0
+                    t.applied = (expirationTime and duration) and (expirationTime - duration) or 0
+                    t.caster = caster or "player"
+                    t.up = true
+                    t.down = false
+                    t.remains = (expirationTime or 0) - GetTime()
+                    return
                 end
 
                 t.count = 0

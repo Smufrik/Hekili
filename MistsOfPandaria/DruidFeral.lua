@@ -465,10 +465,10 @@ spec:RegisterAuras( {
         max_stack = 3,
     },
     dream_of_cenarius = {
-        id = 145152,
         duration = 30,
         max_stack = 1,
-        copy = "dream_of_cenarius_damage",
+        alias = { "dream_of_cenarius_damage" },
+        aliasMode = "first",
     },
 
     natures_vigil = {

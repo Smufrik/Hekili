@@ -16,7 +16,7 @@ actions+=/variable,name=solo_prowl,value=solo_prowl
 
 actions.precombat+=/mark_of_the_wild,if=!buff.mark_of_the_wild.up
 # Proc Dream of Cenarius before combat (T16H)
-actions.precombat+=/healing_touch,if=!buff.dream_of_cenarius.up&talent.dream_of_cenarius.enabled,precombat_time=5.2
+actions.precombat+=/healing_touch,if=!buff.dream_of_cenarius_damage.up&talent.dream_of_cenarius.enabled,precombat_time=5.2
 actions.precombat+=/potion,name=virmens_bite_potion
 actions.precombat+=/cat_form,if=!buff.cat_form.up,precombat_time=2.6
 actions.precombat+=/savage_roar,if=!buff.savage_roar.up&buff.cat_form.up,precombat_time=1
@@ -62,7 +62,7 @@ actions.bear+=/cat_form,if=buff.bear_form.up&(prev.thrash_bear|dot.thrash_bear.t
 
 actions.wrath+=/wrath,if=variable.opt_wrath_weave_setting&variable.opt_wrath_weave&should_wrath_weave
 # Emergency self-heal with Predatory Swiftness
-actions.st+=/healing_touch,if=buff.predatory_swiftness.up&health.pct<=50&!buff.dream_of_cenarius.up
+actions.st+=/healing_touch,if=buff.predatory_swiftness.up&health.pct<=50&!buff.dream_of_cenarius_damage.up
 actions.st+=/tigers_fury,if=(tf_timing|cat_excess_energy>15)&buff.berserk.down&buff.cat_form.up&energy.current<=35
 actions.st+=/savage_roar,if=!buff.savage_roar.up&combo_points.current>0&buff.cat_form.up
 actions.st+=/savage_roar,if=buff.savage_roar.remains<=3&combo_points.current>0&buff.cat_form.up
